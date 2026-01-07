@@ -6778,12 +6778,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.PerceptionData">
             <summary>
-            Data representing a perception event for an actor
+            Data representing a perception event for an actor.
+            <br/>
+            <br/>Spatial context can be provided in two ways (hybrid approach):
+            <br/>1. Typed: Use the optional spatialContext field for structured spatial data
+            <br/>2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+            <br/>
+            <br/>The typed approach is recommended when game server has structured spatial data.
+            <br/>The schema-less approach allows flexibility for game-specific spatial formats.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.PerceptionType">
             <summary>
-            Perception type (visual, auditory, tactile, etc.)
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            <br/>proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SourceId">
@@ -6798,12 +6808,157 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Data">
             <summary>
-            Perception-specific data
+            Perception-specific data. For perceptionType="spatial", this can contain
+            <br/>game-specific spatial context in any format the game server defines.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.Urgency">
             <summary>
             How urgent this perception is (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PerceptionData.SpatialContext">
+            <summary>
+            Optional typed spatial context from game server's local spatial state.
+            <br/>Provides structured information about terrain, nearby objects, hazards, etc.
+            <br/>Alternative to using perceptionType="spatial" with schema-less data.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpatialContext">
+            <summary>
+            Spatial context derived from game server's authoritative spatial state.
+            <br/>Included in perception events to give NPC actors awareness of their environment
+            <br/>without requiring direct map subscriptions.
+            <br/>
+            <br/>Note: additionalProperties=true allows game-specific extensions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.TerrainType">
+            <summary>
+            Terrain type at character position (grass, stone, water, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.Elevation">
+            <summary>
+            Elevation at character position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.NearbyObjects">
+            <summary>
+            Objects within perception radius
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.HazardsInRange">
+            <summary>
+            Active hazards within detection range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.PathableDirections">
+            <summary>
+            Directions the character can move (for navigation awareness)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.CoverNearby">
+            <summary>
+            Whether cover is available within close range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.Indoors">
+            <summary>
+            Whether character is currently indoors/under roof
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpatialContext.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.NearbyObject">
+            <summary>
+            Information about a nearby object perceived by the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.ObjectId">
+            <summary>
+            Unique identifier of the object
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.ObjectType">
+            <summary>
+            Type of object (boulder_cluster, tree, building, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Distance">
+            <summary>
+            Distance from character in game units
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Direction">
+            <summary>
+            Relative direction (north, south, east, west, above, below, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.Position">
+            <summary>
+            Optional absolute position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.NearbyObject.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.HazardInfo">
+            <summary>
+            Information about a hazard in range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.HazardType">
+            <summary>
+            Type of hazard (fire, poison, radiation, deep_water, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Distance">
+            <summary>
+            Distance to hazard edge
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Severity">
+            <summary>
+            Hazard severity (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.Direction">
+            <summary>
+            Direction to hazard center
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.HazardInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.Position3D">
+            <summary>
+            3D position in world coordinates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.Position3D.X">
+            <summary>
+            X coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.Position3D.Y">
+            <summary>
+            Y coordinate (typically vertical)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.Position3D.Z">
+            <summary>
+            Z coordinate
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ActorTemplateCreatedEvent">
@@ -13380,12 +13535,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.PerceptionData">
             <summary>
-            Data representing a perception event for an actor
+            Data representing a perception event for an actor.
+            <br/>
+            <br/>Spatial context can be provided in two ways (hybrid approach):
+            <br/>1. Typed: Use the optional spatialContext field for structured spatial data
+            <br/>2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+            <br/>
+            <br/>The typed approach is recommended when game server has structured spatial data.
+            <br/>The schema-less approach allows flexibility for game-specific spatial formats.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.PerceptionType">
             <summary>
-            Perception type (visual, auditory, tactile, etc.)
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            <br/>proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.SourceId">
@@ -13400,12 +13565,157 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.Data">
             <summary>
-            Perception-specific data
+            Perception-specific data. For perceptionType="spatial", this can contain
+            <br/>game-specific spatial context in any format the game server defines.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.Urgency">
             <summary>
             How urgent this perception is (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.PerceptionData.SpatialContext">
+            <summary>
+            Optional typed spatial context from game server's local spatial state.
+            <br/>Provides structured information about terrain, nearby objects, hazards, etc.
+            <br/>Alternative to using perceptionType="spatial" with schema-less data.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.SpatialContext">
+            <summary>
+            Spatial context derived from game server's authoritative spatial state.
+            <br/>Included in perception events to give NPC actors awareness of their environment
+            <br/>without requiring direct map subscriptions.
+            <br/>
+            <br/>Note: additionalProperties=true allows game-specific extensions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.TerrainType">
+            <summary>
+            Terrain type at character position (grass, stone, water, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.Elevation">
+            <summary>
+            Elevation at character position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.NearbyObjects">
+            <summary>
+            Objects within perception radius
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.HazardsInRange">
+            <summary>
+            Active hazards within detection range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.PathableDirections">
+            <summary>
+            Directions the character can move (for navigation awareness)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.CoverNearby">
+            <summary>
+            Whether cover is available within close range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.Indoors">
+            <summary>
+            Whether character is currently indoors/under roof
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.SpatialContext.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.NearbyObject">
+            <summary>
+            Information about a nearby object perceived by the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.ObjectId">
+            <summary>
+            Unique identifier of the object
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.ObjectType">
+            <summary>
+            Type of object (boulder_cluster, tree, building, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.Distance">
+            <summary>
+            Distance from character in game units
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.Direction">
+            <summary>
+            Relative direction (north, south, east, west, above, below, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.Position">
+            <summary>
+            Optional absolute position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.NearbyObject.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.HazardInfo">
+            <summary>
+            Information about a hazard in range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.HazardInfo.HazardType">
+            <summary>
+            Type of hazard (fire, poison, radiation, deep_water, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.HazardInfo.Distance">
+            <summary>
+            Distance to hazard edge
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.HazardInfo.Severity">
+            <summary>
+            Hazard severity (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.HazardInfo.Direction">
+            <summary>
+            Direction to hazard center
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.HazardInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.Position3D">
+            <summary>
+            3D position in world coordinates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.Position3D.X">
+            <summary>
+            X coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.Position3D.Y">
+            <summary>
+            Y coordinate (typically vertical)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.Position3D.Z">
+            <summary>
+            Z coordinate
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.InjectPerceptionResponse">
