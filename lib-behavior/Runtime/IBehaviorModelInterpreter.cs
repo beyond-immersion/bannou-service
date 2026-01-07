@@ -61,6 +61,16 @@ public interface IBehaviorModelInterpreter
     void Evaluate(ReadOnlySpan<double> inputState, Span<double> outputState);
 
     /// <summary>
+    /// Evaluates the behavior model with continuation point pause support.
+    /// When a CONTINUATION_POINT opcode is reached, evaluation pauses and
+    /// returns a result indicating the pause. Call Resume methods to continue.
+    /// </summary>
+    /// <param name="inputState">Current game state values (must match input schema).</param>
+    /// <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+    /// <returns>Result indicating whether evaluation completed or paused.</returns>
+    EvaluationResult EvaluateWithPause(ReadOnlySpan<double> inputState, Span<double> outputState);
+
+    /// <summary>
     /// Gets the current stack depth (for debugging).
     /// </summary>
     int CurrentStackDepth { get; }
@@ -69,4 +79,38 @@ public interface IBehaviorModelInterpreter
     /// Gets the current instruction pointer (for debugging).
     /// </summary>
     int CurrentInstructionPointer { get; }
+
+    /// <summary>
+    /// Whether evaluation is currently paused at a continuation point.
+    /// </summary>
+    bool IsPaused { get; }
+
+    /// <summary>
+    /// Index of the continuation point where evaluation is paused (-1 if not paused).
+    /// </summary>
+    int PausedContinuationPointIndex { get; }
+
+    /// <summary>
+    /// Resumes evaluation with the default flow after pausing at a continuation point.
+    /// </summary>
+    /// <param name="inputState">Current game state values.</param>
+    /// <param name="outputState">Pre-allocated output buffer.</param>
+    /// <returns>Result of continued evaluation.</returns>
+    EvaluationResult ResumeWithDefaultFlow(ReadOnlySpan<double> inputState, Span<double> outputState);
+
+    /// <summary>
+    /// Resumes evaluation by executing an extension model instead of the default flow.
+    /// </summary>
+    /// <param name="extensionInterpreter">The extension interpreter to execute.</param>
+    /// <param name="inputState">Current game state values.</param>
+    /// <param name="outputState">Pre-allocated output buffer.</param>
+    void ResumeWithExtension(
+        IBehaviorModelInterpreter extensionInterpreter,
+        ReadOnlySpan<double> inputState,
+        Span<double> outputState);
+
+    /// <summary>
+    /// Clears the pause state without resuming execution.
+    /// </summary>
+    void ClearPauseState();
 }

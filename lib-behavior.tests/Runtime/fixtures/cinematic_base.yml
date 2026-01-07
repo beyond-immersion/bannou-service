@@ -1,0 +1,22 @@
+# Test fixture: Base cinematic with continuation point
+# Used to test pause/resume functionality
+# NOTE: after_cp is defined first to ensure it's at output index 0,
+# matching the extension fixture's output layout.
+version: "2.0"
+metadata:
+  id: test-cinematic-base
+
+flows:
+  main:
+    actions:
+    # Register after_cp first (output index 0) to match extension layout
+    - global: { variable: after_cp, value: "0.0" }
+    - global: { variable: before_cp, value: "1.0" }
+    - continuation_point:
+        name: "dramatic_pause"
+        timeout: "500ms"
+        default_flow: default_ending
+    - global: { variable: after_cp, value: "3.0" }
+  default_ending:
+    actions:
+    - global: { variable: after_cp, value: "2.0" }

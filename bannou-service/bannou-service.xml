@@ -7747,6 +7747,56 @@
             IP address of the password reset request
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent">
+            <summary>
+            Event published when a cinematic extension is available for injection at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.Timestamp">
+            <summary>
+            When the event was generated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.CharacterId">
+            <summary>
+            The character whose cinematic is being extended.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.CinematicId">
+            <summary>
+            The cinematic behavior model being extended.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ContinuationPointName">
+            <summary>
+            The name of the continuation point where the extension should be injected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ExtensionBytecode">
+            <summary>
+            Base64-encoded compiled ABML bytecode for the extension.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.SourceAppId">
+            <summary>
+            App ID that generated this extension, for direct mesh routing. Null for pub/sub delivery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ExpiresAtEpochMs">
+            <summary>
+            Epoch milliseconds when this extension expires. Null if no expiration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent">
             <summary>
             Published to behavior.created when a behavior is created

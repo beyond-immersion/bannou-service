@@ -406,35 +406,29 @@ Consider P2 (14 events) based on time/effort.
 
 ---
 
-## Open Questions / Investigation Needed
+## Resolved Issues
 
-### OAuth/Steam Session Creation Flow
+### OAuth/Steam Session Creation & SessionId in Events
 
-**Status**: ✅ RESOLVED - Sessions are created correctly
+**Status**: ✅ FULLY RESOLVED (2026-01-07)
 
-**Original Concern**: The OAuth success events don't include a required `sessionId` field. Was this because OAuth flows weren't creating session objects?
+**Original Concern**: OAuth success events didn't include `sessionId`. Was this because OAuth flows weren't creating sessions?
 
-**Investigation Findings** (2026-01-07):
+**Investigation Findings**:
+All authentication paths call `GenerateAccessTokenAsync()` which creates sessions in Redis. The issue was that sessionId wasn't being returned to callers for event publishing.
 
-All authentication paths call the private `GenerateAccessTokenAsync()` method in `AuthService.cs` (lines 1126-1218), which:
-1. Generates `sessionKey` (opaque GUID) and `sessionId` (separate GUID)
-2. Creates `SessionDataModel` with AccountId, Email, DisplayName, Roles, Authorizations, ExpiresAt
-3. Saves session to Redis at `session:{sessionKey}` with TTL
-4. Maintains account-to-sessions index for `GetSessionsAsync`
-5. Maintains session_id-to-session_key reverse index for `TerminateSessionAsync`
+**Resolution (2026-01-07)**:
+1. Changed `GenerateAccessTokenAsync` signature to return `(string accessToken, string sessionId)` tuple
+2. Updated all callers (LoginAsync, RegisterAsync, CompleteOAuthAsync, VerifySteamAuthAsync) to capture sessionId
+3. Updated all audit event publishers to include sessionId
+4. Updated `auth-events.yaml` schema to make sessionId REQUIRED on:
+   - AuthLoginSuccessfulEvent
+   - AuthRegistrationSuccessfulEvent
+   - AuthOAuthLoginSuccessfulEvent
+   - AuthSteamLoginSuccessfulEvent
+5. Mock handlers (used for testing) discard sessionId and skip audit events
 
-**Verified Callers** - ALL create sessions:
-- `LoginAsync` (line 155) ✅
-- `RegisterAsync` (line 244) ✅
-- `CompleteOAuthAsync` (line 321) ✅
-- `VerifySteamAuthAsync` (line 405) ✅
-- `RefreshTokenAsync` (line 476) ✅
-
-**Why OAuth Events Don't Have Required SessionId**:
-The `sessionId` is generated inside `GenerateAccessTokenAsync` and isn't returned to the caller. The JWT contains a `session_key` claim which the Connect service uses to look up the session. For audit events, the `accountId` + `timestamp` provide sufficient correlation.
-
-**Recommended Future Work**:
-Consider adding HTTP/Edge integration tests that:
-1. Mock Discord/Steam OAuth providers
-2. Verify complete flow: OAuth callback → JWT returned → WebSocket upgrade with JWT → session lookup succeeds → capability manifest sent
-3. This would validate the end-to-end authentication story beyond unit tests
+**HTTP Tests Enhanced**:
+- `TestOAuthFlow` now validates token and verifies SessionId when MockProviders=true
+- `TestSteamAuthFlow` now validates token and verifies SessionId when MockProviders=true
+- Both tests still pass when MockProviders=false (correctly reject invalid mock data)

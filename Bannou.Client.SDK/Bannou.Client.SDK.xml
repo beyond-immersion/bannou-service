@@ -2271,6 +2271,72 @@
             Gets the current instruction pointer (for debugging).
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.IsPaused">
+            <summary>
+            Whether evaluation is currently paused at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.PausedContinuationPointIndex">
+            <summary>
+            Index of the continuation point where evaluation is paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.EvaluateWithPause(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with continuation point pause support.
+            When a CONTINUATION_POINT opcode is reached, evaluation pauses and
+            returns a result indicating the pause. Call Resume methods to continue.
+            </summary>
+            <remarks>
+            <para>
+            This method is allocation-free after initial setup, maintaining the same
+            performance characteristics as <see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.Evaluate(System.ReadOnlySpan{System.Double},System.Span{System.Double})"/>.
+            </para>
+            <para>
+            When resuming from a paused state, the instruction pointer continues from
+            where it left off. The stack and locals are preserved across evaluations.
+            </para>
+            </remarks>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+            <returns>Result indicating whether evaluation completed or paused.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.ResumeWithDefaultFlow(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation with the default flow after pausing at a continuation point.
+            </summary>
+            <remarks>
+            Call this when no extension is available or the timeout has expired.
+            </remarks>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <returns>Result of continued evaluation.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if not paused at a continuation point.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.ResumeWithExtension(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter,System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation by executing an extension model instead of the default flow.
+            </summary>
+            <remarks>
+            <para>
+            The extension interpreter runs to completion, and its output replaces
+            the current output state. After the extension completes, the base model
+            continues from after the continuation point's default flow.
+            </para>
+            </remarks>
+            <param name="extensionInterpreter">The extension interpreter to execute.</param>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown if not paused at a continuation point.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreter.ClearPauseState">
+            <summary>
+            Clears the pause state without resuming execution.
+            </summary>
+            <remarks>
+            Use this to abandon a paused evaluation without continuing.
+            </remarks>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModelInterpreterFactory">
             <summary>
             Default factory for creating behavior model interpreters.
@@ -2530,6 +2596,17 @@
             Interpreter for cinematic composition using continuation points.
             Manages streaming extensions and base model coordination.
             </summary>
+            <remarks>
+            <para>
+            The CinematicInterpreter wraps a base behavior model and intercepts execution
+            at continuation points. When the base model reaches a continuation point,
+            execution pauses to allow extension injection.
+            </para>
+            <para>
+            Extensions can be pre-registered or injected dynamically while waiting.
+            If no extension arrives within the timeout, the default flow is executed.
+            </para>
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
             <summary>
@@ -2537,14 +2614,14 @@
             </summary>
             <param name="baseModel">The base behavior model.</param>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.HasActiveExtension">
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.IsWaitingForExtension">
             <summary>
-            Whether an extension is currently active at a continuation point.
+            Whether execution is waiting at a continuation point.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.ActiveContinuationPoint">
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.WaitingContinuationPoint">
             <summary>
-            The name of the currently active continuation point, if any.
+            The name of the continuation point currently waiting, if any.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.InputState">
@@ -2559,10 +2636,27 @@
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.RegisterExtension(System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
             <summary>
-            Registers an extension model for a continuation point.
+            Pre-registers an extension model for a continuation point.
             </summary>
+            <remarks>
+            Extensions can be registered before or during execution.
+            If registered while waiting at the matching continuation point,
+            the extension will be used in the next Evaluate call.
+            </remarks>
             <param name="continuationPointName">The continuation point name.</param>
             <param name="extensionModel">The extension model.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.InjectExtension(System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.BehaviorModel)">
+            <summary>
+            Injects an extension that arrived via streaming.
+            </summary>
+            <remarks>
+            Use this method when an extension arrives from the network while
+            the interpreter is waiting at a continuation point.
+            </remarks>
+            <param name="continuationPointName">The continuation point name.</param>
+            <param name="extensionModel">The extension model.</param>
+            <returns>True if the extension was accepted (waiting at the matching point).</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.RemoveExtension(System.String)">
             <summary>
@@ -2587,36 +2681,87 @@
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.Evaluate">
             <summary>
-            Evaluates the current state, handling continuation points.
+            Evaluates the current state, handling continuation points with pause support.
             </summary>
+            <remarks>
+            <para>
+            This method uses the new EvaluateWithPause mechanism to properly intercept
+            continuation points at the bytecode level. When a continuation point is reached:
+            </para>
+            <list type="number">
+            <item>If a pre-registered extension exists, it executes immediately</item>
+            <item>Otherwise, enters waiting state and returns "waiting" result</item>
+            <item>On subsequent calls while waiting, checks for timeout or pending extension</item>
+            </list>
+            </remarks>
             <returns>The evaluation result.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.CompleteExtension">
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.ForceResumeWithDefaultFlow">
             <summary>
-            Signals that an extension has completed.
+            Forces resumption with the default flow, even before timeout.
             </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.ActivateContinuationPoint(System.String,System.Nullable{System.UInt32})">
-            <summary>
-            Activates a continuation point for streaming extension.
-            Call this when you want to pause at a continuation point and wait for an extension.
-            </summary>
-            <param name="continuationPointName">The continuation point name.</param>
-            <param name="timeoutMs">Optional timeout override in milliseconds.</param>
+            <remarks>
+            Use this when you know no extension will arrive and want to continue immediately.
+            </remarks>
+            <returns>True if resumed, false if not waiting.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicInterpreter.Reset">
             <summary>
             Resets the interpreter state.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicStatus">
+            <summary>
+            Status of a cinematic evaluation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicStatus.Completed">
+            <summary>Evaluation completed normally.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicStatus.WaitingForExtension">
+            <summary>Waiting at a continuation point for an extension.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicStatus.ExtensionExecuted">
+            <summary>An extension was executed at a continuation point.</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult">
             <summary>
             Result of a cinematic evaluation.
             </summary>
+            <param name="Status">The evaluation status.</param>
+            <param name="ContinuationPointName">The continuation point name, if applicable.</param>
+            <param name="Message">Optional message with details.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.#ctor(System.Boolean,System.String)">
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicStatus,System.String,System.String)">
             <summary>
             Result of a cinematic evaluation.
+            </summary>
+            <param name="Status">The evaluation status.</param>
+            <param name="ContinuationPointName">The continuation point name, if applicable.</param>
+            <param name="Message">Optional message with details.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.Status">
+            <summary>The evaluation status.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.ContinuationPointName">
+            <summary>The continuation point name, if applicable.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.Message">
+            <summary>Optional message with details.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.IsWaiting">
+            <summary>
+            Whether evaluation is waiting for an extension.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.IsCompleted">
+            <summary>
+            Whether evaluation has completed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.CinematicEvaluationResult.ExtensionWasExecuted">
+            <summary>
+            Whether an extension was executed.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.ContinuationPoint">
@@ -2740,6 +2885,79 @@
             Serializes the continuation point table to binary data.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult">
+            <summary>
+            Result of a behavior model evaluation. Allocation-free readonly struct.
+            </summary>
+            <remarks>
+            <para>
+            When evaluation completes normally, use <see cref="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.Completed"/>.
+            When evaluation pauses at a continuation point, the result contains
+            the continuation point index and timeout for extension injection.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.Completed">
+            <summary>
+            Evaluation completed normally without pause.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.Status">
+            <summary>
+            Status of the evaluation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.ContinuationPointIndex">
+            <summary>
+            Index of continuation point if paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.TimeoutMs">
+            <summary>
+            Timeout in milliseconds if paused (0 if not paused or no timeout).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.IsPaused">
+            <summary>
+            Whether evaluation is paused at a continuation point.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.#ctor(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationStatus,System.Int32,System.UInt32)">
+            <summary>
+            Creates a new evaluation result.
+            </summary>
+            <param name="status">The evaluation status.</param>
+            <param name="cpIndex">Continuation point index (-1 if not paused).</param>
+            <param name="timeoutMs">Timeout in milliseconds (0 if no timeout).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationResult.PausedAt(System.Int32,System.UInt32)">
+            <summary>
+            Creates a result indicating pause at a continuation point.
+            </summary>
+            <param name="cpIndex">The continuation point index.</param>
+            <param name="timeoutMs">The timeout in milliseconds.</param>
+            <returns>An evaluation result indicating pause.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationStatus">
+            <summary>
+            Status of a behavior model evaluation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationStatus.Completed">
+            <summary>
+            Evaluation completed normally (reached end or Halt opcode).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationStatus.PausedAtContinuationPoint">
+            <summary>
+            Evaluation paused at a continuation point waiting for extension.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.EvaluationStatus.ExtensionExecuting">
+            <summary>
+            An extension model is currently executing.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter">
             <summary>
             Interface for behavior model interpreters, enabling DI and testability.
@@ -2795,6 +3013,16 @@
             <param name="inputState">Current game state values (must match input schema).</param>
             <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.EvaluateWithPause(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Evaluates the behavior model with continuation point pause support.
+            When a CONTINUATION_POINT opcode is reached, evaluation pauses and
+            returns a result indicating the pause. Call Resume methods to continue.
+            </summary>
+            <param name="inputState">Current game state values (must match input schema).</param>
+            <param name="outputState">Pre-allocated output buffer (must match output schema).</param>
+            <returns>Result indicating whether evaluation completed or paused.</returns>
+        </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.CurrentStackDepth">
             <summary>
             Gets the current stack depth (for debugging).
@@ -2803,6 +3031,37 @@
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.CurrentInstructionPointer">
             <summary>
             Gets the current instruction pointer (for debugging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.IsPaused">
+            <summary>
+            Whether evaluation is currently paused at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.PausedContinuationPointIndex">
+            <summary>
+            Index of the continuation point where evaluation is paused (-1 if not paused).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.ResumeWithDefaultFlow(System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation with the default flow after pausing at a continuation point.
+            </summary>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+            <returns>Result of continued evaluation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.ResumeWithExtension(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter,System.ReadOnlySpan{System.Double},System.Span{System.Double})">
+            <summary>
+            Resumes evaluation by executing an extension model instead of the default flow.
+            </summary>
+            <param name="extensionInterpreter">The extension interpreter to execute.</param>
+            <param name="inputState">Current game state values.</param>
+            <param name="outputState">Pre-allocated output buffer.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreter.ClearPauseState">
+            <summary>
+            Clears the pause state without resuming execution.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IBehaviorModelInterpreterFactory">
@@ -5172,6 +5431,136 @@
             Error message if sync failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent">
+            <summary>
+            Published when a new achievement definition is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Timestamp">
+            <summary>
+            When the definition was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this achievement belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.AchievementId">
+            <summary>
+            Unique identifier for the achievement within the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Description">
+            <summary>
+            Detailed description of how to earn the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.AchievementType">
+            <summary>
+            Type of achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Points">
+            <summary>
+            Points awarded for unlocking this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.ProgressTarget">
+            <summary>
+            Target value for progressive achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Platforms">
+            <summary>
+            Platforms where this achievement is available
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent">
+            <summary>
+            Published when an achievement definition is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Timestamp">
+            <summary>
+            When the definition was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.AchievementId">
+            <summary>
+            Unique identifier for the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.DisplayName">
+            <summary>
+            Updated display name (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Description">
+            <summary>
+            Updated description (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Points">
+            <summary>
+            Updated points value (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.ProgressTarget">
+            <summary>
+            Updated progress target (if changed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent">
+            <summary>
+            Published when an achievement definition is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.Timestamp">
+            <summary>
+            When the definition was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.AchievementId">
+            <summary>
+            ID of the deleted achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.DisplayName">
+            <summary>
+            Display name of the deleted achievement (for logging/audit)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent">
             <summary>
             Periodic heartbeat from pool nodes to control plane.
@@ -6318,6 +6707,231 @@
             Reason for session update
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent">
+            <summary>
+            Published when a user successfully authenticates with username/password
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.Username">
+            <summary>
+            Username or email used for authentication
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.UserAgent">
+            <summary>
+            User agent string from the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent">
+            <summary>
+            Published when a login attempt fails (for brute force detection)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.Username">
+            <summary>
+            Username that was attempted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.Reason">
+            <summary>
+            Why the login attempt failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.AccountId">
+            <summary>
+            Account ID if the username exists (null if unknown user)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.IpAddress">
+            <summary>
+            IP address of the failed login attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.UserAgent">
+            <summary>
+            User agent string from the request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginFailedReason">
+            <summary>
+            Reason why the login attempt failed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent">
+            <summary>
+            Published when a new user successfully registers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.AccountId">
+            <summary>
+            ID of the newly created account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.Username">
+            <summary>
+            Username chosen by the user
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.Email">
+            <summary>
+            Email address provided during registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this registration (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the registration request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent">
+            <summary>
+            Published when a user authenticates via OAuth provider
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.Provider">
+            <summary>
+            OAuth provider name (e.g., discord, google)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.ProviderUserId">
+            <summary>
+            User ID from the OAuth provider
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.IsNewAccount">
+            <summary>
+            Whether this login created a new account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent">
+            <summary>
+            Published when a user authenticates via Steam
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.SteamId">
+            <summary>
+            Steam ID (64-bit)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.IsNewAccount">
+            <summary>
+            Whether this login created a new account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent">
+            <summary>
+            Published when a password reset is successfully completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account whose password was reset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the password reset request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent">
+            <summary>
+            Event published when a cinematic extension is available for injection at a continuation point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.Timestamp">
+            <summary>
+            When the event was generated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.CharacterId">
+            <summary>
+            The character whose cinematic is being extended.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.CinematicId">
+            <summary>
+            The cinematic behavior model being extended.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ContinuationPointName">
+            <summary>
+            The name of the continuation point where the extension should be injected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ExtensionBytecode">
+            <summary>
+            Base64-encoded compiled ABML bytecode for the extension.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.SourceAppId">
+            <summary>
+            App ID that generated this extension, for direct mesh routing. Null for pub/sub delivery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.ExpiresAtEpochMs">
+            <summary>
+            Epoch milliseconds when this extension expires. Null if no expiration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CinematicExtensionAvailableEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent">
             <summary>
             Published to behavior.created when a behavior is created
@@ -7099,6 +7713,121 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent">
+            <summary>
+            Published to game-service.created when a gameservice is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent">
+            <summary>
+            Published to game-service.updated when a gameservice is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent">
+            <summary>
+            Published to game-service.deleted when a gameservice is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
@@ -8648,6 +9377,36 @@
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpeciesMergedEvent">
+            <summary>
+            Published when two species are merged, with the source species being deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.SourceSpeciesId">
+            <summary>
+            ID of the species being merged (deprecated after merge)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.SourceSpeciesCode">
+            <summary>
+            Code of the source species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.TargetSpeciesId">
+            <summary>
+            ID of the species receiving the merge
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.TargetSpeciesCode">
+            <summary>
+            Code of the target species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.MergedCharacterCount">
+            <summary>
+            Number of characters that were migrated to the target species
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent">
@@ -17930,6 +18689,11 @@
         <member name="P:BeyondImmersion.BannouService.GameService.DeleteServiceRequest.ServiceId">
             <summary>
             ID of the service to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.DeleteServiceRequest.Reason">
+            <summary>
+            Optional reason for deletion (included in the lifecycle event)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.ServiceInfo">
