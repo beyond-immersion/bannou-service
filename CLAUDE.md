@@ -395,10 +395,30 @@ git diff HEAD~1               # Review ALL changes since last commit
 ```
 
 ### Standard Commit Format
+
+**MANDATORY**: The first line of every commit message MUST be a senryu (5-7-5 syllable poem about human nature, similar to haiku but focused on human foibles/experiences rather than nature). Format all three "lines" of the senryu on a single line, separated by ` / ` (space-slash-space).
+
+**Senryu themes** should relate to the human experience of coding: debugging frustration, refactoring satisfaction, the hubris of "quick fixes", late-night coding regrets, the joy of tests passing, etc.
+
+**Examples**:
+- `bugs hide in plain sight / we debug with tired eyes / coffee saves us all`
+- `one small change they said / now the whole system is down / hubris strikes again`
+- `tests were passing green / then I touched one single line / red across the board`
+
 ```bash
-git commit -m "Descriptive message
+git commit -m "$(cat <<'EOF'
+code once worked just fine / then a single change broke all / such is dev life's way
+
+Add validation to user input handling
+
+- Added null checks to prevent crashes on malformed input
+- Updated error messages to be more descriptive
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
 ```
+
+**Note**: A PreToolUse hook validates that commits follow this format. Commits without a properly-formatted senryu first line will be blocked.
