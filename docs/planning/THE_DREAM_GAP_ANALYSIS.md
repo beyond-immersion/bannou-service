@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-05 (Updated for Phase 5 NPC Brain Integration progress)
+> **Revised**: 2026-01-07 (Updated for Streaming Composition completion)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -29,7 +29,7 @@ This document analyzes the gap between THE_DREAM's vision and our current ABML i
 | Multi-character coordination | Complex arbitration | ✓ Solved - Intent channels with urgency |
 
 **The Real Gaps** (in priority order):
-1. **Streaming execution model** - ability to extend running behavior (continuation points)
+1. ~~**Streaming execution model**~~ - ✅ COMPLETE (continuation points, CinematicInterpreter with pause/resume)
 2. ~~**Bytecode compilation**~~ - ✅ COMPLETE (see ABML_LOCAL_RUNTIME.md Phase 1-2)
 3. ~~**Behavior distribution**~~ - ✅ COMPLETE (lib-asset handles this; behavior is an asset type)
 4. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
@@ -96,7 +96,7 @@ Timeline:
 **Result**: Execution state extended without restart
 **Use cases**: THE_DREAM's "extend before time runs out", dynamic dramatic acts
 
-**Status**: **This is the gap**. Our execution model doesn't support this yet.
+**Status**: ✅ **COMPLETE**. `CinematicInterpreter` supports pause at continuation points, extension injection, and timeout-based fallback to default flows.
 
 ### 2.2 Why Streaming Composition Matters
 
@@ -169,7 +169,7 @@ This is fundamentally different from:
 | **Bytecode Compiler** | `lib-behavior/Compiler/` | ✅ Complete | 226 tests |
 | **Bytecode Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | 61 tests |
 | **Intent System** | `sdk-sources/Behavior/Intent/` | ✅ Complete | 79 tests |
-| **Cinematic Interpreter** | `sdk-sources/Behavior/Runtime/` | ✅ Complete | Continuation points |
+| **Cinematic Interpreter** | `lib-behavior/Runtime/` | ✅ Complete | 13 pause/resume tests |
 | **NPC Brain Integration** | `lib-actor/Runtime/` | ✅ Bannou-side | Perception/state wiring |
 | **Game Transport (UDP)** | `Bannou.SDK/GameTransport/` | ✅ Complete | LiteNetLib integration |
 | **Server SDK** | `Bannou.SDK/` | ✅ Complete | Full DI, mesh, all clients |
@@ -476,11 +476,11 @@ The streaming composition model ensures graceful degradation:
 
 | Gap | Description | Effort | Dependencies |
 |-----|-------------|--------|--------------|
-| **Continuation Points** | ABML syntax for declaring extension points | Medium | None |
-| **Extension Format** | ABML syntax for extensions that attach to points | Medium | Continuation Points |
-| **Bytecode Extensions** | Extended format for continuation/extension | Medium | LOCAL_RUNTIME Phase 1 |
-| **Streaming Interpreter** | Runtime support for mid-execution attachment | High | Bytecode format |
-| **Extension Delivery** | Protocol for pushing extensions to game servers | Medium | Distribution service |
+| ~~**Continuation Points**~~ | ~~ABML syntax for declaring extension points~~ | ~~Medium~~ | ✅ COMPLETE |
+| ~~**Extension Format**~~ | ~~ABML syntax for extensions that attach to points~~ | ~~Medium~~ | ✅ COMPLETE |
+| ~~**Bytecode Extensions**~~ | ~~Extended format for continuation/extension~~ | ~~Medium~~ | ✅ COMPLETE |
+| ~~**Streaming Interpreter**~~ | ~~Runtime support for mid-execution attachment~~ | ~~High~~ | ✅ COMPLETE |
+| **Extension Delivery** | Protocol for pushing extensions to game servers | Medium | Event schema complete, integration pending |
 
 ### 6.2 High Priority Gaps (Enable Core Functionality)
 
@@ -549,14 +549,14 @@ The streaming composition model ensures graceful degradation:
 - [x] Stack-based interpreter (basic)
 - [x] Round-trip test: ABML → bytecode → execution → same result as tree-walker
 
-### Phase 2: Streaming Composition
+### Phase 2: Streaming Composition ✅ COMPLETE
 **Goal**: Continuation points and extensions working
 
-- [ ] Continuation point ABML syntax
-- [ ] Extension ABML syntax
-- [ ] Extended bytecode format
-- [ ] Streaming interpreter (handles mid-execution attachment)
-- [ ] Tests: extension arrives early/on-time/late/never
+- [x] Continuation point ABML syntax (`continuation_point` action with name, timeout, default_flow)
+- [x] Extension ABML syntax (extensions attach to named continuation points)
+- [x] Extended bytecode format (`CONTINUATION_POINT` opcode with timeout and default flow offset)
+- [x] Streaming interpreter (`CinematicInterpreter` with pause/resume, `EvaluateWithPause()`, `ResumeWithDefaultFlow()`, `ResumeWithExtension()`)
+- [x] Tests: 13 tests covering extension arrives early/on-time/late/never, timeout, force resume, reset
 
 ### Phase 3: Distribution & Integration ✅ MOSTLY COMPLETE
 **Goal**: Models flow to game servers, cinematics can be triggered
@@ -565,7 +565,8 @@ The streaming composition model ensures graceful degradation:
 - [x] `/behavior/models/sync` API - via lib-asset sync
 - [x] Server SDK with full mesh integration (`Bannou.SDK`)
 - [x] Game Transport (UDP) with LiteNetLib for real-time state sync
-- [ ] Extension delivery protocol (for continuation point extensions)
+- [x] Extension delivery event schema (`CinematicExtensionAvailableEvent` in behavior-events.yaml)
+- [ ] Extension delivery integration (mesh routing + pub/sub fallback)
 - [ ] Control handoff mechanism (cinematic takes control)
 - [ ] Integration tests with mock game server
 

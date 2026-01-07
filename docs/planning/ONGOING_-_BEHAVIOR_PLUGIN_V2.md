@@ -2,7 +2,7 @@
 
 > **Status**: PHASES 1-4 MOSTLY COMPLETE, PHASE 5 IN PROGRESS
 > **Created**: 2024-12-28
-> **Updated**: 2026-01-05 (Phase 5 actor integration Bannou-side COMPLETE)
+> **Updated**: 2026-01-07 (Streaming composition infrastructure COMPLETE)
 > **Related Documents**:
 > - **[ABML Guide](../guides/ABML.md)** - **ABML Language Specification & Runtime** (authoritative)
 > - [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) - Local client execution & bytecode compilation
@@ -15,6 +15,7 @@
 - **Phase 3 (Multi-Channel)**: ✅ COMPLETE - Sync points, barriers, deadlock detection.
 - **Phase 4 (Cognition)**: ✅ MOSTLY COMPLETE - All 6 handlers implemented (FilterAttention, AssessSignificance, EvaluateGoalImpact, QueryMemory, StoreMemory, TriggerGoapReplan). Registered in DocumentExecutorFactory. Pipeline orchestration via ABML behaviors.
 - **Phase 5 (Actor Integration)**: 🔄 IN PROGRESS - Bannou-side perception/state wiring COMPLETE. Stride-side integration NEXT. See [ACTORS_PLUGIN_V3.md §5.2](./UPCOMING_-_ACTORS_PLUGIN_V3.md).
+- **Streaming Composition**: ✅ COMPLETE - `CinematicInterpreter` with pause/resume at continuation points, `EvaluateWithPause()`, `ResumeWithDefaultFlow()`, `ResumeWithExtension()`, `CinematicExtensionAvailableEvent` schema. 13 tests. See [THE_DREAM_GAP_ANALYSIS.md](./THE_DREAM_GAP_ANALYSIS.md) Phase 2.
 
 **Bannou-Specific Constraints**: See [ABML Guide Appendix A](../guides/ABML.md#appendix-a-bannou-implementation-requirements) for mandatory infrastructure patterns.
 
@@ -72,9 +73,10 @@ The behavior system operates across four execution layers with different latency
 | **Event Brain** | Cloud | 100-500ms | Cinematic orchestration, QTE presentation, dramatic pacing |
 | **Character Agent** | Cloud | 50-200ms | Tactical decisions, personality-informed choices, memory integration |
 | **Local Runtime** | Client | <1ms | Frame-by-frame combat decisions, action selection |
+| **Cinematic Runtime** | Client | Async | Pause/resume at continuation points, extension injection |
 | **Game Engine** | Client | Per-frame | Animation state machines, physics, collision response |
 
-See [ABML_LOCAL_RUNTIME.md](./UPCOMING_-_ABML_LOCAL_RUNTIME.md) for client-side bytecode execution details.
+See [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md) for client-side bytecode execution details, including the `CinematicInterpreter` for streaming composition.
 
 ---
 
