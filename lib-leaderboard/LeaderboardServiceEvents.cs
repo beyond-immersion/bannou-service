@@ -283,8 +283,8 @@ public partial class LeaderboardService
                 continue;
             }
 
-            var metadata = ConvertMetadataToDictionary(definition.Metadata);
-            if (!TryGetMetadataString(metadata, metadataKey, out var mappedType))
+            var metadata = MetadataHelper.ConvertToReadOnlyDictionary(definition.Metadata);
+            if (!MetadataHelper.TryGetString(metadata, metadataKey, out var mappedType))
             {
                 continue;
             }
@@ -342,103 +342,4 @@ public partial class LeaderboardService
             AnalyticsRatingUpdatedEventEntityType.Custom => EntityType.Custom,
             _ => EntityType.Custom
         };
-
-    private static Dictionary<string, object>? ConvertMetadataToDictionary(object? metadata)
-    {
-        if (metadata == null)
-        {
-            return null;
-        }
-
-        if (metadata is IDictionary<string, object> typedDictionary)
-        {
-            return new Dictionary<string, object>(typedDictionary, StringComparer.OrdinalIgnoreCase);
-        }
-
-        if (metadata is System.Collections.IDictionary dictionary)
-        {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (System.Collections.DictionaryEntry entry in dictionary)
-            {
-                if (entry.Key is string key && entry.Value != null)
-                {
-                    result[key] = entry.Value;
-                }
-            }
-            return result;
-        }
-
-        if (metadata is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (var property in jsonElement.EnumerateObject())
-            {
-                var value = ConvertJsonElement(property.Value);
-                if (value != null)
-                {
-                    result[property.Name] = value;
-                }
-            }
-            return result;
-        }
-
-        return null;
-    }
-
-    private static object? ConvertJsonElement(JsonElement element)
-        => element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Object => element.EnumerateObject()
-                .ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value), StringComparer.OrdinalIgnoreCase),
-            JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
-            JsonValueKind.Null => null,
-            JsonValueKind.Undefined => null,
-            _ => element.ToString()
-        };
-
-    private static bool TryGetMetadataString(IReadOnlyDictionary<string, object>? metadata, string key, out string value)
-    {
-        value = string.Empty;
-        if (metadata == null || !metadata.TryGetValue(key, out var raw) || raw == null)
-        {
-            return false;
-        }
-
-        if (raw is string text && !string.IsNullOrWhiteSpace(text))
-        {
-            value = text;
-            return true;
-        }
-
-        if (raw is JsonElement element)
-        {
-            if (element.ValueKind == JsonValueKind.String)
-            {
-                var textValue = element.GetString();
-                if (!string.IsNullOrWhiteSpace(textValue))
-                {
-                    value = textValue;
-                    return true;
-                }
-            }
-            else if (element.ValueKind == JsonValueKind.Number)
-            {
-                value = element.ToString();
-                return true;
-            }
-        }
-
-        var rawText = raw.ToString();
-        if (string.IsNullOrWhiteSpace(rawText))
-        {
-            return false;
-        }
-
-        value = rawText;
-        return true;
-    }
 }

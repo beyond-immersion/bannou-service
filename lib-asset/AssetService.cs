@@ -786,7 +786,7 @@ public partial class AssetService : IAssetService
                     Version = body.Version ?? "1.0.0",
                     AssetIds = body.AssetIds.ToList(),
                     Compression = body.Compression,
-                    Metadata = ConvertMetadataToDictionary(body.Metadata),
+                    Metadata = MetadataHelper.ConvertToDictionary(body.Metadata),
                     Status = BundleCreationStatus.Queued,
                     CreatedAt = DateTimeOffset.UtcNow
                 };
@@ -843,7 +843,7 @@ public partial class AssetService : IAssetService
                 body.Version ?? "1.0.0",
                 "system",
                 null,
-                ConvertMetadataToStringDictionary(body.Metadata));
+                MetadataHelper.ConvertToStringDictionary(body.Metadata));
 
             // Upload bundle
             bundleStream.Position = 0;
@@ -1557,90 +1557,6 @@ public partial class AssetService : IAssetService
 
     #endregion
 
-    #region Metadata Conversion Helpers
-
-    /// <summary>
-    /// Converts metadata object (typically JsonElement) to Dictionary&lt;string, object&gt;.
-    /// </summary>
-    private static Dictionary<string, object>? ConvertMetadataToDictionary(object? metadata)
-    {
-        if (metadata == null)
-            return null;
-
-        if (metadata is Dictionary<string, object> dict)
-            return dict;
-
-        if (metadata is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            var result = new Dictionary<string, object>();
-            foreach (var property in jsonElement.EnumerateObject())
-            {
-                var value = GetJsonValue(property.Value);
-                if (value != null)
-                {
-                    result[property.Name] = value;
-                }
-            }
-            return result;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Converts metadata object (typically JsonElement) to IReadOnlyDictionary&lt;string, string&gt;.
-    /// </summary>
-    private static IReadOnlyDictionary<string, string>? ConvertMetadataToStringDictionary(object? metadata)
-    {
-        if (metadata == null)
-            return null;
-
-        if (metadata is Dictionary<string, string> strDict)
-            return strDict;
-
-        if (metadata is Dictionary<string, object> objDict)
-        {
-            var result = new Dictionary<string, string>();
-            foreach (var kvp in objDict)
-            {
-                result[kvp.Key] = kvp.Value?.ToString() ?? "";
-            }
-            return result;
-        }
-
-        if (metadata is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            var result = new Dictionary<string, string>();
-            foreach (var property in jsonElement.EnumerateObject())
-            {
-                result[property.Name] = property.Value.ToString();
-            }
-            return result;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Extracts a .NET value from a JsonElement.
-    /// </summary>
-    private static object? GetJsonValue(JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString() ?? "",
-            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => null,
-            JsonValueKind.Array => element.EnumerateArray().Select(GetJsonValue).ToList(),
-            JsonValueKind.Object => element.EnumerateObject()
-                .ToDictionary(p => p.Name, p => GetJsonValue(p.Value)),
-            _ => element.ToString()
-        };
-    }
-
-    #endregion
 }
 
 /// <summary>

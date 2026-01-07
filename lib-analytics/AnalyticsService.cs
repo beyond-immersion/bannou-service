@@ -143,7 +143,7 @@ public partial class AnalyticsService : IAnalyticsService
                 EventType = body.EventType,
                 Timestamp = body.Timestamp,
                 Value = body.Value,
-                Metadata = ConvertMetadataToDictionary(body.Metadata)
+                Metadata = MetadataHelper.ConvertToDictionary(body.Metadata)
             };
 
             var buffered = await BufferAnalyticsEventAsync(bufferedEvent, cancellationToken);
@@ -202,7 +202,7 @@ public partial class AnalyticsService : IAnalyticsService
                         EventType = evt.EventType,
                         Timestamp = evt.Timestamp,
                         Value = evt.Value,
-                        Metadata = ConvertMetadataToDictionary(evt.Metadata)
+                        Metadata = MetadataHelper.ConvertToDictionary(evt.Metadata)
                     };
 
                     var buffered = await BufferAnalyticsEventAsync(
@@ -989,63 +989,6 @@ public partial class AnalyticsService : IAnalyticsService
         }
     }
 
-    private static Dictionary<string, object>? ConvertMetadataToDictionary(object? metadata)
-    {
-        if (metadata == null)
-        {
-            return null;
-        }
-
-        if (metadata is IDictionary<string, object> typedDictionary)
-        {
-            return new Dictionary<string, object>(typedDictionary, StringComparer.OrdinalIgnoreCase);
-        }
-
-        if (metadata is System.Collections.IDictionary dictionary)
-        {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (System.Collections.DictionaryEntry entry in dictionary)
-            {
-                if (entry.Key is string key && entry.Value != null)
-                {
-                    result[key] = entry.Value;
-                }
-            }
-            return result;
-        }
-
-        if (metadata is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (var property in jsonElement.EnumerateObject())
-            {
-                var value = ConvertJsonElement(property.Value);
-                if (value != null)
-                {
-                    result[property.Name] = value;
-                }
-            }
-            return result;
-        }
-
-        return null;
-    }
-
-    private static object? ConvertJsonElement(JsonElement element)
-        => element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Object => element.EnumerateObject()
-                .ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value), StringComparer.OrdinalIgnoreCase),
-            JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
-            JsonValueKind.Null => null,
-            JsonValueKind.Undefined => null,
-            _ => element.ToString()
-        };
-
     private async Task<Guid?> ResolveGameServiceIdAsync(string gameType, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(gameType))
@@ -1562,14 +1505,14 @@ public partial class AnalyticsService : IAnalyticsService
                 }
 
                 var scoreEvents = new List<AnalyticsScoreUpdatedEvent>();
-                var milestoneChecks = new List<(Guid gameServiceId, Guid entityId, EntityType entityType, string scoreType, double newValue)>();
+                var milestoneChecks = new List<(Guid gameServiceId, Guid entityId, EntityType entityType, string scoreType, double previousValue, double newValue)>();
 
                 foreach (var envelope in entityEvents)
                 {
                     var bufferedEvent = envelope.evt;
                     var hasPrevious = summary.Aggregates.TryGetValue(bufferedEvent.EventType, out var previousAggregate);
-                    var previousValue = hasPrevious ? (double?)previousAggregate : null;
-                    var newValue = previousAggregate + bufferedEvent.Value;
+                    var previousValue = hasPrevious ? previousAggregate : 0.0;
+                    var newValue = previousValue + bufferedEvent.Value;
 
                     summary.Aggregates[bufferedEvent.EventType] = newValue;
                     summary.EventCounts[bufferedEvent.EventType] = summary.EventCounts.GetValueOrDefault(bufferedEvent.EventType) + 1;
@@ -1594,12 +1537,12 @@ public partial class AnalyticsService : IAnalyticsService
                             EntityId = bufferedEvent.EntityId,
                             EntityType = MapToScoreEventEntityType(bufferedEvent.EntityType),
                             ScoreType = bufferedEvent.EventType,
-                            PreviousValue = previousValue,
+                            PreviousValue = hasPrevious ? previousValue : null,
                             NewValue = newValue,
                             Delta = bufferedEvent.Value,
                             SessionId = bufferedEvent.SessionId
                         });
-                        milestoneChecks.Add((bufferedEvent.GameServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, newValue));
+                        milestoneChecks.Add((bufferedEvent.GameServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, previousValue, newValue));
                     }
                 }
 
@@ -1667,6 +1610,7 @@ public partial class AnalyticsService : IAnalyticsService
                         milestone.entityId,
                         milestone.entityType,
                         milestone.scoreType,
+                        milestone.previousValue,
                         milestone.newValue,
                         cancellationToken);
                 }
@@ -1686,13 +1630,17 @@ public partial class AnalyticsService : IAnalyticsService
     }
 
     /// <summary>
-    /// Checks if a milestone has been reached and publishes event if so.
+    /// Checks if a milestone has been crossed and publishes event if so.
+    /// A milestone is considered crossed when previousValue was below the threshold
+    /// and newValue is at or above it. This ensures each milestone is only triggered
+    /// once when the entity first reaches it, not on subsequent updates.
     /// </summary>
     private async Task CheckAndPublishMilestoneAsync(
         Guid gameServiceId,
         Guid entityId,
         EntityType entityType,
         string scoreType,
+        double previousValue,
         double newValue,
         CancellationToken cancellationToken)
     {
@@ -1701,8 +1649,8 @@ public partial class AnalyticsService : IAnalyticsService
 
         foreach (var milestone in milestones)
         {
-            // Check if we just crossed this milestone (newValue >= milestone and previous < milestone)
-            if (newValue >= milestone && newValue - milestone < Math.Abs(newValue * 0.1))
+            // Check if we just crossed this milestone: was below, now at or above
+            if (previousValue < milestone && newValue >= milestone)
             {
                 var milestoneEvent = new AnalyticsMilestoneReachedEvent
                 {

@@ -34993,6 +34993,61 @@
             <param name="json">JSON string to parse</param>
             <returns>Parsed JsonElement</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.MetadataHelper">
+            <summary>
+            Utility class for converting metadata objects between different representations.
+            Handles deserialization of JsonElement metadata to typed dictionaries.
+            </summary>
+            <remarks>
+            This class is used across multiple services (Analytics, Leaderboard, Achievement)
+            to convert metadata from JSON payloads into usable dictionary formats.
+            All dictionaries use case-insensitive key comparison for consistent metadata access.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.ConvertToDictionary(System.Object)">
+            <summary>
+            Converts metadata object to a case-insensitive Dictionary&lt;string, object&gt;.
+            Handles JsonElement, IDictionary&lt;string, object&gt;, and generic IDictionary types.
+            </summary>
+            <param name="metadata">The metadata object to convert. Can be null.</param>
+            <returns>A case-insensitive dictionary, or null if input is null or not a valid dictionary type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.ConvertToReadOnlyDictionary(System.Object)">
+            <summary>
+            Converts metadata object to a case-insensitive IReadOnlyDictionary&lt;string, object&gt;.
+            </summary>
+            <param name="metadata">The metadata object to convert.</param>
+            <returns>A read-only dictionary, or null if input is null or not a valid dictionary type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.ConvertToStringDictionary(System.Object)">
+            <summary>
+            Converts metadata object to a case-insensitive Dictionary&lt;string, string&gt;.
+            All values are converted to their string representation.
+            </summary>
+            <param name="metadata">The metadata object to convert.</param>
+            <returns>A string dictionary, or null if input is null or not a valid dictionary type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.TryGetString(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.String,System.String@)">
+            <summary>
+            Attempts to get a string value from metadata by key.
+            </summary>
+            <param name="metadata">The metadata dictionary (converted or original).</param>
+            <param name="key">The key to look up.</param>
+            <param name="value">The string value if found.</param>
+            <returns>True if a non-empty string value was found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.ConvertJsonElement(System.Text.Json.JsonElement)">
+            <summary>
+            Converts a JsonElement to its appropriate .NET type.
+            </summary>
+            <param name="element">The JSON element to convert.</param>
+            <returns>The converted value, or null for null/undefined elements.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.MetadataHelper.GetStringValue(System.Text.Json.JsonElement)">
+            <summary>
+            Gets the string representation of a JsonElement value.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
             Base implementation of IBannouPlugin that provides default behavior
