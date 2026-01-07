@@ -1,6 +1,7 @@
 # Cleaned Events Inventory
 
 Events removed or flagged during schema cleanup (2025-12-30).
+**Updated 2026-01-07**: Added comprehensive gap analysis for missing events across all services.
 
 These events were defined in schemas but had no code implementation (neither published nor subscribed).
 They are documented here for historical reference and potential future implementation.
@@ -157,3 +158,194 @@ For reference, these events have both publishers and subscribers:
 - **Events Removed:** 17 events across 6 services (analytics, debug, optimization events that were never implemented)
 - **Events Kept (Published-only):** 40+ lifecycle/asset/game/documentation events (valid for future cross-service coordination)
 - **Actively Used:** 14 events with full publisher/subscriber chains
+
+---
+
+## Events Gap Analysis (2026-01-07)
+
+Comprehensive analysis of missing events that should be added for proper observability, audit trails, and cross-service coordination.
+
+### Priority Tiers
+
+Events are categorized by importance:
+- **P0 (Critical)**: Security/audit events, session lifecycle, breaks event-driven architecture
+- **P1 (High)**: Important business operations without observability
+- **P2 (Medium)**: Schema-defined but not implemented, or operational gaps
+- **P3 (Low)**: Nice-to-have for completeness, debug/monitoring events
+
+---
+
+## P0 - Critical Missing Events
+
+### Auth Service - Authentication Audit Events
+
+The Auth service publishes NO success events for authentication operations. This is a critical security/audit gap.
+
+| Event | Topic | When to Publish | Why Critical |
+|-------|-------|-----------------|--------------|
+| AuthLoginSuccessfulEvent | `auth.login.successful` | LoginAsync succeeds | Security audit trail, analytics |
+| AuthLoginFailedEvent | `auth.login.failed` | LoginAsync fails (bad credentials) | Brute force detection, security monitoring |
+| AuthRegistrationSuccessfulEvent | `auth.registration.successful` | RegisterAsync succeeds | User onboarding analytics |
+| AuthOAuthLoginSuccessfulEvent | `auth.oauth.successful` | CompleteOAuthAsync succeeds | OAuth provider analytics |
+| AuthSteamLoginSuccessfulEvent | `auth.steam.successful` | VerifySteamAuthAsync succeeds | Platform login analytics |
+| AuthPasswordResetSuccessfulEvent | `auth.password-reset.successful` | ConfirmPasswordResetAsync succeeds | Security audit, should invalidate sessions |
+
+**Additional Critical Fix**: `TerminateSessionAsync` should publish `SessionInvalidatedEvent` (like `LogoutAsync` does) to disconnect WebSocket clients.
+
+### Asset Service - Schema-Defined Events Not Published
+
+These events ARE defined in `asset-events.yaml` but NOT published anywhere in code:
+
+| Event | Topic | When to Publish | Gap Location |
+|-------|-------|-----------------|--------------|
+| AssetUploadRequestedEvent | `asset.upload.requested` | RequestUploadAsync creates upload session | lib-asset/AssetService.cs |
+| AssetProcessingQueuedEvent | `asset.processing.queued` | Asset enters processing queue | lib-asset/AssetService.cs |
+| AssetProcessingCompletedEvent | `asset.processing.completed` | Processing finishes | lib-asset/AssetService.cs |
+| AssetReadyEvent | `asset.ready` | Asset fully processed and available | lib-asset/AssetService.cs |
+
+---
+
+## P1 - High Priority Missing Events
+
+### GameService - No Lifecycle Events
+
+GameService has full CRUD operations but publishes ZERO lifecycle events. Should follow Account service pattern with `x-lifecycle`:
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| GameServiceCreatedEvent | `game-service.created` | CreateServiceAsync succeeds |
+| GameServiceUpdatedEvent | `game-service.updated` | UpdateServiceAsync succeeds |
+| GameServiceDeletedEvent | `game-service.deleted` | DeleteServiceAsync succeeds |
+
+### Species Service - Missing Merge/Seed Events
+
+| Event | Topic | When to Publish | Gap Location |
+|-------|-------|-----------------|--------------|
+| SpeciesMergedEvent | `species.merged` | MergeSpeciesAsync completes | lib-species/SpeciesService.cs:1041 |
+| (species.updated) | `species.updated` | SeedSpeciesAsync updates existing | lib-species/SpeciesService.cs:763-785 |
+
+**Note**: SeedSpeciesAsync already publishes `species.created` for new species, but updates to existing species during seed publish nothing.
+
+### Leaderboard Service - Missing Entry Event
+
+| Event | Topic | When to Publish | Gap Location |
+|-------|-------|-----------------|--------------|
+| LeaderboardEntryAddedEvent | `leaderboard.entry.added` | First score submission (previousScore == null) | lib-leaderboard/LeaderboardService.cs:475 |
+
+This event IS defined in schema but NOT published.
+
+### Achievement Service - Missing Definition Events
+
+Achievement service publishes unlock/progress events but NOT definition lifecycle:
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| AchievementDefinitionCreatedEvent | `achievement.definition.created` | CreateAchievementDefinitionAsync succeeds |
+| AchievementDefinitionUpdatedEvent | `achievement.definition.updated` | UpdateAchievementDefinitionAsync succeeds |
+| AchievementDefinitionDeletedEvent | `achievement.definition.deleted` | DeleteAchievementDefinitionAsync succeeds |
+
+---
+
+## P2 - Medium Priority Missing Events
+
+### Permission Service - Matrix Change Events
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| PermissionMatrixUpdatedEvent | `permission.matrix.updated` | RegisterServicePermissionsAsync modifies matrix |
+| PermissionSessionUpdatedEvent | `permission.session.updated` | Session capabilities change |
+
+### Orchestrator Service - Additional Lifecycle Events
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| ServiceHealthStatusChangedEvent | `orchestrator.health.changed` | Service health transitions (healthy↔unhealthy) |
+| TopologyUpdateCompletedEvent | `orchestrator.topology.updated` | UpdateTopology succeeds |
+| ConfigurationRollbackSucceededEvent | `orchestrator.rollback.succeeded` | RollbackConfiguration succeeds |
+
+### Documentation Service - Missing Operational Events
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| DocumentRecoveredEvent | `documentation.recovered` | RecoverDocumentAsync succeeds |
+| DocumentationBulkUpdateEvent | `documentation.bulk.updated` | BulkUpdateDocumentsAsync completes |
+| DocumentationBulkDeleteEvent | `documentation.bulk.deleted` | BulkDeleteDocumentsAsync completes |
+| DocumentationArchiveRestoredEvent | `documentation.archive.restored` | RestoreDocumentationArchiveAsync succeeds |
+| DocumentationArchiveDeletedEvent | `documentation.archive.deleted` | DeleteDocumentationArchiveAsync succeeds |
+| DocumentationTrashPurgedEvent | `documentation.trash.purged` | PurgeTrashcanAsync completes |
+
+### Actor Service - Instance Lifecycle Events
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| ActorInstanceSpawnedEvent | `actor.instance.spawned` | Actor instance created/initialized |
+| ActorInstanceDespawnedEvent | `actor.instance.despawned` | Actor instance terminated |
+| ActorInstanceStateChangedEvent | `actor.instance.state-changed` | Actor behavior state transitions |
+
+---
+
+## P3 - Low Priority / Nice-to-Have Events
+
+### Auth Service - Token Operations
+
+| Event | Topic | When to Publish | Notes |
+|-------|-------|-----------------|-------|
+| AuthTokenRefreshedEvent | `auth.token.refreshed` | RefreshTokenAsync succeeds | High frequency, consider opt-in |
+
+### Character/Species Schema Updates
+
+| Event | Topic | Notes |
+|-------|-------|-------|
+| (character.realm.joined) | - | Already implemented but NOT in x-event-publications |
+| (character.realm.left) | - | Already implemented but NOT in x-event-publications |
+
+These events ARE published but should be added to schema's `x-event-publications` for documentation.
+
+### Behavior Service
+
+| Event | Topic | When to Publish |
+|-------|-------|-----------------|
+| BehaviorDeletedEvent | `behavior.deleted` | DeleteBehaviorAsync succeeds |
+| BehaviorCompilationStartedEvent | `behavior.compilation.started` | Long-running compilation begins |
+| BehaviorCompilationFailedEvent | `behavior.compilation.failed` | Compilation errors |
+
+---
+
+## Implementation Approach
+
+### For Lifecycle Events (Account/GameService pattern)
+
+1. Add `x-lifecycle` to API schema with entity properties
+2. Run `scripts/generate-all-services.sh` to generate event models
+3. Add private `Publish{Entity}{Action}EventAsync()` methods to service
+4. Call publish method after successful CRUD operations
+
+### For Custom Events
+
+1. Define event model in `{service}-events.yaml` under `components/schemas`
+2. Add to `x-event-publications` list
+3. Run code generation
+4. Add publish call at appropriate location in service
+
+---
+
+## Summary by Service
+
+| Service | P0 Events | P1 Events | P2 Events | P3 Events | Total |
+|---------|-----------|-----------|-----------|-----------|-------|
+| Auth | 7 | 0 | 0 | 1 | 8 |
+| Asset | 4 | 0 | 0 | 0 | 4 |
+| GameService | 0 | 3 | 0 | 0 | 3 |
+| Species | 0 | 2 | 0 | 0 | 2 |
+| Leaderboard | 0 | 1 | 0 | 0 | 1 |
+| Achievement | 0 | 3 | 0 | 0 | 3 |
+| Permission | 0 | 0 | 2 | 0 | 2 |
+| Orchestrator | 0 | 0 | 3 | 0 | 3 |
+| Documentation | 0 | 0 | 6 | 0 | 6 |
+| Actor | 0 | 0 | 3 | 0 | 3 |
+| Behavior | 0 | 0 | 0 | 3 | 3 |
+| Character | 0 | 0 | 0 | 2 | 2 |
+| **Total** | **11** | **9** | **14** | **6** | **40** |
+
+**Recommended Scope**: Implement P0 (11 events) + P1 (9 events) = 20 events as "inarguably reasonable" cases.
+Consider P2 (14 events) based on time/effort.

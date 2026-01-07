@@ -35668,6 +35668,16 @@
             Service name is derived by removing "Client" suffix and converting to lowercase.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
+            <summary>
+            Auto-registers all service clients found in the provided assemblies.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            Use this overload when PluginLoader is not available (e.g., in test harnesses).
+            </summary>
+            <param name="services">The service collection.</param>
+            <param name="assemblies">The assemblies to scan for client types.</param>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
             <summary>
             Extension methods for registering all service client infrastructure.

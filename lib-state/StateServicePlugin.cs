@@ -127,6 +127,21 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["game-service-statestore"] = (StateBackend.MySql, null, false),
             ["species-statestore"] = (StateBackend.MySql, null, false),
             ["subscription-statestore"] = (StateBackend.MySql, null, false),
+
+            // Analytics service stores
+            ["analytics-summary"] = (StateBackend.Redis, "analytics:sum", false),
+            ["analytics-rating"] = (StateBackend.Redis, "analytics:rating", false),
+            ["analytics-history"] = (StateBackend.Redis, "analytics:hist", false),
+
+            // Leaderboard service stores
+            ["leaderboard-definition"] = (StateBackend.Redis, "lb:def", false),
+            ["leaderboard-ranking"] = (StateBackend.Redis, "lb:rank", false),
+            ["leaderboard-season"] = (StateBackend.MySql, null, false),
+
+            // Achievement service stores
+            ["achievement-definition"] = (StateBackend.Redis, "ach:def", false),
+            ["achievement-progress"] = (StateBackend.Redis, "ach:prog", false),
+            ["achievement-unlock"] = (StateBackend.Redis, "ach:unlock", false),
         };
 
         foreach (var (storeName, (backend, prefix, enableSearch)) in defaultStores)

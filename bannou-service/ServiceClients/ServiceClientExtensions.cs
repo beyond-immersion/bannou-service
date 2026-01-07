@@ -129,6 +129,19 @@ public static class ServiceClientExtensions
             assemblies.AddRange(pluginLoader.GetAllPluginAssemblies());
         }
 
+        return AddAllBannouServiceClients(services, assemblies);
+    }
+
+    /// <summary>
+    /// Auto-registers all service clients found in the provided assemblies.
+    /// Follows naming convention: {Service}Client implements I{Service}Client.
+    /// Service name is derived by removing "Client" suffix and converting to lowercase.
+    /// Use this overload when PluginLoader is not available (e.g., in test harnesses).
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="assemblies">The assemblies to scan for client types.</param>
+    public static IServiceCollection AddAllBannouServiceClients(this IServiceCollection services, IEnumerable<Assembly> assemblies)
+    {
         foreach (var assembly in assemblies)
         {
             var clientTypes = assembly.GetTypes()

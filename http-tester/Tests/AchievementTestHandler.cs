@@ -51,7 +51,8 @@ public class AchievementTestHandler : BaseHttpTestHandler
             EntityTypes = new List<EntityType> { EntityType.Account, EntityType.Character },
             AchievementType = achievementType,
             ProgressTarget = progressTarget,
-            Points = 10
+            Points = 10,
+            Platforms = new List<Platform> { Platform.Internal }
         });
     }
 
@@ -69,7 +70,8 @@ public class AchievementTestHandler : BaseHttpTestHandler
                 Description = "Test achievement for create test",
                 EntityTypes = new List<EntityType> { EntityType.Account },
                 AchievementType = AchievementType.Standard,
-                Points = 25
+                Points = 25,
+                Platforms = new List<Platform> { Platform.Internal }
             };
 
             var response = await achievementClient.CreateAchievementDefinitionAsync(request);
