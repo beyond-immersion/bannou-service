@@ -303,6 +303,23 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LOCATION_ENABLED` | bool | `true` | Enable/disable Location service |
 
+### Mapping
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS` | int | `60` | Default TTL for cached affordance query results |
+| `MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds after missed heartbeat before author... |
+| `MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended heartbeat interval for authorities (for client g... |
+| `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
+| `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
+| `MAPPING_ENABLED` | bool | `true` | Enable/disable Mapping service |
+| `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
+| `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
+| `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | int | `1800` | Maximum duration for authoring checkout locks |
+| `MAPPING_MAX_OBJECTS_PER_QUERY` | int | `5000` | Maximum objects returned in a single query |
+| `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | int | `100` | Maximum payloads in single publish or ingest event |
+| `MAPPING_SPATIAL_CELL_SIZE` | double | `64.0` | Size of spatial index cells in world units (default 64) |
+
 ### Mesh
 
 | Environment Variable | Type | Default | Description |
@@ -464,9 +481,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 325
+- **Total properties**: 337
 - **Required (no default)**: 46
-- **Optional (has default)**: 279
+- **Optional (has default)**: 291
 
 ## Environment Variable Naming Convention
 

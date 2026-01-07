@@ -9522,6 +9522,639 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventPosition3D">
+            <summary>
+            A point in 3D space (event version)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventPosition3D.X">
+            <summary>
+            X coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventPosition3D.Y">
+            <summary>
+            Y coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventPosition3D.Z">
+            <summary>
+            Z coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventPosition3D.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventBounds">
+            <summary>
+            An axis-aligned bounding box in 3D space (event version)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventBounds.Min">
+            <summary>
+            Minimum corner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventBounds.Max">
+            <summary>
+            Maximum corner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventBounds.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventMapObject">
+            <summary>
+            A map object in an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.ObjectId">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.RegionId">
+            <summary>
+            Region this object belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Kind">
+            <summary>
+            Map kind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.ObjectType">
+            <summary>
+            Publisher-defined type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Version">
+            <summary>
+            Object version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapIngestEvent">
+            <summary>
+            Event published by authority to ingest topic for high-throughput updates.
+            <br/>lib-mapping validates authority and broadcasts to consumers.
+            <br/>Published to: map.ingest.{channelId}
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapIngestEvent.AuthorityToken">
+            <summary>
+            Token proving authority over this channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapIngestEvent.Timestamp">
+            <summary>
+            When the event was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapIngestEvent.Payloads">
+            <summary>
+            Schema-less payloads to ingest
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapIngestEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.IngestPayload">
+            <summary>
+            A single payload in an ingest event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.ObjectId">
+            <summary>
+            Object ID (generated if not provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.ObjectType">
+            <summary>
+            Publisher-defined type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.Action">
+            <summary>
+            Type of change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapUpdatedEvent">
+            <summary>
+            Published when map layer data changes.
+            <br/>Topic: map.{regionId}.{kind}.updated
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.Timestamp">
+            <summary>
+            When the update occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.RegionId">
+            <summary>
+            Region containing this map data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.Kind">
+            <summary>
+            Map kind (terrain, static_geometry, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.ChannelId">
+            <summary>
+            Channel that published this update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.Bounds">
+            <summary>
+            Affected area (null means entire region)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.Version">
+            <summary>
+            Monotonic version for ordering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.DeltaType">
+            <summary>
+            Whether this is incremental or full
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.SourceAppId">
+            <summary>
+            App-id of publisher
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.Payload">
+            <summary>
+            Schema-less payload data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.PayloadRef">
+            <summary>
+            Asset reference for large payloads
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUpdatedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapSnapshotEvent">
+            <summary>
+            Published when a full snapshot is available.
+            <br/>Topic: map.{regionId}.{kind}.snapshot
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.Timestamp">
+            <summary>
+            When the snapshot was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.RegionId">
+            <summary>
+            Region this snapshot covers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.Kind">
+            <summary>
+            Map kind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.ChannelId">
+            <summary>
+            Channel that owns this data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.Version">
+            <summary>
+            Snapshot version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.ObjectCount">
+            <summary>
+            Number of objects in snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.Bounds">
+            <summary>
+            Bounds of snapshot (null means full region)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.PayloadRef">
+            <summary>
+            Asset reference for snapshot data (large payloads)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.Objects">
+            <summary>
+            Inline objects (for small snapshots)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent">
+            <summary>
+            Published when metadata objects change in a map.
+            <br/>Topic: map.{regionId}.{kind}.objects.changed
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.Timestamp">
+            <summary>
+            When the changes occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.RegionId">
+            <summary>
+            Region containing these objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.Kind">
+            <summary>
+            Map kind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.ChannelId">
+            <summary>
+            Channel that published these changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.Version">
+            <summary>
+            Version after changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.Changes">
+            <summary>
+            List of object changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ObjectChangeEvent">
+            <summary>
+            A single object change in an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.ObjectId">
+            <summary>
+            ID of the changed object
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.Action">
+            <summary>
+            Type of change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.ObjectType">
+            <summary>
+            Object type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.Data">
+            <summary>
+            Object data (for created/updated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.PreviousVersion">
+            <summary>
+            Version before this change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning">
+            <summary>
+            Published when a non-authority attempts to publish.
+            <br/>Topic: map.warnings.unauthorized_publish
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.Timestamp">
+            <summary>
+            When the attempt occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.ChannelId">
+            <summary>
+            Channel that was targeted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.RegionId">
+            <summary>
+            Region of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.Kind">
+            <summary>
+            Map kind of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.AttemptedPublisher">
+            <summary>
+            App-id that tried to publish
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.CurrentAuthority">
+            <summary>
+            App-id that currently has authority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.HandlingMode">
+            <summary>
+            How the attempt was handled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.PublishAccepted">
+            <summary>
+            Whether the publish was actually accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.PayloadSummary">
+            <summary>
+            Truncated payload (if includePayloadSummary enabled)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapUnauthorizedPublishWarning.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent">
+            <summary>
+            Published when a consumer needs a full snapshot.
+            <br/>The authority responds with a MapSnapshotEvent.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.Timestamp">
+            <summary>
+            When the request was made
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.RequesterId">
+            <summary>
+            App-id of requester
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.RegionId">
+            <summary>
+            Region to snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.Kinds">
+            <summary>
+            Which kinds to snapshot (null means all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.Bounds">
+            <summary>
+            Optional bounds filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapSnapshotRequestedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent">
+            <summary>
+            Published to mapping-channel.created when a mappingchannel is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.EventName">
+            <summary>
+            Event type identifier: mapping-channel.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.ChannelId">
+            <summary>
+            Unique identifier for the channel (region+kind)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.RegionId">
+            <summary>
+            Region this channel serves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.Kind">
+            <summary>
+            Map kind (terrain, static_geometry, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.AuthorityAppId">
+            <summary>
+            App ID of current authority (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.AuthorityToken">
+            <summary>
+            Current authority token (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.AuthorityExpiresAt">
+            <summary>
+            When current authority expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.NonAuthorityHandling">
+            <summary>
+            How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.Version">
+            <summary>
+            Current version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.CreatedAt">
+            <summary>
+            When the channel was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent.UpdatedAt">
+            <summary>
+            When the channel was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent">
+            <summary>
+            Published to mapping-channel.updated when a mappingchannel is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: mapping-channel.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.ChannelId">
+            <summary>
+            Unique identifier for the channel (region+kind)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.RegionId">
+            <summary>
+            Region this channel serves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.Kind">
+            <summary>
+            Map kind (terrain, static_geometry, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.AuthorityAppId">
+            <summary>
+            App ID of current authority (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.AuthorityToken">
+            <summary>
+            Current authority token (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.AuthorityExpiresAt">
+            <summary>
+            When current authority expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.NonAuthorityHandling">
+            <summary>
+            How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.Version">
+            <summary>
+            Current version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.CreatedAt">
+            <summary>
+            When the channel was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.UpdatedAt">
+            <summary>
+            When the channel was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent">
+            <summary>
+            Published to mapping-channel.deleted when a mappingchannel is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.EventName">
+            <summary>
+            Event type identifier: mapping-channel.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.ChannelId">
+            <summary>
+            Unique identifier for the channel (region+kind)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.RegionId">
+            <summary>
+            Region this channel serves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.Kind">
+            <summary>
+            Map kind (terrain, static_geometry, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.AuthorityAppId">
+            <summary>
+            App ID of current authority (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.AuthorityToken">
+            <summary>
+            Current authority token (null if unassigned)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.AuthorityExpiresAt">
+            <summary>
+            When current authority expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.NonAuthorityHandling">
+            <summary>
+            How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.Version">
+            <summary>
+            Current version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.CreatedAt">
+            <summary>
+            When the channel was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.UpdatedAt">
+            <summary>
+            When the channel was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingChannelDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.MeshEndpointRegisteredEvent">
             <summary>
             Published when a new endpoint is registered in the service mesh.
@@ -24714,6 +25347,1597 @@
         <member name="P:BeyondImmersion.BannouService.Location.SeedLocationsResponse.Errors">
             <summary>
             List of error messages for locations that failed to seed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.IMappingClient">
+            <summary>
+            Client interface for the Mapping service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.CreateChannelAsync(BeyondImmersion.BannouService.Mapping.CreateChannelRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new map channel and become its authority
+            </summary>
+            <remarks>
+            Creates a new region+kind channel and grants authority to caller.
+            <br/>Returns ingestTopic for high-throughput event publishing.
+            <br/>If channel already exists with active authority, returns Conflict.
+            </remarks>
+            <returns>Channel created, authority granted</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.ReleaseAuthorityAsync(BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Release authority over a channel
+            </summary>
+            <remarks>
+            Voluntarily releases authority. Channel becomes unassigned.
+            <br/>Only the current authority can release.
+            </remarks>
+            <returns>Authority released successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.AuthorityHeartbeatAsync(BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Maintain authority over channel
+            </summary>
+            <remarks>
+            Keep-alive for authority. Must be called periodically (default every 30s).
+            <br/>Failure to heartbeat results in authority expiration.
+            </remarks>
+            <returns>Heartbeat acknowledged</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.PublishMapUpdateAsync(BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish map data update (RPC path)
+            </summary>
+            <remarks>
+            Game servers use this to push authoritative spatial updates.
+            <br/>Validates authority token, stores update, and broadcasts to consumers.
+            <br/>For high-throughput scenarios, use event publishing via ingestTopic instead.
+            </remarks>
+            <returns>Update published successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.PublishObjectChangesAsync(BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish metadata object changes (batch)
+            </summary>
+            <remarks>
+            Game servers use this to push object state changes.
+            <br/>Efficiently batches multiple object changes into one event.
+            <br/>Max 100 changes per request.
+            </remarks>
+            <returns>Object changes published</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.RequestSnapshotAsync(BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Request full snapshot for cold start
+            </summary>
+            <remarks>
+            Consumers use this when starting up to get initial state.
+            <br/>Returns current snapshot of requested region/kinds.
+            <br/>For very large maps, payloadRef points to lib-asset storage.
+            </remarks>
+            <returns>Snapshot returned</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.QueryPointAsync(BeyondImmersion.BannouService.Mapping.QueryPointRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query map data at a specific point
+            </summary>
+            <remarks>
+            Returns all map data at a point across requested kinds.
+            <br/>Used by behavior stacks for contextual decisions.
+            <br/>Optionally includes objects within radius.
+            </remarks>
+            <returns>Query results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.QueryBoundsAsync(BeyondImmersion.BannouService.Mapping.QueryBoundsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query map data within bounds
+            </summary>
+            <remarks>
+            Returns map data within a bounding box.
+            <br/>For event actors needing region overview.
+            <br/>Limited to maxObjects per kind.
+            </remarks>
+            <returns>Query results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.QueryObjectsByTypeAsync(BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find all objects of a type in region
+            </summary>
+            <remarks>
+            Returns all objects matching an objectType filter.
+            <br/>For event actors asking "where are all the boulder clusters?"
+            </remarks>
+            <returns>Matching objects</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.QueryAffordanceAsync(BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find locations that afford a specific action or scene type
+            </summary>
+            <remarks>
+            Affordance queries answer "where can I do X?" by combining
+            <br/>multiple map kinds and applying game-specific scoring logic.
+            <br/>
+            <br/>Used by Event Brain for procedural scene orchestration:
+            <br/>- "Find ambush locations"
+            <br/>- "Find dramatic reveal spots"
+            <br/>- "Find sheltered rest areas"
+            <br/>
+            <br/>Well-known types have predefined scoring; use affordanceType=custom
+            <br/>with customAffordance for novel scenarios.
+            </remarks>
+            <returns>Scored locations</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.CheckoutForAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Acquire exclusive edit lock for design-time editing
+            </summary>
+            <remarks>
+            For level editors and design tools only.
+            <br/>Game servers do NOT use this - they use create-channel for implicit authority.
+            <br/>Returns authority token for publishing edits.
+            </remarks>
+            <returns>Checkout successful</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.CommitAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Commit design-time changes
+            </summary>
+            <remarks>
+            Commits pending changes and releases the checkout lock.
+            <br/>Optionally includes a commit message for history.
+            </remarks>
+            <returns>Changes committed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.IMappingClient.ReleaseAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Release authoring checkout without committing
+            </summary>
+            <remarks>
+            Discards pending changes and releases the checkout lock.
+            <br/>Use when abandoning edits.
+            </remarks>
+            <returns>Checkout released</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MappingClient">
+            <summary>
+            Client implementation for the Mapping service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Mapping.MappingClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MappingClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Mapping.MappingClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Mapping.MappingClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MappingClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Mapping.MappingClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Mapping.MappingClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.CreateChannelAsync(BeyondImmersion.BannouService.Mapping.CreateChannelRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new map channel and become its authority
+            </summary>
+            <remarks>
+            Creates a new region+kind channel and grants authority to caller.
+            <br/>Returns ingestTopic for high-throughput event publishing.
+            <br/>If channel already exists with active authority, returns Conflict.
+            </remarks>
+            <returns>Channel created, authority granted</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ReleaseAuthorityAsync(BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Release authority over a channel
+            </summary>
+            <remarks>
+            Voluntarily releases authority. Channel becomes unassigned.
+            <br/>Only the current authority can release.
+            </remarks>
+            <returns>Authority released successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.AuthorityHeartbeatAsync(BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Maintain authority over channel
+            </summary>
+            <remarks>
+            Keep-alive for authority. Must be called periodically (default every 30s).
+            <br/>Failure to heartbeat results in authority expiration.
+            </remarks>
+            <returns>Heartbeat acknowledged</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.PublishMapUpdateAsync(BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish map data update (RPC path)
+            </summary>
+            <remarks>
+            Game servers use this to push authoritative spatial updates.
+            <br/>Validates authority token, stores update, and broadcasts to consumers.
+            <br/>For high-throughput scenarios, use event publishing via ingestTopic instead.
+            </remarks>
+            <returns>Update published successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.PublishObjectChangesAsync(BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish metadata object changes (batch)
+            </summary>
+            <remarks>
+            Game servers use this to push object state changes.
+            <br/>Efficiently batches multiple object changes into one event.
+            <br/>Max 100 changes per request.
+            </remarks>
+            <returns>Object changes published</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.RequestSnapshotAsync(BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Request full snapshot for cold start
+            </summary>
+            <remarks>
+            Consumers use this when starting up to get initial state.
+            <br/>Returns current snapshot of requested region/kinds.
+            <br/>For very large maps, payloadRef points to lib-asset storage.
+            </remarks>
+            <returns>Snapshot returned</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.QueryPointAsync(BeyondImmersion.BannouService.Mapping.QueryPointRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query map data at a specific point
+            </summary>
+            <remarks>
+            Returns all map data at a point across requested kinds.
+            <br/>Used by behavior stacks for contextual decisions.
+            <br/>Optionally includes objects within radius.
+            </remarks>
+            <returns>Query results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.QueryBoundsAsync(BeyondImmersion.BannouService.Mapping.QueryBoundsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Query map data within bounds
+            </summary>
+            <remarks>
+            Returns map data within a bounding box.
+            <br/>For event actors needing region overview.
+            <br/>Limited to maxObjects per kind.
+            </remarks>
+            <returns>Query results</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.QueryObjectsByTypeAsync(BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find all objects of a type in region
+            </summary>
+            <remarks>
+            Returns all objects matching an objectType filter.
+            <br/>For event actors asking "where are all the boulder clusters?"
+            </remarks>
+            <returns>Matching objects</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.QueryAffordanceAsync(BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find locations that afford a specific action or scene type
+            </summary>
+            <remarks>
+            Affordance queries answer "where can I do X?" by combining
+            <br/>multiple map kinds and applying game-specific scoring logic.
+            <br/>
+            <br/>Used by Event Brain for procedural scene orchestration:
+            <br/>- "Find ambush locations"
+            <br/>- "Find dramatic reveal spots"
+            <br/>- "Find sheltered rest areas"
+            <br/>
+            <br/>Well-known types have predefined scoring; use affordanceType=custom
+            <br/>with customAffordance for novel scenarios.
+            </remarks>
+            <returns>Scored locations</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.CheckoutForAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Acquire exclusive edit lock for design-time editing
+            </summary>
+            <remarks>
+            For level editors and design tools only.
+            <br/>Game servers do NOT use this - they use create-channel for implicit authority.
+            <br/>Returns authority token for publishing edits.
+            </remarks>
+            <returns>Checkout successful</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.CommitAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Commit design-time changes
+            </summary>
+            <remarks>
+            Commits pending changes and releases the checkout lock.
+            <br/>Optionally includes a commit message for history.
+            </remarks>
+            <returns>Changes committed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ReleaseAuthoringAsync(BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Release authoring checkout without committing
+            </summary>
+            <remarks>
+            Discards pending changes and releases the checkout lock.
+            <br/>Use when abandoning edits.
+            </remarks>
+            <returns>Checkout released</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MappingClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Mapping.MappingClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MappingClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MappingClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MappingClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Mapping.MappingClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MapKind">
+            <summary>
+            The category of spatial data this map contains.
+            <br/>Different kinds have different update frequencies, storage models, and TTLs.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.NonAuthorityHandlingMode">
+            <summary>
+            How to handle publish attempts from non-authority sources
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceType">
+            <summary>
+            Well-known affordance types with predefined scoring logic.
+            <br/>Use 'custom' for novel affordance definitions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceFreshness">
+            <summary>
+            Controls caching behavior for affordance queries
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ActorSize">
+            <summary>
+            Size classification affecting cover requirements and passage width
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.DeltaType">
+            <summary>
+            Whether an update is incremental or a full snapshot
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ObjectAction">
+            <summary>
+            Type of change to a map object
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.Position3D">
+            <summary>
+            A point in 3D space
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Position3D.X">
+            <summary>
+            X coordinate (typically east-west)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Position3D.Y">
+            <summary>
+            Y coordinate (typically up-down / elevation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Position3D.Z">
+            <summary>
+            Z coordinate (typically north-south)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Position3D.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.Bounds">
+            <summary>
+            An axis-aligned bounding box in 3D space
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Bounds.Min">
+            <summary>
+            Minimum corner (lowest x, y, z values)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Bounds.Max">
+            <summary>
+            Maximum corner (highest x, y, z values)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.Bounds.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MapPayload">
+            <summary>
+            Schema-less payload. Only envelope fields are validated.
+            <br/>The 'data' field can contain ANYTHING the publisher wants.
+            <br/>lib-mapping does not validate contents - only publisher and consumer care.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.ObjectId">
+            <summary>
+            Unique ID for this object (generated if not provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.ObjectType">
+            <summary>
+            Publisher-defined type (used for indexing and filtering)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.Position">
+            <summary>
+            Position for point objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.Bounds">
+            <summary>
+            Bounds for area objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.Data">
+            <summary>
+            SCHEMA-LESS. Can contain anything.
+            <br/>lib-mapping does not validate this.
+            <br/>Examples: cover_rating, health, respawn_delay, etc.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapPayload.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MapObject">
+            <summary>
+            A stored map object with full metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.ObjectId">
+            <summary>
+            Unique identifier for this object
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.RegionId">
+            <summary>
+            Region this object belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Kind">
+            <summary>
+            Map kind this object is stored under
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.ObjectType">
+            <summary>
+            Publisher-defined type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Version">
+            <summary>
+            Monotonic version for ordering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.CreatedAt">
+            <summary>
+            When the object was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.UpdatedAt">
+            <summary>
+            When the object was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ObjectChange">
+            <summary>
+            A single change to a map object
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.ObjectId">
+            <summary>
+            ID of the object being changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.Action">
+            <summary>
+            Type of change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.ObjectType">
+            <summary>
+            Object type (required for created)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.Data">
+            <summary>
+            Object state (for created/updated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthorityGrant">
+            <summary>
+            Granted authority over a map channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.ChannelId">
+            <summary>
+            The channel (region+kind) you have authority over
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.AuthorityToken">
+            <summary>
+            Opaque token proving your authority (include in publishes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.IngestTopic">
+            <summary>
+            Topic for direct lib-messaging publishes (map.ingest.{channelId})
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.ExpiresAt">
+            <summary>
+            When authority expires (must heartbeat to extend)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.RegionId">
+            <summary>
+            Region ID for this channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.Kind">
+            <summary>
+            Map kind for this channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityGrant.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.NonAuthorityAlertConfig">
+            <summary>
+            Configuration for non-authority publish alerts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.NonAuthorityAlertConfig.Enabled">
+            <summary>
+            Whether to emit warning events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.NonAuthorityAlertConfig.AlertTopic">
+            <summary>
+            Custom topic for warnings (default map.warnings.unauthorized_publish)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.NonAuthorityAlertConfig.IncludePayloadSummary">
+            <summary>
+            Include truncated payload in warning for debugging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.NonAuthorityAlertConfig.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ActorCapabilities">
+            <summary>
+            Actor-specific capabilities that affect affordance evaluation.
+            <br/>Same location may afford different actions to different actor types.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.Size">
+            <summary>
+            Affects cover requirements and passage width
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.Height">
+            <summary>
+            Actor height in meters (affects cover, sightlines)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.CanClimb">
+            <summary>
+            Can reach elevated positions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.CanSwim">
+            <summary>
+            Includes water-based positions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.CanFly">
+            <summary>
+            Includes aerial positions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.PerceptionRange">
+            <summary>
+            Affects sightline distance requirements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.MovementSpeed">
+            <summary>
+            Affects escape route viability calculations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.StealthRating">
+            <summary>
+            Affects ambush/hidden_path affordance scoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ActorCapabilities.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.CustomAffordance">
+            <summary>
+            Custom affordance definition for novel scenarios
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CustomAffordance.Description">
+            <summary>
+            Human-readable description of this affordance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CustomAffordance.Requires">
+            <summary>
+            Required criteria. Object types, property constraints.
+            <br/>Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CustomAffordance.Prefers">
+            <summary>
+            Preferred criteria (boost score but not required).
+            <br/>Example: { "elevation": { "prefer_higher": true } }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CustomAffordance.Excludes">
+            <summary>
+            Exclusion criteria. Reject candidates matching these.
+            <br/>Example: { "hazards": true, "contested": true }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CustomAffordance.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.CreateChannelRequest">
+            <summary>
+            Request to create a new map channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.RegionId">
+            <summary>
+            Region for this channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.Kind">
+            <summary>
+            Map kind for this channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.NonAuthorityHandling">
+            <summary>
+            How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.InitialSnapshot">
+            <summary>
+            Optional initial data to populate channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest">
+            <summary>
+            Request to release authority over a channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest.ChannelId">
+            <summary>
+            Channel to release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest.AuthorityToken">
+            <summary>
+            Current authority token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityResponse">
+            <summary>
+            Response to authority release
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityResponse.Released">
+            <summary>
+            Whether authority was successfully released
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ReleaseAuthorityResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest">
+            <summary>
+            Request to maintain authority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest.ChannelId">
+            <summary>
+            Channel to heartbeat
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest.AuthorityToken">
+            <summary>
+            Current authority token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatResponse">
+            <summary>
+            Response to authority heartbeat
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatResponse.Valid">
+            <summary>
+            Whether your authority is still valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatResponse.ExpiresAt">
+            <summary>
+            Updated expiration time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatResponse.Warning">
+            <summary>
+            Optional warning (e.g., "authority expiring soon")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthorityHeartbeatResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest">
+            <summary>
+            Request to publish map data update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.ChannelId">
+            <summary>
+            Channel to publish to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.AuthorityToken">
+            <summary>
+            Authority token for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.Bounds">
+            <summary>
+            Affected area (null means entire region)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.DeltaType">
+            <summary>
+            Whether this is incremental or full
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.Payload">
+            <summary>
+            The payload to publish
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.PayloadAssetRef">
+            <summary>
+            For large payloads, lib-asset reference instead of inline
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.PublishMapUpdateResponse">
+            <summary>
+            Response to publish request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateResponse.Accepted">
+            <summary>
+            Whether the update was accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateResponse.Version">
+            <summary>
+            Assigned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateResponse.Warning">
+            <summary>
+            Optional warning message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest">
+            <summary>
+            Request to publish object changes (batch)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.ChannelId">
+            <summary>
+            Channel to publish to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.AuthorityToken">
+            <summary>
+            Authority token for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.Changes">
+            <summary>
+            Object changes to publish
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse">
+            <summary>
+            Response to object changes publish
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Accepted">
+            <summary>
+            Whether the changes were accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.AcceptedCount">
+            <summary>
+            Number of changes accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.RejectedCount">
+            <summary>
+            Number of changes rejected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Version">
+            <summary>
+            Assigned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest">
+            <summary>
+            Request for full snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.RegionId">
+            <summary>
+            Region to snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.Kinds">
+            <summary>
+            Which kinds to include (default all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.Bounds">
+            <summary>
+            Optional bounds filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse">
+            <summary>
+            Snapshot response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse.RegionId">
+            <summary>
+            Region ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse.Objects">
+            <summary>
+            All objects in snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse.PayloadRef">
+            <summary>
+            For large snapshots, lib-asset reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse.Version">
+            <summary>
+            Snapshot version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryPointRequest">
+            <summary>
+            Query map data at a point
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointRequest.RegionId">
+            <summary>
+            Region to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointRequest.Position">
+            <summary>
+            Point to query at
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointRequest.Kinds">
+            <summary>
+            Kinds to query (default all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointRequest.Radius">
+            <summary>
+            Include objects within this radius
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryPointResponse">
+            <summary>
+            Point query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointResponse.Objects">
+            <summary>
+            Objects at/near the point
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointResponse.Position">
+            <summary>
+            Queried position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointResponse.Radius">
+            <summary>
+            Applied radius filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryPointResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest">
+            <summary>
+            Query map data within bounds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest.RegionId">
+            <summary>
+            Region to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest.Bounds">
+            <summary>
+            Bounding box to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest.Kinds">
+            <summary>
+            Kinds to query (default all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest.MaxObjects">
+            <summary>
+            Maximum objects to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryBoundsResponse">
+            <summary>
+            Bounds query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsResponse.Objects">
+            <summary>
+            Objects within bounds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsResponse.Bounds">
+            <summary>
+            Queried bounds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsResponse.Truncated">
+            <summary>
+            Whether results were truncated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryBoundsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest">
+            <summary>
+            Query objects by type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest.RegionId">
+            <summary>
+            Region to query
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest.ObjectType">
+            <summary>
+            Object type to filter by
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest.Bounds">
+            <summary>
+            Optional bounds filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest.MaxObjects">
+            <summary>
+            Maximum objects to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeResponse">
+            <summary>
+            Object type query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeResponse.Objects">
+            <summary>
+            Matching objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeResponse.ObjectType">
+            <summary>
+            Queried object type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeResponse.Truncated">
+            <summary>
+            Whether results were truncated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.QueryObjectsByTypeResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest">
+            <summary>
+            Query for locations that afford a specific action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.RegionId">
+            <summary>
+            Region to search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.AffordanceType">
+            <summary>
+            Type of affordance to search for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.CustomAffordance">
+            <summary>
+            Custom affordance definition (when affordanceType=custom)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.Bounds">
+            <summary>
+            Optional bounds to search within
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.MaxResults">
+            <summary>
+            Maximum locations to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.MinScore">
+            <summary>
+            Minimum affordance score to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.ParticipantCount">
+            <summary>
+            Expected participants (affects space requirements)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.ExcludePositions">
+            <summary>
+            Positions to exclude (e.g., player's current location)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.ActorCapabilities">
+            <summary>
+            Actor capabilities affecting evaluation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.Freshness">
+            <summary>
+            Cache freshness level
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.MaxAgeSeconds">
+            <summary>
+            Max age of cached results (for cached/aggressive_cache)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceLocation">
+            <summary>
+            A location that affords the requested action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.Position">
+            <summary>
+            Location position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.Bounds">
+            <summary>
+            Area bounds if affordance spans an area
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.Score">
+            <summary>
+            How well this location affords the action (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.Features">
+            <summary>
+            What makes this location suitable.
+            <br/>Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.ObjectIds">
+            <summary>
+            Map objects contributing to this affordance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceLocation.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata">
+            <summary>
+            Metadata about the affordance query execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.KindsSearched">
+            <summary>
+            Map kinds that were queried
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.ObjectsEvaluated">
+            <summary>
+            Number of candidate objects evaluated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.CandidatesGenerated">
+            <summary>
+            Number of candidate positions generated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.SearchDurationMs">
+            <summary>
+            Query execution time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.CacheHit">
+            <summary>
+            Whether results came from cache
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryMetadata.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse">
+            <summary>
+            Affordance query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse.Locations">
+            <summary>
+            Scored locations (highest score first)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest">
+            <summary>
+            Request to checkout for authoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest.RegionId">
+            <summary>
+            Region to checkout
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest.Kind">
+            <summary>
+            Map kind to checkout
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest.EditorId">
+            <summary>
+            Identifier for the editor/user
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse">
+            <summary>
+            Checkout response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.Success">
+            <summary>
+            Whether checkout was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.AuthorityToken">
+            <summary>
+            Token for publishing changes (if successful)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.ExpiresAt">
+            <summary>
+            When the checkout expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.LockedBy">
+            <summary>
+            Who has the lock (if checkout failed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.LockedAt">
+            <summary>
+            When the lock was acquired (if checkout failed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest">
+            <summary>
+            Request to commit authoring changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest.RegionId">
+            <summary>
+            Region being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest.Kind">
+            <summary>
+            Map kind being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest.AuthorityToken">
+            <summary>
+            Checkout authority token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest.CommitMessage">
+            <summary>
+            Optional commit message for history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse">
+            <summary>
+            Commit response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Success">
+            <summary>
+            Whether commit was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Version">
+            <summary>
+            Committed version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest">
+            <summary>
+            Request to release authoring checkout
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest.RegionId">
+            <summary>
+            Region being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest.Kind">
+            <summary>
+            Map kind being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest.AuthorityToken">
+            <summary>
+            Checkout authority token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringReleaseResponse">
+            <summary>
+            Release response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseResponse.Released">
+            <summary>
+            Whether checkout was released
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Mesh.IMeshClient">

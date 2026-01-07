@@ -24,6 +24,7 @@ Des... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
+| [Mapping](#mapping) | 1.0.0 | 13 | Spatial data management service for Arcadia game worlds. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
@@ -547,6 +548,47 @@ Location management service for Arcadia game world.
 
 ---
 
+## Mapping {#mapping}
+
+**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml`
+
+Spatial data management service for Arcadia game worlds.
+
+### Authoring
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/authoring/checkout` | Acquire exclusive edit lock for design-time editing | developer |
+| `POST` | `/mapping/authoring/commit` | Commit design-time changes | developer |
+| `POST` | `/mapping/authoring/release` | Release authoring checkout without committing | developer |
+
+### Authority
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/authority-heartbeat` | Maintain authority over channel | game_server |
+| `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | game_server |
+| `POST` | `/mapping/release-authority` | Release authority over a channel | game_server |
+
+### Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/query/affordance` | Find locations that afford a specific action or scene type | user |
+| `POST` | `/mapping/query/bounds` | Query map data within bounds | user |
+| `POST` | `/mapping/query/objects-by-type` | Find all objects of a type in region | user |
+| `POST` | `/mapping/query/point` | Query map data at a specific point | user |
+
+### Runtime
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/publish` | Publish map data update (RPC path) | game_server |
+| `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | game_server |
+| `POST` | `/mapping/request-snapshot` | Request full snapshot for cold start | user |
+
+---
+
 ## Mesh {#mesh}
 
 **Version**: 1.0.0 | **Schema**: `schemas/mesh-api.yaml`
@@ -905,8 +947,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 26
-- **Total endpoints**: 272
+- **Total services**: 27
+- **Total endpoints**: 285
 
 ---
 

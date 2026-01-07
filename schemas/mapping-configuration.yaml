@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: Mapping Service Configuration
+  description: |
+    Configuration schema for Mapping service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    The Mapping service manages spatial data for game worlds, including
+    authority management, spatial indexing, and affordance queries.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Service Enable/Disable
+    Enabled:
+      type: boolean
+      description: Enable/disable Mapping service
+      default: true
+      env: MAPPING_ENABLED
+
+    # Authority Management
+    AuthorityTimeoutSeconds:
+      type: integer
+      description: Time in seconds before authority expires without heartbeat
+      default: 60
+      env: MAPPING_AUTHORITY_TIMEOUT_SECONDS
+    AuthorityGracePeriodSeconds:
+      type: integer
+      description: Grace period in seconds after missed heartbeat before authority released
+      default: 30
+      env: MAPPING_AUTHORITY_GRACE_PERIOD_SECONDS
+    AuthorityHeartbeatIntervalSeconds:
+      type: integer
+      description: Recommended heartbeat interval for authorities (for client guidance)
+      default: 30
+      env: MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS
+
+    # Spatial Indexing
+    DefaultSpatialCellSize:
+      type: number
+      description: Size of spatial index cells in world units (default 64)
+      default: 64.0
+      env: MAPPING_SPATIAL_CELL_SIZE
+
+    # Query Limits
+    MaxObjectsPerQuery:
+      type: integer
+      description: Maximum objects returned in a single query
+      default: 5000
+      env: MAPPING_MAX_OBJECTS_PER_QUERY
+    MaxPayloadsPerPublish:
+      type: integer
+      description: Maximum payloads in single publish or ingest event
+      default: 100
+      env: MAPPING_MAX_PAYLOADS_PER_PUBLISH
+
+    # Affordance System
+    AffordanceCacheTimeoutSeconds:
+      type: integer
+      description: Default TTL for cached affordance query results
+      default: 60
+      env: MAPPING_AFFORDANCE_CACHE_TIMEOUT_SECONDS
+    MaxAffordanceCandidates:
+      type: integer
+      description: Maximum candidate points to evaluate in affordance queries
+      default: 1000
+      env: MAPPING_MAX_AFFORDANCE_CANDIDATES
+
+    # Large Payload Handling
+    InlinePayloadMaxBytes:
+      type: integer
+      description: Payloads larger than this are stored via lib-asset reference
+      default: 65536
+      env: MAPPING_INLINE_PAYLOAD_MAX_BYTES
+
+    # Authoring
+    MaxCheckoutDurationSeconds:
+      type: integer
+      description: Maximum duration for authoring checkout locks
+      default: 1800
+      env: MAPPING_MAX_CHECKOUT_DURATION_SECONDS
+
+    # Layer Storage
+    DefaultLayerCacheTtlSeconds:
+      type: integer
+      description: Default TTL for cached layer data (ephemeral kinds)
+      default: 3600
+      env: MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS

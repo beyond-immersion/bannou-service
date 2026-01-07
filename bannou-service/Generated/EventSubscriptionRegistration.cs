@@ -60,6 +60,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
         EventSubscriptionRegistry.Register<AnalyticsRatingUpdatedEvent>("analytics.rating.updated");
 
+        // From mapping-events.yaml
+        EventSubscriptionRegistry.Register<MapIngestEvent>("map.ingest.*");
+
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");
         EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou-full-service-mappings");

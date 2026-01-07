@@ -151,6 +151,20 @@ This document lists all events defined in Bannou's event schemas.
 | `LeaderboardRankChangedEvent` | Custom | `leaderboard-rank-changed` | Published when an entity's rank changes on a leade... |
 | `LeaderboardSeasonStartedEvent` | Custom | `leaderboard-season-started` | Published when a new leaderboard season begins |
 
+### Mapping
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EventBounds` | Custom | `event-bounds` | An axis-aligned bounding box in 3D space (event ve... |
+| `EventMapObject` | Custom | `event-map-object` | A map object in an event |
+| `EventPosition3D` | Custom | `event-position3-d` | A point in 3D space (event version) |
+| `MapIngestEvent` | Custom | `map-ingest` | Event published by authority to ingest topic for h... |
+| `MapObjectsChangedEvent` | Custom | `map-objects-changed` | Published when metadata objects change in a map. |
+| `MapSnapshotEvent` | Custom | `map-snapshot` | Published when a full snapshot is available. |
+| `MapSnapshotRequestedEvent` | Custom | `map-snapshot-requested` | Published when a consumer needs a full snapshot. |
+| `MapUpdatedEvent` | Lifecycle (Updated) | `map.updated` | Published when map layer data changes. |
+| `ObjectChangeEvent` | Custom | `object-change` | A single object change in an event |
+
 ### Mesh
 
 | Event | Type | Likely Topic | Description |
