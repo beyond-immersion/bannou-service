@@ -25,6 +25,9 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `AchievementDefinitionCreatedEvent` | Lifecycle (Created) | `achievement-definition.created` | Published when a new achievement definition is cre... |
+| `AchievementDefinitionDeletedEvent` | Lifecycle (Deleted) | `achievement-definition.deleted` | Published when an achievement definition is delete... |
+| `AchievementDefinitionUpdatedEvent` | Lifecycle (Updated) | `achievement-definition.updated` | Published when an achievement definition is update... |
 | `AchievementPlatformSyncedEvent` | Custom | `achievement-platform-synced` | Published when an achievement is synced to an exte... |
 | `AchievementProgressUpdatedEvent` | Lifecycle (Updated) | `achievement-progress.updated` | Published when progress is made on a progressive a... |
 | `AchievementUnlockedEvent` | Custom | `achievement-unlocked` | Published when an entity unlocks an achievement |
@@ -77,11 +80,23 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `AuthLoginFailedEvent` | Custom | `auth-login-failed` | Published when a login attempt fails (for brute fo... |
+| `AuthLoginSuccessfulEvent` | Custom | `auth-login-successful` | Published when a user successfully authenticates w... |
+| `AuthOAuthLoginSuccessfulEvent` | Custom | `auth-o-auth-login-successful` | Published when a user authenticates via OAuth prov... |
+| `AuthPasswordResetSuccessfulEvent` | Custom | `auth-password-reset-successful` | Published when a password reset is successfully co... |
+| `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
+| `AuthSteamLoginSuccessfulEvent` | Custom | `auth-steam-login-successful` | Published when a user authenticates via Steam |
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
 | `SessionUpdatedEventReason` | Lifecycle (Updated) | `session.updated-event-reason` | Reason for session update |
+
+### Behavior
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 
 ### Common (client)
 
@@ -163,6 +178,13 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
+
+### Species
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
+| `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
 
 ### State
 
