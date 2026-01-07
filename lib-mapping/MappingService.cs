@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -43,7 +44,7 @@ public partial class MappingService : IMappingService
     private readonly MappingServiceConfiguration _configuration;
 
     // Track active ingest subscriptions per channel
-    private static readonly ConcurrentDictionary<Guid, IDisposable> IngestSubscriptions = new();
+    private static readonly ConcurrentDictionary<Guid, IAsyncDisposable> IngestSubscriptions = new();
 
     private const string STATE_STORE = "mapping-statestore";
 
@@ -243,8 +244,8 @@ public partial class MappingService : IMappingService
 
             // Initialize version counter
             var versionKey = BuildVersionKey(channelId);
-            await _stateStoreFactory.GetStore<long>(STATE_STORE)
-                .SaveAsync(versionKey, 1L, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<LongWrapper>(STATE_STORE)
+                .SaveAsync(versionKey, new LongWrapper { Value = 1L }, cancellationToken: cancellationToken);
 
             // Process initial snapshot if provided
             if (body.InitialSnapshot != null && body.InitialSnapshot.Count > 0)
@@ -313,7 +314,7 @@ public partial class MappingService : IMappingService
             // Unsubscribe from ingest topic
             if (IngestSubscriptions.TryRemove(body.ChannelId, out var subscription))
             {
-                subscription.Dispose();
+                await subscription.DisposeAsync();
             }
 
             _logger.LogInformation("Released authority for channel {ChannelId}", body.ChannelId);
@@ -416,6 +417,20 @@ public partial class MappingService : IMappingService
 
         try
         {
+            // Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)
+            var payloadSize = BannouJson.Serialize(body.Payload).Length;
+            if (payloadSize > _configuration.InlinePayloadMaxBytes)
+            {
+                _logger.LogWarning("Payload size {Size} exceeds limit {Limit} for channel {ChannelId}",
+                    payloadSize, _configuration.InlinePayloadMaxBytes, body.ChannelId);
+                return (StatusCodes.BadRequest, new PublishMapUpdateResponse
+                {
+                    Accepted = false,
+                    Version = 0,
+                    Warning = $"Payload size ({payloadSize} bytes) exceeds limit ({_configuration.InlinePayloadMaxBytes} bytes). Use smaller payloads or chunking."
+                });
+            }
+
             // Validate authority
             var (isValid, channel, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
 
@@ -569,7 +584,8 @@ public partial class MappingService : IMappingService
             {
                 var channelId = GenerateChannelId(body.RegionId, kind);
                 var versionKey = BuildVersionKey(channelId);
-                var version = await _stateStoreFactory.GetStore<long>(STATE_STORE).GetAsync(versionKey, cancellationToken);
+                var versionWrapper = await _stateStoreFactory.GetStore<LongWrapper>(STATE_STORE).GetAsync(versionKey, cancellationToken);
+                var version = versionWrapper?.Value ?? 0;
                 if (version > maxVersion)
                 {
                     maxVersion = version;
@@ -1097,15 +1113,12 @@ public partial class MappingService : IMappingService
             return (false, null, "Channel not found");
         }
 
-        var (valid, tokenChannelId, expiresAt) = ParseAuthorityToken(authorityToken);
+        // Opaque token validation: parse only to extract channelId for basic validation,
+        // but expiry is checked ONLY against AuthorityRecord.ExpiresAt (which is updated by heartbeat)
+        var (valid, tokenChannelId, _) = ParseAuthorityToken(authorityToken);
         if (!valid || tokenChannelId != channelId)
         {
             return (false, channel, "Invalid authority token");
-        }
-
-        if (expiresAt < DateTimeOffset.UtcNow)
-        {
-            return (false, channel, "Authority token has expired");
         }
 
         var authorityKey = BuildAuthorityKey(channelId);
@@ -1115,6 +1128,12 @@ public partial class MappingService : IMappingService
         if (authority == null || authority.AuthorityToken != authorityToken)
         {
             return (false, channel, "Authority token not recognized");
+        }
+
+        // Check expiry against the stored AuthorityRecord (updated by heartbeat), not the token
+        if (authority.ExpiresAt < DateTimeOffset.UtcNow)
+        {
+            return (false, channel, "Authority has expired");
         }
 
         return (true, channel, null);
@@ -1214,6 +1233,12 @@ public partial class MappingService : IMappingService
 
     private async Task<bool> ProcessObjectChangeAsync(Guid regionId, MapKind kind, ObjectChange change, CancellationToken cancellationToken)
     {
+        // Delegate to the version with index cleanup
+        return await ProcessObjectChangeWithIndexCleanupAsync(regionId, kind, change, cancellationToken);
+    }
+
+    private async Task<bool> ProcessObjectChangeWithIndexCleanupAsync(Guid regionId, MapKind kind, ObjectChange change, CancellationToken cancellationToken)
+    {
         var objectKey = BuildObjectKey(regionId, change.ObjectId);
 
         switch (change.Action)
@@ -1239,9 +1264,16 @@ public partial class MappingService : IMappingService
                 await _stateStoreFactory.GetStore<MapObject>(STATE_STORE)
                     .SaveAsync(objectKey, newObject, cancellationToken: cancellationToken);
 
+                // Add to region index for snapshot queries without bounds
+                await AddToRegionIndexAsync(regionId, kind, change.ObjectId, cancellationToken);
+
                 if (change.Position != null)
                 {
                     await UpdateSpatialIndexAsync(regionId, kind, change.ObjectId, change.Position, cancellationToken);
+                }
+                else if (change.Bounds != null)
+                {
+                    await UpdateSpatialIndexForBoundsAsync(regionId, kind, change.ObjectId, change.Bounds, cancellationToken);
                 }
                 if (!string.IsNullOrEmpty(change.ObjectType))
                 {
@@ -1254,21 +1286,88 @@ public partial class MappingService : IMappingService
                     .GetAsync(objectKey, cancellationToken);
                 if (existing == null)
                 {
-                    return false;
+                    // Object doesn't exist - treat as upsert (create)
+                    return await ProcessObjectChangeWithIndexCleanupAsync(regionId, kind, new ObjectChange
+                    {
+                        ObjectId = change.ObjectId,
+                        ObjectType = change.ObjectType ?? "unknown",
+                        Action = ObjectAction.Created,
+                        Position = change.Position,
+                        Bounds = change.Bounds,
+                        Data = change.Data
+                    }, cancellationToken);
                 }
+
+                // Clean up old spatial indexes if position/bounds changed
+                if (change.Position != null && existing.Position != null)
+                {
+                    await RemoveFromSpatialIndexAsync(regionId, kind, change.ObjectId, existing.Position, cancellationToken);
+                }
+                if (change.Bounds != null && existing.Bounds != null)
+                {
+                    await RemoveFromSpatialIndexForBoundsAsync(regionId, kind, change.ObjectId, existing.Bounds, cancellationToken);
+                }
+
+                // Clean up old type index if type changed
+                if (!string.IsNullOrEmpty(change.ObjectType) && existing.ObjectType != change.ObjectType)
+                {
+                    await RemoveFromTypeIndexAsync(regionId, existing.ObjectType, change.ObjectId, cancellationToken);
+                }
+
+                // Update object (preserve CreatedAt)
                 if (change.Position != null) existing.Position = change.Position;
                 if (change.Bounds != null) existing.Bounds = change.Bounds;
                 if (change.Data != null) existing.Data = change.Data;
+                if (!string.IsNullOrEmpty(change.ObjectType)) existing.ObjectType = change.ObjectType;
                 existing.Version++;
                 existing.UpdatedAt = DateTimeOffset.UtcNow;
+                // CreatedAt is preserved (not modified)
+
                 await _stateStoreFactory.GetStore<MapObject>(STATE_STORE)
                     .SaveAsync(objectKey, existing, cancellationToken: cancellationToken);
+
+                // Add to new spatial indexes
+                if (change.Position != null)
+                {
+                    await UpdateSpatialIndexAsync(regionId, kind, change.ObjectId, change.Position, cancellationToken);
+                }
+                else if (change.Bounds != null)
+                {
+                    await UpdateSpatialIndexForBoundsAsync(regionId, kind, change.ObjectId, change.Bounds, cancellationToken);
+                }
+
+                // Add to new type index
+                if (!string.IsNullOrEmpty(change.ObjectType))
+                {
+                    await UpdateTypeIndexAsync(regionId, change.ObjectType, change.ObjectId, cancellationToken);
+                }
                 return true;
 
             case ObjectAction.Deleted:
+                var toDelete = await _stateStoreFactory.GetStore<MapObject>(STATE_STORE)
+                    .GetAsync(objectKey, cancellationToken);
+
+                if (toDelete != null)
+                {
+                    // Clean up all indexes for this object
+                    await RemoveFromRegionIndexAsync(regionId, kind, change.ObjectId, cancellationToken);
+
+                    if (toDelete.Position != null)
+                    {
+                        await RemoveFromSpatialIndexAsync(regionId, kind, change.ObjectId, toDelete.Position, cancellationToken);
+                    }
+                    if (toDelete.Bounds != null)
+                    {
+                        await RemoveFromSpatialIndexForBoundsAsync(regionId, kind, change.ObjectId, toDelete.Bounds, cancellationToken);
+                    }
+                    if (!string.IsNullOrEmpty(toDelete.ObjectType))
+                    {
+                        await RemoveFromTypeIndexAsync(regionId, toDelete.ObjectType, change.ObjectId, cancellationToken);
+                    }
+                }
+
                 await _stateStoreFactory.GetStore<MapObject>(STATE_STORE)
                     .DeleteAsync(objectKey, cancellationToken);
-                // Note: Index cleanup would be handled separately
                 return true;
 
             default:
@@ -1323,14 +1422,92 @@ public partial class MappingService : IMappingService
         }
     }
 
+    private static string BuildRegionIndexKey(Guid regionId, MapKind kind) => $"map:region-index:{regionId}:{kind}";
+
+    private async Task AddToRegionIndexAsync(Guid regionId, MapKind kind, Guid objectId, CancellationToken cancellationToken)
+    {
+        var indexKey = BuildRegionIndexKey(regionId, kind);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+            .GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
+
+        if (!objectIds.Contains(objectId))
+        {
+            objectIds.Add(objectId);
+            await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task RemoveFromRegionIndexAsync(Guid regionId, MapKind kind, Guid objectId, CancellationToken cancellationToken)
+    {
+        var indexKey = BuildRegionIndexKey(regionId, kind);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+            .GetAsync(indexKey, cancellationToken);
+
+        if (objectIds != null && objectIds.Contains(objectId))
+        {
+            objectIds.Remove(objectId);
+            await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task RemoveFromSpatialIndexAsync(Guid regionId, MapKind kind, Guid objectId, Position3D position, CancellationToken cancellationToken)
+    {
+        var cell = GetCellCoordinates(position);
+        var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+            .GetAsync(indexKey, cancellationToken);
+
+        if (objectIds != null && objectIds.Contains(objectId))
+        {
+            objectIds.Remove(objectId);
+            await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task RemoveFromSpatialIndexForBoundsAsync(Guid regionId, MapKind kind, Guid objectId, Bounds bounds, CancellationToken cancellationToken)
+    {
+        var cells = GetCellsForBounds(bounds);
+        foreach (var cell in cells)
+        {
+            var indexKey = BuildSpatialIndexKey(regionId, kind, cell.cellX, cell.cellY, cell.cellZ);
+            var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                .GetAsync(indexKey, cancellationToken);
+
+            if (objectIds != null && objectIds.Contains(objectId))
+            {
+                objectIds.Remove(objectId);
+                await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                    .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
+            }
+        }
+    }
+
+    private async Task RemoveFromTypeIndexAsync(Guid regionId, string objectType, Guid objectId, CancellationToken cancellationToken)
+    {
+        var indexKey = BuildTypeIndexKey(regionId, objectType);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+            .GetAsync(indexKey, cancellationToken);
+
+        if (objectIds != null && objectIds.Contains(objectId))
+        {
+            objectIds.Remove(objectId);
+            await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+                .SaveAsync(indexKey, objectIds, cancellationToken: cancellationToken);
+        }
+    }
+
     private async Task<long> IncrementVersionAsync(Guid channelId, CancellationToken cancellationToken)
     {
         var versionKey = BuildVersionKey(channelId);
-        var currentVersion = await _stateStoreFactory.GetStore<long>(STATE_STORE)
+        var versionWrapper = await _stateStoreFactory.GetStore<LongWrapper>(STATE_STORE)
             .GetAsync(versionKey, cancellationToken);
+        var currentVersion = versionWrapper?.Value ?? 0;
         var newVersion = currentVersion + 1;
-        await _stateStoreFactory.GetStore<long>(STATE_STORE)
-            .SaveAsync(versionKey, newVersion, cancellationToken: cancellationToken);
+        await _stateStoreFactory.GetStore<LongWrapper>(STATE_STORE)
+            .SaveAsync(versionKey, new LongWrapper { Value = newVersion }, cancellationToken: cancellationToken);
         return newVersion;
     }
 
@@ -1341,11 +1518,23 @@ public partial class MappingService : IMappingService
             return await QueryObjectsInBoundsAsync(regionId, kind, bounds, maxObjects, cancellationToken);
         }
 
-        // Without bounds, we need to scan all cells - this is expensive
-        // In production, you'd want pagination or a region index
+        // Full region query - use region index that tracks all objects in a region+kind
+        var regionIndexKey = BuildRegionIndexKey(regionId, kind);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+            .GetAsync(regionIndexKey, cancellationToken) ?? new List<Guid>();
+
         var objects = new List<MapObject>();
-        // For now, return empty list when no bounds specified
-        // A full implementation would need region-level indexing
+        foreach (var objectId in objectIds.Take(maxObjects))
+        {
+            var objectKey = BuildObjectKey(regionId, objectId);
+            var obj = await _stateStoreFactory.GetStore<MapObject>(STATE_STORE)
+                .GetAsync(objectKey, cancellationToken);
+            if (obj != null)
+            {
+                objects.Add(obj);
+            }
+        }
+
         return objects;
     }
 
@@ -1456,10 +1645,10 @@ public partial class MappingService : IMappingService
         // Base score from object data
         var score = 0.5;
 
-        if (candidate.Data is IDictionary<string, object> data)
+        if (candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object)
         {
             // Check for common affordance-related properties
-            if (data.TryGetValue("cover_rating", out var coverRating) && coverRating is double cr)
+            if (TryGetJsonDouble(data, "cover_rating", out var cr))
             {
                 if (type == AffordanceType.Ambush || type == AffordanceType.Shelter || type == AffordanceType.Defensible_position)
                 {
@@ -1467,7 +1656,7 @@ public partial class MappingService : IMappingService
                 }
             }
 
-            if (data.TryGetValue("elevation", out var elevation) && elevation is double el)
+            if (TryGetJsonDouble(data, "elevation", out var el))
             {
                 if (type == AffordanceType.Vista || type == AffordanceType.Dramatic_reveal)
                 {
@@ -1475,7 +1664,7 @@ public partial class MappingService : IMappingService
                 }
             }
 
-            if (data.TryGetValue("sightlines", out var sightlines) && sightlines is int sl)
+            if (TryGetJsonInt(data, "sightlines", out var sl))
             {
                 if (type == AffordanceType.Ambush || type == AffordanceType.Vista)
                 {
@@ -1517,29 +1706,84 @@ public partial class MappingService : IMappingService
         return Math.Clamp(score, 0.0, 1.0);
     }
 
+    private static bool TryGetJsonDouble(System.Text.Json.JsonElement element, string propertyName, out double value)
+    {
+        value = 0;
+        if (element.TryGetProperty(propertyName, out var prop))
+        {
+            if (prop.ValueKind == System.Text.Json.JsonValueKind.Number && prop.TryGetDouble(out value))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static bool TryGetJsonInt(System.Text.Json.JsonElement element, string propertyName, out int value)
+    {
+        value = 0;
+        if (element.TryGetProperty(propertyName, out var prop))
+        {
+            if (prop.ValueKind == System.Text.Json.JsonValueKind.Number && prop.TryGetInt32(out value))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static bool TryGetJsonString(System.Text.Json.JsonElement element, string propertyName, out string? value)
+    {
+        value = null;
+        if (element.TryGetProperty(propertyName, out var prop))
+        {
+            if (prop.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                value = prop.GetString();
+                return true;
+            }
+        }
+        return false;
+    }
+
     private double ScoreCustomAffordance(MapObject candidate, CustomAffordance custom)
     {
         var score = 0.5;
 
-        if (candidate.Data is IDictionary<string, object> data && custom.Requires is IDictionary<string, object> requires)
+        var hasData = candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object;
+
+        // Check required criteria
+        if (custom.Requires is System.Text.Json.JsonElement requires && requires.ValueKind == System.Text.Json.JsonValueKind.Object)
         {
-            // Check required criteria
-            foreach (var (key, value) in requires)
+            foreach (var req in requires.EnumerateObject())
             {
-                if (key == "objectTypes" && value is IList<object> types)
+                if (req.Name == "objectTypes" && req.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
                 {
-                    if (!types.Contains(candidate.ObjectType))
+                    var matchesType = false;
+                    foreach (var typeVal in req.Value.EnumerateArray())
                     {
-                        return 0.0; // Required criteria not met
-                    }
-                }
-                else if (data.TryGetValue(key, out var candidateValue))
-                {
-                    if (value is IDictionary<string, object> constraint)
-                    {
-                        if (constraint.TryGetValue("min", out var min) && candidateValue is double cv && min is double mv)
+                        if (typeVal.ValueKind == System.Text.Json.JsonValueKind.String &&
+                            typeVal.GetString() == candidate.ObjectType)
                         {
-                            if (cv < mv) return 0.0;
+                            matchesType = true;
+                            break;
+                        }
+                    }
+                    if (!matchesType) return 0.0;
+                }
+                else if (hasData)
+                {
+                    var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
+                    if (dataElement.TryGetProperty(req.Name, out var candidateValue))
+                    {
+                        if (req.Value.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                            req.Value.TryGetProperty("min", out var minProp) &&
+                            minProp.TryGetDouble(out var minVal))
+                        {
+                            if (candidateValue.TryGetDouble(out var candVal) && candVal < minVal)
+                            {
+                                return 0.0;
+                            }
                         }
                     }
                 }
@@ -1547,11 +1791,12 @@ public partial class MappingService : IMappingService
         }
 
         // Apply preferences (boost but don't require)
-        if (candidate.Data is IDictionary<string, object> dataDict && custom.Prefers is IDictionary<string, object> prefers)
+        if (hasData && custom.Prefers is System.Text.Json.JsonElement prefers && prefers.ValueKind == System.Text.Json.JsonValueKind.Object)
         {
-            foreach (var (key, _) in prefers)
+            var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
+            foreach (var pref in prefers.EnumerateObject())
             {
-                if (dataDict.ContainsKey(key))
+                if (dataElement.TryGetProperty(pref.Name, out _))
                 {
                     score += 0.1;
                 }
@@ -1559,13 +1804,14 @@ public partial class MappingService : IMappingService
         }
 
         // Apply exclusions
-        if (candidate.Data is IDictionary<string, object> excludeData && custom.Excludes is IDictionary<string, object> excludes)
+        if (hasData && custom.Excludes is System.Text.Json.JsonElement excludes && excludes.ValueKind == System.Text.Json.JsonValueKind.Object)
         {
-            foreach (var (key, _) in excludes)
+            var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
+            foreach (var excl in excludes.EnumerateObject())
             {
-                if (excludeData.ContainsKey(key))
+                if (dataElement.TryGetProperty(excl.Name, out _))
                 {
-                    return 0.0; // Excluded
+                    return 0.0;
                 }
             }
         }
@@ -1577,7 +1823,7 @@ public partial class MappingService : IMappingService
     {
         var features = new Dictionary<string, object>();
 
-        if (candidate.Data is IDictionary<string, object> data)
+        if (candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object)
         {
             // Extract relevant features based on affordance type
             var relevantKeys = type switch
@@ -1595,9 +1841,21 @@ public partial class MappingService : IMappingService
 
             foreach (var key in relevantKeys)
             {
-                if (data.TryGetValue(key, out var value))
+                if (data.TryGetProperty(key, out var value))
                 {
-                    features[key] = value;
+                    // Extract the actual value from JsonElement
+                    object? extractedValue = value.ValueKind switch
+                    {
+                        System.Text.Json.JsonValueKind.Number when value.TryGetDouble(out var d) => d,
+                        System.Text.Json.JsonValueKind.String => value.GetString(),
+                        System.Text.Json.JsonValueKind.True => true,
+                        System.Text.Json.JsonValueKind.False => false,
+                        _ => value.ToString()
+                    };
+                    if (extractedValue != null)
+                    {
+                        features[key] = extractedValue;
+                    }
                 }
             }
         }
@@ -1742,11 +2000,20 @@ public partial class MappingService : IMappingService
 
     private async Task SubscribeToIngestTopicAsync(Guid channelId, string ingestTopic, CancellationToken cancellationToken)
     {
+        // Dispose prior subscription if re-creating channel (prevents leaking subscriptions)
+        if (IngestSubscriptions.TryRemove(channelId, out var existingSubscription))
+        {
+            await existingSubscription.DisposeAsync();
+            _logger.LogDebug("Disposed existing subscription for channel {ChannelId} before re-creating", channelId);
+        }
+
         // Subscribe to ingest events for this channel
-        var subscription = await _messageSubscriber.SubscribeAsync<MapIngestEvent>(
+        var subscription = await _messageSubscriber.SubscribeDynamicAsync<MapIngestEvent>(
             ingestTopic,
             async (evt, ct) => await HandleIngestEventAsync(channelId, evt, ct),
-            cancellationToken);
+            exchange: null,
+            exchangeType: SubscriptionExchangeType.Topic,
+            cancellationToken: cancellationToken);
 
         IngestSubscriptions[channelId] = subscription;
         _logger.LogDebug("Subscribed to ingest topic {Topic} for channel {ChannelId}", ingestTopic, channelId);
@@ -1759,24 +2026,7 @@ public partial class MappingService : IMappingService
 
         try
         {
-            // Validate authority token
-            var authorityKey = BuildAuthorityKey(channelId);
-            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(STATE_STORE)
-                .GetAsync(authorityKey, cancellationToken);
-
-            if (authority == null || authority.AuthorityToken != evt.AuthorityToken)
-            {
-                _logger.LogWarning("Invalid authority token in ingest event for channel {ChannelId}", channelId);
-                return;
-            }
-
-            if (authority.ExpiresAt < DateTimeOffset.UtcNow)
-            {
-                _logger.LogWarning("Expired authority token in ingest event for channel {ChannelId}", channelId);
-                return;
-            }
-
-            // Get channel info
+            // Get channel info first (needed for NonAuthorityHandling check)
             var channelKey = BuildChannelKey(channelId);
             var channel = await _stateStoreFactory.GetStore<ChannelRecord>(STATE_STORE)
                 .GetAsync(channelKey, cancellationToken);
@@ -1787,29 +2037,222 @@ public partial class MappingService : IMappingService
                 return;
             }
 
-            // Process payloads
-            var mapPayloads = evt.Payloads.Select(p => new MapPayload
-            {
-                ObjectId = p.ObjectId ?? Guid.NewGuid(),
-                ObjectType = p.ObjectType,
-                Position = p.Position != null ? new Position3D { X = p.Position.X, Y = p.Position.Y, Z = p.Position.Z } : null,
-                Bounds = p.Bounds != null ? new Bounds
-                {
-                    Min = new Position3D { X = p.Bounds.Min.X, Y = p.Bounds.Min.Y, Z = p.Bounds.Min.Z },
-                    Max = new Position3D { X = p.Bounds.Max.X, Y = p.Bounds.Max.Y, Z = p.Bounds.Max.Z }
-                } : null,
-                Data = p.Data
-            }).ToList();
+            // Validate authority token
+            var authorityKey = BuildAuthorityKey(channelId);
+            var authority = await _stateStoreFactory.GetStore<AuthorityRecord>(STATE_STORE)
+                .GetAsync(authorityKey, cancellationToken);
 
-            var version = await ProcessPayloadsAsync(channelId, channel.RegionId, channel.Kind, mapPayloads, cancellationToken);
+            var isValidAuthority = authority != null &&
+                                   authority.AuthorityToken == evt.AuthorityToken &&
+                                   authority.ExpiresAt >= DateTimeOffset.UtcNow;
+
+            if (!isValidAuthority)
+            {
+                // Handle non-authority publish based on channel configuration
+                await HandleNonAuthorityIngestAsync(channel, evt, cancellationToken);
+                return;
+            }
+
+            // Enforce MaxPayloadsPerPublish
+            if (evt.Payloads.Count > _configuration.MaxPayloadsPerPublish)
+            {
+                _logger.LogWarning("Ingest event exceeds MaxPayloadsPerPublish ({Max}), truncating from {Count}",
+                    _configuration.MaxPayloadsPerPublish, evt.Payloads.Count);
+            }
+
+            var payloadsToProcess = evt.Payloads.Take(_configuration.MaxPayloadsPerPublish).ToList();
+
+            // Process each payload according to its action
+            var changes = new List<ObjectChangeEvent>();
+            foreach (var payload in payloadsToProcess)
+            {
+                var objectId = payload.ObjectId ?? Guid.NewGuid();
+                var position = payload.Position != null
+                    ? new Position3D { X = payload.Position.X, Y = payload.Position.Y, Z = payload.Position.Z }
+                    : null;
+                var bounds = payload.Bounds != null
+                    ? new Bounds
+                    {
+                        Min = new Position3D { X = payload.Bounds.Min.X, Y = payload.Bounds.Min.Y, Z = payload.Bounds.Min.Z },
+                        Max = new Position3D { X = payload.Bounds.Max.X, Y = payload.Bounds.Max.Y, Z = payload.Bounds.Max.Z }
+                    }
+                    : null;
+
+                var change = new ObjectChange
+                {
+                    ObjectId = objectId,
+                    ObjectType = payload.ObjectType,
+                    Action = MapIngestActionToObjectAction(payload.Action),
+                    Position = position,
+                    Bounds = bounds,
+                    Data = payload.Data
+                };
+
+                var success = await ProcessObjectChangeWithIndexCleanupAsync(channel.RegionId, channel.Kind, change, cancellationToken);
+                if (success)
+                {
+                    changes.Add(new ObjectChangeEvent
+                    {
+                        ObjectId = objectId,
+                        Action = MapIngestActionToEventAction(payload.Action),
+                        ObjectType = payload.ObjectType,
+                        Position = payload.Position,
+                        Bounds = payload.Bounds,
+                        Data = payload.Data
+                    });
+                }
+            }
+
+            if (changes.Count == 0)
+            {
+                return;
+            }
+
+            // Increment version
+            var version = await IncrementVersionAsync(channelId, cancellationToken);
+
+            // Publish both layer-level and object-level events
+            await PublishMapUpdatedEventAsync(channel, bounds: null, version, DeltaType.Delta, new MapPayload { ObjectType = "ingest" }, cancellationToken);
+            await PublishMapObjectsChangedEventAsync(channel, version, changes, cancellationToken);
 
             _logger.LogDebug("Processed {Count} payloads from ingest event, version {Version}",
-                evt.Payloads.Count, version);
+                changes.Count, version);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling ingest event for channel {ChannelId}", channelId);
         }
+    }
+
+    private async Task HandleNonAuthorityIngestAsync(ChannelRecord channel, MapIngestEvent evt, CancellationToken cancellationToken)
+    {
+        var mode = channel.NonAuthorityHandling;
+
+        switch (mode)
+        {
+            case NonAuthorityHandlingMode.Reject_silent:
+                _logger.LogDebug("Rejecting non-authority ingest silently for channel {ChannelId}", channel.ChannelId);
+                return;
+
+            case NonAuthorityHandlingMode.Reject_and_alert:
+                _logger.LogWarning("Rejecting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
+                await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: false, cancellationToken);
+                return;
+
+            case NonAuthorityHandlingMode.Accept_and_alert:
+                _logger.LogWarning("Accepting non-authority ingest with alert for channel {ChannelId}", channel.ChannelId);
+                await PublishUnauthorizedIngestWarningAsync(channel, evt, accepted: true, cancellationToken);
+                // Process the ingest anyway (recursively but with force flag would be complex, so inline)
+                await ProcessIngestPayloadsAsync(channel, evt.Payloads, cancellationToken);
+                return;
+
+            default:
+                _logger.LogDebug("Unknown NonAuthorityHandlingMode, rejecting ingest for channel {ChannelId}", channel.ChannelId);
+                return;
+        }
+    }
+
+    private async Task ProcessIngestPayloadsAsync(ChannelRecord channel, ICollection<IngestPayload> payloads, CancellationToken cancellationToken)
+    {
+        var changes = new List<ObjectChangeEvent>();
+        foreach (var payload in payloads.Take(_configuration.MaxPayloadsPerPublish))
+        {
+            var objectId = payload.ObjectId ?? Guid.NewGuid();
+            var position = payload.Position != null
+                ? new Position3D { X = payload.Position.X, Y = payload.Position.Y, Z = payload.Position.Z }
+                : null;
+            var bounds = payload.Bounds != null
+                ? new Bounds
+                {
+                    Min = new Position3D { X = payload.Bounds.Min.X, Y = payload.Bounds.Min.Y, Z = payload.Bounds.Min.Z },
+                    Max = new Position3D { X = payload.Bounds.Max.X, Y = payload.Bounds.Max.Y, Z = payload.Bounds.Max.Z }
+                }
+                : null;
+
+            var change = new ObjectChange
+            {
+                ObjectId = objectId,
+                ObjectType = payload.ObjectType,
+                Action = MapIngestActionToObjectAction(payload.Action),
+                Position = position,
+                Bounds = bounds,
+                Data = payload.Data
+            };
+
+            var success = await ProcessObjectChangeWithIndexCleanupAsync(channel.RegionId, channel.Kind, change, cancellationToken);
+            if (success)
+            {
+                changes.Add(new ObjectChangeEvent
+                {
+                    ObjectId = objectId,
+                    Action = MapIngestActionToEventAction(payload.Action),
+                    ObjectType = payload.ObjectType,
+                    Position = payload.Position,
+                    Bounds = payload.Bounds,
+                    Data = payload.Data
+                });
+            }
+        }
+
+        if (changes.Count > 0)
+        {
+            var version = await IncrementVersionAsync(channel.ChannelId, cancellationToken);
+            await PublishMapUpdatedEventAsync(channel, bounds: null, version, DeltaType.Delta, new MapPayload { ObjectType = "ingest" }, cancellationToken);
+            await PublishMapObjectsChangedEventAsync(channel, version, changes, cancellationToken);
+        }
+    }
+
+    private async Task PublishUnauthorizedIngestWarningAsync(ChannelRecord channel, MapIngestEvent evt, bool accepted, CancellationToken cancellationToken)
+    {
+        var alertConfig = channel.AlertConfig;
+        if (alertConfig != null && !alertConfig.Enabled)
+        {
+            return;
+        }
+
+        var warning = new MapUnauthorizedPublishWarning
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            ChannelId = channel.ChannelId,
+            RegionId = channel.RegionId,
+            Kind = channel.Kind.ToString(),
+            AttemptedPublisher = "unknown", // Would come from session context
+            CurrentAuthority = null,
+            HandlingMode = channel.NonAuthorityHandling switch
+            {
+                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
+                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
+                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
+                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
+            },
+            PublishAccepted = accepted,
+            PayloadSummary = alertConfig?.IncludePayloadSummary == true ? $"ingest:{evt.Payloads.Count} payloads" : null
+        };
+
+        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized_publish";
+        await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
+    }
+
+    private static ObjectAction MapIngestActionToObjectAction(IngestPayloadAction action)
+    {
+        return action switch
+        {
+            IngestPayloadAction.Create => ObjectAction.Created,
+            IngestPayloadAction.Update => ObjectAction.Updated,
+            IngestPayloadAction.Delete => ObjectAction.Deleted,
+            _ => ObjectAction.Updated
+        };
+    }
+
+    private static ObjectChangeEventAction MapIngestActionToEventAction(IngestPayloadAction action)
+    {
+        return action switch
+        {
+            IngestPayloadAction.Create => ObjectChangeEventAction.Created,
+            IngestPayloadAction.Update => ObjectChangeEventAction.Updated,
+            IngestPayloadAction.Delete => ObjectChangeEventAction.Deleted,
+            _ => ObjectChangeEventAction.Updated
+        };
     }
 
     private static ObjectChangeEventAction MapObjectActionToEventAction(ObjectAction action)
@@ -1875,6 +2318,14 @@ public partial class MappingService : IMappingService
     {
         public AffordanceQueryResponse Response { get; set; } = new();
         public DateTimeOffset CachedAt { get; set; }
+    }
+
+    /// <summary>
+    /// Wrapper class for storing long values in IStateStore (since value types need a class wrapper).
+    /// </summary>
+    internal class LongWrapper
+    {
+        public long Value { get; set; }
     }
 
     #endregion

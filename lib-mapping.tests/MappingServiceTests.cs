@@ -1,10 +1,12 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace BeyondImmersion.BannouService.Mapping.Tests;
 
@@ -27,7 +29,7 @@ public class MappingServiceTests
     private readonly Mock<IStateStore<MappingService.CheckoutRecord>> _mockCheckoutStore;
     private readonly Mock<IStateStore<MapObject>> _mockObjectStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockIndexStore;
-    private readonly Mock<IStateStore<long>> _mockVersionStore;
+    private readonly Mock<IStateStore<MappingService.LongWrapper>> _mockVersionStore;
     private readonly Mock<IStateStore<MappingService.CachedAffordanceResult>> _mockAffordanceCacheStore;
 
     public MappingServiceTests()
@@ -60,7 +62,7 @@ public class MappingServiceTests
         _mockCheckoutStore = new Mock<IStateStore<MappingService.CheckoutRecord>>();
         _mockObjectStore = new Mock<IStateStore<MapObject>>();
         _mockIndexStore = new Mock<IStateStore<List<Guid>>>();
-        _mockVersionStore = new Mock<IStateStore<long>>();
+        _mockVersionStore = new Mock<IStateStore<MappingService.LongWrapper>>();
         _mockAffordanceCacheStore = new Mock<IStateStore<MappingService.CachedAffordanceResult>>();
 
         // Wire up state store factory to return typed stores
@@ -74,7 +76,7 @@ public class MappingServiceTests
             .Returns(_mockObjectStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(It.IsAny<string>()))
             .Returns(_mockIndexStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<long>(It.IsAny<string>()))
+        _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.LongWrapper>(It.IsAny<string>()))
             .Returns(_mockVersionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.CachedAffordanceResult>(It.IsAny<string>()))
             .Returns(_mockAffordanceCacheStore.Object);
@@ -82,15 +84,20 @@ public class MappingServiceTests
         // Default behaviors
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _mockMessageSubscriber.Setup(m => m.SubscribeAsync(It.IsAny<string>(), It.IsAny<Func<MapIngestEvent, CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Mock.Of<IDisposable>());
+        _mockMessageSubscriber.Setup(m => m.SubscribeDynamicAsync<MapIngestEvent>(
+                It.IsAny<string>(),
+                It.IsAny<Func<MapIngestEvent, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<IAsyncDisposable>());
 
         // Default store behaviors
         _mockChannelStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.ChannelRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockAuthorityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.AuthorityRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
-        _mockVersionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<long>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+        _mockVersionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.LongWrapper>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MapObject>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
@@ -319,11 +326,9 @@ public class MappingServiceTests
         await service.CreateChannelAsync(request, CancellationToken.None);
 
         // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
+        _mockMessageBus.Verify(m => m.TryPublishAsync<MappingChannelCreatedEvent>(
             "mapping.channel.created",
             It.IsAny<MappingChannelCreatedEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -343,9 +348,11 @@ public class MappingServiceTests
         await service.CreateChannelAsync(request, CancellationToken.None);
 
         // Assert
-        _mockMessageSubscriber.Verify(m => m.SubscribeAsync(
+        _mockMessageSubscriber.Verify(m => m.SubscribeDynamicAsync<MapIngestEvent>(
             It.Is<string>(t => t.StartsWith("map.ingest.")),
             It.IsAny<Func<MapIngestEvent, CancellationToken, Task>>(),
+            It.IsAny<string?>(),
+            It.IsAny<SubscriptionExchangeType>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -358,9 +365,15 @@ public class MappingServiceTests
     {
         // Arrange
         var service = CreateService();
-        var channelId = Guid.NewGuid();
 
-        // First create a channel to get a valid token
+        // Create channel and capture the saved authority record
+        MappingService.AuthorityRecord? savedAuthority = null;
+        _mockAuthorityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.AuthorityRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MappingService.AuthorityRecord, StateOptions?, CancellationToken>((k, v, o, c) => savedAuthority = v)
+            .ReturnsAsync("etag");
+        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => savedAuthority);
+
         var createRequest = new CreateChannelRequest
         {
             RegionId = Guid.NewGuid(),
@@ -369,16 +382,6 @@ public class MappingServiceTests
         };
         var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
-
-        // Setup authority record with matching token
-        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MappingService.AuthorityRecord
-            {
-                ChannelId = createResponse.ChannelId,
-                AuthorityToken = createResponse.AuthorityToken,
-                ExpiresAt = createResponse.ExpiresAt,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
 
         var releaseRequest = new ReleaseAuthorityRequest
         {
@@ -424,9 +427,15 @@ public class MappingServiceTests
     {
         // Arrange
         var service = CreateService();
-        var channelId = Guid.NewGuid();
 
-        // First create a channel
+        // Create channel and capture the saved authority record
+        MappingService.AuthorityRecord? savedAuthority = null;
+        _mockAuthorityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.AuthorityRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MappingService.AuthorityRecord, StateOptions?, CancellationToken>((k, v, o, c) => savedAuthority = v)
+            .ReturnsAsync("etag");
+        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => savedAuthority);
+
         var createRequest = new CreateChannelRequest
         {
             RegionId = Guid.NewGuid(),
@@ -435,16 +444,6 @@ public class MappingServiceTests
         };
         var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
-
-        // Setup authority record
-        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MappingService.AuthorityRecord
-            {
-                ChannelId = createResponse.ChannelId,
-                AuthorityToken = createResponse.AuthorityToken,
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1), // Valid
-                CreatedAt = DateTimeOffset.UtcNow
-            });
 
         var heartbeatRequest = new AuthorityHeartbeatRequest
         {
@@ -467,9 +466,15 @@ public class MappingServiceTests
     {
         // Arrange
         var service = CreateService();
-        var channelId = Guid.NewGuid();
 
-        // First create a channel
+        // Create channel and capture the saved authority record (will be overridden to expired)
+        MappingService.AuthorityRecord? savedAuthority = null;
+        _mockAuthorityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.AuthorityRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MappingService.AuthorityRecord, StateOptions?, CancellationToken>((k, v, o, c) => savedAuthority = v)
+            .ReturnsAsync("etag");
+        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => savedAuthority);
+
         var createRequest = new CreateChannelRequest
         {
             RegionId = Guid.NewGuid(),
@@ -479,15 +484,14 @@ public class MappingServiceTests
         var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
 
-        // Setup EXPIRED authority record
-        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MappingService.AuthorityRecord
-            {
-                ChannelId = createResponse.ChannelId,
-                AuthorityToken = createResponse.AuthorityToken,
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-1), // Expired
-                CreatedAt = DateTimeOffset.UtcNow.AddHours(-1)
-            });
+        // Override the saved authority to be expired (simulating time passing)
+        savedAuthority = new MappingService.AuthorityRecord
+        {
+            ChannelId = createResponse.ChannelId,
+            AuthorityToken = createResponse.AuthorityToken,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(-1), // Expired
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+        };
 
         var heartbeatRequest = new AuthorityHeartbeatRequest
         {
@@ -515,7 +519,20 @@ public class MappingServiceTests
         // Arrange
         var service = CreateService();
 
-        // First create a channel
+        // Create channel and capture records to return from mocks
+        MappingService.ChannelRecord? savedChannel = null;
+        MappingService.AuthorityRecord? savedAuthority = null;
+        _mockChannelStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.ChannelRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MappingService.ChannelRecord, StateOptions?, CancellationToken>((k, v, o, c) => savedChannel = v)
+            .ReturnsAsync("etag");
+        _mockChannelStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => savedChannel);
+        _mockAuthorityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.AuthorityRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, MappingService.AuthorityRecord, StateOptions?, CancellationToken>((k, v, o, c) => savedAuthority = v)
+            .ReturnsAsync("etag");
+        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => savedAuthority);
+
         var createRequest = new CreateChannelRequest
         {
             RegionId = Guid.NewGuid(),
@@ -524,26 +541,6 @@ public class MappingServiceTests
         };
         var (_, createResponse) = await service.CreateChannelAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
-
-        // Setup channel and authority for validation
-        _mockChannelStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MappingService.ChannelRecord
-            {
-                ChannelId = createResponse.ChannelId,
-                RegionId = createResponse.RegionId,
-                Kind = MapKind.Dynamic_objects,
-                NonAuthorityHandling = NonAuthorityHandlingMode.Reject_and_alert,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
-            });
-        _mockAuthorityStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new MappingService.AuthorityRecord
-            {
-                ChannelId = createResponse.ChannelId,
-                AuthorityToken = createResponse.AuthorityToken,
-                ExpiresAt = createResponse.ExpiresAt,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
 
         var publishRequest = new PublishMapUpdateRequest
         {

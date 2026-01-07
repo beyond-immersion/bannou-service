@@ -68,56 +68,57 @@ paths:
         ,\n                    \"description\": \"Map kind for this channel\"\n                },\n                \"nonAuthorityHandling\"\
         : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
         How to handle non-authority publishes\"\n                },\n                \"alertConfig\": {\n                \
-        \    \"$ref\": \"#/$defs/NonAuthorityAlertConfig\",\n                    \"nullable\": true\n                },\n\
-        \                \"initialSnapshot\": {\n                    \"type\": \"array\",\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/MapPayload\"\n                    },\n                    \"description\"\
-        : \"Optional initial data to populate channel\",\n                    \"nullable\": true\n                }\n    \
-        \        }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        The category of spatial data this map contains.\\nDifferent kinds have different update frequencies, storage models,
-        and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\",\n   \
-        \             \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n               \
-        \ \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n                \"\
-        weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\
-        \n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n  \
-        \              \"reject_and_alert\",\n                \"accept_and_alert\",\n                \"reject_silent\"\n \
-        \           ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"NonAuthorityAlertConfig\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Configuration for non-authority publish alerts\"\
-        ,\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": true,\n                    \"description\": \"Whether to emit warning events\"\n  \
-        \              },\n                \"alertTopic\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"Custom topic for warnings (default map.warnings.unauthorized_publish)\",\n               \
-        \     \"nullable\": true\n                },\n                \"includePayloadSummary\": {\n                    \"\
-        type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Include truncated
-        payload in warning for debugging\"\n                }\n            }\n        },\n        \"MapPayload\": {\n    \
-        \        \"type\": \"object\",\n            \"description\": \"Schema-less payload. Only envelope fields are validated.\\
-        nThe 'data' field can contain ANYTHING the publisher wants.\\nlib-mapping does not validate contents - only publisher
-        and consumer care.\\n\",\n            \"required\": [\n                \"objectType\"\n            ],\n          \
-        \  \"properties\": {\n                \"objectId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Unique ID for this object (generated if not provided)\"\
-        \n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Publisher-defined type (used for indexing and filtering)\"\n                },\n      \
-        \          \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\"\
-        : \"Position for point objects\",\n                    \"nullable\": true\n                },\n                \"\
-        bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Bounds for
-        area objects\",\n                    \"nullable\": true\n                },\n                \"data\": {\n       \
-        \             \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"SCHEMA-LESS. Can contain anything.\\nlib-mapping does not validate this.\\nExamples: cover_rating, health, respawn_delay,
-        etc.\\n\",\n                    \"nullable\": true\n                }\n            }\n        },\n        \"Position3D\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        },\n    \
-        \    \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box
-        in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n \
-        \           \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n\
-        \                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n           \
-        \     \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum
-        corner (highest x, y, z values)\"\n                }\n            }\n        }\n    }\n}"
+        \    \"$ref\": \"#/$defs/NonAuthorityAlertConfig\",\n                    \"description\": \"Configuration for non-authority
+        publish alerts\",\n                    \"nullable\": true\n                },\n                \"initialSnapshot\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MapPayload\"\n                    },\n                    \"description\": \"Optional initial data to
+        populate channel\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"MapKind\": {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data
+        this map contains.\\nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n        \
+        \    \"enum\": [\n                \"terrain\",\n                \"static_geometry\",\n                \"navigation\"\
+        ,\n                \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n  \
+        \              \"dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n        \
+        \        \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n\
+        \        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\"\
+        ,\n                \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\"\
+        : \"reject_and_alert\"\n        },\n        \"NonAuthorityAlertConfig\": {\n            \"type\": \"object\",\n  \
+        \          \"description\": \"Configuration for non-authority publish alerts\",\n            \"properties\": {\n \
+        \               \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
+        \                    \"description\": \"Whether to emit warning events\"\n                },\n                \"alertTopic\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Custom topic for warnings (default
+        map.warnings.unauthorized_publish)\",\n                    \"nullable\": true\n                },\n              \
+        \  \"includePayloadSummary\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Include truncated payload in warning for debugging\"\n                }\n\
+        \            }\n        },\n        \"MapPayload\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Schema-less payload. Only envelope fields are validated.\\nThe 'data' field can contain ANYTHING the publisher
+        wants.\\nlib-mapping does not validate contents - only publisher and consumer care.\\n\",\n            \"required\"\
+        : [\n                \"objectType\"\n            ],\n            \"properties\": {\n                \"objectId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique ID for this object (generated if not provided)\"\n                },\n                \"objectType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Publisher-defined type (used for
+        indexing and filtering)\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Position for point objects\",\n                    \"nullable\": true\n\
+        \                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n          \
+        \          \"description\": \"Bounds for area objects\",\n                    \"nullable\": true\n               \
+        \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"SCHEMA-LESS. Can contain anything.\\nlib-mapping does not validate
+        this.\\nExamples: cover_rating, health, respawn_delay, etc.\\n\",\n                    \"nullable\": true\n      \
+        \          }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n              \
+        \  \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n      \
+        \              \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
+        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
+        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
+        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
+        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthorityGrant\"\
         ,\n    \"$defs\": {\n        \"AuthorityGrant\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Granted authority over a map channel\",\n            \"required\": [\n                \"channelId\",\n       \
@@ -372,27 +373,29 @@ paths:
         ,\n                    \"description\": \"Type of change\"\n                },\n                \"objectType\": {\n\
         \                    \"type\": \"string\",\n                    \"description\": \"Object type (required for created)\"\
         ,\n                    \"nullable\": true\n                },\n                \"position\": {\n                 \
-        \   \"$ref\": \"#/$defs/Position3D\",\n                    \"nullable\": true\n                },\n              \
-        \  \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                    \"nullable\": true\n    \
-        \            },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Object state (for created/updated)\",\n                    \"nullable\"\
-        : true\n                }\n            }\n        },\n        \"ObjectAction\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of change to a map object\",\n            \"enum\": [\n                \"created\"\
-        ,\n                \"updated\",\n                \"deleted\"\n            ]\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        },\n    \
-        \    \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box
-        in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n \
-        \           \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n\
-        \                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n           \
-        \     \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum
-        corner (highest x, y, z values)\"\n                }\n            }\n        }\n    }\n}"
+        \   \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Object position (for create/update)\"\
+        ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
+        \ \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Object bounds (for create/update)\",\n   \
+        \                 \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Object
+        state (for created/updated)\",\n                    \"nullable\": true\n                }\n            }\n       \
+        \ },\n        \"ObjectAction\": {\n            \"type\": \"string\",\n            \"description\": \"Type of change
+        to a map object\",\n            \"enum\": [\n                \"created\",\n                \"updated\",\n        \
+        \        \"deleted\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n  \
+        \          \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n      \
+        \          \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
+        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
+        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
+        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
+        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishObjectChangesResponse\"\
         ,\n    \"$defs\": {\n        \"PublishObjectChangesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response to object changes publish\",\n            \"properties\": {\n                \"accepted\"\
@@ -489,15 +492,17 @@ paths:
         \                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"Map kind this object is
         stored under\"\n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n\
         \                    \"description\": \"Publisher-defined type\"\n                },\n                \"position\"\
-        : {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"nullable\": true\n             \
-        \   },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                    \"nullable\"\
-        : true\n                },\n                \"data\": {\n                    \"type\": \"object\",\n             \
-        \       \"additionalProperties\": true,\n                    \"nullable\": true\n                },\n            \
-        \    \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
-        \                \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        : {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Position for point
+        objects\",\n                    \"nullable\": true\n                },\n                \"bounds\": {\n          \
+        \          \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Bounding box for area objects\",\n\
+        \                    \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Schema-less
+        object data (publisher-defined)\",\n                    \"nullable\": true\n                },\n                \"\
+        version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n           \
+        \         \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
         description\": \"When the object was last updated\"\n                }\n            }\n        },\n        \"MapKind\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
         nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
@@ -596,17 +601,19 @@ paths:
         ,\n                    \"description\": \"Map kind this object is stored under\"\n                },\n           \
         \     \"objectType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Publisher-defined
         type\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
-        \ \"$ref\": \"#/$defs/Bounds\",\n                    \"nullable\": true\n                },\n                \"data\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"\
-        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for
-        ordering\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n   \
-        \             }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
+        ,\n                    \"description\": \"Position for point objects\",\n                    \"nullable\": true\n\
+        \                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n          \
+        \          \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n         \
+        \       },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
+        \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
+        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
+        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
         storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\"\
         ,\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n          \
         \      \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n             \
@@ -708,9 +715,11 @@ paths:
         \          \"description\": \"Map kind this object is stored under\"\n                },\n                \"objectType\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Publisher-defined type\"\n\
         \                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n    \
-        \                \"nullable\": true\n                },\n                \"bounds\": {\n                    \"$ref\"\
-        : \"#/$defs/Bounds\",\n                    \"nullable\": true\n                },\n                \"data\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": true,\n                 \
+        \                \"description\": \"Position for point objects\",\n                    \"nullable\": true\n      \
+        \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
+        \    \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n               \
+        \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
         \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
         ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
         \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
@@ -812,9 +821,11 @@ paths:
         \         \"description\": \"Map kind this object is stored under\"\n                },\n                \"objectType\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Publisher-defined type\"\n\
         \                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n    \
-        \                \"nullable\": true\n                },\n                \"bounds\": {\n                    \"$ref\"\
-        : \"#/$defs/Bounds\",\n                    \"nullable\": true\n                },\n                \"data\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": true,\n                 \
+        \                \"description\": \"Position for point objects\",\n                    \"nullable\": true\n      \
+        \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
+        \    \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n               \
+        \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
         \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
         ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
         \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
@@ -972,46 +983,47 @@ paths:
         \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AffordanceLocation\"\
         \n                    },\n                    \"description\": \"Scored locations (highest score first)\"\n      \
         \          },\n                \"queryMetadata\": {\n                    \"$ref\": \"#/$defs/AffordanceQueryMetadata\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"AffordanceLocation\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A location that affords the requested action\"\
-        ,\n            \"properties\": {\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Location position\"\n                },\n                \"bounds\": {\n\
-        \                    \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Area bounds if affordance
-        spans an area\",\n                    \"nullable\": true\n                },\n                \"score\": {\n     \
-        \               \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n\
-        \                    \"description\": \"How well this location affords the action (0-1)\"\n                },\n  \
-        \              \"features\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"What makes this location suitable.\\nExample: { \\\"cover_rating\\\
-        \": 0.8, \\\"sightlines\\\": [\\\"north\\\"], \\\"terrain\\\": \\\"rocky\\\" }\\n\",\n                    \"nullable\"\
-        : true\n                },\n                \"objectIds\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
-        \n                    },\n                    \"description\": \"Map objects contributing to this affordance\",\n\
-        \                    \"nullable\": true\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        },\n    \
-        \    \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box
-        in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n \
-        \           \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n\
-        \                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n           \
-        \     \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum
-        corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"AffordanceQueryMetadata\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Metadata about the affordance query execution\"\
-        ,\n            \"properties\": {\n                \"kindsSearched\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Map kinds that were queried\",\n                    \"nullable\": true\n         \
-        \       },\n                \"objectsEvaluated\": {\n                    \"type\": \"integer\",\n                \
-        \    \"description\": \"Number of candidate objects evaluated\"\n                },\n                \"candidatesGenerated\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of candidate positions
-        generated\"\n                },\n                \"searchDurationMs\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Query execution time in milliseconds\"\n                },\n           \
-        \     \"cacheHit\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        results came from cache\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"description\": \"Metadata about query execution (optional)\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"AffordanceLocation\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A location that affords the requested action\",\n            \"properties\"\
+        : {\n                \"position\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"\
+        description\": \"Location position\"\n                },\n                \"bounds\": {\n                    \"$ref\"\
+        : \"#/$defs/Bounds\",\n                    \"description\": \"Area bounds if affordance spans an area\",\n       \
+        \             \"nullable\": true\n                },\n                \"score\": {\n                    \"type\":
+        \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
+        : \"How well this location affords the action (0-1)\"\n                },\n                \"features\": {\n     \
+        \               \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        description\": \"What makes this location suitable.\\nExample: { \\\"cover_rating\\\": 0.8, \\\"sightlines\\\": [\\\
+        \"north\\\"], \\\"terrain\\\": \\\"rocky\\\" }\\n\",\n                    \"nullable\": true\n                },\n\
+        \                \"objectIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
+        \                      \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"description\": \"Map objects contributing to this affordance\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n  \
+        \              \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\":
+        \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n                 \
+        \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Z coordinate
+        (typically north-south)\"\n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
+        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
+        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
+        \            }\n            }\n        },\n        \"AffordanceQueryMetadata\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Metadata about the affordance query execution\",\n            \"properties\": {\n\
+        \                \"kindsSearched\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Map
+        kinds that were queried\",\n                    \"nullable\": true\n                },\n                \"objectsEvaluated\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of candidate objects
+        evaluated\"\n                },\n                \"candidatesGenerated\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of candidate positions generated\"\n                },\n        \
+        \        \"searchDurationMs\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Query execution time in milliseconds\"\n                },\n                \"cacheHit\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"description\": \"Whether results came from cache\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find locations that afford a specific action or scene type\",\n    \"description\"\
         : \"Affordance queries answer \\\"where can I do X?\\\" by combining\\nmultiple map kinds and applying game-specific
         scoring logic.\\n\\nUsed by Event Brain for procedural scene orchestration:\\n- \\\"Find ambush locations\\\"\\n-
@@ -1368,13 +1380,16 @@ components:
           description: Publisher-defined type
         position:
           $ref: '#/components/schemas/Position3D'
+          description: Position for point objects
           nullable: true
         bounds:
           $ref: '#/components/schemas/Bounds'
+          description: Bounding box for area objects
           nullable: true
         data:
           type: object
           additionalProperties: true
+          description: Schema-less object data (publisher-defined)
           nullable: true
         version:
           type: integer
@@ -1409,9 +1424,11 @@ components:
           nullable: true
         position:
           $ref: '#/components/schemas/Position3D'
+          description: Object position (for create/update)
           nullable: true
         bounds:
           $ref: '#/components/schemas/Bounds'
+          description: Object bounds (for create/update)
           nullable: true
         data:
           type: object
@@ -1561,6 +1578,7 @@ components:
           description: How to handle non-authority publishes
         alertConfig:
           $ref: '#/components/schemas/NonAuthorityAlertConfig'
+          description: Configuration for non-authority publish alerts
           nullable: true
         initialSnapshot:
           type: array
@@ -2001,6 +2019,7 @@ components:
           description: Scored locations (highest score first)
         queryMetadata:
           $ref: '#/components/schemas/AffordanceQueryMetadata'
+          description: Metadata about query execution (optional)
           nullable: true
 
     # ========== AUTHORING REQUEST/RESPONSE ==========

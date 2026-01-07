@@ -392,12 +392,21 @@ public partial class MapObject
     [System.Text.Json.Serialization.JsonRequired]
     public string ObjectType { get; set; } = default!;
 
+    /// <summary>
+    /// Position for point objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public Position3D? Position { get; set; } = default!;
 
+    /// <summary>
+    /// Bounding box for area objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public Bounds? Bounds { get; set; } = default!;
 
+    /// <summary>
+    /// Schema-less object data (publisher-defined)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
 
@@ -467,9 +476,15 @@ public partial class ObjectChange
     [System.Text.Json.Serialization.JsonPropertyName("objectType")]
     public string? ObjectType { get; set; } = default!;
 
+    /// <summary>
+    /// Object position (for create/update)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public Position3D? Position { get; set; } = default!;
 
+    /// <summary>
+    /// Object bounds (for create/update)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public Bounds? Bounds { get; set; } = default!;
 
@@ -757,6 +772,9 @@ public partial class CreateChannelRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
 
+    /// <summary>
+    /// Configuration for non-authority publish alerts
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alertConfig")]
     public NonAuthorityAlertConfig? AlertConfig { get; set; } = default!;
 
@@ -1683,6 +1701,9 @@ public partial class AffordanceQueryResponse
     [System.Text.Json.Serialization.JsonPropertyName("locations")]
     public System.Collections.Generic.ICollection<AffordanceLocation> Locations { get; set; } = default!;
 
+    /// <summary>
+    /// Metadata about query execution (optional)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queryMetadata")]
     public AffordanceQueryMetadata? QueryMetadata { get; set; } = default!;
 

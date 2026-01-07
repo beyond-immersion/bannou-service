@@ -135,13 +135,16 @@ components:
           description: Publisher-defined type
         position:
           $ref: '#/components/schemas/EventPosition3D'
+          description: Position for point objects
           nullable: true
         bounds:
           $ref: '#/components/schemas/EventBounds'
+          description: Bounding box for area objects
           nullable: true
         data:
           type: object
           additionalProperties: true
+          description: Schema-less object data (publisher-defined)
           nullable: true
         version:
           type: integer
@@ -195,13 +198,16 @@ components:
           description: Type of change
         position:
           $ref: '#/components/schemas/EventPosition3D'
+          description: Position for point objects
           nullable: true
         bounds:
           $ref: '#/components/schemas/EventBounds'
+          description: Bounding box for area objects
           nullable: true
         data:
           type: object
           additionalProperties: true
+          description: Schema-less object data (publisher-defined)
           nullable: true
 
     # ========== BROADCAST EVENTS (Service -> Consumers) ==========
@@ -383,9 +389,11 @@ components:
           nullable: true
         position:
           $ref: '#/components/schemas/EventPosition3D'
+          description: Object position (for created/updated)
           nullable: true
         bounds:
           $ref: '#/components/schemas/EventBounds'
+          description: Object bounds (for created/updated)
           nullable: true
         data:
           type: object

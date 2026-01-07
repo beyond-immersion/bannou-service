@@ -137,12 +137,21 @@ public partial class EventMapObject
     [System.Text.Json.Serialization.JsonRequired]
     public string ObjectType { get; set; } = default!;
 
+    /// <summary>
+    /// Position for point objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public EventPosition3D? Position { get; set; } = default!;
 
+    /// <summary>
+    /// Bounding box for area objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public EventBounds? Bounds { get; set; } = default!;
 
+    /// <summary>
+    /// Schema-less object data (publisher-defined)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
 
@@ -243,12 +252,21 @@ public partial class IngestPayload
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public IngestPayloadAction Action { get; set; } = BeyondImmersion.BannouService.Events.IngestPayloadAction.Update;
 
+    /// <summary>
+    /// Position for point objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public EventPosition3D? Position { get; set; } = default!;
 
+    /// <summary>
+    /// Bounding box for area objects
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public EventBounds? Bounds { get; set; } = default!;
 
+    /// <summary>
+    /// Schema-less object data (publisher-defined)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
 
@@ -560,9 +578,15 @@ public partial class ObjectChangeEvent
     [System.Text.Json.Serialization.JsonPropertyName("objectType")]
     public string? ObjectType { get; set; } = default!;
 
+    /// <summary>
+    /// Object position (for created/updated)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     public EventPosition3D? Position { get; set; } = default!;
 
+    /// <summary>
+    /// Object bounds (for created/updated)
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
     public EventBounds? Bounds { get; set; } = default!;
 

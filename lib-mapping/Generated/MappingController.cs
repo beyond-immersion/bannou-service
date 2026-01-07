@@ -527,6 +527,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "alertConfig": {
                     "$ref": "#/$defs/NonAuthorityAlertConfig",
+                    "description": "Configuration for non-authority publish alerts",
                     "nullable": true
                 },
                 "initialSnapshot": {
@@ -590,7 +591,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         },
         "MapPayload": {
             "type": "object",
-            "description": "Schema-less payload. Only envelope fields are validated.\ nThe 'data' field can contain ANYTHING the publisher wants.\nlib-mapping does not validate contents - only publisher and consumer care.\n",
+            "description": "Schema-less payload. Only envelope fields are validated.\nThe 'data' field can contain ANYTHING the publisher wants.\nlib-mapping does not validate contents - only publisher and consumer care.\n",
             "required": [
                 "objectType"
             ],
@@ -1286,10 +1287,12 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "position": {
                     "$ref": "#/$defs/Position3D",
+                    "description": "Object position (for create/update)",
                     "nullable": true
                 },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
+                    "description": "Object bounds (for create/update)",
                     "nullable": true
                 },
                 "data": {
@@ -1608,15 +1611,18 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "position": {
                     "$ref": "#/$defs/Position3D",
+                    "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
+                    "description": "Bounding box for area objects",
                     "nullable": true
                 },
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
+                    "description": "Schema-less object data (publisher-defined)",
                     "nullable": true
                 },
                 "version": {
@@ -1902,15 +1908,18 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "position": {
                     "$ref": "#/$defs/Position3D",
+                    "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
+                    "description": "Bounding box for area objects",
                     "nullable": true
                 },
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
+                    "description": "Schema-less object data (publisher-defined)",
                     "nullable": true
                 },
                 "version": {
@@ -2214,15 +2223,18 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "position": {
                     "$ref": "#/$defs/Position3D",
+                    "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
+                    "description": "Bounding box for area objects",
                     "nullable": true
                 },
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
+                    "description": "Schema-less object data (publisher-defined)",
                     "nullable": true
                 },
                 "version": {
@@ -2505,15 +2517,18 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "position": {
                     "$ref": "#/$defs/Position3D",
+                    "description": "Position for point objects",
                     "nullable": true
                 },
                 "bounds": {
                     "$ref": "#/$defs/Bounds",
+                    "description": "Bounding box for area objects",
                     "nullable": true
                 },
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
+                    "description": "Schema-less object data (publisher-defined)",
                     "nullable": true
                 },
                 "version": {
@@ -2910,6 +2925,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "queryMetadata": {
                     "$ref": "#/$defs/AffordanceQueryMetadata",
+                    "description": "Metadata about query execution (optional)",
                     "nullable": true
                 }
             }

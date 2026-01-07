@@ -28,6 +28,8 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-mapping -->
     <ProjectReference Include="../lib-mapping/lib-mapping.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>

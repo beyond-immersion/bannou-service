@@ -4113,6 +4113,21 @@
             Publisher-defined type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Position">
+            <summary>
+            Position for point objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Bounds">
+            <summary>
+            Bounding box for area objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Data">
+            <summary>
+            Schema-less object data (publisher-defined)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.EventMapObject.Version">
             <summary>
             Object version
@@ -4169,6 +4184,21 @@
         <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.Action">
             <summary>
             Type of change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.Position">
+            <summary>
+            Position for point objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.Bounds">
+            <summary>
+            Bounding box for area objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.Data">
+            <summary>
+            Schema-less object data (publisher-defined)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.IngestPayload.AdditionalProperties">
@@ -4370,6 +4400,16 @@
         <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.ObjectType">
             <summary>
             Object type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.Position">
+            <summary>
+            Object position (for created/updated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.Bounds">
+            <summary>
+            Object bounds (for created/updated)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ObjectChangeEvent.Data">
@@ -22770,6 +22810,21 @@
             Publisher-defined type
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Position">
+            <summary>
+            Position for point objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Bounds">
+            <summary>
+            Bounding box for area objects
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Data">
+            <summary>
+            Schema-less object data (publisher-defined)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.MapObject.Version">
             <summary>
             Monotonic version for ordering
@@ -22808,6 +22863,16 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.ObjectType">
             <summary>
             Object type (required for created)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.Position">
+            <summary>
+            Object position (for create/update)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.Bounds">
+            <summary>
+            Object bounds (for create/update)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.ObjectChange.Data">
@@ -22991,6 +23056,11 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.NonAuthorityHandling">
             <summary>
             How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.AlertConfig">
+            <summary>
+            Configuration for non-authority publish alerts
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.InitialSnapshot">
@@ -23568,6 +23638,11 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse.Locations">
             <summary>
             Scored locations (highest score first)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse.QueryMetadata">
+            <summary>
+            Metadata about query execution (optional)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AffordanceQueryResponse.AdditionalProperties">
