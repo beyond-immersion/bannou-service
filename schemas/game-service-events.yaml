@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Game Service Events
+  description: |
+    Event models for Game Service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Game Service doesn't subscribe to external events
+  x-event-publications:
+    # Game Service lifecycle events (auto-generated from x-lifecycle)
+    - topic: game-service.created
+      event: GameServiceCreatedEvent
+      description: Published when a new game service is registered
+    - topic: game-service.updated
+      event: GameServiceUpdatedEvent
+      description: Published when a game service configuration is updated
+    - topic: game-service.deleted
+      event: GameServiceDeletedEvent
+      description: Published when a game service is deleted
+
+paths: {}  # Events don't have HTTP paths
+
+# Auto-generate CRUD events for GameService entity
+x-lifecycle:
+  GameService:
+    model:
+      gameServiceId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: Unique identifier for the game service
+      stubName:
+        type: string
+        required: true
+        description: Short machine-readable name for the service
+      displayName:
+        type: string
+        required: true
+        description: Human-readable display name for the service
+      description:
+        type: string
+        nullable: true
+        description: Description of what the game service does
+      isActive:
+        type: boolean
+        required: true
+        description: Whether the game service is currently active
+
+components:
+  schemas:
+    # Note: GameServiceCreatedEvent, GameServiceUpdatedEvent, GameServiceDeletedEvent are auto-generated
+    # from the x-lifecycle definition above. Do not define them manually here.

@@ -140,6 +140,9 @@ public partial class AchievementService : IAchievementService
                 body.AchievementId,
                 cancellationToken: cancellationToken);
 
+            // Publish definition created event
+            await PublishDefinitionCreatedEventAsync(definition, cancellationToken);
+
             return (StatusCodes.OK, MapToResponse(definition, 0));
         }
         catch (Exception ex)
@@ -300,25 +303,41 @@ public partial class AchievementService : IAchievementService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Track which fields are being updated
+            var changedFields = new List<string>();
+
             // Apply updates
-            if (!string.IsNullOrEmpty(body.DisplayName))
+            if (!string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != definition.DisplayName)
             {
                 definition.DisplayName = body.DisplayName;
+                changedFields.Add("displayName");
             }
-            if (body.Description != null)
+            if (body.Description != null && body.Description != definition.Description)
             {
                 definition.Description = body.Description;
+                changedFields.Add("description");
             }
-            if (body.IsActive.HasValue)
+            if (body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
             {
                 definition.IsActive = body.IsActive.Value;
+                changedFields.Add("isActive");
             }
             if (body.PlatformIds != null)
             {
                 definition.PlatformIds = body.PlatformIds.ToDictionary(x => x.Key, x => x.Value);
+                changedFields.Add("platformIds");
+            }
+
+            if (changedFields.Count == 0)
+            {
+                // No changes
+                return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
             }
 
             await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+
+            // Publish definition updated event
+            await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
 
             return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
         }
@@ -363,6 +382,9 @@ public partial class AchievementService : IAchievementService
                 GetDefinitionIndexKey(body.GameServiceId),
                 body.AchievementId,
                 cancellationToken);
+
+            // Publish definition deleted event
+            await PublishDefinitionDeletedEventAsync(definition, cancellationToken);
 
             return StatusCodes.OK;
         }
@@ -1391,6 +1413,117 @@ public partial class AchievementService : IAchievementService
             Platform.Internal => AchievementPlatformSyncedEventPlatform.Internal,
             _ => AchievementPlatformSyncedEventPlatform.Internal
         };
+
+    /// <summary>
+    /// Maps AchievementType to definition created event achievement type.
+    /// </summary>
+    private static AchievementDefinitionCreatedEventAchievementType MapToCreatedEventAchievementType(AchievementType achievementType)
+        => achievementType switch
+        {
+            AchievementType.Standard => AchievementDefinitionCreatedEventAchievementType.Standard,
+            AchievementType.Progressive => AchievementDefinitionCreatedEventAchievementType.Progressive,
+            AchievementType.Hidden => AchievementDefinitionCreatedEventAchievementType.Hidden,
+            AchievementType.Secret => AchievementDefinitionCreatedEventAchievementType.Secret,
+            _ => AchievementDefinitionCreatedEventAchievementType.Standard
+        };
+
+    /// <summary>
+    /// Maps Platform to definition created event platform enum.
+    /// </summary>
+    private static Platforms MapToCreatedEventPlatform(Platform platform)
+        => platform switch
+        {
+            Platform.Steam => Platforms.Steam,
+            Platform.Xbox => Platforms.Xbox,
+            Platform.Playstation => Platforms.Playstation,
+            Platform.Internal => Platforms.Internal,
+            _ => Platforms.Internal
+        };
+
+    #endregion
+
+    #region Definition Lifecycle Event Publishing
+
+    /// <summary>
+    /// Publishes an event when a new achievement definition is created.
+    /// </summary>
+    private async Task PublishDefinitionCreatedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new AchievementDefinitionCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = definition.GameServiceId,
+                AchievementId = definition.AchievementId,
+                DisplayName = definition.DisplayName,
+                Description = definition.Description,
+                AchievementType = MapToCreatedEventAchievementType(definition.AchievementType),
+                Points = definition.Points,
+                ProgressTarget = definition.ProgressTarget,
+                Platforms = definition.Platforms?.Select(MapToCreatedEventPlatform).ToList() ?? new List<Platforms>()
+            };
+            await _messageBus.TryPublishAsync("achievement.definition.created", eventModel, cancellationToken: cancellationToken);
+            _logger.LogDebug("Published achievement.definition.created event for {AchievementId}", definition.AchievementId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish achievement.definition.created event for {AchievementId}", definition.AchievementId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an event when an achievement definition is updated.
+    /// </summary>
+    private async Task PublishDefinitionUpdatedEventAsync(AchievementDefinitionData definition, List<string> changedFields, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new AchievementDefinitionUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = definition.GameServiceId,
+                AchievementId = definition.AchievementId,
+                DisplayName = definition.DisplayName,
+                Description = definition.Description,
+                Points = definition.Points,
+                ProgressTarget = definition.ProgressTarget
+            };
+            await _messageBus.TryPublishAsync("achievement.definition.updated", eventModel, cancellationToken: cancellationToken);
+            _logger.LogDebug("Published achievement.definition.updated event for {AchievementId} (changed: {ChangedFields})",
+                definition.AchievementId, string.Join(", ", changedFields));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish achievement.definition.updated event for {AchievementId}", definition.AchievementId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an event when an achievement definition is deleted.
+    /// </summary>
+    private async Task PublishDefinitionDeletedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new AchievementDefinitionDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = definition.GameServiceId,
+                AchievementId = definition.AchievementId,
+                DisplayName = definition.DisplayName
+            };
+            await _messageBus.TryPublishAsync("achievement.definition.deleted", eventModel, cancellationToken: cancellationToken);
+            _logger.LogDebug("Published achievement.definition.deleted event for {AchievementId}", definition.AchievementId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish achievement.definition.deleted event for {AchievementId}", definition.AchievementId);
+        }
+    }
 
     #endregion
 }

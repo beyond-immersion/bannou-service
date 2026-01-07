@@ -227,6 +227,21 @@ public partial class AssetService : IAssetService
             _logger.LogInformation("RequestUpload: Created upload session {UploadId}, multipart={IsMultipart}",
                 uploadId, isMultipart);
 
+            // Publish AssetUploadRequestedEvent for audit trail
+            await _messageBus.TryPublishAsync(
+                "asset.upload.requested",
+                new BeyondImmersion.BannouService.Events.AssetUploadRequestedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    UploadId = uploadId,
+                    Owner = body.Owner,
+                    Filename = body.Filename,
+                    Size = body.Size,
+                    ContentType = body.ContentType,
+                    IsMultipart = isMultipart
+                });
+
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)

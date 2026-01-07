@@ -154,6 +154,12 @@ public partial class DeleteServiceRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ServiceId { get; set; } = default!;
 
+    /// <summary>
+    /// Optional reason for deletion (included in the lifecycle event)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
 }
 
 /// <summary>

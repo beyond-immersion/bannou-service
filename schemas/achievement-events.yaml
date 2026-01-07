@@ -25,6 +25,16 @@ info:
       event: LeaderboardRankChangedEvent
       handler: HandleRankChanged
   x-event-publications:
+    # Achievement definition lifecycle events
+    - topic: achievement.definition.created
+      event: AchievementDefinitionCreatedEvent
+      description: Published when a new achievement definition is created
+    - topic: achievement.definition.updated
+      event: AchievementDefinitionUpdatedEvent
+      description: Published when an achievement definition is updated
+    - topic: achievement.definition.deleted
+      event: AchievementDefinitionDeletedEvent
+      description: Published when an achievement definition is deleted
     # Published when an achievement is unlocked
     - topic: achievement.unlocked
       event: AchievementUnlockedEvent
@@ -233,3 +243,139 @@ components:
           type: string
           nullable: true
           description: Error message if sync failed
+
+    # ============================================
+    # Definition Lifecycle Events
+    # ============================================
+    AchievementDefinitionCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new achievement definition is created
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - achievementId
+        - displayName
+        - achievementType
+        - points
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the definition was created
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service this achievement belongs to
+        achievementId:
+          type: string
+          description: Unique identifier for the achievement within the game service
+        displayName:
+          type: string
+          description: Human-readable display name for the achievement
+        description:
+          type: string
+          nullable: true
+          description: Detailed description of how to earn the achievement
+        achievementType:
+          type: string
+          enum:
+            - standard
+            - progressive
+            - hidden
+            - secret
+          description: Type of achievement
+        points:
+          type: integer
+          description: Points awarded for unlocking this achievement
+        progressTarget:
+          type: integer
+          nullable: true
+          description: Target value for progressive achievements
+        platforms:
+          type: array
+          items:
+            type: string
+            enum:
+              - steam
+              - xbox
+              - playstation
+              - internal
+          description: Platforms where this achievement is available
+
+    AchievementDefinitionUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an achievement definition is updated
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - achievementId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the definition was updated
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          description: Unique identifier for the achievement
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name (if changed)
+        description:
+          type: string
+          nullable: true
+          description: Updated description (if changed)
+        points:
+          type: integer
+          nullable: true
+          description: Updated points value (if changed)
+        progressTarget:
+          type: integer
+          nullable: true
+          description: Updated progress target (if changed)
+
+    AchievementDefinitionDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an achievement definition is deleted
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - achievementId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the definition was deleted
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        achievementId:
+          type: string
+          description: ID of the deleted achievement
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the deleted achievement (for logging/audit)

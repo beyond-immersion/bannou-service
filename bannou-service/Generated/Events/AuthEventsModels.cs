@@ -158,6 +158,286 @@ public enum SessionUpdatedEventReason
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Published when a user successfully authenticates with username/password
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthLoginSuccessfulEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that logged in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Username or email used for authentication
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("username")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session created for this login (for tracing WebSocket connections)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// IP address of the login request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+    /// <summary>
+    /// User agent string from the login request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userAgent")]
+    public string? UserAgent { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a login attempt fails (for brute force detection)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthLoginFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Username that was attempted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("username")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// Why the login attempt failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthLoginFailedReason Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID if the username exists (null if unknown user)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    public System.Guid? AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// IP address of the failed login attempt
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+    /// <summary>
+    /// User agent string from the request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("userAgent")]
+    public string? UserAgent { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reason why the login attempt failed
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthLoginFailedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"invalid_credentials")]
+    Invalid_credentials = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account_disabled")]
+    Account_disabled = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account_locked")]
+    Account_locked = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account_not_found")]
+    Account_not_found = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Published when a new user successfully registers
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthRegistrationSuccessfulEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the newly created account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Username chosen by the user
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("username")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// Email address provided during registration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Email { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session created for this registration (for tracing WebSocket connections)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// IP address of the registration request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a user authenticates via OAuth provider
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthOAuthLoginSuccessfulEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that logged in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// OAuth provider name (e.g., discord, google)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Provider { get; set; } = default!;
+
+    /// <summary>
+    /// User ID from the OAuth provider
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("providerUserId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ProviderUserId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session created for this login (for tracing WebSocket connections)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this login created a new account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isNewAccount")]
+    public bool IsNewAccount { get; set; } = false;
+
+    /// <summary>
+    /// IP address of the login request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a user authenticates via Steam
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthSteamLoginSuccessfulEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that logged in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Steam ID (64-bit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("steamId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SteamId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session created for this login (for tracing WebSocket connections)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this login created a new account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isNewAccount")]
+    public bool IsNewAccount { get; set; } = false;
+
+    /// <summary>
+    /// IP address of the login request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a password reset is successfully completed
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthPasswordResetSuccessfulEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account whose password was reset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// IP address of the password reset request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

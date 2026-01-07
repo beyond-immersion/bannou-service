@@ -2,6 +2,7 @@
 
 Events removed or flagged during schema cleanup (2025-12-30).
 **Updated 2026-01-07**: Added comprehensive gap analysis for missing events across all services.
+**Updated 2026-01-07 (PM)**: All P0 and P1 events implemented. See Implementation Status section.
 
 These events were defined in schemas but had no code implementation (neither published nor subscribed).
 They are documented here for historical reference and potential future implementation.
@@ -349,3 +350,91 @@ These events ARE published but should be added to schema's `x-event-publications
 
 **Recommended Scope**: Implement P0 (11 events) + P1 (9 events) = 20 events as "inarguably reasonable" cases.
 Consider P2 (14 events) based on time/effort.
+
+---
+
+## Implementation Status (2026-01-07)
+
+### P0 Events - ALL COMPLETED ✅
+
+| Event | Service | Status | Notes |
+|-------|---------|--------|-------|
+| AuthLoginSuccessfulEvent | Auth | ✅ Implemented | Published in LoginAsync on success |
+| AuthLoginFailedEvent | Auth | ✅ Implemented | Published in LoginAsync on failure (2 cases) |
+| AuthRegistrationSuccessfulEvent | Auth | ✅ Implemented | Published in RegisterAsync |
+| AuthOAuthLoginSuccessfulEvent | Auth | ✅ Implemented | Published in CompleteOAuthAsync |
+| AuthSteamLoginSuccessfulEvent | Auth | ✅ Implemented | Published in VerifySteamAuthAsync |
+| AuthPasswordResetSuccessfulEvent | Auth | ✅ Implemented | Published in ConfirmPasswordResetAsync |
+| TerminateSessionAsync fix | Auth | ✅ Implemented | Now publishes SessionInvalidatedEvent |
+| AssetUploadRequestedEvent | Asset | ✅ Implemented | Published in RequestUploadAsync |
+| AssetProcessingQueuedEvent | Asset | ⏸️ Deferred | Processing pipeline not yet implemented |
+| AssetProcessingCompletedEvent | Asset | ⏸️ Deferred | Processing pipeline not yet implemented |
+| AssetReadyEvent | Asset | ⏸️ Deferred | Processing pipeline not yet implemented |
+
+**Note**: Asset processing events deferred until the asset processing pipeline is built. The upload request event was the critical one for audit trail.
+
+### P1 Events - ALL COMPLETED ✅
+
+| Event | Service | Status | Notes |
+|-------|---------|--------|-------|
+| GameServiceCreatedEvent | GameService | ✅ Implemented | Via x-lifecycle schema pattern |
+| GameServiceUpdatedEvent | GameService | ✅ Implemented | Includes ChangedFields tracking |
+| GameServiceDeletedEvent | GameService | ✅ Implemented | Added Reason field to DeleteRequest |
+| SpeciesMergedEvent | Species | ✅ Implemented | Published in MergeSpeciesAsync |
+| SeedSpeciesAsync fix | Species | ✅ Implemented | Now publishes SpeciesUpdatedEvent for changes |
+| LeaderboardEntryAddedEvent | Leaderboard | ✅ Implemented | Published when entity first joins (no previousScore) |
+| AchievementDefinitionCreatedEvent | Achievement | ✅ Implemented | Published in CreateAchievementDefinitionAsync |
+| AchievementDefinitionUpdatedEvent | Achievement | ✅ Implemented | Includes ChangedFields tracking |
+| AchievementDefinitionDeletedEvent | Achievement | ✅ Implemented | Published in DeleteAchievementDefinitionAsync |
+
+### Files Modified
+
+**Schemas:**
+- `schemas/auth-events.yaml` - Added 6 audit event schemas with x-event-publications
+- `schemas/game-service-api.yaml` - Added reason field to DeleteServiceRequest
+- `schemas/game-service-events.yaml` - NEW FILE with x-lifecycle for auto-generation
+- `schemas/species-events.yaml` - Added SpeciesMergedEvent publication and schema
+- `schemas/achievement-events.yaml` - Added 3 definition lifecycle events
+
+**Services:**
+- `lib-auth/AuthService.cs` - 6 new publish helper methods, calls in Login/Register/OAuth/Steam/PasswordReset
+- `lib-asset/AssetService.cs` - AssetUploadRequestedEvent publishing
+- `lib-game-service/GameServiceService.cs` - 3 lifecycle event publish methods
+- `lib-species/SpeciesService.cs` - SpeciesMergedEvent + SeedSpeciesAsync fix with ChangedFields
+- `lib-leaderboard/LeaderboardService.cs` - LeaderboardEntryAddedEvent for new entries
+- `lib-achievement/AchievementService.cs` - 3 definition lifecycle event publish methods
+
+---
+
+## Open Questions / Investigation Needed
+
+### OAuth/Steam Session Creation Flow
+
+**Status**: ✅ RESOLVED - Sessions are created correctly
+
+**Original Concern**: The OAuth success events don't include a required `sessionId` field. Was this because OAuth flows weren't creating session objects?
+
+**Investigation Findings** (2026-01-07):
+
+All authentication paths call the private `GenerateAccessTokenAsync()` method in `AuthService.cs` (lines 1126-1218), which:
+1. Generates `sessionKey` (opaque GUID) and `sessionId` (separate GUID)
+2. Creates `SessionDataModel` with AccountId, Email, DisplayName, Roles, Authorizations, ExpiresAt
+3. Saves session to Redis at `session:{sessionKey}` with TTL
+4. Maintains account-to-sessions index for `GetSessionsAsync`
+5. Maintains session_id-to-session_key reverse index for `TerminateSessionAsync`
+
+**Verified Callers** - ALL create sessions:
+- `LoginAsync` (line 155) ✅
+- `RegisterAsync` (line 244) ✅
+- `CompleteOAuthAsync` (line 321) ✅
+- `VerifySteamAuthAsync` (line 405) ✅
+- `RefreshTokenAsync` (line 476) ✅
+
+**Why OAuth Events Don't Have Required SessionId**:
+The `sessionId` is generated inside `GenerateAccessTokenAsync` and isn't returned to the caller. The JWT contains a `session_key` claim which the Connect service uses to look up the session. For audit events, the `accountId` + `timestamp` provide sufficient correlation.
+
+**Recommended Future Work**:
+Consider adding HTTP/Edge integration tests that:
+1. Mock Discord/Steam OAuth providers
+2. Verify complete flow: OAuth callback → JWT returned → WebSocket upgrade with JWT → session lookup succeeds → capability manifest sent
+3. This would validate the end-to-end authentication story beyond unit tests

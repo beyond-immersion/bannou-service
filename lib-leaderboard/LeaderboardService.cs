@@ -490,8 +490,26 @@ public partial class LeaderboardService : ILeaderboardService
                 ? prevRank - currentRank // Higher rank (lower number) is better
                 : currentRank - prevRank; // Lower rank is better for ascending
 
-            // Publish rank changed event if rank changed significantly
-            if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
+            // Publish entry added event for new entities (first time on leaderboard)
+            if (!previousScore.HasValue && newRank.HasValue)
+            {
+                var totalEntries = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+                var entryAddedEvent = new LeaderboardEntryAddedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    GameServiceId = body.GameServiceId,
+                    LeaderboardId = body.LeaderboardId,
+                    EntityId = body.EntityId,
+                    EntityType = MapToEntryAddedEventEntityType(body.EntityType),
+                    Score = finalScore,
+                    Rank = currentRank,
+                    TotalEntries = totalEntries
+                };
+                await _messageBus.TryPublishAsync("leaderboard.entry.added", entryAddedEvent, cancellationToken: cancellationToken);
+            }
+            // Publish rank changed event if rank changed significantly (for existing entries)
+            else if (previousRank.HasValue && newRank.HasValue && previousRank.Value != newRank.Value)
             {
                 var rankEvent = new LeaderboardRankChangedEvent
                 {
@@ -1062,7 +1080,7 @@ public partial class LeaderboardService : ILeaderboardService
         };
 
     /// <summary>
-    /// Maps EntityType to event entity type.
+    /// Maps EntityType to LeaderboardRankChangedEvent entity type.
     /// </summary>
     private static LeaderboardRankChangedEventEntityType MapToEventEntityType(EntityType entityType)
         => entityType switch
@@ -1073,6 +1091,20 @@ public partial class LeaderboardService : ILeaderboardService
             EntityType.Actor => LeaderboardRankChangedEventEntityType.Actor,
             EntityType.Custom => LeaderboardRankChangedEventEntityType.Custom,
             _ => LeaderboardRankChangedEventEntityType.Custom
+        };
+
+    /// <summary>
+    /// Maps EntityType to LeaderboardEntryAddedEvent entity type.
+    /// </summary>
+    private static LeaderboardEntryAddedEventEntityType MapToEntryAddedEventEntityType(EntityType entityType)
+        => entityType switch
+        {
+            EntityType.Account => LeaderboardEntryAddedEventEntityType.Account,
+            EntityType.Character => LeaderboardEntryAddedEventEntityType.Character,
+            EntityType.Guild => LeaderboardEntryAddedEventEntityType.Guild,
+            EntityType.Actor => LeaderboardEntryAddedEventEntityType.Actor,
+            EntityType.Custom => LeaderboardEntryAddedEventEntityType.Custom,
+            _ => LeaderboardEntryAddedEventEntityType.Custom
         };
 
     #endregion

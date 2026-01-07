@@ -768,19 +768,65 @@ public partial class SpeciesService : ISpeciesService
 
                             if (existingModel != null)
                             {
-                                existingModel.Name = seedSpecies.Name;
-                                if (seedSpecies.Description != null) existingModel.Description = seedSpecies.Description;
-                                if (seedSpecies.Category != null) existingModel.Category = seedSpecies.Category;
-                                existingModel.IsPlayable = seedSpecies.IsPlayable;
-                                existingModel.BaseLifespan = seedSpecies.BaseLifespan;
-                                existingModel.MaturityAge = seedSpecies.MaturityAge;
-                                if (seedSpecies.TraitModifiers != null) existingModel.TraitModifiers = seedSpecies.TraitModifiers;
-                                if (seedSpecies.Metadata != null) existingModel.Metadata = seedSpecies.Metadata;
-                                existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+                                // Track changed fields
+                                var changedFields = new List<string>();
 
-                                await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
-                                updated++;
-                                _logger.LogDebug("Updated existing species: {Code}", code);
+                                if (seedSpecies.Name != existingModel.Name)
+                                {
+                                    existingModel.Name = seedSpecies.Name;
+                                    changedFields.Add("name");
+                                }
+                                if (seedSpecies.Description != null && seedSpecies.Description != existingModel.Description)
+                                {
+                                    existingModel.Description = seedSpecies.Description;
+                                    changedFields.Add("description");
+                                }
+                                if (seedSpecies.Category != null && seedSpecies.Category != existingModel.Category)
+                                {
+                                    existingModel.Category = seedSpecies.Category;
+                                    changedFields.Add("category");
+                                }
+                                if (seedSpecies.IsPlayable != existingModel.IsPlayable)
+                                {
+                                    existingModel.IsPlayable = seedSpecies.IsPlayable;
+                                    changedFields.Add("isPlayable");
+                                }
+                                if (seedSpecies.BaseLifespan != existingModel.BaseLifespan)
+                                {
+                                    existingModel.BaseLifespan = seedSpecies.BaseLifespan;
+                                    changedFields.Add("baseLifespan");
+                                }
+                                if (seedSpecies.MaturityAge != existingModel.MaturityAge)
+                                {
+                                    existingModel.MaturityAge = seedSpecies.MaturityAge;
+                                    changedFields.Add("maturityAge");
+                                }
+                                if (seedSpecies.TraitModifiers != null)
+                                {
+                                    existingModel.TraitModifiers = seedSpecies.TraitModifiers;
+                                    changedFields.Add("traitModifiers");
+                                }
+                                if (seedSpecies.Metadata != null)
+                                {
+                                    existingModel.Metadata = seedSpecies.Metadata;
+                                    changedFields.Add("metadata");
+                                }
+
+                                if (changedFields.Count > 0)
+                                {
+                                    existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+                                    await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
+
+                                    // Publish updated event for changed species
+                                    await PublishSpeciesUpdatedEventAsync(existingModel, changedFields, cancellationToken);
+                                    updated++;
+                                    _logger.LogDebug("Updated existing species: {Code} (changed: {ChangedFields})", code, string.Join(", ", changedFields));
+                                }
+                                else
+                                {
+                                    skipped++;
+                                    _logger.LogDebug("Skipped unchanged species: {Code}", code);
+                                }
                             }
                         }
                         else
@@ -1041,6 +1087,9 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Merged species {SourceId} into {TargetId}, migrated {MigratedCount} characters (failed: {FailedCount})",
                 body.SourceSpeciesId, body.TargetSpeciesId, migratedCount, failedCount);
 
+            // Publish species merged event for downstream services (analytics, achievements)
+            await PublishSpeciesMergedEventAsync(sourceModel, targetModel, migratedCount, cancellationToken);
+
             return (StatusCodes.OK, new MergeSpeciesResponse
             {
                 SourceSpeciesId = body.SourceSpeciesId,
@@ -1238,6 +1287,39 @@ public partial class SpeciesService : ISpeciesService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish species.deleted event for {SpeciesId}", model.SpeciesId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a species merged event when one species is merged into another.
+    /// </summary>
+    private async Task PublishSpeciesMergedEventAsync(
+        SpeciesModel sourceModel,
+        SpeciesModel targetModel,
+        int migratedCharacterCount,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new SpeciesMergedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SourceSpeciesId = Guid.Parse(sourceModel.SpeciesId),
+                SourceSpeciesCode = sourceModel.Code,
+                TargetSpeciesId = Guid.Parse(targetModel.SpeciesId),
+                TargetSpeciesCode = targetModel.Code,
+                MergedCharacterCount = migratedCharacterCount
+            };
+
+            await _messageBus.TryPublishAsync("species.merged", eventModel, cancellationToken: cancellationToken);
+            _logger.LogDebug("Published species.merged event: {SourceId} -> {TargetId} ({Count} characters)",
+                sourceModel.SpeciesId, targetModel.SpeciesId, migratedCharacterCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish species.merged event for {SourceId} -> {TargetId}",
+                sourceModel.SpeciesId, targetModel.SpeciesId);
         }
     }
 

@@ -123,6 +123,7 @@ public partial class AuthService : IAuthService
             {
                 // Account not found - return Unauthorized (don't reveal whether account exists)
                 _logger.LogWarning("Account not found for email: {Email}", body.Email);
+                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.Account_not_found);
                 return (StatusCodes.Unauthorized, null);
             }
             catch (Exception ex)
@@ -144,13 +145,14 @@ public partial class AuthService : IAuthService
             if (!passwordValid)
             {
                 _logger.LogWarning("Password verification failed for email: {Email}", body.Email);
+                await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.Invalid_credentials, account.AccountId);
                 return (StatusCodes.Unauthorized, null);
             }
 
             _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
 
-            // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+            // Generate tokens (returns both accessToken and sessionId for event publishing)
+            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
 
             var refreshToken = GenerateRefreshToken();
 
@@ -159,6 +161,9 @@ public partial class AuthService : IAuthService
 
             _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
                 body.Email, account.AccountId);
+
+            // Publish audit event for successful login
+            await PublishLoginSuccessfulEventAsync(account.AccountId, body.Email, sessionId);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -235,8 +240,8 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(accountResult, cancellationToken);
+            // Generate tokens (returns both accessToken and sessionId for event publishing)
+            var (accessToken, sessionId) = await GenerateAccessTokenAsync(accountResult, cancellationToken);
             var refreshToken = GenerateRefreshToken();
 
             // Store refresh token
@@ -244,6 +249,9 @@ public partial class AuthService : IAuthService
 
             _logger.LogInformation("Successfully registered user: {Username} with ID: {AccountId}",
                 body.Username, accountResult.AccountId);
+
+            // Publish audit event for successful registration
+            await PublishRegistrationSuccessfulEventAsync(accountResult.AccountId, body.Username, body.Email, sessionId);
 
             return (StatusCodes.OK, new RegisterResponse
             {
@@ -309,13 +317,16 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+            // Generate tokens (returns both accessToken and sessionId for event publishing)
+            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = GenerateRefreshToken();
             await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("OAuth authentication successful for account {AccountId} via {Provider}",
                 account.AccountId, provider);
+
+            // Publish audit event for successful OAuth login
+            await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), userInfo.ProviderId, sessionId, isNewAccount: false);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -390,12 +401,15 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+            // Generate tokens (returns both accessToken and sessionId for event publishing)
+            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = GenerateRefreshToken();
             await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
+
+            // Publish audit event for successful Steam login
+            await PublishSteamLoginSuccessfulEventAsync(account.AccountId, steamId, sessionId, isNewAccount: false);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -458,8 +472,8 @@ public partial class AuthService : IAuthService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // Generate new tokens
-            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+            // Generate new tokens (sessionId not used for refresh - no audit event needed)
+            var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
             var newRefreshToken = GenerateRefreshToken();
 
             // Store new refresh token and remove old one
@@ -690,6 +704,15 @@ public partial class AuthService : IAuthService
             // Remove reverse index entry
             await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
+            // Publish SessionInvalidatedEvent to disconnect WebSocket clients (like LogoutAsync does)
+            if (sessionData != null)
+            {
+                await PublishSessionInvalidatedEventAsync(
+                    sessionData.AccountId,
+                    new List<string> { sessionKey },
+                    SessionInvalidatedEventReason.Admin_action);
+            }
+
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
             return StatusCodes.OK;
         }
@@ -859,6 +882,10 @@ public partial class AuthService : IAuthService
             await resetStore.DeleteAsync($"password-reset:{body.Token}", cancellationToken);
 
             _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
+
+            // Publish audit event for successful password reset
+            await PublishPasswordResetSuccessfulEventAsync(resetData.AccountId);
+
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -1096,7 +1123,11 @@ public partial class AuthService : IAuthService
         return HashPassword(password) == hash;
     }
 
-    private async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Generates an access token and creates a session in Redis.
+    /// Returns both the JWT and the sessionId for event publishing.
+    /// </summary>
+    private async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
         // Validate inputs
         if (account == null)
@@ -1249,7 +1280,7 @@ public partial class AuthService : IAuthService
 
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var jwtString = tokenHandler.WriteToken(jwt);
-            return jwtString;
+            return (jwtString, sessionId);
         }
         catch (Exception ex)
         {
@@ -2228,7 +2259,8 @@ public partial class AuthService : IAuthService
             return (StatusCodes.InternalServerError, null);
         }
 
-        var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+        // Mock providers don't need audit events - discard sessionId
+        var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = GenerateRefreshToken();
         await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
@@ -2263,7 +2295,8 @@ public partial class AuthService : IAuthService
             return (StatusCodes.InternalServerError, null);
         }
 
-        var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+        // Mock providers don't need audit events - discard sessionId
+        var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
         var refreshToken = GenerateRefreshToken();
         await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
@@ -2640,6 +2673,166 @@ public partial class AuthService : IAuthService
             message: message,
             dependency: dependency,
             details: details);
+    }
+
+    // Auth audit event topics
+    private const string AUTH_LOGIN_SUCCESSFUL_TOPIC = "auth.login.successful";
+    private const string AUTH_LOGIN_FAILED_TOPIC = "auth.login.failed";
+    private const string AUTH_REGISTRATION_SUCCESSFUL_TOPIC = "auth.registration.successful";
+    private const string AUTH_OAUTH_SUCCESSFUL_TOPIC = "auth.oauth.successful";
+    private const string AUTH_STEAM_SUCCESSFUL_TOPIC = "auth.steam.successful";
+    private const string AUTH_PASSWORD_RESET_SUCCESSFUL_TOPIC = "auth.password-reset.successful";
+
+    /// <summary>
+    /// Publish AuthLoginSuccessfulEvent for security audit trail.
+    /// </summary>
+    private async Task PublishLoginSuccessfulEventAsync(Guid accountId, string username, string sessionId)
+    {
+        try
+        {
+            var eventModel = new AuthLoginSuccessfulEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                Username = username,
+                SessionId = Guid.Parse(sessionId)
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_LOGIN_SUCCESSFUL_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthLoginSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthLoginSuccessfulEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publish AuthLoginFailedEvent for brute force detection and security monitoring.
+    /// </summary>
+    private async Task PublishLoginFailedEventAsync(string username, AuthLoginFailedReason reason, Guid? accountId = null)
+    {
+        try
+        {
+            var eventModel = new AuthLoginFailedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Username = username,
+                Reason = reason,
+                AccountId = accountId
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_LOGIN_FAILED_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthLoginFailedEvent for username {Username}, reason: {Reason}", username, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthLoginFailedEvent for username {Username}", username);
+        }
+    }
+
+    /// <summary>
+    /// Publish AuthRegistrationSuccessfulEvent for user onboarding analytics.
+    /// </summary>
+    private async Task PublishRegistrationSuccessfulEventAsync(Guid accountId, string username, string email, string sessionId)
+    {
+        try
+        {
+            var eventModel = new AuthRegistrationSuccessfulEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                Username = username,
+                Email = email,
+                SessionId = Guid.Parse(sessionId)
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_REGISTRATION_SUCCESSFUL_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthRegistrationSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthRegistrationSuccessfulEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
+    /// </summary>
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, string sessionId, bool isNewAccount)
+    {
+        try
+        {
+            var eventModel = new AuthOAuthLoginSuccessfulEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                Provider = provider,
+                ProviderUserId = providerUserId,
+                SessionId = Guid.Parse(sessionId),
+                IsNewAccount = isNewAccount
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_OAUTH_SUCCESSFUL_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthOAuthLoginSuccessfulEvent for account {AccountId} via {Provider}, session {SessionId}", accountId, provider, sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthOAuthLoginSuccessfulEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publish AuthSteamLoginSuccessfulEvent for platform login analytics.
+    /// </summary>
+    private async Task PublishSteamLoginSuccessfulEventAsync(Guid accountId, string steamId, string sessionId, bool isNewAccount)
+    {
+        try
+        {
+            var eventModel = new AuthSteamLoginSuccessfulEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                SteamId = steamId,
+                SessionId = Guid.Parse(sessionId),
+                IsNewAccount = isNewAccount
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_STEAM_SUCCESSFUL_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthSteamLoginSuccessfulEvent for account {AccountId}, session {SessionId}", accountId, sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthSteamLoginSuccessfulEvent for account {AccountId}", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Publish AuthPasswordResetSuccessfulEvent for security audit trail.
+    /// </summary>
+    private async Task PublishPasswordResetSuccessfulEventAsync(Guid accountId)
+    {
+        try
+        {
+            var eventModel = new AuthPasswordResetSuccessfulEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId
+            };
+
+            await _messageBus.TryPublishAsync(AUTH_PASSWORD_RESET_SUCCESSFUL_TOPIC, eventModel);
+            _logger.LogDebug("Published AuthPasswordResetSuccessfulEvent for account {AccountId}", accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish AuthPasswordResetSuccessfulEvent for account {AccountId}", accountId);
+        }
     }
 
     #endregion

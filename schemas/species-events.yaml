@@ -20,6 +20,10 @@ info:
     - topic: species.deleted
       event: SpeciesDeletedEvent
       description: Published when a species is soft-deleted
+    # Species merge events
+    - topic: species.merged
+      event: SpeciesMergedEvent
+      description: Published when two species are merged together
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/species-lifecycle-events.yaml
@@ -45,4 +49,52 @@ x-lifecycle:
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+components:
+  schemas:
+    # Base event schema for $ref resolution
+    BaseServiceEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
+    # Species merge event (not auto-generated from lifecycle)
+    SpeciesMergedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when two species are merged, with the source species being deprecated
+      required:
+        - sourceSpeciesId
+        - targetSpeciesId
+        - mergedCharacterCount
+      properties:
+        sourceSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the species being merged (deprecated after merge)
+        sourceSpeciesCode:
+          type: string
+          nullable: true
+          description: Code of the source species
+        targetSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the species receiving the merge
+        targetSpeciesCode:
+          type: string
+          nullable: true
+          description: Code of the target species
+        mergedCharacterCount:
+          type: integer
+          description: Number of characters that were migrated to the target species

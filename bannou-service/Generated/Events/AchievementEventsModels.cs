@@ -295,6 +295,201 @@ public partial class AchievementPlatformSyncedEvent
 
 }
 
+/// <summary>
+/// Published when a new achievement definition is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AchievementDefinitionCreatedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service this achievement belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the achievement within the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name for the achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of how to earn the achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Type of achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AchievementDefinitionCreatedEventAchievementType AchievementType { get; set; } = default!;
+
+    /// <summary>
+    /// Points awarded for unlocking this achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("points")]
+    public int Points { get; set; } = default!;
+
+    /// <summary>
+    /// Target value for progressive achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progressTarget")]
+    public int? ProgressTarget { get; set; } = default!;
+
+    /// <summary>
+    /// Platforms where this achievement is available
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platforms")]
+    // TODO(system.text.json): Add string enum item converter
+    public System.Collections.Generic.ICollection<Platforms> Platforms { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an achievement definition is updated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AchievementDefinitionUpdatedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the definition was updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// Updated display name (if changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Updated description (if changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Updated points value (if changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("points")]
+    public int? Points { get; set; } = default!;
+
+    /// <summary>
+    /// Updated progress target (if changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progressTarget")]
+    public int? ProgressTarget { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an achievement definition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AchievementDefinitionDeletedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the definition was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the deleted achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the deleted achievement (for logging/audit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum AchievementUnlockedEventEntityType
@@ -367,6 +562,46 @@ public enum AchievementPlatformSyncedEventEntityType
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum AchievementPlatformSyncedEventPlatform
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"xbox")]
+    Xbox = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"playstation")]
+    Playstation = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"internal")]
+    Internal = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AchievementDefinitionCreatedEventAchievementType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"standard")]
+    Standard = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"progressive")]
+    Progressive = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"hidden")]
+    Hidden = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"secret")]
+    Secret = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Platforms
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"steam")]

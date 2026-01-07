@@ -39,6 +39,11 @@ public sealed class BehaviorModelInterpreter : IBehaviorModelInterpreter
     // Random number generator (seeded for deterministic replay support)
     private Random _random;
 
+    // Pause state for continuation point support
+    private bool _isPaused;
+    private int _pausedAtCpIndex = -1;
+    private uint _pausedCpTimeout;
+
     /// <summary>
     /// The model being interpreted.
     /// </summary>

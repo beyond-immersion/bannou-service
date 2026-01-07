@@ -6296,6 +6296,136 @@
             Error message if sync failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent">
+            <summary>
+            Published when a new achievement definition is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Timestamp">
+            <summary>
+            When the definition was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.GameServiceId">
+            <summary>
+            ID of the game service this achievement belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.AchievementId">
+            <summary>
+            Unique identifier for the achievement within the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Description">
+            <summary>
+            Detailed description of how to earn the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.AchievementType">
+            <summary>
+            Type of achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Points">
+            <summary>
+            Points awarded for unlocking this achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.ProgressTarget">
+            <summary>
+            Target value for progressive achievements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionCreatedEvent.Platforms">
+            <summary>
+            Platforms where this achievement is available
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent">
+            <summary>
+            Published when an achievement definition is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Timestamp">
+            <summary>
+            When the definition was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.AchievementId">
+            <summary>
+            Unique identifier for the achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.DisplayName">
+            <summary>
+            Updated display name (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Description">
+            <summary>
+            Updated description (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.Points">
+            <summary>
+            Updated points value (if changed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionUpdatedEvent.ProgressTarget">
+            <summary>
+            Updated progress target (if changed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent">
+            <summary>
+            Published when an achievement definition is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.Timestamp">
+            <summary>
+            When the definition was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.GameServiceId">
+            <summary>
+            ID of the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.AchievementId">
+            <summary>
+            ID of the deleted achievement
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AchievementDefinitionDeletedEvent.DisplayName">
+            <summary>
+            Display name of the deleted achievement (for logging/audit)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.PoolNodeHeartbeatEvent">
             <summary>
             Periodic heartbeat from pool nodes to control plane.
@@ -7442,6 +7572,181 @@
             Reason for session update
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent">
+            <summary>
+            Published when a user successfully authenticates with username/password
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.Username">
+            <summary>
+            Username or email used for authentication
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginSuccessfulEvent.UserAgent">
+            <summary>
+            User agent string from the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent">
+            <summary>
+            Published when a login attempt fails (for brute force detection)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.Username">
+            <summary>
+            Username that was attempted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.Reason">
+            <summary>
+            Why the login attempt failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.AccountId">
+            <summary>
+            Account ID if the username exists (null if unknown user)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.IpAddress">
+            <summary>
+            IP address of the failed login attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthLoginFailedEvent.UserAgent">
+            <summary>
+            User agent string from the request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthLoginFailedReason">
+            <summary>
+            Reason why the login attempt failed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent">
+            <summary>
+            Published when a new user successfully registers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.AccountId">
+            <summary>
+            ID of the newly created account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.Username">
+            <summary>
+            Username chosen by the user
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.Email">
+            <summary>
+            Email address provided during registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this registration (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthRegistrationSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the registration request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent">
+            <summary>
+            Published when a user authenticates via OAuth provider
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.Provider">
+            <summary>
+            OAuth provider name (e.g., discord, google)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.ProviderUserId">
+            <summary>
+            User ID from the OAuth provider
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.IsNewAccount">
+            <summary>
+            Whether this login created a new account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthOAuthLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent">
+            <summary>
+            Published when a user authenticates via Steam
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account that logged in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.SteamId">
+            <summary>
+            Steam ID (64-bit)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.SessionId">
+            <summary>
+            ID of the session created for this login (for tracing WebSocket connections)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.IsNewAccount">
+            <summary>
+            Whether this login created a new account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthSteamLoginSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the login request
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent">
+            <summary>
+            Published when a password reset is successfully completed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent.AccountId">
+            <summary>
+            ID of the account whose password was reset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.AuthPasswordResetSuccessfulEvent.IpAddress">
+            <summary>
+            IP address of the password reset request
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent">
             <summary>
             Published to behavior.created when a behavior is created
@@ -8223,6 +8528,121 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.DocumentDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent">
+            <summary>
+            Published to game-service.created when a gameservice is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceCreatedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent">
+            <summary>
+            Published to game-service.updated when a gameservice is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent">
+            <summary>
+            Published to game-service.deleted when a gameservice is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.EventName">
+            <summary>
+            Event type identifier: game-service.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.GameServiceId">
+            <summary>
+            Unique identifier for the game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.StubName">
+            <summary>
+            Short machine-readable name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.DisplayName">
+            <summary>
+            Human-readable display name for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.Description">
+            <summary>
+            Description of what the game service does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.IsActive">
+            <summary>
+            Whether the game service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GameServiceDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
@@ -9772,6 +10192,36 @@
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SpeciesMergedEvent">
+            <summary>
+            Published when two species are merged, with the source species being deprecated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.SourceSpeciesId">
+            <summary>
+            ID of the species being merged (deprecated after merge)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.SourceSpeciesCode">
+            <summary>
+            Code of the source species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.TargetSpeciesId">
+            <summary>
+            ID of the species receiving the merge
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.TargetSpeciesCode">
+            <summary>
+            Code of the target species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SpeciesMergedEvent.MergedCharacterCount">
+            <summary>
+            Number of characters that were migrated to the target species
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SpeciesCreatedEvent">
@@ -20970,6 +21420,11 @@
         <member name="P:BeyondImmersion.BannouService.GameService.DeleteServiceRequest.ServiceId">
             <summary>
             ID of the service to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameService.DeleteServiceRequest.Reason">
+            <summary>
+            Optional reason for deletion (included in the lifecycle event)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameService.ServiceInfo">

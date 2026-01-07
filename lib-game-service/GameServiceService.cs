@@ -205,6 +205,9 @@ public partial class GameServiceService : IGameServiceService
             _logger.LogInformation("Created service {ServiceId} with stub name {StubName}",
                 serviceId, normalizedStubName);
 
+            // Publish lifecycle event for other services (e.g., analytics, achievements)
+            await PublishServiceCreatedEventAsync(serviceModel);
+
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
         catch (Exception ex)
@@ -241,20 +244,33 @@ public partial class GameServiceService : IGameServiceService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Track which fields changed for the update event
+            var changedFields = new List<string>();
+
             // Update fields if provided
-            if (!string.IsNullOrEmpty(body.DisplayName))
+            if (!string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != serviceModel.DisplayName)
             {
                 serviceModel.DisplayName = body.DisplayName;
+                changedFields.Add("displayName");
             }
 
-            if (body.Description != null)
+            if (body.Description != null && body.Description != serviceModel.Description)
             {
                 serviceModel.Description = body.Description;
+                changedFields.Add("description");
             }
 
-            if (body.IsActive.HasValue)
+            if (body.IsActive.HasValue && body.IsActive.Value != serviceModel.IsActive)
             {
                 serviceModel.IsActive = body.IsActive.Value;
+                changedFields.Add("isActive");
+            }
+
+            // Only save if something actually changed
+            if (changedFields.Count == 0)
+            {
+                _logger.LogDebug("No changes to service {ServiceId}", body.ServiceId);
+                return (StatusCodes.OK, MapToServiceInfo(serviceModel));
             }
 
             serviceModel.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -262,7 +278,11 @@ public partial class GameServiceService : IGameServiceService
             // Save updated service
             await modelStore.SaveAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId}", serviceModel, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Updated service {ServiceId}", body.ServiceId);
+            _logger.LogInformation("Updated service {ServiceId} (changed: {ChangedFields})", body.ServiceId, string.Join(", ", changedFields));
+
+            // Publish lifecycle event for other services
+            await PublishServiceUpdatedEventAsync(serviceModel, changedFields);
+
             return (StatusCodes.OK, MapToServiceInfo(serviceModel));
         }
         catch (Exception ex)
@@ -313,6 +333,10 @@ public partial class GameServiceService : IGameServiceService
             await RemoveFromServiceListAsync(body.ServiceId.ToString(), cancellationToken);
 
             _logger.LogInformation("Deleted service {ServiceId}", body.ServiceId);
+
+            // Publish lifecycle event for other services (e.g., cleanup subscriptions)
+            await PublishServiceDeletedEventAsync(serviceModel, body.Reason);
+
             return StatusCodes.OK;
         }
         catch (Exception ex)
@@ -409,6 +433,87 @@ public partial class GameServiceService : IGameServiceService
             message: message,
             dependency: dependency,
             details: details);
+    }
+
+    #endregion
+
+    #region Lifecycle Event Publishing
+
+    /// <summary>
+    /// Publishes a GameServiceCreatedEvent when a new game service is registered.
+    /// </summary>
+    private async Task PublishServiceCreatedEventAsync(GameServiceRegistryModel model)
+    {
+        try
+        {
+            var eventModel = new GameServiceCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = Guid.Parse(model.ServiceId),
+                StubName = model.StubName,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                IsActive = model.IsActive
+            };
+            await _messageBus.TryPublishAsync("game-service.created", eventModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish GameServiceCreatedEvent for {ServiceId}", model.ServiceId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a GameServiceUpdatedEvent when a game service is modified.
+    /// </summary>
+    private async Task PublishServiceUpdatedEventAsync(GameServiceRegistryModel model, List<string> changedFields)
+    {
+        try
+        {
+            var eventModel = new GameServiceUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = Guid.Parse(model.ServiceId),
+                StubName = model.StubName,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                IsActive = model.IsActive,
+                ChangedFields = changedFields
+            };
+            await _messageBus.TryPublishAsync("game-service.updated", eventModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish GameServiceUpdatedEvent for {ServiceId}", model.ServiceId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a GameServiceDeletedEvent when a game service is removed.
+    /// </summary>
+    private async Task PublishServiceDeletedEventAsync(GameServiceRegistryModel model, string? reason)
+    {
+        try
+        {
+            var eventModel = new GameServiceDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameServiceId = Guid.Parse(model.ServiceId),
+                StubName = model.StubName,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                IsActive = model.IsActive,
+                DeletedReason = reason
+            };
+            await _messageBus.TryPublishAsync("game-service.deleted", eventModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish GameServiceDeletedEvent for {ServiceId}", model.ServiceId);
+        }
     }
 
     #endregion

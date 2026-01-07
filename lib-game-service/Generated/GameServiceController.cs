@@ -839,6 +839,11 @@ public partial class GameServiceController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "format": "uuid",
                     "description": "ID of the service to delete"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deletion (included in the lifecycle event)"
                 }
             }
         }

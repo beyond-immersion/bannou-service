@@ -28,6 +28,25 @@ info:
     - topic: session.updated
       event: SessionUpdatedEvent
       description: Published when session roles/authorizations change
+    # Authentication audit events for security monitoring
+    - topic: auth.login.successful
+      event: AuthLoginSuccessfulEvent
+      description: Published when a user successfully logs in with username/password
+    - topic: auth.login.failed
+      event: AuthLoginFailedEvent
+      description: Published when a login attempt fails (brute force detection)
+    - topic: auth.registration.successful
+      event: AuthRegistrationSuccessfulEvent
+      description: Published when a new user account is registered
+    - topic: auth.oauth.successful
+      event: AuthOAuthLoginSuccessfulEvent
+      description: Published when a user authenticates via OAuth provider
+    - topic: auth.steam.successful
+      event: AuthSteamLoginSuccessfulEvent
+      description: Published when a user authenticates via Steam
+    - topic: auth.password-reset.successful
+      event: AuthPasswordResetSuccessfulEvent
+      description: Published when a password reset is successfully completed
 
 paths: {}  # Events don't have HTTP paths
 
@@ -127,3 +146,188 @@ components:
       type: string
       enum: [role_changed, authorization_changed, subscription_changed]
       description: Reason for session update
+
+    # ==========================================================================
+    # Authentication Audit Events
+    # ==========================================================================
+
+    AuthLoginSuccessfulEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user successfully authenticates with username/password
+      required:
+        - accountId
+        - username
+        - sessionId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        username:
+          type: string
+          description: Username or email used for authentication
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the login request
+
+    AuthLoginFailedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a login attempt fails (for brute force detection)
+      required:
+        - username
+        - reason
+      properties:
+        username:
+          type: string
+          description: Username that was attempted
+        reason:
+          $ref: '#/components/schemas/AuthLoginFailedReason'
+          description: Why the login attempt failed
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID if the username exists (null if unknown user)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the failed login attempt
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the request
+
+    AuthLoginFailedReason:
+      type: string
+      enum: [invalid_credentials, account_disabled, account_locked, account_not_found]
+      description: Reason why the login attempt failed
+
+    AuthRegistrationSuccessfulEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a new user successfully registers
+      required:
+        - accountId
+        - username
+        - email
+        - sessionId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the newly created account
+        username:
+          type: string
+          description: Username chosen by the user
+        email:
+          type: string
+          description: Email address provided during registration
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this registration (for tracing WebSocket connections)
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the registration request
+
+    AuthOAuthLoginSuccessfulEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user authenticates via OAuth provider
+      required:
+        - accountId
+        - provider
+        - providerUserId
+        - sessionId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        provider:
+          type: string
+          description: OAuth provider name (e.g., discord, google)
+        providerUserId:
+          type: string
+          description: User ID from the OAuth provider
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        isNewAccount:
+          type: boolean
+          default: false
+          description: Whether this login created a new account
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+
+    AuthSteamLoginSuccessfulEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a user authenticates via Steam
+      required:
+        - accountId
+        - steamId
+        - sessionId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that logged in
+        steamId:
+          type: string
+          description: Steam ID (64-bit)
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created for this login (for tracing WebSocket connections)
+        isNewAccount:
+          type: boolean
+          default: false
+          description: Whether this login created a new account
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the login request
+
+    AuthPasswordResetSuccessfulEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a password reset is successfully completed
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose password was reset
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the password reset request
