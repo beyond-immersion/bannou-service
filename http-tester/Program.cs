@@ -663,7 +663,9 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
+            new AchievementTestHandler(),
             new ActorTestHandler(),
+            new AnalyticsTestHandler(),
             new AssetTestHandler(),
             new AuthTestHandler(),
             new CharacterTestHandler(),
@@ -671,6 +673,7 @@ public class Program
             new PeerRoutingTestHandler(),
             new DocumentationTestHandler(),
             new GameSessionTestHandler(),
+            new LeaderboardTestHandler(),
             new LocationTestHandler(),
             new MeshTestHandler(),
             new MessagingTestHandler(),
