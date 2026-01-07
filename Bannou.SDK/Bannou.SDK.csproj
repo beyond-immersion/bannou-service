@@ -104,6 +104,8 @@
   <!-- These files live in Bannou.Client.SDK and are referenced here -->
   <ItemGroup>
     <Compile Include="../Bannou.Client.SDK/BannouClient.cs" />
+    <Compile Include="../Bannou.Client.SDK/BannouConnectionManager.cs" />
+    <Compile Include="../Bannou.Client.SDK/RemoteAssetCache.cs" />
     <Compile Include="../Bannou.Client.SDK/MetaTypes.cs" />
     <Compile Include="../Bannou.Client.SDK/ResponseCodes.cs" />
   </ItemGroup>

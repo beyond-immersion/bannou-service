@@ -32499,6 +32499,352 @@
             </summary>
             <exception cref="T:System.InvalidOperationException">Thrown when the response is an error.</exception>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager">
+            <summary>
+            Manages the WebSocket connection to Bannou services with auto-reconnect,
+            health checks, and event routing.
+            </summary>
+            <remarks>
+            This class wraps BannouClient and provides:
+            - Automatic reconnection with exponential backoff
+            - Health check loop for connection monitoring
+            - Event subscription/dispatch pattern
+            - Connection status tracking with events
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager._eventHandlers">
+            <summary>
+            Event handlers for server-pushed events from Bannou.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.Status">
+            <summary>
+            Current connection status.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.IsConnected">
+            <summary>
+            Whether currently connected to Bannou services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.SessionId">
+            <summary>
+            Session ID from Bannou (null if not connected).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.Client">
+            <summary>
+            The underlying BannouClient for direct API calls.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.LastSuccessfulConnect">
+            <summary>
+            Time of the last successful connection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.ReconnectAttempts">
+            <summary>
+            Number of reconnect attempts since last successful connection.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.OnStatusChanged">
+            <summary>
+            Event raised when connection status changes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.#ctor(BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager})">
+            <summary>
+            Creates a new BannouConnectionManager.
+            </summary>
+            <param name="config">Connection configuration.</param>
+            <param name="logger">Optional logger instance.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.ConnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connect to Bannou services.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if connection succeeded, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.DisconnectAsync">
+            <summary>
+            Disconnect from Bannou services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.ReconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Attempt to reconnect to Bannou services.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if reconnection succeeded, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Invoke a Bannou service API.
+            </summary>
+            <typeparam name="TRequest">Request type.</typeparam>
+            <typeparam name="TResponse">Response type.</typeparam>
+            <param name="method">HTTP method (POST, GET, etc.).</param>
+            <param name="path">API path.</param>
+            <param name="request">Request payload.</param>
+            <param name="channel">Optional channel for routing.</param>
+            <param name="timeout">Optional timeout override.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>API response with success/failure status.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.SendEventAsync``1(System.String,System.String,``0,System.UInt16,System.Threading.CancellationToken)">
+            <summary>
+            Send a fire-and-forget event to Bannou.
+            </summary>
+            <typeparam name="TRequest">Request type.</typeparam>
+            <param name="method">HTTP method.</param>
+            <param name="path">API path.</param>
+            <param name="request">Request payload.</param>
+            <param name="channel">Optional channel for routing.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.Subscribe(System.String,System.Action{System.String})">
+            <summary>
+            Subscribe to a Bannou event type.
+            </summary>
+            <param name="eventType">Event type to subscribe to.</param>
+            <param name="handler">Handler to invoke when event is received.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.Unsubscribe(System.String,System.Action{System.String})">
+            <summary>
+            Unsubscribe from a Bannou event type.
+            </summary>
+            <param name="eventType">Event type to unsubscribe from.</param>
+            <param name="handler">Handler to remove.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouConnectionManager.DisposeAsync">
+            <summary>
+            Dispose of the connection manager and release resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig">
+            <summary>
+            Configuration for Bannou connection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.Endpoint">
+            <summary>
+            Bannou server endpoint (e.g., "http://localhost:5050").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.Email">
+            <summary>
+            Email for authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.Password">
+            <summary>
+            Password for authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.Username">
+            <summary>
+            Username for registration (if enabled).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.UseRegistration">
+            <summary>
+            Whether to attempt registration if login fails.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.AutoReconnect">
+            <summary>
+            Whether to automatically reconnect on connection loss.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.HealthCheckIntervalMs">
+            <summary>
+            Health check interval in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.MaxReconnectAttempts">
+            <summary>
+            Maximum number of reconnect attempts before giving up.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.ReconnectBaseDelayMs">
+            <summary>
+            Base delay for reconnect backoff in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.BannouConnectionConfig.ReconnectMaxDelayMs">
+            <summary>
+            Maximum delay for reconnect backoff in milliseconds.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus">
+            <summary>
+            Connection status for Bannou services.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Disconnected">
+            <summary>Not connected to Bannou services.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Connecting">
+            <summary>Currently connecting to Bannou services.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Connected">
+            <summary>Connected to Bannou services.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Reconnecting">
+            <summary>Attempting to reconnect after connection loss.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Failed">
+            <summary>Connection failed and reconnect attempts exhausted.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1">
+            <summary>
+            Caches assets downloaded from remote URLs with optional CRC32 verification
+            and disk persistence.
+            </summary>
+            <typeparam name="T">The type of asset being cached.</typeparam>
+            <remarks>
+            This class provides:
+            - Memory caching with ConcurrentDictionary for thread safety
+            - Optional disk persistence for offline access
+            - CRC32 verification for data integrity
+            - Automatic URL-based asset ID extraction
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.#ctor(System.Net.Http.HttpClient,System.Func{System.Byte[],`0},System.String,System.String,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Creates a new RemoteAssetCache.
+            </summary>
+            <param name="httpClient">HTTP client for downloading assets.</param>
+            <param name="deserializer">Function to deserialize bytes to asset type T.</param>
+            <param name="cacheDirectory">Directory for disk persistence (null to use temp).</param>
+            <param name="fileExtension">File extension for cached files (default: ".asset").</param>
+            <param name="logger">Optional logger instance.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetOrDownloadAsync(System.String,System.Nullable{System.UInt32},System.Threading.CancellationToken)">
+            <summary>
+            Gets a cached asset by URL, downloading if not cached.
+            </summary>
+            <param name="assetUrl">URL to the asset (may be pre-signed).</param>
+            <param name="expectedCrc">Optional CRC32 for verification.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The cached asset entry, or null if download/verification failed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.TryGet(System.String)">
+            <summary>
+            Gets a cached asset by URL without downloading.
+            </summary>
+            <param name="assetUrl">URL key for the cached asset.</param>
+            <returns>The cached asset if found, null otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Add(System.String,System.Byte[],`0)">
+            <summary>
+            Adds an asset to the cache without downloading.
+            Useful for pre-loading assets from local storage.
+            </summary>
+            <param name="assetUrl">URL key for the asset.</param>
+            <param name="data">Raw asset data.</param>
+            <param name="asset">Deserialized asset.</param>
+            <returns>The cached asset entry.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Invalidate(System.String)">
+            <summary>
+            Removes an asset from the cache.
+            </summary>
+            <param name="assetUrl">URL key of the asset to remove.</param>
+            <returns>True if the asset was removed, false if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Clear">
+            <summary>
+            Clears all cached assets from memory.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetStats">
+            <summary>
+            Gets cache statistics.
+            </summary>
+            <returns>Current cache statistics.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.LoadFromDiskAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads an asset from disk cache if available.
+            </summary>
+            <param name="assetId">Asset ID to load.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The loaded asset, or null if not found on disk.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1">
+            <summary>
+            A cached asset with metadata.
+            </summary>
+            <typeparam name="T">The asset type.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.AssetId">
+            <summary>
+            Unique asset identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.SourceUrl">
+            <summary>
+            Source URL this was downloaded from.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Data">
+            <summary>
+            Raw asset binary data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Asset">
+            <summary>
+            Deserialized asset instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Crc32">
+            <summary>
+            CRC32 checksum of the data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.CachedAt">
+            <summary>
+            When this asset was cached.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats">
+            <summary>
+            Asset cache statistics.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.CachedCount">
+            <summary>Number of assets in cache.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.TotalBytes">
+            <summary>Total size of cached assets in bytes.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.OldestEntry">
+            <summary>Timestamp of oldest cached entry.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.NewestEntry">
+            <summary>Timestamp of newest cached entry.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Crc32">
+            <summary>
+            CRC32 checksum utility.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.Byte[])">
+            <summary>
+            Computes the CRC32 checksum of the given data.
+            </summary>
+            <param name="data">Data to compute checksum for.</param>
+            <returns>CRC32 checksum.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Computes the CRC32 checksum of the given data span.
+            </summary>
+            <param name="data">Data span to compute checksum for.</param>
+            <returns>CRC32 checksum.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaType">
             <summary>
             Meta endpoint types for requesting endpoint metadata instead of executing.

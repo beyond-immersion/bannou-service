@@ -94,10 +94,12 @@
     <Compile Include="../lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../lib-asset/Bundles/BundleValidator.cs')" />
   </ItemGroup>
 
-  <!-- SDK Source Files (WebSocket client, meta types, response codes) -->
+  <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->
   <!-- These files are now part of this project directly -->
   <ItemGroup>
     <Compile Update="BannouClient.cs" />
+    <Compile Update="BannouConnectionManager.cs" />
+    <Compile Update="RemoteAssetCache.cs" />
     <Compile Update="MetaTypes.cs" />
     <Compile Update="ResponseCodes.cs" />
   </ItemGroup>
