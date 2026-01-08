@@ -50,8 +50,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Hello in English"
-              es: "Hola en Español"
+            en: "Hello in English"
+            es: "Hola en Español"
             """;
         CreateFile("test.yaml", content);
 
@@ -75,7 +75,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
 
         var content = """
             localizations:
-              en: "Welcome to my shop!"
+            en: "Welcome to my shop!"
             """;
         File.WriteAllText(Path.Combine(nestedDir, "greet.yaml"), content);
 
@@ -108,12 +108,12 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Default text"
+            en: "Default text"
             overrides:
-              - condition: "${player.reputation > 50}"
+            - condition: "${player.reputation > 50}"
                 text: "VIP greeting!"
                 priority: 10
-              - condition: "${time.hour >= 20}"
+            - condition: "${time.hour >= 20}"
                 text: "We're closing soon!"
                 priority: 5
             """;
@@ -139,10 +139,10 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "English default"
-              es: "Spanish default"
+            en: "English default"
+            es: "Spanish default"
             overrides:
-              - condition: "${always_true}"
+            - condition: "${always_true}"
                 text: "Spanish only override"
                 priority: 10
                 locale: es
@@ -168,7 +168,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Original text"
+            en: "Original text"
             """;
         CreateFile("test.yaml", content);
 
@@ -186,7 +186,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Original text"
+            en: "Original text"
             """;
         CreateFile("test.yaml", content);
 
@@ -196,7 +196,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Update file
         var updatedContent = """
             localizations:
-              en: "Updated text"
+            en: "Updated text"
             """;
         CreateFile("test.yaml", updatedContent);
 
@@ -215,7 +215,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Test"
+            en: "Test"
             """;
         CreateFile("test1.yaml", content);
         CreateFile("test2.yaml", content);
@@ -245,11 +245,11 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
 
         File.WriteAllText(Path.Combine(lowPriorityDir, "test.yaml"), """
             localizations:
-              en: "Low priority"
+            en: "Low priority"
             """);
         File.WriteAllText(Path.Combine(highPriorityDir, "test.yaml"), """
             localizations:
-              en: "High priority"
+            en: "High priority"
             """);
 
         var loader = new ExternalDialogueLoader();
@@ -292,7 +292,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "Found with .yml"
+            en: "Found with .yml"
             """;
         CreateFile("test.yml", content);
 
@@ -325,8 +325,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              en: "English text"
-              es: "Spanish text"
+            en: "English text"
+            es: "Spanish text"
             """;
         CreateFile("test.yaml", content);
 
@@ -349,7 +349,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         // Arrange
         var content = """
             localizations:
-              de: "German only"
+            de: "German only"
             """;
         CreateFile("test.yaml", content);
 

@@ -48,11 +48,11 @@ public sealed class FileLocalizationProviderTests : IDisposable
         // Arrange
         CreateLocalizationFile("strings.en.yaml", """
             ui:
-              menu:
+            menu:
                 start: "Start Game"
                 quit: "Quit Game"
             dialogue:
-              greeting: "Hello!"
+            greeting: "Hello!"
             """);
 
         var source = new YamlFileLocalizationSource(

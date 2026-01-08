@@ -2095,10 +2095,146 @@ Phase 4 is complete with:
 
 | Task | Layer | Dependencies | Priority |
 |------|-------|--------------|----------|
-| Implement `IDialogueResolver` | 6 | Expression VM | Low |
-| Implement localization overlay | 6 | DialogueResolver | Low |
+| ~~Implement `IDialogueResolver`~~ | 6 | Expression VM | ✅ DONE |
+| ~~Implement localization overlay~~ | 6 | DialogueResolver | ✅ DONE |
 | Implement `ICognitionBuilder` | 7 | Existing cognition | Low |
 | Implement override system | 7 | CognitionBuilder | Low |
+
+#### Phase 5 Layer 6 Audit (2026-01-08)
+
+**STATUS: LAYER 6 COMPLETE** - Dialogue & Localization
+
+**Files Created:**
+
+Interfaces (bannou-service/Behavior/):
+- `IDialogueResolver.cs` - Three-step resolution pipeline interface + types
+- `ILocalizationProvider.cs` - Language-specific text lookup interface
+- `IExternalDialogueLoader.cs` - External dialogue YAML file loader interface
+
+Implementations (lib-behavior/Dialogue/):
+- `DialogueResolver.cs` - Three-step resolution: overrides → localization → inline
+- `ExternalDialogueLoader.cs` - YAML file loading with caching
+- `FileLocalizationProvider.cs` - Aggregate localization from multiple sources
+- `AbmlDialogueExpressionContext.cs` - Bridges ABML expression context with dialogue
+
+Tests (lib-behavior.tests/Dialogue/):
+- `DialogueResolverTests.cs` - 18 tests for resolution pipeline
+- `ExternalDialogueLoaderTests.cs` - 15 tests for file loading
+- `FileLocalizationProviderTests.cs` - 12 tests for localization
+
+**Key Design Decisions:**
+
+1. **Inline Required (per G2)**: Every dialogue must have inline default text
+2. **External Optional**: YAML files provide localization + conditional overrides
+3. **Three-Step Resolution**:
+   - Step 1: Check external file for matching condition override (priority-sorted)
+   - Step 2: Check external file for localization (with fallback chain)
+   - Step 3: Fall back to inline default
+4. **Dedicated YAML Schema**: Not full ABML - dialogue localization is runtime, not compile-time
+5. **Template Variables**: Both `${expr}` and `{{ var }}` syntax supported
+
+**External Dialogue File Format:**
+```yaml
+# dialogue/merchant/greet.yaml
+localizations:
+  en: "Welcome to my shop!"
+  es: "¡Bienvenido a mi tienda!"
+  ja: "いらっしゃいませ！"
+
+overrides:
+  - condition: "${player.reputation > 50}"
+    text: "Ah, my favorite customer!"
+    priority: 10
+  - condition: "${time.hour >= 20}"
+    text: "We're closing soon, but come in!"
+    priority: 5
+    locale: en  # Optional: locale-restricted override
+```
+
+**Test Results:**
+- 45 new dialogue tests (all passing)
+- 716 total lib-behavior tests (all passing)
+
+**DI Registration:**
+Services registered in `BehaviorServicePlugin.ConfigureServices()`:
+- `IExternalDialogueLoader` (singleton)
+- `IDialogueResolver` (singleton)
+- `ILocalizationProvider` (singleton)
+
+**Future Extension Point: Database-Backed Dialogue Sources**
+
+> **TODO**: Copy this section to the "extension points / future work" section in the
+> ABML, behavior, or dialogue guides when documentation is finalized.
+
+The dialogue system has TWO separate localization systems by design:
+
+1. **Per-dialogue companion documents** (`IExternalDialogueLoader` → `DialogueResolver`)
+   - Reference-based: `dialogue/merchant/greet` → YAML file with localizations + overrides
+   - Conditional logic supported (overrides with conditions)
+   - Currently file-only
+
+2. **Global string tables** (`ILocalizationProvider` → `FileLocalizationProvider`)
+   - Key-based: `ui.menu.start` → localized string
+   - Plugin architecture with `ILocalizationSource`
+   - Ready for database source TODAY
+
+**Intended priority chain for dialogue text:**
+1. Database (highest priority, almost never exists)
+2. Companion document (YAML file, may exist)
+3. Inline text (always exists, required in ABML)
+
+**To add database support for per-dialogue:**
+
+The `IExternalDialogueLoader` interface is already abstract enough:
+```csharp
+Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct);
+```
+
+A `DatabaseDialogueLoader : IExternalDialogueLoader` can implement this. Then create
+an aggregate loader:
+
+```csharp
+// Future: AggregateDialogueLoader.cs
+public class AggregateDialogueLoader : IExternalDialogueLoader
+{
+    private readonly IReadOnlyList<IDialogueSource> _sources; // Priority-ordered
+
+    public async Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct)
+    {
+        foreach (var source in _sources)
+        {
+            var result = await source.LoadAsync(reference, ct);
+            if (result != null) return result;
+        }
+        return null;
+    }
+}
+
+// Sources:
+// - DatabaseDialogueSource (priority 10) - if configured
+// - CachedDialogueSource (priority 5) - local cache of DB results
+// - FileDialogueSource (priority 0) - current ExternalDialogueLoader
+```
+
+**What exists now:**
+- ✅ Interface abstraction (`IExternalDialogueLoader`) is source-agnostic
+- ✅ `ExternalDialogueFile` model works for any source
+- ✅ Caching infrastructure in file loader (pattern can be reused)
+- ✅ `ILocalizationSource` plugin pattern in string tables (can mirror for dialogue)
+
+**What to add when needed:**
+- `IDialogueSource` interface (mirrors `ILocalizationSource`)
+- `AggregateDialogueLoader` implementation
+- `DatabaseDialogueSource` implementation
+- Priority property on sources
+
+This can be added without changing `DialogueResolver` - it only knows about
+`IExternalDialogueLoader`, not the implementation details.
+
+**Layer 7 (Cognition Layering) Remaining:**
+- `ICognitionBuilder` - Build cognition pipelines from templates + overrides
+- `CognitionTemplateRegistry` - Load/manage base templates
+- Override system - Add/remove/modify handlers within stages
 
 ### Implementation Notes
 

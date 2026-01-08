@@ -128,7 +128,7 @@ public sealed class DialogueResolver : IDialogueResolver
     {
         // Evaluate availability condition
         var isAvailable = string.IsNullOrEmpty(option.Condition) ||
-                          context.EvaluateCondition(option.Condition);
+                        context.EvaluateCondition(option.Condition);
 
         // Resolve label text
         var labelReference = new DialogueReference

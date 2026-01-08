@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
@@ -71,5 +72,23 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         services.AddSingleton<IActionHandler, StoreMemoryHandler>();
         services.AddSingleton<IActionHandler, EvaluateGoalImpactHandler>();
         services.AddSingleton<IActionHandler, TriggerGoapReplanHandler>();
+
+        // Register dialogue & localization layer (Layer 6)
+        // External dialogue loader for YAML-based dialogue files
+        services.AddSingleton<IExternalDialogueLoader>(sp =>
+        {
+            var loader = new ExternalDialogueLoader(new ExternalDialogueLoaderOptions
+            {
+                EnableCaching = true,
+                LogFileLoads = false
+            });
+            return loader;
+        });
+
+        // Dialogue resolver with three-step resolution pipeline
+        services.AddSingleton<IDialogueResolver, DialogueResolver>();
+
+        // Localization provider for string table lookups
+        services.AddSingleton<ILocalizationProvider, FileLocalizationProvider>();
     }
 }

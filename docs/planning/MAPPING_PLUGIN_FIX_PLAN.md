@@ -228,5 +228,6 @@ Also added `Warning` property to `PublishObjectChangesResponse` schema.
 ---
 
 ## Related Documents
+- **[docs/guides/MAPPING_SYSTEM.md](../guides/MAPPING_SYSTEM.md)**: Comprehensive reference guide for the mapping system (created 2026-01-08)
 - **UPCOMING_-_MAPPING_PLUGIN.md**: Detailed feature specification with advanced affordance system design (retained for future reference)
 - **~~UPCOMING_-_MAP_SERVICE.md~~**: Superseded architecture document (deleted 2025-01-08)
