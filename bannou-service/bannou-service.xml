@@ -4322,6 +4322,676 @@
             <param name="archetype">The archetype defining channels and strategies.</param>
             <returns>Merged emissions keyed by channel name.</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionBuilder">
+            <summary>
+            Builds cognition pipelines from templates with optional character-specific overrides.
+            </summary>
+            <remarks>
+            <para>
+            The builder applies overrides in order to produce a customized pipeline.
+            Override priority (most to least common):
+            </para>
+            <list type="number">
+            <item>Parameter overrides - Modify handler parameters (weights, thresholds, etc.)</item>
+            <item>Disable overrides - Conditionally or unconditionally disable handlers</item>
+            <item>Replace overrides - Swap handler implementations (advanced, rare)</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionBuilder.Build(System.String,BeyondImmersion.BannouService.Behavior.CognitionOverrides)">
+            <summary>
+            Builds a cognition pipeline from a template with optional overrides.
+            </summary>
+            <param name="templateId">The template ID to build from.</param>
+            <param name="overrides">Optional overrides to apply.</param>
+            <returns>The built pipeline, or null if template not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionBuilder.Build(BeyondImmersion.BannouService.Behavior.CognitionTemplate,BeyondImmersion.BannouService.Behavior.CognitionOverrides)">
+            <summary>
+            Builds a cognition pipeline from a template with optional overrides.
+            </summary>
+            <param name="template">The template to build from.</param>
+            <param name="overrides">Optional overrides to apply.</param>
+            <returns>The built pipeline.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionBuilder.ValidateOverrides(System.String,BeyondImmersion.BannouService.Behavior.CognitionOverrides)">
+            <summary>
+            Validates overrides against a template without building.
+            </summary>
+            <param name="templateId">The template ID to validate against.</param>
+            <param name="overrides">The overrides to validate.</param>
+            <returns>Validation result with any errors or warnings.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation">
+            <summary>
+            Result of validating cognition overrides.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation.IsValid">
+            <summary>
+            Whether the overrides are valid.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation.Errors">
+            <summary>
+            Validation errors that prevent building.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation.Warnings">
+            <summary>
+            Validation warnings that don't prevent building but may indicate issues.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation.Valid">
+            <summary>
+            Creates a valid result with no errors.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionOverrideValidation.Invalid(System.String[])">
+            <summary>
+            Creates an invalid result with errors.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionPipeline">
+            <summary>
+            A built cognition pipeline ready for execution.
+            </summary>
+            <remarks>
+            <para>
+            Pipelines are immutable once built. For different character configurations,
+            build separate pipelines with different overrides.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionPipeline.TemplateId">
+            <summary>
+            The template ID this pipeline was built from.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionPipeline.Stages">
+            <summary>
+            The resolved stages in execution order.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionPipeline.ProcessAsync(System.Object,BeyondImmersion.BannouService.Behavior.CognitionContext,System.Threading.CancellationToken)">
+            <summary>
+            Processes a perception through the entire pipeline.
+            </summary>
+            <param name="perception">The perception to process.</param>
+            <param name="context">The cognition execution context.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The processing result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionPipeline.ProcessBatchAsync(System.Collections.Generic.IReadOnlyList{System.Object},BeyondImmersion.BannouService.Behavior.CognitionContext,System.Threading.CancellationToken)">
+            <summary>
+            Processes multiple perceptions through the pipeline.
+            </summary>
+            <param name="perceptions">The perceptions to process.</param>
+            <param name="context">The cognition execution context.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The processing results.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionStage">
+            <summary>
+            A stage within a cognition pipeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionStage.Name">
+            <summary>
+            The stage name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionStage.Handlers">
+            <summary>
+            The handlers in this stage, in execution order.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionStage.ExecuteAsync(BeyondImmersion.BannouService.Behavior.CognitionContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes all handlers in this stage.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionHandler">
+            <summary>
+            A handler within a cognition stage.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionHandler.Id">
+            <summary>
+            Unique ID of this handler instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionHandler.HandlerName">
+            <summary>
+            The handler name (action name).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionHandler.IsEnabled">
+            <summary>
+            Whether this handler is enabled.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionHandler.Parameters">
+            <summary>
+            The resolved parameters for this handler.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionHandler.ExecuteAsync(BeyondImmersion.BannouService.Behavior.CognitionContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes this handler.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionContext">
+            <summary>
+            Context for cognition pipeline execution.
+            </summary>
+            <remarks>
+            <para>
+            The context carries state between stages and provides access to
+            the ABML execution infrastructure.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.EntityId">
+            <summary>
+            The entity ID being processed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.AbmlContext">
+            <summary>
+            ABML execution context for running action handlers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.HandlerRegistry">
+            <summary>
+            The action handler registry for finding handlers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.Perceptions">
+            <summary>
+            Current perceptions being processed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.FilteredPerceptions">
+            <summary>
+            Filtered perceptions after Stage 1.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.FastTrackPerceptions">
+            <summary>
+            Fast-tracked threat perceptions that skip to Stage 5.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.RelevantMemories">
+            <summary>
+            Retrieved memories from Stage 2.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.SignificanceScores">
+            <summary>
+            Significance scores from Stage 3.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.RequiresReplan">
+            <summary>
+            Whether replanning is needed (from Stage 5).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.ReplanUrgency">
+            <summary>
+            Urgency level for replanning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.Data">
+            <summary>
+            Additional context data for handlers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionContext.ConditionEvaluator">
+            <summary>
+            Expression context for evaluating conditions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionContext.ForEntity(System.Guid)">
+            <summary>
+            Creates a context for an entity.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionResult">
+            <summary>
+            Result of processing perceptions through a cognition pipeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.Success">
+            <summary>
+            Whether processing completed successfully.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.ProcessedPerceptions">
+            <summary>
+            Perceptions that passed all stages and may trigger behavior.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.StoredMemories">
+            <summary>
+            Perceptions that were stored as memories.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.RequiresReplan">
+            <summary>
+            Whether the GOAP planner should replan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.ReplanUrgency">
+            <summary>
+            Urgency level for replanning (0-1).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.AffectedGoals">
+            <summary>
+            Goals affected by the processed perceptions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionResult.Error">
+            <summary>
+            Error message if processing failed.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionResult.Successful(System.Collections.Generic.IReadOnlyList{System.Object},System.Boolean,System.Single)">
+            <summary>
+            Creates a success result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionResult.Failed(System.String)">
+            <summary>
+            Creates a failed result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry">
+            <summary>
+            Registry for cognition templates.
+            </summary>
+            <remarks>
+            <para>
+            Templates can be registered from:
+            </para>
+            <list type="bullet">
+            <item>Embedded resources (compiled-in defaults)</item>
+            <item>YAML files (runtime configuration)</item>
+            <item>Programmatic construction</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry.GetTemplate(System.String)">
+            <summary>
+            Gets a template by ID.
+            </summary>
+            <param name="templateId">The template ID.</param>
+            <returns>The template, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry.HasTemplate(System.String)">
+            <summary>
+            Checks if a template exists.
+            </summary>
+            <param name="templateId">The template ID.</param>
+            <returns>True if the template exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry.RegisterTemplate(BeyondImmersion.BannouService.Behavior.CognitionTemplate)">
+            <summary>
+            Registers a template.
+            </summary>
+            <param name="template">The template to register.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry.GetTemplateIds">
+            <summary>
+            Gets all registered template IDs.
+            </summary>
+            <returns>The template IDs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICognitionTemplateRegistry.LoadFromDirectory(System.String,System.Boolean)">
+            <summary>
+            Loads templates from a directory.
+            </summary>
+            <param name="directory">The directory containing YAML template files.</param>
+            <param name="recursive">Whether to search subdirectories.</param>
+            <returns>Number of templates loaded.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionTemplates">
+            <summary>
+            Standard cognition template IDs.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionTemplates.HumanoidBase">
+            <summary>
+            Base template for humanoid characters.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionTemplates.CreatureBase">
+            <summary>
+            Base template for creature characters.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionTemplates.ObjectBase">
+            <summary>
+            Minimal template for objects (limited cognition).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionTemplate">
+            <summary>
+            A cognition pipeline template that defines the stages and handlers
+            for processing perceptions into intentions.
+            </summary>
+            <remarks>
+            <para>
+            Templates define the standard cognition pipeline structure:
+            </para>
+            <list type="number">
+            <item>Filter - Attention filtering based on priority weights</item>
+            <item>MemoryQuery - Query relevant memories</item>
+            <item>Significance - Assess perception significance</item>
+            <item>Storage - Store significant perceptions as memories</item>
+            <item>Intention - Evaluate goal impact and trigger replanning</item>
+            </list>
+            <para>
+            Templates can be loaded from embedded resources or YAML files.
+            Character-specific behavior is achieved through overrides applied at runtime.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionTemplate.Id">
+            <summary>
+            Unique identifier for this template.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionTemplate.Description">
+            <summary>
+            Optional human-readable description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionTemplate.Stages">
+            <summary>
+            The ordered list of stages in this pipeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionTemplate.Version">
+            <summary>
+            Template version for compatibility checking.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionStageDefinition">
+            <summary>
+            Definition of a single stage in the cognition pipeline.
+            </summary>
+            <remarks>
+            Each stage can contain multiple handlers that execute in order.
+            The standard stages are: filter, memory_query, significance, storage, intention.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionStageDefinition.Name">
+            <summary>
+            Stage name (e.g., "filter", "significance", "intention").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionStageDefinition.Handlers">
+            <summary>
+            Ordered list of handlers in this stage.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition">
+            <summary>
+            Definition of a handler within a cognition stage.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition.Id">
+            <summary>
+            Unique ID for this handler instance within the template.
+            Used for targeting overrides.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition.HandlerName">
+            <summary>
+            The action handler name to invoke (e.g., "filter_attention", "assess_significance").
+            This must match an IActionHandler registered with the system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition.Parameters">
+            <summary>
+            Parameters to pass to the handler.
+            These are merged with override parameters at runtime.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition.Enabled">
+            <summary>
+            Whether this handler is enabled by default.
+            Can be overridden per-character.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionHandlerDefinition.Description">
+            <summary>
+            Optional description of what this handler does.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionOverrides">
+            <summary>
+            Collection of overrides to apply to a cognition template.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionOverrides.Overrides">
+            <summary>
+            List of overrides to apply, in order.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionOverrides.Empty">
+            <summary>
+            Creates an empty override set.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CognitionOverrides.FromList(BeyondImmersion.BannouService.Behavior.ICognitionOverride[])">
+            <summary>
+            Creates overrides from a list of override definitions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICognitionOverride">
+            <summary>
+            Base interface for cognition overrides.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionOverride.Stage">
+            <summary>
+            The stage this override applies to.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICognitionOverride.Type">
+            <summary>
+            The type of override operation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionOverrideType">
+            <summary>
+            Types of cognition overrides.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionOverrideType.Parameter">
+            <summary>
+            Override handler parameters only.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionOverrideType.Add">
+            <summary>
+            Add a new handler to the stage.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionOverrideType.Disable">
+            <summary>
+            Disable an existing handler.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionOverrideType.Replace">
+            <summary>
+            Replace a handler with a different implementation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionOverrideType.Reorder">
+            <summary>
+            Reorder handlers within a stage.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ParameterOverride">
+            <summary>
+            Override that modifies handler parameters.
+            </summary>
+            <remarks>
+            This is the most common override type. Parameters are deep-merged,
+            so you only need to specify the parameters you want to change.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ParameterOverride.Stage">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ParameterOverride.Type">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ParameterOverride.HandlerId">
+            <summary>
+            The handler ID to modify.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ParameterOverride.Parameters">
+            <summary>
+            Parameter overrides to apply.
+            These are deep-merged with the handler's existing parameters.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.AddHandlerOverride">
+            <summary>
+            Override that adds a new handler to a stage.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AddHandlerOverride.Stage">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AddHandlerOverride.Type">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AddHandlerOverride.AfterId">
+            <summary>
+            Handler ID to insert after. Null means insert at the beginning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AddHandlerOverride.BeforeId">
+            <summary>
+            Handler ID to insert before. Takes precedence over AfterId if both specified.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AddHandlerOverride.Handler">
+            <summary>
+            The handler definition to add.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DisableHandlerOverride">
+            <summary>
+            Override that disables an existing handler.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DisableHandlerOverride.Stage">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DisableHandlerOverride.Type">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DisableHandlerOverride.HandlerId">
+            <summary>
+            The handler ID to disable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DisableHandlerOverride.Condition">
+            <summary>
+            Optional condition expression for conditional disabling.
+            When specified, the handler is only disabled when this expression evaluates to true.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ReplaceHandlerOverride">
+            <summary>
+            Override that replaces a handler with a different implementation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReplaceHandlerOverride.Stage">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReplaceHandlerOverride.Type">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReplaceHandlerOverride.HandlerId">
+            <summary>
+            The handler ID to replace.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReplaceHandlerOverride.NewHandler">
+            <summary>
+            The new handler definition.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride">
+            <summary>
+            Override that reorders handlers within a stage.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride.Stage">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride.Type">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride.HandlerId">
+            <summary>
+            The handler ID to move.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride.AfterId">
+            <summary>
+            Insert after this handler ID. Null with BeforeId=null means move to beginning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ReorderHandlerOverride.BeforeId">
+            <summary>
+            Insert before this handler ID. Takes precedence over AfterId.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CognitionStages">
+            <summary>
+            Standard cognition stage names.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionStages.Filter">
+            <summary>
+            Stage 1: Attention filtering.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionStages.MemoryQuery">
+            <summary>
+            Stage 2: Memory query.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionStages.Significance">
+            <summary>
+            Stage 3: Significance assessment.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionStages.Storage">
+            <summary>
+            Stage 4: Memory storage.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CognitionStages.Intention">
+            <summary>
+            Stage 5: Intention formation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CognitionStages.All">
+            <summary>
+            Gets all standard stage names in pipeline order.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.ControlSource">
             <summary>
             Source of control for an entity's Intent Channels.

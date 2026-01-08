@@ -2097,8 +2097,8 @@ Phase 4 is complete with:
 |------|-------|--------------|----------|
 | ~~Implement `IDialogueResolver`~~ | 6 | Expression VM | ✅ DONE |
 | ~~Implement localization overlay~~ | 6 | DialogueResolver | ✅ DONE |
-| Implement `ICognitionBuilder` | 7 | Existing cognition | Low |
-| Implement override system | 7 | CognitionBuilder | Low |
+| ~~Implement `ICognitionBuilder`~~ | 7 | Existing cognition | ✅ DONE |
+| ~~Implement override system~~ | 7 | CognitionBuilder | ✅ DONE |
 
 #### Phase 5 Layer 6 Audit (2026-01-08)
 
@@ -2231,10 +2231,230 @@ public class AggregateDialogueLoader : IExternalDialogueLoader
 This can be added without changing `DialogueResolver` - it only knows about
 `IExternalDialogueLoader`, not the implementation details.
 
-**Layer 7 (Cognition Layering) Remaining:**
-- `ICognitionBuilder` - Build cognition pipelines from templates + overrides
-- `CognitionTemplateRegistry` - Load/manage base templates
-- Override system - Add/remove/modify handlers within stages
+#### Phase 5 Layer 7 Audit (2026-01-08)
+
+**STATUS: LAYER 7 COMPLETE** - Cognition Layering
+
+**Files Created:**
+
+Interfaces (bannou-service/Behavior/):
+- `ICognitionTemplate.cs` - Template and override model types
+  - `CognitionTemplate`, `CognitionStageDefinition`, `CognitionHandlerDefinition`
+  - `CognitionOverrides`, `ICognitionOverride` base interface
+  - `ParameterOverride`, `DisableHandlerOverride`, `AddHandlerOverride`
+  - `ReplaceHandlerOverride`, `ReorderHandlerOverride`
+  - `CognitionStages` constants, `CognitionTemplates` standard IDs
+- `ICognitionBuilder.cs` - Builder and pipeline interfaces
+  - `ICognitionBuilder` - Build pipelines from templates + overrides
+  - `ICognitionPipeline` - Executable pipeline with stages
+  - `ICognitionStage`, `ICognitionHandler` - Stage/handler execution
+  - `CognitionContext` - Execution context for pipelines
+  - `CognitionResult` - Pipeline processing result
+  - `ICognitionTemplateRegistry` - Template storage and loading
+
+Implementations (lib-behavior/Cognition/):
+- `CognitionTemplateRegistry.cs` - Template management with:
+  - Embedded default templates (humanoid, creature, object)
+  - YAML file loading with caching
+  - Thread-safe concurrent dictionary storage
+- `CognitionBuilder.cs` - Pipeline construction with:
+  - Full override application (parameter, disable, add, replace, reorder)
+  - Deep parameter merging for nested dictionaries
+  - Validation of overrides against templates
+  - Executable pipeline construction
+
+Tests (lib-behavior.tests/Cognition/):
+- `CognitionTemplateRegistryTests.cs` - 31 tests
+  - Embedded defaults loading
+  - YAML parsing (flat and metadata formats)
+  - Directory loading (recursive and non-recursive)
+  - Error handling for invalid YAML
+- `CognitionBuilderTests.cs` - 26 tests
+  - Basic pipeline building
+  - Parameter overrides (single, nested, multiple)
+  - Disable overrides (unconditional and conditional)
+  - Add handler overrides (with positioning)
+  - Replace handler overrides
+  - Reorder handler overrides
+  - Override validation
+  - Complex archetype scenarios (paranoid, oblivious)
+
+**Key Design Decisions:**
+
+1. **Override Priority (per user feedback)**:
+   - Parameter overrides = common, expected, easy
+   - Handler disable = supported, documented
+   - Handler replacement = advanced, rare, "escape hatch"
+
+2. **Handler Model (hybrid)**:
+   - Default: 1:1 stage-to-handler mapping
+   - Advanced: Sub-handler chains within stages
+   - All existing cognition handlers work unchanged
+
+3. **Template Sources (both)**:
+   - Embedded defaults compiled into assembly
+   - YAML files loaded from configurable directory
+
+4. **Deep Parameter Merging**:
+   - Overrides merge with base, not replace
+   - Nested dictionaries (like `priority_weights`) merged recursively
+   - Only specified parameters changed
+
+**Embedded Default Templates:**
+
+Three base templates with full 5-stage cognition:
+
+| Template | Stages | Use Case |
+|----------|--------|----------|
+| `humanoid-cognition-base` | All 5 | Players, NPCs, humanoid creatures |
+| `creature-cognition-base` | 3 (skip sig/storage) | Animals, monsters, familiars |
+| `object-cognition-base` | 2 (filter + intention) | Doors, traps, puzzles |
+
+**Override Examples:**
+
+```yaml
+# Paranoid archetype override
+cognition:
+  base: humanoid-cognition-base
+  overrides:
+    - stage: filter
+      handler_id: attention_filter
+      parameters:
+        priority_weights:
+          threat: 15.0  # Higher threat sensitivity
+        threat_threshold: 0.6  # Lower threshold = more fast-tracking
+
+# Oblivious archetype override
+cognition:
+  base: humanoid-cognition-base
+  overrides:
+    - stage: filter
+      handler_id: attention_filter
+      parameters:
+        attention_budget: 30   # Very limited attention
+        threat_fast_track: false
+    - stage: storage
+      handler_id: store_memory
+      action: disable  # Doesn't form new memories
+```
+
+**Test Results:**
+- 57 new cognition layering tests (all passing)
+- 115 total cognition tests (all passing)
+- 761 total lib-behavior tests (all passing)
+
+**DI Registration:**
+Services registered in `BehaviorServicePlugin.ConfigureServices()`:
+- `ICognitionTemplateRegistry` (singleton with embedded defaults)
+- `ICognitionBuilder` (singleton with registry + optional handler registry)
+
+**Integration with Existing Cognition:**
+
+The cognition handlers (`FilterAttentionHandler`, `AssessSignificanceHandler`, etc.)
+continue to work unchanged. The new layer provides:
+
+1. **Templates** - Standardized configurations per archetype
+2. **Overrides** - Per-character customization without new handlers
+3. **Pipeline execution** - Orchestrates handler calls through stages
+
+The existing `IActionHandler` implementations are invoked by `CognitionHandler.ExecuteAsync()`
+through the ABML `DomainAction` mechanism.
+
+---
+
+**Future Extension Point: Character-Level Cognition Override Parsing**
+
+> **TODO**: Copy this section to the "extension points / future work" section in the
+> behavior or entity archetype guides when documentation is finalized.
+
+**Gap Identified**: The G3 spec (lines 1132-1145) shows character-level YAML like:
+```yaml
+character:
+  id: paranoid_guard
+  cognition:
+    base: humanoid-cognition-base
+    overrides:
+      filter:
+        - check_perception_distance: { max: 75.0 }
+      significance:
+        - calculate_threat: { multiplier: 1.5 }
+```
+
+Current implementation can:
+- ✅ Parse YAML cognition **templates** (`CognitionTemplateRegistry.ParseYaml()`)
+- ✅ Build pipelines with **programmatic** overrides (`CognitionBuilder.Build()`)
+- ❌ Parse character-definition YAML into `CognitionOverrides`
+
+**YAML Infrastructure Analysis**:
+
+Three YAML parsers currently exist with **duplicate patterns**:
+
+| Component | Purpose | DTOs |
+|-----------|---------|------|
+| `CognitionTemplateRegistry` | Cognition templates | `CognitionTemplateDto`, `StageDto`, `HandlerDto` |
+| `ExternalDialogueLoader` | Dialogue companions | `RawDialogueFile`, `RawOverride` |
+| `FileLocalizationProvider` | String tables | Direct hierarchical dict |
+
+**Common patterns that could be shared**:
+1. YamlDotNet with `UnderscoredNamingConvention`
+2. `IgnoreUnmatchedProperties()` configuration
+3. Directory registration with priority
+4. MemoryCache caching pattern
+5. DTO → domain model conversion
+
+**Recommended shared infrastructure** (for future):
+```csharp
+// bannou-service/Yaml/BannouYaml.cs
+public static class BannouYaml
+{
+    public static IDeserializer CreateDeserializer()
+    {
+        return new DeserializerBuilder()
+            .WithNamingConvention(UnderscoredNamingConvention.Instance)
+            .IgnoreUnmatchedProperties()
+            .Build();
+    }
+}
+
+// bannou-service/Yaml/IDocumentLoader.cs
+public interface IDocumentLoader<TDocument>
+{
+    void RegisterDirectory(string directory, int priority = 0);
+    Task<TDocument?> LoadAsync(string reference, CancellationToken ct);
+    void ClearCache();
+}
+```
+
+**For character cognition overrides specifically**:
+
+Need a DTO that matches the nested override YAML format:
+```csharp
+// Character YAML override format: stage -> list of handler overrides
+internal sealed class CognitionOverridesDto
+{
+    // Map: stage_name -> list of {handler_id: {params...}} or special actions
+    public Dictionary<string, List<Dictionary<string, object>>>? Overrides { get; set; }
+}
+```
+
+**Can existing code be reused?**
+- `CognitionTemplateRegistry.ParseYaml()` - Parses **full templates**, not override-only
+- `ExternalDialogueLoader` - Parses **dialogue** structure, not cognition
+- Neither is directly reusable, but patterns can be extracted
+
+**What to add when needed** (Phase 6 or entity archetype integration):
+1. `CognitionOverridesDto` and conversion logic
+2. `CharacterDefinitionLoader` or extend `EntityArchetypeRegistry`
+3. Consider shared `BannouYaml` helper for deserializer creation
+4. Wire into entity creation pipeline
+
+**Priority**: LOW - This is an entity archetype integration concern.
+The cognition infrastructure works today with programmatic overrides.
+YAML parsing becomes valuable when characters are defined in data files.
+
+---
+
+**Phase 5 COMPLETE**
 
 ### Implementation Notes
 

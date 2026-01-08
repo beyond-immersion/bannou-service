@@ -90,5 +90,26 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
 
         // Localization provider for string table lookups
         services.AddSingleton<ILocalizationProvider, FileLocalizationProvider>();
+
+        // Register cognition layering system (Layer 7)
+        // Template registry for base cognition templates (humanoid, creature, object)
+        services.AddSingleton<ICognitionTemplateRegistry>(sp =>
+        {
+            var registry = new CognitionTemplateRegistry(
+                logger: sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitionTemplateRegistry>>(),
+                loadEmbeddedDefaults: true);
+            return registry;
+        });
+
+        // Cognition builder for constructing pipelines from templates with overrides
+        services.AddSingleton<ICognitionBuilder>(sp =>
+        {
+            var registry = sp.GetRequiredService<ICognitionTemplateRegistry>();
+            var handlerRegistry = sp.GetService<IActionHandlerRegistry>();
+            return new CognitionBuilder(
+                registry,
+                handlerRegistry,
+                sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitionBuilder>>());
+        });
     }
 }

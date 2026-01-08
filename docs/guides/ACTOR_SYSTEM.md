@@ -1,0 +1,967 @@
+# Actor System - Bringing Worlds to Life
+
+> **Version**: 1.0
+> **Status**: Implemented (Phases 0-5)
+> **Location**: `lib-actor/`, `lib-behavior/`
+> **Related**: [ABML Guide](./ABML.md), [GOAP Guide](./GOAP.md), [Mapping System Guide](./MAPPING_SYSTEM.md)
+
+The Actor System provides the cognitive layer for Arcadia's living world. Actors are long-running processes that give characters personality, make regions feel alive, and orchestrate dramatic moments. They are the invisible directors that turn static game worlds into dynamic, responsive experiences.
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [The Key Insight: Flavor, Not Foundation](#2-the-key-insight-flavor-not-foundation)
+3. [Actor Types](#3-actor-types)
+4. [NPC Brain Actors](#4-npc-brain-actors)
+5. [Event Actors](#5-event-actors)
+6. [Behavior Integration](#6-behavior-integration)
+7. [Perception and Cognition](#7-perception-and-cognition)
+8. [Cutscene and QTE Orchestration](#8-cutscene-and-qte-orchestration)
+9. [Infrastructure Integration](#9-infrastructure-integration)
+10. [State Management](#10-state-management)
+11. [Scaling and Distribution](#11-scaling-and-distribution)
+12. [API Reference](#12-api-reference)
+- [Appendix A: Actor Categories](#appendix-a-actor-categories)
+- [Appendix B: Perception Event Types](#appendix-b-perception-event-types)
+
+---
+
+## 1. Overview
+
+### 1.1 What Is An Actor?
+
+An **Actor** is a long-running task that executes a behavior (ABML document) in a loop until:
+- The behavior signals completion (self-terminate)
+- The control plane stops it (external terminate)
+
+Actors are **not** request-response entities. They are autonomous processes that:
+- Run continuously on pool nodes
+- Execute behaviors defined in ABML
+- Subscribe to events and react over time
+- Emit state updates that influence character behaviors
+
+### 1.2 The Two Actor Paradigms
+
+| Actor Type | Scope | Primary Function | Data Flow |
+|------------|-------|------------------|-----------|
+| **NPC Brain Actor** | Single character | Growth, personality, feelings | Consumes perceptions → Emits state updates |
+| **Event Actor** | Region/situation | Orchestration, drama | Queries spatial data → Emits cinematics/events |
+
+### 1.3 Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           BANNOU NETWORK                                     │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                    CONTROL PLANE (lib-actor in bannou-service)          ││
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                      ││
+│  │  │   Actor     │  │   Actor     │  │    Pool     │                      ││
+│  │  │  Registry   │  │  Templates  │  │   Manager   │                      ││
+│  │  └─────────────┘  └─────────────┘  └─────────────┘                      ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│         lib-mesh (app-ids, routing)  +  lib-messaging (events)               │
+│                              │                                               │
+│    ┌─────────────────────────┼─────────────────────────┐                    │
+│    │                         │                         │                    │
+│    ▼                         ▼                         ▼                    │
+│  ┌─────────────┐       ┌─────────────┐           ┌─────────────┐           │
+│  │ Actor Pool  │       │ Actor Pool  │           │ Game Server │           │
+│  │   Node A    │       │   Node B    │           │  (Stride)   │           │
+│  │             │       │             │           │             │           │
+│  │ ┌─────────┐ │       │ ┌─────────┐ │           │ Runs:       │           │
+│  │ │NPC Brain│ │       │ │ Event   │ │           │ - Physics   │           │
+│  │ │ Actors  │ │       │ │ Actors  │ │           │ - Bytecode  │           │
+│  │ └─────────┘ │       │ └─────────┘ │           │ - Cinematics│           │
+│  └─────────────┘       └─────────────┘           └─────────────┘           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. The Key Insight: Flavor, Not Foundation
+
+### 2.1 Actors Are Strictly Optional
+
+Characters have massive, self-sufficient **behavior stacks** that handle every situation:
+- Opening doors, hunting prey, combat maneuvers
+- Social interactions, daily routines, survival instincts
+- All moment-to-moment decision-making
+
+**Without ANY actor, a character is fully functional.** They just don't CHANGE or GROW.
+
+### 2.2 What Actors Provide
+
+| Actors Provide | Actors Do NOT Provide |
+|----------------|----------------------|
+| **Growth** - Characters learn and evolve | Core functionality (behavior stack handles this) |
+| **Spontaneity** - Unexpected reactions | Moment-to-moment decisions (bytecode handles this) |
+| **Personality** - Feelings, moods, memories | Required infrastructure (everything works without actors) |
+| **Realism** - Characters that feel alive | Frame-by-frame combat choices |
+
+### 2.3 The Dependency Graph
+
+```
+Game Client ──depends on──► Game Server ──depends on──► Bannou Services
+                                                              │
+                                              ┌───────────────┴───────────────┐
+                                              │                               │
+                                         REQUIRED                        OPTIONAL
+                                    ┌─────────────────┐            ┌─────────────────┐
+                                    │ Character       │            │ Actor           │
+                                    │ Behavior        │            │ Service         │
+                                    │ Asset           │            │                 │
+                                    │ (core data &    │            │ (flavor only -  │
+                                    │ compiled        │            │ growth, change, │
+                                    │ behaviors)      │            │ personality)    │
+                                    └─────────────────┘            └─────────────────┘
+```
+
+**Nothing depends on Actor Service.** Characters are fully functional with just their behavior stacks. Actors add growth and personality, but the game works without them.
+
+### 2.4 Actor Output Types
+
+| Output Type | Frequency | Effect |
+|-------------|-----------|--------|
+| **State Update** | Every few ticks | Updates feelings/mood variables read by behavior stack |
+| **Goal Update** | When goals change | Updates goal-related inputs for GOAP |
+| **Memory Update** | On significant events | Stores/retrieves memories affecting behavior |
+| **Behavior Change** | Rare (learning/growth) | Modifies the composed behavior stack |
+
+The actor never controls the character directly - it influences how the already-running behavior stack behaves.
+
+---
+
+## 3. Actor Types
+
+### 3.1 NPC Brain Actors
+
+**Purpose**: Character growth, personality expression, memory integration
+
+**Scope**: One actor per character that needs growth/personality
+
+**Lifecycle**:
+- Created when character needs cognitive processing
+- Runs continuously while character is active
+- Persists state across sessions
+
+**Primary Outputs**:
+- Feelings: "You're upset now", "You're scared"
+- Goals: "You want RABBIT specifically, not just food"
+- Memories: "Remember that person betrayed you"
+
+### 3.2 Event Actors
+
+**Purpose**: Orchestrate dramatic moments, regional events, cinematics
+
+**Scope**: One actor per event/situation
+
+**Lifecycle**:
+- Spawned when "interestingness" threshold is crossed
+- Lives for duration of the event
+- Terminates when event concludes
+
+**Primary Outputs**:
+- Cinematics sent to game servers
+- QTE option presentations
+- Environmental effects coordination
+- Multi-character scene orchestration
+
+### 3.3 Administrative Actors
+
+**Purpose**: Background tasks, world maintenance, scheduled jobs
+
+**Examples**:
+- Daily cleanup tasks
+- Economic simulation
+- Weather pattern generation
+- NPC population management
+
+---
+
+## 4. NPC Brain Actors
+
+### 4.1 The Character Co-Pilot Pattern
+
+In Arcadia, players don't control characters directly - they **possess** them as "guardian spirits". The character has their own agent (NPC brain) that:
+- Is always running, always perceiving, always computing
+- Has intimate knowledge of capabilities, state, and preferences
+- Makes decisions when the player doesn't (or can't respond fast enough)
+- Maintains personality and behavioral patterns
+
+When a player connects, they take **priority** over the agent's decisions, but the agent doesn't stop - it watches, computes, and waits.
+
+### 4.2 Perception Flow
+
+Perceptions flow **directly** from Game Server to Actor via event subscription:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          GAME SERVER                                         │
+│                                                                              │
+│  Character moves, sees enemy, takes damage, etc.                            │
+│                            │                                                 │
+│                            │ publish                                         │
+│                            ▼                                                 │
+│              topic: character.{characterId}.perception                       │
+└────────────────────────────┼────────────────────────────────────────────────┘
+                             │
+                             │ lib-messaging (RabbitMQ)
+                             │ DIRECT delivery to subscriber
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ACTOR POOL NODE                                      │
+│                                                                              │
+│  ActorRunner for character-{characterId}                                    │
+│  └── Subscribed to: character.{characterId}.perception                      │
+│      └── On receive: enqueue for next tick                                  │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │ Actor Loop (process_tick)                                               ││
+│  │                                                                         ││
+│  │  1. Drain perception queue                                              ││
+│  │  2. filter_attention → filtered perceptions                             ││
+│  │  3. assess_significance → scored perceptions                            ││
+│  │  4. evaluate_goal_impact → should we replan?                           ││
+│  │  5. Update intents, emit behavior changes                               ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key point**: The control plane does NOT route perceptions. Events flow directly via lib-messaging, scaling horizontally with pool nodes.
+
+### 4.3 The Cognition Pipeline
+
+Each tick, the NPC brain processes perceptions through a cognition pipeline:
+
+```yaml
+flows:
+  process_tick:
+    # Stage 1: Filter attention
+    - filter_attention:
+        input: "${perceptions}"
+        attention_budget: 100
+        max_perceptions: 10
+        priority_weights:
+          threat: 10.0
+          novelty: 5.0
+          social: 3.0
+        result_variable: "filtered"
+        fast_track_variable: "urgent"
+
+    # Handle urgent threats immediately
+    - cond:
+        if: "${len(urgent) > 0}"
+        then:
+          - call: handle_urgent_threat
+            args: { threat: "${urgent[0]}" }
+
+    # Stage 2: Query memory for context
+    - query_memory:
+        query_type: "episodic"
+        context: "${filtered}"
+        result_variable: "memories"
+
+    # Stage 3: Assess significance
+    - assess_significance:
+        perceptions: "${filtered}"
+        memories: "${memories}"
+        result_variable: "significance_scores"
+
+    # Stage 4: Store significant memories
+    - for_each:
+        items: "${filtered}"
+        as: "perception"
+        do:
+          - store_memory:
+              perception: "${perception}"
+              significance: "${significance_scores[perception.id]}"
+              threshold: 0.7
+
+    # Stage 5: Evaluate goal impact
+    - evaluate_goal_impact:
+        perceptions: "${filtered}"
+        current_goal: "${current_goal}"
+        result_variable: "goal_impact"
+
+    # Replan if needed
+    - cond:
+        if: "${goal_impact.requires_replan}"
+        then:
+          - trigger_goap_replan:
+              urgency: "${goal_impact.urgency}"
+              affected_goals: "${goal_impact.affected_goals}"
+              result_variable: "new_plan"
+          - set: current_plan = "${new_plan}"
+```
+
+### 4.4 State Updates Flow to Behavior Stack
+
+How actor state updates eventually become character actions:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ACTOR (Pool Node)                                                          │
+│  Cognition produces: feelings, goals, memories                              │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 │ emit_state_update event
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  GAME SERVER - Character's Behavior Stack                                   │
+│                                                                              │
+│  INPUT SLOTS (read by bytecode):                                            │
+│  ├── perceptions: [enemy_nearby, low_health, ally_in_danger]               │
+│  ├── player_input: [move_forward, attack_pressed] (if player-controlled)   │
+│  └── actor_state: { feelings.angry=0.9, goals.target=X, memories... }      │
+│                                                                              │
+│  BYTECODE EVALUATION (massive composed behavior):                           │
+│  ├── if angry > 0.7 AND enemy_nearby → choose aggressive_combo             │
+│  ├── if fearful > 0.8 AND low_health → choose flee_behavior                │
+│  ├── if goal.target exists → prioritize that target                        │
+│  └── ... thousands of composed decision branches ...                        │
+│                                                                              │
+│  EMITINTENT OPCODES produce:                                                │
+│  ├── Action: "heavy_slash", urgency=0.9                                    │
+│  ├── Locomotion: toward_enemy, urgency=0.7                                 │
+│  ├── Stance: "aggressive", urgency=0.8                                     │
+│  └── Attention: focus_on_enemy, urgency=0.9                                │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 │ IntentMerger combines multiple behaviors
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CHARACTER ACTIONS                                                           │
+│  Merged intents drive animation, movement, combat, attention                │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key insight**: The actor never emits IntentChannels directly. It emits STATE, which the behavior stack reads, which then emits IntentChannels.
+- **Actor**: "Why" (feelings, goals, memories)
+- **Behavior Stack**: "What" (which actions to take)
+- **IntentChannels**: "How" (animation, movement execution)
+
+### 4.5 Personality Through Failure
+
+When players miss QTE windows, the character agent's pre-computed answer executes. This creates emergent personality expression:
+
+| Character Type | QTE Timeout Behavior |
+|----------------|---------------------|
+| Aggressive | Attack anyway |
+| Cautious | Defensive stance |
+| Loyal | Protect ally first |
+| Panicked | Random flailing |
+
+The character's nature shows through even when (especially when) the player fails to respond.
+
+---
+
+## 5. Event Actors
+
+### 5.1 The Invisible Director
+
+Event Actors are **drama coordinators** for any significant situation. They don't fight or act directly - they **script** the action in real-time.
+
+### 5.2 Event Actor Hierarchy
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              REGIONAL WATCHER / WORLD EVENTS                     │
+│                                                                  │
+│  Monitors: proximity, antagonism, dramatic potential             │
+│  Spawns: Event Actors when interestingness thresholds crossed    │
+│                                                                  │
+│  Always-on Event Actors for VIPs:                                │
+│  - Kings, god avatars, elder dragons                             │
+│  - At sufficient power level, EVERYTHING is an event             │
+└──────────────────────────────┬───────────────────────────────────┘
+                               │
+            spawns             │              spawns
+       ┌───────────────────────┼───────────────────────────┐
+       ▼                       ▼                           ▼
+┌─────────────┐      ┌─────────────────┐        ┌─────────────────┐
+│  FESTIVAL   │      │    DISASTER     │        │  CONFRONTATION  │
+│  DAY EVENT  │      │     EVENT       │        │     EVENT       │
+│             │      │                 │        │                 │
+│ The day     │      │ Earthquake,     │        │ Two rivals      │
+│ itself is   │      │ dragon attack,  │        │ finally meet    │
+│ an event    │      │ magical storm   │        │                 │
+└──────┬──────┘      └────────┬────────┘        └────────┬────────┘
+       │                      │                          │
+       │ spawns sub-events    │                          │
+       ▼                      ▼                          ▼
+┌─────────────┐      ┌─────────────────┐        ┌─────────────────┐
+│ Market      │      │ Building        │        │ Cinematic       │
+│ Brawl       │      │ Collapse        │        │ Exchange        │
+│ Event       │      │ Event           │        │ (Fight)         │
+└─────────────┘      └─────────────────┘        └─────────────────┘
+```
+
+### 5.3 Interestingness Triggers
+
+Event Actors spawn when the Regional Watcher detects:
+
+| Trigger | Description |
+|---------|-------------|
+| **Power level proximity** | Matched combatants (interesting fight potential) |
+| **Antagonism score** | Relationship system indicates hatred/rivalry |
+| **Environmental drama** | Near hazards, in public, at significant location |
+| **Story flags** | Characters with narrative significance |
+| **Player involvement** | Human players make things interesting by default |
+| **VIP presence** | Some characters ALWAYS have an Event Actor |
+
+### 5.4 Event Brain Responsibilities
+
+| Responsibility | Implementation |
+|----------------|----------------|
+| Discover environment | Query Map Service for affordances in combat bounds |
+| Track combat state | Authoritative state machine: setup → exchange → resolution |
+| Generate options | Build valid option sets from capabilities × opportunities |
+| Present choices | Send QTE prompts to participants with timing windows |
+| Resolve outcomes | Evaluate choices, apply effects, update state |
+| Choreograph result | Emit ABML channel instructions for animation/camera/audio |
+| Handle interruptions | Detect and integrate crisis moments |
+
+### 5.5 Combat Without Event Actors
+
+Fights happen constantly without Event Actors - and that's fine. Normal combat:
+- Handled entirely by game engine/server
+- Direct bytecode evaluation each frame
+- Character agent provides defaults
+- No Bannou hops required
+
+**Event Actors ENHANCE already-good combat when the situation warrants it.**
+
+---
+
+## 6. Behavior Integration
+
+### 6.1 The Behavior Stack
+
+Characters have layered behavior stacks:
+
+```
+Character Behavior Stack
+├── Base Layer (species/type fundamentals)
+├── Cultural Layer (faction, background)
+├── Professional Layer (class, occupation)
+├── Personal Layer (individual quirks)
+└── Situational Layer (current context overrides)
+```
+
+Each layer produces IntentEmissions. The stack merges them using archetype-defined strategies.
+
+### 6.2 Behavior Types and Variants
+
+```
+Character Behaviors
+├── combat (type)
+│   ├── sword-and-shield (variant)
+│   ├── dual-wield (variant)
+│   └── unarmed (variant)
+├── movement (type)
+│   ├── standard (variant)
+│   └── mounted (variant)
+└── interaction (type)
+    └── default (variant)
+```
+
+### 6.3 Intent Channels
+
+When multiple behavior types are active simultaneously, they output to Intent Channels with urgency values:
+
+| Channel | Purpose | Merge Strategy |
+|---------|---------|----------------|
+| Locomotion | Movement decisions | Highest urgency wins |
+| Action | Combat/interaction actions | Highest urgency wins |
+| Attention | Focus targets | Blended by weight |
+| Stance | Body positioning | Highest urgency wins |
+| Expression | Facial animations | Blended |
+| Vocalization | Speech/sounds | Priority queue |
+
+### 6.4 Actor State → Behavior Input
+
+Actors update state variables that behaviors read:
+
+```csharp
+// Actor emits
+await _messageBus.PublishAsync($"character.{characterId}.state", new StateUpdateEvent
+{
+    Feelings = new() { ["angry"] = 0.9, ["fearful"] = 0.2 },
+    Goals = new() { Primary = "defeat_rival", Target = rivalId },
+    Modifiers = new() { ["combat_style"] = "aggressive" }
+});
+
+// Behavior stack reads (in bytecode)
+// if (state.feelings.angry > 0.7 && perceptions.enemy_nearby)
+//     emit_intent(action, "aggressive_combo", urgency=0.9);
+```
+
+---
+
+## 7. Perception and Cognition
+
+### 7.1 Perception Event Format
+
+```yaml
+CharacterPerceptionEvent:
+  type: object
+  properties:
+    characterId:
+      type: string
+      format: uuid
+    perceptionType:
+      type: string
+      enum: [visual, auditory, tactile, olfactory, proprioceptive]
+    sourceId:
+      type: string
+    sourceType:
+      type: string
+      enum: [character, npc, object, environment]
+    data:
+      type: object
+      additionalProperties: true
+    urgency:
+      type: number
+      minimum: 0
+      maximum: 1
+    timestamp:
+      type: string
+      format: date-time
+```
+
+### 7.2 Cognition Handlers
+
+The behavior plugin provides six cognition handlers:
+
+| Handler | Purpose |
+|---------|---------|
+| `filter_attention` | Prioritize perceptions within attention budget |
+| `assess_significance` | Score perceptions for memory storage |
+| `query_memory` | Retrieve relevant memories for context |
+| `store_memory` | Persist significant experiences |
+| `evaluate_goal_impact` | Determine if perceptions affect goals |
+| `trigger_goap_replan` | Request GOAP planner to generate new plan |
+
+### 7.3 Memory System (MVP)
+
+Current implementation uses keyword-based relevance matching:
+
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Category match | 0.3 | Memory category matches perception category |
+| Content overlap | 0.4 | Shared keywords between perception and memory |
+| Metadata overlap | 0.2 | Shared keys in metadata |
+| Recency bonus | 0.1 | Memories < 1 hour old get boost |
+| Significance bonus | 0.1 | Higher significance memories score higher |
+
+**Future**: Interface designed for migration to embedding-based semantic similarity.
+
+### 7.4 Cognition Constants
+
+All magic numbers are centralized in `CognitionConstants`:
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| LowUrgencyThreshold | 0.3 | Full deliberation below this |
+| HighUrgencyThreshold | 0.7 | Immediate reaction at/above |
+| DefaultThreatWeight | 10.0 | Priority for threat perceptions |
+| DefaultThreatFastTrackThreshold | 0.8 | Bypasses normal pipeline |
+
+---
+
+## 8. Cutscene and QTE Orchestration
+
+### 8.1 The Coordination Layer
+
+The behavior plugin provides coordination infrastructure for multi-participant cinematics:
+
+```
+lib-behavior/Coordination/
+├── CutsceneCoordinator.cs    # Session management
+├── CutsceneSession.cs        # Individual session state
+├── SyncPointManager.cs       # Channel synchronization
+└── InputWindowManager.cs     # QTE timing windows
+```
+
+### 8.2 Cutscene Sessions
+
+```csharp
+var session = await _coordinator.CreateSessionAsync(
+    sessionId: "fight-scene-123",
+    cinematicId: "dramatic_duel",
+    participants: [heroId, villainId],
+    options: new CutsceneSessionOptions
+    {
+        DefaultTimeout = TimeSpan.FromSeconds(5),
+        AllowExtensions = true
+    });
+```
+
+### 8.3 Multi-Channel Execution
+
+Cutscenes use parallel channels with sync points:
+
+```yaml
+channels:
+  camera:
+    - fade_in: { duration: 1s }
+    - move_to: { shot: wide_throne_room }
+    - emit: establishing_complete
+    - wait_for: @hero.at_mark
+    - crane_up: { reveal: boss }
+
+  hero:
+    - wait_for: @camera.establishing_complete
+    - walk_to: { mark: hero_mark_1, speed: cautious }
+    - emit: at_mark
+    - speak: "Your reign ends today!"
+
+  audio:
+    - play: { track: ambient_throne_room }
+    - wait_for: @camera.establishing_complete
+    - crossfade_to: { track: boss_theme }
+```
+
+### 8.4 QTE Input Windows
+
+The `InputWindowManager` handles timed input collection:
+
+```csharp
+var window = await _inputManager.CreateWindowAsync(
+    sessionId: sessionId,
+    participantId: heroId,
+    options: ["dodge_left", "dodge_right", "parry", "counter"],
+    defaultOption: "parry",  // Character agent's choice
+    timeout: TimeSpan.FromSeconds(2));
+
+// Window executes default if player doesn't respond
+var choice = await window.GetResultAsync(ct);
+```
+
+### 8.5 Streaming Composition
+
+Cinematics can be extended mid-execution:
+
+```
+Timeline:
+0s     Game Server receives Cinematic A (compiled bytecode)
+0-10s  Executes Cinematic A
+8s     Event Brain decides to extend based on player action
+8.5s   Game Server receives Extension B
+10s    Cinematic A hits continuation point, seamlessly transitions to B
+10-18s Executes Extension B
+```
+
+Key properties:
+- Initial delivery is **complete** - game server can execute independently
+- Extensions are **additive** - don't modify what's executing
+- Missing extensions are **fine** - original completes gracefully
+
+---
+
+## 9. Infrastructure Integration
+
+### 9.1 The Four Pillars
+
+The actor system builds on four critical services:
+
+```
+                    ┌─────────────────────────────────────┐
+                    │         ACTOR SYSTEM                │
+                    └──────────────┬──────────────────────┘
+                                   │
+           ┌───────────────────────┼───────────────────────┐
+           │                       │                       │
+           ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   lib-mapping   │    │  lib-behavior   │    │   lib-asset     │
+│ (Spatial Query) │    │ (GOAP + ABML)   │    │ (Distribution)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    │   lib-orchestrator    │
+                    │  (Pool Management)    │
+                    └───────────────────────┘
+```
+
+### 9.2 lib-mapping Integration
+
+Event actors use the mapping system for spatial awareness:
+
+```yaml
+# Event actor queries affordances
+- service_call:
+    service: mapping
+    method: query-affordance
+    parameters:
+      region_id: "${region.id}"
+      affordance_type: "ambush"
+      bounds: "${combat_bounds}"
+    result_variable: "nearby_affordances"
+
+# Generate options based on environment
+- for_each:
+    items: "${nearby_affordances.locations}"
+    as: "location"
+    do:
+      - call: { flow: generate_environmental_option }
+```
+
+### 9.3 lib-behavior Integration
+
+Actors execute ABML documents via the behavior service:
+
+- **Tree-walking** `DocumentExecutor` for cloud-side cognition
+- **Bytecode** `BehaviorModelInterpreter` for game server execution
+- **GOAP** planner for goal-directed action selection
+- **Cognition handlers** for perception processing
+
+### 9.4 lib-asset Integration
+
+Compiled behaviors are stored and distributed via lib-asset:
+
+```
+Actor Template → behaviorRef: "asset://behaviors/npc-brain-v1"
+                                       │
+                                       ▼
+                              lib-asset Storage
+                                       │
+                                       ▼ (pre-signed URL)
+                              Game Server Download
+```
+
+### 9.5 lib-orchestrator Integration
+
+The orchestrator spawns actor pool nodes on demand:
+
+```yaml
+# Request pool expansion
+POST /orchestrator/spawn
+{
+  "template": "actor-pool",
+  "count": 5,
+  "configuration": {
+    "plugins": ["actor"],
+    "capacity": 1000
+  }
+}
+```
+
+---
+
+## 10. State Management
+
+### 10.1 Actor State
+
+```csharp
+public class ActorState
+{
+    public string ActorId { get; set; }
+    public string TemplateId { get; set; }
+    public string Category { get; set; }
+
+    // Behavior execution state
+    public Dictionary<string, object?> Variables { get; set; }
+    public string? CurrentFlowName { get; set; }
+    public int CurrentActionIndex { get; set; }
+
+    // GOAP state
+    public object? CurrentGoal { get; set; }
+    public object? CurrentPlan { get; set; }
+    public int CurrentPlanStep { get; set; }
+
+    // Metrics
+    public long LoopIterations { get; set; }
+    public DateTimeOffset LastSaveTime { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+}
+```
+
+### 10.2 Auto-Save Configuration
+
+```yaml
+# Per-template configuration
+category: npc-brain
+behaviorRef: "asset://behaviors/npc-brain-v1"
+autoSaveIntervalSeconds: 30  # Override default
+
+# Or disable for transient actors
+category: daily-cleanup
+behaviorRef: "asset://behaviors/cleanup-v1"
+autoSaveEnabled: false
+```
+
+### 10.3 State Recovery
+
+When a pool node restarts or an actor migrates:
+1. Control plane detects actor needs recovery
+2. Loads last saved state from lib-state
+3. Spawns actor on new node with restored state
+4. Behavior resumes from saved position
+
+---
+
+## 11. Scaling and Distribution
+
+### 11.1 Pool Node Architecture
+
+Actor pool nodes are **peers** on the Bannou network:
+- Unique app-ids per node
+- Can send/receive events via lib-messaging
+- Can make mesh API calls via lib-mesh
+
+### 11.2 Horizontal Scaling
+
+For 10,000 NPCs × 10 events/second = 100,000 events/second:
+- Direct subscription scales horizontally with pool nodes
+- Control plane only handles lifecycle (spawn, stop, migrate)
+- No bottleneck in event routing
+
+### 11.3 Actor Distribution
+
+```yaml
+# Pool node capacity
+MAX_ACTORS_PER_NODE: 1000
+
+# Distribution strategy
+actor_assignment:
+  strategy: locality  # Prefer co-location with related actors
+  fallback: round_robin
+  migration_threshold: 0.8  # Migrate when node at 80% capacity
+```
+
+### 11.4 Event Tap Pattern
+
+Event actors can "tap" specific characters to receive their events:
+
+```
+                    RabbitMQ Fanout Exchange
+                    (routing_id = character-123)
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+              ▼               ▼               ▼
+       ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+       │  Character  │ │   Player    │ │   Event     │
+       │   Agent     │ │   Client    │ │   Actor     │
+       │  (NPC side) │ │  (if any)   │ │   (tap)     │
+       └─────────────┘ └─────────────┘ └─────────────┘
+```
+
+---
+
+## 12. API Reference
+
+### 12.1 Actor Templates
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /actor/template/create` | Create actor template |
+| `POST /actor/template/get` | Get template by ID or category |
+| `POST /actor/template/list` | List all templates |
+| `POST /actor/template/update` | Update template |
+| `POST /actor/template/delete` | Delete template |
+
+### 12.2 Actor Instances
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /actor/spawn` | Spawn new actor from template |
+| `POST /actor/get` | Get actor (instantiate-on-access if template allows) |
+| `POST /actor/stop` | Stop running actor |
+| `POST /actor/list` | List actors with filters |
+| `POST /actor/send-message` | Send message to actor |
+
+### 12.3 Messaging Topics
+
+**Control Plane → Pool Node:**
+```
+actor.node.{poolAppId}.spawn    -> SpawnActorCommand
+actor.node.{poolAppId}.stop     -> StopActorCommand
+actor.node.{poolAppId}.message  -> SendMessageCommand
+```
+
+**Pool Node → Control Plane:**
+```
+actor.pool-node.heartbeat       -> PoolNodeHeartbeatEvent
+actor.instance.status-changed   -> ActorStatusChangedEvent
+actor.instance.completed        -> ActorCompletedEvent
+```
+
+**Perception Events:**
+```
+character.{characterId}.perception  -> CharacterPerceptionEvent
+character.{characterId}.state       -> StateUpdateEvent
+```
+
+---
+
+## Appendix A: Actor Categories
+
+### Standard Categories
+
+| Category | Purpose | Auto-Spawn | Persistence |
+|----------|---------|------------|-------------|
+| `npc-brain` | Character cognition | On character load | Full state |
+| `event-combat` | Combat orchestration | On trigger | Session only |
+| `event-regional` | Regional events | On trigger | Session only |
+| `world-admin` | World maintenance | Singleton | Metrics only |
+| `scheduled-task` | CRON-like jobs | On schedule | None |
+
+### Category Configuration
+
+```yaml
+# Template definition
+category: npc-brain
+behaviorRef: "asset://behaviors/npc-brain-v1"
+autoSpawnPattern: "character-{characterId}"
+autoSpawnEnabled: true
+autoSaveIntervalSeconds: 30
+maxInstancesPerPool: 500
+```
+
+---
+
+## Appendix B: Perception Event Types
+
+### Visual Perceptions
+
+| Type | Data Fields |
+|------|-------------|
+| `entity_spotted` | entityId, entityType, position, distance |
+| `entity_lost` | entityId, lastKnownPosition |
+| `movement_detected` | direction, speed, estimatedDistance |
+| `gesture_seen` | gestureType, performer, target |
+
+### Auditory Perceptions
+
+| Type | Data Fields |
+|------|-------------|
+| `speech_heard` | speakerId, content, volume, direction |
+| `sound_detected` | soundType, intensity, direction, source |
+| `combat_noise` | combatType, participants, distance |
+
+### Tactile Perceptions
+
+| Type | Data Fields |
+|------|-------------|
+| `damage_received` | damageType, amount, source, hitLocation |
+| `contact_made` | contactType, otherEntity, force |
+| `environment_change` | changeType, position, intensity |
+
+### Proprioceptive Perceptions
+
+| Type | Data Fields |
+|------|-------------|
+| `stamina_change` | previousValue, currentValue, delta |
+| `health_change` | previousValue, currentValue, delta |
+| `status_effect` | effectType, source, duration |
+
+---
+
+*This document describes the Actor System as implemented in lib-actor and lib-behavior. For implementation details, see the source code and schema definitions.*
