@@ -3,9 +3,9 @@
 // Tests for state synchronization when control returns from cinematic.
 // =============================================================================
 
-using System.Numerics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using System.Numerics;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Control;

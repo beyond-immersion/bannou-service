@@ -3,9 +3,9 @@
 // Thread-safe registry for mapping ABML actions to Intent Channel emissions.
 // =============================================================================
 
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers;
 

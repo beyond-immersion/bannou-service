@@ -3,9 +3,9 @@
 // Registry and management of per-entity control gates.
 // =============================================================================
 
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
 
