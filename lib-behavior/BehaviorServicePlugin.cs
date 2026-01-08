@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Behavior.Cognition;
 using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.Behavior.Coordination;
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;

@@ -7,6 +7,9 @@ using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Archetypes;
+using BeyondImmersion.BannouService.Behavior.Control;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Actor.Execution;
@@ -31,9 +34,16 @@ public sealed class DocumentExecutorFactory : IDocumentExecutorFactory
     /// <inheritdoc/>
     public IDocumentExecutor Create()
     {
-        // Create evaluator and registry with built-in handlers
+        // Create evaluator
         var evaluator = new ExpressionEvaluator();
-        var handlers = ActionHandlerRegistry.CreateWithBuiltins();
+
+        // Resolve intent emission registries from DI for domain action integration
+        var emitters = _serviceProvider.GetService<IIntentEmitterRegistry>();
+        var archetypes = _serviceProvider.GetService<IArchetypeRegistry>();
+        var controlGates = _serviceProvider.GetService<IControlGateRegistry>();
+
+        // Create handler registry with built-in handlers and intent emission support
+        var handlers = ActionHandlerRegistry.CreateWithBuiltins(emitters, archetypes, controlGates);
 
         // Register cognition handlers from DI
         // Order: specific handlers before generic, as ActionHandlerRegistry

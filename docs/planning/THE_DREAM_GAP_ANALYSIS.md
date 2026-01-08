@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-07 (Updated for Streaming Composition completion)
+> **Revised**: 2026-01-08 (Updated for Behavior Enhancements Phase 6 completion)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -18,21 +18,33 @@ This document analyzes the gap between THE_DREAM's vision and our current ABML i
 - Tree-walking `DocumentExecutor` for cloud-side interpretation
 - **Complete bytecode compiler and interpreter** for client-side execution (226+ tests)
 - Intent channel architecture for multi-model coordination (79+ tests)
+- **Full Behavior Stack system** with layers (Base/Cultural/Professional/Personal/Situational)
+- **Full Cutscene Coordination** with sync points, QTE input windows, multi-participant sessions
+- **Cognition pipeline** with attention filtering, memory, significance assessment, GOAP replanning
+- **Control Gates** for cinematic handoff from basic behavior
+- **Dialogue resolution** with localization and external file support
 
 **What THE_DREAM Actually Needs**:
 
-| Need | Original Assumption | Actual Requirement |
-|------|---------------------|-------------------|
-| Event Brain ↔ Agent communication | Service-to-service calls | ✓ Correct - HTTP/mesh queries work |
-| Character behavior execution | Service calls | ✗ Wrong - needs local bytecode |
-| Cinematic extension | Import/include | ✗ Wrong - needs streaming append |
-| Multi-character coordination | Complex arbitration | ✓ Solved - Intent channels with urgency |
+| Need | Original Assumption | Actual Requirement | Status |
+|------|---------------------|-------------------|--------|
+| Event Brain ↔ Agent communication | Service-to-service calls | HTTP/mesh queries | ✅ Works |
+| Character behavior execution | Service calls | Local bytecode | ✅ Complete |
+| Cinematic extension | Import/include | Streaming append | ✅ Complete |
+| Multi-character coordination | Complex arbitration | Intent channels with urgency | ✅ Complete |
+| QTE input with defaults | Custom system | InputWindowManager | ✅ Complete |
+| Multi-participant sync | Custom protocol | SyncPointManager | ✅ Complete |
+| Control handoff | TBD | ControlGateManager | ✅ Complete |
 
 **The Real Gaps** (in priority order):
 1. ~~**Streaming execution model**~~ - ✅ COMPLETE (continuation points, CinematicInterpreter with pause/resume)
 2. ~~**Bytecode compilation**~~ - ✅ COMPLETE (see ABML_LOCAL_RUNTIME.md Phase 1-2)
 3. ~~**Behavior distribution**~~ - ✅ COMPLETE (lib-asset handles this; behavior is an asset type)
-4. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
+4. ~~**Behavior Stack system**~~ - ✅ COMPLETE (lib-behavior/Stack/)
+5. ~~**Cutscene Coordination**~~ - ✅ COMPLETE (lib-behavior/Coordination/)
+6. ~~**Control Handoff**~~ - ✅ COMPLETE (lib-behavior/Control/)
+7. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
+8. **Actor Plugin implementation** - template management, pool nodes, state persistence
 
 ---
 
@@ -174,6 +186,27 @@ This is fundamentally different from:
 | **Game Transport (UDP)** | `Bannou.SDK/GameTransport/` | ✅ Complete | LiteNetLib integration |
 | **Server SDK** | `Bannou.SDK/` | ✅ Complete | Full DI, mesh, all clients |
 
+**Behavior Enhancements Phase 6 (2026-01-08):**
+
+| Component | Location | Status | Notes |
+|-----------|----------|--------|-------|
+| **Behavior Stack** | `lib-behavior/Stack/` | ✅ Complete | Layers: Base/Cultural/Professional/Personal/Situational |
+| **Intent Stack Merger** | `lib-behavior/Stack/` | ✅ Complete | Priority/Blend/Additive merge strategies |
+| **Situational Triggers** | `lib-behavior/Stack/` | ✅ Complete | Dynamic behavior activation |
+| **Archetype System** | `lib-behavior/Archetypes/` | ✅ Complete | Entity type definitions with channel configs |
+| **Intent Channel Factory** | `lib-behavior/Archetypes/` | ✅ Complete | Per-archetype channel creation |
+| **Control Gates** | `lib-behavior/Control/` | ✅ Complete | Cinematic handoff from basic behavior |
+| **Control Gate Manager** | `lib-behavior/Control/` | ✅ Complete | Multi-gate coordination |
+| **Cutscene Coordinator** | `lib-behavior/Coordination/` | ✅ Complete | Multi-participant session management |
+| **Cutscene Sessions** | `lib-behavior/Coordination/` | ✅ Complete | Session state, events, lifecycle |
+| **Sync Point Manager** | `lib-behavior/Coordination/` | ✅ Complete | Cross-participant synchronization |
+| **Input Window Manager** | `lib-behavior/Coordination/` | ✅ Complete | QTE timing with behavior defaults |
+| **Dialogue Resolver** | `lib-behavior/Dialogue/` | ✅ Complete | 3-step resolution with localization |
+| **External Dialogue Loader** | `lib-behavior/Dialogue/` | ✅ Complete | File-based dialogue management |
+| **Cognition Handlers** | `lib-behavior/Handlers/` | ✅ Complete | All 6 handlers implemented |
+| **Core Intent Emitters** | `lib-behavior/Handlers/CoreEmitters/` | ✅ Complete | Movement, Combat, Attention, Interaction, Expression, Vocalization |
+| **Cinematic Controller** | `lib-behavior/Runtime/` | ✅ Complete | High-level cinematic orchestration |
+
 **Total**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
 
 ### 3.1.1 SDK Enhancements (2026-01-05)
@@ -195,18 +228,21 @@ The `Bannou.SDK` now provides comprehensive game server integration:
 | Component | Document | Status |
 |-----------|----------|--------|
 | ~~Behavior Distribution~~ | ~~LOCAL_RUNTIME §5.4~~ | ✅ lib-asset handles this |
-| Multi-Channel Cutscenes | BEHAVIOR_PLUGIN §1.4 | Partially designed |
-| Streaming Composition | LOCAL_RUNTIME §3.6 | Designed (critical gap) |
+| ~~Multi-Channel Cutscenes~~ | ~~BEHAVIOR_PLUGIN §1.4~~ | ✅ CutsceneCoordinator, SyncPointManager |
+| ~~Streaming Composition~~ | ~~LOCAL_RUNTIME §3.6~~ | ✅ CinematicInterpreter with continuation points |
+| ~~QTE Input Windows~~ | ~~BEHAVIOR_PLUGIN §1.5~~ | ✅ InputWindowManager with behavior defaults |
+| ~~Control Handoff~~ | ~~BEHAVIOR_PLUGIN §1.6~~ | ✅ ControlGateManager |
 
 ### 3.3 What's Not Yet Designed
 
 | Component | Needed For | Priority |
 |-----------|------------|----------|
-| Streaming extension format | Cinematic extension | **Critical** |
-| Attach point mechanism | Extension targeting | **Critical** |
-| Extension delivery protocol | Game server updates | High |
+| ~~Streaming extension format~~ | ~~Cinematic extension~~ | ✅ BehaviorModel.IsExtension |
+| ~~Attach point mechanism~~ | ~~Extension targeting~~ | ✅ ContinuationPoint, AttachPointHash |
+| ~~Extension delivery protocol~~ | ~~Game server updates~~ | ✅ CinematicExtensionAvailableEvent |
 | Event Brain actor schema | Orchestration | High |
 | Character Agent query API | Option generation | High |
+| Actor Plugin implementation | Actor lifecycle | High |
 | Static import resolution | DRY authoring | Medium |
 
 ---
@@ -585,23 +621,34 @@ The streaming composition model ensures graceful degradation:
 - [ ] Apply state updates to behavior input slots
 - [ ] Implement lizard brain fallback
 
-### Phase 5: Event Brain
+### Phase 5: Event Brain 🔄 PARTIALLY COMPLETE
 **Goal**: Cloud-side cinematic orchestration working
 
-- [ ] Event Brain actor schema (Event Actor in ACTORS_V3 terminology)
-- [ ] Character Agent query API
-- [ ] Event tap subscriptions (direct perception routing, not control plane)
-- [ ] Option generation algorithm
-- [ ] Choreography emission (produces cinematics)
-- [ ] Extension delivery integration (Event Brain publishes `CinematicExtensionAvailableEvent` via mesh + pub/sub fallback)
-- [ ] Control handoff mechanism (cinematic takes control from basic behavior)
+Infrastructure (COMPLETE):
+- [x] Control handoff mechanism - ControlGateManager implemented
+- [x] Extension delivery event schema - CinematicExtensionAvailableEvent defined
+- [x] Cinematic orchestration infrastructure - CutsceneCoordinator, CinematicController
 
-### Phase 6: Full Integration
+Remaining:
+- [ ] Event Brain actor schema (Event Actor in ACTORS_V3 terminology)
+- [ ] Character Agent query API (`/agent/query-combat-options`)
+- [ ] Event tap subscriptions (direct perception routing, not control plane)
+- [ ] Option generation algorithm (capability × affordance matching)
+- [ ] Choreography emission (produces compiled cinematics)
+- [ ] Extension delivery integration (Event Brain publishes extensions to game servers)
+
+### Phase 6: Full Integration 🔄 PARTIALLY COMPLETE
 **Goal**: THE_DREAM works end-to-end
 
-- [ ] Regional Watcher (spawns Event Agents)
-- [ ] Map Service affordance queries
-- [ ] Dynamic QTE presentation
+Infrastructure (COMPLETE):
+- [x] Dynamic QTE presentation - InputWindowManager with behavior defaults
+- [x] Sync point coordination - SyncPointManager for multi-participant cutscenes
+- [x] Behavior stack with situational triggers - SituationalTriggerManager
+
+Remaining:
+- [ ] Actor Plugin implementation (template CRUD, pool nodes, state persistence)
+- [ ] Regional Watcher (spawns Event Agents based on interestingness)
+- [ ] Map Service affordance queries (integrate with lib-mapping)
 - [ ] Integration tests with mock game server
 - [ ] End-to-end test: basic combat → escalation → cinematic → resolution
 
@@ -676,22 +723,54 @@ The streaming composition model ensures graceful degradation:
 
 ## 11. Conclusion
 
-The original gap analysis was written when ABML was theoretical. Now that we have a working implementation, the gaps are clearer:
+**2026-01-08 UPDATE**: The behavior infrastructure is now essentially complete. What was once "the big gap" (streaming composition) is now implemented.
 
-1. **The big gap is streaming composition** - not imports, not service calls, but runtime extension of executing behaviors
-2. **The Intent Channel system solved multi-model coordination** - no complex arbitration needed
-3. **Most "service integration" gaps are just normal service calls** - the architecture supports them
-4. **The bytecode format needs continuation point support** - this is a format extension, not a new system
+### What's Done (Infrastructure)
 
-THE_DREAM is achievable with:
-- Continuation points in ABML/bytecode
-- Streaming interpreter that accepts extensions
-- Event Brain that produces cinematics + extensions
-- Distribution protocol that delivers them to game servers
+| Area | Components | Status |
+|------|------------|--------|
+| **ABML Language** | Parser, AST, Expressions, Executor | ✅ Complete |
+| **Bytecode Runtime** | Compiler, Interpreter, Continuation Points | ✅ Complete |
+| **Intent System** | Channels, Merging, Archetypes | ✅ Complete |
+| **Behavior Stacks** | Layers, Categories, Situational Triggers | ✅ Complete |
+| **Cutscene Coordination** | Sessions, Sync Points, Input Windows | ✅ Complete |
+| **Control Handoff** | Gates, Manager, State Sync | ✅ Complete |
+| **Cognition Pipeline** | All 6 handlers, Memory, GOAP integration | ✅ Complete |
+| **Dialogue System** | Resolution, Localization, External Loading | ✅ Complete |
 
-**Novelty Note**: Research confirms this combination is genuinely novel. No existing system combines graceful degradation + precise choreography + runtime extension + async delivery with timeout. The closest academic concepts are algebraic effects (theoretical) and dynamic behavior trees (synchronous). The closest industry implementations are Left 4 Dead's AI Director (macro-level) and procedural cinematics like AC Odyssey (pre-generated). See THE_DREAM.md §12 for detailed prior art analysis.
+### What Remains (Bannou-side)
 
-The path is clear. The composition model is defined. Let's build it.
+| Gap | Effort | Description |
+|-----|--------|-------------|
+| **Actor Plugin** | Medium | Template CRUD, pool nodes, state persistence, ActorRunner |
+| **Event Brain Actor Schema** | Small | ABML behavior definition for orchestration |
+| **Character Agent Query API** | Small | `/agent/query-combat-options` endpoint |
+| **Regional Watcher** | Medium | Spawns Event Actors based on interestingness |
+| **Affordance Query Actions** | Small | `query_environment` ABML action using lib-mapping |
+
+### Distance to THE DREAM
+
+**Estimated Completion: ~80%**
+
+The hardest 80% (the novel architecture) is done:
+- Streaming composition with continuation points ✅
+- Intent channels with urgency-based merging ✅
+- Behavior stacks with layered evaluation ✅
+- Cutscene coordination with QTE support ✅
+- Control handoff for cinematic takeover ✅
+- Cognition pipeline for NPC awareness ✅
+
+The remaining 20% is mostly "filling in the boxes":
+- Actor plugin is standard CRUD + event routing
+- Event Brain is an ABML behavior using existing infrastructure
+- Regional Watcher is event subscription + spawn logic
+- Affordance queries integrate existing lib-mapping
+
+**Critical Path**: Actor Plugin → Event Brain Schema → Regional Watcher → End-to-end test
+
+**Novelty Note**: Research confirms this combination is genuinely novel. No existing system combines graceful degradation + precise choreography + runtime extension + async delivery with timeout + behavior stacks with intent merging. The closest academic concepts are algebraic effects (theoretical) and dynamic behavior trees (synchronous). The closest industry implementations are Left 4 Dead's AI Director (macro-level) and procedural cinematics like AC Odyssey (pre-generated).
+
+THE DREAM is within reach. The infrastructure is built. The remaining work is integration.
 
 ---
 

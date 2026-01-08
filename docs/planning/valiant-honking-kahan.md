@@ -2456,6 +2456,190 @@ YAML parsing becomes valuable when characters are defined in data files.
 
 **Phase 5 COMPLETE**
 
+---
+
+### Integration Test Plan (2026-01-08)
+
+> **Purpose**: Test components together that have only been tested in isolation.
+> These are unit-level integration tests (no Docker, no external services).
+
+#### lib-behavior.tests/Integration/
+
+##### 1. BehaviorStackIntegrationTests.cs (~15 tests)
+
+Tests: Archetype → Stack → Merger flow
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `EvaluateAsync_MultiCategoryLayers_HigherCategoryWins` | ☐ | Base outputs walk_to, Situational outputs run_to → run_to wins |
+| `EvaluateAsync_SameCategoryDifferentPriority_HigherPriorityWins` | ☐ | Two Base layers with different priorities |
+| `EvaluateAsync_BlendMergeStrategy_CombinesEmissions` | ☐ | Two layers emit to "expression" with Blend → blended output |
+| `EvaluateAsync_AdditiveMergeStrategy_AccumulatesEmissions` | ☐ | Multiple emissions to same channel with Additive |
+| `EvaluateAsync_PriorityMergeStrategy_SingleWinner` | ☐ | Multiple emissions, only highest priority wins |
+| `EvaluateAsync_WithSituationalTrigger_ActivatesSituationalLayer` | ☐ | Layer triggers situational → new layer activates mid-eval |
+| `EvaluateAsync_InactiveLayer_NotIncluded` | ☐ | Deactivated layer skipped during evaluation |
+| `EvaluateAsync_ArchetypeChannels_OnlyValidChannelsOutput` | ☐ | Emissions to invalid channels filtered |
+| `EvaluateAsync_EmptyStack_ReturnsEmptyOutput` | ☐ | No layers → empty but valid output |
+| `EvaluateAsync_AllLayersNoOutput_ReturnsEmptyOutput` | ☐ | Layers exist but produce nothing |
+| `EvaluateAsync_MultipleChannels_EachMergedIndependently` | ☐ | Movement + Expression + Combat all merge separately |
+| `EvaluateAsync_WinningLayersTracked_CorrectAttribution` | ☐ | Output.WinningLayers shows which layer won each channel |
+| `EvaluateAsync_ContributionsTracked_AllContributionsRecorded` | ☐ | Output.AllContributions has all emissions |
+| `EvaluateAsync_DifferentArchetypes_DifferentChannelSets` | ☐ | Humanoid vs Vehicle have different valid channels |
+| `EvaluateAsync_RealArchetype_FullEvaluation` | ☐ | Real humanoid archetype with real layers end-to-end |
+
+##### 2. ControlGateIntegrationTests.cs (~12 tests)
+
+Tests: Control gate + Stack + Cutscene control flow
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `BehaviorStack_ThroughControlGate_FiltersWhenCinematicActive` | ☐ | Stack produces emissions, cinematic active → blocked |
+| `BehaviorStack_ThroughControlGate_PassesWhenBehaviorActive` | ☐ | Gate in Behavior mode → emissions pass |
+| `ControlGate_PlayerMode_BlocksBehaviorAllowsPlayer` | ☐ | Player control → behavior blocked, player input allowed |
+| `ControlGate_ReturnToPlayer_RestoresBehaviorOutput` | ☐ | Cinematic → Player handoff → behavior resumes |
+| `ControlGate_PartialChannelBlock_OnlyAffectsSpecifiedChannels` | ☐ | Block movement only → expression still works |
+| `ControlGate_OpportunityMode_BothSourcesAllowed` | ☐ | Opportunity → both behavior and player allowed |
+| `ControlGate_PriorityEscalation_HigherPriorityWins` | ☐ | Behavior → Player → Cinematic escalation |
+| `ControlGate_PriorityDenial_LowerCantTakeFromHigher` | ☐ | Cinematic active → Player can't take control |
+| `ControlGate_WithBehaviorStack_RealEvaluation` | ☐ | Full stack evaluation through gate |
+| `ControlGateManager_MultipleEntities_IndependentGates` | ☐ | Each entity has separate gate state |
+| `ControlGate_HandoffData_PreservesState` | ☐ | Control return includes restoration data |
+| `ControlGate_EmissionFiltering_BySourceMatch` | ☐ | Only matching source emissions pass |
+
+##### 3. CutsceneCoordinationIntegrationTests.cs (~15 tests)
+
+Tests: Session + Sync + Input + Gate integration
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `CutsceneSession_TakesControlOfAllParticipants` | ☐ | Start session → all gates switch to Cinematic |
+| `CutsceneSession_SyncPoint_BlocksUntilAllReach` | ☐ | All participants must reach before release |
+| `CutsceneSession_SyncPoint_PartialReach_NotComplete` | ☐ | 2/3 reached → not yet complete |
+| `CutsceneSession_SyncPoint_WithTimeout_AutoCompletes` | ☐ | Timeout expires → sync completes anyway |
+| `CutsceneSession_InputWindow_CollectsInput` | ☐ | Choice window → participant submits → recorded |
+| `CutsceneSession_InputWindow_TimeoutUsesDefault` | ☐ | Timeout expires → default value used |
+| `CutsceneSession_InputWindow_MultipleParticipants` | ☐ | Different participants have different windows |
+| `CutsceneSession_QteWindow_ScoresInput` | ☐ | QTE timing → score calculated |
+| `CutsceneSession_Abort_ReturnsControlToAllParticipants` | ☐ | Abort → all gates return to Behavior |
+| `CutsceneSession_Complete_HandoffWithRestorationData` | ☐ | Complete → state restoration data provided |
+| `CutsceneSession_Complete_AllGatesReleased` | ☐ | Complete → all gates back to Behavior |
+| `CutsceneSession_StateTransitions_CorrectSequence` | ☐ | Active → WaitingForSync → WaitingForInput → Completed |
+| `CutsceneCoordinator_MultipleSessions_Independent` | ☐ | Two sessions don't interfere |
+| `CutsceneCoordinator_SessionCleanup_RemovesCompleted` | ☐ | Cleanup removes completed sessions |
+| `CutsceneSession_WithRealControlGates_FullFlow` | ☐ | End-to-end with actual ControlGate instances |
+
+##### 4. CognitionPipelineIntegrationTests.cs (~12 tests)
+
+Tests: Template + Builder + Handler execution
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `Pipeline_FromTemplate_ExecutesAllStages` | ☐ | Humanoid-base → all 5 stages run |
+| `Pipeline_CreatureTemplate_SkipsSignificanceStorage` | ☐ | Creature → only 3 stages |
+| `Pipeline_ObjectTemplate_MinimalPipeline` | ☐ | Object → only 2 stages |
+| `Pipeline_WithOverrides_AppliesModifiedParameters` | ☐ | Paranoid overrides → higher threat sensitivity |
+| `Pipeline_HighThreat_FastTracksToIntention` | ☐ | High urgency → skips to Stage 5 |
+| `Pipeline_MultiplePerceptions_FiltersByBudget` | ☐ | 20 perceptions, budget 10 → only 10 processed |
+| `Pipeline_SignificantPerception_StoredAsMemory` | ☐ | High significance → memory storage triggered |
+| `Pipeline_GoalImpact_TriggersReplan` | ☐ | Perception affects goal → replan triggered |
+| `Pipeline_GoalImpact_SetsUrgency` | ☐ | Impact assessment → urgency level set |
+| `Pipeline_MemoryQuery_RetrievesRelevant` | ☐ | Query stage → relevant memories returned |
+| `Pipeline_ProcessBatch_MultipleEntities` | ☐ | Batch processing for multiple entities |
+| `Pipeline_RealHandlers_FullExecution` | ☐ | Real handlers, real perceptions, full pipeline |
+
+##### 5. DialogueIntegrationTests.cs (~12 tests)
+
+Tests: Resolver + Loader + Expression Context
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `Resolve_WithConditionOverride_EvaluatesExpressions` | ☐ | Condition `${player.rep > 50}` → evaluated correctly |
+| `Resolve_LocalizationFallback_FallsBackCorrectly` | ☐ | Request "fr", only "en" → falls back |
+| `Resolve_LocalizationChain_TriesAllFallbacks` | ☐ | "fr-CA" → "fr" → "en" fallback chain |
+| `Resolve_TemplateInterpolation_SubstitutesVariables` | ☐ | `${speaker.name}` → resolved from context |
+| `Resolve_MultipleOverrides_HighestPriorityWins` | ☐ | Multiple matching conditions → priority order |
+| `Resolve_NoExternalFile_FallsBackToInline` | ☐ | No companion file → inline text used |
+| `Resolve_InlineOnly_NoExternalRef` | ☐ | No external ref → inline returned |
+| `ResolveOptions_ConditionalAvailability_FiltersOptions` | ☐ | Option condition fails → IsAvailable = false |
+| `ResolveOptions_AllOptionsResolved_WithLocalization` | ☐ | Each option gets localized text |
+| `ResolveOptions_EmptyOptions_ReturnsEmptyList` | ☐ | No options defined → empty list |
+| `Resolve_WithAbmlExpressionContext_BridgeWorks` | ☐ | AbmlDialogueExpressionContext evaluates correctly |
+| `Resolve_SourceTracking_CorrectSourceReported` | ☐ | Override/Localization/Inline source tracked |
+
+##### 6. IntentEmissionIntegrationTests.cs (~10 tests)
+
+Tests: Emitter + Archetype + Gate
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `Emitter_ProducesValidChannelEmissions` | ☐ | WalkToEmitter → "movement" channel |
+| `Emitter_MultipleChannels_AllProduced` | ☐ | AttackEmitter → combat + expression |
+| `EmitterRegistry_ActionLookup_FindsCorrectEmitter` | ☐ | "walk_to" → WalkToEmitter |
+| `EmitterRegistry_DocumentTypeFilter_RespectsType` | ☐ | Some emitters only for "behavior" docs |
+| `Emitter_WithArchetype_ValidatesChannels` | ☐ | Emission to invalid channel filtered |
+| `Emitter_ThroughControlGate_RespectsBehaviorBlock` | ☐ | Cinematic mode → behavior emissions blocked |
+| `Emitter_ContextData_PassedToEmitter` | ☐ | Emitter receives context data |
+| `Emitter_ParameterEvaluation_ExpressionsResolved` | ☐ | `${target}` resolved before emission |
+| `Emitter_UrgencyCalculation_CorrectValue` | ☐ | Emission urgency calculated from params |
+| `Emitter_CoreEmitters_AllRegistered` | ☐ | All core emitters present after registration |
+
+##### 7. EntityLifecycleIntegrationTests.cs (~10 tests)
+
+Tests: Archetype + Stack + Cognition full entity
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `Entity_WithArchetype_HasCorrectChannels` | ☐ | Humanoid → all 7 channels |
+| `Entity_WithCognitionTemplate_ProcessesPerceptions` | ☐ | Perceptions flow through pipeline |
+| `Entity_BehaviorStackEvaluation_ProducesChannelOutputs` | ☐ | Stack evaluation → emissions |
+| `Entity_FullCycle_PerceptionToEmission` | ☐ | Perception → Cognition → Stack → Emission |
+| `Entity_ControlGateIntegration_FiltersOutput` | ☐ | Gate state affects final output |
+| `Entity_ArchetypeMergeStrategies_Applied` | ☐ | Per-channel merge strategies used |
+| `Entity_SituationalTrigger_ActivatesLayer` | ☐ | Combat trigger → combat layer active |
+| `Entity_MultipleEntities_IndependentState` | ☐ | Entity A and B have independent state |
+| `Entity_VehicleArchetype_DifferentChannels` | ☐ | Vehicle has propulsion, not movement |
+| `Entity_CreatureArchetype_SimplifiedCognition` | ☐ | Creature uses 3-stage cognition |
+
+#### lib-actor.tests/Integration/
+
+##### 8. AbmlEmissionIntegrationTests.cs (~10 tests)
+
+> **Note**: Requires DocumentExecutorFactory fix first (injecting emitters/archetypes/gates)
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `DocumentExecutor_DomainAction_ProducesIntentEmissions` | ☐ | Execute ABML walk_to → emissions in context |
+| `DocumentExecutor_MultipleDomainActions_AllEmit` | ☐ | Sequence of actions → all emit |
+| `DocumentExecutor_WithControlGate_RespectsCinematicBlock` | ☐ | Cinematic active → emissions blocked |
+| `DocumentExecutor_WithArchetype_ValidatesChannels` | ☐ | Invalid channel emissions filtered |
+| `DocumentExecutor_ExpressionParameters_Evaluated` | ☐ | `${target}` in params → resolved |
+| `DocumentExecutor_EntityResolution_FindsEntity` | ☐ | `agent.id` in scope → used for emissions |
+| `DocumentExecutor_NoEmitter_LogsAndContinues` | ☐ | Unknown action → logged, not error |
+| `DocumentExecutor_EmissionStorage_InContext` | ☐ | `_intent_emissions` populated in scope |
+| `DocumentExecutor_CognitionHandlers_Registered` | ☐ | Cognition handlers callable from ABML |
+| `DocumentExecutor_FullBehaviorDocument_ExecutesCorrectly` | ☐ | Real behavior doc with actions + control flow |
+
+---
+
+**Integration Test Summary**
+
+| Test File | Count | Priority | Status |
+|-----------|-------|----------|--------|
+| CutsceneCoordinationIntegrationTests | 15 | HIGH | ☐ Not Started |
+| CognitionPipelineIntegrationTests | 12 | HIGH | ☐ Not Started |
+| BehaviorStackIntegrationTests | 15 | HIGH | ☐ Not Started |
+| ControlGateIntegrationTests | 12 | MEDIUM | ☐ Not Started |
+| DialogueIntegrationTests | 12 | MEDIUM | ☐ Not Started |
+| IntentEmissionIntegrationTests | 10 | MEDIUM | ☐ Not Started |
+| EntityLifecycleIntegrationTests | 10 | MEDIUM | ☐ Not Started |
+| AbmlEmissionIntegrationTests | 10 | HIGH* | ☐ Blocked (needs factory fix) |
+
+**Total: ~96 integration tests**
+
+*AbmlEmissionIntegrationTests is HIGH priority but blocked until DocumentExecutorFactory is fixed.
+
+---
+
 ### Implementation Notes
 
 **What already exists** (leverage, don't rebuild):

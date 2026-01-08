@@ -5921,6 +5921,262 @@
         <member name="M:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext.GetVariable(System.String)">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IEntityResolver">
+            <summary>
+            Resolves semantic binding names to entity references within cutscene contexts.
+            </summary>
+            <remarks>
+            <para>
+            In ABML cutscenes, channels use semantic names like "hero" or "villain" rather
+            than entity IDs. The entity resolver translates these names to actual entity
+            references using the cutscene's bindings.
+            </para>
+            <para>
+            Resolution sources (in priority order):
+            </para>
+            <list type="number">
+            <item>Explicit bindings provided at cutscene start</item>
+            <item>Role-based resolution from participants</item>
+            <item>Expression context for dynamic bindings</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityResolver.ResolveAsync(System.String,BeyondImmersion.BannouService.Behavior.CutsceneBindings,BeyondImmersion.BannouService.Behavior.EntityResolutionContext,System.Threading.CancellationToken)">
+            <summary>
+            Resolves a binding name to an entity reference.
+            </summary>
+            <param name="bindingName">The semantic name (e.g., "hero", "villain", "target").</param>
+            <param name="bindings">The cutscene's entity bindings.</param>
+            <param name="context">Optional expression context for dynamic resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The resolved entity reference, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityResolver.ResolveManyAsync(System.Collections.Generic.IEnumerable{System.String},BeyondImmersion.BannouService.Behavior.CutsceneBindings,BeyondImmersion.BannouService.Behavior.EntityResolutionContext,System.Threading.CancellationToken)">
+            <summary>
+            Resolves multiple binding names at once.
+            </summary>
+            <param name="bindingNames">The semantic names to resolve.</param>
+            <param name="bindings">The cutscene's entity bindings.</param>
+            <param name="context">Optional expression context for dynamic resolution.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Dictionary of resolved references (missing bindings omitted).</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityResolver.CanResolve(System.String,BeyondImmersion.BannouService.Behavior.CutsceneBindings)">
+            <summary>
+            Checks if a binding name can be resolved.
+            </summary>
+            <param name="bindingName">The semantic name to check.</param>
+            <param name="bindings">The cutscene's entity bindings.</param>
+            <returns>True if the binding can be resolved.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.EntityReference">
+            <summary>
+            Reference to a resolved entity.
+            </summary>
+            <remarks>
+            Contains the entity ID and optional metadata about the binding,
+            such as the archetype and role information.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.EntityId">
+            <summary>
+            The resolved entity ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.ArchetypeId">
+            <summary>
+            The archetype ID of the entity (if known).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.Role">
+            <summary>
+            The role this entity plays in the cutscene (e.g., "protagonist", "antagonist").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.IsPlayer">
+            <summary>
+            Whether this is a player-controlled entity.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.IsProp">
+            <summary>
+            Whether this entity is a prop (non-character).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityReference.Metadata">
+            <summary>
+            Additional metadata about the entity.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.EntityReference.FromId(System.Guid)">
+            <summary>
+            Creates a simple entity reference.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.EntityReference.Player(System.Guid,System.String)">
+            <summary>
+            Creates a player entity reference.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.EntityReference.Npc(System.Guid,System.String,System.String)">
+            <summary>
+            Creates an NPC entity reference.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.EntityReference.Prop(System.Guid,System.String)">
+            <summary>
+            Creates a prop entity reference.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CutsceneBindings">
+            <summary>
+            Entity bindings for a cutscene, mapping semantic names to entity references.
+            </summary>
+            <remarks>
+            <para>
+            Bindings are provided when a cutscene starts to establish which entities
+            fill which roles. This allows the same cutscene to be reused with different
+            participants.
+            </para>
+            <para>
+            Standard binding categories:
+            </para>
+            <list type="bullet">
+            <item><b>Participants</b>: Active characters (hero, villain, ally)</item>
+            <item><b>Props</b>: Interactive objects (door, chest, weapon)</item>
+            <item><b>Locations</b>: Named positions (center_stage, exit_point)</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Participants">
+            <summary>
+            Character participants mapped by semantic name.
+            </summary>
+            <example>
+            { "hero": EntityRef(player_id), "villain": EntityRef(boss_id) }
+            </example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Props">
+            <summary>
+            Prop entities mapped by semantic name.
+            </summary>
+            <example>
+            { "mcguffin": EntityRef(item_id), "door": EntityRef(door_id) }
+            </example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Locations">
+            <summary>
+            Named locations mapped by semantic name.
+            </summary>
+            <example>
+            { "center": { x: 0, y: 0, z: 0 }, "exit": { x: 10, y: 0, z: 5 } }
+            </example>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Roles">
+            <summary>
+            Role assignments mapping semantic names to roles.
+            </summary>
+            <remarks>
+            Roles provide semantic meaning for resolution priority.
+            E.g., "protagonist" → "hero", "antagonist" → "villain"
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Custom">
+            <summary>
+            Additional custom bindings.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Empty">
+            <summary>
+            Creates empty bindings.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindings.FromParticipants(System.Collections.Generic.IReadOnlyDictionary{System.String,BeyondImmersion.BannouService.Behavior.EntityReference})">
+            <summary>
+            Creates bindings from a participant list.
+            </summary>
+            <param name="participants">Participant name-to-reference mappings.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindings.Builder">
+            <summary>
+            Creates a builder for constructing bindings.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder">
+            <summary>
+            Builder for constructing cutscene bindings.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddParticipant(System.String,BeyondImmersion.BannouService.Behavior.EntityReference)">
+            <summary>
+            Adds a participant binding.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddParticipant(System.String,System.Guid)">
+            <summary>
+            Adds a participant binding by ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddProp(System.String,BeyondImmersion.BannouService.Behavior.EntityReference)">
+            <summary>
+            Adds a prop binding.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddProp(System.String,System.Guid)">
+            <summary>
+            Adds a prop binding by ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddLocation(System.String,System.Numerics.Vector3)">
+            <summary>
+            Adds a location binding.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddRole(System.String,System.String)">
+            <summary>
+            Adds a role assignment.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.AddCustom(System.String,System.Object)">
+            <summary>
+            Adds a custom binding.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.CutsceneBindingsBuilder.Build">
+            <summary>
+            Builds the bindings.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.EntityResolutionContext">
+            <summary>
+            Context for entity resolution, providing additional information for dynamic bindings.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityResolutionContext.SessionId">
+            <summary>
+            The cutscene session ID (if in a cutscene).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityResolutionContext.DocumentId">
+            <summary>
+            The current document being executed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityResolutionContext.Variables">
+            <summary>
+            Variables from the expression context.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityResolutionContext.RequestingEntity">
+            <summary>
+            The requesting entity (for relative bindings like "self" or "target").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityResolutionContext.Empty">
+            <summary>
+            Creates empty context.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader">
              <summary>
              Loads external dialogue files containing localizations and conditional overrides.
