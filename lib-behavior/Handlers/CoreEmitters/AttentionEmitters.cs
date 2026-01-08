@@ -3,6 +3,8 @@
 // Intent emitters for attention/gaze actions.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -31,7 +33,7 @@ public sealed class LookAtEmitter : BaseIntentEmitter
         var position = GetOptionalVector3(parameters, "position");
 
         // Attention channel is standard across most archetypes
-        var channel = context.Archetype.HasChannel("attention") ? "attention" : "alert";
+        var channel = context.Archetype?.HasChannel("attention") == true ? "attention" : "alert";
 
         return ValueTask.FromResult(SingleEmission(
             channel,
@@ -65,7 +67,7 @@ public sealed class TrackEmitter : BaseIntentEmitter
         var urgency = GetOptionalFloat(parameters, "urgency", 0.7f);
         var target = GetOptionalGuid(parameters, "target");
 
-        var channel = context.Archetype.HasChannel("attention") ? "attention" : "alert";
+        var channel = context.Archetype?.HasChannel("attention") == true ? "attention" : "alert";
 
         return ValueTask.FromResult(SingleEmission(
             channel,

@@ -1769,6 +1769,195 @@ public interface IStateSync
 
 ---
 
+#### 🔴 CRITICAL: Interface Architecture Problem
+
+**Problem**: Interfaces are incorrectly split between `bannou-service` and `lib-behavior`, creating duplicate types and unnecessary complexity.
+
+**Current (WRONG) Architecture**:
+```
+bannou-service/Behavior/
+├── IArchetype.cs           → IArchetypeDefinition, IArchetypeRegistry (simple)
+├── IIntentEmitter.cs       → IIntentEmitter, IIntentEmitterRegistry (simple)
+├── IControlGate.cs         → IControlGate, IControlGateRegistry (simple)
+└── IntentEmission, IntentEmissionContext (types)
+
+lib-behavior/
+├── Archetypes/IArchetypeRegistry.cs   → IArchetypeRegistry : CoreBehavior.IArchetypeRegistry (EXTENDS)
+├── Handlers/IIntentEmitter.cs         → IIntentEmitter (DUPLICATE - doesn't extend!)
+├── Control/IControlGate.cs            → IControlGate : CoreBehavior.IControlGate (EXTENDS)
+└── IntentEmission, IntentEmissionContext (DUPLICATE TYPES with ToCore()/FromCore())
+```
+
+**Issues**:
+| Problem | Impact |
+|---------|--------|
+| Duplicate types (`IntentEmission`) | Two types with same name, different fields, need conversion |
+| Duplicate interfaces | `IIntentEmitter` in lib-behavior does NOT extend bannou-service one |
+| Method hiding (`new` keyword) | Returns concrete types instead of interfaces |
+| Only ONE implementation exists | No actual need for extended interfaces |
+
+**Root Cause**: Over-engineering Dependency Inversion. The split IS needed (DomainActionHandler can't reference lib-behavior), but extended interfaces are NOT needed.
+
+**Required Architecture**:
+```
+bannou-service/Behavior/
+├── IArchetype.cs           → COMPLETE interfaces with ALL methods
+├── IIntentEmitter.cs       → COMPLETE interfaces with ALL methods
+├── IControlGate.cs         → COMPLETE interfaces with ALL methods
+└── ALL types (IntentEmission, ControlOptions, etc.)
+
+lib-behavior/
+├── ArchetypeRegistry.cs    → IMPLEMENTS bannou-service.IArchetypeRegistry (no separate interface)
+├── IntentEmitterRegistry.cs → IMPLEMENTS bannou-service.IIntentEmitterRegistry (no separate interface)
+├── ControlGateManager.cs   → IMPLEMENTS bannou-service.IControlGateRegistry (no separate interface)
+└── IntentEmissionExtensions.cs → Extension methods for TargetPosition, etc.
+```
+
+**Fix Step 1**: Make bannou-service interfaces COMPLETE
+
+Update `bannou-service/Behavior/IArchetype.cs`:
+```csharp
+public interface IArchetypeRegistry
+{
+    IArchetypeDefinition? GetArchetype(string archetypeId);
+    IArchetypeDefinition? GetArchetypeByHash(int hash);           // ADD
+    bool HasArchetype(string archetypeId);
+    IArchetypeDefinition GetDefaultArchetype();
+    IReadOnlyCollection<string> GetArchetypeIds();                // ADD
+    IReadOnlyCollection<IArchetypeDefinition> GetAllArchetypes(); // ADD
+    void RegisterArchetype(IArchetypeDefinition archetype);       // ADD
+}
+```
+
+Update `bannou-service/Behavior/IIntentEmitter.cs`:
+```csharp
+public interface IIntentEmitterRegistry
+{
+    void Register(IIntentEmitter emitter);                        // ADD
+    IIntentEmitter? GetEmitter(string actionName, IntentEmissionContext context);
+    bool HasEmitter(string actionName);
+    IReadOnlyCollection<string> GetActionNames();                 // Change to IReadOnlyCollection
+}
+```
+
+Update `bannou-service/Behavior/IControlGate.cs`:
+```csharp
+public interface IControlGate
+{
+    Guid EntityId { get; }
+    ControlSource CurrentSource { get; }
+    ControlOptions? CurrentOptions { get; }                       // ADD
+    bool AcceptsBehaviorOutput { get; }
+    bool AcceptsPlayerInput { get; }
+    IReadOnlySet<string> BehaviorInputChannels { get; }
+    Task<bool> TakeControlAsync(ControlOptions options);          // ADD
+    Task ReturnControlAsync(ControlHandoff handoff);              // ADD
+    IReadOnlyList<IntentEmission> FilterEmissions(IReadOnlyList<IntentEmission> emissions, ControlSource source);
+    event EventHandler<ControlChangedEvent>? ControlChanged;      // ADD
+}
+
+public interface IControlGateRegistry
+{
+    IControlGate? Get(Guid entityId);
+    IControlGate GetOrCreate(Guid entityId);
+    bool Remove(Guid entityId);
+    IReadOnlyCollection<Guid> GetCinematicControlledEntities();   // ADD
+    IReadOnlyCollection<Guid> GetPlayerControlledEntities();      // ADD
+}
+```
+
+**Fix Step 2**: Move ALL types to bannou-service
+
+Move these to `bannou-service/Behavior/`:
+- `ControlOptions` (currently only in lib-behavior)
+- `ControlHandoff` (currently only in lib-behavior)
+- `ControlChangedEvent` (currently only in lib-behavior)
+
+**Fix Step 3**: DELETE lib-behavior interface files
+
+Remove entirely:
+- `lib-behavior/Archetypes/IArchetypeRegistry.cs`
+- `lib-behavior/Handlers/IIntentEmitter.cs` (the INTERFACE part - keep emitter implementations)
+- `lib-behavior/Control/IControlGate.cs`
+
+**Fix Step 4**: Update implementations to use bannou-service interfaces directly
+
+```csharp
+// lib-behavior/Archetypes/ArchetypeRegistry.cs
+using BeyondImmersion.BannouService.Behavior;
+
+namespace BeyondImmersion.BannouService.Behavior.Archetypes;
+
+public sealed class ArchetypeRegistry : IArchetypeRegistry  // Direct implementation
+{
+    // Implement ALL methods from bannou-service interface
+    // ArchetypeDefinition implements IArchetypeDefinition
+}
+```
+
+**Fix Step 5**: Use extension methods for lib-behavior-specific needs
+
+For `TargetPosition` (which lib-behavior emitters need but bannou-service doesn't):
+
+```csharp
+// lib-behavior/Extensions/IntentEmissionExtensions.cs
+namespace BeyondImmersion.BannouService.Behavior.Extensions;
+
+public static class IntentEmissionExtensions
+{
+    public static Vector3? GetTargetPosition(this IntentEmission emission)
+    {
+        if (emission.Data?.TryGetValue("target_position", out var pos) == true
+            && pos is Vector3 vec)
+            return vec;
+        return null;
+    }
+
+    public static IntentEmission WithTargetPosition(this IntentEmission emission, Vector3 pos)
+    {
+        var data = new Dictionary<string, object>(emission.Data ?? new Dictionary<string, object>())
+        {
+            ["target_position"] = pos
+        };
+        return emission with { Data = data };
+    }
+}
+```
+
+**Fix Step 6**: Update emitter implementations to use extension methods
+
+```csharp
+// lib-behavior/Handlers/CoreEmitters/MovementEmitters.cs
+public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(...)
+{
+    var emission = new IntentEmission(channel, "walk", urgency, targetEntity)
+        .WithTargetPosition(targetPos);  // Use extension method
+
+    return ValueTask.FromResult<IReadOnlyList<IntentEmission>>(new[] { emission });
+}
+```
+
+---
+
+#### Interface Fix Checklist
+
+- [ ] Update `bannou-service/Behavior/IArchetype.cs` with complete interface methods
+- [ ] Update `bannou-service/Behavior/IIntentEmitter.cs` with complete interface methods
+- [ ] Update `bannou-service/Behavior/IControlGate.cs` with complete interface methods
+- [ ] Move `ControlOptions`, `ControlHandoff`, `ControlChangedEvent` to bannou-service
+- [ ] Delete `lib-behavior/Archetypes/IArchetypeRegistry.cs`
+- [ ] Delete `lib-behavior/Handlers/IIntentEmitter.cs` (interface parts only)
+- [ ] Delete `lib-behavior/Control/IControlGate.cs`
+- [ ] Update `ArchetypeRegistry` to implement `BeyondImmersion.BannouService.Behavior.IArchetypeRegistry`
+- [ ] Update `IntentEmitterRegistry` to implement `BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry`
+- [ ] Update `ControlGateManager` to implement `BeyondImmersion.BannouService.Behavior.IControlGateRegistry`
+- [ ] Create `lib-behavior/Extensions/IntentEmissionExtensions.cs` for TargetPosition
+- [ ] Update all emitters to use `IntentEmission` from bannou-service + extension methods
+- [ ] Remove all `ToCore()`/`FromCore()` conversion methods
+- [ ] Verify build succeeds after changes
+
+---
+
 #### Integration Checklist for Next Agent
 
 - [ ] Update `DomainActionHandler` with `IIntentEmitterRegistry` integration (see code above)

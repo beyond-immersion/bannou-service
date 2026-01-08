@@ -3,6 +3,8 @@
 // Intent emitters for combat actions.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -31,7 +33,7 @@ public sealed class AttackEmitter : BaseIntentEmitter
         var target = GetOptionalGuid(parameters, "target");
 
         // Combat maps to action channel for most archetypes
-        var channel = context.Archetype.HasChannel("combat") ? "combat" : "action";
+        var channel = context.Archetype?.HasChannel("combat") == true ? "combat" : "action";
         var intent = $"attack_{attackType}";
 
         return ValueTask.FromResult(SingleEmission(
@@ -66,7 +68,7 @@ public sealed class BlockEmitter : BaseIntentEmitter
         var direction = GetOptionalString(parameters, "direction") ?? "front";
         var urgency = GetOptionalFloat(parameters, "urgency", 0.7f);
 
-        var channel = context.Archetype.HasChannel("combat") ? "combat" : "action";
+        var channel = context.Archetype?.HasChannel("combat") == true ? "combat" : "action";
         var intent = $"block_{direction}";
 
         return ValueTask.FromResult(SingleEmission(
@@ -100,7 +102,7 @@ public sealed class DodgeEmitter : BaseIntentEmitter
         var direction = GetOptionalString(parameters, "direction") ?? "back";
         var urgency = GetOptionalFloat(parameters, "urgency", 0.85f);
 
-        var channel = context.Archetype.HasChannel("combat") ? "combat" : "action";
+        var channel = context.Archetype?.HasChannel("combat") == true ? "combat" : "action";
         var intent = $"dodge_{direction}";
 
         // Dodge also affects movement channel
@@ -110,9 +112,9 @@ public sealed class DodgeEmitter : BaseIntentEmitter
         };
 
         // If archetype has movement channel, also emit there
-        if (context.Archetype.HasChannel("movement") || context.Archetype.HasChannel("locomotion"))
+        if (context.Archetype?.HasChannel("movement") == true || context.Archetype?.HasChannel("locomotion") == true)
         {
-            var movementChannel = context.Archetype.HasChannel("movement") ? "movement" : "locomotion";
+            var movementChannel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
             emissions.Add(new IntentEmission(movementChannel, $"dodge_{direction}", Math.Clamp(urgency, 0f, 1f)));
         }
 

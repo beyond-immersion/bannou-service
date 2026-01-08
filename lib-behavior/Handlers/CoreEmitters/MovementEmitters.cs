@@ -3,6 +3,8 @@
 // Intent emitters for locomotion actions.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -31,8 +33,8 @@ public sealed class WalkToEmitter : BaseIntentEmitter
         var targetPos = GetOptionalVector3(parameters, "target");
         var targetEntity = GetOptionalGuid(parameters, "entity");
 
-        // Determine the channel based on archetype
-        var channel = context.Archetype.HasChannel("movement") ? "movement" : "locomotion";
+        // Determine the channel based on archetype (default to movement)
+        var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
         return ValueTask.FromResult(SingleEmission(
             channel,
@@ -67,7 +69,7 @@ public sealed class RunToEmitter : BaseIntentEmitter
         var targetPos = GetOptionalVector3(parameters, "target");
         var targetEntity = GetOptionalGuid(parameters, "entity");
 
-        var channel = context.Archetype.HasChannel("movement") ? "movement" : "locomotion";
+        var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
         return ValueTask.FromResult(SingleEmission(
             channel,
@@ -100,7 +102,7 @@ public sealed class StopEmitter : BaseIntentEmitter
         CancellationToken ct)
     {
         var urgency = GetOptionalFloat(parameters, "urgency", 0.8f);
-        var channel = context.Archetype.HasChannel("movement") ? "movement" : "locomotion";
+        var channel = context.Archetype?.HasChannel("movement") == true ? "movement" : "locomotion";
 
         return ValueTask.FromResult(SingleEmission(
             channel,

@@ -3,6 +3,9 @@
 // Direct intent emission for fine-grained control.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Extensions;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -47,8 +50,8 @@ public sealed class EmitIntentEmitter : BaseIntentEmitter
         var target = GetOptionalGuid(parameters, "target");
         var position = GetOptionalVector3(parameters, "position");
 
-        // Validate channel exists in archetype
-        if (!context.Archetype.HasChannel(channel))
+        // Validate channel exists in archetype (if archetype is available)
+        if (context.Archetype != null && !context.Archetype.HasChannel(channel))
         {
             // Try to find a similar channel or use a fallback
             var fallbackChannel = FindFallbackChannel(channel, context);
@@ -74,6 +77,12 @@ public sealed class EmitIntentEmitter : BaseIntentEmitter
     /// </summary>
     private static string? FindFallbackChannel(string requestedChannel, IntentEmissionContext context)
     {
+        // If no archetype, can't do fallback
+        if (context.Archetype == null)
+        {
+            return null;
+        }
+
         // Map common channel requests to archetype-specific channels
         return requestedChannel.ToLowerInvariant() switch
         {
@@ -142,7 +151,8 @@ public sealed class MultiEmitEmitter : BaseIntentEmitter
                         continue;
                     }
 
-                    if (!context.Archetype.HasChannel(channel))
+                    // Skip if archetype exists and doesn't have the channel
+                    if (context.Archetype != null && !context.Archetype.HasChannel(channel))
                     {
                         continue;
                     }
@@ -151,7 +161,18 @@ public sealed class MultiEmitEmitter : BaseIntentEmitter
                     var target = GetOptionalGuid(emissionParams.AsReadOnly(), "target");
                     var position = GetOptionalVector3(emissionParams.AsReadOnly(), "position");
 
-                    emissions.Add(new IntentEmission(channel, intent, Math.Clamp(urgency, 0f, 1f), target, position));
+                    IntentEmission emission;
+                    if (position.HasValue)
+                    {
+                        emission = IntentEmissionExtensions.CreateWithPosition(
+                            channel, intent, Math.Clamp(urgency, 0f, 1f), position.Value, target);
+                    }
+                    else
+                    {
+                        emission = new IntentEmission(channel, intent, Math.Clamp(urgency, 0f, 1f), target);
+                    }
+
+                    emissions.Add(emission);
                 }
             }
         }

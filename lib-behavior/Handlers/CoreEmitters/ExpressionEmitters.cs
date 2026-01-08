@@ -3,6 +3,8 @@
 // Intent emitters for facial expression actions.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -32,12 +34,12 @@ public sealed class EmoteEmitter : BaseIntentEmitter
         var urgency = GetOptionalFloat(parameters, "urgency", intensity);
 
         // Expression channel is only available on humanoids
-        if (!context.Archetype.HasChannel("expression"))
+        if (context.Archetype?.HasChannel("expression") != true)
         {
             // Fallback: emit to stance channel for non-humanoids
-            if (context.Archetype.HasChannel("stance") || context.Archetype.HasChannel("alert"))
+            if (context.Archetype?.HasChannel("stance") == true || context.Archetype?.HasChannel("alert") == true)
             {
-                var fallbackChannel = context.Archetype.HasChannel("stance") ? "stance" : "alert";
+                var fallbackChannel = context.Archetype?.HasChannel("stance") == true ? "stance" : "alert";
                 return ValueTask.FromResult(SingleEmission(
                     fallbackChannel,
                     $"emote_{emotion}",

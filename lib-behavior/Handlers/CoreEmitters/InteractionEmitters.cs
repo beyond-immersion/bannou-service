@@ -3,6 +3,8 @@
 // Intent emitters for object/NPC interaction actions.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -31,7 +33,7 @@ public sealed class UseEmitter : BaseIntentEmitter
         var item = GetOptionalString(parameters, "item");
 
         // Interaction maps to action channel for most archetypes
-        var channel = context.Archetype.HasChannel("interaction") ? "interaction" : "action";
+        var channel = context.Archetype?.HasChannel("interaction") == true ? "interaction" : "action";
         var intent = string.IsNullOrEmpty(item) ? "use" : $"use_{item}";
 
         return ValueTask.FromResult(SingleEmission(
@@ -65,7 +67,7 @@ public sealed class PickUpEmitter : BaseIntentEmitter
         var urgency = GetOptionalFloat(parameters, "urgency", 0.5f);
         var target = GetOptionalGuid(parameters, "target");
 
-        var channel = context.Archetype.HasChannel("interaction") ? "interaction" : "action";
+        var channel = context.Archetype?.HasChannel("interaction") == true ? "interaction" : "action";
 
         return ValueTask.FromResult(SingleEmission(
             channel,
@@ -102,11 +104,11 @@ public sealed class TalkToEmitter : BaseIntentEmitter
         var emissions = new List<IntentEmission>();
 
         // Primary interaction
-        var interactionChannel = context.Archetype.HasChannel("interaction") ? "interaction" : "action";
+        var interactionChannel = context.Archetype?.HasChannel("interaction") == true ? "interaction" : "action";
         emissions.Add(new IntentEmission(interactionChannel, "talk_to", Math.Clamp(urgency, 0f, 1f), target));
 
         // Also direct attention
-        if (context.Archetype.HasChannel("attention"))
+        if (context.Archetype?.HasChannel("attention") == true)
         {
             emissions.Add(new IntentEmission("attention", "look_at", Math.Clamp(urgency, 0f, 1f), target));
         }

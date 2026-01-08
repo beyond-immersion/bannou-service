@@ -4,6 +4,7 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Archetypes;
@@ -58,7 +59,7 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
     }
 
     /// <inheritdoc/>
-    public ArchetypeDefinition? GetArchetype(string archetypeId)
+    public IArchetypeDefinition? GetArchetype(string archetypeId)
     {
         if (string.IsNullOrEmpty(archetypeId))
         {
@@ -69,7 +70,7 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
     }
 
     /// <inheritdoc/>
-    public ArchetypeDefinition? GetArchetypeByHash(int archetypeIdHash)
+    public IArchetypeDefinition? GetArchetypeByHash(int archetypeIdHash)
     {
         return _archetypesByHash.GetValueOrDefault(archetypeIdHash);
     }
@@ -81,13 +82,13 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
     }
 
     /// <inheritdoc/>
-    public IReadOnlyCollection<ArchetypeDefinition> GetAllArchetypes()
+    public IReadOnlyCollection<IArchetypeDefinition> GetAllArchetypes()
     {
-        return _archetypesById.Values.ToList().AsReadOnly();
+        return _archetypesById.Values.Cast<IArchetypeDefinition>().ToList().AsReadOnly();
     }
 
     /// <inheritdoc/>
-    public void RegisterArchetype(ArchetypeDefinition archetype)
+    public void RegisterArchetype(IArchetypeDefinition archetype)
     {
         ArgumentNullException.ThrowIfNull(archetype);
 
@@ -101,12 +102,19 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
             throw new ArgumentException($"Archetype with ID '{archetype.Id}' is already registered", nameof(archetype));
         }
 
-        RegisterArchetypeInternal(archetype);
+        if (archetype is not ArchetypeDefinition concreteArchetype)
+        {
+            throw new ArgumentException(
+                $"Archetype must be an {nameof(ArchetypeDefinition)} instance",
+                nameof(archetype));
+        }
+
+        RegisterArchetypeInternal(concreteArchetype);
 
         _logger?.LogInformation(
             "Registered custom archetype {ArchetypeId} with {ChannelCount} channels",
             archetype.Id,
-            archetype.Channels.Count);
+            concreteArchetype.Channels.Count);
     }
 
     /// <inheritdoc/>
@@ -121,7 +129,7 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
     }
 
     /// <inheritdoc/>
-    public ArchetypeDefinition GetDefaultArchetype()
+    public IArchetypeDefinition GetDefaultArchetype()
     {
         return _defaultArchetype;
     }

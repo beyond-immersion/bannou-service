@@ -4,6 +4,9 @@ using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Behavior.Archetypes;
+using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Behavior.Handlers;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +51,17 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
 
         // Register memory store for cognition pipeline (actor-local MVP)
         services.AddSingleton<IMemoryStore, ActorLocalMemoryStore>();
+
+        // Register archetype registry - singleton with pre-loaded archetypes
+        // ArchetypeRegistry constructor registers all standard archetypes automatically
+        services.AddSingleton<IArchetypeRegistry, ArchetypeRegistry>();
+
+        // Register intent emitter registry - singleton with core emitters
+        services.AddSingleton<IIntentEmitterRegistry>(sp =>
+            IntentEmitterRegistry.CreateWithCoreEmitters());
+
+        // Register control gate registry - singleton for per-entity control tracking
+        services.AddSingleton<IControlGateRegistry, ControlGateManager>();
 
         // Register cognition pipeline handlers
         // These handle domain actions for the 5-stage cognition pipeline

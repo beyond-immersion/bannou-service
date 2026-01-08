@@ -108,6 +108,13 @@ public interface IArchetypeRegistry
     IArchetypeDefinition? GetArchetype(string archetypeId);
 
     /// <summary>
+    /// Gets an archetype by its pre-computed hash.
+    /// </summary>
+    /// <param name="archetypeIdHash">The FNV-1a hash of the archetype ID.</param>
+    /// <returns>The archetype, or null if not found.</returns>
+    IArchetypeDefinition? GetArchetypeByHash(int archetypeIdHash);
+
+    /// <summary>
     /// Checks if an archetype exists.
     /// </summary>
     /// <param name="archetypeId">The archetype ID to check.</param>
@@ -119,4 +126,23 @@ public interface IArchetypeRegistry
     /// </summary>
     /// <returns>The default archetype.</returns>
     IArchetypeDefinition GetDefaultArchetype();
+
+    /// <summary>
+    /// Gets all registered archetype IDs.
+    /// </summary>
+    /// <returns>Collection of archetype IDs.</returns>
+    IReadOnlyCollection<string> GetArchetypeIds();
+
+    /// <summary>
+    /// Gets all registered archetypes.
+    /// </summary>
+    /// <returns>Collection of archetype definitions.</returns>
+    IReadOnlyCollection<IArchetypeDefinition> GetAllArchetypes();
+
+    /// <summary>
+    /// Registers a new archetype.
+    /// </summary>
+    /// <param name="archetype">The archetype to register.</param>
+    /// <exception cref="ArgumentException">If archetype ID is already registered.</exception>
+    void RegisterArchetype(IArchetypeDefinition archetype);
 }

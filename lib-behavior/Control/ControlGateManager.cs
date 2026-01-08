@@ -4,6 +4,7 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;

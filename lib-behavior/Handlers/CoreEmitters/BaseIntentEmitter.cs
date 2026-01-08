@@ -3,6 +3,9 @@
 // Common base class for intent emitters.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Extensions;
+
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 
 /// <summary>
@@ -159,7 +162,11 @@ public abstract class BaseIntentEmitter : IIntentEmitter
         Guid? target = null,
         System.Numerics.Vector3? position = null)
     {
-        return new[] { new IntentEmission(channel, intent, urgency, target, position) };
+        if (position.HasValue)
+        {
+            return new[] { IntentEmissionExtensions.CreateWithPosition(channel, intent, urgency, position.Value, target) };
+        }
+        return new[] { new IntentEmission(channel, intent, urgency, target) };
     }
 
     /// <summary>

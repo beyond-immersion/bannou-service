@@ -3838,6 +3838,13 @@
             <param name="archetypeId">The archetype ID.</param>
             <returns>The archetype, or null if not found.</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.GetArchetypeByHash(System.Int32)">
+            <summary>
+            Gets an archetype by its pre-computed hash.
+            </summary>
+            <param name="archetypeIdHash">The FNV-1a hash of the archetype ID.</param>
+            <returns>The archetype, or null if not found.</returns>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.HasArchetype(System.String)">
             <summary>
             Checks if an archetype exists.
@@ -3850,6 +3857,25 @@
             Gets the default archetype (typically "humanoid").
             </summary>
             <returns>The default archetype.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.GetArchetypeIds">
+            <summary>
+            Gets all registered archetype IDs.
+            </summary>
+            <returns>Collection of archetype IDs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.GetAllArchetypes">
+            <summary>
+            Gets all registered archetypes.
+            </summary>
+            <returns>Collection of archetype definitions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.RegisterArchetype(BeyondImmersion.BannouService.Behavior.IArchetypeDefinition)">
+            <summary>
+            Registers a new archetype.
+            </summary>
+            <param name="archetype">The archetype to register.</param>
+            <exception cref="T:System.ArgumentException">If archetype ID is already registered.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.ControlSource">
             <summary>
@@ -3869,6 +3895,181 @@
         <member name="F:BeyondImmersion.BannouService.Behavior.ControlSource.Cinematic">
             <summary>Cinematic/cutscene control (highest priority).</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.HandoffStyle">
+            <summary>
+            Style of control handoff when returning control.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.HandoffStyle.Instant">
+            <summary>Immediate transfer - no transition period.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.HandoffStyle.Blend">
+            <summary>Smooth blend - gradually return control over time.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.HandoffStyle.Explicit">
+            <summary>Explicit handoff - wait for explicit trigger (button press, action).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.EntityState">
+            <summary>
+            Final state information for control handoff.
+            </summary>
+            <remarks>
+            <para>
+            When a cinematic returns control, it must communicate the final state
+            so the behavior stack can resume with accurate world knowledge.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Position">
+            <summary>Entity's final position.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Rotation">
+            <summary>Entity's final rotation (euler angles or quaternion).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Health">
+            <summary>Entity's current health (0.0-1.0).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Stance">
+            <summary>Current stance/posture.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Emotion">
+            <summary>Current emotional state.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.CurrentTarget">
+            <summary>Current target entity (if any).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.AdditionalState">
+            <summary>Additional state values.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityState.Empty">
+            <summary>Creates empty state.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ControlOptions">
+            <summary>
+            Options for taking control of an entity.
+            </summary>
+            <param name="Source">The control source requesting control.</param>
+            <param name="CinematicId">ID of the cinematic taking control (if Cinematic source).</param>
+            <param name="AllowBehaviorInput">Channels where behavior can still contribute (optional).</param>
+            <param name="Duration">Expected duration of control (null = indefinite).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlOptions.#ctor(BeyondImmersion.BannouService.Behavior.ControlSource,System.String,System.Collections.Generic.IReadOnlySet{System.String},System.Nullable{System.TimeSpan})">
+            <summary>
+            Options for taking control of an entity.
+            </summary>
+            <param name="Source">The control source requesting control.</param>
+            <param name="CinematicId">ID of the cinematic taking control (if Cinematic source).</param>
+            <param name="AllowBehaviorInput">Channels where behavior can still contribute (optional).</param>
+            <param name="Duration">Expected duration of control (null = indefinite).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlOptions.Source">
+            <summary>The control source requesting control.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlOptions.CinematicId">
+            <summary>ID of the cinematic taking control (if Cinematic source).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlOptions.AllowBehaviorInput">
+            <summary>Channels where behavior can still contribute (optional).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlOptions.Duration">
+            <summary>Expected duration of control (null = indefinite).</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlOptions.ForBehavior">
+            <summary>Creates options for behavior control.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlOptions.ForPlayer">
+            <summary>Creates options for player control.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlOptions.ForCinematic(System.String,System.Collections.Generic.IReadOnlySet{System.String},System.Nullable{System.TimeSpan})">
+            <summary>
+            Creates options for cinematic control.
+            </summary>
+            <param name="cinematicId">The cutscene identifier.</param>
+            <param name="allowBehaviorChannels">Channels where behavior can still contribute.</param>
+            <param name="duration">Expected duration.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlOptions.ForOpportunity">
+            <summary>Creates options for offered opportunity.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ControlHandoff">
+            <summary>
+            Protocol for transferring control between sources.
+            </summary>
+            <param name="Style">How to perform the handoff.</param>
+            <param name="BlendDuration">Duration for blend-style handoffs.</param>
+            <param name="SyncState">Whether to push final state to behavior stack.</param>
+            <param name="FinalState">The entity's final state (if syncing).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlHandoff.#ctor(BeyondImmersion.BannouService.Behavior.HandoffStyle,System.Nullable{System.TimeSpan},System.Boolean,BeyondImmersion.BannouService.Behavior.EntityState)">
+            <summary>
+            Protocol for transferring control between sources.
+            </summary>
+            <param name="Style">How to perform the handoff.</param>
+            <param name="BlendDuration">Duration for blend-style handoffs.</param>
+            <param name="SyncState">Whether to push final state to behavior stack.</param>
+            <param name="FinalState">The entity's final state (if syncing).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlHandoff.Style">
+            <summary>How to perform the handoff.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlHandoff.BlendDuration">
+            <summary>Duration for blend-style handoffs.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlHandoff.SyncState">
+            <summary>Whether to push final state to behavior stack.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlHandoff.FinalState">
+            <summary>The entity's final state (if syncing).</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlHandoff.Instant">
+            <summary>Creates an instant handoff (no transition).</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlHandoff.InstantWithState(BeyondImmersion.BannouService.Behavior.EntityState)">
+            <summary>
+            Creates an instant handoff with state sync.
+            </summary>
+            <param name="finalState">The final entity state.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlHandoff.Blend(System.TimeSpan,BeyondImmersion.BannouService.Behavior.EntityState)">
+            <summary>
+            Creates a blended handoff.
+            </summary>
+            <param name="duration">Blend duration.</param>
+            <param name="finalState">Optional final state.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlHandoff.Explicit">
+            <summary>Creates an explicit handoff (triggered by action).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ControlChangedEvent">
+            <summary>
+            Event raised when control source changes for an entity.
+            </summary>
+            <param name="EntityId">The entity whose control changed.</param>
+            <param name="PreviousSource">The previous control source.</param>
+            <param name="NewSource">The new control source.</param>
+            <param name="Handoff">The handoff protocol used (if returning control).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ControlChangedEvent.#ctor(System.Guid,BeyondImmersion.BannouService.Behavior.ControlSource,BeyondImmersion.BannouService.Behavior.ControlSource,BeyondImmersion.BannouService.Behavior.ControlHandoff)">
+            <summary>
+            Event raised when control source changes for an entity.
+            </summary>
+            <param name="EntityId">The entity whose control changed.</param>
+            <param name="PreviousSource">The previous control source.</param>
+            <param name="NewSource">The new control source.</param>
+            <param name="Handoff">The handoff protocol used (if returning control).</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlChangedEvent.EntityId">
+            <summary>The entity whose control changed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlChangedEvent.PreviousSource">
+            <summary>The previous control source.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlChangedEvent.NewSource">
+            <summary>The new control source.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ControlChangedEvent.Handoff">
+            <summary>The handoff protocol used (if returning control).</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IControlGate">
             <summary>
             Per-entity control gate that determines what sources can write to Intent Channels.
@@ -3879,6 +4080,9 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.CurrentSource">
             <summary>The current control source.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.CurrentOptions">
+            <summary>The current control options.</summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.AcceptsBehaviorOutput">
             <summary>Whether behavior stack outputs are accepted.</summary>
@@ -3892,6 +4096,19 @@
             Empty means no behavior output allowed.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGate.TakeControlAsync(BeyondImmersion.BannouService.Behavior.ControlOptions)">
+            <summary>
+            Takes control of the entity.
+            </summary>
+            <param name="options">Control options.</param>
+            <returns>True if control was taken, false if denied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGate.ReturnControlAsync(BeyondImmersion.BannouService.Behavior.ControlHandoff)">
+            <summary>
+            Returns control to the default source (behavior).
+            </summary>
+            <param name="handoff">Handoff protocol.</param>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IControlGate.FilterEmissions(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Behavior.IntentEmission},BeyondImmersion.BannouService.Behavior.ControlSource)">
             <summary>
             Filters emissions based on current control state.
@@ -3899,6 +4116,11 @@
             <param name="emissions">The emissions to filter.</param>
             <param name="source">The source of these emissions.</param>
             <returns>The filtered emissions.</returns>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.IControlGate.ControlChanged">
+            <summary>
+            Event raised when control source changes.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IControlGateRegistry">
             <summary>
@@ -3925,6 +4147,16 @@
             </summary>
             <param name="entityId">The entity ID.</param>
             <returns>True if a gate was removed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGateRegistry.GetCinematicControlledEntities">
+            <summary>
+            Gets all entities currently under cinematic control.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGateRegistry.GetPlayerControlledEntities">
+            <summary>
+            Gets all entities currently under player control.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IntentEmission">
             <summary>
@@ -4023,6 +4255,12 @@
             Registry of Intent Emitters for action-to-intent translation.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry.Register(BeyondImmersion.BannouService.Behavior.IIntentEmitter)">
+            <summary>
+            Registers an intent emitter.
+            </summary>
+            <param name="emitter">The emitter to register.</param>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry.GetEmitter(System.String,BeyondImmersion.BannouService.Behavior.IntentEmissionContext)">
             <summary>
             Gets an emitter for the given action name and context.
@@ -4042,7 +4280,7 @@
             <summary>
             Gets all registered action names.
             </summary>
-            <returns>The set of registered action names.</returns>
+            <returns>Collection of registered action names.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
             <summary>

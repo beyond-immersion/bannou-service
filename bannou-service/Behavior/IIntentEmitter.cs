@@ -90,6 +90,12 @@ public interface IIntentEmitter
 public interface IIntentEmitterRegistry
 {
     /// <summary>
+    /// Registers an intent emitter.
+    /// </summary>
+    /// <param name="emitter">The emitter to register.</param>
+    void Register(IIntentEmitter emitter);
+
+    /// <summary>
     /// Gets an emitter for the given action name and context.
     /// </summary>
     /// <param name="actionName">The action name to look up.</param>
@@ -107,6 +113,6 @@ public interface IIntentEmitterRegistry
     /// <summary>
     /// Gets all registered action names.
     /// </summary>
-    /// <returns>The set of registered action names.</returns>
-    IReadOnlySet<string> GetActionNames();
+    /// <returns>Collection of registered action names.</returns>
+    IReadOnlyCollection<string> GetActionNames();
 }

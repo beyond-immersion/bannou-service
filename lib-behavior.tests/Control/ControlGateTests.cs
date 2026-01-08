@@ -3,8 +3,8 @@
 // Unit tests for control gating layer.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
-using BeyondImmersion.BannouService.Behavior.Handlers;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Control;
