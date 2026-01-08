@@ -24,7 +24,7 @@ Des... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
-| [Mapping](#mapping) | 1.0.0 | 13 | Spatial data management service for Arcadia game worlds. |
+| [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for Arcadia game worlds. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
@@ -570,6 +570,16 @@ Spatial data management service for Arcadia game worlds.
 | `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | game_server |
 | `POST` | `/mapping/release-authority` | Release authority over a channel | game_server |
 
+### Definition
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/definition/create` | Create a map definition template | developer |
+| `POST` | `/mapping/definition/delete` | Delete a map definition | admin |
+| `POST` | `/mapping/definition/get` | Get a map definition by ID | user |
+| `POST` | `/mapping/definition/list` | List map definitions with optional filters | user |
+| `POST` | `/mapping/definition/update` | Update a map definition | developer |
+
 ### Query
 
 | Method | Path | Summary | Access |
@@ -948,7 +958,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 27
-- **Total endpoints**: 285
+- **Total endpoints**: 290
 
 ---
 

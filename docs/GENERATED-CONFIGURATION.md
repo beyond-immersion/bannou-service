@@ -313,12 +313,25 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
 | `MAPPING_ENABLED` | bool | `true` | Enable/disable Mapping service |
+| `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
 | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
 | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
 | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | int | `1800` | Maximum duration for authoring checkout locks |
 | `MAPPING_MAX_OBJECTS_PER_QUERY` | int | `5000` | Maximum objects returned in a single query |
 | `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | int | `100` | Maximum payloads in single publish or ingest event |
 | `MAPPING_SPATIAL_CELL_SIZE` | double | `64.0` | Size of spatial index cells in world units (default 64) |
+| `MAPPING_TTL_COMBAT_EFFECTS` | int | `30` | TTL for combat effects layer data (very short-lived, ephemer... |
+| `MAPPING_TTL_DYNAMIC_OBJECTS` | int | `3600` | TTL for dynamic objects layer data |
+| `MAPPING_TTL_HAZARDS` | int | `300` | TTL for hazards layer data (short-lived) |
+| `MAPPING_TTL_NAVIGATION` | int | `-1` | TTL for navigation layer data (-1 = no TTL, durable) |
+| `MAPPING_TTL_OWNERSHIP` | int | `-1` | TTL for ownership layer data (-1 = no TTL, durable) |
+| `MAPPING_TTL_POINTS_OF_INTEREST` | int | `3600` | TTL for points of interest layer data |
+| `MAPPING_TTL_RESOURCES` | int | `3600` | TTL for resources layer data |
+| `MAPPING_TTL_SPAWN_POINTS` | int | `3600` | TTL for spawn points layer data |
+| `MAPPING_TTL_STATIC_GEOMETRY` | int | `-1` | TTL for static geometry layer data (-1 = no TTL, durable) |
+| `MAPPING_TTL_TERRAIN` | int | `-1` | TTL for terrain layer data (-1 = no TTL, durable) |
+| `MAPPING_TTL_VISUAL_EFFECTS` | int | `60` | TTL for visual effects layer data (short-lived, ephemeral) |
+| `MAPPING_TTL_WEATHER_EFFECTS` | int | `600` | TTL for weather effects layer data |
 
 ### Mesh
 
@@ -481,9 +494,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 337
+- **Total properties**: 350
 - **Required (no default)**: 46
-- **Optional (has default)**: 291
+- **Optional (has default)**: 304
 
 ## Environment Variable Naming Convention
 

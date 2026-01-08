@@ -34,6 +34,8 @@ public class MappingServiceTests
     private readonly Mock<IStateStore<List<Guid>>> _mockIndexStore;
     private readonly Mock<IStateStore<MappingService.LongWrapper>> _mockVersionStore;
     private readonly Mock<IStateStore<MappingService.CachedAffordanceResult>> _mockAffordanceCacheStore;
+    private readonly Mock<IStateStore<MappingService.DefinitionRecord>> _mockDefinitionStore;
+    private readonly Mock<IStateStore<MappingService.DefinitionIndexEntry>> _mockDefinitionIndexStore;
 
     public MappingServiceTests()
     {
@@ -69,6 +71,8 @@ public class MappingServiceTests
         _mockIndexStore = new Mock<IStateStore<List<Guid>>>();
         _mockVersionStore = new Mock<IStateStore<MappingService.LongWrapper>>();
         _mockAffordanceCacheStore = new Mock<IStateStore<MappingService.CachedAffordanceResult>>();
+        _mockDefinitionStore = new Mock<IStateStore<MappingService.DefinitionRecord>>();
+        _mockDefinitionIndexStore = new Mock<IStateStore<MappingService.DefinitionIndexEntry>>();
 
         // Wire up state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.ChannelRecord>(It.IsAny<string>()))
@@ -85,6 +89,10 @@ public class MappingServiceTests
             .Returns(_mockVersionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.CachedAffordanceResult>(It.IsAny<string>()))
             .Returns(_mockAffordanceCacheStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.DefinitionRecord>(It.IsAny<string>()))
+            .Returns(_mockDefinitionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<MappingService.DefinitionIndexEntry>(It.IsAny<string>()))
+            .Returns(_mockDefinitionIndexStore.Object);
 
         // Default behaviors
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
@@ -107,6 +115,10 @@ public class MappingServiceTests
         _mockObjectStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MapObject>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<Guid>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockDefinitionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.DefinitionRecord>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        _mockDefinitionIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MappingService.DefinitionIndexEntry>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
     }
 
@@ -185,7 +197,7 @@ public class MappingServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(13, endpoints.Count); // 13 endpoints defined in mapping-api.yaml
+        Assert.Equal(18, endpoints.Count); // 18 endpoints defined in mapping-api.yaml
     }
 
     [Fact]
@@ -209,7 +221,7 @@ public class MappingServiceTests
         Assert.Equal("mapping", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(13, registrationEvent.Endpoints.Count);
+        Assert.Equal(18, registrationEvent.Endpoints.Count);
         Assert.NotEmpty(registrationEvent.Version);
     }
 
@@ -859,6 +871,268 @@ public class MappingServiceTests
             It.IsAny<MapObject>(),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    #endregion
+
+    #region Definition CRUD Tests
+
+    [Fact]
+    public async Task CreateDefinitionAsync_WithValidRequest_ShouldReturnDefinition()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateDefinitionRequest
+        {
+            Name = "Test Map",
+            Description = "A test map definition",
+            Layers = new List<LayerDefinition>
+            {
+                new LayerDefinition { Kind = MapKind.Terrain }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.CreateDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("Test Map", response.Name);
+        Assert.Equal("A test map definition", response.Description);
+        Assert.NotEqual(Guid.Empty, response.DefinitionId);
+    }
+
+    [Fact]
+    public async Task CreateDefinitionAsync_WithDuplicateName_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var existingId = Guid.NewGuid();
+
+        // Setup existing definition with same name
+        _mockDefinitionIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionIndexEntry { DefinitionIds = new List<Guid> { existingId } });
+
+        _mockDefinitionStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord
+            {
+                DefinitionId = existingId,
+                Name = "Test Map",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new CreateDefinitionRequest
+        {
+            Name = "Test Map", // Same name as existing
+            Description = "Another map"
+        };
+
+        // Act
+        var (status, response) = await service.CreateDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetDefinitionAsync_WhenExists_ShouldReturnDefinition()
+    {
+        // Arrange
+        var service = CreateService();
+        var definitionId = Guid.NewGuid();
+
+        _mockDefinitionStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord
+            {
+                DefinitionId = definitionId,
+                Name = "My Map",
+                Description = "A great map",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new GetDefinitionRequest { DefinitionId = definitionId };
+
+        // Act
+        var (status, response) = await service.GetDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(definitionId, response.DefinitionId);
+        Assert.Equal("My Map", response.Name);
+    }
+
+    [Fact]
+    public async Task GetDefinitionAsync_WhenNotExists_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetDefinitionRequest { DefinitionId = Guid.NewGuid() };
+
+        // Act
+        var (status, response) = await service.GetDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task ListDefinitionsAsync_ShouldReturnPaginatedList()
+    {
+        // Arrange
+        var service = CreateService();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        _mockDefinitionIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionIndexEntry { DefinitionIds = new List<Guid> { id1, id2 } });
+
+        _mockDefinitionStore.SetupSequence(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord { DefinitionId = id1, Name = "Alpha Map", CreatedAt = DateTimeOffset.UtcNow })
+            .ReturnsAsync(new MappingService.DefinitionRecord { DefinitionId = id2, Name = "Beta Map", CreatedAt = DateTimeOffset.UtcNow });
+
+        var request = new ListDefinitionsRequest { Offset = 0, Limit = 10 };
+
+        // Act
+        var (status, response) = await service.ListDefinitionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Total);
+        Assert.Equal(2, response.Definitions.Count);
+    }
+
+    [Fact]
+    public async Task ListDefinitionsAsync_WithNameFilter_ShouldFilterResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        _mockDefinitionIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionIndexEntry { DefinitionIds = new List<Guid> { id1, id2 } });
+
+        _mockDefinitionStore.SetupSequence(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord { DefinitionId = id1, Name = "Forest Map", CreatedAt = DateTimeOffset.UtcNow })
+            .ReturnsAsync(new MappingService.DefinitionRecord { DefinitionId = id2, Name = "Desert Map", CreatedAt = DateTimeOffset.UtcNow });
+
+        var request = new ListDefinitionsRequest { NameFilter = "Forest", Offset = 0, Limit = 10 };
+
+        // Act
+        var (status, response) = await service.ListDefinitionsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.Total);
+        Assert.Single(response.Definitions);
+        Assert.Equal("Forest Map", response.Definitions.First().Name);
+    }
+
+    [Fact]
+    public async Task UpdateDefinitionAsync_WhenExists_ShouldUpdateAndReturn()
+    {
+        // Arrange
+        var service = CreateService();
+        var definitionId = Guid.NewGuid();
+
+        _mockDefinitionStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord
+            {
+                DefinitionId = definitionId,
+                Name = "Old Name",
+                Description = "Old description",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new UpdateDefinitionRequest
+        {
+            DefinitionId = definitionId,
+            Name = "New Name",
+            Description = "New description"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("New Name", response.Name);
+        Assert.Equal("New description", response.Description);
+        Assert.NotNull(response.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateDefinitionAsync_WhenNotExists_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateDefinitionRequest
+        {
+            DefinitionId = Guid.NewGuid(),
+            Name = "New Name"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task DeleteDefinitionAsync_WhenExists_ShouldDeleteAndReturnSuccess()
+    {
+        // Arrange
+        var service = CreateService();
+        var definitionId = Guid.NewGuid();
+
+        _mockDefinitionStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionRecord
+            {
+                DefinitionId = definitionId,
+                Name = "To Delete",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockDefinitionIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MappingService.DefinitionIndexEntry { DefinitionIds = new List<Guid> { definitionId } });
+
+        var request = new DeleteDefinitionRequest { DefinitionId = definitionId };
+
+        // Act
+        var (status, response) = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Deleted);
+
+        // Verify delete was called
+        _mockDefinitionStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteDefinitionAsync_WhenNotExists_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteDefinitionRequest { DefinitionId = Guid.NewGuid() };
+
+        // Act
+        var (status, response) = await service.DeleteDefinitionAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Deleted);
     }
 
     #endregion

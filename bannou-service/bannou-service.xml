@@ -2268,14 +2268,22 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler">
             <summary>
-            Handles domain-specific actions.
-            In a full implementation, this would dispatch to registered domain handlers.
-            For now, it logs the action for testing purposes.
+            Handles domain-specific actions by routing them to Intent Emitters.
+            This is the integration point between ABML execution and the behavior system.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler.#ctor(BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry,BeyondImmersion.BannouService.Behavior.IArchetypeRegistry,BeyondImmersion.BannouService.Behavior.IControlGateRegistry,System.Func{System.Guid})">
+            <summary>
+            Creates a domain action handler with full intent emission support.
+            </summary>
+            <param name="emitters">Intent emitter registry for action→emission translation.</param>
+            <param name="archetypes">Archetype registry for entity type resolution.</param>
+            <param name="controlGates">Control gate registry for emission filtering.</param>
+            <param name="entityIdResolver">Optional resolver for current entity ID.</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Abml.Execution.Handlers.DomainActionHandler.#ctor(System.Func{System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.Tasks.ValueTask{BeyondImmersion.BannouService.Abml.Execution.ActionResult}})">
             <summary>
-            Creates a domain action handler.
+            Creates a domain action handler with a custom callback (legacy mode).
             </summary>
             <param name="callback">Optional callback for handling domain actions.</param>
         </member>
@@ -2451,15 +2459,22 @@
             Gets the handler for an action.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.CreateWithBuiltins">
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.CreateWithBuiltins(BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry,BeyondImmersion.BannouService.Behavior.IArchetypeRegistry,BeyondImmersion.BannouService.Behavior.IControlGateRegistry)">
             <summary>
             Creates a registry with all built-in handlers registered.
             </summary>
+            <param name="emitters">Optional intent emitter registry for domain action integration.</param>
+            <param name="archetypes">Optional archetype registry for entity type resolution.</param>
+            <param name="controlGates">Optional control gate registry for emission filtering.</param>
+            <returns>A registry with all built-in handlers.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.RegisterBuiltinHandlers">
+        <member name="M:BeyondImmersion.BannouService.Abml.Execution.ActionHandlerRegistry.RegisterBuiltinHandlers(BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry,BeyondImmersion.BannouService.Behavior.IArchetypeRegistry,BeyondImmersion.BannouService.Behavior.IControlGateRegistry)">
             <summary>
             Registers all built-in control flow and variable handlers.
             </summary>
+            <param name="emitters">Optional intent emitter registry for domain action integration.</param>
+            <param name="archetypes">Optional archetype registry for entity type resolution.</param>
+            <param name="controlGates">Optional control gate registry for emission filtering.</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Execution.ValueEvaluator">
             <summary>
@@ -3725,6 +3740,1373 @@
             </summary>
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.MergeStrategy">
+            <summary>
+            Merge strategy for combining multiple intent emissions on the same channel.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.MergeStrategy.Priority">
+            <summary>Highest urgency wins exclusively.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.MergeStrategy.Blend">
+            <summary>Values are blended proportionally by urgency.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.MergeStrategy.Additive">
+            <summary>Values are summed (for additive effects).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.PhysicalChannel">
+            <summary>
+            Physical output channel for entity animation/physics.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Action">
+            <summary>Primary actions (attacks, abilities).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Locomotion">
+            <summary>Movement and navigation.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Attention">
+            <summary>Gaze and head tracking.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Stance">
+            <summary>Body posture.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Vocalization">
+            <summary>Speech and sounds.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.PhysicalChannel.Expression">
+            <summary>Facial expressions.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition">
+            <summary>
+            Definition of a logical channel within an archetype.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition.Name">
+            <summary>The logical channel name (e.g., "combat", "movement").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition.PhysicalChannel">
+            <summary>The physical channel this maps to.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition.DefaultUrgency">
+            <summary>Default urgency for emissions on this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition.MergeStrategy">
+            <summary>How to merge multiple emissions on this channel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILogicalChannelDefinition.Description">
+            <summary>Human-readable description.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition">
+            <summary>
+            Definition of an entity archetype (humanoid, vehicle, creature, etc.).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition.Id">
+            <summary>Unique archetype identifier (e.g., "humanoid", "vehicle").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition.Description">
+            <summary>Human-readable description.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition.Channels">
+            <summary>Logical channels available for this archetype.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition.HasChannel(System.String)">
+            <summary>
+            Checks if this archetype has a channel with the given name.
+            </summary>
+            <param name="channelName">The channel name to check.</param>
+            <returns>True if the channel exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeDefinition.GetChannel(System.String)">
+            <summary>
+            Gets a channel definition by name.
+            </summary>
+            <param name="channelName">The channel name.</param>
+            <returns>The channel definition, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry">
+            <summary>
+            Registry of entity archetypes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.GetArchetype(System.String)">
+            <summary>
+            Gets an archetype definition by ID.
+            </summary>
+            <param name="archetypeId">The archetype ID.</param>
+            <returns>The archetype, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.HasArchetype(System.String)">
+            <summary>
+            Checks if an archetype exists.
+            </summary>
+            <param name="archetypeId">The archetype ID to check.</param>
+            <returns>True if the archetype is registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IArchetypeRegistry.GetDefaultArchetype">
+            <summary>
+            Gets the default archetype (typically "humanoid").
+            </summary>
+            <returns>The default archetype.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ControlSource">
+            <summary>
+            Source of control for an entity's Intent Channels.
+            Higher values have higher priority.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.ControlSource.Behavior">
+            <summary>Normal autonomous behavior stack.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.ControlSource.Opportunity">
+            <summary>Optional opportunity (player can accept/decline).</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.ControlSource.Player">
+            <summary>Direct player input commands.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.ControlSource.Cinematic">
+            <summary>Cinematic/cutscene control (highest priority).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IControlGate">
+            <summary>
+            Per-entity control gate that determines what sources can write to Intent Channels.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.EntityId">
+            <summary>The entity this gate controls.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.CurrentSource">
+            <summary>The current control source.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.AcceptsBehaviorOutput">
+            <summary>Whether behavior stack outputs are accepted.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.AcceptsPlayerInput">
+            <summary>Whether player input is accepted.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IControlGate.BehaviorInputChannels">
+            <summary>
+            Channels where behavior can still contribute during non-Behavior control.
+            Empty means no behavior output allowed.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGate.FilterEmissions(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Behavior.IntentEmission},BeyondImmersion.BannouService.Behavior.ControlSource)">
+            <summary>
+            Filters emissions based on current control state.
+            </summary>
+            <param name="emissions">The emissions to filter.</param>
+            <param name="source">The source of these emissions.</param>
+            <returns>The filtered emissions.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IControlGateRegistry">
+            <summary>
+            Registry of control gates for entity control management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGateRegistry.Get(System.Guid)">
+            <summary>
+            Gets the control gate for an entity, if it exists.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The control gate, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGateRegistry.GetOrCreate(System.Guid)">
+            <summary>
+            Gets or creates a control gate for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The control gate.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IControlGateRegistry.Remove(System.Guid)">
+            <summary>
+            Removes the control gate for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>True if a gate was removed.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IntentEmission">
+            <summary>
+            A single Intent emission targeting a specific channel.
+            </summary>
+            <param name="Channel">The logical channel name (e.g., "combat", "movement").</param>
+            <param name="Intent">The intent identifier (e.g., "attack", "walk").</param>
+            <param name="Urgency">Urgency value 0.0-1.0 for merge priority.</param>
+            <param name="Target">Optional target entity ID.</param>
+            <param name="Data">Additional emission data.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IntentEmission.#ctor(System.String,System.String,System.Single,System.Nullable{System.Guid},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            A single Intent emission targeting a specific channel.
+            </summary>
+            <param name="Channel">The logical channel name (e.g., "combat", "movement").</param>
+            <param name="Intent">The intent identifier (e.g., "attack", "walk").</param>
+            <param name="Urgency">Urgency value 0.0-1.0 for merge priority.</param>
+            <param name="Target">Optional target entity ID.</param>
+            <param name="Data">Additional emission data.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmission.Channel">
+            <summary>The logical channel name (e.g., "combat", "movement").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmission.Intent">
+            <summary>The intent identifier (e.g., "attack", "walk").</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmission.Urgency">
+            <summary>Urgency value 0.0-1.0 for merge priority.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmission.Target">
+            <summary>Optional target entity ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmission.Data">
+            <summary>Additional emission data.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IntentEmissionContext">
+            <summary>
+            Context for intent emission, providing entity and archetype information.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmissionContext.EntityId">
+            <summary>
+            The entity ID emitting the intent.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmissionContext.Archetype">
+            <summary>
+            The entity's archetype definition.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmissionContext.DocumentType">
+            <summary>
+            The document type being executed (e.g., "behavior", "cutscene").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IntentEmissionContext.Data">
+            <summary>
+            Additional context data from the execution scope.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IIntentEmitter">
+            <summary>
+            Interface for handlers that translate ABML actions to Intent Channel emissions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IIntentEmitter.ActionName">
+            <summary>
+            The action name this emitter handles (e.g., "walk_to", "attack").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IIntentEmitter.SupportedDocumentTypes">
+            <summary>
+            Document types this emitter supports.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitter.CanEmit(System.String,BeyondImmersion.BannouService.Behavior.IntentEmissionContext)">
+            <summary>
+            Checks if this emitter can handle the given action in the context.
+            </summary>
+            <param name="actionName">The action name to check.</param>
+            <param name="context">The emission context.</param>
+            <returns>True if this emitter can handle the action.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitter.EmitAsync(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},BeyondImmersion.BannouService.Behavior.IntentEmissionContext,System.Threading.CancellationToken)">
+            <summary>
+            Emits intents for the given action.
+            </summary>
+            <param name="parameters">The action parameters.</param>
+            <param name="context">The emission context.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The emitted intents.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry">
+            <summary>
+            Registry of Intent Emitters for action-to-intent translation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry.GetEmitter(System.String,BeyondImmersion.BannouService.Behavior.IntentEmissionContext)">
+            <summary>
+            Gets an emitter for the given action name and context.
+            </summary>
+            <param name="actionName">The action name to look up.</param>
+            <param name="context">The emission context.</param>
+            <returns>The matching emitter, or null if none found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry.HasEmitter(System.String)">
+            <summary>
+            Checks if an emitter exists for the given action.
+            </summary>
+            <param name="actionName">The action name to check.</param>
+            <returns>True if an emitter is registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IIntentEmitterRegistry.GetActionNames">
+            <summary>
+            Gets all registered action names.
+            </summary>
+            <returns>The set of registered action names.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
+            <summary>
+            Client interface for the Behavior service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compile ABML behavior definition
+            </summary>
+            <remarks>
+            Compiles a YAML-based ABML behavior definition into executable behavior trees.
+            <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+            </remarks>
+            <returns>ABML behavior compiled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compile stackable behavior sets
+            </summary>
+            <remarks>
+            Compiles multiple ABML behavior sets with priority-based merging.
+            <br/>Handles cultural adaptations, profession specializations, and context resolution.
+            </remarks>
+            <returns>Behavior stack compiled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate ABML definition
+            </summary>
+            <remarks>
+            Validates ABML YAML against schema and checks for semantic correctness.
+            <br/>Includes context variable validation and service dependency checking.
+            </remarks>
+            <returns>Validation completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GetCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get cached compiled behavior
+            </summary>
+            <remarks>
+            Retrieves a previously compiled behavior from the cache.
+            <br/>Used for performance optimization in high-frequency behavior execution.
+            </remarks>
+            <returns>Cached behavior retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.InvalidateCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Invalidate cached behavior
+            </summary>
+            <remarks>
+            Removes a behavior from the cache, forcing recompilation on next access.
+            <br/>Used when behavior definitions are updated.
+            </remarks>
+            <returns>Cache invalidated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Resolve context variables
+            </summary>
+            <remarks>
+            Resolves context variables in ABML definitions against character and world state.
+            <br/>Used for dynamic behavior adaptation based on current game state.
+            </remarks>
+            <returns>Context variables resolved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate GOAP plan
+            </summary>
+            <remarks>
+            Generates a GOAP plan to achieve a goal from the current world state.
+            <br/>Uses A* search to find the optimal sequence of actions.
+            </remarks>
+            <returns>Plan generated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate existing GOAP plan
+            </summary>
+            <remarks>
+            Validates an existing GOAP plan against the current world state.
+            <br/>Returns whether the plan is still valid or needs replanning.
+            </remarks>
+            <returns>Plan validation completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorClient">
+            <summary>
+            Client implementation for the Behavior service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Behavior.BehaviorClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Behavior.BehaviorClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compile ABML behavior definition
+            </summary>
+            <remarks>
+            Compiles a YAML-based ABML behavior definition into executable behavior trees.
+            <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+            </remarks>
+            <returns>ABML behavior compiled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compile stackable behavior sets
+            </summary>
+            <remarks>
+            Compiles multiple ABML behavior sets with priority-based merging.
+            <br/>Handles cultural adaptations, profession specializations, and context resolution.
+            </remarks>
+            <returns>Behavior stack compiled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate ABML definition
+            </summary>
+            <remarks>
+            Validates ABML YAML against schema and checks for semantic correctness.
+            <br/>Includes context variable validation and service dependency checking.
+            </remarks>
+            <returns>Validation completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GetCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get cached compiled behavior
+            </summary>
+            <remarks>
+            Retrieves a previously compiled behavior from the cache.
+            <br/>Used for performance optimization in high-frequency behavior execution.
+            </remarks>
+            <returns>Cached behavior retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.InvalidateCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Invalidate cached behavior
+            </summary>
+            <remarks>
+            Removes a behavior from the cache, forcing recompilation on next access.
+            <br/>Used when behavior definitions are updated.
+            </remarks>
+            <returns>Cache invalidated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Resolve context variables
+            </summary>
+            <remarks>
+            Resolves context variables in ABML definitions against character and world state.
+            <br/>Used for dynamic behavior adaptation based on current game state.
+            </remarks>
+            <returns>Context variables resolved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate GOAP plan
+            </summary>
+            <remarks>
+            Generates a GOAP plan to achieve a goal from the current world state.
+            <br/>Uses A* search to find the optimal sequence of actions.
+            </remarks>
+            <returns>Plan generated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Validate existing GOAP plan
+            </summary>
+            <remarks>
+            Validates an existing GOAP plan against the current world state.
+            <br/>Returns whether the plan is still valid or needs replanning.
+            </remarks>
+            <returns>Plan validation completed</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest">
+            <summary>
+            Request to get a cached compiled behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest.BehaviorId">
+            <summary>
+            Unique identifier for the cached behavior
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest">
+            <summary>
+            Request to invalidate a cached behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest.BehaviorId">
+            <summary>
+            Unique identifier for the cached behavior to invalidate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest">
+            <summary>
+            Request to compile an ABML behavior definition into executable behavior trees
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.AbmlContent">
+            <summary>
+            Raw ABML YAML content to compile
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorName">
+            <summary>
+            Optional human-readable name for the behavior.
+            <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorCategory">
+            <summary>
+            Category for organizing behaviors (e.g., profession, cultural, situational).
+            <br/>Used for filtering and grouping in bundles.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BundleId">
+            <summary>
+            Optional bundle identifier for grouping related behaviors.
+            <br/>When specified, the compiled behavior will be added to a bundle with this ID.
+            <br/>Clients can then download entire bundles for efficient bulk loading.
+            <br/>If the bundle doesn't exist, it will be created.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.CharacterContext">
+            <summary>
+            Character context for context variable resolution during compilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.CompilationOptions">
+            <summary>
+            Options controlling the compilation process
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest">
+            <summary>
+            Request to compile multiple stackable behavior sets with priority-based merging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.BehaviorSets">
+            <summary>
+            Array of behavior sets to compile together
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CharacterContext">
+            <summary>
+            Character context for context variable resolution during compilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CompilationOptions">
+            <summary>
+            Options controlling the compilation process
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest">
+            <summary>
+            Request to validate ABML YAML content against schema and semantic rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.AbmlContent">
+            <summary>
+            Raw ABML YAML content to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.StrictMode">
+            <summary>
+            Enable strict validation mode with enhanced checking
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextRequest">
+            <summary>
+            Request to resolve context variable expressions against character and world state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.ContextExpression">
+            <summary>
+            Context variable expression to resolve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.CharacterContext">
+            <summary>
+            Character context providing values for variable resolution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse">
+            <summary>
+            Response containing the results of an ABML behavior compilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Success">
+            <summary>
+            Whether compilation was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorId">
+            <summary>
+            Unique identifier for the compiled behavior (content-addressable hash)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorName">
+            <summary>
+            Human-readable name of the behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.CompiledBehavior">
+            <summary>
+            The compiled behavior data including behavior tree and metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.CompilationTimeMs">
+            <summary>
+            Time taken to compile the behavior in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.AssetId">
+            <summary>
+            Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BundleId">
+            <summary>
+            Bundle ID if the behavior was added to a bundle. Null if not bundled.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.IsUpdate">
+            <summary>
+            True if this replaced an existing behavior with the same content hash
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Warnings">
+            <summary>
+            Non-fatal warnings during compilation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse">
+            <summary>
+            Response containing the results of ABML validation including errors and warnings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.IsValid">
+            <summary>
+            Whether the ABML definition is valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.ValidationErrors">
+            <summary>
+            List of validation errors if invalid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SemanticWarnings">
+            <summary>
+            Semantic warnings that don't prevent compilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SchemaVersion">
+            <summary>
+            ABML schema version used for validation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse">
+            <summary>
+            Response containing a previously compiled behavior retrieved from cache
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.BehaviorId">
+            <summary>
+            Unique identifier for the cached behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CompiledBehavior">
+            <summary>
+            The compiled behavior data retrieved from cache
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheTimestamp">
+            <summary>
+            When the behavior was cached
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheHit">
+            <summary>
+            Whether this was a cache hit or miss
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextResponse">
+            <summary>
+            Response containing the resolved value of a context variable expression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedValue">
+            <summary>
+            The resolved value of the context expression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedType">
+            <summary>
+            Type of the resolved value
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ContextVariablesUsed">
+            <summary>
+            List of context variables referenced in the expression
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition">
+            <summary>
+            Definition of a behavior set with priority for stackable behavior merging
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Id">
+            <summary>
+            Unique identifier for the behavior set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Priority">
+            <summary>
+            Priority level for merging (higher priority overrides lower)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Category">
+            <summary>
+            Category of the behavior set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.AbmlContent">
+            <summary>
+            Raw ABML YAML content for this behavior set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Metadata">
+            <summary>
+            Additional metadata for the behavior set
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CharacterContext">
+            <summary>
+            Context information about a character for behavior resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.NpcId">
+            <summary>
+            Unique identifier for the NPC
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Culture">
+            <summary>
+            Cultural background identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Profession">
+            <summary>
+            Character profession identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Stats">
+            <summary>
+            Character statistics and attributes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Skills">
+            <summary>
+            Character skill levels
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Location">
+            <summary>
+            Current location information for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Relationships">
+            <summary>
+            Relationship values with other characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.WorldState">
+            <summary>
+            Relevant world state information
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorTreeData">
+            <summary>
+            Compiled behavior tree data with bytecode or download reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Bytecode">
+            <summary>
+            Base64-encoded compiled bytecode for the behavior tree
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.BytecodeSize">
+            <summary>
+            Size of the bytecode in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.DownloadUrl">
+            <summary>
+            URL to download the compiled behavior asset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ContextSchemaData">
+            <summary>
+            Schema defining required context variables for behavior execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ContextSchemaData.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompiledBehavior">
+            <summary>
+            Compiled behavior containing behavior tree, context schema, and GOAP integration data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.BehaviorTree">
+            <summary>
+            Compiled behavior tree data with bytecode or download reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ContextSchema">
+            <summary>
+            Schema defining required context variables for execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ServiceDependencies">
+            <summary>
+            List of required services for this behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.GoapGoals">
+            <summary>
+            GOAP goals extracted from the behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ExecutionMetadata">
+            <summary>
+            Metadata for behavior execution including performance hints and resource requirements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.Location">
+            <summary>
+            Character location information including current position, region, and 3D coordinates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Current">
+            <summary>
+            Current location name or identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Region">
+            <summary>
+            Region or zone the character is in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Coordinates">
+            <summary>
+            3D spatial coordinates of the character's position in the game world
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.Coordinates">
+            <summary>
+            3D spatial coordinates representing a position in the game world
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.X">
+            <summary>
+            X coordinate position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Y">
+            <summary>
+            Y coordinate position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Z">
+            <summary>
+            Z coordinate position
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ExecutionMetadata">
+            <summary>
+            Metadata about behavior execution requirements including timing, resources, and interrupt conditions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.EstimatedDuration">
+            <summary>
+            Estimated execution time in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.ResourceRequirements">
+            <summary>
+            Resource requirements for behavior execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.InterruptConditions">
+            <summary>
+            Conditions that can interrupt behavior execution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapGoal">
+            <summary>
+            Goal definition for GOAP planning with conditions and priority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Name">
+            <summary>
+            Name of the goal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Description">
+            <summary>
+            Human-readable description of the goal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Conditions">
+            <summary>
+            World state conditions that satisfy this goal (literal conditions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Priority">
+            <summary>
+            Priority of this goal relative to others
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Preconditions">
+            <summary>
+            World state conditions required to pursue this goal
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanRequest">
+            <summary>
+            Request to generate a GOAP plan to achieve a goal from current world state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.AgentId">
+            <summary>
+            Unique identifier for the agent requesting the plan
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Goal">
+            <summary>
+            The goal to achieve through planning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.WorldState">
+            <summary>
+            Current world state as key-value pairs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.BehaviorId">
+            <summary>
+            ID of compiled behavior containing GOAP actions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Options">
+            <summary>
+            Options controlling the planning process
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResponse">
+            <summary>
+            Response containing the generated GOAP plan or failure information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
+            <summary>
+            Whether planning was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Plan">
+            <summary>
+            The generated plan if successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.PlanningTimeMs">
+            <summary>
+            Time spent planning in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.NodesExpanded">
+            <summary>
+            Number of nodes expanded during A* search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.FailureReason">
+            <summary>
+            Reason for planning failure if unsuccessful
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResult">
+            <summary>
+            Result of GOAP planning containing the ordered sequence of actions to achieve a goal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.GoalId">
+            <summary>
+            ID of the goal this plan achieves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Actions">
+            <summary>
+            Ordered sequence of actions to execute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.TotalCost">
+            <summary>
+            Total cost of all actions in the plan
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.PlannedActionResponse">
+            <summary>
+            Single action within a GOAP plan with position and cost information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.ActionId">
+            <summary>
+            ID of the action (flow name)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Index">
+            <summary>
+            Position in the plan sequence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Cost">
+            <summary>
+            Cost of this action
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest">
+            <summary>
+            Request to validate an existing GOAP plan against current world state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Plan">
+            <summary>
+            The plan to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.CurrentActionIndex">
+            <summary>
+            Index of the action currently being executed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.WorldState">
+            <summary>
+            Current world state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.ActiveGoals">
+            <summary>
+            All active goals for priority checking
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse">
+            <summary>
+            Response indicating whether a GOAP plan is still valid and suggested next action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.IsValid">
+            <summary>
+            Whether the plan is still valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Reason">
+            <summary>
+            Reason for the validation result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.SuggestedAction">
+            <summary>
+            Suggested action based on validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.InvalidatedAtIndex">
+            <summary>
+            Index where plan became invalid (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Message">
+            <summary>
+            Additional details about the validation result. Null when no additional context is needed.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions">
+            <summary>
+            Options controlling the GOAP planning process including depth and timeout limits
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxDepth">
+            <summary>
+            Maximum plan depth (number of actions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxNodes">
+            <summary>
+            Maximum nodes to expand during search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.TimeoutMs">
+            <summary>
+            Planning timeout in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CompilationOptions">
+            <summary>
+            Options controlling the ABML compilation process including optimizations and caching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.EnableOptimizations">
+            <summary>
+            Enable behavior tree optimizations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CacheCompiledResult">
+            <summary>
+            Cache the compiled behavior for reuse
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.StrictValidation">
+            <summary>
+            Enable strict validation mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CulturalAdaptations">
+            <summary>
+            Apply cultural adaptations during compilation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.GoapIntegration">
+            <summary>
+            Generate GOAP goals from behaviors
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ValidationError">
+            <summary>
+            Detailed validation error with type, location, and message information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Type">
+            <summary>
+            Type of validation error
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.LineNumber">
+            <summary>
+            Line number where the error occurred (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.ColumnNumber">
+            <summary>
+            Column number where the error occurred (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.YamlPath">
+            <summary>
+            YAML path to the problematic element
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse">
+            <summary>
+            Error response for ABML operations with detailed error information and context
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ErrorCode">
+            <summary>
+            Specific error code for programmatic handling
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Details">
+            <summary>
+            Detailed error information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ValidationErrors">
+            <summary>
+            Validation errors encountered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.YamlLine">
+            <summary>
+            Line number in YAML where error occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Context">
+            <summary>
+            Additional context about the error
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Timestamp">
+            <summary>
+            When the error occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
+            <summary>
+            Unique identifier for the failed request
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
             <summary>
@@ -16949,1070 +18331,6 @@
         <member name="P:BeyondImmersion.BannouService.Auth.Providers.AuthUrl">
             <summary>
             URL to initiate authentication with this provider
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
-            <summary>
-            Client interface for the Behavior service.
-            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile ABML behavior definition
-            </summary>
-            <remarks>
-            Compiles a YAML-based ABML behavior definition into executable behavior trees.
-            <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
-            </remarks>
-            <returns>ABML behavior compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile stackable behavior sets
-            </summary>
-            <remarks>
-            Compiles multiple ABML behavior sets with priority-based merging.
-            <br/>Handles cultural adaptations, profession specializations, and context resolution.
-            </remarks>
-            <returns>Behavior stack compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Validate ABML definition
-            </summary>
-            <remarks>
-            Validates ABML YAML against schema and checks for semantic correctness.
-            <br/>Includes context variable validation and service dependency checking.
-            </remarks>
-            <returns>Validation completed</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GetCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get cached compiled behavior
-            </summary>
-            <remarks>
-            Retrieves a previously compiled behavior from the cache.
-            <br/>Used for performance optimization in high-frequency behavior execution.
-            </remarks>
-            <returns>Cached behavior retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.InvalidateCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Invalidate cached behavior
-            </summary>
-            <remarks>
-            Removes a behavior from the cache, forcing recompilation on next access.
-            <br/>Used when behavior definitions are updated.
-            </remarks>
-            <returns>Cache invalidated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Resolve context variables
-            </summary>
-            <remarks>
-            Resolves context variables in ABML definitions against character and world state.
-            <br/>Used for dynamic behavior adaptation based on current game state.
-            </remarks>
-            <returns>Context variables resolved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Generate GOAP plan
-            </summary>
-            <remarks>
-            Generates a GOAP plan to achieve a goal from the current world state.
-            <br/>Uses A* search to find the optimal sequence of actions.
-            </remarks>
-            <returns>Plan generated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Validate existing GOAP plan
-            </summary>
-            <remarks>
-            Validates an existing GOAP plan against the current world state.
-            <br/>Returns whether the plan is still valid or needs replanning.
-            </remarks>
-            <returns>Plan validation completed</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorClient">
-            <summary>
-            Client implementation for the Behavior service.
-            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._serviceName">
-            <summary>
-            Service name used for app-id resolution. Extracted from class name.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Implements IServiceClient.ServiceName.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Behavior.BehaviorClient})">
-            <summary>
-            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Behavior.BehaviorClient"/> class.
-            </summary>
-            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
-            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
-            <param name="logger">Optional logger for diagnostic output.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.JsonSerializerSettings">
-            <summary>
-            Gets the JSON serializer settings used for request and response serialization.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._customHeaders">
-            <summary>
-            Storage for custom headers to be applied to the next request.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Behavior.BehaviorClient._authorizationHeader">
-            <summary>
-            Authorization header value for the next request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.SetHeader(System.String,System.String)">
-            <summary>
-            Sets a custom header for the next service request.
-            Headers are applied once and then cleared.
-            </summary>
-            <param name="name">Header name (e.g., "X-Custom-Header")</param>
-            <param name="value">Header value</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.WithAuthorization(System.String)">
-            <summary>
-            Sets the Authorization header for the next request.
-            Automatically prefixes with "Bearer " if not already present.
-            Returns this instance for method chaining.
-            </summary>
-            <param name="token">JWT token or authorization value</param>
-            <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearAuthorization">
-            <summary>
-            Clears the Authorization header.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ClearHeaders">
-            <summary>
-            Clears all custom headers and authorization for a fresh request.
-            Called automatically after each request.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
-            <summary>
-            Applies stored headers to a request message.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile ABML behavior definition
-            </summary>
-            <remarks>
-            Compiles a YAML-based ABML behavior definition into executable behavior trees.
-            <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
-            </remarks>
-            <returns>ABML behavior compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile stackable behavior sets
-            </summary>
-            <remarks>
-            Compiles multiple ABML behavior sets with priority-based merging.
-            <br/>Handles cultural adaptations, profession specializations, and context resolution.
-            </remarks>
-            <returns>Behavior stack compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Validate ABML definition
-            </summary>
-            <remarks>
-            Validates ABML YAML against schema and checks for semantic correctness.
-            <br/>Includes context variable validation and service dependency checking.
-            </remarks>
-            <returns>Validation completed</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GetCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Get cached compiled behavior
-            </summary>
-            <remarks>
-            Retrieves a previously compiled behavior from the cache.
-            <br/>Used for performance optimization in high-frequency behavior execution.
-            </remarks>
-            <returns>Cached behavior retrieved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.InvalidateCachedBehaviorAsync(BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Invalidate cached behavior
-            </summary>
-            <remarks>
-            Removes a behavior from the cache, forcing recompilation on next access.
-            <br/>Used when behavior definitions are updated.
-            </remarks>
-            <returns>Cache invalidated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Resolve context variables
-            </summary>
-            <remarks>
-            Resolves context variables in ABML definitions against character and world state.
-            <br/>Used for dynamic behavior adaptation based on current game state.
-            </remarks>
-            <returns>Context variables resolved successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Generate GOAP plan
-            </summary>
-            <remarks>
-            Generates a GOAP plan to achieve a goal from the current world state.
-            <br/>Uses A* search to find the optimal sequence of actions.
-            </remarks>
-            <returns>Plan generated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Validate existing GOAP plan
-            </summary>
-            <remarks>
-            Validates an existing GOAP plan against the current world state.
-            <br/>Returns whether the plan is still valid or needs replanning.
-            </remarks>
-            <returns>Plan validation completed</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1">
-            <summary>
-            Represents the result of deserializing an HTTP response into an object.
-            </summary>
-            <typeparam name="T">The type of the deserialized response object.</typeparam>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.#ctor(`0,System.String)">
-            <summary>
-            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1"/> struct.
-            </summary>
-            <param name="responseObject">The deserialized response object.</param>
-            <param name="responseText">The raw response text.</param>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.Object">
-            <summary>
-            Gets the deserialized response object.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ObjectResponseResult`1.Text">
-            <summary>
-            Gets the raw response text.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorClient.ReadResponseAsString">
-            <summary>
-            Gets or sets a value indicating whether to read the response as a string before deserialization.
-            When true, the response is read as text first; when false, it's streamed directly.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
-            <summary>
-            Reads and deserializes an HTTP response into the specified type.
-            </summary>
-            <typeparam name="T">The type to deserialize the response into.</typeparam>
-            <param name="response">The HTTP response message to read.</param>
-            <param name="headers">The response headers.</param>
-            <param name="cancellationToken">A cancellation token.</param>
-            <returns>The deserialized response object and raw text.</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest">
-            <summary>
-            Request to get a cached compiled behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest.BehaviorId">
-            <summary>
-            Unique identifier for the cached behavior
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest">
-            <summary>
-            Request to invalidate a cached behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.InvalidateCacheRequest.BehaviorId">
-            <summary>
-            Unique identifier for the cached behavior to invalidate
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest">
-            <summary>
-            Request to compile an ABML behavior definition into executable behavior trees
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.AbmlContent">
-            <summary>
-            Raw ABML YAML content to compile
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorName">
-            <summary>
-            Optional human-readable name for the behavior.
-            <br/>If not provided, extracted from ABML metadata.id or generated from content hash.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BehaviorCategory">
-            <summary>
-            Category for organizing behaviors (e.g., profession, cultural, situational).
-            <br/>Used for filtering and grouping in bundles.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.BundleId">
-            <summary>
-            Optional bundle identifier for grouping related behaviors.
-            <br/>When specified, the compiled behavior will be added to a bundle with this ID.
-            <br/>Clients can then download entire bundles for efficient bulk loading.
-            <br/>If the bundle doesn't exist, it will be created.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.CharacterContext">
-            <summary>
-            Character context for context variable resolution during compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorRequest.CompilationOptions">
-            <summary>
-            Options controlling the compilation process
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest">
-            <summary>
-            Request to compile multiple stackable behavior sets with priority-based merging
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.BehaviorSets">
-            <summary>
-            Array of behavior sets to compile together
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CharacterContext">
-            <summary>
-            Character context for context variable resolution during compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CompilationOptions">
-            <summary>
-            Options controlling the compilation process
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest">
-            <summary>
-            Request to validate ABML YAML content against schema and semantic rules
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.AbmlContent">
-            <summary>
-            Raw ABML YAML content to validate
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.StrictMode">
-            <summary>
-            Enable strict validation mode with enhanced checking
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextRequest">
-            <summary>
-            Request to resolve context variable expressions against character and world state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.ContextExpression">
-            <summary>
-            Context variable expression to resolve
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.CharacterContext">
-            <summary>
-            Character context providing values for variable resolution
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse">
-            <summary>
-            Response containing the results of an ABML behavior compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Success">
-            <summary>
-            Whether compilation was successful
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorId">
-            <summary>
-            Unique identifier for the compiled behavior (content-addressable hash)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorName">
-            <summary>
-            Human-readable name of the behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.CompiledBehavior">
-            <summary>
-            The compiled behavior data including behavior tree and metadata
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.CompilationTimeMs">
-            <summary>
-            Time taken to compile the behavior in milliseconds
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.AssetId">
-            <summary>
-            Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BundleId">
-            <summary>
-            Bundle ID if the behavior was added to a bundle. Null if not bundled.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.IsUpdate">
-            <summary>
-            True if this replaced an existing behavior with the same content hash
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Warnings">
-            <summary>
-            Non-fatal warnings during compilation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse">
-            <summary>
-            Response containing the results of ABML validation including errors and warnings
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.IsValid">
-            <summary>
-            Whether the ABML definition is valid
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.ValidationErrors">
-            <summary>
-            List of validation errors if invalid
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SemanticWarnings">
-            <summary>
-            Semantic warnings that don't prevent compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlResponse.SchemaVersion">
-            <summary>
-            ABML schema version used for validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse">
-            <summary>
-            Response containing a previously compiled behavior retrieved from cache
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.BehaviorId">
-            <summary>
-            Unique identifier for the cached behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CompiledBehavior">
-            <summary>
-            The compiled behavior data retrieved from cache
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheTimestamp">
-            <summary>
-            When the behavior was cached
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheHit">
-            <summary>
-            Whether this was a cache hit or miss
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextResponse">
-            <summary>
-            Response containing the resolved value of a context variable expression
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedValue">
-            <summary>
-            The resolved value of the context expression
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedType">
-            <summary>
-            Type of the resolved value
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ContextVariablesUsed">
-            <summary>
-            List of context variables referenced in the expression
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition">
-            <summary>
-            Definition of a behavior set with priority for stackable behavior merging
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Id">
-            <summary>
-            Unique identifier for the behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Priority">
-            <summary>
-            Priority level for merging (higher priority overrides lower)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Category">
-            <summary>
-            Category of the behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.AbmlContent">
-            <summary>
-            Raw ABML YAML content for this behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Metadata">
-            <summary>
-            Additional metadata for the behavior set
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CharacterContext">
-            <summary>
-            Context information about a character for behavior resolution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.NpcId">
-            <summary>
-            Unique identifier for the NPC
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Culture">
-            <summary>
-            Cultural background identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Profession">
-            <summary>
-            Character profession identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Stats">
-            <summary>
-            Character statistics and attributes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Skills">
-            <summary>
-            Character skill levels
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Location">
-            <summary>
-            Current location information for the character
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.Relationships">
-            <summary>
-            Relationship values with other characters
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CharacterContext.WorldState">
-            <summary>
-            Relevant world state information
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorTreeData">
-            <summary>
-            Compiled behavior tree data with bytecode or download reference
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.Bytecode">
-            <summary>
-            Base64-encoded compiled bytecode for the behavior tree
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.BytecodeSize">
-            <summary>
-            Size of the bytecode in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorTreeData.DownloadUrl">
-            <summary>
-            URL to download the compiled behavior asset
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ContextSchemaData">
-            <summary>
-            Schema defining required context variables for behavior execution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ContextSchemaData.AdditionalProperties">
-            <summary>
-            Gets or sets additional properties not defined in the schema.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CompiledBehavior">
-            <summary>
-            Compiled behavior containing behavior tree, context schema, and GOAP integration data
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.BehaviorTree">
-            <summary>
-            Compiled behavior tree data with bytecode or download reference
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ContextSchema">
-            <summary>
-            Schema defining required context variables for execution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ServiceDependencies">
-            <summary>
-            List of required services for this behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.GoapGoals">
-            <summary>
-            GOAP goals extracted from the behavior
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompiledBehavior.ExecutionMetadata">
-            <summary>
-            Metadata for behavior execution including performance hints and resource requirements
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.Location">
-            <summary>
-            Character location information including current position, region, and 3D coordinates
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Current">
-            <summary>
-            Current location name or identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Region">
-            <summary>
-            Region or zone the character is in
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Location.Coordinates">
-            <summary>
-            3D spatial coordinates of the character's position in the game world
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.Coordinates">
-            <summary>
-            3D spatial coordinates representing a position in the game world
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.X">
-            <summary>
-            X coordinate position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Y">
-            <summary>
-            Y coordinate position
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.Coordinates.Z">
-            <summary>
-            Z coordinate position
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ExecutionMetadata">
-            <summary>
-            Metadata about behavior execution requirements including timing, resources, and interrupt conditions
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.EstimatedDuration">
-            <summary>
-            Estimated execution time in seconds
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.ResourceRequirements">
-            <summary>
-            Resource requirements for behavior execution
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ExecutionMetadata.InterruptConditions">
-            <summary>
-            Conditions that can interrupt behavior execution
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GoapGoal">
-            <summary>
-            Goal definition for GOAP planning with conditions and priority
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Name">
-            <summary>
-            Name of the goal
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Description">
-            <summary>
-            Human-readable description of the goal
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Conditions">
-            <summary>
-            World state conditions that satisfy this goal (literal conditions)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Priority">
-            <summary>
-            Priority of this goal relative to others
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapGoal.Preconditions">
-            <summary>
-            World state conditions required to pursue this goal
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanRequest">
-            <summary>
-            Request to generate a GOAP plan to achieve a goal from current world state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.AgentId">
-            <summary>
-            Unique identifier for the agent requesting the plan
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Goal">
-            <summary>
-            The goal to achieve through planning
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.WorldState">
-            <summary>
-            Current world state as key-value pairs
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.BehaviorId">
-            <summary>
-            ID of compiled behavior containing GOAP actions
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanRequest.Options">
-            <summary>
-            Options controlling the planning process
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResponse">
-            <summary>
-            Response containing the generated GOAP plan or failure information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
-            <summary>
-            Whether planning was successful
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Plan">
-            <summary>
-            The generated plan if successful
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.PlanningTimeMs">
-            <summary>
-            Time spent planning in milliseconds
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.NodesExpanded">
-            <summary>
-            Number of nodes expanded during A* search
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.FailureReason">
-            <summary>
-            Reason for planning failure if unsuccessful
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResult">
-            <summary>
-            Result of GOAP planning containing the ordered sequence of actions to achieve a goal
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.GoalId">
-            <summary>
-            ID of the goal this plan achieves
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.Actions">
-            <summary>
-            Ordered sequence of actions to execute
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResult.TotalCost">
-            <summary>
-            Total cost of all actions in the plan
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.PlannedActionResponse">
-            <summary>
-            Single action within a GOAP plan with position and cost information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.ActionId">
-            <summary>
-            ID of the action (flow name)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Index">
-            <summary>
-            Position in the plan sequence
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.PlannedActionResponse.Cost">
-            <summary>
-            Cost of this action
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest">
-            <summary>
-            Request to validate an existing GOAP plan against current world state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.Plan">
-            <summary>
-            The plan to validate
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.CurrentActionIndex">
-            <summary>
-            Index of the action currently being executed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.WorldState">
-            <summary>
-            Current world state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanRequest.ActiveGoals">
-            <summary>
-            All active goals for priority checking
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse">
-            <summary>
-            Response indicating whether a GOAP plan is still valid and suggested next action
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.IsValid">
-            <summary>
-            Whether the plan is still valid
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Reason">
-            <summary>
-            Reason for the validation result
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.SuggestedAction">
-            <summary>
-            Suggested action based on validation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.InvalidatedAtIndex">
-            <summary>
-            Index where plan became invalid (if applicable)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidateGoapPlanResponse.Message">
-            <summary>
-            Additional details about the validation result. Null when no additional context is needed.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions">
-            <summary>
-            Options controlling the GOAP planning process including depth and timeout limits
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxDepth">
-            <summary>
-            Maximum plan depth (number of actions)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.MaxNodes">
-            <summary>
-            Maximum nodes to expand during search
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanningOptions.TimeoutMs">
-            <summary>
-            Planning timeout in milliseconds
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.CompilationOptions">
-            <summary>
-            Options controlling the ABML compilation process including optimizations and caching
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.EnableOptimizations">
-            <summary>
-            Enable behavior tree optimizations
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CacheCompiledResult">
-            <summary>
-            Cache the compiled behavior for reuse
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.StrictValidation">
-            <summary>
-            Enable strict validation mode
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.CulturalAdaptations">
-            <summary>
-            Apply cultural adaptations during compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompilationOptions.GoapIntegration">
-            <summary>
-            Generate GOAP goals from behaviors
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ValidationError">
-            <summary>
-            Detailed validation error with type, location, and message information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Type">
-            <summary>
-            Type of validation error
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.Message">
-            <summary>
-            Human-readable error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.LineNumber">
-            <summary>
-            Line number where the error occurred (if applicable)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.ColumnNumber">
-            <summary>
-            Column number where the error occurred (if applicable)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.YamlPath">
-            <summary>
-            YAML path to the problematic element
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse">
-            <summary>
-            Error response for ABML operations with detailed error information and context
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error">
-            <summary>
-            Error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ErrorCode">
-            <summary>
-            Specific error code for programmatic handling
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Details">
-            <summary>
-            Detailed error information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ValidationErrors">
-            <summary>
-            Validation errors encountered
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.YamlLine">
-            <summary>
-            Line number in YAML where error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Context">
-            <summary>
-            Additional context about the error
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Timestamp">
-            <summary>
-            When the error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
-            <summary>
-            Unique identifier for the failed request
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.ICharacterClient">

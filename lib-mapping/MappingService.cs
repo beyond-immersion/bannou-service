@@ -2540,8 +2540,8 @@ public partial class MappingService : IMappingService
                 .GetAsync(authorityKey, cancellationToken);
 
             var isValidAuthority = authority != null &&
-                                   authority.AuthorityToken == evt.AuthorityToken &&
-                                   authority.ExpiresAt >= DateTimeOffset.UtcNow;
+                                    authority.AuthorityToken == evt.AuthorityToken &&
+                                    authority.ExpiresAt >= DateTimeOffset.UtcNow;
 
             if (!isValidAuthority)
             {
