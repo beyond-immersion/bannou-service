@@ -48,12 +48,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_WithValidYaml_ReturnsDialogueFile()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Hello in English"
-            es: "Hola en Español"
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_basic"));
 
         // Act
         var result = await _loader.LoadAsync("test");
@@ -73,11 +68,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         var nestedDir = Path.Combine(_tempDir, "dialogue", "merchant");
         Directory.CreateDirectory(nestedDir);
 
-        var content = """
-            localizations:
-            en: "Welcome to my shop!"
-            """;
-        File.WriteAllText(Path.Combine(nestedDir, "greet.yaml"), content);
+        File.WriteAllText(Path.Combine(nestedDir, "greet.yaml"), DialogueTestFixtures.Load("dialogue_nested"));
 
         // Act
         var result = await _loader.LoadAsync("dialogue/merchant/greet");
@@ -106,18 +97,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_ParsesOverrides()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Default text"
-            overrides:
-            - condition: "${player.reputation > 50}"
-                text: "VIP greeting!"
-                priority: 10
-            - condition: "${time.hour >= 20}"
-                text: "We're closing soon!"
-                priority: 5
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_with_overrides"));
 
         // Act
         var result = await _loader.LoadAsync("test");
@@ -137,17 +117,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_ParsesLocaleRestrictedOverrides()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "English default"
-            es: "Spanish default"
-            overrides:
-            - condition: "${always_true}"
-                text: "Spanish only override"
-                priority: 10
-                locale: es
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_locale_restricted"));
 
         // Act
         var result = await _loader.LoadAsync("test");
@@ -166,11 +136,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_CachesResult()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Original text"
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Act - Load twice
         var result1 = await _loader.LoadAsync("test");
@@ -184,21 +150,13 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task ReloadAsync_InvalidatesCache()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Original text"
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Load initial
         var result1 = await _loader.LoadAsync("test");
 
         // Update file
-        var updatedContent = """
-            localizations:
-            en: "Updated text"
-            """;
-        CreateFile("test.yaml", updatedContent);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_updated"));
 
         // Act - Reload
         var result2 = await _loader.ReloadAsync("test");
@@ -213,12 +171,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task ClearCache_InvalidatesAllCachedFiles()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Test"
-            """;
-        CreateFile("test1.yaml", content);
-        CreateFile("test2.yaml", content);
+        CreateFile("test1.yaml", DialogueTestFixtures.Load("dialogue_original"));
+        CreateFile("test2.yaml", DialogueTestFixtures.Load("dialogue_original"));
 
         // Load both
         await _loader.LoadAsync("test1");
@@ -243,14 +197,8 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         Directory.CreateDirectory(lowPriorityDir);
         Directory.CreateDirectory(highPriorityDir);
 
-        File.WriteAllText(Path.Combine(lowPriorityDir, "test.yaml"), """
-            localizations:
-            en: "Low priority"
-            """);
-        File.WriteAllText(Path.Combine(highPriorityDir, "test.yaml"), """
-            localizations:
-            en: "High priority"
-            """);
+        File.WriteAllText(Path.Combine(lowPriorityDir, "test.yaml"), DialogueTestFixtures.Load("dialogue_low_priority"));
+        File.WriteAllText(Path.Combine(highPriorityDir, "test.yaml"), DialogueTestFixtures.Load("dialogue_high_priority"));
 
         var loader = new ExternalDialogueLoader();
         loader.RegisterDirectory(lowPriorityDir, priority: 0);
@@ -290,11 +238,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task LoadAsync_FindsYmlExtension()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "Found with .yml"
-            """;
-        CreateFile("test.yml", content);
+        CreateFile("test.yml", DialogueTestFixtures.Load("dialogue_yml_extension"));
 
         // Act
         var result = await _loader.LoadAsync("test");
@@ -308,7 +252,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public void Exists_ReturnsTrueForExistingFile()
     {
         // Arrange
-        CreateFile("exists.yaml", "localizations:\n  en: test");
+        CreateFile("exists.yaml", DialogueTestFixtures.Load("dialogue_exists"));
 
         // Act & Assert
         Assert.True(_loader.Exists("exists"));
@@ -323,12 +267,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task GetLocalizationWithFallback_ReturnsCorrectLocale()
     {
         // Arrange
-        var content = """
-            localizations:
-            en: "English text"
-            es: "Spanish text"
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_en_es"));
 
         var result = await _loader.LoadAsync("test");
         Assert.NotNull(result);
@@ -347,11 +286,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
     public async Task GetLocalizationWithFallback_ReturnsNullWhenNotFound()
     {
         // Arrange
-        var content = """
-            localizations:
-            de: "German only"
-            """;
-        CreateFile("test.yaml", content);
+        CreateFile("test.yaml", DialogueTestFixtures.Load("dialogue_de_only"));
 
         var result = await _loader.LoadAsync("test");
         Assert.NotNull(result);

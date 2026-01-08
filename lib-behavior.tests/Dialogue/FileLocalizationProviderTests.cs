@@ -46,14 +46,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void YamlFileLocalizationSource_LoadsStringTable()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", """
-            ui:
-            menu:
-                start: "Start Game"
-                quit: "Quit Game"
-            dialogue:
-            greeting: "Hello!"
-            """);
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_en_full"));
 
         var source = new YamlFileLocalizationSource(
             "test",
@@ -77,15 +70,9 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void YamlFileLocalizationSource_LoadsMultipleLocales()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", """
-            greeting: "Hello!"
-            """);
-        CreateLocalizationFile("strings.es.yaml", """
-            greeting: "¡Hola!"
-            """);
-        CreateLocalizationFile("strings.ja.yaml", """
-            greeting: "こんにちは！"
-            """);
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_en_simple"));
+        CreateLocalizationFile("strings.es.yaml", DialogueTestFixtures.Load("strings_es_simple"));
+        CreateLocalizationFile("strings.ja.yaml", DialogueTestFixtures.Load("strings_ja_simple"));
 
         var source = new YamlFileLocalizationSource(
             "test",
@@ -109,8 +96,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void YamlFileLocalizationSource_ReportsSupportedLocales()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "key: value");
-        CreateLocalizationFile("strings.fr.yaml", "key: value");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_single_key"));
+        CreateLocalizationFile("strings.fr.yaml", DialogueTestFixtures.Load("strings_single_key"));
 
         var source = new YamlFileLocalizationSource(
             "test",
@@ -134,7 +121,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void GetText_ReturnsNullForMissingKey()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "existing: value");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_existing"));
         RegisterSource();
 
         // Act
@@ -148,7 +135,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void GetText_ReturnsNullForMissingLocale()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "key: value");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_single_key"));
         RegisterSource();
 
         // Act
@@ -162,7 +149,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void GetTextWithFallback_UsesLocaleFallbackChain()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "greeting: English greeting");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_greeting"));
         RegisterSource();
 
         var context = LocalizationContext.ForLocale("en-US"); // Falls back to "en"
@@ -181,7 +168,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void GetTextWithFallback_UsesDefaultLocale()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "greeting: Default English");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_greeting_default"));
         RegisterSource();
 
         var context = new LocalizationContext
@@ -204,7 +191,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void GetTextWithFallback_ReturnsNullWhenNothingFound()
     {
         // Arrange
-        CreateLocalizationFile("strings.de.yaml", "greeting: German");
+        CreateLocalizationFile("strings.de.yaml", DialogueTestFixtures.Load("strings_greeting_de"));
         RegisterSource();
 
         var context = new LocalizationContext
@@ -224,7 +211,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void HasKey_ReturnsTrueForExistingKey()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "existing: value");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_existing"));
         RegisterSource();
 
         // Act & Assert
@@ -245,8 +232,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
         Directory.CreateDirectory(lowDir);
         Directory.CreateDirectory(highDir);
 
-        File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), "key: Low priority");
-        File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), "key: High priority");
+        File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_low_priority"));
+        File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_high_priority"));
 
         var lowSource = new YamlFileLocalizationSource("low", lowDir, priority: 0);
         var highSource = new YamlFileLocalizationSource("high", highDir, priority: 10);
@@ -270,11 +257,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
         Directory.CreateDirectory(lowDir);
         Directory.CreateDirectory(highDir);
 
-        File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), """
-            key_a: Low A
-            key_b: Low B
-            """);
-        File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), "key_a: High A");
+        File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_ab_low"));
+        File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_a_high"));
 
         var lowSource = new YamlFileLocalizationSource("low", lowDir, priority: 0);
         var highSource = new YamlFileLocalizationSource("high", highDir, priority: 10);
@@ -343,14 +327,14 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public async Task ReloadAsync_RefreshesAllSources()
     {
         // Arrange
-        CreateLocalizationFile("strings.en.yaml", "key: Original");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_key_original"));
         RegisterSource();
 
         var original = _provider.GetText("key", "en");
         Assert.Equal("Original", original);
 
         // Update file
-        CreateLocalizationFile("strings.en.yaml", "key: Updated");
+        CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_key_updated"));
 
         // Act
         await _provider.ReloadAsync();
@@ -372,10 +356,10 @@ public sealed class FileLocalizationProviderTests : IDisposable
         Directory.CreateDirectory(dir1);
         Directory.CreateDirectory(dir2);
 
-        File.WriteAllText(Path.Combine(dir1, "strings.en.yaml"), "key: value");
-        File.WriteAllText(Path.Combine(dir1, "strings.fr.yaml"), "key: value");
-        File.WriteAllText(Path.Combine(dir2, "strings.de.yaml"), "key: value");
-        File.WriteAllText(Path.Combine(dir2, "strings.ja.yaml"), "key: value");
+        File.WriteAllText(Path.Combine(dir1, "strings.en.yaml"), DialogueTestFixtures.Load("strings_single_key"));
+        File.WriteAllText(Path.Combine(dir1, "strings.fr.yaml"), DialogueTestFixtures.Load("strings_single_key"));
+        File.WriteAllText(Path.Combine(dir2, "strings.de.yaml"), DialogueTestFixtures.Load("strings_single_key"));
+        File.WriteAllText(Path.Combine(dir2, "strings.ja.yaml"), DialogueTestFixtures.Load("strings_single_key"));
 
         var source1 = new YamlFileLocalizationSource("source1", dir1);
         var source2 = new YamlFileLocalizationSource("source2", dir2);
