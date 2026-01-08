@@ -155,7 +155,7 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
     {
         var sessionsToRemove = _sessions
             .Where(kv => kv.Value.State == CutsceneSessionState.Completed ||
-                         kv.Value.State == CutsceneSessionState.Aborted)
+                        kv.Value.State == CutsceneSessionState.Aborted)
             .Select(kv => kv.Key)
             .ToList();
 

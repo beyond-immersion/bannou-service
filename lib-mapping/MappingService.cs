@@ -2528,11 +2528,8 @@ public partial class MappingService : IMappingService
 
     private async Task PublishMapUpdatedEventAsync(ChannelRecord channel, Bounds? bounds, long version, DeltaType deltaType, MapPayload payload, string? sourceAppId, CancellationToken cancellationToken)
     {
-        // Note: EventAggregationWindowMs configuration is available for batching rapid updates.
-        // When > 0, events should be buffered and coalesced within the window before publishing.
-        // Current implementation publishes immediately; full aggregation requires a background service.
-        // Configuration value: _configuration.EventAggregationWindowMs (default: 100ms, 0 = disabled)
-
+        // MapUpdatedEvent publishes immediately - payload-level coalescing is complex.
+        // Event aggregation is implemented for MapObjectsChangedEvent which has discrete changes.
         var eventData = new MapUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2584,7 +2581,7 @@ public partial class MappingService : IMappingService
                         await PublishMapObjectsChangedEventDirectAsync(currentChannel, bufferedVersion, bufferedChanges, bufferedSourceAppId, ct);
                     }
                 },
-                channelId => EventAggregationBuffers.TryRemove(channelId, out _)));
+                cId => { EventAggregationBuffers.TryRemove(cId, out EventAggregationBuffer? _); }));
 
         buffer.AddChanges(changes, version, sourceAppId);
     }

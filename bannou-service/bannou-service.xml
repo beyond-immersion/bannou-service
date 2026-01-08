@@ -4952,6 +4952,512 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.SessionStateChangedEventArgs.Reason">
             <summary>Optional reason for the change.</summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IDialogueResolver">
+            <summary>
+            Resolves dialogue text through the three-step resolution pipeline:
+            1. Check external file for condition overrides
+            2. Check external file for localization
+            3. Fall back to inline default
+            </summary>
+            <remarks>
+            <para>
+            Per FOUNDATION TENETS (G2 decision), every dialogue must have an inline
+            default. External references are optional and provide localization and
+            conditional overrides.
+            </para>
+            <para>
+            Example ABML usage:
+            <code>
+            - speak:
+                character: "${npc.id}"
+                text: "Welcome to my shop!"           # Inline default (required)
+                external: dialogue/merchant/greet     # External reference (optional)
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IDialogueResolver.ResolveAsync(BeyondImmersion.BannouService.Behavior.DialogueReference,BeyondImmersion.BannouService.Behavior.LocalizationContext,BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext,System.Threading.CancellationToken)">
+            <summary>
+            Resolves dialogue text using the three-step resolution pipeline.
+            </summary>
+            <param name="reference">The dialogue reference containing inline and optional external.</param>
+            <param name="locale">The localization context.</param>
+            <param name="context">Expression context for evaluating condition overrides.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The resolved dialogue with source information.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IDialogueResolver.ResolveOptionsAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Behavior.DialogueOptionReference},BeyondImmersion.BannouService.Behavior.LocalizationContext,BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext,System.Threading.CancellationToken)">
+            <summary>
+            Resolves multiple dialogue options (for choice prompts).
+            </summary>
+            <param name="options">The dialogue options to resolve.</param>
+            <param name="locale">The localization context.</param>
+            <param name="context">Expression context for evaluating conditions.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The resolved options.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DialogueReference">
+            <summary>
+            Reference to dialogue text with inline default and optional external reference.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueReference.InlineText">
+            <summary>
+            The inline default text (required).
+            </summary>
+            <remarks>
+            Per G2 decision, inline text is REQUIRED for all dialogue.
+            This ensures documents are playable without external files.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueReference.ExternalRef">
+            <summary>
+            Optional external reference path (e.g., "dialogue/merchant/greet").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueReference.Speaker">
+            <summary>
+            Speaker identifier (character ID).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueReference.Emotion">
+            <summary>
+            Emotion or tone for the dialogue.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueReference.Metadata">
+            <summary>
+            Additional metadata for the dialogue.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.DialogueReference.Inline(System.String)">
+            <summary>
+            Creates a simple dialogue reference with just inline text.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.DialogueReference.WithExternal(System.String,System.String)">
+            <summary>
+            Creates a dialogue reference with inline text and external reference.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DialogueOptionReference">
+            <summary>
+            Reference to a dialogue option (for choice prompts).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.Value">
+            <summary>
+            The option value (returned when selected).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.InlineLabel">
+            <summary>
+            The inline default label text (required).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.InlineDescription">
+            <summary>
+            Optional inline description text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.ExternalRef">
+            <summary>
+            Optional external reference for the label.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.Condition">
+            <summary>
+            Condition for this option to be available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOptionReference.IsDefault">
+            <summary>
+            Whether this is the default option.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolvedDialogue">
+            <summary>
+            Resolved dialogue text with source information.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.Text">
+            <summary>
+            The final resolved text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.Speaker">
+            <summary>
+            The speaker identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.Emotion">
+            <summary>
+            The emotion or tone.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.Source">
+            <summary>
+            Where the text came from in the resolution chain.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.MatchedCondition">
+            <summary>
+            If an override was used, which condition matched.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.ResolvedLocale">
+            <summary>
+            The locale used for resolution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogue.Metadata">
+            <summary>
+            Additional metadata.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption">
+            <summary>
+            Resolved dialogue option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.Value">
+            <summary>
+            The option value (returned when selected).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.Label">
+            <summary>
+            The resolved label text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.Description">
+            <summary>
+            The resolved description text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.IsAvailable">
+            <summary>
+            Whether this option is available (condition passed).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.IsDefault">
+            <summary>
+            Whether this is the default option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ResolvedDialogueOption.Source">
+            <summary>
+            Where the label text came from.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DialogueSource">
+            <summary>
+            Source of the resolved dialogue text.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DialogueSource.Inline">
+            <summary>
+            Used the inline default text.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DialogueSource.Localization">
+            <summary>
+            Used localized text from external file.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DialogueSource.Override">
+            <summary>
+            Used conditional override from external file.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.LocalizationContext">
+            <summary>
+            Localization context for dialogue resolution.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationContext.Locale">
+            <summary>
+            The primary locale (e.g., "en-US", "ja-JP").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationContext.FallbackLocales">
+            <summary>
+            Fallback locales in order of preference.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationContext.DefaultLocale">
+            <summary>
+            The default locale to use when all else fails.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.LocalizationContext.ForLocale(System.String)">
+            <summary>
+            Creates a context for the specified locale with standard fallback chain.
+            </summary>
+            <param name="locale">The primary locale (e.g., "en-US").</param>
+            <returns>A localization context with fallback chain.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationContext.English">
+            <summary>
+            Creates a context for English with no fallbacks.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext">
+            <summary>
+            Expression context for evaluating dialogue conditions.
+            </summary>
+            <remarks>
+            This interface abstracts the expression evaluation so that
+            the dialogue resolver doesn't depend directly on ABML internals.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext.EvaluateCondition(System.String)">
+            <summary>
+            Evaluates a condition expression.
+            </summary>
+            <param name="condition">The condition expression (e.g., "${player.reputation > 50}").</param>
+            <returns>True if the condition is satisfied.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext.EvaluateTemplate(System.String)">
+            <summary>
+            Evaluates template variables in text.
+            </summary>
+            <param name="text">Text with template variables (e.g., "Hello {{ player.name }}").</param>
+            <returns>Text with variables substituted.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IDialogueExpressionContext.GetVariable(System.String)">
+            <summary>
+            Gets a variable value from the context.
+            </summary>
+            <param name="name">Variable name.</param>
+            <returns>The value, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext">
+            <summary>
+            Null implementation of expression context (always returns false/unchanged).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext.Instance">
+            <summary>
+            Singleton instance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext.EvaluateCondition(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext.EvaluateTemplate(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullDialogueExpressionContext.GetVariable(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader">
+             <summary>
+             Loads external dialogue files containing localizations and conditional overrides.
+             </summary>
+             <remarks>
+             <para>
+             External dialogue files are YAML documents with the following structure:
+             <code>
+             # dialogue/merchant/greet.yaml
+             localizations:
+               en: "Welcome to my shop!"
+               es: "¡Bienvenido a mi tienda!"
+               ja: "いらっしゃいませ！"
+            
+             overrides:
+               - condition: "${player.reputation > 50}"
+                 text: "Ah, my favorite customer!"
+                 priority: 10
+               - condition: "${time.hour >= 20}"
+                 text: "We're about to close, but come in!"
+                 priority: 5
+             </code>
+             </para>
+             <para>
+             Resolution order per G2 decision:
+             1. Check overrides (highest priority matching condition wins)
+             2. Check localizations (for current locale with fallback)
+             3. Fall back to inline default (from ABML document)
+             </para>
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.LoadAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads an external dialogue file by reference path.
+            </summary>
+            <param name="reference">The reference path (e.g., "dialogue/merchant/greet").</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded dialogue file, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.Exists(System.String)">
+            <summary>
+            Checks if a dialogue file exists.
+            </summary>
+            <param name="reference">The reference path.</param>
+            <returns>True if the file exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.RegisterDirectory(System.String,System.Int32)">
+            <summary>
+            Registers a base directory for dialogue files.
+            </summary>
+            <param name="directory">The directory path.</param>
+            <param name="priority">Priority (higher = searched first).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.ClearCache">
+            <summary>
+            Clears the file cache.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.ReloadAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reloads a specific file (invalidates cache).
+            </summary>
+            <param name="reference">The reference path.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader.RegisteredDirectories">
+            <summary>
+            Gets all registered directories.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DialogueDirectory">
+            <summary>
+            A registered dialogue directory.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueDirectory.Path">
+            <summary>
+            The directory path.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueDirectory.Priority">
+            <summary>
+            Search priority (higher = searched first).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile">
+            <summary>
+            An external dialogue file containing localizations and overrides.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.Reference">
+            <summary>
+            The reference path this file was loaded from.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.FilePath">
+            <summary>
+            The full file path on disk.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.Localizations">
+            <summary>
+            Localized text by locale code.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.Overrides">
+            <summary>
+            Conditional overrides ordered by priority (highest first).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.Metadata">
+            <summary>
+            Optional metadata for the dialogue.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.LastModified">
+            <summary>
+            When the file was last modified.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.GetLocalization(System.String)">
+            <summary>
+            Gets localized text for a locale.
+            </summary>
+            <param name="locale">The locale code.</param>
+            <returns>The localized text, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ExternalDialogueFile.GetLocalizationWithFallback(BeyondImmersion.BannouService.Behavior.LocalizationContext)">
+            <summary>
+            Gets localized text with fallback chain.
+            </summary>
+            <param name="context">The localization context.</param>
+            <returns>The localized text and locale found, or null.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DialogueOverride">
+            <summary>
+            A conditional override for dialogue text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOverride.Condition">
+            <summary>
+            The condition expression to evaluate.
+            </summary>
+            <remarks>
+            Conditions use ABML expression syntax (e.g., "${player.reputation > 50}").
+            The condition is evaluated against the current expression context.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOverride.Text">
+            <summary>
+            The override text to use when condition matches.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOverride.Priority">
+            <summary>
+            Priority for this override (higher wins when multiple match).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOverride.Locale">
+            <summary>
+            Optional locale restriction (only applies to this locale).
+            </summary>
+            <remarks>
+            If null, the override applies to all locales.
+            If set, the override only applies when the target locale matches.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.DialogueOverride.Metadata">
+            <summary>
+            Optional metadata for this override.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions">
+            <summary>
+            Options for loading external dialogue files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.BaseDirectories">
+            <summary>
+            Base directories to search for dialogue files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.FileExtensions">
+            <summary>
+            File extensions to search for (default: .yaml, .yml).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.EnableCaching">
+            <summary>
+            Whether to cache loaded files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.CacheExpiration">
+            <summary>
+            Cache expiration time.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.EnableFileWatching">
+            <summary>
+            Whether to watch for file changes and auto-reload.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ExternalDialogueLoaderOptions.LogFileLoads">
+            <summary>
+            Whether to log when files are loaded.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IInputWindowManager">
             <summary>
             Manages input windows for player/behavior input during cutscenes.
@@ -5398,6 +5904,174 @@
             </summary>
             <returns>Collection of registered action names.</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ILocalizationProvider">
+            <summary>
+            Provides language-specific text lookup for dialogue localization.
+            </summary>
+            <remarks>
+            <para>
+            The localization provider manages text strings across multiple locales.
+            It supports:
+            </para>
+            <list type="bullet">
+            <item>Multiple locale fallback chains (e.g., "en-US" → "en" → default)</item>
+            <item>Hot-reloading of localization files in development</item>
+            <item>Namespace-based key organization</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.GetText(System.String,System.String)">
+            <summary>
+            Gets localized text for a key and locale.
+            </summary>
+            <param name="key">The localization key (e.g., "dialogue/merchant/greet").</param>
+            <param name="locale">The target locale (e.g., "en-US").</param>
+            <returns>The localized text, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.GetTextWithFallback(System.String,BeyondImmersion.BannouService.Behavior.LocalizationContext)">
+            <summary>
+            Gets localized text using a fallback chain.
+            </summary>
+            <param name="key">The localization key.</param>
+            <param name="context">The localization context with fallback chain.</param>
+            <returns>The localized text and the locale it was found in, or null.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.HasKey(System.String,System.String)">
+            <summary>
+            Checks if a key exists for a locale.
+            </summary>
+            <param name="key">The localization key.</param>
+            <param name="locale">The target locale.</param>
+            <returns>True if the key exists for the locale.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.SupportedLocales">
+            <summary>
+            Gets all supported locales.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.DefaultLocale">
+            <summary>
+            Gets the default locale.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.ReloadAsync(System.Threading.CancellationToken)">
+            <summary>
+            Reloads localization data (for development hot-reload).
+            </summary>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationProvider.RegisterSource(BeyondImmersion.BannouService.Behavior.ILocalizationSource)">
+            <summary>
+            Registers a localization source.
+            </summary>
+            <param name="source">The source to register.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.LocalizedText">
+            <summary>
+            Localized text with metadata about where it was found.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizedText.Text">
+            <summary>
+            The localized text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizedText.FoundLocale">
+            <summary>
+            The locale where the text was found.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizedText.IsFallback">
+            <summary>
+            Whether a fallback was used.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizedText.SourceName">
+            <summary>
+            The source that provided the text.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ILocalizationSource">
+            <summary>
+            A source of localization data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILocalizationSource.Name">
+            <summary>
+            Unique name for this source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILocalizationSource.Priority">
+            <summary>
+            Priority for this source (higher = checked first).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationSource.GetText(System.String,System.String)">
+            <summary>
+            Gets localized text from this source.
+            </summary>
+            <param name="key">The localization key.</param>
+            <param name="locale">The target locale.</param>
+            <returns>The localized text, or null if not found.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ILocalizationSource.SupportedLocales">
+            <summary>
+            Gets all locales supported by this source.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ILocalizationSource.ReloadAsync(System.Threading.CancellationToken)">
+            <summary>
+            Reloads data from this source.
+            </summary>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IAggregateLocalizationProvider">
+            <summary>
+            Aggregate localization provider that delegates to multiple sources.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IAggregateLocalizationProvider.Sources">
+            <summary>
+            Gets all registered sources ordered by priority.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IAggregateLocalizationProvider.RemoveSource(System.String)">
+            <summary>
+            Removes a source by name.
+            </summary>
+            <param name="name">The source name.</param>
+            <returns>True if removed.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration">
+            <summary>
+            Configuration for the localization system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration.DefaultLocale">
+            <summary>
+            The default locale when no locale is specified.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration.EnableHotReload">
+            <summary>
+            Whether to enable hot-reload of localization files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration.HotReloadPatterns">
+            <summary>
+            File patterns to watch for hot-reload (glob patterns).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration.CacheDuration">
+            <summary>
+            Cache duration for localization lookups.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.LocalizationConfiguration.LogMissingKeys">
+            <summary>
+            Whether to log missing keys.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.ISyncPointManager">
             <summary>
             Manages synchronization points for multi-participant cutscenes.
@@ -5584,6 +6258,183 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs.Timeout">
             <summary>The timeout duration.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ITemporalManager">
+            <summary>
+            Manages temporal desync for multiplayer cutscenes.
+            </summary>
+            <remarks>
+            <para>
+            This interface defines the contract for THE DREAM's "three-version solution"
+            where participants experience time dilation during QTE sequences while
+            spectators see real-time playback.
+            </para>
+            <para>
+            Key concepts:
+            </para>
+            <list type="bullet">
+            <item><b>Time Budget</b>: Participants "earn" slow-mo time by fast-forwarding through setup</item>
+            <item><b>Time Dilation</b>: Applied during QTE sections to extend reaction windows</item>
+            <item><b>Spectator View</b>: Unaffected by time dilation (sees real-time)</item>
+            </list>
+            <para>
+            Implementation note: This is a game engine concern. The ABML/behavior system
+            marks time-gain and QTE sections; the game engine implements the actual
+            time dilation. This interface provides the integration point.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.AddTimeBudget(System.Guid,System.TimeSpan)">
+            <summary>
+            Adds time budget to a participant.
+            </summary>
+            <remarks>
+            Called when a participant fast-forwards through a time-gain section
+            (e.g., walking to the arena entrance). The "saved" time is added to
+            their slow-mo budget for later QTE sections.
+            </remarks>
+            <param name="participant">The participant entity ID.</param>
+            <param name="amount">Amount of time budget to add.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.SpendTimeBudget(System.Guid,System.TimeSpan)">
+            <summary>
+            Spends time budget for a participant.
+            </summary>
+            <remarks>
+            Called when a participant uses slow-mo during a QTE section.
+            The amount spent is deducted from their budget.
+            </remarks>
+            <param name="participant">The participant entity ID.</param>
+            <param name="amount">Amount of time budget to spend.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.GetTimeBudget(System.Guid)">
+            <summary>
+            Gets the current time budget for a participant.
+            </summary>
+            <param name="participant">The participant entity ID.</param>
+            <returns>The remaining time budget.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.GetTimeDilation(System.Guid)">
+            <summary>
+            Gets the current time dilation for an entity.
+            </summary>
+            <remarks>
+            <para>Time dilation values:</para>
+            <list type="bullet">
+            <item>1.0 = Normal time (no dilation)</item>
+            <item>0.1 = 10x slow-mo (participant has budget, in QTE section)</item>
+            <item>2.0 = 2x fast-forward (participant in time-gain section)</item>
+            </list>
+            <para>
+            Spectators always return 1.0 (real-time playback).
+            </para>
+            </remarks>
+            <param name="entity">The entity ID.</param>
+            <returns>Time dilation multiplier (1.0 = normal).</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.IsParticipant(System.Guid)">
+            <summary>
+            Checks if an entity is currently a participant in a temporal session.
+            </summary>
+            <param name="entity">The entity ID.</param>
+            <returns>True if the entity is a participant (can experience dilation).</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.RegisterParticipant(System.Guid,System.String)">
+            <summary>
+            Registers an entity as a participant in temporal desync.
+            </summary>
+            <param name="entity">The entity ID.</param>
+            <param name="sessionId">The cutscene session ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.UnregisterParticipant(System.Guid)">
+            <summary>
+            Unregisters an entity from temporal desync.
+            </summary>
+            <param name="entity">The entity ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.EnterTimeGainSection(System.Guid,System.TimeSpan)">
+            <summary>
+            Enters a time-gain section for a participant.
+            </summary>
+            <remarks>
+            During time-gain sections, participants fast-forward through content
+            (e.g., walking sequences) to "earn" slow-mo budget for later QTEs.
+            </remarks>
+            <param name="participant">The participant entity ID.</param>
+            <param name="maxGain">Maximum time that can be gained in this section.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.ExitTimeGainSection(System.Guid)">
+            <summary>
+            Exits a time-gain section for a participant.
+            </summary>
+            <param name="participant">The participant entity ID.</param>
+            <returns>The actual time gained.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.EnterQteSection(System.Guid,System.TimeSpan,System.Single)">
+            <summary>
+            Enters a QTE section where time budget can be spent.
+            </summary>
+            <param name="participant">The participant entity ID.</param>
+            <param name="realTimeWindow">The actual window duration without slow-mo.</param>
+            <param name="maxSlowMo">Maximum slow-mo multiplier (e.g., 0.1 for 10x).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ITemporalManager.ExitQteSection(System.Guid)">
+            <summary>
+            Exits a QTE section.
+            </summary>
+            <param name="participant">The participant entity ID.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.NullTemporalManager">
+            <summary>
+            Null implementation of temporal manager for when temporal desync is disabled.
+            </summary>
+            <remarks>
+            Use this implementation when:
+            <list type="bullet">
+            <item>Single-player mode (no temporal desync needed)</item>
+            <item>Game engine doesn't support temporal desync</item>
+            <item>Testing without temporal features</item>
+            </list>
+            All time dilations return 1.0 (normal time).
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.NullTemporalManager.Instance">
+            <summary>
+            Shared instance for convenience.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.AddTimeBudget(System.Guid,System.TimeSpan)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.SpendTimeBudget(System.Guid,System.TimeSpan)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.GetTimeBudget(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.GetTimeDilation(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.IsParticipant(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.RegisterParticipant(System.Guid,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.UnregisterParticipant(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.EnterTimeGainSection(System.Guid,System.TimeSpan)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.ExitTimeGainSection(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.EnterQteSection(System.Guid,System.TimeSpan,System.Single)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.NullTemporalManager.ExitQteSection(System.Guid)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
             <summary>

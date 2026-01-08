@@ -1,6 +1,6 @@
 # Mapping Plugin Fix Plan (Post-Review)
 
-**Status**: IN PROGRESS (11/14 core issues resolved, 3 incomplete)
+**Status**: IN PROGRESS (13/14 core issues resolved, 1 deferred)
 **Last Updated**: 2025-01-08
 **Reviewed By**: Claude Code
 
@@ -23,7 +23,7 @@ This includes: hard bugs, missing behavior, schema gaps, eventing behavior, inde
 |---|-------|--------|-------|
 | 1 | Authority Token Validation | ✅ COMPLETE | ValidateAuthorityAsync uses AuthorityRecord.ExpiresAt only |
 | 2 | Ingest Path (Actions + Broadcast) | ✅ COMPLETE | HandleIngestEventAsync handles create/update/delete and emits events |
-| 3 | PublishObjectChanges NonAuthorityHandling | ❌ INCOMPLETE | Returns Unauthorized without applying NonAuthorityHandlingMode |
+| 3 | PublishObjectChanges NonAuthorityHandling | ✅ COMPLETE | HandleNonAuthorityObjectChangesAsync mirrors PublishMapUpdate behavior |
 | 4 | accept_and_alert Event Publishing | ✅ COMPLETE | HandleNonAuthorityPublishAsync processes payload and publishes events |
 | 5 | Snapshot/Query Without Bounds | ✅ COMPLETE | RequestSnapshotAsync works without bounds via QueryObjectsInRegionAsync |
 | 6 | Index Cleanup on Update/Delete | ✅ COMPLETE | ProcessObjectChangeWithIndexCleanupAsync handles index maintenance |
@@ -34,55 +34,54 @@ This includes: hard bugs, missing behavior, schema gaps, eventing behavior, inde
 | 11 | Subscription Lifecycle | ✅ COMPLETE | SubscribeToIngestTopicAsync disposes prior subscription |
 | 12 | Takeover Policy | ✅ COMPLETE | AuthorityTakeoverMode (preserve_and_diff, reset, require_consume) |
 | 13 | Map Definition CRUD | ✅ COMPLETE | All 5 endpoints implemented with unit tests |
-| 14 | Event Aggregation Window | ❌ INCOMPLETE | Config exists but publishes immediately; planning doc says implement it |
+| 14 | Event Aggregation Window | ✅ COMPLETE | EventAggregationBuffer coalesces MapObjectsChangedEvent within window |
 
 ---
 
 ## Remaining Work
 
-### Issue #3: PublishObjectChanges NonAuthorityHandling (INCOMPLETE)
+### Issue #8: Large Payload Handling for Publishing (USER DEFERRED)
 
-**Current Behavior**: `PublishObjectChangesAsync` returns `Unauthorized` immediately when authority validation fails. It does not apply `NonAuthorityHandlingMode` like `PublishMapUpdateAsync` does.
-
-**Required Fix**: Mirror `PublishMapUpdateAsync` behavior:
-1. After authority validation fails, check `channel.NonAuthorityHandling`
-2. For `Reject_silent`: Return Unauthorized (current behavior)
-3. For `Reject_and_alert`: Return Unauthorized AND publish warning event
-4. For `Accept_and_alert`: Process changes AND publish warning event
-
-**File**: `lib-mapping/MappingService.cs:553-637`
-
-### Issue #8: Large Payload Handling for Publishing (INCOMPLETE)
+**Status**: User has deferred this issue - they don't recall specifically requesting large payload handling.
 
 **Current Behavior**: `PublishMapUpdateAsync` at line 494-505 REJECTS payloads exceeding `InlinePayloadMaxBytes` with an error message: "Use smaller payloads or chunking."
-
-The code has a comment: `// Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)`
 
 **Planning Doc Requirement**:
 > If payload exceeds InlinePayloadMaxBytes, store it via lib-asset and return payloadAssetRef.
 
 **What Works**: `RequestSnapshotAsync` correctly uploads large responses to lib-asset via `UploadLargePayloadToAssetAsync`.
 
-**Required Fix**: `PublishMapUpdateAsync` should upload to lib-asset instead of rejecting, mirroring the pattern used in `RequestSnapshotAsync`.
+**Required Fix (if pursued)**: `PublishMapUpdateAsync` should upload to lib-asset instead of rejecting, mirroring the pattern used in `RequestSnapshotAsync`.
 
 **File**: `lib-mapping/MappingService.cs:494-505`
 
-### Issue #14: Event Aggregation Window (INCOMPLETE)
+---
 
-**Current Behavior**: Events are published immediately. The comment at line 2422-2425 notes:
-> "EventAggregationWindowMs configuration is available for batching rapid updates. When > 0, events should be buffered and coalesced within the window before publishing. Current implementation publishes immediately; full aggregation requires a background service."
+## Recently Completed (2025-01-08)
 
-**Planning Doc Requirement**:
-> Implement EventAggregationWindowMs and per-kind TTLs for ephemeral kinds.
+### Issue #3: PublishObjectChanges NonAuthorityHandling
 
-Per-kind TTLs ARE implemented via `GetTtlSecondsForKind`. Event aggregation is NOT implemented.
+**Fix Applied**: Added `HandleNonAuthorityObjectChangesAsync` and `PublishUnauthorizedObjectChangesWarningAsync` methods that mirror the `PublishMapUpdateAsync` behavior for the three modes:
+- `Reject_silent`: Return Unauthorized
+- `Reject_and_alert`: Return Unauthorized AND publish warning event
+- `Accept_and_alert`: Process changes AND publish warning event
 
-**Required for Full Implementation**:
-- Background service to buffer events within `EventAggregationWindowMs` window
-- Coalesce multiple updates to same region/kind into single event
-- Timer-based flush when window expires
+Also added `Warning` property to `PublishObjectChangesResponse` schema.
 
-**File**: `lib-mapping/MappingService.cs:2420-2426`
+**Files Modified**:
+- `lib-mapping/MappingService.cs` - Added NonAuthorityHandling support
+- `schemas/mapping-api.yaml` - Added warning property to response
+
+### Issue #14: Event Aggregation Window
+
+**Fix Applied**: Implemented `EventAggregationBuffer` class with timer-based coalescing:
+- When `EventAggregationWindowMs > 0`, `MapObjectsChangedEvent` events are buffered per channel
+- Timer fires after the configured window, coalesces all pending changes, publishes single event
+- Thread-safe using locks and `ConcurrentDictionary`
+- Buffer auto-cleans after flush
+
+**Files Modified**:
+- `lib-mapping/MappingService.cs` - Added EventAggregationBuffer class and integration
 
 ---
 
@@ -135,9 +134,10 @@ Per-kind TTLs ARE implemented via `GetTtlSecondsForKind`. Event aggregation is N
    - **Implementation**: `HandleIngestEventAsync` processes actions via `MapIngestActionToObjectAction`, emits `MapUpdatedEvent` and `MapObjectsChangedEvent`
 
 ### Non-Authority Handling
-3) ❌ **INCOMPLETE** - PublishObjectChangesAsync ignores NonAuthorityHandlingMode.
+3) ✅ **COMPLETE** - PublishObjectChangesAsync ignores NonAuthorityHandlingMode.
    - Must mirror PublishMapUpdateAsync behavior.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `HandleNonAuthorityObjectChangesAsync` and `PublishUnauthorizedObjectChangesWarningAsync` added
 
 4) ✅ **COMPLETE** - accept_and_alert path writes data but does not publish events.
    - Consumers never receive updates for accepted non-authority publishes.
@@ -196,10 +196,10 @@ Per-kind TTLs ARE implemented via `GetTtlSecondsForKind`. Event aggregation is N
    - Files: schemas/mapping-api.yaml, lib-mapping/MappingService.cs
    - **Implementation**: `CreateDefinitionAsync`, `GetDefinitionAsync`, `ListDefinitionsAsync`, `UpdateDefinitionAsync`, `DeleteDefinitionAsync`
 
-14) ❌ **INCOMPLETE** - Event aggregation window and per-kind TTL behavior are not implemented.
+14) ✅ **COMPLETE** - Event aggregation window and per-kind TTL behavior are not implemented.
    - Config exists but is unused.
    - Files: schemas/mapping-configuration.yaml, lib-mapping/MappingService.cs
-   - **Partial Implementation**: Per-kind TTL IS implemented via `GetTtlSecondsForKind`. Event aggregation is NOT implemented (code has excuse comment about "requiring background service")
+   - **Implementation**: Per-kind TTL via `GetTtlSecondsForKind`. Event aggregation via `EventAggregationBuffer` class with timer-based coalescing for `MapObjectsChangedEvent`
 
 ---
 

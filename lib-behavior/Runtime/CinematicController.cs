@@ -79,7 +79,7 @@ public sealed class CinematicController : IDisposable
     /// Gets whether the cinematic is currently running.
     /// </summary>
     public bool IsRunning => _state == CinematicControllerState.Running ||
-                             _state == CinematicControllerState.WaitingForExtension;
+                            _state == CinematicControllerState.WaitingForExtension;
 
     /// <summary>
     /// Gets the underlying interpreter.

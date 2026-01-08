@@ -23430,6 +23430,11 @@
             Assigned version number
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Warning">
+            <summary>
+            Optional warning message
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
