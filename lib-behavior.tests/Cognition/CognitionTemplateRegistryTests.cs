@@ -188,18 +188,9 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void LoadFromDirectory_LoadsYamlFiles()
     {
         // Arrange
-        var yaml = """
-            id: test-template
-            description: Test template from YAML
-            stages:
-              filter:
-                handlers:
-                  - id: attention_filter
-                    handler: filter_attention
-                    parameters:
-                      attention_budget: 100
-            """;
-        File.WriteAllText(Path.Combine(_tempDir, "test.yaml"), yaml);
+        File.WriteAllText(
+            Path.Combine(_tempDir, "test.yaml"),
+            CognitionTestFixtures.Load("template_test"));
 
         // Act
         var count = _registry.LoadFromDirectory(_tempDir);
@@ -218,13 +209,9 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void LoadFromDirectory_LoadsYmlExtension()
     {
         // Arrange
-        var yaml = """
-            id: yml-template
-            stages:
-              filter:
-                handlers: []
-            """;
-        File.WriteAllText(Path.Combine(_tempDir, "test.yml"), yaml);
+        File.WriteAllText(
+            Path.Combine(_tempDir, "test.yml"),
+            CognitionTestFixtures.Load("template_yml_extension"));
 
         // Act
         var count = _registry.LoadFromDirectory(_tempDir);
@@ -241,14 +228,12 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
         var subDir = Path.Combine(_tempDir, "subdirectory");
         Directory.CreateDirectory(subDir);
 
-        File.WriteAllText(Path.Combine(_tempDir, "root.yaml"), """
-            id: root-template
-            stages: {}
-            """);
-        File.WriteAllText(Path.Combine(subDir, "nested.yaml"), """
-            id: nested-template
-            stages: {}
-            """);
+        File.WriteAllText(
+            Path.Combine(_tempDir, "root.yaml"),
+            CognitionTestFixtures.Load("template_root"));
+        File.WriteAllText(
+            Path.Combine(subDir, "nested.yaml"),
+            CognitionTestFixtures.Load("template_nested"));
 
         // Act
         var count = _registry.LoadFromDirectory(_tempDir, recursive: true);
@@ -266,14 +251,12 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
         var subDir = Path.Combine(_tempDir, "subdirectory");
         Directory.CreateDirectory(subDir);
 
-        File.WriteAllText(Path.Combine(_tempDir, "root.yaml"), """
-            id: root-template
-            stages: {}
-            """);
-        File.WriteAllText(Path.Combine(subDir, "nested.yaml"), """
-            id: nested-template
-            stages: {}
-            """);
+        File.WriteAllText(
+            Path.Combine(_tempDir, "root.yaml"),
+            CognitionTestFixtures.Load("template_root"));
+        File.WriteAllText(
+            Path.Combine(subDir, "nested.yaml"),
+            CognitionTestFixtures.Load("template_nested"));
 
         // Act
         var count = _registry.LoadFromDirectory(_tempDir, recursive: false);
@@ -288,13 +271,12 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void LoadFromDirectory_InvalidYaml_SkipsAndContinues()
     {
         // Arrange
-        File.WriteAllText(Path.Combine(_tempDir, "valid.yaml"), """
-            id: valid-template
-            stages: {}
-            """);
-        File.WriteAllText(Path.Combine(_tempDir, "invalid.yaml"), """
-            this is not valid yaml: [unclosed bracket
-            """);
+        File.WriteAllText(
+            Path.Combine(_tempDir, "valid.yaml"),
+            CognitionTestFixtures.Load("template_valid"));
+        File.WriteAllText(
+            Path.Combine(_tempDir, "invalid.yaml"),
+            "this is not valid yaml: [unclosed bracket");
 
         // Act
         var count = _registry.LoadFromDirectory(_tempDir);
@@ -318,23 +300,7 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void ParseYaml_ValidTemplate_ReturnsTemplate()
     {
         // Arrange
-        var yaml = """
-            id: parsed-template
-            description: Parsed from string
-            version: "2.0"
-            stages:
-              filter:
-                handlers:
-                  - id: handler1
-                    handler: filter_attention
-                    description: First handler
-                    parameters:
-                      max: 50
-              intention:
-                handlers:
-                  - id: handler2
-                    handler: trigger_goap_replan
-            """;
+        var yaml = CognitionTestFixtures.Load("template_parsed");
 
         // Act
         var template = _registry.ParseYaml(yaml);
@@ -357,15 +323,7 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void ParseYaml_MetadataFormat_ReturnsTemplate()
     {
         // Arrange - Alternative format with nested metadata
-        var yaml = """
-            metadata:
-              id: metadata-template
-              description: Uses metadata format
-              type: cognition
-            stages:
-              filter:
-                handlers: []
-            """;
+        var yaml = CognitionTestFixtures.Load("template_metadata");
 
         // Act
         var template = _registry.ParseYaml(yaml);
@@ -390,11 +348,7 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     public void ParseYaml_MissingId_ReturnsNull()
     {
         // Arrange
-        var yaml = """
-            stages:
-              filter:
-                handlers: []
-            """;
+        var yaml = CognitionTestFixtures.Load("template_no_id");
 
         // Act
         var template = _registry.ParseYaml(yaml);

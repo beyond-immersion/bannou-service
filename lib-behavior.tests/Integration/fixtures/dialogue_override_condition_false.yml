@@ -1,0 +1,6 @@
+overrides:
+  - condition: "never_true"
+    text: "Should not see this"
+    priority: 100
+localizations:
+  en: "Localized text"

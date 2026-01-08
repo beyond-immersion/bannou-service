@@ -65,6 +65,9 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register control gate registry - singleton for per-entity control tracking
         services.AddSingleton<IControlGateRegistry, ControlGateManager>();
 
+        // Register entity resolver for cutscene semantic name resolution
+        services.AddSingleton<IEntityResolver, EntityResolver>();
+
         // Register cognition pipeline handlers
         // These handle domain actions for the 5-stage cognition pipeline
         services.AddSingleton<IActionHandler, FilterAttentionHandler>();

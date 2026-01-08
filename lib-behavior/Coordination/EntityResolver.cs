@@ -125,7 +125,7 @@ public sealed class EntityResolver : IEntityResolver
         if (TryGetCaseInsensitive(bindings.Roles, bindingName, out var targetBinding))
         {
             return ContainsCaseInsensitive(bindings.Participants, targetBinding) ||
-                   ContainsCaseInsensitive(bindings.Props, targetBinding);
+                    ContainsCaseInsensitive(bindings.Props, targetBinding);
         }
 
         // Context bindings are always potentially resolvable

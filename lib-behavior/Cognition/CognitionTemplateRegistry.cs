@@ -3,9 +3,9 @@
 // Manages cognition pipeline templates from embedded resources and YAML files.
 // =============================================================================
 
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 

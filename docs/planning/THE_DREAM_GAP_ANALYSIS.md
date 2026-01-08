@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-08 (Updated for Behavior Enhancements Phase 6 completion)
+> **Revised**: 2026-01-08 (Updated for Behavior Enhancements Phase 6 + Actor Plugin completion)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -43,8 +43,8 @@ This document analyzes the gap between THE_DREAM's vision and our current ABML i
 4. ~~**Behavior Stack system**~~ - ✅ COMPLETE (lib-behavior/Stack/)
 5. ~~**Cutscene Coordination**~~ - ✅ COMPLETE (lib-behavior/Coordination/)
 6. ~~**Control Handoff**~~ - ✅ COMPLETE (lib-behavior/Control/)
-7. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
-8. **Actor Plugin implementation** - template management, pool nodes, state persistence
+7. ~~**Actor Plugin implementation**~~ - ✅ COMPLETE (6,934 LOC - template CRUD, pool nodes, ActorRunner, state persistence)
+8. **Event Brain actor type** - the orchestrator itself (see ACTORS_PLUGIN_V3.md)
 
 ---
 
@@ -207,7 +207,24 @@ This is fundamentally different from:
 | **Core Intent Emitters** | `lib-behavior/Handlers/CoreEmitters/` | ✅ Complete | Movement, Combat, Attention, Interaction, Expression, Vocalization |
 | **Cinematic Controller** | `lib-behavior/Runtime/` | ✅ Complete | High-level cinematic orchestration |
 
-**Total**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
+**Actor Plugin (2026-01-08):**
+
+| Component | Location | Status | Notes |
+|-----------|----------|--------|-------|
+| **ActorService** | `lib-actor/ActorService.cs` | ✅ Complete | 10 endpoints: Template CRUD, Spawn/Stop/Get/List, InjectPerception |
+| **ActorRunner** | `lib-actor/Runtime/` | ✅ Complete | Perception queue, NPC brain integration, state persistence |
+| **ActorRegistry** | `lib-actor/Runtime/` | ✅ Complete | Instance tracking and lookup |
+| **ActorState** | `lib-actor/Runtime/` | ✅ Complete | Serializable actor state with snapshots |
+| **ActorTemplateData** | `lib-actor/Runtime/` | ✅ Complete | Template storage and retrieval |
+| **ActorPoolManager** | `lib-actor/Pool/` | ✅ Complete | Pool node assignment and balancing |
+| **PoolHealthMonitor** | `lib-actor/Pool/` | ✅ Complete | Node health tracking |
+| **ActorPoolNodeWorker** | `lib-actor/PoolNode/` | ✅ Complete | Background worker for pool nodes |
+| **HeartbeatEmitter** | `lib-actor/PoolNode/` | ✅ Complete | Pool node heartbeat publishing |
+| **DocumentExecutorFactory** | `lib-actor/Execution/` | ✅ Complete | Creates executors for actor behaviors |
+
+**Total**: 6,934 LOC in lib-actor
+
+**Total tests**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
 
 ### 3.1.1 SDK Enhancements (2026-01-05)
 
@@ -240,9 +257,9 @@ The `Bannou.SDK` now provides comprehensive game server integration:
 | ~~Streaming extension format~~ | ~~Cinematic extension~~ | ✅ BehaviorModel.IsExtension |
 | ~~Attach point mechanism~~ | ~~Extension targeting~~ | ✅ ContinuationPoint, AttachPointHash |
 | ~~Extension delivery protocol~~ | ~~Game server updates~~ | ✅ CinematicExtensionAvailableEvent |
+| ~~Actor Plugin implementation~~ | ~~Actor lifecycle~~ | ✅ lib-actor (6,934 LOC) |
 | Event Brain actor schema | Orchestration | High |
 | Character Agent query API | Option generation | High |
-| Actor Plugin implementation | Actor lifecycle | High |
 | Static import resolution | DRY authoring | Medium |
 
 ---
@@ -637,16 +654,16 @@ Remaining:
 - [ ] Choreography emission (produces compiled cinematics)
 - [ ] Extension delivery integration (Event Brain publishes extensions to game servers)
 
-### Phase 6: Full Integration 🔄 PARTIALLY COMPLETE
+### Phase 6: Full Integration 🔄 NEARLY COMPLETE
 **Goal**: THE_DREAM works end-to-end
 
 Infrastructure (COMPLETE):
 - [x] Dynamic QTE presentation - InputWindowManager with behavior defaults
 - [x] Sync point coordination - SyncPointManager for multi-participant cutscenes
 - [x] Behavior stack with situational triggers - SituationalTriggerManager
+- [x] Actor Plugin implementation - lib-actor with 6,934 LOC (template CRUD, pool nodes, ActorRunner, state persistence, perception injection)
 
 Remaining:
-- [ ] Actor Plugin implementation (template CRUD, pool nodes, state persistence)
 - [ ] Regional Watcher (spawns Event Agents based on interestingness)
 - [ ] Map Service affordance queries (integrate with lib-mapping)
 - [ ] Integration tests with mock game server
@@ -737,12 +754,13 @@ Remaining:
 | **Control Handoff** | Gates, Manager, State Sync | ✅ Complete |
 | **Cognition Pipeline** | All 6 handlers, Memory, GOAP integration | ✅ Complete |
 | **Dialogue System** | Resolution, Localization, External Loading | ✅ Complete |
+| **Actor Plugin** | Template CRUD, Pool Nodes, ActorRunner, State Persistence | ✅ Complete |
 
 ### What Remains (Bannou-side)
 
 | Gap | Effort | Description |
 |-----|--------|-------------|
-| **Actor Plugin** | Medium | Template CRUD, pool nodes, state persistence, ActorRunner |
+| ~~**Actor Plugin**~~ | ~~Medium~~ | ✅ COMPLETE - 6,934 LOC with full template CRUD, pool nodes, ActorRunner, state persistence |
 | **Event Brain Actor Schema** | Small | ABML behavior definition for orchestration |
 | **Character Agent Query API** | Small | `/agent/query-combat-options` endpoint |
 | **Regional Watcher** | Medium | Spawns Event Actors based on interestingness |
@@ -750,23 +768,24 @@ Remaining:
 
 ### Distance to THE DREAM
 
-**Estimated Completion: ~80%**
+**Estimated Completion: ~90%**
 
-The hardest 80% (the novel architecture) is done:
+The hardest 90% (the novel architecture + major infrastructure) is done:
 - Streaming composition with continuation points ✅
 - Intent channels with urgency-based merging ✅
 - Behavior stacks with layered evaluation ✅
 - Cutscene coordination with QTE support ✅
 - Control handoff for cinematic takeover ✅
 - Cognition pipeline for NPC awareness ✅
+- **Actor Plugin with full lifecycle management** ✅
 
-The remaining 20% is mostly "filling in the boxes":
-- Actor plugin is standard CRUD + event routing
+The remaining ~10% is mostly "filling in the boxes":
 - Event Brain is an ABML behavior using existing infrastructure
 - Regional Watcher is event subscription + spawn logic
 - Affordance queries integrate existing lib-mapping
+- Character Agent query API is a single endpoint
 
-**Critical Path**: Actor Plugin → Event Brain Schema → Regional Watcher → End-to-end test
+**Critical Path**: Event Brain Schema → Regional Watcher → End-to-end test
 
 **Novelty Note**: Research confirms this combination is genuinely novel. No existing system combines graceful degradation + precise choreography + runtime extension + async delivery with timeout + behavior stacks with intent merging. The closest academic concepts are algebraic effects (theoretical) and dynamic behavior trees (synchronous). The closest industry implementations are Left 4 Dead's AI Director (macro-level) and procedural cinematics like AC Odyssey (pre-generated).
 

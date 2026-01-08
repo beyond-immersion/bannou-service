@@ -151,7 +151,12 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         {
             TargetEntity = _participants[0],
             WindowType = InputWindowType.Choice,
-            Options = new[] { "option_a", "option_b", "option_c" },
+            Options = new List<InputOption>
+            {
+                new() { Value = "option_a", Label = "Option A" },
+                new() { Value = "option_b", Label = "Option B" },
+                new() { Value = "option_c", Label = "Option C" }
+            },
             PromptText = "Choose wisely"
         };
 
@@ -165,7 +170,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
 
         // Assert
         Assert.True(result.Accepted);
-        Assert.Equal("option_b", result.Value);
+        Assert.Equal("option_b", result.AdjudicatedValue);
     }
 
     [Fact]
@@ -187,9 +192,13 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         {
             TargetEntity = _participants[0],
             WindowType = InputWindowType.Choice,
-            Options = new[] { "yes", "no" },
+            Options = new List<InputOption>
+            {
+                new() { Value = "yes", Label = "Yes", IsDefault = true },
+                new() { Value = "no", Label = "No" }
+            },
             DefaultValue = "yes",
-            DefaultSource = DefaultValueSource.Specified,
+            DefaultSource = DefaultValueSource.Cutscene,
             Timeout = TimeSpan.FromMilliseconds(50)
         };
 
@@ -202,22 +211,16 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         await Task.Delay(100);
 
         // Trigger a check by attempting another operation
-        try
-        {
-            var checkResult = session.InputWindows.GetWindow(window.WindowId);
-            if (checkResult != null && checkResult.State == InputWindowState.Completed)
-            {
-                // Window timed out and completed
-            }
-        }
-        catch
-        {
-            // Expected if window was cleaned up
-        }
+        var checkResult = session.InputWindows.GetWindow(window.WindowId);
 
-        // Assert - Either event fired with default or window is completed
-        // Note: InputWindowManager async timeout handling may vary
+        // Assert - Window should be complete or timed out
         Assert.NotNull(window);
+        // Window may be timed out with default value applied
+        if (checkResult != null && checkResult.IsCompleted)
+        {
+            // Window timed out successfully
+            Assert.True(checkResult.HasInput);
+        }
     }
 
     [Fact]
@@ -230,13 +233,21 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         {
             TargetEntity = _participants[0],
             WindowType = InputWindowType.Choice,
-            Options = new[] { "attack", "defend" }
+            Options = new List<InputOption>
+            {
+                new() { Value = "attack", Label = "Attack" },
+                new() { Value = "defend", Label = "Defend" }
+            }
         };
         var window2Options = new InputWindowOptions
         {
             TargetEntity = _participants[1],
             WindowType = InputWindowType.Choice,
-            Options = new[] { "support", "retreat" }
+            Options = new List<InputOption>
+            {
+                new() { Value = "support", Label = "Support" },
+                new() { Value = "retreat", Label = "Retreat" }
+            }
         };
 
         var window1 = await session.CreateInputWindowAsync(window1Options);
@@ -249,8 +260,8 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         // Assert - Both accepted independently
         Assert.True(result1.Accepted);
         Assert.True(result2.Accepted);
-        Assert.Equal("attack", result1.Value);
-        Assert.Equal("support", result2.Value);
+        Assert.Equal("attack", result1.AdjudicatedValue);
+        Assert.Equal("support", result2.AdjudicatedValue);
     }
 
     [Fact]
@@ -261,7 +272,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         var windowOptions = new InputWindowOptions
         {
             TargetEntity = _participants[0],
-            WindowType = InputWindowType.Qte,
+            WindowType = InputWindowType.QuickTimeEvent,
             PromptText = "Press Now!"
         };
 
@@ -472,30 +483,32 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
     }
 
     [Fact]
-    public void CutsceneCoordinator_SessionCleanup_RemovesCompleted()
+    public async Task CutsceneCoordinator_SessionCleanup_RemovesCompleted()
     {
         // Arrange
         var coordinator = new CutsceneCoordinator();
 
-        var session1 = coordinator.CreateSession(
+        var session1 = await coordinator.CreateSessionAsync(
+            "session1",
             "cleanup_cinematic",
             _participants.Take(2).ToList(),
             CutsceneSessionOptions.Multiplayer);
 
-        var session2 = coordinator.CreateSession(
+        var session2 = await coordinator.CreateSessionAsync(
+            "session2",
             "active_cinematic",
             _participants.Skip(1).ToList(),
             CutsceneSessionOptions.Multiplayer);
 
         // Complete session1
-        session1.CompleteAsync().GetAwaiter().GetResult();
+        await session1.CompleteAsync();
 
         // Act - Cleanup
         coordinator.CleanupCompletedSessions();
 
         // Assert
-        Assert.Null(coordinator.GetSession(session1.SessionId));
-        Assert.NotNull(coordinator.GetSession(session2.SessionId));
+        Assert.Null(coordinator.GetSession("session1"));
+        Assert.NotNull(coordinator.GetSession("session2"));
     }
 
     [Fact]
@@ -531,7 +544,11 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         {
             TargetEntity = _participants[0],
             WindowType = InputWindowType.Choice,
-            Options = new[] { "spare", "eliminate" }
+            Options = new List<InputOption>
+            {
+                new() { Value = "spare", Label = "Spare" },
+                new() { Value = "eliminate", Label = "Eliminate" }
+            }
         });
         await session.SubmitInputAsync(window.WindowId, _participants[0], "spare");
 
