@@ -50,6 +50,9 @@ public partial class MappingService : IMappingService
     // Track active ingest subscriptions per channel
     private static readonly ConcurrentDictionary<Guid, IAsyncDisposable> IngestSubscriptions = new();
 
+    // Event aggregation buffers per channel - used to coalesce rapid updates
+    private static readonly ConcurrentDictionary<Guid, EventAggregationBuffer> EventAggregationBuffers = new();
+
     private const string STATE_STORE = "mapping-statestore";
 
     // Key prefixes for state storage
@@ -559,9 +562,16 @@ public partial class MappingService : IMappingService
             // Validate authority
             var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
 
-            if (!isValid || channel == null)
+            if (!isValid && channel != null)
             {
-                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
+                // Authority invalid but channel exists - apply NonAuthorityHandlingMode
+                return await HandleNonAuthorityObjectChangesAsync(channel, body.Changes, warning, cancellationToken);
+            }
+
+            if (channel == null)
+            {
+                // Channel doesn't exist at all
+                return (StatusCodes.NotFound, new PublishObjectChangesResponse
                 {
                     Accepted = false,
                     AcceptedCount = 0,
@@ -570,60 +580,8 @@ public partial class MappingService : IMappingService
                 });
             }
 
-            var acceptedCount = 0;
-            var rejectedCount = 0;
-            var changes = new List<ObjectChangeEvent>();
-
-            foreach (var change in body.Changes)
-            {
-                try
-                {
-                    var processed = await ProcessObjectChangeAsync(channel.RegionId, channel.Kind, change, cancellationToken);
-                    if (processed)
-                    {
-                        acceptedCount++;
-                        changes.Add(new ObjectChangeEvent
-                        {
-                            ObjectId = change.ObjectId,
-                            Action = MapObjectActionToEventAction(change.Action),
-                            ObjectType = change.ObjectType,
-                            Position = change.Position != null ? new EventPosition3D { X = change.Position.X, Y = change.Position.Y, Z = change.Position.Z } : null,
-                            Bounds = change.Bounds != null ? new EventBounds
-                            {
-                                Min = new EventPosition3D { X = change.Bounds.Min.X, Y = change.Bounds.Min.Y, Z = change.Bounds.Min.Z },
-                                Max = new EventPosition3D { X = change.Bounds.Max.X, Y = change.Bounds.Max.Y, Z = change.Bounds.Max.Z }
-                            } : null,
-                            Data = change.Data
-                        });
-                    }
-                    else
-                    {
-                        rejectedCount++;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to process object change for {ObjectId}", change.ObjectId);
-                    rejectedCount++;
-                }
-            }
-
-            // Increment version
-            var version = await IncrementVersionAsync(channel.ChannelId, cancellationToken);
-
-            // Publish objects changed event with authority's app-id as source
-            if (changes.Count > 0)
-            {
-                await PublishMapObjectsChangedEventAsync(channel, version, changes, authorityAppId, cancellationToken);
-            }
-
-            return (StatusCodes.OK, new PublishObjectChangesResponse
-            {
-                Accepted = acceptedCount > 0,
-                AcceptedCount = acceptedCount,
-                RejectedCount = rejectedCount,
-                Version = version
-            });
+            // Authority is valid - process changes normally
+            return await ProcessAuthorizedObjectChangesAsync(channel, body.Changes, authorityAppId, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -634,6 +592,157 @@ public partial class MappingService : IMappingService
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    private async Task<(StatusCodes, PublishObjectChangesResponse?)> ProcessAuthorizedObjectChangesAsync(
+        ChannelRecord channel, ICollection<ObjectChange> changes, string? sourceAppId, CancellationToken cancellationToken)
+    {
+        var acceptedCount = 0;
+        var rejectedCount = 0;
+        var changeEvents = new List<ObjectChangeEvent>();
+
+        foreach (var change in changes)
+        {
+            try
+            {
+                var processed = await ProcessObjectChangeAsync(channel.RegionId, channel.Kind, change, cancellationToken);
+                if (processed)
+                {
+                    acceptedCount++;
+                    changeEvents.Add(new ObjectChangeEvent
+                    {
+                        ObjectId = change.ObjectId,
+                        Action = MapObjectActionToEventAction(change.Action),
+                        ObjectType = change.ObjectType,
+                        Position = change.Position != null ? new EventPosition3D { X = change.Position.X, Y = change.Position.Y, Z = change.Position.Z } : null,
+                        Bounds = change.Bounds != null ? new EventBounds
+                        {
+                            Min = new EventPosition3D { X = change.Bounds.Min.X, Y = change.Bounds.Min.Y, Z = change.Bounds.Min.Z },
+                            Max = new EventPosition3D { X = change.Bounds.Max.X, Y = change.Bounds.Max.Y, Z = change.Bounds.Max.Z }
+                        } : null,
+                        Data = change.Data
+                    });
+                }
+                else
+                {
+                    rejectedCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to process object change for {ObjectId}", change.ObjectId);
+                rejectedCount++;
+            }
+        }
+
+        // Increment version
+        var version = await IncrementVersionAsync(channel.ChannelId, cancellationToken);
+
+        // Publish objects changed event
+        if (changeEvents.Count > 0)
+        {
+            await PublishMapObjectsChangedEventAsync(channel, version, changeEvents, sourceAppId, cancellationToken);
+        }
+
+        return (StatusCodes.OK, new PublishObjectChangesResponse
+        {
+            Accepted = acceptedCount > 0,
+            AcceptedCount = acceptedCount,
+            RejectedCount = rejectedCount,
+            Version = version
+        });
+    }
+
+    private async Task<(StatusCodes, PublishObjectChangesResponse?)> HandleNonAuthorityObjectChangesAsync(
+        ChannelRecord channel, ICollection<ObjectChange> changes, string? warning, CancellationToken cancellationToken)
+    {
+        var mode = channel.NonAuthorityHandling;
+
+        switch (mode)
+        {
+            case NonAuthorityHandlingMode.Reject_silent:
+                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
+                {
+                    Accepted = false,
+                    AcceptedCount = 0,
+                    RejectedCount = changes.Count,
+                    Version = 0,
+                    Warning = warning
+                });
+
+            case NonAuthorityHandlingMode.Reject_and_alert:
+                await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: false, cancellationToken);
+                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
+                {
+                    Accepted = false,
+                    AcceptedCount = 0,
+                    RejectedCount = changes.Count,
+                    Version = 0,
+                    Warning = warning
+                });
+
+            case NonAuthorityHandlingMode.Accept_and_alert:
+                await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: true, cancellationToken);
+                // Process the changes anyway - use null for sourceAppId since this is unauthorized
+                var (status, response) = await ProcessAuthorizedObjectChangesAsync(channel, changes, null, cancellationToken);
+                if (response != null)
+                {
+                    response.Warning = "Published despite lacking authority (accept_and_alert mode)";
+                }
+                return (status, response);
+
+            default:
+                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
+                {
+                    Accepted = false,
+                    AcceptedCount = 0,
+                    RejectedCount = changes.Count,
+                    Version = 0,
+                    Warning = warning
+                });
+        }
+    }
+
+    private async Task PublishUnauthorizedObjectChangesWarningAsync(
+        ChannelRecord channel, ICollection<ObjectChange> changes, bool accepted, CancellationToken cancellationToken)
+    {
+        var alertConfig = channel.AlertConfig;
+        if (alertConfig != null && !alertConfig.Enabled)
+        {
+            return;
+        }
+
+        // Summarize the object types being changed
+        var objectTypes = changes
+            .Select(c => c.ObjectType)
+            .Where(t => t != null)
+            .Distinct()
+            .Take(5);
+        var payloadSummary = alertConfig?.IncludePayloadSummary == true
+            ? $"{changes.Count} objects ({string.Join(", ", objectTypes)})"
+            : null;
+
+        var warning = new MapUnauthorizedPublishWarning
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            ChannelId = channel.ChannelId,
+            RegionId = channel.RegionId,
+            Kind = channel.Kind.ToString(),
+            AttemptedPublisher = "unknown",
+            CurrentAuthority = null,
+            HandlingMode = channel.NonAuthorityHandling switch
+            {
+                NonAuthorityHandlingMode.Reject_and_alert => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert,
+                NonAuthorityHandlingMode.Accept_and_alert => MapUnauthorizedPublishWarningHandlingMode.Accept_and_alert,
+                NonAuthorityHandlingMode.Reject_silent => MapUnauthorizedPublishWarningHandlingMode.Reject_silent,
+                _ => MapUnauthorizedPublishWarningHandlingMode.Reject_and_alert
+            },
+            PublishAccepted = accepted,
+            PayloadSummary = payloadSummary
+        };
+
+        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized_publish";
+        await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
@@ -2448,6 +2557,40 @@ public partial class MappingService : IMappingService
 
     private async Task PublishMapObjectsChangedEventAsync(ChannelRecord channel, long version, List<ObjectChangeEvent> changes, string? sourceAppId, CancellationToken cancellationToken)
     {
+        var windowMs = _configuration.EventAggregationWindowMs;
+
+        if (windowMs <= 0)
+        {
+            // Aggregation disabled - publish immediately
+            await PublishMapObjectsChangedEventDirectAsync(channel, version, changes, sourceAppId, cancellationToken);
+            return;
+        }
+
+        // Aggregation enabled - buffer the changes
+        var buffer = EventAggregationBuffers.GetOrAdd(
+            channel.ChannelId,
+            _ => new EventAggregationBuffer(
+                channel.ChannelId,
+                windowMs,
+                async (channelId, bufferedChanges, bufferedVersion, bufferedSourceAppId, ct) =>
+                {
+                    // Retrieve channel record for publishing (may have been updated)
+                    var channelKey = BuildChannelKey(channelId);
+                    var currentChannel = await _stateStoreFactory.GetStore<ChannelRecord>(STATE_STORE)
+                        .GetAsync(channelKey, ct);
+
+                    if (currentChannel != null)
+                    {
+                        await PublishMapObjectsChangedEventDirectAsync(currentChannel, bufferedVersion, bufferedChanges, bufferedSourceAppId, ct);
+                    }
+                },
+                channelId => EventAggregationBuffers.TryRemove(channelId, out _)));
+
+        buffer.AddChanges(changes, version, sourceAppId);
+    }
+
+    private async Task PublishMapObjectsChangedEventDirectAsync(ChannelRecord channel, long version, List<ObjectChangeEvent> changes, string? sourceAppId, CancellationToken cancellationToken)
+    {
         var eventData = new MapObjectsChangedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2846,6 +2989,86 @@ public partial class MappingService : IMappingService
     internal class LongWrapper
     {
         public long Value { get; set; }
+    }
+
+    /// <summary>
+    /// Buffer for aggregating events within a time window before publishing.
+    /// Uses a timer to flush events after the configured window expires.
+    /// </summary>
+    internal sealed class EventAggregationBuffer : IDisposable
+    {
+        private readonly object _lock = new();
+        private readonly Timer _flushTimer;
+        private readonly Guid _channelId;
+        private readonly Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> _flushCallback;
+        private readonly Action<Guid> _removeCallback;
+        private List<ObjectChangeEvent> _pendingChanges = new();
+        private long _latestVersion;
+        private string? _sourceAppId;
+        private bool _disposed;
+
+        public EventAggregationBuffer(
+            Guid channelId,
+            int windowMs,
+            Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> flushCallback,
+            Action<Guid> removeCallback)
+        {
+            _channelId = channelId;
+            _flushCallback = flushCallback;
+            _removeCallback = removeCallback;
+            _flushTimer = new Timer(OnTimerElapsed, null, windowMs, Timeout.Infinite);
+        }
+
+        public void AddChanges(List<ObjectChangeEvent> changes, long version, string? sourceAppId)
+        {
+            lock (_lock)
+            {
+                if (_disposed) return;
+                _pendingChanges.AddRange(changes);
+                _latestVersion = version;
+                _sourceAppId = sourceAppId;
+            }
+        }
+
+        private void OnTimerElapsed(object? state)
+        {
+            List<ObjectChangeEvent> changesToPublish;
+            long version;
+            string? sourceAppId;
+
+            lock (_lock)
+            {
+                if (_disposed || _pendingChanges.Count == 0) return;
+                changesToPublish = _pendingChanges;
+                _pendingChanges = new List<ObjectChangeEvent>();
+                version = _latestVersion;
+                sourceAppId = _sourceAppId;
+            }
+
+            // Fire and forget - we're in a timer callback, can't await
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _flushCallback(_channelId, changesToPublish, version, sourceAppId, CancellationToken.None);
+                }
+                finally
+                {
+                    _removeCallback(_channelId);
+                    Dispose();
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            lock (_lock)
+            {
+                if (_disposed) return;
+                _disposed = true;
+                _flushTimer.Dispose();
+            }
+        }
     }
 
     #endregion

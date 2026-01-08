@@ -1560,6 +1560,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "format": "int64",
                     "description": "Assigned version number"
+                },
+                "warning": {
+                    "type": "string",
+                    "description": "Optional warning message",
+                    "nullable": true
                 }
             }
         }

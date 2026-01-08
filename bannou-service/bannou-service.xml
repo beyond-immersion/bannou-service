@@ -4603,6 +4603,677 @@
             Gets all entities currently under player control.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICutsceneCoordinator">
+            <summary>
+            Coordinates multi-participant cutscenes across distributed clients.
+            </summary>
+            <remarks>
+            <para>
+            The coordinator manages the server-side master timeline for cutscenes
+            involving multiple players/entities across different clients.
+            </para>
+            <para>
+            Key responsibilities:
+            </para>
+            <list type="bullet">
+            <item>Track sync point progress across all participants</item>
+            <item>Create and manage input windows for QTEs and choices</item>
+            <item>Handle disconnection gracefully with defaults</item>
+            <item>Distribute cutscene state updates to all participants</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneCoordinator.CreateSessionAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.Guid},BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions,System.Threading.CancellationToken)">
+            <summary>
+            Creates a new cutscene session.
+            </summary>
+            <param name="sessionId">Unique session identifier.</param>
+            <param name="cinematicId">The cinematic being executed.</param>
+            <param name="participants">Entity IDs of all participants.</param>
+            <param name="options">Session options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The created session.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneCoordinator.GetSession(System.String)">
+            <summary>
+            Gets an existing session by ID.
+            </summary>
+            <param name="sessionId">The session ID.</param>
+            <returns>The session, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneCoordinator.EndSessionAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Ends a session and cleans up resources.
+            </summary>
+            <param name="sessionId">The session ID.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneCoordinator.ActiveSessions">
+            <summary>
+            Gets all active sessions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ICutsceneSession">
+            <summary>
+            Represents an active cutscene session with multiple participants.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.SessionId">
+            <summary>
+            Unique session identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.CinematicId">
+            <summary>
+            The cinematic being executed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.Participants">
+            <summary>
+            All participant entity IDs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.State">
+            <summary>
+            Current session state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.StartedAt">
+            <summary>
+            When the session started.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.Options">
+            <summary>
+            Session options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.SyncPoints">
+            <summary>
+            Gets the sync point manager for this session.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ICutsceneSession.InputWindows">
+            <summary>
+            Gets the input window manager for this session.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneSession.ReportSyncReachedAsync(System.String,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Reports that an entity has reached a sync point.
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+            <param name="entityId">The entity that reached the point.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>True when all participants have reached the sync point.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneSession.CreateInputWindowAsync(BeyondImmersion.BannouService.Behavior.InputWindowOptions,System.Threading.CancellationToken)">
+            <summary>
+            Creates an input window for a participant.
+            </summary>
+            <param name="options">Input window options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The created input window.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneSession.SubmitInputAsync(System.String,System.Guid,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Submits input for an active input window.
+            </summary>
+            <param name="windowId">The input window ID.</param>
+            <param name="entityId">The entity submitting.</param>
+            <param name="input">The input value.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The input result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneSession.CompleteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Marks the session as completed.
+            </summary>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ICutsceneSession.AbortAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Aborts the session.
+            </summary>
+            <param name="reason">Abort reason.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.ICutsceneSession.SyncPointReached">
+            <summary>
+            Event raised when all participants reach a sync point.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.ICutsceneSession.InputWindowResult">
+            <summary>
+            Event raised when an input window result is available.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.ICutsceneSession.StateChanged">
+            <summary>
+            Event raised when the session state changes.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CutsceneSessionState">
+            <summary>
+            State of a cutscene session.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.Initializing">
+            <summary>Session is being set up.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.Active">
+            <summary>Session is active and running.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.WaitingForSync">
+            <summary>Waiting for participants at a sync point.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.WaitingForInput">
+            <summary>Waiting for input from a participant.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.Completed">
+            <summary>Session completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.CutsceneSessionState.Aborted">
+            <summary>Session was aborted.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions">
+            <summary>
+            Options for creating a cutscene session.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.DefaultSyncTimeout">
+            <summary>
+            Default timeout for sync points (null = wait indefinitely in single-player).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.DefaultInputTimeout">
+            <summary>
+            Default timeout for input windows.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.UseBehaviorDefaults">
+            <summary>
+            Whether to use behavior defaults when input times out.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.Skippable">
+            <summary>
+            Whether the cutscene is skippable.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.SkipDestinations">
+            <summary>
+            Skip destinations per branch (for when cutscene is skipped).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.Default">
+            <summary>
+            Creates default options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.SinglePlayer">
+            <summary>
+            Creates options for single-player (no timeouts).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.CutsceneSessionOptions.Multiplayer">
+            <summary>
+            Creates options for multiplayer.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SkippableMode">
+            <summary>
+            Skippable mode for cutscenes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SkippableMode.NotSkippable">
+            <summary>Cannot be skipped.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SkippableMode.Easily">
+            <summary>Can be skipped easily.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SkippableMode.WithPenalty">
+            <summary>Can be skipped with penalty.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SkipDestination">
+            <summary>
+            Skip destination for an entity.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SkipDestination.EntityStates">
+            <summary>
+            Entity positions after skip.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointResult">
+            <summary>
+            Result of a sync point check.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointResult.AllReached">
+            <summary>
+            Whether all participants have reached the sync point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointResult.ReachedParticipants">
+            <summary>
+            Participants who have reached the sync point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointResult.PendingParticipants">
+            <summary>
+            Participants still pending.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointResult.TimedOut">
+            <summary>
+            Whether the sync point timed out.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputSubmitResult">
+            <summary>
+            Result of submitting input.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputSubmitResult.Accepted">
+            <summary>
+            Whether the input was accepted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputSubmitResult.AdjudicatedValue">
+            <summary>
+            The final adjudicated value (may differ from submitted).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputSubmitResult.RejectionReason">
+            <summary>
+            Reason if input was rejected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputSubmitResult.WasDefault">
+            <summary>
+            Whether this was the timeout default.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.InputSubmitResult.Accept(System.Object)">
+            <summary>
+            Creates an accepted result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.InputSubmitResult.Reject(System.String)">
+            <summary>
+            Creates a rejected result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.InputSubmitResult.Timeout(System.Object)">
+            <summary>
+            Creates a timeout default result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointReachedEventArgs">
+            <summary>
+            Event args for sync point reached.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointReachedEventArgs.SyncPointId">
+            <summary>The sync point ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointReachedEventArgs.Participants">
+            <summary>All participants who reached it.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointReachedEventArgs.ReachedAt">
+            <summary>When all reached.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowResultEventArgs">
+            <summary>
+            Event args for input window result.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowResultEventArgs.WindowId">
+            <summary>The window ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowResultEventArgs.TargetEntity">
+            <summary>The target entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowResultEventArgs.Result">
+            <summary>The result.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SessionStateChangedEventArgs">
+            <summary>
+            Event args for session state change.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SessionStateChangedEventArgs.PreviousState">
+            <summary>Previous state.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SessionStateChangedEventArgs.NewState">
+            <summary>New state.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SessionStateChangedEventArgs.Reason">
+            <summary>Optional reason for the change.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IInputWindowManager">
+            <summary>
+            Manages input windows for player/behavior input during cutscenes.
+            </summary>
+            <remarks>
+            <para>
+            Input windows represent moments where specific participants can provide input.
+            The "blue/red/gray box" mental model from THE DREAM:
+            </para>
+            <list type="bullet">
+            <item><b>Blue box</b>: Your turn to input (you're the target)</item>
+            <item><b>Red box</b>: Their turn (waiting for another participant)</item>
+            <item><b>Gray box</b>: No input allowed (e.g., reading text)</item>
+            </list>
+            <para>
+            All input is server-adjudicated - client input is a "suggestion" that
+            may be accepted, modified, or replaced by timeout defaults.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindowManager.CreateAsync(BeyondImmersion.BannouService.Behavior.InputWindowOptions,System.Threading.CancellationToken)">
+            <summary>
+            Creates a new input window.
+            </summary>
+            <param name="options">Window options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The created window.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindowManager.GetWindow(System.String)">
+            <summary>
+            Gets an active window by ID.
+            </summary>
+            <param name="windowId">The window ID.</param>
+            <returns>The window, or null if not found or expired.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindowManager.SubmitAsync(System.String,System.Guid,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Submits input to a window.
+            </summary>
+            <param name="windowId">The window ID.</param>
+            <param name="entityId">The submitting entity.</param>
+            <param name="input">The input value.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The submission result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindowManager.Close(System.String,System.Boolean)">
+            <summary>
+            Closes a window without waiting for timeout.
+            </summary>
+            <param name="windowId">The window ID.</param>
+            <param name="useDefault">Whether to use the default value.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindowManager.ActiveWindows">
+            <summary>
+            Gets all active windows.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindowManager.GetWindowsForEntity(System.Guid)">
+            <summary>
+            Gets windows waiting for a specific entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>Windows targeting this entity.</returns>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.IInputWindowManager.WindowCompleted">
+            <summary>
+            Event raised when a window result is available.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.IInputWindowManager.WindowTimedOut">
+            <summary>
+            Event raised when a window times out.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IInputWindow">
+            <summary>
+            Represents an active input window.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.WindowId">
+            <summary>
+            Unique window identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.TargetEntity">
+            <summary>
+            The entity that should provide input.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.WindowType">
+            <summary>
+            Type of input expected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.State">
+            <summary>
+            Current window state.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.CreatedAt">
+            <summary>
+            When the window was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.ExpiresAt">
+            <summary>
+            When the window expires.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.TimeRemaining">
+            <summary>
+            Time remaining until timeout.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.Options">
+            <summary>
+            Available options (for Choice type).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.DefaultValue">
+            <summary>
+            The default value if timeout occurs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.DefaultSource">
+            <summary>
+            Source of the default value.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.SubmittedInput">
+            <summary>
+            The submitted input (null until submitted).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.FinalValue">
+            <summary>
+            The final adjudicated value (null until resolved).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.HasInput">
+            <summary>
+            Whether input has been received.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IInputWindow.IsCompleted">
+            <summary>
+            Whether the window has completed (input received or timed out).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IInputWindow.WaitForCompletionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Waits for the window to complete.
+            </summary>
+            <param name="ct">Cancellation token.</param>
+            <returns>The final value.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowOptions">
+            <summary>
+            Options for creating an input window.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.TargetEntity">
+            <summary>
+            The entity that should provide input.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.WindowType">
+            <summary>
+            Type of input expected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.Timeout">
+            <summary>
+            Timeout duration (null = indefinite).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.Options">
+            <summary>
+            Available options (for Choice type).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.DefaultValue">
+            <summary>
+            The default value if timeout occurs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.DefaultSource">
+            <summary>
+            Source of the default value.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.EmitSyncOnComplete">
+            <summary>
+            Optional sync point to emit when complete.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.PromptText">
+            <summary>
+            Human-readable prompt text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowOptions.WindowId">
+            <summary>
+            Custom window ID (auto-generated if null).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowType">
+            <summary>
+            Type of input window.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.Choice">
+            <summary>Multiple choice selection.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.QuickTimeEvent">
+            <summary>QTE button press.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.Direction">
+            <summary>Directional input.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.Timing">
+            <summary>Timing-based input.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.Text">
+            <summary>Free-form text input.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowType.Confirmation">
+            <summary>Confirmation (yes/no).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowState">
+            <summary>
+            State of an input window.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowState.Waiting">
+            <summary>Window is active and waiting for input.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowState.Submitted">
+            <summary>Input was received and accepted.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowState.TimedOut">
+            <summary>Window timed out, using default.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.InputWindowState.Closed">
+            <summary>Window was closed without result.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.DefaultValueSource">
+            <summary>
+            Source of the default value for timeout.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DefaultValueSource.Cutscene">
+            <summary>Default defined in cutscene.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DefaultValueSource.Behavior">
+            <summary>Default from behavior stack evaluation.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.DefaultValueSource.None">
+            <summary>No default (window stays open indefinitely).</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputOption">
+            <summary>
+            An option in a choice input window.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputOption.Value">
+            <summary>
+            The option value.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputOption.Label">
+            <summary>
+            Display label for the option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputOption.Description">
+            <summary>
+            Optional description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputOption.IsDefault">
+            <summary>
+            Whether this is the default option.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs">
+            <summary>
+            Event args for window completion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs.WindowId">
+            <summary>The window ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs.TargetEntity">
+            <summary>The target entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs.FinalValue">
+            <summary>The final value.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs.WasDefault">
+            <summary>Whether it was a timeout default.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowCompletedEventArgs.Duration">
+            <summary>Time from creation to completion.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.InputWindowTimedOutEventArgs">
+            <summary>
+            Event args for window timeout.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowTimedOutEventArgs.WindowId">
+            <summary>The window ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowTimedOutEventArgs.TargetEntity">
+            <summary>The target entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowTimedOutEventArgs.DefaultValue">
+            <summary>The default value used.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.InputWindowTimedOutEventArgs.Timeout">
+            <summary>The timeout duration.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IntentEmission">
             <summary>
             A single Intent emission targeting a specific channel.
@@ -4726,6 +5397,193 @@
             Gets all registered action names.
             </summary>
             <returns>Collection of registered action names.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.ISyncPointManager">
+            <summary>
+            Manages synchronization points for multi-participant cutscenes.
+            </summary>
+            <remarks>
+            <para>
+            Sync points allow multiple ABML channels (each potentially on different clients)
+            to coordinate their execution. When any channel reaches a sync point:
+            </para>
+            <list type="number">
+            <item>That channel pauses execution</item>
+            <item>Server tracks which participants have reached</item>
+            <item>Once all participants reach, server releases all to continue</item>
+            </list>
+            <para>
+            This enables cross-entity coordination like:
+            </para>
+            <list type="bullet">
+            <item>Hero attacks → villain reacts (villain waits for hero)</item>
+            <item>Camera shake → after impact (camera waits for attack to land)</item>
+            <item>Dialogue choice → other player responds (both synchronized)</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.RegisterSyncPoint(System.String,System.Collections.Generic.IReadOnlySet{System.Guid},System.Nullable{System.TimeSpan})">
+            <summary>
+            Registers a sync point that will be used in this session.
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+            <param name="requiredParticipants">Participants that must reach this point (null = all).</param>
+            <param name="timeout">Optional timeout (null = use session default).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.ReportReachedAsync(System.String,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Reports that a participant has reached a sync point.
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+            <param name="entityId">The entity that reached the point.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The sync point status after this report.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.WaitForAllAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Waits for all participants to reach a sync point.
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The final sync point status.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.GetStatus(System.String)">
+            <summary>
+            Gets the current status of a sync point.
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+            <returns>The sync point status, or null if not registered.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ISyncPointManager.RegisteredSyncPoints">
+            <summary>
+            Gets all registered sync points.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.ISyncPointManager.WaitingSyncPoints">
+            <summary>
+            Gets sync points that are currently waiting for participants.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.Reset(System.String)">
+            <summary>
+            Resets a sync point for reuse (e.g., in a loop).
+            </summary>
+            <param name="syncPointId">The sync point identifier.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.ISyncPointManager.ResetAll">
+            <summary>
+            Resets all sync points.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.ISyncPointManager.SyncPointCompleted">
+            <summary>
+            Event raised when all participants reach a sync point.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.ISyncPointManager.SyncPointTimedOut">
+            <summary>
+            Event raised when a sync point times out.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointStatus">
+            <summary>
+            Status of a sync point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.SyncPointId">
+            <summary>
+            The sync point identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.State">
+            <summary>
+            Current state of the sync point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.RequiredParticipants">
+            <summary>
+            Participants required to reach this point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.ReachedParticipants">
+            <summary>
+            Participants who have reached.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.PendingParticipants">
+            <summary>
+            Participants still pending.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.IsComplete">
+            <summary>
+            Whether all required participants have reached.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.FirstReachedAt">
+            <summary>
+            When the first participant reached.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.CompletedAt">
+            <summary>
+            When all participants reached (null if not yet).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.Timeout">
+            <summary>
+            Timeout for this sync point.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointStatus.TimedOut">
+            <summary>
+            Whether the sync point timed out.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointState">
+            <summary>
+            State of a sync point.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SyncPointState.Waiting">
+            <summary>Waiting for participants.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SyncPointState.Completed">
+            <summary>All participants have reached.</summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Behavior.SyncPointState.TimedOut">
+            <summary>Timed out before all participants reached.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointCompletedEventArgs">
+            <summary>
+            Event args for sync point completion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointCompletedEventArgs.SyncPointId">
+            <summary>The sync point ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointCompletedEventArgs.Participants">
+            <summary>Participants who reached.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointCompletedEventArgs.Duration">
+            <summary>Duration from first reach to completion.</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs">
+            <summary>
+            Event args for sync point timeout.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs.SyncPointId">
+            <summary>The sync point ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs.ReachedParticipants">
+            <summary>Participants who reached before timeout.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs.MissingParticipants">
+            <summary>Participants who did not reach.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.SyncPointTimedOutEventArgs.Timeout">
+            <summary>The timeout duration.</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IBehaviorClient">
             <summary>
@@ -27644,6 +28502,11 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Version">
             <summary>
             Assigned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Warning">
+            <summary>
+            Optional warning message
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.AdditionalProperties">

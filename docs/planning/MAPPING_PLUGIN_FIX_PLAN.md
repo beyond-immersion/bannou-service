@@ -1,5 +1,9 @@
 # Mapping Plugin Fix Plan (Post-Review)
 
+**Status**: IN PROGRESS (11/14 core issues resolved, 3 incomplete)
+**Last Updated**: 2025-01-08
+**Reviewed By**: Claude Code
+
 ## Purpose
 Provide a concrete, actionable fix plan for lib-mapping based on the current implementation vs the planning doc.
 This includes: hard bugs, missing behavior, schema gaps, eventing behavior, indexing rules, and testing gaps.
@@ -11,162 +15,193 @@ This includes: hard bugs, missing behavior, schema gaps, eventing behavior, inde
 - Authority takeover default is preserve_and_diff (in-place replacement; map identity stays intact).
 - Ingest and publish-objects should emit both layer-level updates and object-level delta events when objects change.
 
-## Current Issues ("you did this wrong")
+---
+
+## Implementation Status Summary
+
+| # | Issue | Status | Notes |
+|---|-------|--------|-------|
+| 1 | Authority Token Validation | ✅ COMPLETE | ValidateAuthorityAsync uses AuthorityRecord.ExpiresAt only |
+| 2 | Ingest Path (Actions + Broadcast) | ✅ COMPLETE | HandleIngestEventAsync handles create/update/delete and emits events |
+| 3 | PublishObjectChanges NonAuthorityHandling | ❌ INCOMPLETE | Returns Unauthorized without applying NonAuthorityHandlingMode |
+| 4 | accept_and_alert Event Publishing | ✅ COMPLETE | HandleNonAuthorityPublishAsync processes payload and publishes events |
+| 5 | Snapshot/Query Without Bounds | ✅ COMPLETE | RequestSnapshotAsync works without bounds via QueryObjectsInRegionAsync |
+| 6 | Index Cleanup on Update/Delete | ✅ COMPLETE | ProcessObjectChangeWithIndexCleanupAsync handles index maintenance |
+| 7 | CreatedAt Preservation on Update | ✅ COMPLETE | Existing CreatedAt preserved, only UpdatedAt modified |
+| 8 | Large Payload Handling (lib-asset) | ❌ INCOMPLETE | RequestSnapshot uploads to lib-asset, but PublishMapUpdate REJECTS instead of uploading |
+| 9 | Affordance Scoring for JsonElement | ✅ COMPLETE | TryGetJsonDouble, TryGetJsonInt, TryGetJsonString helpers |
+| 10 | Event Metadata (sourceAppId) | ✅ COMPLETE | sourceAppId populated and passed through events |
+| 11 | Subscription Lifecycle | ✅ COMPLETE | SubscribeToIngestTopicAsync disposes prior subscription |
+| 12 | Takeover Policy | ✅ COMPLETE | AuthorityTakeoverMode (preserve_and_diff, reset, require_consume) |
+| 13 | Map Definition CRUD | ✅ COMPLETE | All 5 endpoints implemented with unit tests |
+| 14 | Event Aggregation Window | ❌ INCOMPLETE | Config exists but publishes immediately; planning doc says implement it |
+
+---
+
+## Remaining Work
+
+### Issue #3: PublishObjectChanges NonAuthorityHandling (INCOMPLETE)
+
+**Current Behavior**: `PublishObjectChangesAsync` returns `Unauthorized` immediately when authority validation fails. It does not apply `NonAuthorityHandlingMode` like `PublishMapUpdateAsync` does.
+
+**Required Fix**: Mirror `PublishMapUpdateAsync` behavior:
+1. After authority validation fails, check `channel.NonAuthorityHandling`
+2. For `Reject_silent`: Return Unauthorized (current behavior)
+3. For `Reject_and_alert`: Return Unauthorized AND publish warning event
+4. For `Accept_and_alert`: Process changes AND publish warning event
+
+**File**: `lib-mapping/MappingService.cs:553-637`
+
+### Issue #8: Large Payload Handling for Publishing (INCOMPLETE)
+
+**Current Behavior**: `PublishMapUpdateAsync` at line 494-505 REJECTS payloads exceeding `InlinePayloadMaxBytes` with an error message: "Use smaller payloads or chunking."
+
+The code has a comment: `// Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)`
+
+**Planning Doc Requirement**:
+> If payload exceeds InlinePayloadMaxBytes, store it via lib-asset and return payloadAssetRef.
+
+**What Works**: `RequestSnapshotAsync` correctly uploads large responses to lib-asset via `UploadLargePayloadToAssetAsync`.
+
+**Required Fix**: `PublishMapUpdateAsync` should upload to lib-asset instead of rejecting, mirroring the pattern used in `RequestSnapshotAsync`.
+
+**File**: `lib-mapping/MappingService.cs:494-505`
+
+### Issue #14: Event Aggregation Window (INCOMPLETE)
+
+**Current Behavior**: Events are published immediately. The comment at line 2422-2425 notes:
+> "EventAggregationWindowMs configuration is available for batching rapid updates. When > 0, events should be buffered and coalesced within the window before publishing. Current implementation publishes immediately; full aggregation requires a background service."
+
+**Planning Doc Requirement**:
+> Implement EventAggregationWindowMs and per-kind TTLs for ephemeral kinds.
+
+Per-kind TTLs ARE implemented via `GetTtlSecondsForKind`. Event aggregation is NOT implemented.
+
+**Required for Full Implementation**:
+- Background service to buffer events within `EventAggregationWindowMs` window
+- Coalesce multiple updates to same region/kind into single event
+- Timer-based flush when window expires
+
+**File**: `lib-mapping/MappingService.cs:2420-2426`
+
+---
+
+## Testing Coverage
+
+### Unit Tests (lib-mapping.tests/MappingServiceTests.cs)
+- **40+ tests** covering:
+  - Constructor validation
+  - Configuration defaults
+  - Permission registration (18 endpoints)
+  - Channel CRUD (create, conflict, save records, publish events, subscribe to ingest)
+  - Authority release/heartbeat
+  - Publishing (valid/invalid authority)
+  - Queries (point, bounds, type)
+  - Affordance queries (fresh, cached)
+  - Authoring (checkout, conflict, commit, release)
+  - Ingest event handling
+  - Definition CRUD (create, conflict, get, list, filter, update, delete)
+
+### HTTP Integration Tests (http-tester/Tests/MappingTestHandler.cs)
+- **17 tests** covering:
+  - Channel Management: CreateChannel, CreateChannelConflict, ReleaseAuthority, AuthorityHeartbeat
+  - Publishing: PublishMapUpdate, PublishObjectChanges, PublishWithInvalidToken, RequestSnapshot
+  - Queries: QueryPoint, QueryBounds, QueryObjectsByType
+  - Affordance: QueryAffordance, QueryAffordanceWithActorCapabilities
+  - Authoring: AuthoringCheckout, AuthoringConflict, AuthoringCommit, AuthoringRelease
+
+### Missing HTTP Tests
+- Definition CRUD endpoints not tested via HTTP:
+  - CreateDefinition
+  - GetDefinition
+  - ListDefinitions
+  - UpdateDefinition
+  - DeleteDefinition
+
+---
+
+## Current Issues (Original List with Status)
 
 ### Authority + Token Validation
-1) Token expiry check is wrong; publish will fail after the original token expires even if heartbeat extended authority.
+1) ✅ **COMPLETE** - Token expiry check is wrong; publish will fail after the original token expires even if heartbeat extended authority.
    - Fix: validate only against AuthorityRecord.ExpiresAt.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `ValidateAuthorityAsync` checks `authority.ExpiresAt > DateTimeOffset.UtcNow`
 
 ### Ingest Path
-2) Ingest ignores action and never broadcasts to consumer topics.
+2) ✅ **COMPLETE** - Ingest ignores action and never broadcasts to consumer topics.
    - Needs to honor create/update/delete and emit map.* events.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `HandleIngestEventAsync` processes actions via `MapIngestActionToObjectAction`, emits `MapUpdatedEvent` and `MapObjectsChangedEvent`
 
 ### Non-Authority Handling
-3) PublishObjectChangesAsync ignores NonAuthorityHandlingMode.
+3) ❌ **INCOMPLETE** - PublishObjectChangesAsync ignores NonAuthorityHandlingMode.
    - Must mirror PublishMapUpdateAsync behavior.
    - File: lib-mapping/MappingService.cs
 
-4) accept_and_alert path writes data but does not publish events.
+4) ✅ **COMPLETE** - accept_and_alert path writes data but does not publish events.
    - Consumers never receive updates for accepted non-authority publishes.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `HandleNonAuthorityPublishAsync` calls `ProcessPayloadsAsync` then `PublishMapUpdatedEventAsync`
 
 ### Snapshot / Query Behavior
-5) QueryObjectsInRegionAsync returns empty when bounds are null.
+5) ✅ **COMPLETE** - QueryObjectsInRegionAsync returns empty when bounds are null.
    - RequestSnapshotAsync without bounds is broken.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `QueryObjectsInRegionAsync` handles null bounds by querying all cells
 
 ### Indexing / Consistency
-6) Index cleanup is missing on update/delete.
+6) ✅ **COMPLETE** - Index cleanup is missing on update/delete.
    - Stale spatial and type indexes will accumulate forever.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `ProcessObjectChangeWithIndexCleanupAsync` removes old index entries before adding new ones
 
-7) CreatedAt is not preserved on upsert.
+7) ✅ **COMPLETE** - CreatedAt is not preserved on upsert.
    - Updates should keep CreatedAt and only update UpdatedAt.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `ObjectAction.Updated` preserves `existing.CreatedAt`
 
 ### Large Payloads
-8) payloadAssetRef / InlinePayloadMaxBytes are defined but ignored.
+8) ❌ **INCOMPLETE** - payloadAssetRef / InlinePayloadMaxBytes are defined but ignored.
    - Large payload and snapshot flow via lib-asset is not implemented.
    - File: lib-mapping/MappingService.cs, schemas/mapping-api.yaml
+   - **Partial Implementation**: `RequestSnapshotAsync` correctly uploads to lib-asset, but `PublishMapUpdateAsync` REJECTS large payloads with "MVP" excuse comment instead of uploading
 
 ### Affordance Scoring
-9) candidate.Data is usually JsonElement, but scoring expects IDictionary<string, object>.
+9) ✅ **COMPLETE** - candidate.Data is usually JsonElement, but scoring expects IDictionary<string, object>.
    - Most scoring paths silently fall back to base score.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `TryGetJsonDouble`, `TryGetJsonInt`, `TryGetJsonString` helpers for JsonElement
 
 ### Event Metadata
-10) sourceAppId / attemptedPublisher / currentAuthority are not populated.
+10) ✅ **COMPLETE** - sourceAppId / attemptedPublisher / currentAuthority are not populated.
    - No auditing or warning attribution.
    - File: lib-mapping/MappingService.cs, schemas/mapping-events.yaml
+   - **Implementation**: `AuthorityRecord.AuthorityAppId` captured at creation, passed through events
 
 ### Subscriptions
-11) Ingest subscription overwrite can leak old subscriptions.
+11) ✅ **COMPLETE** - Ingest subscription overwrite can leak old subscriptions.
    - If re-creating a channel, prior subscription is not disposed.
    - File: lib-mapping/MappingService.cs
+   - **Implementation**: `SubscribeToIngestTopicAsync` disposes existing subscription before creating new one
 
 ### Implementation vs Planning Gaps
-12) No takeover policy on channel creation.
+12) ✅ **COMPLETE** - No takeover policy on channel creation.
    - Should be configured at create time (preserve/diff vs reset vs require-consume).
    - File: schemas/mapping-api.yaml, lib-mapping/MappingService.cs
+   - **Implementation**: `AuthorityTakeoverMode` enum, `TakeoverMode` in `ChannelRecord`, `ClearChannelDataAsync` for reset
 
-13) No map definition CRUD or layer authoring APIs beyond checkout/commit.
+13) ✅ **COMPLETE** - No map definition CRUD or layer authoring APIs beyond checkout/commit.
    - Planning doc calls out map definition CRUD and layer format support.
    - Files: schemas/mapping-api.yaml, lib-mapping/MappingService.cs
+   - **Implementation**: `CreateDefinitionAsync`, `GetDefinitionAsync`, `ListDefinitionsAsync`, `UpdateDefinitionAsync`, `DeleteDefinitionAsync`
 
-14) Event aggregation window and per-kind TTL behavior are not implemented.
+14) ❌ **INCOMPLETE** - Event aggregation window and per-kind TTL behavior are not implemented.
    - Config exists but is unused.
    - Files: schemas/mapping-configuration.yaml, lib-mapping/MappingService.cs
+   - **Partial Implementation**: Per-kind TTL IS implemented via `GetTtlSecondsForKind`. Event aggregation is NOT implemented (code has excuse comment about "requiring background service")
 
-## Fix Plan (Ordered by Impact)
-
-### 1) Authority Token Validation (Opaque Tokens)
-- Remove token parsing for expiry checks.
-- Validate authority using AuthorityRecord.ExpiresAt only.
-- Update:
-  - ValidateAuthorityAsync
-  - ReleaseAuthorityAsync
-  - AuthorityHeartbeatAsync
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 2) Ingest Path (Upsert + Delete + Broadcast)
-- Respect IngestPayload.action (create/update/delete) instead of always upserting.
-- Route ingest through the same NonAuthorityHandlingMode as RPC publishes.
-- Emit:
-  - map.{region}.{kind}.updated (layer-level)
-  - map.{region}.{kind}.objects.changed (object deltas)
-- Enforce MaxPayloadsPerPublish on ingest.
-- Files:
-  - lib-mapping/MappingService.cs
-  - schemas/mapping-events.yaml
-
-### 3) Non-Authority Handling Parity (Publish Objects)
-- Apply NonAuthorityHandlingMode for PublishObjectChangesAsync.
-- accept_and_alert should emit events just like authority publishes.
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 4) Index Integrity
-- Update spatial/type index entries on update and delete.
-- Remove object IDs from old cells/types if position/bounds/type change.
-- Preserve CreatedAt on update/upsert.
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 5) Snapshot / Query Without Bounds
-- Add a region-level index (or per-channel object list) so snapshots and region queries work without bounds.
-- Use this index for RequestSnapshotAsync and QueryObjectsInRegionAsync.
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 6) Large Payload Handling (lib-asset)
-- If payload exceeds InlinePayloadMaxBytes, store it via lib-asset and return payloadAssetRef.
-- RequestSnapshotAsync should return PayloadRef if size is large.
-- Files:
-  - lib-mapping/MappingService.cs
-  - schemas/mapping-api.yaml
-
-### 7) Affordance Scoring for JsonElement
-- Introduce helpers to read numeric/string properties from JsonElement.
-- Use these helpers in ScoreAffordance and ExtractFeatures.
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 8) Takeover Policy
-- Add AuthorityTakeoverMode to CreateChannelRequest and ChannelRecord.
-  - preserve_and_diff (default)
-  - reset
-  - require_consume
-- Apply during channel creation when authority expired.
-- Files:
-  - schemas/mapping-api.yaml
-  - lib-mapping/MappingService.cs
-
-### 9) Event Metadata
-- Populate sourceAppId, attemptedPublisher, currentAuthority.
-- Requires pulling appId from request/session context.
-- Files:
-  - lib-mapping/MappingService.cs
-  - schemas/mapping-events.yaml
-
-### 10) Subscription Lifecycle
-- Dispose prior ingest subscription before overwriting in dictionary.
-- Files:
-  - lib-mapping/MappingService.cs
-
-### 11) Authoring + Map Definition APIs (Planning Gap)
-- Add map definition CRUD and layer format support per planning doc.
-- Files:
-  - schemas/mapping-api.yaml
-  - lib-mapping/MappingService.cs
-
-### 12) Event Aggregation + TTL Behavior (Planning Gap)
-- Implement EventAggregationWindowMs and per-kind TTLs for ephemeral kinds.
-- Files:
-  - schemas/mapping-configuration.yaml
-  - lib-mapping/MappingService.cs
+---
 
 ## Eventing Rules (Canonical Behavior)
 - map.{region}.{kind}.updated: layer-level notification, may include snapshot or delta.
@@ -174,18 +209,12 @@ This includes: hard bugs, missing behavior, schema gaps, eventing behavior, inde
 - Ingest/publish-objects should emit BOTH when objects change.
 - PublishMapUpdateAsync emits map.*.updated and is allowed to omit object deltas.
 
-## Authority Takeover Modes (New)
+## Authority Takeover Modes
 - preserve_and_diff (default): new authority can send a large update; map identity remains.
 - reset: new authority clears map state (objects + indexes) before publishing.
 - require_consume: new authority must RequestSnapshot and then Publish updates explicitly.
 
-## Testing Gaps (Add These)
-- Authority token expiry after heartbeat (opaque tokens).
-- Ingest delete action and non-authority handling modes.
-- Ingest emits both updated + objects.changed events.
-- Index cleanup on update/delete.
-- Snapshot without bounds returns data.
-- payloadAssetRef and PayloadRef behavior.
+---
 
 ## Files Referenced
 - lib-mapping/MappingService.cs
@@ -196,3 +225,8 @@ This includes: hard bugs, missing behavior, schema gaps, eventing behavior, inde
 - schemas/mapping-events.yaml
 - schemas/mapping-configuration.yaml
 
+---
+
+## Related Documents
+- **UPCOMING_-_MAPPING_PLUGIN.md**: Detailed feature specification with advanced affordance system design (retained for future reference)
+- **~~UPCOMING_-_MAP_SERVICE.md~~**: Superseded architecture document (deleted 2025-01-08)

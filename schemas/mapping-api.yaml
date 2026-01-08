@@ -418,8 +418,10 @@ paths:
         \           \"description\": \"Number of changes accepted\"\n                },\n                \"rejectedCount\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of changes rejected\"\
         \n                },\n                \"version\": {\n                    \"type\": \"integer\",\n               \
-        \     \"format\": \"int64\",\n                    \"description\": \"Assigned version number\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \     \"format\": \"int64\",\n                    \"description\": \"Assigned version number\"\n                },\n\
+        \                \"warning\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Optional warning message\",\n                    \"nullable\": true\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Publish metadata object changes (batch)\",\n    \"description\": \"Game
         servers use this to push object state changes.\\nEfficiently batches multiple object changes into one event.\\nMax
         100 changes per request.\\n\",\n    \"tags\": [\n        \"Runtime\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -2301,6 +2303,10 @@ components:
           type: integer
           format: int64
           description: Assigned version number
+        warning:
+          type: string
+          description: Optional warning message
+          nullable: true
 
     RequestSnapshotRequest:
       type: object

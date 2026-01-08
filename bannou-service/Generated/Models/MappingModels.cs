@@ -1171,6 +1171,12 @@ public partial class PublishObjectChangesResponse
     [System.Text.Json.Serialization.JsonPropertyName("version")]
     public long Version { get; set; } = default!;
 
+    /// <summary>
+    /// Optional warning message
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("warning")]
+    public string? Warning { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     /// <summary>
