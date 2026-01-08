@@ -1971,14 +1971,23 @@ public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(...)
 
 ---
 
-### Phase 2: Control Infrastructure
+### Phase 2: Control Infrastructure ✅ COMPLETED 2026-01-08
 
-| Task | Layer | Dependencies | Priority |
-|------|-------|--------------|----------|
-| Implement `IControlGate` interface | 3 | Archetypes | High |
-| Implement `ControlGateManager` | 3 | IControlGate | High |
-| Integrate with `CinematicInterpreter` | 3 | ControlGate | High |
-| Implement `BehaviorOutputMask` | 3 | ControlGate | Medium |
+| Task | Layer | Dependencies | Status |
+|------|-------|--------------|--------|
+| Implement `IControlGate` interface | 3 | Archetypes | ✅ DONE |
+| Implement `ControlGateManager` | 3 | IControlGate | ✅ DONE |
+| Integrate with `CinematicInterpreter` | 3 | ControlGate | ✅ DONE - `CinematicController` created |
+| Implement `BehaviorOutputMask` | 3 | ControlGate | ✅ DONE |
+
+**Phase 2 Components**:
+- `lib-behavior/Control/ControlGate.cs` - Per-entity control gate
+- `lib-behavior/Control/ControlGateManager.cs` - Entity control registry
+- `lib-behavior/Control/BehaviorOutputMask.cs` - Filters behavior output during control override
+- `lib-behavior/Control/StateSync.cs` - State synchronization on control return
+- `lib-behavior/Runtime/CinematicController.cs` - High-level cinematic playback with control gating
+
+**Tests**: 21 new CinematicController tests, 554 total lib-behavior tests passing
 
 ### Phase 3: Behavior Stack Enhancement
 
@@ -2018,8 +2027,8 @@ public override ValueTask<IReadOnlyList<IntentEmission>> EmitAsync(...)
 
 **What needs building** (the gaps this document addresses):
 - Handler Mapping layer (Layer 2)
-- Control Gating layer (Layer 3)
-- Entity Archetype registry (Layer 1)
+- ~~Control Gating layer (Layer 3)~~ ✅ DONE 2026-01-08
+- ~~Entity Archetype registry (Layer 1)~~ ✅ DONE 2026-01-08
 - Multiplayer sync coordination (Layer 5)
 
 ---
