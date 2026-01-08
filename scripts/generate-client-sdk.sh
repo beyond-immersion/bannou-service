@@ -30,9 +30,18 @@ copy_behavior_files() {
     local src_ns="BeyondImmersion.BannouService.Behavior"
 
     # Copy and transform Runtime files
+    # EXCLUDE cloud-side files that depend on server infrastructure:
+    #   - CinematicController.cs: Depends on Control/* types (server-side orchestration)
+    local exclude_runtime="CinematicController.cs"
+
     for file in ./lib-behavior/Runtime/*.cs; do
         if [ -f "$file" ]; then
             local basename=$(basename "$file")
+            # Skip excluded files
+            if [[ "$exclude_runtime" == *"$basename"* ]]; then
+                echo "    Skipping $basename (cloud-side only)"
+                continue
+            fi
             sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Runtime/$basename"
         fi
     done

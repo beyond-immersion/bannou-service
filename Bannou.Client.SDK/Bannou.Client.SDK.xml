@@ -8986,6 +8986,11 @@
             Version after changes
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.SourceAppId">
+            <summary>
+            App-id of authority that published these changes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.MapObjectsChangedEvent.Changes">
             <summary>
             List of object changes
@@ -21336,6 +21341,13 @@
             How to handle publish attempts from non-authority sources
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.AuthorityTakeoverMode">
+            <summary>
+            Policy for handling authority takeover when creating a channel that
+            <br/>already has expired authority. Controls what happens to existing data.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Mapping.AffordanceType">
             <summary>
             Well-known affordance types with predefined scoring logic.
@@ -21707,6 +21719,11 @@
             Request to create a new map channel
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.SourceAppId">
+            <summary>
+            App-id of the caller taking authority (used for event metadata)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.RegionId">
             <summary>
             Region for this channel
@@ -21720,6 +21737,15 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.NonAuthorityHandling">
             <summary>
             How to handle non-authority publishes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.TakeoverMode">
+            <summary>
+            Policy for authority takeover when channel exists with expired authority.
+            <br/>preserve_and_diff (default): Keep existing data, new authority sends updates.
+            <br/>reset: Clear all channel data before new authority takes over.
+            <br/>require_consume: New authority must call RequestSnapshot before publishing.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.CreateChannelRequest.AlertConfig">
@@ -21832,6 +21858,11 @@
             Authority token for validation
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.SourceAppId">
+            <summary>
+            App-id of caller (for warnings on non-authority attempts)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishMapUpdateRequest.Bounds">
             <summary>
             Affected area (null means entire region)
@@ -21897,6 +21928,11 @@
             Authority token for validation
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.SourceAppId">
+            <summary>
+            App-id of caller (for warnings on non-authority attempts)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesRequest.Changes">
             <summary>
             Object changes to publish
@@ -21932,6 +21968,11 @@
             Assigned version number
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.Warning">
+            <summary>
+            Optional warning message
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.PublishObjectChangesResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
@@ -21955,6 +21996,13 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.Bounds">
             <summary>
             Optional bounds filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.AuthorityToken">
+            <summary>
+            Optional authority token. If provided and valid, clears the
+            <br/>RequiresConsumeBeforePublish flag for require_consume takeover mode.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.RequestSnapshotRequest.AdditionalProperties">
@@ -22460,6 +22508,266 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringReleaseResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.MapDefinition">
+            <summary>
+            A map definition template that describes the structure of a region
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.DefinitionId">
+            <summary>
+            Unique identifier for this definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.Name">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.Description">
+            <summary>
+            Description of the map template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.Layers">
+            <summary>
+            Layer configurations for this map
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.DefaultBounds">
+            <summary>
+            Default bounds for regions using this definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.Metadata">
+            <summary>
+            Additional metadata (schema-less)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.CreatedAt">
+            <summary>
+            When the definition was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.UpdatedAt">
+            <summary>
+            When the definition was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.MapDefinition.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.LayerDefinition">
+            <summary>
+            Configuration for a specific layer within a map definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.Kind">
+            <summary>
+            The layer kind
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.StorageMode">
+            <summary>
+            How this layer's data should be stored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.TtlSeconds">
+            <summary>
+            TTL for cached/ephemeral data (0 = no TTL)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.DefaultNonAuthorityHandling">
+            <summary>
+            Default non-authority handling for channels using this layer
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.CellSize">
+            <summary>
+            Spatial cell size for indexing (default from config if not set)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.LayerDefinition.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest">
+            <summary>
+            Request to create a map definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.Name">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.Description">
+            <summary>
+            Description of the map template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.Layers">
+            <summary>
+            Layer configurations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.DefaultBounds">
+            <summary>
+            Default bounds for regions using this definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.Metadata">
+            <summary>
+            Additional metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.CreateDefinitionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.GetDefinitionRequest">
+            <summary>
+            Request to get a map definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.GetDefinitionRequest.DefinitionId">
+            <summary>
+            Definition ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.GetDefinitionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ListDefinitionsRequest">
+            <summary>
+            Request to list map definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsRequest.NameFilter">
+            <summary>
+            Filter by name (partial match)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsRequest.Limit">
+            <summary>
+            Max results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse">
+            <summary>
+            Response containing list of map definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse.Definitions">
+            <summary>
+            List of definitions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse.Total">
+            <summary>
+            Total count matching filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse.Offset">
+            <summary>
+            Current offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse.Limit">
+            <summary>
+            Results limit used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.ListDefinitionsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest">
+            <summary>
+            Request to update a map definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.DefinitionId">
+            <summary>
+            Definition ID to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.Name">
+            <summary>
+            New name (optional)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.Description">
+            <summary>
+            New description (optional)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.Layers">
+            <summary>
+            New layer configurations (replaces existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.DefaultBounds">
+            <summary>
+            New default bounds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.Metadata">
+            <summary>
+            New metadata (replaces existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.UpdateDefinitionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.DeleteDefinitionRequest">
+            <summary>
+            Request to delete a map definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.DeleteDefinitionRequest.DefinitionId">
+            <summary>
+            Definition ID to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.DeleteDefinitionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Mapping.DeleteDefinitionResponse">
+            <summary>
+            Response to delete request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.DeleteDefinitionResponse.Deleted">
+            <summary>
+            Whether the definition was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Mapping.DeleteDefinitionResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
             </summary>
