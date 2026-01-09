@@ -1718,4 +1718,104 @@ This is approximately 10-15 lines of code with no architectural changes required
 
 ---
 
+## Appendix D: Dialogue Resolution System
+
+The dialogue system provides runtime text resolution with localization and conditional overrides.
+
+### D.1 Three-Step Resolution Pipeline
+
+```
+1. Check external file for matching condition override (priority-sorted)
+2. Check external file for localization (with fallback chain)
+3. Fall back to inline default text (always exists, required in ABML)
+```
+
+**Key design**: Inline text is REQUIRED in every `speak:` action. External files are optional and provide localization + conditional overrides.
+
+### D.2 External Dialogue File Format
+
+```yaml
+# dialogue/merchant/greet.yaml
+localizations:
+  en: "Welcome to my shop!"
+  es: "¡Bienvenido a mi tienda!"
+  ja: "いらっしゃいませ！"
+
+overrides:
+  - condition: "${player.reputation > 50}"
+    text: "Ah, my favorite customer!"
+    priority: 10
+  - condition: "${time.hour >= 20}"
+    text: "We're closing soon, but come in!"
+    priority: 5
+    locale: en  # Optional: locale-restricted override
+```
+
+### D.3 Code Locations
+
+| Component | Location |
+|-----------|----------|
+| `IDialogueResolver` | `bannou-service/Behavior/IDialogueResolver.cs` |
+| `ILocalizationProvider` | `bannou-service/Behavior/ILocalizationProvider.cs` |
+| `IExternalDialogueLoader` | `bannou-service/Behavior/IExternalDialogueLoader.cs` |
+| `DialogueResolver` | `lib-behavior/Dialogue/DialogueResolver.cs` |
+| `ExternalDialogueLoader` | `lib-behavior/Dialogue/ExternalDialogueLoader.cs` |
+| `FileLocalizationProvider` | `lib-behavior/Dialogue/FileLocalizationProvider.cs` |
+
+### D.4 Future Extension: Database-Backed Dialogue Sources
+
+The dialogue system supports two separate localization systems:
+
+1. **Per-dialogue companion documents** (`IExternalDialogueLoader`)
+   - Reference-based: `dialogue/merchant/greet` → YAML file
+   - Conditional logic supported (overrides with conditions)
+   - Currently file-only
+
+2. **Global string tables** (`ILocalizationProvider`)
+   - Key-based: `ui.menu.start` → localized string
+   - Plugin architecture with `ILocalizationSource`
+   - Ready for database source today
+
+**Intended priority chain for dialogue text**:
+1. Database (highest priority, almost never exists)
+2. Companion document (YAML file, may exist)
+3. Inline text (always exists, required in ABML)
+
+**To add database support for per-dialogue**:
+
+The `IExternalDialogueLoader` interface is abstract enough:
+```csharp
+Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct);
+```
+
+Create `DatabaseDialogueLoader : IExternalDialogueLoader`, then aggregate:
+
+```csharp
+// Future: AggregateDialogueLoader.cs
+public class AggregateDialogueLoader : IExternalDialogueLoader
+{
+    private readonly IReadOnlyList<IDialogueSource> _sources; // Priority-ordered
+
+    public async Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct)
+    {
+        foreach (var source in _sources)
+        {
+            var result = await source.LoadAsync(reference, ct);
+            if (result != null) return result;
+        }
+        return null;
+    }
+}
+```
+
+**What to add when needed**:
+- `IDialogueSource` interface (mirrors `ILocalizationSource`)
+- `AggregateDialogueLoader` implementation
+- `DatabaseDialogueSource` implementation
+- Priority property on sources
+
+This can be added without changing `DialogueResolver` - it only knows about `IExternalDialogueLoader`, not implementation details.
+
+---
+
 *This document is the authoritative reference for ABML.*

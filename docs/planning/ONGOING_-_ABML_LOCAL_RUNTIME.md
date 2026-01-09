@@ -1,8 +1,8 @@
 # ABML Local Runtime & Behavior Compilation
 
-> **Status**: PARTIAL IMPLEMENTATION
+> **Status**: MOSTLY COMPLETE - Client integration remaining
 > **Updated**: 2026-01-08
-> **Related**: [ABML Guide](../guides/ABML.md), [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md)
+> **Related**: [ABML Guide](../guides/ABML.md), [Actor System](../guides/ACTOR_SYSTEM.md)
 
 ## Implementation Status
 
@@ -10,10 +10,10 @@
 |-------|--------|-------------|
 | **1. Bytecode Foundation** | COMPLETE | `BehaviorOpcode` (40+ opcodes), `BehaviorModelInterpreter` (509 lines), binary format |
 | **2. Full Compilation** | COMPLETE | `BehaviorCompiler`, `SemanticAnalyzer`, `BytecodeEmitter`, `BytecodeOptimizer` |
-| **3. Distribution** | PENDING | Model sync service, lib-state storage, delta sync |
-| **4. Client Integration** | PARTIAL | `BehaviorModelCache` exists; `BehaviorEvaluationSystem`, variant selection pending |
+| **3. Distribution** | COMPLETE | Uses Asset Service pattern - presigned URLs, state store metadata |
+| **4. Client Integration** | PARTIAL | `BehaviorDocumentCache` in lib-actor; `BehaviorEvaluationSystem` pending |
 | **5. Intent Channels** | COMPLETE | `IntentChannels`, `IntentMerger`, `ContributionTrace` in sdk-sources/ |
-| **6. Agent Integration** | PENDING | Cloud agents use models, Event Brain integration |
+| **6. Agent Integration** | COMPLETE | Actors use `ICognitionPipeline.ProcessAsync()`, Event Brain via cognition stages |
 | **7. Training System** | PENDING | Proficiency tracking, model tier unlocking, trainer NPCs |
 | **8. Polish** | PENDING | Benchmarks, memory pooling, hot reload, debug tooling |
 
@@ -102,25 +102,49 @@ Bannou.SDK/Behavior/
 
 ## 3. Remaining Work
 
-### Phase 3: Distribution (PENDING)
+### Phase 3: Distribution (COMPLETE)
 
-- [ ] Model storage in lib-state (Redis) with version tracking
-- [ ] `/behavior/models/sync` endpoint for client sync
-- [ ] Delta sync for efficient updates
-- [ ] Character-specific model assignment
+Behaviors follow the **Asset Service pattern** - identical to how game assets are stored and distributed:
+
+```
+Compile ABML
+    │
+    ├─→ Store bytecode in Asset Service (presigned upload to MinIO)
+    ├─→ Store metadata in State Store (Redis: behavior-metadata:{id})
+    └─→ Publish behavior.created / behavior.updated events
+
+Retrieval:
+    GET /cache/get { behaviorId } → presigned download URL or inline bytecode
+```
+
+**Key files**: `BehaviorService.cs` (lines 414-471), `BehaviorBundleManager.cs`
+
+**Completed features**:
+- [x] Bytecode stored as `.bbm` assets via Asset Service presigned URLs
+- [x] Metadata indexed in state store with version tracking
+- [x] `/cache/get` endpoint returns download URL or inline bytecode
+- [x] Bundle grouping via `bundleId` parameter
+- [x] Lifecycle events published for downstream consumers
 
 ### Phase 4: Client Integration (PARTIAL)
 
-- [ ] `BehaviorEvaluationSystem` - Stride ECS system for per-frame evaluation
-- [ ] Variant selection logic (equipment-based)
+**Completed**:
+- [x] `BehaviorDocumentCache` in lib-actor - caches parsed YAML documents
+- [x] `RemoteAssetCache<T>` in SDK - generic asset caching with CRC verification
+
+**Remaining**:
+- [ ] `BehaviorEvaluationSystem` - Stride ECS system for per-frame bytecode evaluation
+- [ ] Variant selection logic (equipment-based model switching)
 - [ ] Fallback chain when specialized variant unavailable
 
-### Phase 6: Agent Integration (PENDING)
+### Phase 6: Agent Integration (COMPLETE)
 
-- [ ] `/behavior/agent/query-combat-options` - Cloud agents query compiled models
-- [ ] Event Brain integration for cinematic combat
+Cloud agents use the cognition pipeline which incorporates compiled behavior models:
+- [x] `ICognitionPipeline.ProcessAsync()` - 5-stage cognition for actors
+- [x] Cognition templates define stage handlers (humanoid_base, creature_base, object_base)
+- [x] Event Brain orchestration via cognition intention stage
 
-### Phase 7: Training System (PENDING)
+### Phase 7: Training System (PENDING - Game Feature)
 
 - [ ] Proficiency tracking per character/weapon-type
 - [ ] Model tier unlocking based on proficiency
@@ -169,10 +193,22 @@ Bannou.SDK/Behavior/
 
 ## Reference
 
-- **ABML Language**: [docs/guides/ABML.md](../guides/ABML.md)
-- **Implemented code**: `lib-behavior/Compiler/`, `sdk-sources/Behavior/`
-- **Bytecode opcodes**: `BehaviorOpcode.cs` in lib-behavior
+**Guides**:
+- [ABML Language](../guides/ABML.md) - YAML syntax, nodes, expressions
+- [Actor System](../guides/ACTOR_SYSTEM.md) - Cognition pipeline, templates, actor integration
+
+**Key Implementation Files**:
+- `lib-behavior/BehaviorService.cs` - Main service, compilation, asset storage
+- `lib-behavior/BehaviorBundleManager.cs` - Bundle grouping and management
+- `lib-behavior/Compiler/` - YAML→bytecode compilation pipeline
+- `lib-actor/Caching/BehaviorDocumentCache.cs` - YAML document caching
+- `sdk-sources/Behavior/` - Client-side runtime, intent channels
+- `Bannou.Client.SDK/Cache/RemoteAssetCache.cs` - Generic asset caching
+
+**Bytecode**:
+- `lib-behavior/Compiler/BehaviorOpcode.cs` - All opcodes
+- `lib-behavior/Compiler/BehaviorModelInterpreter.cs` - Stack-based VM
 
 ---
 
-*Original ~2870-line document condensed 2026-01-08. Implementation details now in codebase.*
+*Condensed 2026-01-08. Distribution confirmed complete via Asset Service pattern.*

@@ -23,6 +23,7 @@ The Actor System provides the cognitive layer for Arcadia's living world. Actors
 10. [State Management](#10-state-management)
 11. [Scaling and Distribution](#11-scaling-and-distribution)
 12. [API Reference](#12-api-reference)
+13. [Game Server Integration](#13-game-server-integration-stride-side)
 - [Appendix A: Actor Categories](#appendix-a-actor-categories)
 - [Appendix B: Perception Event Types](#appendix-b-perception-event-types)
 
@@ -572,6 +573,161 @@ All magic numbers are centralized in `CognitionConstants`:
 | DefaultThreatWeight | 10.0 | Priority for threat perceptions |
 | DefaultThreatFastTrackThreshold | 0.8 | Bypasses normal pipeline |
 
+### 7.5 Cognition Templates
+
+The cognition system uses **templates** that define which handlers run in what order. Three embedded templates are provided:
+
+| Template | Use Case | Stages |
+|----------|----------|--------|
+| `humanoid_base` | Humanoid NPCs | All 5 stages (filter → memory_query → significance → storage → intention) |
+| `creature_base` | Animals/creatures | Simpler (skips significance, lower attention budget, faster reactions) |
+| `object_base` | Interactive objects | Minimal (just filter + intention for traps, doors, etc.) |
+
+**Template differences**:
+
+```
+humanoid_base:                    creature_base:                  object_base:
+├── filter (budget=100)           ├── filter (budget=50)          ├── filter (budget=10)
+├── memory_query (max=20)         ├── memory_query (max=5)        └── intention
+├── significance                  └── intention                       (no memory/significance)
+├── storage
+└── intention
+    ├── goal_impact
+    └── goap_replan
+```
+
+Creatures skip significance assessment - they react instinctively. Objects skip memory entirely - they're stateless responders.
+
+### 7.6 Building Cognition Pipelines
+
+The `CognitionBuilder` constructs pipelines from templates with optional character-specific overrides:
+
+```csharp
+// Get the template registry (DI-injected)
+ICognitionTemplateRegistry registry = ...;
+ICognitionBuilder builder = new CognitionBuilder(registry, handlerRegistry, logger);
+
+// Build a standard humanoid pipeline
+var pipeline = builder.Build("humanoid_base");
+
+// Build with character-specific overrides
+var overrides = new CognitionOverrides
+{
+    Overrides =
+    [
+        // Make this character less reactive to threats (e.g., battle-hardened veteran)
+        new ParameterOverride
+        {
+            Stage = "filter",
+            HandlerId = "attention_filter",
+            Parameters = new Dictionary<string, object>
+            {
+                ["threat_fast_track_threshold"] = 0.95f  // Only extreme threats fast-track
+            }
+        },
+        // Disable memory storage for a mindless zombie
+        new DisableHandlerOverride
+        {
+            Stage = "storage",
+            HandlerId = "store_memory"
+        }
+    ]
+};
+
+var customPipeline = builder.Build("humanoid_base", overrides);
+```
+
+**Override types**:
+- `ParameterOverride` - Modify handler parameters (most common)
+- `DisableHandlerOverride` - Disable a handler entirely or conditionally
+- `AddHandlerOverride` - Insert a custom handler at a specific position
+- `ReplaceHandlerOverride` - Swap one handler for another
+- `ReorderHandlerOverride` - Change handler execution order
+
+### 7.7 Invoking the Cognition Pipeline
+
+Actors invoke cognition through `ICognitionPipeline.ProcessAsync()`:
+
+```csharp
+// In the actor tick loop
+var result = await _cognitionPipeline.ProcessAsync(
+    perception,
+    new CognitionContext
+    {
+        AgentId = _actorId,
+        AbmlContext = _executionContext,
+        HandlerRegistry = _handlerRegistry
+    },
+    cancellationToken);
+
+// Handle the result
+if (result.Success)
+{
+    if (result.RequiresReplan)
+    {
+        // GOAP replanning was triggered with urgency level
+        await HandleReplanAsync(result.ReplanUrgency);
+    }
+
+    // Process filtered perceptions
+    foreach (var perception in result.ProcessedPerceptions)
+    {
+        // These passed all cognition stages
+    }
+}
+```
+
+**Batch processing** for efficiency when multiple perceptions arrive:
+
+```csharp
+var result = await _cognitionPipeline.ProcessBatchAsync(
+    perceptions,  // IReadOnlyList<object>
+    context,
+    cancellationToken);
+```
+
+### 7.8 Cognition Code Locations
+
+| Component | Location |
+|-----------|----------|
+| `CognitionPipeline` | `lib-behavior/Cognition/CognitionBuilder.cs:448-515` |
+| `CognitionBuilder` | `lib-behavior/Cognition/CognitionBuilder.cs` |
+| `CognitionTemplateRegistry` | `lib-behavior/Cognition/CognitionTemplateRegistry.cs` |
+| `CognitionTypes` | `lib-behavior/Cognition/CognitionTypes.cs` |
+| Cognition Handlers | `lib-behavior/Handlers/` |
+
+### 7.9 Future Extension: Character-Level Cognition Overrides from YAML
+
+The cognition system currently supports:
+- Parsing YAML cognition **templates** (`CognitionTemplateRegistry.ParseYaml()`)
+- Building pipelines with **programmatic** overrides (`CognitionBuilder.Build()`)
+
+A future enhancement would parse character-definition YAML directly into `CognitionOverrides`:
+
+```yaml
+# Character definition with cognition override
+character:
+  id: paranoid_guard
+  cognition:
+    base: humanoid_base
+    overrides:
+      filter:
+        - attention_filter: { max_perceptions: 5, threat_fast_track_threshold: 0.6 }
+      significance:
+        - assess_significance: { weights: { threat: 1.5 } }
+```
+
+**What exists now**:
+- `CognitionTemplateRegistry.ParseYaml()` parses full templates
+- `CognitionBuilder.Build(templateId, overrides)` accepts programmatic overrides
+
+**What to add when needed**:
+1. `CognitionOverridesDto` for YAML parsing
+2. `CharacterDefinitionLoader` or extend entity archetype registry
+3. Wire into entity creation pipeline
+
+**Priority**: LOW - The cognition infrastructure works today with programmatic overrides. YAML parsing becomes valuable when characters are defined in data files rather than code.
+
 ---
 
 ## 8. Cutscene and QTE Orchestration
@@ -898,6 +1054,146 @@ actor.instance.completed        -> ActorCompletedEvent
 character.{characterId}.perception  -> CharacterPerceptionEvent
 character.{characterId}.state       -> StateUpdateEvent
 ```
+
+---
+
+## 13. Game Server Integration (Stride-side)
+
+The actor system requires game server support to complete the perception-cognition-action loop.
+
+### 13.1 Data Flow
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    STRIDE GAME SERVER                          │
+│                                                                │
+│  Character experiences something (sees enemy, finds item)      │
+│                            │                                   │
+│                            │ BROADCAST (fire and forget)       │
+│                            │ Topic: character.{id}.perceptions │
+│                            ▼                                   │
+└────────────────────────────┼───────────────────────────────────┘
+                             │
+                             │ lib-messaging (RabbitMQ fanout)
+                             │
+┌────────────────────────────┼───────────────────────────────────┐
+│                    NPC BRAIN ACTOR                             │
+│                                                                │
+│  Subscribed to perceptions → cognition pipeline → state update │
+│                            │                                   │
+│                            │ lib-mesh invocation               │
+│                            │ Endpoint: character/state-update  │
+│                            ▼                                   │
+└────────────────────────────┼───────────────────────────────────┘
+                             │
+┌────────────────────────────┼───────────────────────────────────┐
+│                    STRIDE GAME SERVER                          │
+│                                                                │
+│  Apply state updates to behavior stack inputs                  │
+│  - feelings.angry = 0.8                                        │
+│  - goals.target = entityX                                      │
+│  - memories.betrayed_by = [X]                                  │
+│                                                                │
+│  BehaviorModelInterpreter reads these and adjusts behavior     │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### 13.2 Game Server Requirements
+
+The game server must implement:
+
+| Requirement | Description |
+|-------------|-------------|
+| **Publish perceptions** | Emit `CharacterPerceptionEvent` to `character.{characterId}.perceptions` fanout when character sees/hears/senses something |
+| **Handle state updates** | Implement `character/state-update` endpoint for lib-mesh invocations |
+| **Apply to behavior inputs** | Write received state (feelings, goals, memories) to behavior stack input slots |
+| **Lizard brain fallback** | Characters function autonomously when no actor is connected |
+
+### 13.3 Publishing Perceptions
+
+When a character experiences something significant:
+
+```csharp
+// Fire-and-forget broadcast - no required subscribers
+await _messageBus.PublishAsync(
+    $"character.{characterId}.perceptions",
+    new CharacterPerceptionEvent
+    {
+        CharacterId = characterId,
+        PerceptionType = PerceptionType.Visual,
+        SourceId = enemyId,
+        SourceType = SourceType.Character,
+        Data = new { distance = 10.5, threat_level = 0.8 },
+        Urgency = 0.9f,
+        Timestamp = DateTimeOffset.UtcNow
+    });
+```
+
+**When to publish perceptions**:
+- Entity enters perception range
+- Combat events (damage taken, ally hurt)
+- Environmental changes (fire started, door opened)
+- Social events (conversation started, gift received)
+- Inventory changes (item found, item stolen)
+
+### 13.4 Handling State Updates
+
+The game server receives state updates via lib-mesh:
+
+```csharp
+// Endpoint: character/state-update
+public async Task<(StatusCodes, StateUpdateResponse?)> HandleStateUpdateAsync(
+    CharacterStateUpdateEvent update,
+    CancellationToken ct)
+{
+    var character = await GetCharacterAsync(update.CharacterId, ct);
+
+    // Apply feelings to behavior input slots
+    foreach (var (feeling, intensity) in update.Feelings)
+    {
+        character.BehaviorStack.SetInput($"feelings.{feeling}", intensity);
+    }
+
+    // Apply goals
+    if (update.Goals?.Target != null)
+    {
+        character.BehaviorStack.SetInput("goals.target", update.Goals.Target);
+    }
+
+    // Apply memories (affect future decisions)
+    foreach (var memory in update.NewMemories)
+    {
+        character.MemoryStore.Add(memory);
+    }
+
+    return (StatusCodes.Ok, new StateUpdateResponse { Applied = true });
+}
+```
+
+### 13.5 Lizard Brain Fallback
+
+Characters must function autonomously when no NPC brain actor is connected:
+
+```csharp
+// In behavior evaluation
+var hasActorUpdates = character.LastStateUpdateTime > TimeSpan.FromSeconds(5);
+
+if (!hasActorUpdates)
+{
+    // Fall back to default behavior stack without actor enrichment
+    // Character still functions, just doesn't grow/evolve
+    return EvaluateDefaultBehavior(character, perceptions);
+}
+
+// Use actor-enriched behavior with feelings, memories, goals
+return EvaluateEnrichedBehavior(character, perceptions, actorState);
+```
+
+**Fallback guarantees**:
+- Characters respond to immediate threats
+- Basic pathfinding and navigation works
+- Combat actions execute based on local state
+- Social interactions use default personality
 
 ---
 
