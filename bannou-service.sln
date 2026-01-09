@@ -5,121 +5,123 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service", "bannou-service\bannou-service.csproj", "{FD238707-4552-4A0E-8F17-6A12CC731B86}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-testing", "lib-testing\lib-testing.csproj", "{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-testing", "plugins\lib-testing\lib-testing.csproj", "{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service.tests", "bannou-service.tests\bannou-service.tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior", "lib-behavior\lib-behavior.csproj", "{BE805579-8F99-455F-BEFA-10D86C5398CD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior", "plugins\lib-behavior\lib-behavior.csproj", "{BE805579-8F99-455F-BEFA-10D86C5398CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website", "lib-website\lib-website.csproj", "{A93EB50A-5892-4C20-AAFB-B865313171F9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website", "plugins\lib-website\lib-website.csproj", "{A93EB50A-5892-4C20-AAFB-B865313171F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session", "lib-game-session\lib-game-session.csproj", "{DCD62DD4-D16A-484B-ACF8-77FB2A107F41}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session", "plugins\lib-game-session\lib-game-session.csproj", "{DCD62DD4-D16A-484B-ACF8-77FB2A107F41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission", "lib-permission\lib-permission.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission", "plugins\lib-permission\lib-permission.csproj", "{32F4896D-B2FF-428F-8A1E-8DAC8BFB6A5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect.tests", "lib-connect.tests\lib-connect.tests.csproj", "{1F56F922-2110-41AD-8BF3-3D939D3F2208}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect.tests", "plugins\lib-connect.tests\lib-connect.tests.csproj", "{1F56F922-2110-41AD-8BF3-3D939D3F2208}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account.tests", "lib-account.tests\lib-account.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account.tests", "plugins\lib-account.tests\lib-account.tests.csproj", "{1673C5ED-F3D5-4CAF-AC85-30F4B08B327A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth.tests", "lib-auth.tests\lib-auth.tests.csproj", "{EC3E7182-F8E6-4EC5-8CA8-A66450C6F8A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth.tests", "plugins\lib-auth.tests\lib-auth.tests.csproj", "{EC3E7182-F8E6-4EC5-8CA8-A66450C6F8A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior.tests", "lib-behavior.tests\lib-behavior.tests.csproj", "{6A5396F4-D04E-458A-8072-8C1E3E90CCC6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behavior.tests", "plugins\lib-behavior.tests\lib-behavior.tests.csproj", "{6A5396F4-D04E-458A-8072-8C1E3E90CCC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session.tests", "lib-game-session.tests\lib-game-session.tests.csproj", "{50202130-A677-4C70-8B69-F41CD4AED472}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-session.tests", "plugins\lib-game-session.tests\lib-game-session.tests.csproj", "{50202130-A677-4C70-8B69-F41CD4AED472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission.tests", "lib-permission.tests\lib-permission.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-permission.tests", "plugins\lib-permission.tests\lib-permission.tests.csproj", "{4E46D6F6-F9BC-4F0F-8738-4B9981E1B2E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website.tests", "lib-website.tests\lib-website.tests.csproj", "{A84EE6E4-8AE3-49BF-B2E3-84C3E6887FCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-website.tests", "plugins\lib-website.tests\lib-website.tests.csproj", "{A84EE6E4-8AE3-49BF-B2E3-84C3E6887FCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account", "lib-account\lib-account.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-account", "plugins\lib-account\lib-account.csproj", "{82C90F41-327D-6127-E805-1C7F1457A851}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "lib-auth\lib-auth.csproj", "{27572A97-101F-0A9C-1C17-F1EA1541A562}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "plugins\lib-auth\lib-auth.csproj", "{27572A97-101F-0A9C-1C17-F1EA1541A562}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect", "lib-connect\lib-connect.csproj", "{12EF86E5-D398-AE42-DAF8-DA3F02333D25}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect", "plugins\lib-connect\lib-connect.csproj", "{12EF86E5-D398-AE42-DAF8-DA3F02333D25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator", "lib-orchestrator\lib-orchestrator.csproj", "{A60FBB3F-4A2F-4BE7-A5A6-DDCB284E3136}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator", "plugins\lib-orchestrator\lib-orchestrator.csproj", "{A60FBB3F-4A2F-4BE7-A5A6-DDCB284E3136}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator.tests", "lib-orchestrator.tests\lib-orchestrator.tests.csproj", "{0ED390BD-B6C1-460D-A084-A5250F644EB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-orchestrator.tests", "plugins\lib-orchestrator.tests\lib-orchestrator.tests.csproj", "{0ED390BD-B6C1-460D-A084-A5250F644EB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription", "lib-subscription\lib-subscription.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription", "plugins\lib-subscription\lib-subscription.csproj", "{A11EF205-6F26-437A-83AB-DC7D9F63E30A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription.tests", "lib-subscription.tests\lib-subscription.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-subscription.tests", "plugins\lib-subscription.tests\lib-subscription.tests.csproj", "{286A644A-F156-4AC1-A39D-D22274CEC723}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service", "lib-game-service\lib-game-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service", "plugins\lib-game-service\lib-game-service.csproj", "{8691A745-EA89-4BC7-B967-AE06A31BC3E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service.tests", "lib-game-service.tests\lib-game-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-game-service.tests", "plugins\lib-game-service.tests\lib-game-service.tests.csproj", "{7B23E5AE-62C7-4357-B0B1-7FC8A6E15F69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character", "lib-character\lib-character.csproj", "{14AE0BB9-08E9-4E97-8D76-47178A8D0D10}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character", "plugins\lib-character\lib-character.csproj", "{14AE0BB9-08E9-4E97-8D76-47178A8D0D10}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character.tests", "lib-character.tests\lib-character.tests.csproj", "{1E4A24F5-CFCA-4301-B5A1-41511127D213}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-character.tests", "plugins\lib-character.tests\lib-character.tests.csproj", "{1E4A24F5-CFCA-4301-B5A1-41511127D213}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship-type", "lib-relationship-type\lib-relationship-type.csproj", "{A590AF5F-3C67-4BA0-B4E6-D8CAD0E3A3E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship-type", "plugins\lib-relationship-type\lib-relationship-type.csproj", "{A590AF5F-3C67-4BA0-B4E6-D8CAD0E3A3E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship-type.tests", "lib-relationship-type.tests\lib-relationship-type.tests.csproj", "{F03D1C26-A013-4963-A5F0-5C39DEA73928}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship-type.tests", "plugins\lib-relationship-type.tests\lib-relationship-type.tests.csproj", "{F03D1C26-A013-4963-A5F0-5C39DEA73928}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-species", "lib-species\lib-species.csproj", "{A15ABCB7-9D94-4994-885D-0CC288DED7E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-species", "plugins\lib-species\lib-species.csproj", "{A15ABCB7-9D94-4994-885D-0CC288DED7E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-species.tests", "lib-species.tests\lib-species.tests.csproj", "{25B44721-9E7E-4D4B-8010-8168B21F9C49}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-species.tests", "plugins\lib-species.tests\lib-species.tests.csproj", "{25B44721-9E7E-4D4B-8010-8168B21F9C49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship", "lib-relationship\lib-relationship.csproj", "{09103E17-88C4-47EA-99D7-A8284CFE6E2E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship", "plugins\lib-relationship\lib-relationship.csproj", "{09103E17-88C4-47EA-99D7-A8284CFE6E2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship.tests", "lib-relationship.tests\lib-relationship.tests.csproj", "{B45BFF1E-C208-4165-A711-EE0103A9AFB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-relationship.tests", "plugins\lib-relationship.tests\lib-relationship.tests.csproj", "{B45BFF1E-C208-4165-A711-EE0103A9AFB5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-location", "lib-location\lib-location.csproj", "{C3DE1299-8C7C-4A7B-94D1-DD36AF8D5E21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-location", "plugins\lib-location\lib-location.csproj", "{C3DE1299-8C7C-4A7B-94D1-DD36AF8D5E21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-location.tests", "lib-location.tests\lib-location.tests.csproj", "{372261A5-954B-49EB-9863-451A1A5FCAEA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-location.tests", "plugins\lib-location.tests\lib-location.tests.csproj", "{372261A5-954B-49EB-9863-451A1A5FCAEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm", "lib-realm\lib-realm.csproj", "{0E2A1DD2-F4E4-4A7F-A82A-6149C0B51424}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm", "plugins\lib-realm\lib-realm.csproj", "{0E2A1DD2-F4E4-4A7F-A82A-6149C0B51424}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm.tests", "lib-realm.tests\lib-realm.tests.csproj", "{791A8F53-2355-47A1-AFAE-6D5741C6285F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm.tests", "plugins\lib-realm.tests\lib-realm.tests.csproj", "{791A8F53-2355-47A1-AFAE-6D5741C6285F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.SDK.Tests", "Bannou.SDK.Tests\Bannou.SDK.Tests.csproj", "{ABCC276B-107B-4DC8-9899-6D7A63EF4543}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice", "lib-voice\lib-voice.csproj", "{6D7A987A-7EFD-4965-90FA-27361CD31233}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice", "plugins\lib-voice\lib-voice.csproj", "{6D7A987A-7EFD-4965-90FA-27361CD31233}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice.tests", "lib-voice.tests\lib-voice.tests.csproj", "{D0433697-6CC3-4607-8856-C7AECA1DCB8A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice.tests", "plugins\lib-voice.tests\lib-voice.tests.csproj", "{D0433697-6CC3-4607-8856-C7AECA1DCB8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-documentation", "lib-documentation\lib-documentation.csproj", "{D9AD8FE6-DE7C-4952-B9DB-369E3C6C4B79}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-documentation", "plugins\lib-documentation\lib-documentation.csproj", "{D9AD8FE6-DE7C-4952-B9DB-369E3C6C4B79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-documentation.tests", "lib-documentation.tests\lib-documentation.tests.csproj", "{1F6E4379-64F1-4595-AB8D-93F4441C3A7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-documentation.tests", "plugins\lib-documentation.tests\lib-documentation.tests.csproj", "{1F6E4379-64F1-4595-AB8D-93F4441C3A7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-asset", "lib-asset\lib-asset.csproj", "{B0D8E910-FE15-406B-8008-C7C869DD4173}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-asset", "plugins\lib-asset\lib-asset.csproj", "{B0D8E910-FE15-406B-8008-C7C869DD4173}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-asset.tests", "lib-asset.tests\lib-asset.tests.csproj", "{49D7E0C2-F200-4239-8DFF-6110035984BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-asset.tests", "plugins\lib-asset.tests\lib-asset.tests.csproj", "{49D7E0C2-F200-4239-8DFF-6110035984BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mesh", "lib-mesh\lib-mesh.csproj", "{0513482D-051C-4041-BC0D-E5573BB31FBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mesh", "plugins\lib-mesh\lib-mesh.csproj", "{0513482D-051C-4041-BC0D-E5573BB31FBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mesh.tests", "lib-mesh.tests\lib-mesh.tests.csproj", "{7538DC4E-235F-4170-9E78-DA055AFF0DD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mesh.tests", "plugins\lib-mesh.tests\lib-mesh.tests.csproj", "{7538DC4E-235F-4170-9E78-DA055AFF0DD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-messaging", "lib-messaging\lib-messaging.csproj", "{C6B91CFA-ADC7-4835-9FCF-BBA90F2F03EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-messaging", "plugins\lib-messaging\lib-messaging.csproj", "{C6B91CFA-ADC7-4835-9FCF-BBA90F2F03EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-messaging.tests", "lib-messaging.tests\lib-messaging.tests.csproj", "{50D2A67C-7E7D-40EF-9487-12BAB2113DDC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-messaging.tests", "plugins\lib-messaging.tests\lib-messaging.tests.csproj", "{50D2A67C-7E7D-40EF-9487-12BAB2113DDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state", "lib-state\lib-state.csproj", "{66B5BDF3-A0D0-4D18-8FDB-8410BAFA7045}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state", "plugins\lib-state\lib-state.csproj", "{66B5BDF3-A0D0-4D18-8FDB-8410BAFA7045}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state.tests", "lib-state.tests\lib-state.tests.csproj", "{0F559C1B-A619-47F3-8C36-6B8354A4F61E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-state.tests", "plugins\lib-state.tests\lib-state.tests.csproj", "{0F559C1B-A619-47F3-8C36-6B8354A4F61E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor", "lib-actor\lib-actor.csproj", "{6B4D6512-2D58-4205-A7A6-455D2C44F638}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor", "plugins\lib-actor\lib-actor.csproj", "{6B4D6512-2D58-4205-A7A6-455D2C44F638}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor.tests", "lib-actor.tests\lib-actor.tests.csproj", "{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-actor.tests", "plugins\lib-actor.tests\lib-actor.tests.csproj", "{8EBD87A6-F8B9-42F1-ABAB-1E5FB874E1F4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test-utilities", "test-utilities\test-utilities.csproj", "{D303EBC6-3680-47B2-9130-2CD8DFF42573}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-achievement", "lib-achievement\lib-achievement.csproj", "{AD4F879C-9F76-476A-884A-6F4093DAE6FD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-achievement", "plugins\lib-achievement\lib-achievement.csproj", "{AD4F879C-9F76-476A-884A-6F4093DAE6FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-achievement.tests", "lib-achievement.tests\lib-achievement.tests.csproj", "{B18E3175-A59A-4BDF-8FAD-6B19532C9B4F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-achievement.tests", "plugins\lib-achievement.tests\lib-achievement.tests.csproj", "{B18E3175-A59A-4BDF-8FAD-6B19532C9B4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-analytics", "lib-analytics\lib-analytics.csproj", "{02AB9008-C879-42B3-BA6A-7C4913085CC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-analytics", "plugins\lib-analytics\lib-analytics.csproj", "{02AB9008-C879-42B3-BA6A-7C4913085CC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-analytics.tests", "lib-analytics.tests\lib-analytics.tests.csproj", "{E0E9BDE1-A1DD-495F-8565-A34B4DF9A365}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-analytics.tests", "plugins\lib-analytics.tests\lib-analytics.tests.csproj", "{E0E9BDE1-A1DD-495F-8565-A34B4DF9A365}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-leaderboard", "lib-leaderboard\lib-leaderboard.csproj", "{0601F33A-C7BD-4D21-9A0A-8D185193747E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-leaderboard", "plugins\lib-leaderboard\lib-leaderboard.csproj", "{0601F33A-C7BD-4D21-9A0A-8D185193747E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-leaderboard.tests", "lib-leaderboard.tests\lib-leaderboard.tests.csproj", "{6A4D5813-8A02-4BEC-91CA-B96F08B14FBA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-leaderboard.tests", "plugins\lib-leaderboard.tests\lib-leaderboard.tests.csproj", "{6A4D5813-8A02-4BEC-91CA-B96F08B14FBA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mapping", "lib-mapping\lib-mapping.csproj", "{B7DC15A7-DE5D-4C79-8BDD-2745A7642E5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mapping", "plugins\lib-mapping\lib-mapping.csproj", "{B7DC15A7-DE5D-4C79-8BDD-2745A7642E5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mapping.tests", "lib-mapping.tests\lib-mapping.tests.csproj", "{C0377326-79AE-450A-B5A6-CE50EC240EE0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-mapping.tests", "plugins\lib-mapping.tests\lib-mapping.tests.csproj", "{C0377326-79AE-450A-B5A6-CE50EC240EE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

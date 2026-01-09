@@ -173,17 +173,17 @@ clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (impro
 clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
-		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
-			rm -rf "./lib-$(PLUGIN)/Generated"; \
-			echo "  Removed lib-$(PLUGIN)/Generated"; \
+		if [ -d "./plugins/lib-$(PLUGIN)/Generated" ]; then \
+			rm -rf "./plugins/lib-$(PLUGIN)/Generated"; \
+			echo "  Removed plugins/lib-$(PLUGIN)/Generated"; \
 		else \
-			echo "  No Generated directory found for lib-$(PLUGIN)"; \
+			echo "  No Generated directory found for plugins/lib-$(PLUGIN)"; \
 		fi; \
 		echo "✅ Clean completed for plugin: $(PLUGIN)"; \
 	else \
 		$(MAKE) clean-build-artifacts; \
 		echo "🧹 Cleaning all generated files..."; \
-		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		find . -path "./plugins/lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
 		rm -rf bannou-service/Generated 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \

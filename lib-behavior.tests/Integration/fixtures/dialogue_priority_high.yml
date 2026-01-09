@@ -1,4 +1,0 @@
-overrides:
-  - condition: "true"
-    text: "High priority"
-    priority: 100

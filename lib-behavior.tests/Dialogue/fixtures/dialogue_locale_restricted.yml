@@ -1,8 +1,0 @@
-localizations:
-  en: "English default"
-  es: "Spanish default"
-overrides:
-  - condition: "${always_true}"
-    text: "Spanish only override"
-    priority: 10
-    locale: es

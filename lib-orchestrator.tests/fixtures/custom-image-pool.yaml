@@ -1,9 +1,0 @@
-name: custom-image-pool
-description: Pool with custom image
-
-processingPools:
-  - poolType: asset-processor
-    plugin: asset
-    image: myregistry/asset-processor:v2
-    minInstances: 1
-    maxInstances: 5

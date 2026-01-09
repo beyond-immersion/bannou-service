@@ -52,7 +52,7 @@
       <Compile Include="../bannou-service/Generated/Models/*.cs" />
       <Compile Include="../bannou-service/Generated/Events/*.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
-      <Compile Include="../lib-*/Generated/*ClientEventsModels.cs" />
+      <Compile Include="../plugins/lib-*/Generated/*ClientEventsModels.cs" />
     </ItemGroup>
   </Target>
 
@@ -72,11 +72,11 @@
 
   <!-- WebSocket Binary Protocol -->
   <ItemGroup>
-    <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
-    <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
-    <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
-    <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
-    <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../plugins/lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../plugins/lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../plugins/lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../plugins/lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../plugins/lib-connect/Protocol/ConnectionState.cs')" />
   </ItemGroup>
 
   <!-- Game transport protocol primitives -->
@@ -88,10 +88,10 @@
 
   <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
   <ItemGroup>
-    <Compile Include="../lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../lib-asset/Bundles/BannouBundleReader.cs')" />
-    <Compile Include="../lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../lib-asset/Bundles/BundleManifest.cs')" />
-    <Compile Include="../lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../lib-asset/Bundles/BundleIndex.cs')" />
-    <Compile Include="../lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../lib-asset/Bundles/BundleValidator.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleManifest.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleIndex.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleValidator.cs')" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->

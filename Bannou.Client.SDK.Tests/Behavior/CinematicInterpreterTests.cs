@@ -91,8 +91,8 @@ public class CinematicInterpreterTests
         var interpreter = new CinematicInterpreter(model);
 
         Assert.NotNull(interpreter);
-        Assert.False(interpreter.HasActiveExtension);
-        Assert.Null(interpreter.ActiveContinuationPoint);
+        Assert.False(interpreter.IsWaitingForExtension);
+        Assert.Null(interpreter.WaitingContinuationPoint);
     }
 
     [Fact]
@@ -103,7 +103,8 @@ public class CinematicInterpreterTests
 
         var result = interpreter.Evaluate();
 
-        Assert.False(result.IsAtContinuationPoint);
+        Assert.True(result.IsCompleted);
+        Assert.False(result.IsWaiting);
         Assert.Equal(42.0, interpreter.OutputState[0]);
     }
 
@@ -166,8 +167,8 @@ public class CinematicInterpreterTests
 
         interpreter.RegisterExtension("before_resolution", extensionModel);
 
-        // Extension is registered but not active until continuation point is hit
-        Assert.False(interpreter.HasActiveExtension);
+        // Extension is registered but interpreter is not waiting until a continuation point is hit
+        Assert.False(interpreter.IsWaitingForExtension);
     }
 
     [Fact]
@@ -203,31 +204,47 @@ public class CinematicInterpreterTests
     }
 
     // =========================================================================
-    // CONTINUATION POINT ACTIVATION TESTS
+    // RESET TESTS
     // =========================================================================
 
     [Fact]
-    public void ActivateContinuationPoint_ValidPoint_SetsActiveState()
+    public void Reset_ClearsInputState()
     {
         var model = CreateModel(
             CreateSimpleBytecode(),
-            constants: new[] { 42.0 },
-            continuationPoints: new[]
-            {
-                ContinuationPoint.Create("test_point", 0, TimeSpan.FromSeconds(2), 0, 0)
-            },
-            strings: new[] { "test_point" });
+            constants: new[] { 42.0 });
 
         var interpreter = new CinematicInterpreter(model);
+        interpreter.SetInput("input0", 100.0);
 
-        interpreter.ActivateContinuationPoint("test_point");
+        interpreter.Reset();
 
-        Assert.True(interpreter.HasActiveExtension);
-        Assert.Equal("test_point", interpreter.ActiveContinuationPoint);
+        Assert.False(interpreter.IsWaitingForExtension);
+        Assert.Null(interpreter.WaitingContinuationPoint);
+        Assert.Equal(0.0, interpreter.InputState[0]); // Reset to default
     }
 
+    // =========================================================================
+    // FORCE RESUME TESTS
+    // =========================================================================
+
     [Fact]
-    public void ActivateContinuationPoint_WithExtension_ExecutesExtension()
+    public void ForceResumeWithDefaultFlow_WhenNotWaiting_ReturnsFalse()
+    {
+        var model = CreateModel(CreateSimpleBytecode(), constants: new[] { 42.0 });
+        var interpreter = new CinematicInterpreter(model);
+
+        var resumed = interpreter.ForceResumeWithDefaultFlow();
+
+        Assert.False(resumed);
+    }
+
+    // =========================================================================
+    // INJECT EXTENSION TESTS
+    // =========================================================================
+
+    [Fact]
+    public void InjectExtension_WhenNotWaiting_RegistersForFutureUse()
     {
         var baseModel = CreateModel(
             CreateSimpleBytecode(),
@@ -241,85 +258,47 @@ public class CinematicInterpreterTests
         var extensionModel = CreateModel(CreateSimpleBytecode(), constants: new[] { 99.0 });
         var interpreter = new CinematicInterpreter(baseModel);
 
-        interpreter.RegisterExtension("test_point", extensionModel);
-        interpreter.ActivateContinuationPoint("test_point");
+        // Inject when not waiting - should register for future use
+        var accepted = interpreter.InjectExtension("test_point", extensionModel);
 
-        var result = interpreter.Evaluate();
+        Assert.False(accepted); // Not immediately accepted since not waiting
+        Assert.False(interpreter.IsWaitingForExtension);
+    }
 
-        Assert.True(result.IsAtContinuationPoint);
+    // =========================================================================
+    // EVALUATION RESULT TESTS
+    // =========================================================================
+
+    [Fact]
+    public void CinematicEvaluationResult_Completed_HasCorrectProperties()
+    {
+        var result = new CinematicEvaluationResult(CinematicStatus.Completed, null, null);
+
+        Assert.True(result.IsCompleted);
+        Assert.False(result.IsWaiting);
+        Assert.False(result.ExtensionWasExecuted);
+    }
+
+    [Fact]
+    public void CinematicEvaluationResult_WaitingForExtension_HasCorrectProperties()
+    {
+        var result = new CinematicEvaluationResult(CinematicStatus.WaitingForExtension, "test_point", null);
+
+        Assert.False(result.IsCompleted);
+        Assert.True(result.IsWaiting);
+        Assert.False(result.ExtensionWasExecuted);
         Assert.Equal("test_point", result.ContinuationPointName);
-        Assert.Equal(99.0, interpreter.OutputState[0]); // Extension's output
     }
 
     [Fact]
-    public void CompleteExtension_ClearsActiveState()
+    public void CinematicEvaluationResult_ExtensionExecuted_HasCorrectProperties()
     {
-        var model = CreateModel(
-            CreateSimpleBytecode(),
-            constants: new[] { 42.0 },
-            continuationPoints: new[]
-            {
-                ContinuationPoint.Create("test_point", 0, TimeSpan.FromSeconds(2), 0, 0)
-            },
-            strings: new[] { "test_point" });
+        var result = new CinematicEvaluationResult(CinematicStatus.ExtensionExecuted, "test_point", "message");
 
-        var interpreter = new CinematicInterpreter(model);
-        interpreter.ActivateContinuationPoint("test_point");
-
-        interpreter.CompleteExtension();
-
-        Assert.False(interpreter.HasActiveExtension);
-        Assert.Null(interpreter.ActiveContinuationPoint);
-    }
-
-    // =========================================================================
-    // RESET TESTS
-    // =========================================================================
-
-    [Fact]
-    public void Reset_ClearsAllState()
-    {
-        var model = CreateModel(
-            CreateSimpleBytecode(),
-            constants: new[] { 42.0 },
-            continuationPoints: new[]
-            {
-                ContinuationPoint.Create("test_point", 0, TimeSpan.FromSeconds(2), 0, 0)
-            },
-            strings: new[] { "test_point" });
-
-        var interpreter = new CinematicInterpreter(model);
-        interpreter.SetInput("input0", 100.0);
-        interpreter.ActivateContinuationPoint("test_point");
-
-        interpreter.Reset();
-
-        Assert.False(interpreter.HasActiveExtension);
-        Assert.Null(interpreter.ActiveContinuationPoint);
-        Assert.Equal(0.0, interpreter.InputState[0]); // Reset to default
-    }
-
-    // =========================================================================
-    // TIMEOUT BEHAVIOR TESTS
-    // =========================================================================
-
-    [Fact]
-    public void Evaluate_WithTimeoutOverride_UsesOverride()
-    {
-        var model = CreateModel(
-            CreateSimpleBytecode(),
-            constants: new[] { 42.0 },
-            continuationPoints: new[]
-            {
-                ContinuationPoint.Create("test_point", 0, TimeSpan.FromSeconds(2), 0, 0)
-            },
-            strings: new[] { "test_point" });
-
-        var interpreter = new CinematicInterpreter(model);
-
-        // Use a very short timeout override (1ms)
-        interpreter.ActivateContinuationPoint("test_point", timeoutMs: 1);
-
-        Assert.True(interpreter.HasActiveExtension);
+        Assert.False(result.IsCompleted);
+        Assert.False(result.IsWaiting);
+        Assert.True(result.ExtensionWasExecuted);
+        Assert.Equal("test_point", result.ContinuationPointName);
+        Assert.Equal("message", result.Message);
     }
 }

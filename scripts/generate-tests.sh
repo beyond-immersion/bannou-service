@@ -19,7 +19,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="$2"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-TEST_PROJECT_DIR="../lib-${SERVICE_NAME}.tests"
+TEST_PROJECT_DIR="../plugins/lib-${SERVICE_NAME}.tests"
 TEST_PROJECT_FILE="$TEST_PROJECT_DIR/lib-${SERVICE_NAME}.tests.csproj"
 
 echo -e "${YELLOW}🧪 Generating unit test project for: $SERVICE_NAME${NC}"
@@ -76,7 +76,7 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
 
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
-    <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
+    <ProjectReference Include="../plugins/lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../test-utilities/test-utilities.csproj" />
   </ItemGroup>
@@ -100,7 +100,7 @@ ASSEMBLYEOF
 
     # Add project to solution
     # Note: Path must be relative from repo root, not from scripts directory
-    TEST_PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
+    TEST_PROJECT_FILE_FROM_ROOT="plugins/lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
     echo -e "${YELLOW}🔗 Adding test project to solution...${NC}"
 
     ORIGINAL_DIR="$(pwd)"
@@ -119,7 +119,7 @@ else
 
     # Still try to add to solution in case it's not there
     # Note: Path must be relative from repo root, not from scripts directory
-    TEST_PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
+    TEST_PROJECT_FILE_FROM_ROOT="plugins/lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
 
     ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."

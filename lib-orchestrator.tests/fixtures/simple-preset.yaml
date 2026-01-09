@@ -1,8 +1,0 @@
-name: simple-preset
-description: Simple preset without pools
-
-topology:
-  nodes:
-    - name: test-node
-      services:
-        - auth

@@ -1,6 +1,0 @@
-name: minimal-pool
-description: Minimal pool config
-
-processingPools:
-  - poolType: test-pool
-    plugin: test

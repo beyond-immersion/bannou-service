@@ -1,7 +1,0 @@
-metadata:
-  id: metadata-template
-  description: Uses metadata format
-  type: cognition
-stages:
-  filter:
-    handlers: []

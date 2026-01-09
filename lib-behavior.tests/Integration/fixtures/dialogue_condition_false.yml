@@ -1,6 +1,0 @@
-overrides:
-  - condition: "false"
-    text: "Should not appear"
-    priority: 10
-localizations:
-  en: "Localized text"

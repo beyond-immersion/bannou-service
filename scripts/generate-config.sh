@@ -20,7 +20,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-configuration.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-OUTPUT_DIR="../lib-${SERVICE_NAME}/Generated"
+OUTPUT_DIR="../plugins/lib-${SERVICE_NAME}/Generated"
 OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}ServiceConfiguration.cs"
 
 echo -e "${YELLOW}🔧 Generating configuration for service: $SERVICE_NAME${NC}"

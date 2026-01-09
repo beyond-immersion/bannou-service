@@ -1,6 +1,0 @@
-ui:
-  menu:
-    start: "Start Game"
-    quit: "Quit Game"
-dialogue:
-  greeting: "Hello!"

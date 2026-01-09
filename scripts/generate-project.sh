@@ -20,7 +20,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-SERVICE_DIR="../lib-${SERVICE_NAME}"
+SERVICE_DIR="../plugins/lib-${SERVICE_NAME}"
 PROJECT_FILE="$SERVICE_DIR/lib-${SERVICE_NAME}.csproj"
 
 echo -e "${YELLOW}🔧 Creating service plugin project: $SERVICE_NAME${NC}"
@@ -96,7 +96,7 @@ ASSEMBLYEOF
 
     # Add project to solution
     # Note: Path must be relative from repo root, not from scripts directory
-    PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
+    PROJECT_FILE_FROM_ROOT="plugins/lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
     echo -e "${YELLOW}🔗 Adding project to solution...${NC}"
 
     ORIGINAL_DIR="$(pwd)"
@@ -115,7 +115,7 @@ else
 
     # Still try to add to solution in case it's not there
     # Note: Path must be relative from repo root, not from scripts directory
-    PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
+    PROJECT_FILE_FROM_ROOT="plugins/lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
 
     ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."

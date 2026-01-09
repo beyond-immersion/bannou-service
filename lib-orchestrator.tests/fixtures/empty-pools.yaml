@@ -1,4 +1,0 @@
-name: empty-pools
-description: Preset with empty pools list
-
-processingPools: []

@@ -1,9 +1,0 @@
-localizations:
-  en: "Default text"
-overrides:
-  - condition: "${player.reputation > 50}"
-    text: "VIP greeting!"
-    priority: 10
-  - condition: "${time.hour >= 20}"
-    text: "We're closing soon!"
-    priority: 5
