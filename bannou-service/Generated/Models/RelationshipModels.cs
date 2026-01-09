@@ -35,6 +35,7 @@ using System = global::System;
 /// <br/>- ORGANIZATION: Guilds, companies, groups
 /// <br/>- FACTION: Political or social factions
 /// <br/>- REALM: Game realms/worlds
+/// <br/>- SOUL: Immortal soul entity for reincarnation chains
 /// <br/>- OTHER: Catch-all for future entity types
 /// <br/>
 /// </summary>
@@ -67,8 +68,11 @@ public enum EntityType
     [System.Runtime.Serialization.EnumMember(Value = @"REALM")]
     REALM = 7,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"SOUL")]
+    SOUL = 8,
+
     [System.Runtime.Serialization.EnumMember(Value = @"OTHER")]
-    OTHER = 8,
+    OTHER = 9,
 
 }
 #pragma warning restore CS1591

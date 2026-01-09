@@ -22167,6 +22167,1288 @@
             Reason for leaving (death, transfer, deletion)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient">
+            <summary>
+            Client interface for the CharacterHistory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.RecordParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record character participation in a historical event
+            </summary>
+            <remarks>
+            Records that a character participated in a historical event. Events are
+            <br/>identified by eventId (typically managed by a game-specific event system).
+            <br/>The significance rating affects how strongly this event influences behavior.
+            </remarks>
+            <returns>Participation recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.GetParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all historical events a character participated in
+            </summary>
+            <remarks>
+            Retrieves all historical event participation records for a character.
+            <br/>Supports filtering by event category and minimum significance.
+            </remarks>
+            <returns>Participation records retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.GetEventParticipantsAsync(BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all characters who participated in a historical event
+            </summary>
+            <remarks>
+            Retrieves all characters who participated in a specific historical event.
+            <br/>Useful for generating event summaries or finding related characters.
+            </remarks>
+            <returns>Participants retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.DeleteParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a participation record
+            </summary>
+            <remarks>
+            Removes a specific participation record. Used during character compression
+            <br/>or to correct erroneous records.
+            </remarks>
+            <returns>Participation deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.GetBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get machine-readable backstory elements for behavior system
+            </summary>
+            <remarks>
+            Retrieves structured backstory elements for a character. These elements
+            <br/>are machine-readable key-value pairs used by the behavior system for
+            <br/>decision-making, not narrative text for players.
+            </remarks>
+            <returns>Backstory retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.SetBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set backstory elements for a character
+            </summary>
+            <remarks>
+            Creates or updates backstory elements for a character. Can either replace
+            <br/>all existing elements or merge with them based on the replaceExisting flag.
+            </remarks>
+            <returns>Backstory saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.AddBackstoryElementAsync(BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add a single backstory element
+            </summary>
+            <remarks>
+            Adds a single backstory element to a character's existing backstory.
+            <br/>If an element with the same type and key exists, it will be updated.
+            </remarks>
+            <returns>Element added successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.DeleteBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all backstory for a character
+            </summary>
+            <remarks>
+            Removes all backstory elements for a character. Used during character
+            <br/>compression or deletion.
+            </remarks>
+            <returns>Backstory deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.DeleteAllHistoryAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all history data for a character
+            </summary>
+            <remarks>
+            Removes all history data (participation records and backstory) for a
+            <br/>character. Used during character compression after summarization.
+            </remarks>
+            <returns>All history deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient.SummarizeHistoryAsync(BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate text summaries for character compression
+            </summary>
+            <remarks>
+            Generates text summaries of a character's backstory and historical
+            <br/>participation for inclusion in the CharacterArchive. Called during
+            <br/>character compression before history data is deleted.
+            </remarks>
+            <returns>Summaries generated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient">
+            <summary>
+            Client implementation for the CharacterHistory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.RecordParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record character participation in a historical event
+            </summary>
+            <remarks>
+            Records that a character participated in a historical event. Events are
+            <br/>identified by eventId (typically managed by a game-specific event system).
+            <br/>The significance rating affects how strongly this event influences behavior.
+            </remarks>
+            <returns>Participation recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.GetParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all historical events a character participated in
+            </summary>
+            <remarks>
+            Retrieves all historical event participation records for a character.
+            <br/>Supports filtering by event category and minimum significance.
+            </remarks>
+            <returns>Participation records retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.GetEventParticipantsAsync(BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all characters who participated in a historical event
+            </summary>
+            <remarks>
+            Retrieves all characters who participated in a specific historical event.
+            <br/>Useful for generating event summaries or finding related characters.
+            </remarks>
+            <returns>Participants retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.DeleteParticipationAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a participation record
+            </summary>
+            <remarks>
+            Removes a specific participation record. Used during character compression
+            <br/>or to correct erroneous records.
+            </remarks>
+            <returns>Participation deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.GetBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get machine-readable backstory elements for behavior system
+            </summary>
+            <remarks>
+            Retrieves structured backstory elements for a character. These elements
+            <br/>are machine-readable key-value pairs used by the behavior system for
+            <br/>decision-making, not narrative text for players.
+            </remarks>
+            <returns>Backstory retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.SetBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set backstory elements for a character
+            </summary>
+            <remarks>
+            Creates or updates backstory elements for a character. Can either replace
+            <br/>all existing elements or merge with them based on the replaceExisting flag.
+            </remarks>
+            <returns>Backstory saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.AddBackstoryElementAsync(BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add a single backstory element
+            </summary>
+            <remarks>
+            Adds a single backstory element to a character's existing backstory.
+            <br/>If an element with the same type and key exists, it will be updated.
+            </remarks>
+            <returns>Element added successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.DeleteBackstoryAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all backstory for a character
+            </summary>
+            <remarks>
+            Removes all backstory elements for a character. Used during character
+            <br/>compression or deletion.
+            </remarks>
+            <returns>Backstory deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.DeleteAllHistoryAsync(BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all history data for a character
+            </summary>
+            <remarks>
+            Removes all history data (participation records and backstory) for a
+            <br/>character. Used during character compression after summarization.
+            </remarks>
+            <returns>All history deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.SummarizeHistoryAsync(BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate text summaries for character compression
+            </summary>
+            <remarks>
+            Generates text summaries of a character's backstory and historical
+            <br/>participation for inclusion in the CharacterArchive. Called during
+            <br/>character compression before history data is deleted.
+            </remarks>
+            <returns>Summaries generated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterHistory.CharacterHistoryClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.EventCategory">
+            <summary>
+            Categories of historical events that characters can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.ParticipationRole">
+            <summary>
+            How the character participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryElementType">
+            <summary>
+            Types of backstory elements. Each type represents a different aspect
+            <br/>of the character's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation">
+            <summary>
+            Record of a character's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.CharacterId">
+            <summary>
+            ID of the character who participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Role">
+            <summary>
+            How the character participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Significance">
+            <summary>
+            How significant this event was for the character (0.0 to 1.0).
+            <br/>Affects behavior system weighting of this memory.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement">
+            <summary>
+            A machine-readable backstory element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.ElementType">
+            <summary>
+            Category of this backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Key">
+            <summary>
+            Machine-readable key (e.g., "homeland", "trained_by", "past_job").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Value">
+            <summary>
+            Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse">
+            <summary>
+            Complete backstory data for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.CharacterId">
+            <summary>
+            ID of the character this backstory belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.Elements">
+            <summary>
+            All backstory elements for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.CreatedAt">
+            <summary>
+            When this backstory was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.UpdatedAt">
+            <summary>
+            When this backstory was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest">
+            <summary>
+            Request payload for recording event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.CharacterId">
+            <summary>
+            ID of the character who participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventName">
+            <summary>
+            Name of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventCategory">
+            <summary>
+            Category of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Role">
+            <summary>
+            How the character participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Significance">
+            <summary>
+            How significant this event was for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Metadata">
+            <summary>
+            Optional event-specific details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest">
+            <summary>
+            Request payload for getting a character's event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.CharacterId">
+            <summary>
+            ID of the character to get participation for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.EventCategory">
+            <summary>
+            Filter by event category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.MinimumSignificance">
+            <summary>
+            Filter by minimum significance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest">
+            <summary>
+            Request payload for getting participants of an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.Role">
+            <summary>
+            Filter by participation role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest">
+            <summary>
+            Request payload for deleting a participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest.ParticipationId">
+            <summary>
+            ID of the participation record to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest">
+            <summary>
+            Request payload for getting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to get backstory for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.ElementTypes">
+            <summary>
+            Filter by element types (null for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.MinimumStrength">
+            <summary>
+            Filter by minimum strength
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest">
+            <summary>
+            Request payload for setting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to set backstory for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.Elements">
+            <summary>
+            Backstory elements to set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.ReplaceExisting">
+            <summary>
+            If true, replace all existing elements.
+            <br/>If false, merge with existing (update matching type+key pairs).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest">
+            <summary>
+            Request payload for adding a single backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest.CharacterId">
+            <summary>
+            ID of the character to add element to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest.Element">
+            <summary>
+            The backstory element to add
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest">
+            <summary>
+            Request payload for deleting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to delete backstory for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest">
+            <summary>
+            Request payload for deleting all history data for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest.CharacterId">
+            <summary>
+            ID of the character to delete history for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest">
+            <summary>
+            Request payload for generating history summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.CharacterId">
+            <summary>
+            ID of the character to summarize history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.MaxBackstoryPoints">
+            <summary>
+            Maximum number of key backstory points to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.MaxLifeEvents">
+            <summary>
+            Maximum number of major life events to include
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse">
+            <summary>
+            Paginated list of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.Participations">
+            <summary>
+            List of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.TotalCount">
+            <summary>
+            Total number of matching records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.Page">
+            <summary>
+            Current page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.HasNextPage">
+            <summary>
+            Whether there are more results after this page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.HasPreviousPage">
+            <summary>
+            Whether there are results before this page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse">
+            <summary>
+            Result of deleting all history data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.CharacterId">
+            <summary>
+            ID of the character whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.BackstoryDeleted">
+            <summary>
+            Whether backstory was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse">
+            <summary>
+            Generated text summaries for character compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.CharacterId">
+            <summary>
+            ID of the character summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.KeyBackstoryPoints">
+            <summary>
+            Key backstory elements as text summaries.
+            <br/>e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.MajorLifeEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient">
+            <summary>
+            Client interface for the CharacterPersonality service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.GetPersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get personality for a character
+            </summary>
+            <remarks>
+            Retrieves the personality profile for a character. Returns 404 if no
+            <br/>personality has been defined for this character.
+            </remarks>
+            <returns>Personality retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.SetPersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create or update personality for a character
+            </summary>
+            <remarks>
+            Creates or replaces the personality profile for a character. If a personality
+            <br/>already exists, it will be completely replaced (not merged).
+            </remarks>
+            <returns>Personality saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.RecordExperienceAsync(BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record an experience that may evolve personality
+            </summary>
+            <remarks>
+            Records a significant experience for a character. The system evaluates whether
+            <br/>the experience causes trait evolution based on:
+            <br/>- Experience type and its typical trait impacts
+            <br/>- Experience intensity (higher = more likely to cause change)
+            <br/>- Current trait values and resistance
+            <br/>- Random factor for rarity (most experiences don't cause changes)
+            <br/>
+            <br/>This endpoint is typically called by the behavior service when significant
+            <br/>events occur during gameplay.
+            </remarks>
+            <returns>Experience recorded and evaluated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.BatchGetPersonalitiesAsync(BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get personalities for multiple characters
+            </summary>
+            <remarks>
+            Bulk load personalities for multiple characters. Used by the behavior service
+            <br/>for efficient region initialization. Characters without personalities are
+            <br/>returned in the notFound array.
+            <br/>
+            <br/>Maximum 100 characters per request.
+            </remarks>
+            <returns>Personalities retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.DeletePersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete personality for a character
+            </summary>
+            <remarks>
+            Removes the personality profile for a character. Typically called during
+            <br/>character compression or deletion.
+            </remarks>
+            <returns>Personality deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient">
+            <summary>
+            Client implementation for the CharacterPersonality service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.GetPersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get personality for a character
+            </summary>
+            <remarks>
+            Retrieves the personality profile for a character. Returns 404 if no
+            <br/>personality has been defined for this character.
+            </remarks>
+            <returns>Personality retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.SetPersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create or update personality for a character
+            </summary>
+            <remarks>
+            Creates or replaces the personality profile for a character. If a personality
+            <br/>already exists, it will be completely replaced (not merged).
+            </remarks>
+            <returns>Personality saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.RecordExperienceAsync(BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record an experience that may evolve personality
+            </summary>
+            <remarks>
+            Records a significant experience for a character. The system evaluates whether
+            <br/>the experience causes trait evolution based on:
+            <br/>- Experience type and its typical trait impacts
+            <br/>- Experience intensity (higher = more likely to cause change)
+            <br/>- Current trait values and resistance
+            <br/>- Random factor for rarity (most experiences don't cause changes)
+            <br/>
+            <br/>This endpoint is typically called by the behavior service when significant
+            <br/>events occur during gameplay.
+            </remarks>
+            <returns>Experience recorded and evaluated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.BatchGetPersonalitiesAsync(BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get personalities for multiple characters
+            </summary>
+            <remarks>
+            Bulk load personalities for multiple characters. Used by the behavior service
+            <br/>for efficient region initialization. Characters without personalities are
+            <br/>returned in the notFound array.
+            <br/>
+            <br/>Maximum 100 characters per request.
+            </remarks>
+            <returns>Personalities retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.DeletePersonalityAsync(BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete personality for a character
+            </summary>
+            <remarks>
+            Removes the personality profile for a character. Typically called during
+            <br/>character compression or deletion.
+            </remarks>
+            <returns>Personality deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.TraitAxis">
+            <summary>
+            Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
+            <br/>Based on psychological research (Big Five + game-relevant extensions).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.ExperienceType">
+            <summary>
+            Categories of significant experiences that may cause personality evolution.
+            <br/>Each type has predefined trait impact tendencies.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.TraitValue">
+            <summary>
+            A single personality trait with its current value and evolution history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.Axis">
+            <summary>
+            The personality axis this value represents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.Value">
+            <summary>
+            Current trait value on the spectrum (-1.0 to +1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.LastChangedAt">
+            <summary>
+            When this trait last evolved (null if never changed since creation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.ChangeCount">
+            <summary>
+            Number of times this trait has evolved
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse">
+            <summary>
+            Complete personality profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.CharacterId">
+            <summary>
+            Character this personality belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.Traits">
+            <summary>
+            All trait axis values for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.Version">
+            <summary>
+            Personality version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.ArchetypeHint">
+            <summary>
+            Optional archetype code for behavior optimization (e.g., "guardian",
+            <br/>"merchant", "scholar", "trickster"). Allows behavior system to use
+            <br/>pre-compiled behavior variants for common personality patterns.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.CreatedAt">
+            <summary>
+            When this personality was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.UpdatedAt">
+            <summary>
+            When this personality was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult">
+            <summary>
+            Result of recording an experience, including any personality evolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.CharacterId">
+            <summary>
+            Character who had the experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.ExperienceRecorded">
+            <summary>
+            Whether the experience was recorded successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.PersonalityEvolved">
+            <summary>
+            Whether any traits changed as a result of this experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.ChangedTraits">
+            <summary>
+            Traits that evolved (empty array if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.NewVersion">
+            <summary>
+            New personality version if evolved (null if no change)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest">
+            <summary>
+            Request payload for retrieving a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to get personality for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest">
+            <summary>
+            Request payload for creating or updating a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to set personality for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.Traits">
+            <summary>
+            Initial trait values. All 8 trait axes should be provided.
+            <br/>Missing axes will default to 0.0 (neutral).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.ArchetypeHint">
+            <summary>
+            Optional archetype code for behavior optimization
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest">
+            <summary>
+            Request payload for recording an experience that may evolve personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.CharacterId">
+            <summary>
+            ID of the character who had the experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.ExperienceType">
+            <summary>
+            Category of significant experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.Intensity">
+            <summary>
+            How significant the experience was (0.0 to 1.0).
+            <br/>Higher intensity = higher probability of trait evolution.
+            <br/>Typical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.ContextData">
+            <summary>
+            Optional context for logging and debugging.
+            <br/>Not used in evolution calculations.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest">
+            <summary>
+            Request payload for bulk loading personalities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest.CharacterIds">
+            <summary>
+            IDs of characters to get personalities for (max 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest">
+            <summary>
+            Request payload for deleting a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to delete personality for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse">
+            <summary>
+            Response containing personalities for multiple characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse.Personalities">
+            <summary>
+            Successfully retrieved personalities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse.NotFound">
+            <summary>
+            Character IDs that have no personality defined
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.IConnectClient">
             <summary>
             Client interface for the Connect service.
@@ -36884,6 +38166,7 @@
             <br/>- ORGANIZATION: Guilds, companies, groups
             <br/>- FACTION: Political or social factions
             <br/>- REALM: Game realms/worlds
+            <br/>- SOUL: Immortal soul entity for reincarnation chains
             <br/>- OTHER: Catch-all for future entity types
             <br/>
             </summary>
