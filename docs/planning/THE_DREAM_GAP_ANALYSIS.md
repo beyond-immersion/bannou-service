@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-08 (Updated for Behavior Enhancements Phase 6 + Actor Plugin completion)
+> **Revised**: 2026-01-09 (Updated for lib-character-personality/history + BackstoryProvider + Query API completion)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -258,8 +258,10 @@ The `Bannou.SDK` now provides comprehensive game server integration:
 | ~~Attach point mechanism~~ | ~~Extension targeting~~ | ✅ ContinuationPoint, AttachPointHash |
 | ~~Extension delivery protocol~~ | ~~Game server updates~~ | ✅ CinematicExtensionAvailableEvent |
 | ~~Actor Plugin implementation~~ | ~~Actor lifecycle~~ | ✅ lib-actor (6,934 LOC) |
-| Event Brain actor schema | Orchestration | High |
-| Character Agent query API | Option generation | High |
+| ~~Character Agent query API~~ | ~~Option generation~~ | ✅ `/actor/query-options` (generalized) |
+| ~~Character personality/backstory~~ | ~~Backstory-aware behavior~~ | ✅ lib-character-personality, lib-character-history |
+| ~~ABML variable providers~~ | ~~Personality/backstory in expressions~~ | ✅ PersonalityProvider, CombatPreferencesProvider, BackstoryProvider |
+| Event Brain actor schema | Orchestration | High (design complete, implementation in progress) |
 | Static import resolution | DRY authoring | Medium |
 
 ---
@@ -542,9 +544,11 @@ The streaming composition model ensures graceful degradation:
 |-----|-------------|--------|--------------|
 | ~~**Bytecode Compiler**~~ | ~~AST → bytecode compilation~~ | ~~High~~ | ✅ COMPLETE |
 | ~~**Bytecode Interpreter**~~ | ~~Stack-based VM for client execution~~ | ~~High~~ | ✅ COMPLETE |
-| **Event Brain Actor Schema** | Actor type definition | Medium | Phase 5 |
-| **Character Agent Query API** | `/agent/query-combat-options` | Medium | Phase 5 |
-| **Control Handoff** | How cinematics take control from basic behavior | Medium | Phase 5 (after Event Brain) |
+| ~~**Character Agent Query API**~~ | ~~`/actor/query-options` (generalized)~~ | ~~Medium~~ | ✅ COMPLETE |
+| ~~**Character personality/backstory storage**~~ | ~~Dedicated services~~ | ~~Medium~~ | ✅ COMPLETE (lib-character-personality, lib-character-history) |
+| ~~**ABML variable providers**~~ | ~~Access personality/backstory in expressions~~ | ~~Medium~~ | ✅ COMPLETE (PersonalityProvider, CombatPreferencesProvider, BackstoryProvider) |
+| **Event Brain Actor Schema** | Actor type definition | Medium | Phase 5 (design complete, implementation in progress) |
+| ~~**Control Handoff**~~ | ~~How cinematics take control from basic behavior~~ | ~~Medium~~ | ✅ COMPLETE (ControlGateManager) |
 
 ### 6.3 Medium Priority Gaps (Quality of Life)
 
@@ -740,7 +744,7 @@ Remaining:
 
 ## 11. Conclusion
 
-**2026-01-08 UPDATE**: The behavior infrastructure is now essentially complete. What was once "the big gap" (streaming composition) is now implemented.
+**2026-01-09 UPDATE**: The behavior infrastructure is now essentially complete. Character personality, backstory, and combat preferences are fully implemented with ABML integration. The Event Brain design is complete with implementation actively in progress.
 
 ### What's Done (Infrastructure)
 
@@ -755,37 +759,50 @@ Remaining:
 | **Cognition Pipeline** | All 6 handlers, Memory, GOAP integration | ✅ Complete |
 | **Dialogue System** | Resolution, Localization, External Loading | ✅ Complete |
 | **Actor Plugin** | Template CRUD, Pool Nodes, ActorRunner, State Persistence | ✅ Complete |
+| **Character Personality** | 8 trait axes, experience evolution, ABML provider | ✅ Complete (lib-character-personality) |
+| **Combat Preferences** | 6 preference fields, combat experience evolution | ✅ Complete (lib-character-personality) |
+| **Character History** | 9 backstory types, event participation, ABML provider | ✅ Complete (lib-character-history) |
+| **Character Agent Query API** | Generalized `/actor/query-options` endpoint | ✅ Complete |
+| **Event Brain Design** | ABML schema, choreography format, action handlers | ✅ Complete (DESIGN_-_EVENT_BRAIN_ABML.md) |
 
 ### What Remains (Bannou-side)
 
 | Gap | Effort | Description |
 |-----|--------|-------------|
 | ~~**Actor Plugin**~~ | ~~Medium~~ | ✅ COMPLETE - 6,934 LOC with full template CRUD, pool nodes, ActorRunner, state persistence |
-| **Event Brain Actor Schema** | Small | ABML behavior definition for orchestration |
-| **Character Agent Query API** | Small | `/agent/query-combat-options` endpoint |
-| **Regional Watcher** | Medium | Spawns Event Actors based on interestingness |
+| ~~**Character Agent Query API**~~ | ~~Small~~ | ✅ COMPLETE - `/actor/query-options` generalized endpoint |
+| ~~**Character personality/backstory**~~ | ~~Medium~~ | ✅ COMPLETE - lib-character-personality, lib-character-history with ABML providers |
+| **Event Brain ABML Action Handlers** | Small | `query_options`, `emit_perception`, `schedule_event` (agents actively working) |
+| **Choreography Integration** | Small | Wire to CutsceneCoordinator (agents actively working) |
+| **Regional Watcher** | Medium | Spawns Event Actors based on interestingness (not blocking) |
 | **Affordance Query Actions** | Small | `query_environment` ABML action using lib-mapping |
 
 ### Distance to THE DREAM
 
-**Estimated Completion: ~90%**
+**Estimated Completion: ~97%**
 
-The hardest 90% (the novel architecture + major infrastructure) is done:
+The hardest 97% (the novel architecture + major infrastructure + character data layer) is done:
 - Streaming composition with continuation points ✅
 - Intent channels with urgency-based merging ✅
 - Behavior stacks with layered evaluation ✅
 - Cutscene coordination with QTE support ✅
 - Control handoff for cinematic takeover ✅
 - Cognition pipeline for NPC awareness ✅
-- **Actor Plugin with full lifecycle management** ✅
+- Actor Plugin with full lifecycle management ✅
+- **Character personality with experience-based evolution** ✅
+- **Character backstory with historical event participation** ✅
+- **ABML variable providers for personality/combat/backstory** ✅
+- **Character Agent Query API for option generation** ✅
+- **Event Brain design with ABML behavior schema** ✅
 
-The remaining ~10% is mostly "filling in the boxes":
-- Event Brain is an ABML behavior using existing infrastructure
-- Regional Watcher is event subscription + spawn logic
-- Affordance queries integrate existing lib-mapping
-- Character Agent query API is a single endpoint
+The remaining ~3% is implementation of designed components (agents actively working):
+- Event Brain ABML action handlers (using existing infrastructure)
+- Choreography perception handler integration
+- Example `fight-coordinator-regional` behavior
 
-**Critical Path**: Event Brain Schema → Regional Watcher → End-to-end test
+**Critical Path**: Event Brain Action Handlers → Choreography Integration → End-to-end test
+
+**Note**: Regional Watcher is enhancement, not blocker. THE_DREAM is functional without auto-spawning.
 
 **Novelty Note**: Research confirms this combination is genuinely novel. No existing system combines graceful degradation + precise choreography + runtime extension + async delivery with timeout + behavior stacks with intent merging. The closest academic concepts are algebraic effects (theoretical) and dynamic behavior trees (synchronous). The closest industry implementations are Left 4 Dead's AI Director (macro-level) and procedural cinematics like AC Odyssey (pre-generated).
 

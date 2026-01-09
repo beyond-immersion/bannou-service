@@ -1,9 +1,9 @@
 # ABML - Arcadia Behavior Markup Language
 
-> **Version**: 2.0
+> **Version**: 2.1
 > **Status**: Implemented (414 tests passing)
 > **Location**: `bannou-service/Abml/`
-> **Related**: [GOAP Guide](./GOAP.md)
+> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md)
 
 ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Arcadia.
 
@@ -437,7 +437,97 @@ narrate:
 
 Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `default`, `date`
 
-### 5.4 Expression vs Template
+### 5.4 Character Variable Providers
+
+When executing behaviors for characters, the ActorRunner automatically registers variable providers that expose character data:
+
+#### PersonalityProvider (`${personality.*}`)
+
+Exposes character personality traits (8 axes):
+
+```yaml
+# Direct trait access (normalized 0.0-1.0)
+"${personality.openness}"
+"${personality.aggression}"
+"${personality.loyalty}"
+
+# Trait enum access
+"${personality.traits.NEUROTICISM}"
+"${personality.traits.HONESTY}"
+
+# Metadata
+"${personality.version}"  # Version counter for change detection
+```
+
+#### CombatPreferencesProvider (`${combat.*}`)
+
+Exposes combat style preferences:
+
+```yaml
+# Style enum (aggressive/defensive/tactical/opportunistic)
+"${combat.style}"
+
+# Range preference (close/mid/long)
+"${combat.preferredRange}"
+
+# Group role (leader/support/striker/tank)
+"${combat.groupRole}"
+
+# Numeric preferences (0.0-1.0)
+"${combat.riskTolerance}"
+"${combat.retreatThreshold}"
+
+# Boolean preferences
+"${combat.protectAllies}"
+```
+
+#### BackstoryProvider (`${backstory.*}`)
+
+Exposes character backstory elements (9 types):
+
+```yaml
+# Direct type access (returns first element's value)
+"${backstory.origin}"
+"${backstory.fear}"
+"${backstory.trauma}"
+
+# Property access
+"${backstory.fear.key}"       # e.g., "FIRE", "BETRAYAL"
+"${backstory.fear.value}"     # Narrative description
+"${backstory.fear.strength}"  # 0.0-1.0
+
+# Collection access
+"${backstory.elements}"                # All backstory elements
+"${backstory.elements.TRAUMA}"         # All elements of type TRAUMA
+```
+
+**Example usage in behavior decisions:**
+
+```yaml
+flows:
+  evaluate_threat_response:
+    - cond:
+        # High aggression + low retreat threshold = stand and fight
+        if: "${personality.aggression > 0.7 && combat.retreatThreshold < 0.3}"
+        then:
+          - emit_intent:
+              channel: stance
+              stance: "aggressive"
+              urgency: 0.9
+
+        # Character fears fire - avoid fire-based tactics
+        if: "${backstory.fear.key == 'FIRE'}"
+        then:
+          - set: avoid_fire = true
+          - modify_emotion: { emotion: fear, delta: 0.2 }
+
+        # Protective personality - prioritize allies
+        if: "${combat.protectAllies && personality.loyalty > 0.6}"
+        then:
+          - call: protect_ally_behavior
+```
+
+### 5.5 Expression vs Template
 
 | Context | Syntax | Use |
 |---------|--------|-----|

@@ -74,5 +74,13 @@ public sealed class DocumentExecutorFactory : IDocumentExecutorFactory
 
         // Stage 5: GOAP replanning
         handlers.Register(_serviceProvider.GetRequiredService<TriggerGoapReplanHandler>());
+
+        // Event Brain action handlers (query_options, emit_perception, etc.)
+        // Registered via IActionHandler interface to get all implementations
+        var eventBrainHandlers = _serviceProvider.GetServices<IActionHandler>();
+        foreach (var handler in eventBrainHandlers)
+        {
+            handlers.Register(handler);
+        }
     }
 }

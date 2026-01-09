@@ -27,15 +27,18 @@ The foundation is **significantly more complete than expected**. The core archit
 - **ABML Personality Provider**: **100% complete** (`${personality.*}` paths in ActorRunner)
 - **ABML Combat Preferences Provider**: **100% complete** (`${combat.*}` paths in ActorRunner)
 
-**2026-01-09 Update**: Major progress since last review. The `lib-character-personality` and `lib-character-history` services are fully implemented with expanded capabilities beyond the original design. PersonalityProvider and CombatPreferencesProvider are wired into ActorRunner, providing ABML access to character traits.
+- **ABML BackstoryProvider**: **100% complete** (`${backstory.*}` paths in ActorRunner)
+- **Character Agent Query API**: **100% complete** (`/actor/query-options` generalized endpoint)
+- **Event Brain ABML design**: **100% complete** (see DESIGN_-_EVENT_BRAIN_ABML.md)
 
-**Remaining gaps for Event Brain / Fight Coordinators**:
-1. **BackstoryProvider for ABML** - `${backstory.*}` paths not yet wired into ActorRunner
-2. **Character Agent Query API** - `/actor/query-combat-options` endpoint for Event Brain coordination
-3. **Event Brain Actor Schema** - ABML behavior definition for orchestration actors
-4. **Regional Watcher** - Auto-spawns Event Actors based on interestingness (larger separate task)
+**2026-01-09 Update**: Major progress since last review. The `lib-character-personality` and `lib-character-history` services are fully implemented with expanded capabilities beyond the original design. PersonalityProvider, CombatPreferencesProvider, and BackstoryProvider are all wired into ActorRunner, providing ABML access to character traits, combat preferences, and backstory.
 
-**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~90% overall completion. The remaining gaps are "filling in boxes" integration work, not new architecture.
+**Remaining gaps for Event Brain / Fight Coordinators (Implementation only - design is complete)**:
+1. **ABML Action Handlers** - `query_options`, `query_actor_state`, `emit_perception`, `schedule_event` action handlers (agents actively working on this)
+2. **Choreography Integration** - Wire choreography perception handler to CutsceneCoordinator (agents actively working on this)
+3. **Regional Watcher** - Auto-spawns Event Actors based on interestingness (larger separate task, not blocking)
+
+**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~97% overall completion. The remaining gaps are ABML action handler implementation (not new architecture) currently being worked by agents.
 
 ---
 

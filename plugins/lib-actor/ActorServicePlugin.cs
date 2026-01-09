@@ -1,6 +1,8 @@
 using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;
+using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.PoolNode;
 using BeyondImmersion.BannouService.Actor.Runtime;
@@ -59,6 +61,16 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<StoreMemoryHandler>();
         services.AddSingleton<EvaluateGoalImpactHandler>();
         services.AddSingleton<TriggerGoapReplanHandler>();
+
+        // Register Event Brain action handlers (used by DocumentExecutorFactory)
+        services.AddSingleton<IActionHandler, QueryOptionsHandler>();
+        services.AddSingleton<IActionHandler, QueryActorStateHandler>();
+        services.AddSingleton<IActionHandler, EmitPerceptionHandler>();
+        services.AddSingleton<IActionHandler, ScheduleEventHandler>();
+        services.AddSingleton<IActionHandler, StateUpdateHandler>();
+
+        // Register scheduled event manager for delayed event handling
+        services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
 
         // Register behavior execution infrastructure
         services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();

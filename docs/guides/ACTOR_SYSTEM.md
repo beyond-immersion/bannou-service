@@ -1,8 +1,8 @@
 # Actor System - Bringing Worlds to Life
 
-> **Version**: 1.0
-> **Status**: Implemented (Phases 0-5)
-> **Location**: `lib-actor/`, `lib-behavior/`
+> **Version**: 1.1
+> **Status**: Implemented (Phases 0-5), Character Data Layer Complete
+> **Location**: `lib-actor/`, `lib-behavior/`, `lib-character-personality/`, `lib-character-history/`
 > **Related**: [ABML Guide](./ABML.md), [GOAP Guide](./GOAP.md), [Mapping System Guide](./MAPPING_SYSTEM.md)
 
 The Actor System provides the cognitive layer for Arcadia's living world. Actors are long-running processes that give characters personality, make regions feel alive, and orchestrate dramatic moments. They are the invisible directors that turn static game worlds into dynamic, responsive experiences.
@@ -15,15 +15,16 @@ The Actor System provides the cognitive layer for Arcadia's living world. Actors
 2. [The Key Insight: Flavor, Not Foundation](#2-the-key-insight-flavor-not-foundation)
 3. [Actor Types](#3-actor-types)
 4. [NPC Brain Actors](#4-npc-brain-actors)
-5. [Event Actors](#5-event-actors)
-6. [Behavior Integration](#6-behavior-integration)
-7. [Perception and Cognition](#7-perception-and-cognition)
-8. [Cutscene and QTE Orchestration](#8-cutscene-and-qte-orchestration)
-9. [Infrastructure Integration](#9-infrastructure-integration)
-10. [State Management](#10-state-management)
-11. [Scaling and Distribution](#11-scaling-and-distribution)
-12. [API Reference](#12-api-reference)
-13. [Game Server Integration](#13-game-server-integration-stride-side)
+5. [Character Personality and Backstory](#5-character-personality-and-backstory)
+6. [Event Actors](#6-event-actors)
+7. [Behavior Integration](#7-behavior-integration)
+8. [Perception and Cognition](#8-perception-and-cognition)
+9. [Cutscene and QTE Orchestration](#9-cutscene-and-qte-orchestration)
+10. [Infrastructure Integration](#10-infrastructure-integration)
+11. [State Management](#11-state-management)
+12. [Scaling and Distribution](#12-scaling-and-distribution)
+13. [API Reference](#13-api-reference)
+14. [Game Server Integration](#14-game-server-integration-stride-side)
 - [Appendix A: Actor Categories](#appendix-a-actor-categories)
 - [Appendix B: Perception Event Types](#appendix-b-perception-event-types)
 
@@ -361,13 +362,204 @@ The character's nature shows through even when (especially when) the player fail
 
 ---
 
-## 5. Event Actors
+## 5. Character Personality and Backstory
 
-### 5.1 The Invisible Director
+### 5.1 The Character Data Layer
+
+Characters in Arcadia have persistent personality traits, combat preferences, and backstory that inform their behavior. This data is stored in dedicated services and made available to actors through ABML variable providers.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CHARACTER DATA LAYER                                      │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                 lib-character-personality                               ││
+│  │  ┌────────────────────────┐  ┌────────────────────────────────────────┐ ││
+│  │  │ Personality Traits     │  │ Combat Preferences                      │ ││
+│  │  │ - OPENNESS            │  │ - style (aggressive/defensive/tactical) │ ││
+│  │  │ - CONSCIENTIOUSNESS   │  │ - preferredRange (close/mid/long)       │ ││
+│  │  │ - EXTRAVERSION        │  │ - groupRole (leader/support/striker)    │ ││
+│  │  │ - AGREEABLENESS       │  │ - riskTolerance (0.0-1.0)              │ ││
+│  │  │ - NEUROTICISM         │  │ - retreatThreshold (0.0-1.0)           │ ││
+│  │  │ - HONESTY             │  │ - protectAllies (boolean)               │ ││
+│  │  │ - AGGRESSION          │  └────────────────────────────────────────┘ ││
+│  │  │ - LOYALTY             │                                             ││
+│  │  └────────────────────────┘  Experience Evolution (probabilistic)      ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                 lib-character-history                                   ││
+│  │  ┌────────────────────────┐  ┌────────────────────────────────────────┐ ││
+│  │  │ Backstory Elements     │  │ Event Participation                     │ ││
+│  │  │ - ORIGIN              │  │ - Historical event tracking             │ ││
+│  │  │ - OCCUPATION          │  │ - Roles: LEADER, COMBATANT, VICTIM,    │ ││
+│  │  │ - TRAINING            │  │          WITNESS, BENEFICIARY, etc.     │ ││
+│  │  │ - TRAUMA              │  │ - Dual-indexed for efficient queries    │ ││
+│  │  │ - ACHIEVEMENT         │  └────────────────────────────────────────┘ ││
+│  │  │ - SECRET              │                                             ││
+│  │  │ - GOAL                │  History Summarization (for prompts)       ││
+│  │  │ - FEAR                │                                             ││
+│  │  │ - BELIEF              │                                             ││
+│  │  └────────────────────────┘                                             ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 ABML Variable Providers
+
+Character data is exposed to ABML behaviors through three variable providers:
+
+| Provider | Namespace | Example Paths |
+|----------|-----------|---------------|
+| **PersonalityProvider** | `${personality.*}` | `${personality.openness}`, `${personality.traits.AGGRESSION}` |
+| **CombatPreferencesProvider** | `${combat.*}` | `${combat.style}`, `${combat.riskTolerance}`, `${combat.protectAllies}` |
+| **BackstoryProvider** | `${backstory.*}` | `${backstory.origin}`, `${backstory.fear.value}`, `${backstory.elements.TRAUMA}` |
+
+### 5.3 Using Character Data in ABML
+
+Character personality and backstory inform behavior decisions:
+
+```yaml
+flows:
+  evaluate_combat_approach:
+    # Consider personality traits
+    - cond:
+        if: "${personality.aggression > 0.7 && combat.riskTolerance > 0.6}"
+        then:
+          - set: combat_approach = "aggressive"
+          - emit_intent:
+              channel: stance
+              stance: "aggressive"
+              urgency: 0.9
+        else:
+          - set: combat_approach = "cautious"
+
+    # Consider backstory when facing fire
+    - cond:
+        if: "${backstory.fear.key == 'FIRE' && environment.has_fire}"
+        then:
+          - modify_emotion:
+              emotion: fear
+              delta: 0.3
+          - set: avoid_fire_tactics = true
+
+    # Protect allies based on combat preferences
+    - cond:
+        if: "${combat.protectAllies && ally_in_danger}"
+        then:
+          - call: protect_ally_behavior
+            priority: high
+```
+
+### 5.4 Personality Evolution
+
+Characters evolve over time through experiences. The `RecordExperience` API triggers probabilistic trait changes:
+
+```csharp
+// After a traumatic combat experience
+await _characterPersonalityClient.RecordExperienceAsync(new RecordExperienceRequest
+{
+    CharacterId = characterId,
+    ExperienceType = ExperienceType.TRAUMA,
+    Intensity = 0.8f  // Severe trauma
+});
+
+// Base 15% chance × intensity = 12% chance of trait modification
+// If triggered: NEUROTICISM +0.05, AGREEABLENESS -0.03
+```
+
+**Experience types and their effects:**
+
+| Experience | Potential Effects |
+|------------|-------------------|
+| `TRAUMA` | ↑ Neuroticism, ↓ Agreeableness |
+| `BETRAYAL` | ↓ Honesty, ↓ Agreeableness |
+| `VICTORY` | ↑ Confidence (custom trait) |
+| `FRIENDSHIP` | ↑ Extraversion, ↑ Agreeableness |
+| `NEAR_DEATH` | ↓ Risk tolerance, ↑ Retreat threshold |
+| `ALLY_SAVED` | ↑ Protect allies tendency |
+
+### 5.5 Combat Preference Evolution
+
+Combat experiences also shape preferences:
+
+```csharp
+// After barely surviving a fight
+await _characterPersonalityClient.RecordCombatExperienceAsync(new RecordCombatExperienceRequest
+{
+    CharacterId = characterId,
+    CombatExperienceType = CombatExperienceType.NEAR_DEATH,
+    Intensity = 0.9f
+});
+
+// May result in: riskTolerance ↓, retreatThreshold ↑
+```
+
+### 5.6 Character Data Loading in ActorRunner
+
+When an actor starts for a character, the ActorRunner automatically loads personality, combat preferences, and backstory:
+
+```csharp
+// From ActorRunner.cs - character data loading
+if (CharacterId.HasValue)
+{
+    // Load and cache personality traits
+    var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new PersonalityProvider(personality));
+
+    // Load and cache combat preferences
+    var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+
+    // Load and cache backstory
+    var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new BackstoryProvider(backstory));
+}
+```
+
+Data is cached with a 5-minute TTL and stale-if-error fallback for resilience.
+
+### 5.7 Character Agent Query API
+
+Event Actors can query character agents for available options using the generalized `/actor/query-options` endpoint:
+
+```yaml
+# Event Brain querying combat options from a character
+- query_options:
+    actor_id: "${participant.actorId}"
+    query_type: combat
+    freshness: fresh  # Get current options, not cached
+    context:
+      combat_state: "${combat.state}"
+      opponent_ids: "${combat.opponents}"
+      environment_tags: "${environment.affordances}"
+    result_variable: "character_options"
+
+# Use options in choreography decision
+- for_each:
+    items: "${character_options.options}"
+    as: "option"
+    do:
+      - cond:
+          if: "${option.confidence > 0.7}"
+          then:
+            - add_to_option_pool: "${option}"
+```
+
+**Freshness levels:**
+- `fresh` - Force re-evaluation of options (for critical decisions)
+- `cached` - Accept recently cached options (configurable max age)
+- `stale_ok` - Accept any cached value (for low-priority queries)
+
+---
+
+## 6. Event Actors
+
+### 6.1 The Invisible Director
 
 Event Actors are **drama coordinators** for any significant situation. They don't fight or act directly - they **script** the action in real-time.
 
-### 5.2 Event Actor Hierarchy
+### 6.2 Event Actor Hierarchy
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -402,7 +594,7 @@ Event Actors are **drama coordinators** for any significant situation. They don'
 └─────────────┘      └─────────────────┘        └─────────────────┘
 ```
 
-### 5.3 Interestingness Triggers
+### 6.3 Interestingness Triggers
 
 Event Actors spawn when the Regional Watcher detects:
 
@@ -415,7 +607,7 @@ Event Actors spawn when the Regional Watcher detects:
 | **Player involvement** | Human players make things interesting by default |
 | **VIP presence** | Some characters ALWAYS have an Event Actor |
 
-### 5.4 Event Brain Responsibilities
+### 6.4 Event Brain Responsibilities
 
 | Responsibility | Implementation |
 |----------------|----------------|
@@ -427,7 +619,7 @@ Event Actors spawn when the Regional Watcher detects:
 | Choreograph result | Emit ABML channel instructions for animation/camera/audio |
 | Handle interruptions | Detect and integrate crisis moments |
 
-### 5.5 Combat Without Event Actors
+### 6.5 Combat Without Event Actors
 
 Fights happen constantly without Event Actors - and that's fine. Normal combat:
 - Handled entirely by game engine/server
