@@ -47,10 +47,14 @@ echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
 # Create service implementation template
 cat > "$IMPLEMENTATION_FILE" << EOF
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
 

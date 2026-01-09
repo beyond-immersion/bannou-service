@@ -435,6 +435,7 @@ paths:
         '404':
           description: No personality found for this character
 
+  # Combat Preferences Endpoints
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeletePersonalityRequest\"\
         ,\n    \"$defs\": {\n        \"DeletePersonalityRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request payload for deleting a character's personality\",\n            \"additionalProperties\": false,\n    \
@@ -447,6 +448,310 @@ paths:
         personality profile for a character. Typically called during\\ncharacter compression or deletion.\\n\",\n    \"tags\"\
         : [\n        \"Personality Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deletePersonality\"\
         \n}"
+  /character-personality/get-combat:
+    post:
+      summary: Get combat preferences for a character
+      operationId: getCombatPreferences
+      tags:
+      - Combat Preferences
+      description: |
+        Retrieves the combat preferences for a character. Combat preferences
+        influence tactical decisions in the behavior system, including engagement
+        style, positioning, and retreat conditions.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCombatPreferencesRequest'
+      responses:
+        '200':
+          description: Combat preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatPreferencesResponse'
+        '404':
+          description: No combat preferences defined for this character
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCombatPreferencesRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCombatPreferencesRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request payload for retrieving combat preferences\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character to get combat preferences for\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatPreferencesResponse\"\
+        ,\n    \"$defs\": {\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Combat preferences profile for behavior system consumption\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"preferences\",\n               \
+        \ \"version\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character these preferences belong to\"\n                },\n                \"preferences\": {\n\
+        \                    \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"description\": \"The combat preferences
+        values\"\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n       \
+        \             \"description\": \"Preferences version number (increments on each evolution)\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When these preferences were first created\"\n                },\n      \
+        \          \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When these preferences were last
+        modified\"\n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese
+        values affect GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\"\
+        ,\n                \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n   \
+        \             \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n   \
+        \                 \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\
+        \n                },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\"\
+        ,\n                    \"description\": \"Preferred engagement distance\"\n                },\n                \"\
+        groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role
+        when fighting in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very
+        cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\n\"\n                },\n     \
+        \           \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
+        : \"Health percentage at which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 =
+        retreat at any damage).\\n\"\n                },\n                \"protectAllies\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether to prioritize ally protection over self-preservation.\\
+        nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
+        CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
+        Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
+        \    \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\"\
+        ,\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
+        in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n              \
+        \  \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n            \
+        \    \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n         \
+        \   ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get combat preferences for a character\",\n    \"description\": \"Retrieves
+        the combat preferences for a character. Combat preferences\\ninfluence tactical decisions in the behavior system,
+        including engagement\\nstyle, positioning, and retreat conditions.\\n\",\n    \"tags\": [\n        \"Combat Preferences\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCombatPreferences\"\n}"
+  /character-personality/set-combat:
+    post:
+      summary: Create or update combat preferences for a character
+      operationId: setCombatPreferences
+      tags:
+      - Combat Preferences
+      description: |
+        Creates or replaces the combat preferences for a character. If preferences
+        already exist, they will be completely replaced (not merged).
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetCombatPreferencesRequest'
+      responses:
+        '200':
+          description: Combat preferences saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatPreferencesResponse'
+        '400':
+          description: Invalid combat preferences data
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetCombatPreferencesRequest\"\
+        ,\n    \"$defs\": {\n        \"SetCombatPreferencesRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request payload for creating or updating combat preferences\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"preferences\"\n       \
+        \     ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the character to set combat
+        preferences for\"\n                },\n                \"preferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\"\
+        ,\n                    \"description\": \"The combat preferences to set\"\n                }\n            }\n    \
+        \    },\n        \"CombatPreferences\": {\n            \"type\": \"object\",\n            \"description\": \"Combat
+        behavior preferences that influence tactical decisions.\\nThese values affect GOAP action selection, retreat conditions,\\
+        nand group coordination behavior.\\n\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"style\",\n                \"preferredRange\",\n                \"groupRole\",\n               \
+        \ \"riskTolerance\",\n                \"retreatThreshold\",\n                \"protectAllies\"\n            ],\n \
+        \           \"properties\": {\n                \"style\": {\n                    \"$ref\": \"#/$defs/CombatStyle\"\
+        ,\n                    \"description\": \"Overall combat approach\"\n                },\n                \"preferredRange\"\
+        : {\n                    \"$ref\": \"#/$defs/PreferredRange\",\n                    \"description\": \"Preferred engagement
+        distance\"\n                },\n                \"groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\"\
+        ,\n                    \"description\": \"Role when fighting in groups\"\n                },\n                \"riskTolerance\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Willingness to take
+        dangerous actions (0.0 = very cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\\
+        n\"\n                },\n                \"retreatThreshold\": {\n                    \"type\": \"number\",\n    \
+        \                \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Health percentage at which retreat is considered (0.0 = fight to death,\\\
+        n0.5 = retreat at half health, 1.0 = retreat at any damage).\\n\"\n                },\n                \"protectAllies\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether to prioritize ally
+        protection over self-preservation.\\nAffects target selection and positioning decisions.\\n\"\n                }\n\
+        \            }\n        },\n        \"CombatStyle\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Overall approach to combat situations. Affects target selection,\\nability usage, and engagement decisions.\\\
+        n\",\n            \"enum\": [\n                \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\"\
+        ,\n                \"BERSERKER\",\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Preferred engagement distance. Influences positioning
+        and\\nability selection in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"\
+        CLOSE\",\n                \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects
+        positioning,\\ntarget priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\"\
+        ,\n                \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\
+        \n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatPreferencesResponse\"\
+        ,\n    \"$defs\": {\n        \"CombatPreferencesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Combat preferences profile for behavior system consumption\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"preferences\",\n               \
+        \ \"version\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character these preferences belong to\"\n                },\n                \"preferences\": {\n\
+        \                    \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"description\": \"The combat preferences
+        values\"\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n       \
+        \             \"description\": \"Preferences version number (increments on each evolution)\"\n                },\n\
+        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When these preferences were first created\"\n                },\n      \
+        \          \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When these preferences were last
+        modified\"\n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\":
+        \"object\",\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese
+        values affect GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\"\
+        ,\n                \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n   \
+        \             \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n   \
+        \                 \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\
+        \n                },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\"\
+        ,\n                    \"description\": \"Preferred engagement distance\"\n                },\n                \"\
+        groupRole\": {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role
+        when fighting in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very
+        cautious, 1.0 = reckless).\\nAffects ability selection and target prioritization.\\n\"\n                },\n     \
+        \           \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
+        : \"Health percentage at which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 =
+        retreat at any damage).\\n\"\n                },\n                \"protectAllies\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether to prioritize ally protection over self-preservation.\\
+        nAffects target selection and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"\
+        CombatStyle\": {\n            \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations.
+        Affects target selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n            \
+        \    \"DEFENSIVE\",\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\"\
+        ,\n                \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection
+        in combat.\\n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n              \
+        \  \"MEDIUM\",\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget
+        priority, and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n            \
+        \    \"SUPPORT\",\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n         \
+        \   ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create or update combat preferences for a character\",\n    \"description\"\
+        : \"Creates or replaces the combat preferences for a character. If preferences\\nalready exist, they will be completely
+        replaced (not merged).\\n\",\n    \"tags\": [\n        \"Combat Preferences\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"setCombatPreferences\"\n}"
+  /character-personality/evolve-combat:
+    post:
+      summary: Record combat experience that may evolve preferences
+      operationId: evolveCombatPreferences
+      tags:
+      - Combat Preferences
+      description: |
+        Records a significant combat experience that may cause preference evolution.
+        Similar to personality evolution, but focused on combat-specific traits.
+
+        Combat experiences can shift style (e.g., repeated losses may make a
+        character more defensive), adjust risk tolerance, or change retreat thresholds.
+      x-permissions:
+      - role: service
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvolveCombatRequest'
+      responses:
+        '200':
+          description: Combat experience recorded and evaluated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatEvolutionResult'
+        '404':
+          description: Character combat preferences not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EvolveCombatRequest\"\
+        ,\n    \"$defs\": {\n        \"EvolveCombatRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request payload for recording combat experience that may evolve preferences\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"experienceType\",\n   \
+        \             \"intensity\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the character who had the combat experience\"\n                },\n                \"experienceType\": {\n\
+        \                    \"$ref\": \"#/$defs/CombatExperienceType\",\n                    \"description\": \"Category
+        of combat experience\"\n                },\n                \"intensity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"description\": \"How significant the combat experience was (0.0 to 1.0).\\nHigher intensity
+        = higher probability of preference evolution.\\n\"\n                },\n                \"contextData\": {\n     \
+        \               \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Optional context for logging and debugging (e.g., enemy
+        type,\\nally count, location). Not used in evolution calculations.\\n\"\n                }\n            }\n      \
+        \  },\n        \"CombatExperienceType\": {\n            \"type\": \"string\",\n            \"description\": \"Categories
+        of combat experiences that may cause preference evolution.\\nEach type affects different aspects of combat behavior.\\\
+        n\",\n            \"enum\": [\n                \"DECISIVE_VICTORY\",\n                \"NARROW_VICTORY\",\n      \
+        \          \"DEFEAT\",\n                \"NEAR_DEATH\",\n                \"ALLY_SAVED\",\n                \"ALLY_LOST\"\
+        ,\n                \"SUCCESSFUL_RETREAT\",\n                \"FAILED_RETREAT\",\n                \"AMBUSH_SUCCESS\"\
+        ,\n                \"AMBUSH_SURVIVED\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatEvolutionResult\"\
+        ,\n    \"$defs\": {\n        \"CombatEvolutionResult\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of recording a combat experience\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"experienceRecorded\",\n                \"preferencesEvolved\"\
+        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character who had
+        the combat experience\"\n                },\n                \"experienceRecorded\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the experience was recorded successfully\"\n      \
+        \          },\n                \"preferencesEvolved\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether any preferences changed as a result\"\n                },\n                \"\
+        previousPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Previous preferences (null if no change)\"\n                },\n \
+        \               \"newPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferences\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"New preferences after evolution (null if no change)\"\
+        \n                },\n                \"newVersion\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"New version number if evolved (null if no change)\"\
+        \n                }\n            }\n        },\n        \"CombatPreferences\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Combat behavior preferences that influence tactical decisions.\\nThese values affect
+        GOAP action selection, retreat conditions,\\nand group coordination behavior.\\n\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\",\n         \
+        \       \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n              \
+        \  \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n              \
+        \      \"$ref\": \"#/$defs/CombatStyle\",\n                    \"description\": \"Overall combat approach\"\n    \
+        \            },\n                \"preferredRange\": {\n                    \"$ref\": \"#/$defs/PreferredRange\",\n\
+        \                    \"description\": \"Preferred engagement distance\"\n                },\n                \"groupRole\"\
+        : {\n                    \"$ref\": \"#/$defs/GroupRole\",\n                    \"description\": \"Role when fighting
+        in groups\"\n                },\n                \"riskTolerance\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"description\": \"Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).\\
+        nAffects ability selection and target prioritization.\\n\"\n                },\n                \"retreatThreshold\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Health percentage at
+        which retreat is considered (0.0 = fight to death,\\n0.5 = retreat at half health, 1.0 = retreat at any damage).\\\
+        n\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\",\n      \
+        \              \"description\": \"Whether to prioritize ally protection over self-preservation.\\nAffects target selection
+        and positioning decisions.\\n\"\n                }\n            }\n        },\n        \"CombatStyle\": {\n      \
+        \      \"type\": \"string\",\n            \"description\": \"Overall approach to combat situations. Affects target
+        selection,\\nability usage, and engagement decisions.\\n\",\n            \"enum\": [\n                \"DEFENSIVE\"\
+        ,\n                \"BALANCED\",\n                \"AGGRESSIVE\",\n                \"BERSERKER\",\n              \
+        \  \"TACTICAL\"\n            ]\n        },\n        \"PreferredRange\": {\n            \"type\": \"string\",\n   \
+        \         \"description\": \"Preferred engagement distance. Influences positioning and\\nability selection in combat.\\\
+        n\",\n            \"enum\": [\n                \"MELEE\",\n                \"CLOSE\",\n                \"MEDIUM\"\
+        ,\n                \"RANGED\"\n            ]\n        },\n        \"GroupRole\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Preferred role when fighting in groups. Affects positioning,\\ntarget priority,
+        and coordination behavior.\\n\",\n            \"enum\": [\n                \"FRONTLINE\",\n                \"SUPPORT\"\
+        ,\n                \"FLANKER\",\n                \"LEADER\",\n                \"SOLO\"\n            ]\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Record combat experience that may evolve preferences\",\n    \"description\"\
+        : \"Records a significant combat experience that may cause preference evolution.\\nSimilar to personality evolution,
+        but focused on combat-specific traits.\\n\\nCombat experiences can shift style (e.g., repeated losses may make a\\
+        ncharacter more defensive), adjust risk tolerance, or change retreat thresholds.\\n\",\n    \"tags\": [\n        \"\
+        Combat Preferences\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"evolveCombatPreferences\"\n}"
 components:
   schemas:
     # Enums
@@ -480,6 +785,59 @@ components:
       - CORRUPTION
       - ENLIGHTENMENT
       - SACRIFICE
+
+    # Combat Preference Enums
+    CombatStyle:
+      type: string
+      description: |
+        Overall approach to combat situations. Affects target selection,
+        ability usage, and engagement decisions.
+      enum:
+      - DEFENSIVE
+      - BALANCED
+      - AGGRESSIVE
+      - BERSERKER
+      - TACTICAL
+
+    PreferredRange:
+      type: string
+      description: |
+        Preferred engagement distance. Influences positioning and
+        ability selection in combat.
+      enum:
+      - MELEE
+      - CLOSE
+      - MEDIUM
+      - RANGED
+
+    GroupRole:
+      type: string
+      description: |
+        Preferred role when fighting in groups. Affects positioning,
+        target priority, and coordination behavior.
+      enum:
+      - FRONTLINE
+      - SUPPORT
+      - FLANKER
+      - LEADER
+      - SOLO
+
+    CombatExperienceType:
+      type: string
+      description: |
+        Categories of combat experiences that may cause preference evolution.
+        Each type affects different aspects of combat behavior.
+      enum:
+      - DECISIVE_VICTORY
+      - NARROW_VICTORY
+      - DEFEAT
+      - NEAR_DEATH
+      - ALLY_SAVED
+      - ALLY_LOST
+      - SUCCESSFUL_RETREAT
+      - FAILED_RETREAT
+      - AMBUSH_SUCCESS
+      - AMBUSH_SURVIVED
 
     # Core Models
     TraitValue:
@@ -696,3 +1054,173 @@ components:
             type: string
             format: uuid
           description: Character IDs that have no personality defined
+
+    # Combat Preferences Models
+    CombatPreferences:
+      type: object
+      description: |
+        Combat behavior preferences that influence tactical decisions.
+        These values affect GOAP action selection, retreat conditions,
+        and group coordination behavior.
+      additionalProperties: false
+      required:
+      - style
+      - preferredRange
+      - groupRole
+      - riskTolerance
+      - retreatThreshold
+      - protectAllies
+      properties:
+        style:
+          $ref: '#/components/schemas/CombatStyle'
+          description: Overall combat approach
+        preferredRange:
+          $ref: '#/components/schemas/PreferredRange'
+          description: Preferred engagement distance
+        groupRole:
+          $ref: '#/components/schemas/GroupRole'
+          description: Role when fighting in groups
+        riskTolerance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).
+            Affects ability selection and target prioritization.
+        retreatThreshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            Health percentage at which retreat is considered (0.0 = fight to death,
+            0.5 = retreat at half health, 1.0 = retreat at any damage).
+        protectAllies:
+          type: boolean
+          description: |
+            Whether to prioritize ally protection over self-preservation.
+            Affects target selection and positioning decisions.
+
+    CombatPreferencesResponse:
+      type: object
+      description: Combat preferences profile for behavior system consumption
+      additionalProperties: false
+      required:
+      - characterId
+      - preferences
+      - version
+      - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character these preferences belong to
+        preferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          description: The combat preferences values
+        version:
+          type: integer
+          description: Preferences version number (increments on each evolution)
+        createdAt:
+          type: string
+          format: date-time
+          description: When these preferences were first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When these preferences were last modified
+
+    CombatEvolutionResult:
+      type: object
+      description: Result of recording a combat experience
+      additionalProperties: false
+      required:
+      - characterId
+      - experienceRecorded
+      - preferencesEvolved
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character who had the combat experience
+        experienceRecorded:
+          type: boolean
+          description: Whether the experience was recorded successfully
+        preferencesEvolved:
+          type: boolean
+          description: Whether any preferences changed as a result
+        previousPreferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          nullable: true
+          description: Previous preferences (null if no change)
+        newPreferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          nullable: true
+          description: New preferences after evolution (null if no change)
+        newVersion:
+          type: integer
+          nullable: true
+          description: New version number if evolved (null if no change)
+
+    # Combat Preferences Request Models
+    GetCombatPreferencesRequest:
+      type: object
+      description: Request payload for retrieving combat preferences
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get combat preferences for
+
+    SetCombatPreferencesRequest:
+      type: object
+      description: Request payload for creating or updating combat preferences
+      additionalProperties: false
+      required:
+      - characterId
+      - preferences
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to set combat preferences for
+        preferences:
+          $ref: '#/components/schemas/CombatPreferences'
+          description: The combat preferences to set
+
+    EvolveCombatRequest:
+      type: object
+      description: Request payload for recording combat experience that may evolve preferences
+      additionalProperties: false
+      required:
+      - characterId
+      - experienceType
+      - intensity
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who had the combat experience
+        experienceType:
+          $ref: '#/components/schemas/CombatExperienceType'
+          description: Category of combat experience
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: |
+            How significant the combat experience was (0.0 to 1.0).
+            Higher intensity = higher probability of preference evolution.
+        contextData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Optional context for logging and debugging (e.g., enemy type,
+            ally count, location). Not used in evolution calculations.

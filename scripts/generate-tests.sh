@@ -76,9 +76,9 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
 
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
-    <ProjectReference Include="../plugins/lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
+    <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
-    <ProjectReference Include="../test-utilities/test-utilities.csproj" />
+    <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
 </Project>

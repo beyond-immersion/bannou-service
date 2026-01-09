@@ -62,7 +62,7 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,7 +71,7 @@ if [ ! -f "$PROJECT_FILE" ]; then
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
-  <Import Project="../ServiceLib.targets" />
+  <Import Project="../../ServiceLib.targets" />
 
 </Project>
 EOF

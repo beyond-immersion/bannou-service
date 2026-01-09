@@ -17213,6 +17213,49 @@
             <returns>Personality deleted successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.GetCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get combat preferences for a character
+            </summary>
+            <remarks>
+            Retrieves the combat preferences for a character. Combat preferences
+            <br/>influence tactical decisions in the behavior system, including engagement
+            <br/>style, positioning, and retreat conditions.
+            </remarks>
+            <returns>Combat preferences retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.SetCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create or update combat preferences for a character
+            </summary>
+            <remarks>
+            Creates or replaces the combat preferences for a character. If preferences
+            <br/>already exist, they will be completely replaced (not merged).
+            </remarks>
+            <returns>Combat preferences saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient.EvolveCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record combat experience that may evolve preferences
+            </summary>
+            <remarks>
+            Records a significant combat experience that may cause preference evolution.
+            <br/>Similar to personality evolution, but focused on combat-specific traits.
+            <br/>
+            <br/>Combat experiences can shift style (e.g., repeated losses may make a
+            <br/>character more defensive), adjust risk tolerance, or change retreat thresholds.
+            </remarks>
+            <returns>Combat experience recorded and evaluated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient">
             <summary>
             Client implementation for the CharacterPersonality service.
@@ -17361,6 +17404,49 @@
             <returns>Personality deleted successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.GetCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get combat preferences for a character
+            </summary>
+            <remarks>
+            Retrieves the combat preferences for a character. Combat preferences
+            <br/>influence tactical decisions in the behavior system, including engagement
+            <br/>style, positioning, and retreat conditions.
+            </remarks>
+            <returns>Combat preferences retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.SetCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create or update combat preferences for a character
+            </summary>
+            <remarks>
+            Creates or replaces the combat preferences for a character. If preferences
+            <br/>already exist, they will be completely replaced (not merged).
+            </remarks>
+            <returns>Combat preferences saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.EvolveCombatPreferencesAsync(BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record combat experience that may evolve preferences
+            </summary>
+            <remarks>
+            Records a significant combat experience that may cause preference evolution.
+            <br/>Similar to personality evolution, but focused on combat-specific traits.
+            <br/>
+            <br/>Combat experiences can shift style (e.g., repeated losses may make a
+            <br/>character more defensive), adjust risk tolerance, or change retreat thresholds.
+            </remarks>
+            <returns>Combat experience recorded and evaluated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CharacterPersonalityClient.ObjectResponseResult`1">
             <summary>
             Represents the result of deserializing an HTTP response into an object.
@@ -17411,6 +17497,34 @@
             <summary>
             Categories of significant experiences that may cause personality evolution.
             <br/>Each type has predefined trait impact tendencies.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatStyle">
+            <summary>
+            Overall approach to combat situations. Affects target selection,
+            <br/>ability usage, and engagement decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.PreferredRange">
+            <summary>
+            Preferred engagement distance. Influences positioning and
+            <br/>ability selection in combat.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GroupRole">
+            <summary>
+            Preferred role when fighting in groups. Affects positioning,
+            <br/>target priority, and coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatExperienceType">
+            <summary>
+            Categories of combat experiences that may cause preference evolution.
+            <br/>Each type affects different aspects of combat behavior.
             <br/>
             </summary>
         </member>
@@ -17602,6 +17716,169 @@
         <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse.NotFound">
             <summary>
             Character IDs that have no personality defined
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences">
+            <summary>
+            Combat behavior preferences that influence tactical decisions.
+            <br/>These values affect GOAP action selection, retreat conditions,
+            <br/>and group coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.Style">
+            <summary>
+            Overall combat approach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.PreferredRange">
+            <summary>
+            Preferred engagement distance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.GroupRole">
+            <summary>
+            Role when fighting in groups
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.RiskTolerance">
+            <summary>
+            Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).
+            <br/>Affects ability selection and target prioritization.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.RetreatThreshold">
+            <summary>
+            Health percentage at which retreat is considered (0.0 = fight to death,
+            <br/>0.5 = retreat at half health, 1.0 = retreat at any damage).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.ProtectAllies">
+            <summary>
+            Whether to prioritize ally protection over self-preservation.
+            <br/>Affects target selection and positioning decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse">
+            <summary>
+            Combat preferences profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.CharacterId">
+            <summary>
+            Character these preferences belong to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.Preferences">
+            <summary>
+            The combat preferences values
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.Version">
+            <summary>
+            Preferences version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.CreatedAt">
+            <summary>
+            When these preferences were first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.UpdatedAt">
+            <summary>
+            When these preferences were last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult">
+            <summary>
+            Result of recording a combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.CharacterId">
+            <summary>
+            Character who had the combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.ExperienceRecorded">
+            <summary>
+            Whether the experience was recorded successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.PreferencesEvolved">
+            <summary>
+            Whether any preferences changed as a result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.PreviousPreferences">
+            <summary>
+            Previous preferences (null if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.NewPreferences">
+            <summary>
+            New preferences after evolution (null if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.NewVersion">
+            <summary>
+            New version number if evolved (null if no change)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest">
+            <summary>
+            Request payload for retrieving combat preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest.CharacterId">
+            <summary>
+            ID of the character to get combat preferences for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest">
+            <summary>
+            Request payload for creating or updating combat preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest.CharacterId">
+            <summary>
+            ID of the character to set combat preferences for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest.Preferences">
+            <summary>
+            The combat preferences to set
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest">
+            <summary>
+            Request payload for recording combat experience that may evolve preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.CharacterId">
+            <summary>
+            ID of the character who had the combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.ExperienceType">
+            <summary>
+            Category of combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.Intensity">
+            <summary>
+            How significant the combat experience was (0.0 to 1.0).
+            <br/>Higher intensity = higher probability of preference evolution.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.ContextData">
+            <summary>
+            Optional context for logging and debugging (e.g., enemy type,
+            <br/>ally count, location). Not used in evolution calculations.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.IDocumentationClient">
