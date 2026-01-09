@@ -21,11 +21,6 @@ jobs:
       - name: Install Dependencies
         run: dotnet restore
 
-      - name: Generate SDK Behavior Files
-        run: |
-          echo "📦 Generating SDK behavior files..."
-          scripts/generate-client-sdk.sh
-
       - name: Build Application
         run: dotnet build --configuration Release --no-restore
 
