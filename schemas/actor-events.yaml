@@ -311,6 +311,169 @@ components:
           nullable: true
           description: Associated character ID (for NPC brains)
 
+    # === Instance Runtime Events (from ActorRunner to control plane) ===
+    ActorInstanceStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor instance successfully starts and begins running.
+        Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+      required:
+        - actorId
+        - nodeId
+        - templateId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.started"
+          description: Event type identifier for actor instance started
+        actorId:
+          type: string
+          description: Unique identifier of the actor that started
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        templateId:
+          type: string
+          format: uuid
+          description: Template this actor was spawned from
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+        category:
+          type: string
+          nullable: true
+          description: Actor category (npc-brain, event-brain, etc.)
+
+    ActorStatePersistedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when actor state is auto-saved to persistent storage.
+        Useful for monitoring and debugging state persistence.
+      required:
+        - actorId
+        - nodeId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.state-persisted"
+          description: Event type identifier for actor state persistence
+        actorId:
+          type: string
+          description: Unique identifier of the actor whose state was persisted
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        loopIterations:
+          type: integer
+          format: int64
+          description: Loop iterations at time of persistence
+
+    # === Encounter Events (from Event Brain actors) ===
+    ActorEncounterStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor starts managing a new encounter.
+        Other systems can subscribe to track active encounters.
+      required:
+        - actorId
+        - encounterId
+        - encounterType
+        - participants
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.started"
+          description: Event type identifier for encounter started
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        encounterType:
+          type: string
+          description: Type of encounter (combat, conversation, etc.)
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs participating in the encounter
+
+    ActorEncounterEndedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor ends an encounter.
+        Includes duration and final phase for analytics.
+      required:
+        - actorId
+        - encounterId
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.ended"
+          description: Event type identifier for encounter ended
+        actorId:
+          type: string
+          description: Actor that was managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        durationSeconds:
+          type: number
+          format: float
+          nullable: true
+          description: Duration of the encounter in seconds
+        finalPhase:
+          type: string
+          nullable: true
+          description: Phase the encounter was in when it ended
+
+    ActorEncounterPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an encounter transitions to a new phase.
+        Useful for game servers to react to encounter state changes.
+      required:
+        - actorId
+        - encounterId
+        - previousPhase
+        - newPhase
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.phase-changed"
+          description: Event type identifier for encounter phase change
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        previousPhase:
+          type: string
+          description: Phase before the change
+        newPhase:
+          type: string
+          description: Phase after the change
+
     # === Internal Commands (control plane to pool nodes) ===
     SpawnActorCommand:
       type: object

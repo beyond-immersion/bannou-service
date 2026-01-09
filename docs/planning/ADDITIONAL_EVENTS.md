@@ -14,29 +14,31 @@ This document tracks events that need to be added to complete the eventing cover
 
 ## lib-actor
 
-| Event | Topic | Purpose | Priority |
-|-------|-------|---------|----------|
-| `ActorInstanceStartedEvent` | `actor.instance.started` | When actor actually begins running (distinct from created) | P2 |
-| `ActorInstancePausedEvent` | `actor.instance.paused` | When actor is paused | P2 |
-| `ActorInstanceResumedEvent` | `actor.instance.resumed` | When actor resumes from pause | P2 |
-| `ActorStatePersistedEvent` | `actor.instance.state-persisted` | When auto-save persists state | P3 |
-| `ActorEncounterStartedEvent` | `actor.encounter.started` | When encounter starts on Event Brain | P2 |
-| `ActorEncounterEndedEvent` | `actor.encounter.ended` | When encounter ends | P2 |
-| `ActorEncounterPhaseChangedEvent` | `actor.encounter.phase-changed` | When encounter phase changes | P3 |
+| Event | Topic | Purpose | Priority | Status |
+|-------|-------|---------|----------|--------|
+| `ActorInstanceStartedEvent` | `actor.instance.started` | When actor actually begins running (distinct from created) | P2 | **Done** |
+| `ActorInstancePausedEvent` | `actor.instance.paused` | When actor is paused | P2 | Needs Pause API |
+| `ActorInstanceResumedEvent` | `actor.instance.resumed` | When actor resumes from pause | P2 | Needs Resume API |
+| `ActorStatePersistedEvent` | `actor.instance.state-persisted` | When auto-save persists state | P3 | **Done** |
+| `ActorEncounterStartedEvent` | `actor.encounter.started` | When encounter starts on Event Brain | P2 | **Done** |
+| `ActorEncounterEndedEvent` | `actor.encounter.ended` | When encounter ends | P2 | **Done** |
+| `ActorEncounterPhaseChangedEvent` | `actor.encounter.phase-changed` | When encounter phase changes | P3 | **Done** |
+
+> **Note**: ActorInstancePausedEvent and ActorInstanceResumedEvent require adding Pause/Resume methods to IActorRunner interface first.
 
 ---
 
 ## lib-behavior
 
-| Event | Topic | Purpose | Priority |
-|-------|-------|---------|----------|
-| `BehaviorCompilationFailedEvent` | `behavior.compilation-failed` | When ABML compilation fails (for monitoring/alerting) | P2 |
-| `BehaviorBundleCreatedEvent` | `behavior.bundle.created` | When a behavior bundle is created | P3 |
-| `BehaviorBundleUpdatedEvent` | `behavior.bundle.updated` | When bundle metadata changes | P3 |
-| `BehaviorBundleDeletedEvent` | `behavior.bundle.deleted` | When a behavior bundle is deleted | P3 |
-| `GoapPlanGeneratedEvent` | `behavior.goap.plan-generated` | When GOAP planner generates new plan | P3 |
+| Event | Topic | Purpose | Priority | Status |
+|-------|-------|---------|----------|--------|
+| `BehaviorCompilationFailedEvent` | `behavior.compilation-failed` | When ABML compilation fails (for monitoring/alerting) | P2 | **Done** |
+| `BehaviorBundleCreatedEvent` | `behavior.bundle.created` | When a behavior bundle is created | P3 | Needs IMessageBus in BundleManager |
+| `BehaviorBundleUpdatedEvent` | `behavior.bundle.updated` | When bundle metadata changes | P3 | Needs IMessageBus in BundleManager |
+| `BehaviorBundleDeletedEvent` | `behavior.bundle.deleted` | When a behavior bundle is deleted | P3 | Needs IMessageBus in BundleManager |
+| `GoapPlanGeneratedEvent` | `behavior.goap.plan-generated` | When GOAP planner generates new plan | P3 | **Done** |
 
-> **Note**: BehaviorBundle events (created/updated/deleted) could be implemented as x-lifecycle events for consistency.
+> **Note**: BehaviorBundle events (created/updated/deleted) are defined via x-lifecycle but require injecting IMessageBus into BehaviorBundleManager to publish.
 
 ---
 
@@ -64,18 +66,18 @@ This document tracks events that need to be added to complete the eventing cover
 ## Implementation Status
 
 - [x] CombatPreferencesDeletedEvent (lib-character-personality)
-- [ ] ActorInstanceStartedEvent (lib-actor)
-- [ ] ActorInstancePausedEvent (lib-actor)
-- [ ] ActorInstanceResumedEvent (lib-actor)
-- [ ] ActorStatePersistedEvent (lib-actor)
-- [ ] ActorEncounterStartedEvent (lib-actor)
-- [ ] ActorEncounterEndedEvent (lib-actor)
-- [ ] ActorEncounterPhaseChangedEvent (lib-actor)
-- [ ] BehaviorCompilationFailedEvent (lib-behavior)
-- [ ] BehaviorBundleCreatedEvent (lib-behavior)
-- [ ] BehaviorBundleUpdatedEvent (lib-behavior)
-- [ ] BehaviorBundleDeletedEvent (lib-behavior)
-- [ ] GoapPlanGeneratedEvent (lib-behavior)
+- [x] ActorInstanceStartedEvent (lib-actor)
+- [ ] ~~ActorInstancePausedEvent~~ (lib-actor) - **Deferred: needs Pause API**
+- [ ] ~~ActorInstanceResumedEvent~~ (lib-actor) - **Deferred: needs Resume API**
+- [x] ActorStatePersistedEvent (lib-actor)
+- [x] ActorEncounterStartedEvent (lib-actor)
+- [x] ActorEncounterEndedEvent (lib-actor)
+- [x] ActorEncounterPhaseChangedEvent (lib-actor)
+- [x] BehaviorCompilationFailedEvent (lib-behavior)
+- [ ] ~~BehaviorBundleCreatedEvent~~ (lib-behavior) - **Deferred: needs IMessageBus in BundleManager**
+- [ ] ~~BehaviorBundleUpdatedEvent~~ (lib-behavior) - **Deferred: needs IMessageBus in BundleManager**
+- [ ] ~~BehaviorBundleDeletedEvent~~ (lib-behavior) - **Deferred: needs IMessageBus in BundleManager**
+- [x] GoapPlanGeneratedEvent (lib-behavior)
 - [ ] MappingAuthorityGrantedEvent (lib-mapping)
 - [ ] MappingAuthorityReleasedEvent (lib-mapping)
 - [ ] MappingAuthorityExpiredEvent (lib-mapping)

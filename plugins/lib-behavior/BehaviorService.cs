@@ -37,6 +37,10 @@ public partial class BehaviorService : IBehaviorService
     /// </summary>
     public const string AbmlSchemaVersion = "1.0";
 
+    // Event topics
+    private const string COMPILATION_FAILED_TOPIC = "behavior.compilation-failed";
+    private const string GOAP_PLAN_GENERATED_TOPIC = "behavior.goap.plan-generated";
+
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
@@ -120,6 +124,17 @@ public partial class BehaviorService : IBehaviorService
             if (!result.Success || result.Bytecode == null)
             {
                 _logger.LogWarning("ABML compilation failed with {ErrorCount} errors", result.Errors.Count);
+
+                // Publish compilation failed event for monitoring
+                await _messageBus.TryPublishAsync(COMPILATION_FAILED_TOPIC, new BehaviorCompilationFailedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    BehaviorName = body.BehaviorName,
+                    ErrorCount = result.Errors.Count,
+                    Errors = result.Errors.Select(e => e.Message).ToList()
+                }, cancellationToken: cancellationToken);
+
                 return (StatusCodes.BadRequest, new CompileBehaviorResponse
                 {
                     Success = false,
@@ -894,6 +909,17 @@ public partial class BehaviorService : IBehaviorService
                 plan.TotalCost,
                 plan.NodesExpanded,
                 plan.PlanningTimeMs);
+
+            // Publish plan generated event for monitoring/analytics
+            await _messageBus.TryPublishAsync(GOAP_PLAN_GENERATED_TOPIC, new GoapPlanGeneratedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ActorId = body.AgentId,
+                GoalId = body.Goal.Name,
+                PlanStepCount = plan.ActionCount,
+                PlanningTimeMs = (int)plan.PlanningTimeMs
+            }, cancellationToken: cancellationToken);
 
             return (StatusCodes.OK, new GoapPlanResponse
             {

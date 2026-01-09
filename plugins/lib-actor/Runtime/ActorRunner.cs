@@ -52,6 +52,16 @@ public class ActorRunner : IActorRunner
     // Event Brain encounter state (for actors managing encounters)
     private EncounterStateData? _encounter;
 
+    // Node identity for event publishing
+    private string NodeId => _config.PoolNodeId ?? _config.LocalModeNodeId;
+
+    // Event topics
+    private const string ACTOR_INSTANCE_STARTED_TOPIC = "actor.instance.started";
+    private const string ACTOR_STATE_PERSISTED_TOPIC = "actor.instance.state-persisted";
+    private const string ENCOUNTER_STARTED_TOPIC = "actor.encounter.started";
+    private const string ENCOUNTER_ENDED_TOPIC = "actor.encounter.ended";
+    private const string ENCOUNTER_PHASE_CHANGED_TOPIC = "actor.encounter.phase-changed";
+
     /// <inheritdoc/>
     public string ActorId { get; }
 
@@ -196,6 +206,18 @@ public class ActorRunner : IActorRunner
 
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
+
+        // Publish started event
+        await _messageBus.TryPublishAsync(ACTOR_INSTANCE_STARTED_TOPIC, new ActorInstanceStartedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            NodeId = NodeId,
+            TemplateId = TemplateId,
+            CharacterId = CharacterId,
+            Category = Category
+        }, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -316,6 +338,17 @@ public class ActorRunner : IActorRunner
         _logger.LogInformation("Actor {ActorId} started encounter {EncounterId} (type: {Type}, participants: {Count})",
             ActorId, encounterId, encounterType, participants.Count);
 
+        // Publish encounter started event (fire-and-forget for monitoring)
+        _ = _messageBus.TryPublishAsync(ENCOUNTER_STARTED_TOPIC, new ActorEncounterStartedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            EncounterId = encounterId,
+            EncounterType = encounterType,
+            Participants = participants.ToList()
+        });
+
         return true;
     }
 
@@ -331,6 +364,17 @@ public class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
             ActorId, _encounter.EncounterId, oldPhase, phase);
 
+        // Publish phase changed event (fire-and-forget for monitoring)
+        _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            EncounterId = _encounter.EncounterId,
+            PreviousPhase = oldPhase,
+            NewPhase = phase
+        });
+
         return true;
     }
 
@@ -341,11 +385,23 @@ public class ActorRunner : IActorRunner
             return false;
 
         var encounterId = _encounter.EncounterId;
+        var finalPhase = _encounter.Phase;
         var duration = DateTimeOffset.UtcNow - _encounter.StartedAt;
         _encounter = null;
 
         _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
             ActorId, encounterId, duration);
+
+        // Publish encounter ended event (fire-and-forget for monitoring)
+        _ = _messageBus.TryPublishAsync(ENCOUNTER_ENDED_TOPIC, new ActorEncounterEndedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            EncounterId = encounterId,
+            DurationSeconds = (float)duration.TotalSeconds,
+            FinalPhase = finalPhase
+        });
 
         return true;
     }
@@ -884,6 +940,16 @@ public class ActorRunner : IActorRunner
         {
             await _stateStore.SaveAsync(ActorId, snapshot, cancellationToken: ct);
             _logger.LogDebug("Actor {ActorId} persisted state", ActorId);
+
+            // Publish state persisted event
+            await _messageBus.TryPublishAsync(ACTOR_STATE_PERSISTED_TOPIC, new ActorStatePersistedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ActorId = ActorId,
+                NodeId = NodeId,
+                LoopIterations = LoopIterations
+            }, cancellationToken: ct);
         }
         catch (Exception ex)
         {

@@ -324,6 +324,241 @@ public partial class ActorCompletedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when an actor instance successfully starts and begins running.
+/// <br/>Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorInstanceStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for actor instance started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.instance.started";
+
+    /// <summary>
+    /// Unique identifier of the actor that started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Pool node where the actor is running
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Template this actor was spawned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Associated character ID (for NPC brains)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    public System.Guid? CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Actor category (npc-brain, event-brain, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when actor state is auto-saved to persistent storage.
+/// <br/>Useful for monitoring and debugging state persistence.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorStatePersistedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for actor state persistence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.instance.state-persisted";
+
+    /// <summary>
+    /// Unique identifier of the actor whose state was persisted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Pool node where the actor is running
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Loop iterations at time of persistence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("loopIterations")]
+    public long LoopIterations { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an Event Brain actor starts managing a new encounter.
+/// <br/>Other systems can subscribe to track active encounters.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.started";
+
+    /// <summary>
+    /// Actor managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of encounter (combat, conversation, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterType { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs participating in the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participants")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> Participants { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Published when an Event Brain actor ends an encounter.
+/// <br/>Includes duration and final phase for analytics.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterEndedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.ended";
+
+    /// <summary>
+    /// Actor that was managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Duration of the encounter in seconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationSeconds")]
+    public float? DurationSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// Phase the encounter was in when it ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("finalPhase")]
+    public string? FinalPhase { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an encounter transitions to a new phase.
+/// <br/>Useful for game servers to react to encounter state changes.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter phase change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.phase-changed";
+
+    /// <summary>
+    /// Actor managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Phase before the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PreviousPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Phase after the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newPhase")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NewPhase { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Command sent from control plane to pool node to spawn an actor.
 /// <br/>Published to topic: actor.node.{poolAppId}.spawn
 /// <br/>

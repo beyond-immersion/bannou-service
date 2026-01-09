@@ -1,0 +1,450 @@
+# =============================================================================
+# Simple Fight Coordinator - Event Brain Example
+# Demonstrates choreographing a 1v1 dramatic fight between two characters.
+# Uses ABML Event Brain handlers: emit_perception, query_options, state_update,
+# query_actor_state, schedule_event
+# =============================================================================
+
+behavior_version: 2
+name: fight-coordinator-simple
+type: event_brain
+description: |
+  Coordinates a dramatic 1v1 fight between two characters.
+  Queries participants for available combat options, selects choreography,
+  and distributes instructions via perception events.
+
+metadata:
+  category: event-combat
+  min_participants: 2
+  max_participants: 2
+  auto_terminate: true
+
+# Initial state
+context:
+  variables:
+    phase:
+      type: string
+      initial: "setup"
+    round_number:
+      type: int
+      initial: 0
+    max_rounds:
+      type: int
+      initial: 3
+    participants:
+      type: list<any>
+      initial: []
+
+# -----------------------------------------------------------------------------
+# Main Entry Flow
+# -----------------------------------------------------------------------------
+flows:
+  # Called when encounter spawns
+  main:
+    actions:
+      - log:
+          message: "Fight coordinator starting for encounter ${encounter.id}"
+          level: info
+
+      # Initialize encounter state
+      - state_update:
+          path: "memories.encounter_id"
+          operation: set
+          value: "${encounter.id}"
+
+      - state_update:
+          path: "memories.phase"
+          operation: set
+          value: "setup"
+
+      # Extract participant info from spawn parameters
+      - call: { flow: initialize_participants }
+
+      # Run the fight loop (3 rounds)
+      - call: { flow: fight_loop }
+
+      # Cleanup
+      - call: { flow: cleanup_encounter }
+
+  # -----------------------------------------------------------------------------
+  # Participant Initialization
+  # -----------------------------------------------------------------------------
+  initialize_participants:
+    actions:
+      - log:
+          message: "Initializing participants for encounter"
+          level: debug
+
+      # Participants passed via spawn parameters
+      # Format: { participant_a: { actorId, characterId }, participant_b: { ... } }
+      - set:
+          variable: participant_a
+          value: "${spawn_params.participant_a}"
+
+      - set:
+          variable: participant_b
+          value: "${spawn_params.participant_b}"
+
+      # Store in memories for later access
+      - state_update:
+          path: "memories.participants"
+          operation: set
+          value:
+            - actorId: "${participant_a.actorId}"
+              characterId: "${participant_a.characterId}"
+              role: attacker
+            - actorId: "${participant_b.actorId}"
+              characterId: "${participant_b.characterId}"
+              role: defender
+
+      # Notify participants they're entering an encounter
+      - emit_perception:
+          target_character: "${participant_a.characterId}"
+          perception_type: encounter_start
+          source_id: "${encounter.id}"
+          urgency: 0.9
+          data:
+            encounter_id: "${encounter.id}"
+            encounter_type: dramatic_fight
+            role: attacker
+            opponent_character_id: "${participant_b.characterId}"
+
+      - emit_perception:
+          target_character: "${participant_b.characterId}"
+          perception_type: encounter_start
+          source_id: "${encounter.id}"
+          urgency: 0.9
+          data:
+            encounter_id: "${encounter.id}"
+            encounter_type: dramatic_fight
+            role: defender
+            opponent_character_id: "${participant_a.characterId}"
+
+      - log:
+          message: "Participants initialized"
+          level: info
+
+  # -----------------------------------------------------------------------------
+  # Main Fight Loop - Runs 3 exchange rounds
+  # -----------------------------------------------------------------------------
+  fight_loop:
+    actions:
+      - set:
+          variable: round_number
+          value: 0
+
+      # Run round 1
+      - increment:
+          variable: round_number
+          by: 1
+      - state_update:
+          path: "memories.round_number"
+          operation: set
+          value: "${round_number}"
+      - log:
+          message: "Starting round ${round_number}"
+          level: info
+      - call: { flow: run_exchange }
+
+      # Run round 2
+      - increment:
+          variable: round_number
+          by: 1
+      - state_update:
+          path: "memories.round_number"
+          operation: set
+          value: "${round_number}"
+      - log:
+          message: "Starting round ${round_number}"
+          level: info
+      - call: { flow: run_exchange }
+
+      # Run round 3
+      - increment:
+          variable: round_number
+          by: 1
+      - state_update:
+          path: "memories.round_number"
+          operation: set
+          value: "${round_number}"
+      - log:
+          message: "Starting round ${round_number}"
+          level: info
+      - call: { flow: run_exchange }
+
+      - log:
+          message: "Fight loop completed after ${round_number} rounds"
+          level: info
+
+  # -----------------------------------------------------------------------------
+  # Exchange Phase - One round of combat
+  # -----------------------------------------------------------------------------
+  run_exchange:
+    actions:
+      # Set phase
+      - state_update:
+          path: "memories.phase"
+          operation: set
+          value: "exchange"
+
+      # Get participants from memories
+      - set:
+          variable: participants
+          value: "${memories.participants}"
+
+      - set:
+          variable: attacker
+          value: "${participants[0]}"
+
+      - set:
+          variable: defender
+          value: "${participants[1]}"
+
+      # Query attacker's combat options
+      - query_options:
+          actor_id: "${attacker.actorId}"
+          query_type: combat
+          freshness: fresh
+          context:
+            combat_state: engaged
+            opponent_ids:
+              - "${defender.characterId}"
+          result_variable: attacker_options
+
+      - log:
+          message: "Attacker has ${length(attacker_options.options)} combat options"
+          level: debug
+
+      # Query defender's options
+      - query_options:
+          actor_id: "${defender.actorId}"
+          query_type: combat
+          freshness: fresh
+          context:
+            combat_state: engaged
+            opponent_ids:
+              - "${attacker.characterId}"
+          result_variable: defender_options
+
+      - log:
+          message: "Defender has ${length(defender_options.options)} combat options"
+          level: debug
+
+      # Generate choreography for this exchange
+      - call:
+          flow: generate_choreography
+          args:
+            attacker_opts: "${attacker_options}"
+            defender_opts: "${defender_options}"
+          result_variable: choreography
+
+      # Distribute choreography to participants
+      - call:
+          flow: distribute_choreography
+          args:
+            choreo: "${choreography}"
+
+      # Schedule timeout for this exchange
+      - schedule_event:
+          delay_ms: 5000
+          target_character: "${attacker.characterId}"
+          event_type: exchange_timeout
+          data:
+            encounter_id: "${encounter.id}"
+            round: "${round_number}"
+
+  # -----------------------------------------------------------------------------
+  # Choreography Generation
+  # -----------------------------------------------------------------------------
+  generate_choreography:
+    actions:
+      - log:
+          message: "Generating choreography from options"
+          level: debug
+
+      # Select best attack option (simplified - would use scoring in real impl)
+      - set:
+          variable: attack_option
+          value: "${first(attacker_opts.options)}"
+
+      - set:
+          variable: defense_option
+          value: "${first(defender_opts.options)}"
+
+      # Build choreography instruction for attacker
+      - set:
+          variable: attacker_instruction
+          value:
+            encounterId: "${encounter.id}"
+            sequenceId: "${random(100000, 999999)}"
+            actions:
+              - actionType: "${attack_option.actionId ?? 'attack'}"
+                target: "${defender.characterId}"
+                parameters: "${attack_option.parameters ?? {}}"
+            timing:
+              startCondition: immediate
+              durationMs: 1500
+            priority: high
+            canInterrupt: false
+            expectedOutcome: hit
+            onComplete: "sync_point.attack_complete"
+
+      # Build choreography instruction for defender
+      - set:
+          variable: defender_instruction
+          value:
+            encounterId: "${encounter.id}"
+            sequenceId: "${random(100000, 999999)}"
+            actions:
+              - actionType: "${defense_option.actionId ?? 'block'}"
+                target: "${attacker.characterId}"
+                parameters: "${defense_option.parameters ?? {}}"
+            timing:
+              startCondition: sync_point
+              syncPointName: "sync_point.attack_complete"
+              durationMs: 1000
+            priority: high
+            canInterrupt: false
+            expectedOutcome: block
+            onComplete: "sync_point.defense_complete"
+
+      # Return combined choreography
+      - return:
+          attacker: "${attacker_instruction}"
+          defender: "${defender_instruction}"
+
+  # -----------------------------------------------------------------------------
+  # Distribute Choreography to Participants
+  # -----------------------------------------------------------------------------
+  distribute_choreography:
+    actions:
+      - set:
+          variable: participants
+          value: "${memories.participants}"
+
+      - set:
+          variable: attacker
+          value: "${participants[0]}"
+
+      - set:
+          variable: defender
+          value: "${participants[1]}"
+
+      - log:
+          message: "Distributing choreography to participants"
+          level: debug
+
+      # Send choreography instruction to attacker
+      - emit_perception:
+          target_character: "${attacker.characterId}"
+          perception_type: choreography_instruction
+          source_id: "${encounter.id}"
+          source_type: event_brain
+          urgency: 0.95
+          data:
+            instruction: "${choreo.attacker}"
+            role: attacker
+            round: "${round_number}"
+
+      # Send choreography instruction to defender
+      - emit_perception:
+          target_character: "${defender.characterId}"
+          perception_type: choreography_instruction
+          source_id: "${encounter.id}"
+          source_type: event_brain
+          urgency: 0.95
+          data:
+            instruction: "${choreo.defender}"
+            role: defender
+            round: "${round_number}"
+
+      # Track active choreography
+      - state_update:
+          path: "memories.active_choreography"
+          operation: set
+          value:
+            attacker_sequence: "${choreo.attacker.sequenceId}"
+            defender_sequence: "${choreo.defender.sequenceId}"
+            started_at: "${now()}"
+
+  # -----------------------------------------------------------------------------
+  # Cleanup
+  # -----------------------------------------------------------------------------
+  cleanup_encounter:
+    actions:
+      - log:
+          message: "Cleaning up encounter ${encounter.id}"
+          level: info
+
+      - set:
+          variable: participants
+          value: "${memories.participants}"
+
+      # Notify participants encounter is ending
+      - for_each:
+          variable: participant
+          collection: "${participants}"
+          do:
+            - emit_perception:
+                target_character: "${participant.characterId}"
+                perception_type: encounter_end
+                source_id: "${encounter.id}"
+                urgency: 0.8
+                data:
+                  encounter_id: "${encounter.id}"
+                  outcome: complete
+                  rounds: "${memories.round_number}"
+
+      - log:
+          message: "Fight coordinator completed"
+          level: info
+
+  # -----------------------------------------------------------------------------
+  # Event Handler Flows
+  # -----------------------------------------------------------------------------
+  handle_sync_point:
+    actions:
+      - log:
+          message: "Sync point reached: ${perception.data.sync_point}"
+          level: debug
+
+      - state_update:
+          path: "memories.sync_points.${perception.data.sync_point}"
+          operation: set
+          value:
+            reached_at: "${now()}"
+            actor_id: "${perception.source_id}"
+
+  handle_choreography_complete:
+    actions:
+      - log:
+          message: "Choreography complete from ${perception.source_id}"
+          level: debug
+
+  handle_exchange_timeout:
+    actions:
+      - log:
+          message: "Exchange timeout - forcing resolution"
+          level: warning
+
+      # Force move to next phase
+      - state_update:
+          path: "memories.timeout_occurred"
+          operation: set
+          value: true
+
+# -----------------------------------------------------------------------------
+# Event Subscriptions
+# -----------------------------------------------------------------------------
+events:
+  # Handle sync point completion from participants
+  - pattern: "sync_point_reached"
+    handler: handle_sync_point
+
+  # Handle participant reporting choreography complete
+  - pattern: "choreography_complete"
+    handler: handle_choreography_complete
+
+  # Handle exchange timeout
+  - pattern: "exchange_timeout"
+    handler: handle_exchange_timeout

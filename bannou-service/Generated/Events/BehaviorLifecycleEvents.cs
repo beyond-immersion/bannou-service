@@ -279,6 +279,197 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Published to behavior-bundle.created when a behaviorbundle is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: behavior-bundle.created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "behavior-bundle.created";
+
+    /// <summary>
+    /// Unique identifier for the behavior bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Number of behaviors in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorCount")]
+    public int BehaviorCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size of all compiled bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalBytecodeSize")]
+    public long? TotalBytecodeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to behavior-bundle.updated when a behaviorbundle is updated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: behavior-bundle.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "behavior-bundle.updated";
+
+    /// <summary>
+    /// Unique identifier for the behavior bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Number of behaviors in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorCount")]
+    public int BehaviorCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size of all compiled bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalBytecodeSize")]
+    public long? TotalBytecodeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Published to behavior-bundle.deleted when a behaviorbundle is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: behavior-bundle.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "behavior-bundle.deleted";
+
+    /// <summary>
+    /// Unique identifier for the behavior bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Number of behaviors in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorCount")]
+    public int BehaviorCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size of all compiled bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalBytecodeSize")]
+    public long? TotalBytecodeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the bundle was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

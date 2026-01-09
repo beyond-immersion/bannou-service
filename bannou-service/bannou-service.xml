@@ -11393,6 +11393,166 @@
             Associated character ID (for NPC brains)
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent">
+            <summary>
+            Published when an actor instance successfully starts and begins running.
+            <br/>Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.EventName">
+            <summary>
+            Event type identifier for actor instance started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.ActorId">
+            <summary>
+            Unique identifier of the actor that started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.NodeId">
+            <summary>
+            Pool node where the actor is running
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.TemplateId">
+            <summary>
+            Template this actor was spawned from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.CharacterId">
+            <summary>
+            Associated character ID (for NPC brains)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorInstanceStartedEvent.Category">
+            <summary>
+            Actor category (npc-brain, event-brain, etc.)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorStatePersistedEvent">
+            <summary>
+            Published when actor state is auto-saved to persistent storage.
+            <br/>Useful for monitoring and debugging state persistence.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorStatePersistedEvent.EventName">
+            <summary>
+            Event type identifier for actor state persistence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorStatePersistedEvent.ActorId">
+            <summary>
+            Unique identifier of the actor whose state was persisted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorStatePersistedEvent.NodeId">
+            <summary>
+            Pool node where the actor is running
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorStatePersistedEvent.LoopIterations">
+            <summary>
+            Loop iterations at time of persistence
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent">
+            <summary>
+            Published when an Event Brain actor starts managing a new encounter.
+            <br/>Other systems can subscribe to track active encounters.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent.EventName">
+            <summary>
+            Event type identifier for encounter started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent.ActorId">
+            <summary>
+            Actor managing this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent.EncounterId">
+            <summary>
+            Unique identifier for the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent.EncounterType">
+            <summary>
+            Type of encounter (combat, conversation, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterStartedEvent.Participants">
+            <summary>
+            Character IDs participating in the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent">
+            <summary>
+            Published when an Event Brain actor ends an encounter.
+            <br/>Includes duration and final phase for analytics.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent.EventName">
+            <summary>
+            Event type identifier for encounter ended
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent.ActorId">
+            <summary>
+            Actor that was managing this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent.EncounterId">
+            <summary>
+            Unique identifier for the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent.DurationSeconds">
+            <summary>
+            Duration of the encounter in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterEndedEvent.FinalPhase">
+            <summary>
+            Phase the encounter was in when it ended
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent">
+            <summary>
+            Published when an encounter transitions to a new phase.
+            <br/>Useful for game servers to react to encounter state changes.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent.EventName">
+            <summary>
+            Event type identifier for encounter phase change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent.ActorId">
+            <summary>
+            Actor managing this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent.EncounterId">
+            <summary>
+            Unique identifier for the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent.PreviousPhase">
+            <summary>
+            Phase before the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ActorEncounterPhaseChangedEvent.NewPhase">
+            <summary>
+            Phase after the change
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SpawnActorCommand">
             <summary>
             Command sent from control plane to pool node to spawn an actor.
@@ -12707,6 +12867,86 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent">
+            <summary>
+            Event published when ABML compilation fails. Used for monitoring and alerting.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.Timestamp">
+            <summary>
+            When the event was generated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.BehaviorName">
+            <summary>
+            Name of the behavior being compiled (if provided).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.ErrorCount">
+            <summary>
+            Number of compilation errors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.Errors">
+            <summary>
+            List of compilation error messages.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.ContentHash">
+            <summary>
+            Hash of the ABML content for deduplication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorCompilationFailedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent">
+            <summary>
+            Event published when the GOAP planner generates a new plan. Useful for debugging and analytics.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.Timestamp">
+            <summary>
+            When the event was generated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.ActorId">
+            <summary>
+            Actor that requested the plan (if applicable).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.GoalId">
+            <summary>
+            The goal that was planned for.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.PlanStepCount">
+            <summary>
+            Number of steps in the generated plan.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.PlanningTimeMs">
+            <summary>
+            Time taken to generate the plan in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.GoapPlanGeneratedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.BehaviorCreatedEvent">
             <summary>
             Published to behavior.created when a behavior is created
@@ -12878,6 +13118,136 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.BehaviorDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent">
+            <summary>
+            Published to behavior-bundle.created when a behaviorbundle is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.EventName">
+            <summary>
+            Event type identifier: behavior-bundle.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.BundleId">
+            <summary>
+            Unique identifier for the behavior bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.Name">
+            <summary>
+            Human-readable name of the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.BehaviorCount">
+            <summary>
+            Number of behaviors in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.TotalBytecodeSize">
+            <summary>
+            Total size of all compiled bytecode in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the bundle was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleCreatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the bundle was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent">
+            <summary>
+            Published to behavior-bundle.updated when a behaviorbundle is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: behavior-bundle.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.BundleId">
+            <summary>
+            Unique identifier for the behavior bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.Name">
+            <summary>
+            Human-readable name of the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.BehaviorCount">
+            <summary>
+            Number of behaviors in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.TotalBytecodeSize">
+            <summary>
+            Total size of all compiled bytecode in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.CreatedAt">
+            <summary>
+            Timestamp when the bundle was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the bundle was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent">
+            <summary>
+            Published to behavior-bundle.deleted when a behaviorbundle is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.EventName">
+            <summary>
+            Event type identifier: behavior-bundle.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.BundleId">
+            <summary>
+            Unique identifier for the behavior bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.Name">
+            <summary>
+            Human-readable name of the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.BehaviorCount">
+            <summary>
+            Number of behaviors in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.TotalBytecodeSize">
+            <summary>
+            Total size of all compiled bytecode in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.CreatedAt">
+            <summary>
+            Timestamp when the bundle was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.UpdatedAt">
+            <summary>
+            Timestamp when the bundle was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BehaviorBundleDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
