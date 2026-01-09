@@ -3,6 +3,7 @@
 > **Status**: Gap Analysis for ACTOR_BEHAVIORS.md Implementation
 > **Date**: 2026-01-08
 > **Peer Reviewed**: 2026-01-09
+> **Revised**: 2026-01-09 (Updated for lib-character-personality/history completion)
 > **Related**: [ACTOR_BEHAVIORS.md](ACTOR_BEHAVIORS.md), [THE_DREAM.md](THE_DREAM.md), [THE_DREAM_GAP_ANALYSIS.md](THE_DREAM_GAP_ANALYSIS.md)
 
 This document identifies gaps between the design in ACTOR_BEHAVIORS.md and current implementation.
@@ -20,14 +21,21 @@ The foundation is **significantly more complete than expected**. The core archit
 - Actor state management (feelings, goals, memories): **100% complete**
 - Runtime BehaviorStack evaluation: **100% complete** (lib-behavior/Stack/)
 - Cutscene coordination: **100% complete** (CutsceneCoordinator, SyncPointManager, InputWindowManager)
+- **Character personality traits**: **100% complete** (lib-character-personality with 8 axes + experience evolution)
+- **Combat preferences**: **100% complete** (lib-character-personality with 6 preference fields + combat experience evolution)
+- **Character history/backstory**: **100% complete** (lib-character-history with 9 backstory element types + event participation)
+- **ABML Personality Provider**: **100% complete** (`${personality.*}` paths in ActorRunner)
+- **ABML Combat Preferences Provider**: **100% complete** (`${combat.*}` paths in ActorRunner)
 
-**Key gaps are small but critical**:
-1. Character personality/backstory schema (schema change)
-2. `CompileBehaviorStackAsync` service endpoint (currently returns NotImplemented)
-3. Event actor architecture (THE_DREAM "Event Brain" - Phase 5)
-4. Character data loading in ActorRunner startup
+**2026-01-09 Update**: Major progress since last review. The `lib-character-personality` and `lib-character-history` services are fully implemented with expanded capabilities beyond the original design. PersonalityProvider and CombatPreferencesProvider are wired into ActorRunner, providing ABML access to character traits.
 
-**Alignment with THE_DREAM**: These gaps correspond to THE_DREAM_GAP_ANALYSIS Phase 5 (Event Brain) remaining work. THE_DREAM_GAP_ANALYSIS estimates ~90% overall completion.
+**Remaining gaps for Event Brain / Fight Coordinators**:
+1. **BackstoryProvider for ABML** - `${backstory.*}` paths not yet wired into ActorRunner
+2. **Character Agent Query API** - `/actor/query-combat-options` endpoint for Event Brain coordination
+3. **Event Brain Actor Schema** - ABML behavior definition for orchestration actors
+4. **Regional Watcher** - Auto-spawns Event Actors based on interestingness (larger separate task)
+
+**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~90% overall completion. The remaining gaps are "filling in boxes" integration work, not new architecture.
 
 ---
 
@@ -90,6 +98,34 @@ The foundation is **significantly more complete than expected**. The core archit
 | Expression VM | ✅ Complete | Zero-allocation per-frame evaluation |
 | 5-channel intent system | ✅ Complete | action, locomotion, attention, stance, vocalization |
 | GOAP planner | ✅ Complete | A* with urgency-based constraints |
+
+### 1.6 Character Personality (`plugins/lib-character-personality/`)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Personality traits (8 axes) | ✅ Complete | OPENNESS, CONSCIENTIOUSNESS, EXTRAVERSION, AGREEABLENESS, NEUROTICISM, HONESTY, AGGRESSION, LOYALTY |
+| Combat preferences | ✅ Complete | style, preferredRange, groupRole, riskTolerance, retreatThreshold, protectAllies |
+| Personality evolution | ✅ Complete | 9 experience types (TRAUMA, BETRAYAL, LOSS, VICTORY, FRIENDSHIP, etc.) |
+| Combat preference evolution | ✅ Complete | 10 combat experience types (DECISIVE_VICTORY, NEAR_DEATH, ALLY_SAVED, etc.) |
+| Batch personality retrieval | ✅ Complete | Efficient region loading |
+
+### 1.7 Character History (`plugins/lib-character-history/`)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Backstory elements | ✅ Complete | 9 types: ORIGIN, OCCUPATION, TRAINING, TRAUMA, ACHIEVEMENT, SECRET, GOAL, FEAR, BELIEF |
+| Event participation | ✅ Complete | Historical event tracking with roles (LEADER, COMBATANT, VICTIM, WITNESS, etc.) |
+| History summarization | ✅ Complete | Compression for character summaries |
+| Dual-index storage | ✅ Complete | Efficient query by character or event |
+
+### 1.8 ABML Variable Providers (`plugins/lib-actor/Runtime/`)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| PersonalityProvider | ✅ Complete | `${personality.openness}`, `${personality.traits.AGGRESSION}`, `${personality.version}` |
+| CombatPreferencesProvider | ✅ Complete | `${combat.style}`, `${combat.riskTolerance}`, `${combat.protectAllies}`, etc. |
+| PersonalityCache | ✅ Complete | TTL-based caching via ICharacterPersonalityClient |
+| Provider registration | ✅ Complete | Providers registered in ActorRunner behavior execution scope |
 
 ---
 
@@ -188,157 +224,233 @@ The ACTOR_BEHAVIORS.md example uses `channel: cognition` for actions like `store
 
 ### 3.1 Character Personality/Backstory Schema
 
-**Gap**: `schemas/character-api.yaml` only has basic identity fields.
+**Status**: ✅ **COMPLETE** (2026-01-09)
 
-**Current CharacterResponse**:
-```yaml
-characterId, name, realmId, speciesId, birthDate, deathDate, status, createdAt, updatedAt
-```
+The original gap (character personality and backstory storage) has been fully addressed through separate dedicated services:
 
-**Missing from ACTOR_BEHAVIORS.md design**:
-```yaml
-personality:
-  friendliness: 0.8
-  patience: 0.7
-  aggression: 0.3
-  caution: 0.6
-  ...
+| Original Gap | Resolution |
+|--------------|------------|
+| Personality traits | ✅ `lib-character-personality` - 8 trait axes with evolution |
+| Combat preferences | ✅ `lib-character-personality` - 6 preference fields with combat experience evolution |
+| Backstory | ✅ `lib-character-history` - 9 backstory element types |
+| ABML personality access | ✅ `PersonalityProvider` - `${personality.*}` paths |
+| ABML combat access | ✅ `CombatPreferencesProvider` - `${combat.*}` paths |
+| Character data loading | ✅ `PersonalityCache` - TTL-cached loading via mesh client |
 
-backstory:
-  template: "veteran_soldier"
-  seed: "..."
-
-appearance:
-  height: 1.8
-  build: "muscular"
-  ...
-
-baseGoals:
-  - id: "maintain_order"
-    priority: 70
-
-combatPreferences:
-  style: "defensive"
-  aggression: 0.3
-```
-
-**Required Work**:
-1. Update `schemas/character-api.yaml` with personality, backstory, combat preferences
-2. Regenerate services: `scripts/generate-all-services.sh`
-3. Update CharacterService to store/retrieve extended data
-4. Update ActorRunner to load character data on startup
-
-**Effort**: ~3-4 days (schema + service + actor integration)
+**Remaining sub-gap**: BackstoryProvider for ABML (see §3.5)
 
 ### 3.2 Event Actor Architecture (THE_DREAM "Event Brain")
 
-**Gap**: No EventActor class for multi-character orchestration.
+**Gap**: No EventActor/EventBrain ABML behavior definition for multi-character orchestration.
 
-**Alignment with THE_DREAM**: This is THE_DREAM's "Event Brain" concept from Phase 5. THE_DREAM_GAP_ANALYSIS identifies this as remaining work with:
-- Event Brain Actor Schema
-- Character Agent Query API (`/agent/query-combat-options`)
-- Regional Watcher (spawns Event Actors based on interestingness)
+**Alignment with THE_DREAM**: This is THE_DREAM's "Event Brain" concept from Phase 5. THE_DREAM_GAP_ANALYSIS identifies this as remaining work.
 
 **Current State**:
-- ActorRunner is single-actor focused
-- CutsceneCoordinator exists in lib-behavior and IS complete (sessions, sync points, input windows)
-- ControlGateManager exists for cinematic handoff
-- No regional event subscription pattern (Regional Watcher)
+- ActorRunner is complete and can run ANY actor type (no separate EventActorRunner needed)
+- CutsceneCoordinator: ✅ Complete (sessions, sync points, input windows)
+- ControlGateManager: ✅ Complete (cinematic handoff)
+- PersonalityProvider: ✅ Complete (`${personality.*}` paths)
+- CombatPreferencesProvider: ✅ Complete (`${combat.*}` paths)
+- No Event Brain ABML behavior definition
+- No Character Agent Query API
 
-**ACTOR_BEHAVIORS.md and THE_DREAM describe event actors that**:
-- Subscribe to mapping channel updates (Regional Watcher pattern)
-- Query character actors for current state (Character Agent Query API)
-- Compose multi-character choreography (uses existing CutsceneCoordinator)
-- Handle player intervention opportunities (uses existing InputWindowManager)
-- Apply aftermath effects (uses existing event publishing)
+**What Event Brain needs**:
+1. **ABML behavior definition** - The orchestration logic itself (what "Event Brain" does)
+2. **Character Agent Query API** - Ask participants "what can you do?"
+3. **BackstoryProvider** - Consider character history for choreography decisions
+
+**Note**: Event Brain is an ABML behavior that uses existing infrastructure. The existing ActorRunner can execute it - no separate runtime class needed. The gap is the ABML definition and query API, not infrastructure.
 
 **Required Work**:
-1. Create `EventActorRunner` class (or new EventActor ABML behavior type)
-2. Implement Regional Watcher pattern for event spawning
-3. Add `/agent/query-combat-options` endpoint to ActorService
-4. Wire EventActor to existing CutsceneCoordinator, InputWindowManager
-5. Create event choreography composition using existing SyncPointManager
+1. Design Event Brain ABML behavior schema (orchestration logic)
+2. Add Character Agent Query API endpoint (see §3.6)
+3. Add BackstoryProvider to ActorRunner (see §3.5)
+4. Create example event behaviors (fight orchestration, cutscene direction)
 
-**Effort**: ~3-5 days (most infrastructure exists, this is integration)
+**Effort**: ~3-5 days (ABML authoring + endpoint + provider)
 
-**Note**: THE_DREAM_GAP_ANALYSIS estimates this at "Small" effort for Event Brain actor schema, suggesting existing infrastructure is more reusable than originally thought.
+**Separate Task**: Regional Watcher for auto-spawning Event Actors based on interestingness. This is a larger architectural decision about when/how Event Brains spawn and is tracked separately.
 
 ### 3.3 Combat Preference Storage in ActorState
 
-**Gap**: No storage for combat preferences that evolve during play.
+**Status**: ✅ **COMPLETE** (2026-01-09)
 
-**Current ActorState has**:
-- `_feelings` - emotional dimensions
-- `_goals` - primary/secondary goals
-- `_memories` - key-value memories
+Combat preferences are now handled through the dedicated `lib-character-personality` service:
 
-**Missing**:
-- `_combatPreferences` - style, aggression, tactics
-- Methods: `GetCombatStyle()`, `SetCombatAggression()`, etc.
+| Original Gap | Resolution |
+|--------------|------------|
+| Combat preferences storage | ✅ `lib-character-personality` stores style, preferredRange, groupRole, riskTolerance, retreatThreshold, protectAllies |
+| Preference evolution | ✅ Combat experience evolution (DECISIVE_VICTORY, NEAR_DEATH, etc.) |
+| ABML access | ✅ `CombatPreferencesProvider` provides `${combat.*}` paths |
+| Caching | ✅ `PersonalityCache.GetCombatPreferencesOrLoadAsync()` with TTL |
 
-**Required Work**:
-1. Add `CombatPreferences` class to ActorState
-2. Add pending change tracking for combat preference updates
-3. Add to CharacterStateUpdateEvent schema
-4. Wire to behavior execution scope
-
-**Effort**: ~1 day
+**Design Decision**: Combat preferences are persistent character data (survives actor restart), not transient actor state. This is more appropriate than storing in ActorState which is session-scoped.
 
 ### 3.4 Character Data Loading in Actor Startup
 
-**Gap**: ActorRunner has CharacterId but doesn't load character data.
+**Status**: ✅ **COMPLETE** (2026-01-09)
 
-**Current flow**:
-```
-ActorRunner created with CharacterId
-  → Sets up perception subscription
-  → BUT: Doesn't load personality/backstory from lib-character
+Character data loading is now implemented via the PersonalityCache pattern:
+
+```csharp
+// From ActorRunner.cs lines 541-555
+if (CharacterId.HasValue)
+{
+    var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new PersonalityProvider(personality));
+
+    var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
+    scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+}
 ```
 
-**Required flow**:
-```
-ActorRunner created with CharacterId
-  → Load character data from lib-character
-  → Initialize emotional state baseline from personality
-  → Initialize goals from character's base goals
-  → Initialize combat preferences from character config
-  → Set up perception subscription
-```
+| Original Gap | Resolution |
+|--------------|------------|
+| Load character data on startup | ✅ PersonalityCache loads via mesh client |
+| Initialize personality | ✅ PersonalityProvider registered in scope |
+| Initialize combat preferences | ✅ CombatPreferencesProvider registered in scope |
+| Handle missing data | ✅ Graceful degradation (providers use defaults) |
+| Caching | ✅ 5-minute TTL with stale-if-error fallback |
+
+### 3.5 BackstoryProvider for ABML (NEW GAP)
+
+**Gap**: Character backstory data exists in `lib-character-history` but is not accessible from ABML expressions.
+
+**Current State**:
+- `lib-character-history` stores rich backstory data (9 element types)
+- No `BackstoryProvider` class exists
+- No `${backstory.*}` paths available in ABML
+- ActorRunner does not load backstory on startup
+
+**Why this matters for Fight Coordinators**:
+- Event Brain could consider character fears when choreographing ("character fears fire" → avoid fire-based kills)
+- Training background could influence combat style ("trained by knights" → prefers honorable combat)
+- Trauma could affect reactions ("witnessed betrayal" → distrusts ambush tactics)
 
 **Required Work**:
-1. Add lib-character client to ActorRunner dependencies
-2. Call character/get on startup to load data
-3. Initialize ActorState with character baseline
-4. Handle character data not found (graceful degradation)
+1. Create `BackstoryProvider : IVariableProvider` in `lib-actor/Runtime/`
+2. Add `ICharacterHistoryClient` to PersonalityCache (or create separate HistoryCache)
+3. Register BackstoryProvider in ActorRunner execution scope
+4. Define ABML access patterns:
+   - `${backstory.origin}` - Character origin backstory element
+   - `${backstory.training}` - Training background
+   - `${backstory.fear}` - Character fears
+   - `${backstory.elements}` - All backstory elements as collection
 
-**Effort**: ~1-2 days
+**Example ABML Usage**:
+```yaml
+# Event Brain considering backstory for choreography
+- cond:
+    if: "${backstory.fear.key == 'FIRE'}"
+    then:
+      - exclude_option: "chandelier_fire_kill"
+    else:
+      - include_option: "chandelier_fire_kill"
+```
+
+**Effort**: ~1-2 days (follows existing provider pattern)
+
+### 3.6 Character Agent Query API (NEW GAP)
+
+**Gap**: No endpoint for Event Brain to query character actors "what can you do?"
+
+**Why this is critical for Fight Coordinators**:
+- Event Brain orchestrates multi-character events
+- Must know what each participant CAN do (available actions)
+- Must know what each participant PREFERS (based on personality/combat prefs)
+- Current approach: Event Brain has no way to ask participants
+
+**Proposed Endpoint**: `/actor/query-combat-options` (or generalized `/actor/query-options`)
+
+**Request**:
+```yaml
+QueryCombatOptionsRequest:
+  actorId: "guid"           # Actor to query
+  context:
+    combatState: "engaged"  # Current combat state
+    opponentIds: ["guid"]   # Who they're fighting
+    environmentTags: ["indoor", "elevated", "destructibles"]
+    urgency: 0.7            # How urgent is the decision
+```
+
+**Response**:
+```yaml
+QueryCombatOptionsResponse:
+  options:
+    - actionId: "sword_slash"
+      preference: 0.8        # How much this character wants to do this (from personality + combat prefs)
+      risk: 0.3              # Estimated risk
+      requirements: []       # Any prerequisites
+    - actionId: "shield_bash"
+      preference: 0.5
+      risk: 0.2
+      requirements: ["has_shield"]
+    - actionId: "retreat"
+      preference: 0.1        # Low - character has high riskTolerance
+      risk: 0.0
+      requirements: []
+  characterContext:
+    combatStyle: "aggressive"
+    riskTolerance: 0.8
+    protectAllies: true
+```
+
+**Design Considerations**:
+1. **Generalized vs Specific**: Should this be `/actor/query-options` with a `queryType` parameter (combat, dialogue, exploration) or specific endpoints?
+2. **Who computes options**: Should the Actor itself compute options (via ABML), or should the service compute based on character data?
+3. **Caching**: Options may be expensive to compute - should responses be cached?
+
+**Required Work**:
+1. Design query/response schema in `schemas/actor-api.yaml`
+2. Implement option computation logic (likely uses personality + combat prefs + available actions)
+3. Add endpoint to ActorService
+4. Create ABML action handler for Event Brain to call query
+
+**Effort**: ~2-3 days (schema + implementation + testing)
 
 ---
 
 ## 4. Implementation Priority
 
-### Phase 1: Foundation (Week 1)
-| Task | Effort | Priority | Dependency |
-|------|--------|----------|------------|
-| Add personality/backstory to character schema | 2 days | High | None |
-| Add combat preferences to ActorState | 1 day | High | None |
-| Load character data in ActorRunner startup | 1 day | High | Character schema |
+### ~~Phase 1: Foundation (Week 1)~~ ✅ COMPLETE
 
-### Phase 2: Cognition Wiring (Week 2)
-| Task | Effort | Priority | Dependency |
-|------|--------|----------|------------|
-| Verify cognition handler integration | 1 day | High | None |
-| Add cognition intent channel | 1 day | High | None |
-| Implement behavior stack compilation | 2 days | Medium | None |
-| Test end-to-end cognition flow | 1 day | High | Above tasks |
+| Task | Status | Resolution |
+|------|--------|------------|
+| ~~Add personality/backstory to character schema~~ | ✅ Complete | lib-character-personality, lib-character-history |
+| ~~Add combat preferences to ActorState~~ | ✅ Complete | CombatPreferencesProvider |
+| ~~Load character data in ActorRunner startup~~ | ✅ Complete | PersonalityCache pattern |
 
-### Phase 3: Event Actors (Week 3-4)
+### ~~Phase 2: Cognition Wiring (Week 2)~~ ✅ COMPLETE
+
+| Task | Status | Resolution |
+|------|--------|------------|
+| ~~Verify cognition handler integration~~ | ✅ Complete | All 6 handlers registered |
+| ~~Add cognition intent channel~~ | ✅ N/A | Not needed - cognition modifies state, not intents |
+| ~~Test end-to-end cognition flow~~ | ✅ Complete | Cognition handlers tested |
+
+**Remaining**: `CompileBehaviorStackAsync` endpoint (returns NotImplemented) - Medium priority, not blocking Event Brain work.
+
+### Phase 3: Event Brain Infrastructure (Current Focus)
+
 | Task | Effort | Priority | Dependency |
 |------|--------|----------|------------|
-| Create EventActorRunner class | 2 days | Medium | Phase 1-2 |
-| Add mapping subscription capability | 2 days | Medium | EventActorRunner |
-| Expose CutsceneCoordinator to actors | 1 day | Medium | EventActorRunner |
-| Implement event choreography composition | 2 days | Medium | All above |
+| Create BackstoryProvider for ABML | 1-2 days | High | None |
+| Design Character Agent Query API | 2-3 days | High | None (can parallel) |
+| Create Event Brain ABML behavior schema | 2-3 days | High | Query API |
+| Create example event behaviors | 1-2 days | Medium | Above tasks |
+
+**Total Phase 3 Effort**: ~6-10 days
+
+### Phase 4: Regional Watcher (Separate Task)
+
+Regional Watcher is a larger architectural decision about when/how Event Brains spawn automatically based on "interestingness" thresholds. This is tracked separately and not blocking Phase 3 work.
+
+| Task | Effort | Priority | Notes |
+|------|--------|----------|-------|
+| Define "interestingness" metrics | TBD | Medium | Design decision |
+| Regional perception aggregation | TBD | Medium | Architecture decision |
+| Auto-spawn threshold tuning | TBD | Medium | Requires playtesting |
+| Integration with Orchestrator | TBD | Medium | Deployment consideration |
 
 ---
 
@@ -388,45 +500,74 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 | ABML compilation | Complete | ✅ Complete (226+ compiler tests) | None |
 | Bytecode interpreter | Complete | ✅ Complete (61 tests) | None |
 | Cognition types/constants | Complete | ✅ Complete (CognitionTypes.cs 633 lines) | None |
-| Cognition handlers (6 stages) | Complete | ✅ Complete (verification needed) | Small |
+| Cognition handlers (6 stages) | Complete | ✅ Complete | None |
 | Runtime BehaviorStack | Complete | ✅ Complete (387 lines) | None |
 | BehaviorStack service endpoint | Complete | ❌ NotImplemented | Medium |
 | Cutscene coordination | Complete | ✅ Complete | None |
 | Control gates | Complete | ✅ Complete | None |
 | Intent channels (5) | Complete | ✅ Complete | None |
-| Character personality schema | Complete | ❌ Not in schema | Medium |
-| Combat preferences | Complete | ❌ Not in ActorState | Small |
-| Character data loading | Complete | ❌ Not in ActorRunner | Small |
-| Event actor (Event Brain) | Complete | ❌ Not implemented | Medium |
-| Regional Watcher | Complete | ❌ Not implemented | Medium |
+| **Character personality traits** | Complete | ✅ Complete (lib-character-personality) | None |
+| **Combat preferences** | Complete | ✅ Complete (lib-character-personality) | None |
+| **Character backstory storage** | Complete | ✅ Complete (lib-character-history) | None |
+| **PersonalityProvider (ABML)** | Complete | ✅ Complete (`${personality.*}`) | None |
+| **CombatPreferencesProvider (ABML)** | Complete | ✅ Complete (`${combat.*}`) | None |
+| **BackstoryProvider (ABML)** | Design needed | ❌ Not implemented | **Small** |
+| **Character data loading** | Complete | ✅ Complete (PersonalityCache) | None |
+| **Character Agent Query API** | Design needed | ❌ Not implemented | **Medium** |
+| Event Brain ABML behavior | Design needed | ❌ Not implemented | **Medium** |
+| Regional Watcher | Design needed | ❌ Not implemented | Large (separate) |
 | Mapping infrastructure | Complete | ✅ Complete | None |
 
-**Total estimated effort to close gaps**: ~2-3 weeks
+**Total estimated effort to close Phase 3 gaps**: ~6-10 days
+**Regional Watcher (Phase 4)**: TBD (separate larger task)
 
-**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~90% completion. The remaining gaps here are THE_DREAM Phase 5 (Event Brain) work.
+**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~90% completion. With Phase 3 complete, estimate rises to ~95%.
 
 ---
 
 ## 8. Recommended Next Steps
 
-1. **Immediate**: Update character schema with personality/backstory/combatPreferences fields
-2. **This week**:
-   - Add combat preferences to ActorState
-   - Wire character data loading in ActorRunner startup
-   - Verify cognition handler registration in DocumentExecutorFactory
-3. **Next week**:
-   - Implement `CompileBehaviorStackAsync` service endpoint
-   - Create example ABML behaviors that exercise cognition pipeline
-4. **Following weeks**:
-   - Event Actor / Event Brain architecture (THE_DREAM Phase 5)
-   - Regional Watcher for event spawning
-   - Character Agent Query API
+### ~~Previous Recommendations~~ ✅ COMPLETE
+- ~~Update character schema with personality/backstory/combatPreferences fields~~ → lib-character-personality, lib-character-history
+- ~~Add combat preferences to ActorState~~ → CombatPreferencesProvider
+- ~~Wire character data loading in ActorRunner startup~~ → PersonalityCache pattern
+- ~~Verify cognition handler registration~~ → All 6 handlers registered
 
-**The foundation is solid**. THE_DREAM_GAP_ANALYSIS's ~90% completion estimate is accurate. Remaining gaps are integration and "filling in the boxes" work, not new architecture.
+### Phase 3: Event Brain Infrastructure (Current Focus)
+
+**Parallel Track A - BackstoryProvider** (~1-2 days):
+1. Create `BackstoryProvider : IVariableProvider` following PersonalityProvider pattern
+2. Add history loading to PersonalityCache (or create HistoryCache)
+3. Register in ActorRunner execution scope
+4. Test `${backstory.*}` paths work in ABML
+
+**Parallel Track B - Character Agent Query API** (~2-3 days):
+1. Design query/response schema (consider generalized vs combat-specific)
+2. Define option computation algorithm (personality + combat prefs + available actions)
+3. Add endpoint to `schemas/actor-api.yaml`
+4. Implement in ActorService
+5. Create ABML action handler for query invocation
+
+**After A+B Complete - Event Brain ABML** (~2-3 days):
+1. Design Event Brain behavior structure (orchestration logic)
+2. Create example fight coordination behavior
+3. Wire to existing CutsceneCoordinator, InputWindowManager
+4. Create example cutscene direction behavior
+5. Document Event Brain authoring patterns
+
+### Phase 4: Regional Watcher (Separate Task)
+Regional Watcher auto-spawning is a larger architectural decision tracked separately. It depends on:
+- Defining "interestingness" metrics
+- Regional perception aggregation patterns
+- Integration with Orchestrator deployment
+
+**The foundation is solid**. With Phase 3 complete, THE_DREAM reaches ~95% completion. Event Brain becomes functional using existing infrastructure. Regional Watcher is enhancement, not blocker.
 
 ---
 
-## 9. Corrections Log (Peer Review 2026-01-09)
+## 9. Corrections Log
+
+### Peer Review 2026-01-09
 
 | Original Claim | Correction | Reason |
 |----------------|------------|--------|
@@ -438,3 +579,26 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 | Missing THE_DREAM alignment | Added | Event Actor = Event Brain Phase 5 |
 
 **Key Architectural Insight**: The ACTOR_BEHAVIORS.md example uses some aspirational syntax (`${agent.cognition.emotional_state}`, `layer_activate`, `emit_intent: channel: cognition`) that doesn't exist. These are design proposals, not implementation gaps. The 5-channel intent system is architecturally correct as-is.
+
+### Revision 2026-01-09 (lib-character-personality/history Review)
+
+| Original Claim | Correction | Reason |
+|----------------|------------|--------|
+| "Character personality schema - Not in schema" | ✅ Complete | lib-character-personality provides 8 trait axes + experience evolution |
+| "Combat preferences - Not in ActorState" | ✅ Complete | CombatPreferencesProvider via lib-character-personality |
+| "Character data loading - Not in ActorRunner" | ✅ Complete | PersonalityCache pattern with TTL caching |
+| "Need separate EventActorRunner" | NOT needed | ActorRunner can execute any actor type including Event Brain |
+| "2-3 weeks total effort" | ~6-10 days | Foundation work complete, only Event Brain gaps remain |
+
+**New Gaps Identified**:
+1. **BackstoryProvider** - lib-character-history data not accessible from ABML (`${backstory.*}` paths missing)
+2. **Character Agent Query API** - Event Brain has no way to ask participants "what can you do?"
+3. **Event Brain ABML behavior** - Orchestration logic not yet defined
+
+**Key Finding**: The implementation evolved beyond the original design in a positive way:
+- Personality and combat preferences are now in dedicated services (better separation of concerns)
+- Experience-based evolution enables personality growth over time
+- Dual-index history storage enables efficient queries from both character and event perspectives
+- The PersonalityCache pattern provides efficient caching with graceful degradation
+
+**Alignment Update**: THE_DREAM completion estimate raised from ~90% to ~95% after Phase 3 completion.
