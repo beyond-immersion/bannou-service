@@ -126,15 +126,27 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var response = MapToPersonalityResponse(data);
 
-            // Publish event
-            var topic = isNew ? PERSONALITY_CREATED_TOPIC : PERSONALITY_UPDATED_TOPIC;
-            await _messageBus.TryPublishAsync(topic, new
+            // Publish event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            if (isNew)
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = body.CharacterId,
-                Version = data.Version
-            }, cancellationToken: cancellationToken);
+                await _messageBus.TryPublishAsync(PERSONALITY_CREATED_TOPIC, new PersonalityCreatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId,
+                    Version = data.Version
+                }, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await _messageBus.TryPublishAsync(PERSONALITY_UPDATED_TOPIC, new PersonalityUpdatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId,
+                    Version = data.Version
+                }, cancellationToken: cancellationToken);
+            }
 
             _logger.LogInformation("Personality {Action} for character {CharacterId}, version {Version}",
                 isNew ? "created" : "updated", body.CharacterId, data.Version);
@@ -221,8 +233,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 result.ChangedTraits = changedTraits;
                 result.NewVersion = data.Version;
 
-                // Publish evolution event
-                await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new
+                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
+                await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -337,8 +349,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             await store.DeleteAsync(key, cancellationToken);
 
-            // Publish deletion event
-            await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new
+            // Publish deletion event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -438,15 +450,27 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
             var response = MapToCombatPreferencesResponse(data);
 
-            // Publish event
-            var topic = isNew ? COMBAT_PREFERENCES_CREATED_TOPIC : COMBAT_PREFERENCES_UPDATED_TOPIC;
-            await _messageBus.TryPublishAsync(topic, new
+            // Publish event using typed events per IMPLEMENTATION TENETS (TENET 5)
+            if (isNew)
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = body.CharacterId,
-                Version = data.Version
-            }, cancellationToken: cancellationToken);
+                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_CREATED_TOPIC, new CombatPreferencesCreatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId,
+                    Version = data.Version
+                }, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_UPDATED_TOPIC, new CombatPreferencesUpdatedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    CharacterId = body.CharacterId,
+                    Version = data.Version
+                }, cancellationToken: cancellationToken);
+            }
 
             _logger.LogInformation("Combat preferences {Action} for character {CharacterId}, version {Version}",
                 isNew ? "created" : "updated", body.CharacterId, data.Version);
@@ -517,8 +541,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 result.NewPreferences = MapToCombatPreferences(data);
                 result.NewVersion = data.Version;
 
-                // Publish evolution event
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new
+                // Publish evolution event using typed events per IMPLEMENTATION TENETS (TENET 5)
+                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,

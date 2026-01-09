@@ -4,6 +4,7 @@
 > **Date**: 2026-01-08
 > **Peer Reviewed**: 2026-01-09
 > **Revised**: 2026-01-09 (Updated for lib-character-personality/history completion)
+> **Revised**: 2026-01-09 (Event Brain Communication Architecture analysis - see §6)
 > **Related**: [ACTOR_BEHAVIORS.md](ACTOR_BEHAVIORS.md), [THE_DREAM.md](THE_DREAM.md), [THE_DREAM_GAP_ANALYSIS.md](THE_DREAM_GAP_ANALYSIS.md)
 
 This document identifies gaps between the design in ACTOR_BEHAVIORS.md and current implementation.
@@ -36,9 +37,16 @@ The foundation is **significantly more complete than expected**. The core archit
 **Remaining gaps for Event Brain / Fight Coordinators (Implementation only - design is complete)**:
 1. **ABML Action Handlers** - `query_options`, `query_actor_state`, `emit_perception`, `schedule_event` action handlers (agents actively working on this)
 2. **Choreography Integration** - Wire choreography perception handler to CutsceneCoordinator (agents actively working on this)
-3. **Regional Watcher** - Auto-spawns Event Actors based on interestingness (larger separate task, not blocking)
+3. **Actor Encounter State** - Internal encounter tracking (`_currentEncounterId`, `_encounterRole`, `_encounterPriority`) + StartEncounter/EndEncounter endpoints
+4. **Regional Watcher** - Auto-spawns Event Actors based on interestingness (larger separate task, not blocking)
 
-**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~97% overall completion. The remaining gaps are ABML action handler implementation (not new architecture) currently being worked by agents.
+**Implementation Fixes Required (2026-01-09 Review)**:
+1. ⚠️ **TENET 5 Violation** - CharacterPersonalityService uses anonymous event objects; need typed events in schema
+2. ⚠️ **Pattern Violation** - EmitPerceptionHandler publishes to `actor.{actorId}.perceptions`; should use existing `character.{characterId}.perceptions` channel or RPC
+3. ⚠️ **Local Type** - PerceptionEvent defined locally in EmitPerceptionHandler.cs; should be in schema
+4. ⚠️ **Redundant Subscription** - `_actorPerceptionSubscription` in ActorRunner should be removed
+
+**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~97% overall completion. The remaining gaps are ABML action handler implementation (not new architecture) plus fixing identified violations. Event Brain Communication Architecture now fully designed (see §6).
 
 ---
 
@@ -458,7 +466,301 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 
 ---
 
-## 6. Testing Considerations
+## 6. Event Brain Communication Architecture (2026-01-09)
+
+This section documents the architectural analysis and design decisions for how Event Brains (choreography orchestrators) communicate with Character Actors.
+
+### 6.1 Problem Statement
+
+When an Event Brain wants to orchestrate a choreographed sequence (cinematic, QTE, quest event, combat coordination), it needs to:
+1. **Reserve** participants (mutual exclusion - can't be in two cinematics at once)
+2. **Get consent** (actor agency - actors can refuse based on personality/state)
+3. **Coordinate** the sequence (broadcast instructions)
+4. **Release** participants (cleanup when encounter ends)
+
+### 6.2 Rejected Approach: Separate Encounter Service + New Topics
+
+**Initial proposal** (rejected as over-engineering):
+
+```
+Event Brain → Encounter Service → State Store (locks) → Actors (via new topics)
+```
+
+This approach proposed:
+- New `lib-encounter` plugin for lifecycle management
+- Distributed locking via state store for mutual exclusion
+- New `encounter.{encounterId}.instructions` topic for broadcast
+- Consent aggregation service
+
+**Why this was rejected**:
+
+| Proposed Feature | Why Unnecessary |
+|------------------|-----------------|
+| Distributed locking | Actor's internal state check IS the lock (atomic per-request) |
+| Encounter Service plugin | Event Brain + actor internal state is sufficient |
+| New encounter topic | Event Brain already knows character perception channels |
+| Consent aggregation | Event Brain can track responses directly |
+
+### 6.3 Correct Approach: Actor-Centric Encounters
+
+**Key insight**: "Encounters are what make actors 'actors' instead of simply 'agents'."
+
+The theatrical metaphor is deliberate. Actors don't just exist - they **perform** in directed sequences. Encounter participation belongs IN the actor, not bolted on via external service.
+
+**Simplified architecture**:
+```
+Event Brain → RPC → Actor (which tracks its own encounter state internally)
+```
+
+### 6.4 Actor Encounter State
+
+Actors maintain encounter state internally:
+
+```csharp
+// Internal actor state (not exposed via external service)
+private Guid? _currentEncounterId;        // null if not in encounter
+private string? _encounterRole;           // "guard_1", "merchant", etc.
+private int _encounterPriority;           // For interruption decisions
+private Dictionary<string, object>? _encounterState;  // Role-specific data
+```
+
+### 6.5 Communication Patterns
+
+Event Brain uses **existing** communication patterns:
+
+| Operation | Pattern | Rationale |
+|-----------|---------|-----------|
+| Start Encounter | RPC | Synchronous accept/reject response needed |
+| Query Options | RPC | Already exists (`/actor/query-options`), synchronous |
+| Instructions | RPC or Perception | Depends on sync needs (see §6.6) |
+| End Encounter | RPC | Synchronous confirmation |
+
+**No new topics or channels needed.** Event Brain already knows:
+- Character perception channels (`character.{characterId}.perceptions`)
+- Actor RPC endpoints (`/actor/query-options`, etc.)
+
+### 6.6 Instructions: RPC vs Perception Channel
+
+Two valid approaches for sending encounter instructions:
+
+**Option A: RPC to Actor**
+```csharp
+// Event Brain sends instruction directly to actor
+await _actorClient.SendInstructionAsync(actorId, new InstructionRequest
+{
+    EncounterId = encounterId,
+    InstructionType = "move_to_position",
+    Data = new { Position = new { X = 10, Y = 20 }, Speed = "walk" }
+});
+```
+
+- Synchronous confirmation
+- Event Brain knows exactly when actor received instruction
+- Individual timeout/failure handling per-actor
+- Good for "do this now and confirm" scenarios
+
+**Option B: Perception Channel (existing)**
+```csharp
+// Event Brain publishes to character's perception topic
+await _messageBus.PublishAsync($"character.{characterId}.perceptions", new CharacterPerceptionEvent
+{
+    PerceptionType = "encounter_instruction",
+    SourceType = "encounter",
+    SourceId = encounterId,
+    Data = instruction
+});
+```
+
+- Uses existing infrastructure completely
+- Asynchronous (actor processes in next tick)
+- Natural for "this is happening, react appropriately"
+- Consistent with other perceptions
+
+**Recommendation**: Hybrid approach:
+- RPC for synchronous operations (StartEncounter, QueryOptions, EndEncounter)
+- Perception channel for instructions (async is acceptable, actor reacts in next tick)
+
+### 6.7 Mutual Exclusion Without Distributed Locks
+
+The actor's `StartEncounter` check provides atomic mutual exclusion:
+
+```csharp
+public async Task<EncounterStartResponse> StartEncounterAsync(StartEncounterRequest request)
+{
+    // Mutual exclusion check (atomic per-request)
+    if (_currentEncounterId.HasValue)
+    {
+        if (request.Priority > _encounterPriority)
+        {
+            // Higher priority can interrupt
+            await ExitCurrentEncounterAsync("interrupted_by_higher_priority");
+        }
+        else
+        {
+            return new EncounterStartResponse
+            {
+                Accepted = false,
+                Reason = $"already_in_encounter:{_currentEncounterId}"
+            };
+        }
+    }
+
+    // Evaluate against personality/configuration
+    var evaluation = EvaluateEncounterProposal(request);
+    if (!evaluation.Accepted)
+        return evaluation;
+
+    // Accept and set internal state
+    _currentEncounterId = request.EncounterId;
+    _encounterRole = request.Role;
+    _encounterPriority = request.Priority;
+
+    return new EncounterStartResponse { Accepted = true };
+}
+```
+
+**Race condition handling**: If two Event Brains simultaneously try to claim the same actor, the first request processed wins, the second gets a rejection response. The Event Brain then adapts (substitute NPC, retry later, degrade encounter, cancel).
+
+### 6.8 Actor Consent via Configuration
+
+Actors can refuse encounters based on personality and configuration:
+
+```yaml
+# Actor configuration (part of personality or actor template)
+encounter_preferences:
+  encounters_enabled: true           # Master toggle
+  allowed_types: [cinematic, quest_event, social]
+  blocked_types: [tutorial]          # "I've done this already"
+  min_interrupt_priority: 50         # Only interrupt if priority > current activity
+  min_encounter_interval_seconds: 300  # Rate limiting
+```
+
+Example consent evaluation:
+```csharp
+private EncounterStartResponse EvaluateEncounterProposal(StartEncounterRequest request)
+{
+    // Check master toggle
+    if (!_config.EncountersEnabled)
+        return Reject("encounters_disabled");
+
+    // Check type filter
+    if (_config.BlockedTypes.Contains(request.EncounterType))
+        return Reject($"type_blocked:{request.EncounterType}");
+
+    // Check priority vs current activity
+    if (request.Priority < _state.CurrentActivityPriority)
+        return Reject($"busy:priority_{_state.CurrentActivityPriority}");
+
+    // Rate limiting
+    if (_state.LastEncounterTime.HasValue)
+    {
+        var elapsed = DateTimeOffset.UtcNow - _state.LastEncounterTime.Value;
+        if (elapsed.TotalSeconds < _config.MinEncounterInterval)
+            return Reject($"cooldown:{_config.MinEncounterInterval - elapsed.TotalSeconds}s");
+    }
+
+    return Accept();
+}
+```
+
+### 6.9 ABML Handler for Encounter Instructions: Analysis
+
+**Question**: Should there be an `encounter_instruction` ABML handler that maps instructions to actions?
+
+**Without handler (hardcoded)**:
+```csharp
+switch (instruction.Type)
+{
+    case "move_to_position":
+        await NavigateAsync(instruction.Position, instruction.Speed);
+        break;
+    case "deliver_line":
+        await SpeakAsync(instruction.LineId, instruction.Emotion);
+        break;
+    // ... more cases
+}
+```
+
+**With ABML handler (data-driven)**:
+```yaml
+handlers:
+  encounter_instruction:
+    type: instruction_mapper
+    mappings:
+      move_to_position:
+        action: navigate
+        params:
+          destination: "{{instruction.position}}"
+          speed: "{{instruction.speed | default: 'walk'}}"
+      deliver_line:
+        action: speak
+        params:
+          dialogue_id: "{{instruction.line_id}}"
+          emotion: "{{instruction.emotion}}"
+      play_animation:
+        action: animate
+        params:
+          animation: "{{instruction.animation_id}}"
+```
+
+**Analysis**:
+
+| Aspect | Without Handler | With ABML Handler |
+|--------|-----------------|-------------------|
+| Flexibility | Hardcoded in service | Data-driven, per-actor-type |
+| Extension | Requires code changes | Add mappings in YAML |
+| Consistency | Different from query_options | Matches query_options pattern |
+| Complexity | Simpler initially | More abstraction upfront |
+| Actor variation | Same for all actors | Guard interprets differently than merchant |
+
+**Verdict**: The ABML handler approach is **NOT overkill** - it's the natural extension of the `query_options` pattern. Different actor types SHOULD interpret the same instruction differently:
+- Guard's `deliver_line` includes authoritative stance
+- Merchant's `deliver_line` includes nervous gestures
+- Warrior's `take_damage` is stoic
+- Scholar's `take_damage` is dramatic
+
+**Recommendation**: Staged implementation:
+1. **Phase 1**: Direct handling in actor code (understand instruction patterns first)
+2. **Phase 2**: Extract to ABML `encounter_instruction` handler once patterns crystallize
+
+### 6.10 Encounter Types and Consent Requirements
+
+Different encounter types have different semantics:
+
+| Type | Checkout Required | Consent Required | Can Interrupt |
+|------|-------------------|------------------|---------------|
+| `world_broadcast` | No | No | No (informational only) |
+| `qte` | No | No | Instant reaction, no negotiation |
+| `combat_cue` | No | No | Combat context only |
+| `social_interaction` | Yes | Yes | Low priority activities |
+| `cinematic` | Yes | Yes | Priority-based |
+| `quest_event` | Yes | Yes | Priority-based |
+
+This means the `StartEncounter` flow applies to cinematics/quests, but QTEs and combat cues can use perception channel directly.
+
+### 6.11 Implementation Summary
+
+**What's needed (minimal viable)**:
+
+1. **Actor internal state**: `_currentEncounterId`, `_encounterRole`, `_encounterPriority`
+2. **Actor endpoints**:
+   - `StartEncounterAsync(request)` → Accept/Reject with reason
+   - `EndEncounterAsync(request)` → Confirmation
+   - Optionally: `SendInstructionAsync(request)` for RPC-style instructions
+3. **Encounter evaluation logic**: Based on personality config
+4. **Event Brain handling**: Track responses, adapt to rejections
+
+**What's NOT needed**:
+- New `lib-encounter` plugin
+- New `encounter.{id}.instructions` topic
+- Distributed locking via state store
+- Consent aggregation service
+
+**Alignment with THE_DREAM**: This actor-centric approach directly supports THE_DREAM's vision of autonomous agents that participate in encounters as a core capability, not puppets being controlled by external systems.
+
+---
+
+## 7. Testing Considerations
 
 ### Existing Test Infrastructure
 - `InjectPerception` endpoint allows direct perception injection
@@ -474,7 +776,7 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 
 ---
 
-## 7. Summary Table
+## 8. Summary Table
 
 | Component | Design Status | Implementation Status | Gap Size |
 |-----------|---------------|----------------------|----------|
@@ -500,17 +802,24 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 | **Character data loading** | Complete | ✅ Complete (PersonalityCache) | None |
 | **Character Agent Query API** | Complete | ✅ Complete (`/actor/query-options`) | None |
 | Event Brain ABML behavior | Complete | ✅ Design complete (see DESIGN_-_EVENT_BRAIN_ABML.md) | **Implementation** |
+| **Event Brain Communication** | ✅ Design complete (§6) | Needs refactoring | **Small** |
+| **Actor Encounter State** | ✅ Design complete (§6) | ❌ Not implemented | Small |
 | Regional Watcher | Design needed | ❌ Not implemented | Large (separate) |
 | Mapping infrastructure | Complete | ✅ Complete | None |
 
-**Total estimated effort to close Phase 3 gaps**: ~3-5 days (Event Brain implementation only)
+**Total estimated effort to close Phase 3 gaps**: ~4-6 days (Event Brain implementation + fixes)
 **Regional Watcher (Phase 4)**: TBD (separate larger task)
 
-**Alignment with THE_DREAM**: Phase 3 design is complete. Remaining work is Event Brain ABML action handler implementation. Estimate ~97% completion.
+**Implementation Fixes Identified (2026-01-09)**:
+- ⚠️ **TENET 5 Violation**: CharacterPersonalityService uses anonymous event objects (need typed events in schema)
+- ⚠️ **Pattern Violation**: EmitPerceptionHandler uses `actor.{actorId}.perceptions` (should use existing channels)
+- ⚠️ **Local Type**: PerceptionEvent defined locally, not in schema
+
+**Alignment with THE_DREAM**: Phase 3 design is complete. Remaining work is Event Brain ABML action handler implementation plus fixing identified violations. Estimate ~97% completion.
 
 ---
 
-## 8. Recommended Next Steps
+## 9. Recommended Next Steps
 
 ### ~~Previous Recommendations~~ ✅ COMPLETE
 - ~~Update character schema with personality/backstory/combatPreferences fields~~ → lib-character-personality, lib-character-history
@@ -564,7 +873,7 @@ Regional Watcher auto-spawning is a larger architectural decision tracked separa
 
 ---
 
-## 9. Corrections Log
+## 10. Corrections Log
 
 ### Peer Review 2026-01-09
 
@@ -601,3 +910,35 @@ Regional Watcher auto-spawning is a larger architectural decision tracked separa
 - The PersonalityCache pattern provides efficient caching with graceful degradation
 
 **Alignment Update**: THE_DREAM completion estimate raised from ~90% to ~95% after Phase 3 completion.
+
+### Revision 2026-01-09 (Event Brain Communication Architecture)
+
+**Context**: Agent implemented `emit_perception` handler publishing to `actor.{actorId}.perceptions` and added second subscription to ActorRunner. This pattern was flagged for architectural review.
+
+| Original Proposal | Correction | Reason |
+|-------------------|------------|--------|
+| New `lib-encounter` plugin | NOT needed | Event Brain + actor internal state is sufficient |
+| Distributed locking via state store | NOT needed | Actor's internal state check IS the lock (atomic per-request) |
+| New `encounter.{id}.instructions` topic | NOT needed | Use existing character perception channels or RPC |
+| `actor.{actorId}.perceptions` topic | INCORRECT | Violates "tap" pattern; should use existing channels |
+| Consent aggregation service | NOT needed | Event Brain can track responses directly |
+
+**Key Architectural Insight**: "Encounters are what make actors 'actors' instead of simply 'agents'." Encounter participation belongs IN the actor, not bolted on via external service.
+
+**Correct Architecture**:
+1. Actor owns encounter state internally (`_currentEncounterId`, `_encounterRole`, `_encounterPriority`)
+2. Event Brain uses existing RPC for synchronous operations (StartEncounter, EndEncounter, QueryOptions)
+3. Instructions via existing perception channel (`character.{characterId}.perceptions`) or RPC
+4. No new topics or services needed
+
+**ABML Handler Analysis**: An `encounter_instruction` ABML handler is NOT overkill - it matches the `query_options` pattern and allows different actor types to interpret instructions differently. Recommended staged implementation: direct handling first, extract to ABML handler when patterns crystallize.
+
+**Implementation Fixes Required**:
+1. Remove `actor.{actorId}.perceptions` topic pattern from EmitPerceptionHandler
+2. Remove `_actorPerceptionSubscription` from ActorRunner
+3. Add encounter state fields to ActorRunner
+4. Add StartEncounter/EndEncounter endpoints (or handle via perception events)
+5. Fix TENET 5 violation in CharacterPersonalityService (anonymous event objects)
+6. Move PerceptionEvent to schema if keeping any direct perception pattern
+
+See §6 (Event Brain Communication Architecture) for full analysis.

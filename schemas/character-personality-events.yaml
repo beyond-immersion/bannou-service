@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Character Personality Service Events
+  description: |
+    Event models for Character Personality service RabbitMQ pub/sub via MassTransit.
+    These events are published when personality or combat preference data changes.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Character Personality doesn't subscribe to external events
+  x-event-publications:
+    - topic: personality.created
+      event: PersonalityCreatedEvent
+      description: Published when a character's personality is first created
+    - topic: personality.updated
+      event: PersonalityUpdatedEvent
+      description: Published when a character's personality traits are updated
+    - topic: personality.evolved
+      event: PersonalityEvolvedEvent
+      description: Published when a character's personality evolves due to experience
+    - topic: personality.deleted
+      event: PersonalityDeletedEvent
+      description: Published when a character's personality is deleted
+    - topic: combat-preferences.created
+      event: CombatPreferencesCreatedEvent
+      description: Published when a character's combat preferences are first created
+    - topic: combat-preferences.updated
+      event: CombatPreferencesUpdatedEvent
+      description: Published when a character's combat preferences are updated
+    - topic: combat-preferences.evolved
+      event: CombatPreferencesEvolvedEvent
+      description: Published when a character's combat preferences evolve due to combat experience
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    PersonalityCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's personality is first created
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose personality was created
+        version:
+          type: integer
+          description: Version number of the personality data
+
+    PersonalityUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's personality traits are updated
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose personality was updated
+        version:
+          type: integer
+          description: New version number of the personality data
+
+    PersonalityEvolvedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's personality evolves due to experience
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - experienceType
+        - intensity
+        - version
+        - affectedTraits
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose personality evolved
+        experienceType:
+          type: string
+          description: Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+        intensity:
+          type: number
+          format: float
+          description: Intensity of the experience (0.0-1.0)
+        version:
+          type: integer
+          description: New version number of the personality data
+        affectedTraits:
+          type: array
+          items:
+            type: string
+          description: List of trait names that were affected by the evolution
+
+    PersonalityDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's personality is deleted
+      required:
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose personality was deleted
+
+    CombatPreferencesCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's combat preferences are first created
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose combat preferences were created
+        version:
+          type: integer
+          description: Version number of the combat preferences data
+
+    CombatPreferencesUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's combat preferences are updated
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose combat preferences were updated
+        version:
+          type: integer
+          description: New version number of the combat preferences data
+
+    CombatPreferencesEvolvedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's combat preferences evolve due to combat experience
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - experienceType
+        - intensity
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose combat preferences evolved
+        experienceType:
+          type: string
+          description: Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+        intensity:
+          type: number
+          format: float
+          description: Intensity of the combat experience (0.0-1.0)
+        version:
+          type: integer
+          description: New version number of the combat preferences data

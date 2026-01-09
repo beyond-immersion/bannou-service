@@ -2978,6 +2978,201 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PersonalityCreatedEvent">
+            <summary>
+            Published when a character's personality is first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityCreatedEvent.CharacterId">
+            <summary>
+            ID of the character whose personality was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityCreatedEvent.Version">
+            <summary>
+            Version number of the personality data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PersonalityUpdatedEvent">
+            <summary>
+            Published when a character's personality traits are updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityUpdatedEvent.CharacterId">
+            <summary>
+            ID of the character whose personality was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityUpdatedEvent.Version">
+            <summary>
+            New version number of the personality data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent">
+            <summary>
+            Published when a character's personality evolves due to experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.CharacterId">
+            <summary>
+            ID of the character whose personality evolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.ExperienceType">
+            <summary>
+            Type of experience that caused the evolution (e.g., TRAUMA, BETRAYAL, VICTORY)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.Intensity">
+            <summary>
+            Intensity of the experience (0.0-1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.Version">
+            <summary>
+            New version number of the personality data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityEvolvedEvent.AffectedTraits">
+            <summary>
+            List of trait names that were affected by the evolution
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.PersonalityDeletedEvent">
+            <summary>
+            Published when a character's personality is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.PersonalityDeletedEvent.CharacterId">
+            <summary>
+            ID of the character whose personality was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CombatPreferencesCreatedEvent">
+            <summary>
+            Published when a character's combat preferences are first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesCreatedEvent.CharacterId">
+            <summary>
+            ID of the character whose combat preferences were created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesCreatedEvent.Version">
+            <summary>
+            Version number of the combat preferences data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CombatPreferencesUpdatedEvent">
+            <summary>
+            Published when a character's combat preferences are updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesUpdatedEvent.CharacterId">
+            <summary>
+            ID of the character whose combat preferences were updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesUpdatedEvent.Version">
+            <summary>
+            New version number of the combat preferences data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent">
+            <summary>
+            Published when a character's combat preferences evolve due to combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.CharacterId">
+            <summary>
+            ID of the character whose combat preferences evolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.ExperienceType">
+            <summary>
+            Type of combat experience that caused the evolution (e.g., DECISIVE_VICTORY, NEAR_DEATH)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.Intensity">
+            <summary>
+            Intensity of the combat experience (0.0-1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CombatPreferencesEvolvedEvent.Version">
+            <summary>
+            New version number of the combat preferences data
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.DocumentationQueriedEvent">
             <summary>
             Published when documentation is queried with natural language

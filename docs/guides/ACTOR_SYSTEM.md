@@ -17,6 +17,7 @@ The Actor System provides the cognitive layer for Arcadia's living world. Actors
 4. [NPC Brain Actors](#4-npc-brain-actors)
 5. [Character Personality and Backstory](#5-character-personality-and-backstory)
 6. [Event Actors](#6-event-actors)
+   - [6.6 Future Extension: ABML encounter_instruction Handler](#66-future-extension-abml-encounter_instruction-handler)
 7. [Behavior Integration](#7-behavior-integration)
 8. [Perception and Cognition](#8-perception-and-cognition)
 9. [Cutscene and QTE Orchestration](#9-cutscene-and-qte-orchestration)
@@ -629,11 +630,56 @@ Fights happen constantly without Event Actors - and that's fine. Normal combat:
 
 **Event Actors ENHANCE already-good combat when the situation warrants it.**
 
+### 6.6 Future Extension: ABML encounter_instruction Handler
+
+When Event Brains orchestrate encounters (cinematics, QTEs, quest events), they send instructions to participating actors. Currently, these instructions would be handled with hardcoded switch statements in actor code.
+
+**Future enhancement**: An ABML `encounter_instruction` handler that maps instructions to actions data-driven per actor type:
+
+```yaml
+# In actor ABML definition
+handlers:
+  encounter_instruction:
+    type: instruction_mapper
+    mappings:
+      move_to_position:
+        action: navigate
+        params:
+          destination: "{{instruction.position}}"
+          speed: "{{instruction.speed | default: 'walk'}}"
+      deliver_line:
+        action: speak
+        params:
+          dialogue_id: "{{instruction.line_id}}"
+          emotion: "{{instruction.emotion}}"
+      play_animation:
+        action: animate
+        params:
+          animation: "{{instruction.animation_id}}"
+      wait_for_cue:
+        action: idle_until
+        params:
+          signal: "{{instruction.signal_name}}"
+```
+
+**Benefits**:
+- Different actor types interpret instructions differently (guard's `deliver_line` includes authoritative stance, merchant's includes nervous gestures)
+- Matches the `query_options` ABML pattern for consistency
+- Extensible without code changes
+
+**Recommended staged implementation**:
+1. **Phase 1**: Direct handling in actor code (understand instruction patterns first)
+2. **Phase 2**: Extract to ABML handler once patterns crystallize from real usage
+
+**Priority**: MEDIUM - Implement after encounter system is functional with hardcoded handling. Extract patterns to ABML when we understand which instruction types are common.
+
+See also: `docs/planning/ACTOR_BEHAVIORS_GAP_ANALYSIS.md` §6.9 for detailed analysis.
+
 ---
 
-## 6. Behavior Integration
+## 7. Behavior Integration
 
-### 6.1 The Behavior Stack
+### 7.1 The Behavior Stack
 
 Characters have layered behavior stacks:
 
@@ -648,7 +694,7 @@ Character Behavior Stack
 
 Each layer produces IntentEmissions. The stack merges them using archetype-defined strategies.
 
-### 6.2 Behavior Types and Variants
+### 7.2 Behavior Types and Variants
 
 ```
 Character Behaviors
@@ -663,7 +709,7 @@ Character Behaviors
     └── default (variant)
 ```
 
-### 6.3 Intent Channels
+### 7.3 Intent Channels
 
 When multiple behavior types are active simultaneously, they output to Intent Channels with urgency values:
 
@@ -676,7 +722,7 @@ When multiple behavior types are active simultaneously, they output to Intent Ch
 | Expression | Facial animations | Blended |
 | Vocalization | Speech/sounds | Priority queue |
 
-### 6.4 Actor State → Behavior Input
+### 7.4 Actor State → Behavior Input
 
 Actors update state variables that behaviors read:
 
