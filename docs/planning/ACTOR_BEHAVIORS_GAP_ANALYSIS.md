@@ -312,30 +312,24 @@ if (CharacterId.HasValue)
 | Handle missing data | ✅ Graceful degradation (providers use defaults) |
 | Caching | ✅ 5-minute TTL with stale-if-error fallback |
 
-### 3.5 BackstoryProvider for ABML (NEW GAP)
+### 3.5 ~~BackstoryProvider for ABML~~ ✅ COMPLETE
 
-**Gap**: Character backstory data exists in `lib-character-history` but is not accessible from ABML expressions.
+**Status**: ✅ **COMPLETE** (2026-01-09)
 
-**Current State**:
-- `lib-character-history` stores rich backstory data (9 element types)
-- No `BackstoryProvider` class exists
-- No `${backstory.*}` paths available in ABML
-- ActorRunner does not load backstory on startup
+**Implementation**:
+- `BackstoryProvider : IVariableProvider` created in `lib-actor/Runtime/BackstoryProvider.cs`
+- `GetBackstoryOrLoadAsync` added to `IPersonalityCache` and `PersonalityCache`
+- BackstoryProvider registered in ActorRunner execution scope for character-based actors
+- Uses 5-minute TTL caching with stale-if-error fallback (same pattern as PersonalityProvider)
 
-**Why this matters for Fight Coordinators**:
-- Event Brain could consider character fears when choreographing ("character fears fire" → avoid fire-based kills)
-- Training background could influence combat style ("trained by knights" → prefers honorable combat)
-- Trauma could affect reactions ("witnessed betrayal" → distrusts ambush tactics)
-
-**Required Work**:
-1. Create `BackstoryProvider : IVariableProvider` in `lib-actor/Runtime/`
-2. Add `ICharacterHistoryClient` to PersonalityCache (or create separate HistoryCache)
-3. Register BackstoryProvider in ActorRunner execution scope
-4. Define ABML access patterns:
-   - `${backstory.origin}` - Character origin backstory element
-   - `${backstory.training}` - Training background
-   - `${backstory.fear}` - Character fears
-   - `${backstory.elements}` - All backstory elements as collection
+**Supported ABML Paths**:
+- `${backstory.origin}` - First ORIGIN element's value
+- `${backstory.origin.value}` - Element value
+- `${backstory.origin.key}` - Element key
+- `${backstory.origin.strength}` - Element strength (0.0-1.0)
+- `${backstory.fear}` - First FEAR element's value
+- `${backstory.elements}` - All backstory elements as collection
+- `${backstory.elements.TRAUMA}` - All elements of type TRAUMA
 
 **Example ABML Usage**:
 ```yaml
@@ -348,65 +342,52 @@ if (CharacterId.HasValue)
       - include_option: "chandelier_fire_kill"
 ```
 
-**Effort**: ~1-2 days (follows existing provider pattern)
+### 3.6 ~~Character Agent Query API~~ ✅ COMPLETE
 
-### 3.6 Character Agent Query API (NEW GAP)
+**Status**: ✅ **COMPLETE** (2026-01-09)
 
-**Gap**: No endpoint for Event Brain to query character actors "what can you do?"
+**Implementation**:
+- Generalized `/actor/query-options` endpoint implemented
+- Schema added to `schemas/actor-api.yaml`
+- `QueryOptionsAsync` implemented in `ActorService.cs`
+- Full design document: `docs/planning/DESIGN_-_QUERY_OPTIONS_API.md`
 
-**Why this is critical for Fight Coordinators**:
-- Event Brain orchestrates multi-character events
-- Must know what each participant CAN do (available actions)
-- Must know what each participant PREFERS (based on personality/combat prefs)
-- Current approach: Event Brain has no way to ask participants
+**Key Design Decisions**:
+1. **Generalized Approach**: Single endpoint with `queryType` parameter (combat, dialogue, social, exploration, custom)
+2. **Requester-Determines-Freshness**: Three levels (fresh, cached, stale_ok) following lib-mapping pattern
+3. **Actor Self-Describes**: Options maintained by actors in `state.memories.{type}_options`, not computed by endpoint
+4. **First-Class ABML Support**: `options` block proposed for ABML behaviors (future implementation)
 
-**Proposed Endpoint**: `/actor/query-combat-options` (or generalized `/actor/query-options`)
+**Endpoint**: `POST /actor/query-options`
 
-**Request**:
+**Request Schema**:
 ```yaml
-QueryCombatOptionsRequest:
-  actorId: "guid"           # Actor to query
-  context:
-    combatState: "engaged"  # Current combat state
-    opponentIds: ["guid"]   # Who they're fighting
-    environmentTags: ["indoor", "elevated", "destructibles"]
-    urgency: 0.7            # How urgent is the decision
+QueryOptionsRequest:
+  actorId: string           # Actor to query
+  queryType: enum           # combat, dialogue, social, exploration, custom
+  freshness: enum           # fresh, cached, stale_ok
+  maxAgeMs: integer         # Max cache age for 'cached' freshness
+  context:                  # Optional context for fresh queries
+    combatState: string
+    opponentIds: array
+    allyIds: array
+    environmentTags: array
+    urgency: float
 ```
 
-**Response**:
+**Response Schema**:
 ```yaml
-QueryCombatOptionsResponse:
-  options:
-    - actionId: "sword_slash"
-      preference: 0.8        # How much this character wants to do this (from personality + combat prefs)
-      risk: 0.3              # Estimated risk
-      requirements: []       # Any prerequisites
-    - actionId: "shield_bash"
-      preference: 0.5
-      risk: 0.2
-      requirements: ["has_shield"]
-    - actionId: "retreat"
-      preference: 0.1        # Low - character has high riskTolerance
-      risk: 0.0
-      requirements: []
-  characterContext:
-    combatStyle: "aggressive"
-    riskTolerance: 0.8
-    protectAllies: true
+QueryOptionsResponse:
+  actorId: string
+  queryType: enum
+  options: array            # ActorOption[]
+  computedAt: datetime
+  ageMs: integer
+  characterContext:         # For character-based actors
+    combatStyle: string
+    riskTolerance: float
+    protectAllies: boolean
 ```
-
-**Design Considerations**:
-1. **Generalized vs Specific**: Should this be `/actor/query-options` with a `queryType` parameter (combat, dialogue, exploration) or specific endpoints?
-2. **Who computes options**: Should the Actor itself compute options (via ABML), or should the service compute based on character data?
-3. **Caching**: Options may be expensive to compute - should responses be cached?
-
-**Required Work**:
-1. Design query/response schema in `schemas/actor-api.yaml`
-2. Implement option computation logic (likely uses personality + combat prefs + available actions)
-3. Add endpoint to ActorService
-4. Create ABML action handler for Event Brain to call query
-
-**Effort**: ~2-3 days (schema + implementation + testing)
 
 ---
 
@@ -430,16 +411,17 @@ QueryCombatOptionsResponse:
 
 **Remaining**: `CompileBehaviorStackAsync` endpoint (returns NotImplemented) - Medium priority, not blocking Event Brain work.
 
-### Phase 3: Event Brain Infrastructure (Current Focus)
+### ~~Phase 3: Event Brain Infrastructure~~ ✅ DESIGN COMPLETE
 
-| Task | Effort | Priority | Dependency |
-|------|--------|----------|------------|
-| Create BackstoryProvider for ABML | 1-2 days | High | None |
-| Design Character Agent Query API | 2-3 days | High | None (can parallel) |
-| Create Event Brain ABML behavior schema | 2-3 days | High | Query API |
-| Create example event behaviors | 1-2 days | Medium | Above tasks |
+| Task | Effort | Status | Notes |
+|------|--------|--------|-------|
+| ~~Create BackstoryProvider for ABML~~ | 1-2 days | ✅ Complete | `lib-actor/Runtime/BackstoryProvider.cs` |
+| ~~Design Character Agent Query API~~ | 2-3 days | ✅ Complete | `/actor/query-options` endpoint |
+| ~~Create Event Brain ABML behavior schema~~ | 2-3 days | ✅ Complete | `DESIGN_-_EVENT_BRAIN_ABML.md` |
+| Implement Event Brain ABML actions | 2-3 days | **Pending** | `query_options`, `emit_perception`, etc. |
+| Create example event behaviors | 1-2 days | **Pending** | `fight-coordinator-regional` |
 
-**Total Phase 3 Effort**: ~6-10 days
+**Total Remaining Phase 3 Effort**: ~3-5 days (implementation only)
 
 ### Phase 4: Regional Watcher (Separate Task)
 
@@ -511,17 +493,17 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 | **Character backstory storage** | Complete | ✅ Complete (lib-character-history) | None |
 | **PersonalityProvider (ABML)** | Complete | ✅ Complete (`${personality.*}`) | None |
 | **CombatPreferencesProvider (ABML)** | Complete | ✅ Complete (`${combat.*}`) | None |
-| **BackstoryProvider (ABML)** | Design needed | ❌ Not implemented | **Small** |
+| **BackstoryProvider (ABML)** | Complete | ✅ Complete (`${backstory.*}`) | None |
 | **Character data loading** | Complete | ✅ Complete (PersonalityCache) | None |
-| **Character Agent Query API** | Design needed | ❌ Not implemented | **Medium** |
-| Event Brain ABML behavior | Design needed | ❌ Not implemented | **Medium** |
+| **Character Agent Query API** | Complete | ✅ Complete (`/actor/query-options`) | None |
+| Event Brain ABML behavior | Complete | ✅ Design complete (see DESIGN_-_EVENT_BRAIN_ABML.md) | **Implementation** |
 | Regional Watcher | Design needed | ❌ Not implemented | Large (separate) |
 | Mapping infrastructure | Complete | ✅ Complete | None |
 
-**Total estimated effort to close Phase 3 gaps**: ~6-10 days
+**Total estimated effort to close Phase 3 gaps**: ~3-5 days (Event Brain implementation only)
 **Regional Watcher (Phase 4)**: TBD (separate larger task)
 
-**Alignment with THE_DREAM**: THE_DREAM_GAP_ANALYSIS estimates ~90% completion. With Phase 3 complete, estimate rises to ~95%.
+**Alignment with THE_DREAM**: Phase 3 design is complete. Remaining work is Event Brain ABML action handler implementation. Estimate ~97% completion.
 
 ---
 
@@ -533,27 +515,41 @@ Actors don't require character linking. Event actors, system actors, etc. may no
 - ~~Wire character data loading in ActorRunner startup~~ → PersonalityCache pattern
 - ~~Verify cognition handler registration~~ → All 6 handlers registered
 
-### Phase 3: Event Brain Infrastructure (Current Focus)
+### ~~Phase 3: Event Brain Infrastructure~~ ✅ DESIGN COMPLETE
 
-**Parallel Track A - BackstoryProvider** (~1-2 days):
-1. Create `BackstoryProvider : IVariableProvider` following PersonalityProvider pattern
-2. Add history loading to PersonalityCache (or create HistoryCache)
-3. Register in ActorRunner execution scope
-4. Test `${backstory.*}` paths work in ABML
+**~~Parallel Track A - BackstoryProvider~~** ✅ COMPLETE (2026-01-09):
+- ✅ `BackstoryProvider : IVariableProvider` created
+- ✅ History loading added to PersonalityCache
+- ✅ Registered in ActorRunner execution scope
+- ✅ Supports `${backstory.*}` paths in ABML
 
-**Parallel Track B - Character Agent Query API** (~2-3 days):
-1. Design query/response schema (consider generalized vs combat-specific)
-2. Define option computation algorithm (personality + combat prefs + available actions)
-3. Add endpoint to `schemas/actor-api.yaml`
-4. Implement in ActorService
-5. Create ABML action handler for query invocation
+**~~Parallel Track B - Character Agent Query API~~** ✅ COMPLETE (2026-01-09):
+- ✅ Generalized `/actor/query-options` endpoint designed
+- ✅ Schema added to `schemas/actor-api.yaml`
+- ✅ `QueryOptionsAsync` implemented in ActorService
+- ✅ Supports freshness levels (fresh, cached, stale_ok)
+- ✅ Design document: `DESIGN_-_QUERY_OPTIONS_API.md`
 
-**After A+B Complete - Event Brain ABML** (~2-3 days):
-1. Design Event Brain behavior structure (orchestration logic)
-2. Create example fight coordination behavior
-3. Wire to existing CutsceneCoordinator, InputWindowManager
-4. Create example cutscene direction behavior
-5. Document Event Brain authoring patterns
+**~~Event Brain ABML Design~~** ✅ COMPLETE (2026-01-09):
+- ✅ Event Brain behavior schema designed
+- ✅ Core actions defined (query_options, emit_perception, etc.)
+- ✅ Choreography output format specified
+- ✅ Integration with CutsceneCoordinator documented
+- ✅ Design document: `DESIGN_-_EVENT_BRAIN_ABML.md`
+
+### Phase 3 Remaining: Implementation (~3-5 days)
+
+1. **ABML Action Handlers** (~2-3 days):
+   - Implement `query_options` action handler
+   - Implement `query_actor_state` action handler
+   - Implement `emit_perception` action handler
+   - Implement `schedule_event` action handler
+   - Add Event Brain metadata type to ABML parser
+
+2. **Choreography Integration** (~1-2 days):
+   - Add choreography perception handler to character agents
+   - Wire to CutsceneCoordinator for sync points
+   - Create example `fight-coordinator-regional` behavior
 
 ### Phase 4: Regional Watcher (Separate Task)
 Regional Watcher auto-spawning is a larger architectural decision tracked separately. It depends on:

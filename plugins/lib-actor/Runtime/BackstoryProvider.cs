@@ -144,6 +144,6 @@ public sealed class BackstoryProvider : IVariableProvider
         var firstSegment = path[0];
 
         return firstSegment.Equals("elements", StringComparison.OrdinalIgnoreCase) ||
-               _elementsByType.ContainsKey(firstSegment);
+                _elementsByType.ContainsKey(firstSegment);
     }
 }
