@@ -31,7 +31,7 @@ The foundation is **significantly more complete than expected**. The core archit
 
 - **ABML BackstoryProvider**: **100% complete** (`${backstory.*}` paths in ActorRunner)
 - **Character Agent Query API**: **100% complete** (`/actor/query-options` generalized endpoint)
-- **Event Brain ABML design**: **100% complete** (see DESIGN_-_EVENT_BRAIN_ABML.md)
+- **Event Brain ABML design**: **100% complete** (see ACTOR_SYSTEM.md §6)
 
 **2026-01-09 Update**: Major progress since last review. The `lib-character-personality` and `lib-character-history` services are fully implemented with expanded capabilities beyond the original design. PersonalityProvider, CombatPreferencesProvider, and BackstoryProvider are all wired into ActorRunner, providing ABML access to character traits, combat preferences, and backstory.
 
@@ -352,7 +352,7 @@ if (CharacterId.HasValue)
 - Generalized `/actor/query-options` endpoint implemented
 - Schema added to `schemas/actor-api.yaml`
 - `QueryOptionsAsync` implemented in `ActorService.cs`
-- Full design document: `docs/planning/DESIGN_-_QUERY_OPTIONS_API.md`
+- Full design document: `docs/planning/ABML.md §2.3`
 
 **Key Design Decisions**:
 1. **Generalized Approach**: Single endpoint with `queryType` parameter (combat, dialogue, social, exploration, custom)
@@ -419,7 +419,7 @@ QueryOptionsResponse:
 |------|--------|--------|-------|
 | ~~Create BackstoryProvider for ABML~~ | 1-2 days | ✅ Complete | `lib-actor/Runtime/BackstoryProvider.cs` |
 | ~~Design Character Agent Query API~~ | 2-3 days | ✅ Complete | `/actor/query-options` endpoint |
-| ~~Create Event Brain ABML behavior schema~~ | 2-3 days | ✅ Complete | `DESIGN_-_EVENT_BRAIN_ABML.md` |
+| ~~Create Event Brain ABML behavior schema~~ | 2-3 days | ✅ Complete | `ACTOR_SYSTEM.md §6` |
 | Implement Event Brain ABML actions | 2-3 days | **Pending** | `query_options`, `emit_perception`, etc. |
 | Create example event behaviors | 1-2 days | **Pending** | `fight-coordinator-regional` |
 
@@ -793,7 +793,7 @@ This means the `StartEncounter` flow applies to cinematics/quests, but QTEs and 
 | **BackstoryProvider (ABML)** | Complete | ✅ Complete (`${backstory.*}`) | None |
 | **Character data loading** | Complete | ✅ Complete (PersonalityCache) | None |
 | **Character Agent Query API** | Complete | ✅ Complete (`/actor/query-options`) | None |
-| Event Brain ABML behavior | Complete | ✅ Design complete (see DESIGN_-_EVENT_BRAIN_ABML.md) | **Implementation** |
+| Event Brain ABML behavior | Complete | ✅ Design complete (see ACTOR_SYSTEM.md §6) | **Implementation** |
 | **Event Brain Communication** | ✅ Design complete (§6) | Needs refactoring | **Small** |
 | **Actor Encounter State** | ✅ Design complete (§6) | ❌ Not implemented | Small |
 | Regional Watcher | Design needed | ❌ Not implemented | Large (separate) |
@@ -832,14 +832,14 @@ This means the `StartEncounter` flow applies to cinematics/quests, but QTEs and 
 - ✅ Schema added to `schemas/actor-api.yaml`
 - ✅ `QueryOptionsAsync` implemented in ActorService
 - ✅ Supports freshness levels (fresh, cached, stale_ok)
-- ✅ Design document: `DESIGN_-_QUERY_OPTIONS_API.md`
+- ✅ Design document: `ABML.md §2.3`
 
 **~~Event Brain ABML Design~~** ✅ COMPLETE (2026-01-09):
 - ✅ Event Brain behavior schema designed
 - ✅ Core actions defined (query_options, emit_perception, etc.)
 - ✅ Choreography output format specified
 - ✅ Integration with CutsceneCoordinator documented
-- ✅ Design document: `DESIGN_-_EVENT_BRAIN_ABML.md`
+- ✅ Design document: `ACTOR_SYSTEM.md §6`
 
 ### Phase 3 Remaining: Implementation (~3-5 days)
 

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Events;
@@ -8,6 +9,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Channels;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
@@ -30,6 +32,7 @@ public class ActorRunner : IActorRunner
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
     private readonly IDocumentExecutor _executor;
+    private readonly IExpressionEvaluator _expressionEvaluator;
 
     private AbmlDocument? _behavior;
     private ActorStatus _status = ActorStatus.Pending;
@@ -109,6 +112,7 @@ public class ActorRunner : IActorRunner
     /// <param name="behaviorCache">Behavior document cache.</param>
     /// <param name="personalityCache">Personality cache for character traits.</param>
     /// <param name="executor">Document executor for behavior execution.</param>
+    /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
@@ -123,6 +127,7 @@ public class ActorRunner : IActorRunner
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
         IDocumentExecutor executor,
+        IExpressionEvaluator expressionEvaluator,
         ILogger<ActorRunner> logger,
         object? initialState)
     {
@@ -137,6 +142,7 @@ public class ActorRunner : IActorRunner
         _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
         _personalityCache = personalityCache ?? throw new ArgumentNullException(nameof(personalityCache));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _expressionEvaluator = expressionEvaluator ?? throw new ArgumentNullException(nameof(expressionEvaluator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Create bounded perception queue with DropOldest behavior
@@ -563,7 +569,48 @@ public class ActorRunner : IActorRunner
         // 4. Apply state changes from scope back to ActorState
         ApplyStateChangesFromScope(scope);
 
+        // 5. Evaluate options block if present and store in state.memories
+        if (_behavior.Options != null)
+        {
+            EvaluateAndStoreOptions(_behavior.Options, scope);
+        }
+
         _logger.LogDebug("Actor {ActorId} completed behavior tick ({Flow})", ActorId, startFlow);
+    }
+
+    /// <summary>
+    /// Evaluates the options block from the behavior document and stores results in actor state.
+    /// Options are stored in state.memories.{type}_options with computed timestamp.
+    /// </summary>
+    private void EvaluateAndStoreOptions(OptionsDefinition options, IVariableScope scope)
+    {
+        var evaluated = OptionsEvaluator.EvaluateAll(options, scope, _expressionEvaluator, _logger);
+
+        foreach (var (optionType, evaluatedOptions) in evaluated)
+        {
+            // Store as JSON in memories for retrieval via query-options endpoint
+            var memoryKey = $"{optionType}_options";
+            var memoryValue = new Dictionary<string, object?>
+            {
+                ["options"] = evaluatedOptions.Options.Select(o => new Dictionary<string, object?>
+                {
+                    ["actionId"] = o.ActionId,
+                    ["preference"] = o.Preference,
+                    ["risk"] = o.Risk,
+                    ["available"] = o.Available,
+                    ["requirements"] = o.Requirements,
+                    ["cooldownMs"] = o.CooldownMs,
+                    ["tags"] = o.Tags
+                }).ToList(),
+                ["computedAt"] = evaluatedOptions.ComputedAt.ToString("o"),
+                ["count"] = evaluatedOptions.Options.Count
+            };
+
+            _state.AddMemory(memoryKey, memoryValue);
+
+            _logger.LogDebug("Actor {ActorId} stored {Count} {OptionType} options",
+                ActorId, evaluatedOptions.Options.Count, optionType);
+        }
     }
 
     /// <summary>

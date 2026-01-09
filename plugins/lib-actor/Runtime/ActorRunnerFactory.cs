@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Messaging;
@@ -20,6 +21,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IPersonalityCache _personalityCache;
     private readonly IDocumentExecutorFactory _executorFactory;
+    private readonly IExpressionEvaluator _expressionEvaluator;
 
     /// <summary>
     /// Creates a new actor runner factory.
@@ -33,6 +35,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
     /// <param name="personalityCache">Personality cache for character traits.</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
+    /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     public ActorRunnerFactory(
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
@@ -42,7 +45,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IStateStoreFactory stateStoreFactory,
         IBehaviorDocumentCache behaviorCache,
         IPersonalityCache personalityCache,
-        IDocumentExecutorFactory executorFactory)
+        IDocumentExecutorFactory executorFactory,
+        IExpressionEvaluator expressionEvaluator)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
@@ -53,6 +57,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
         _personalityCache = personalityCache ?? throw new ArgumentNullException(nameof(personalityCache));
         _executorFactory = executorFactory ?? throw new ArgumentNullException(nameof(executorFactory));
+        _expressionEvaluator = expressionEvaluator ?? throw new ArgumentNullException(nameof(expressionEvaluator));
     }
 
     /// <inheritdoc/>
@@ -93,6 +98,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             _behaviorCache,
             _personalityCache,
             executor,
+            _expressionEvaluator,
             logger,
             initialState);
     }

@@ -70,6 +70,7 @@ public sealed class DocumentParser
             // Parse optional sections
             var imports = ParseImports(dict, errors);
             var context = ParseContext(dict, errors);
+            var options = ParseOptions(dict, errors);
             var goals = ParseGoals(dict, errors);
             var flows = ParseFlows(dict, errors);
 
@@ -91,6 +92,7 @@ public sealed class DocumentParser
                 Metadata = metadata,
                 Imports = imports,
                 Context = context,
+                Options = options,
                 Goals = goals,
                 Flows = flows,
                 OnError = docOnError
@@ -229,6 +231,131 @@ public sealed class DocumentParser
             Variables = variables,
             Requirements = requirements,
             Services = services
+        };
+    }
+
+    private OptionsDefinition? ParseOptions(Dictionary<string, object?> dict, List<ParseError> errors)
+    {
+        if (!dict.TryGetValue("options", out var optionsObj) || optionsObj is not Dictionary<object, object> optionsDict)
+        {
+            return null;
+        }
+
+        var optionsByType = new Dictionary<string, IReadOnlyList<OptionDefinition>>();
+
+        foreach (var (key, value) in optionsDict)
+        {
+            if (key is not string optionType)
+            {
+                continue;
+            }
+
+            if (value is not IList<object> optionsList)
+            {
+                errors.Add(new ParseError($"Options type '{optionType}' must be a list"));
+                continue;
+            }
+
+            var options = new List<OptionDefinition>();
+            foreach (var item in optionsList)
+            {
+                var option = ParseOptionDefinition(item, optionType, errors);
+                if (option != null)
+                {
+                    options.Add(option);
+                }
+            }
+
+            optionsByType[optionType] = options;
+        }
+
+        return new OptionsDefinition
+        {
+            OptionsByType = optionsByType
+        };
+    }
+
+    private OptionDefinition? ParseOptionDefinition(object? item, string optionType, List<ParseError> errors)
+    {
+        if (item is not Dictionary<object, object> optionDict)
+        {
+            errors.Add(new ParseError($"Option in '{optionType}' must be an object"));
+            return null;
+        }
+
+        // actionId is required
+        if (!optionDict.TryGetValue("actionId", out var actionIdObj) || actionIdObj is not string actionId)
+        {
+            errors.Add(new ParseError($"Option in '{optionType}' requires 'actionId' field"));
+            return null;
+        }
+
+        // preference is required - can be literal or expression
+        string? preference = null;
+        if (optionDict.TryGetValue("preference", out var prefObj))
+        {
+            preference = ConvertToExpressionString(prefObj);
+        }
+        if (string.IsNullOrEmpty(preference))
+        {
+            errors.Add(new ParseError($"Option '{actionId}' in '{optionType}' requires 'preference' field"));
+            return null;
+        }
+
+        // available is required - can be literal or expression
+        string? available = null;
+        if (optionDict.TryGetValue("available", out var availObj))
+        {
+            available = ConvertToExpressionString(availObj);
+        }
+        if (string.IsNullOrEmpty(available))
+        {
+            errors.Add(new ParseError($"Option '{actionId}' in '{optionType}' requires 'available' field"));
+            return null;
+        }
+
+        // Optional fields
+        string? risk = null;
+        if (optionDict.TryGetValue("risk", out var riskObj))
+        {
+            risk = ConvertToExpressionString(riskObj);
+        }
+
+        string? cooldownMs = null;
+        if (optionDict.TryGetValue("cooldownMs", out var cooldownObj))
+        {
+            cooldownMs = ConvertToExpressionString(cooldownObj);
+        }
+
+        var requirements = ParseStringList(optionDict.TryGetValue("requirements", out var reqObj) ? reqObj : null);
+        var tags = ParseStringList(optionDict.TryGetValue("tags", out var tagsObj) ? tagsObj : null);
+
+        return new OptionDefinition
+        {
+            ActionId = actionId,
+            Preference = preference,
+            Risk = risk,
+            Available = available,
+            Requirements = requirements,
+            CooldownMs = cooldownMs,
+            Tags = tags
+        };
+    }
+
+    /// <summary>
+    /// Converts a value to an expression string. Handles literals and expressions.
+    /// </summary>
+    private static string? ConvertToExpressionString(object? value)
+    {
+        return value switch
+        {
+            string s => s,
+            bool b => b.ToString().ToLowerInvariant(),
+            int i => i.ToString(),
+            long l => l.ToString(),
+            float f => f.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            double d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            _ => value?.ToString()
         };
     }
 

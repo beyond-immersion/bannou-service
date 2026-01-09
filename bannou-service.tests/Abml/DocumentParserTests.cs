@@ -396,6 +396,89 @@ public class DocumentParserTests
     }
 
     // =========================================================================
+    // OPTIONS BLOCK TESTS
+    // =========================================================================
+
+    [Fact]
+    public void Parse_OptionsBlock_ParsesAllTypes()
+    {
+        var yaml = TestFixtures.Load("parser_options");
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value!.Options);
+        Assert.Equal(2, result.Value.Options.OptionsByType.Count);
+        Assert.True(result.Value.Options.OptionsByType.ContainsKey("combat"));
+        Assert.True(result.Value.Options.OptionsByType.ContainsKey("dialogue"));
+    }
+
+    [Fact]
+    public void Parse_OptionsBlock_ParsesCombatOptions()
+    {
+        var yaml = TestFixtures.Load("parser_options");
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        var combat = result.Value!.Options!.OptionsByType["combat"];
+        Assert.Equal(3, combat.Count);
+
+        // Verify sword_slash option
+        var swordSlash = combat.First(o => o.ActionId == "sword_slash");
+        Assert.Equal("${combat.style == 'aggressive' ? 0.9 : 0.6}", swordSlash.Preference);
+        Assert.Equal("0.3", swordSlash.Risk);
+        Assert.Equal("${equipment.has_sword}", swordSlash.Available);
+        Assert.Contains("has_sword", swordSlash.Requirements);
+        Assert.Contains("melee", swordSlash.Tags);
+        Assert.Contains("offensive", swordSlash.Tags);
+        Assert.Null(swordSlash.CooldownMs);
+
+        // Verify shield_bash option with cooldown
+        var shieldBash = combat.First(o => o.ActionId == "shield_bash");
+        Assert.Equal("0.7", shieldBash.Preference);
+        Assert.Equal("true", shieldBash.Available);
+        Assert.Equal("3000", shieldBash.CooldownMs);
+        Assert.Contains("stun", shieldBash.Tags);
+
+        // Verify retreat option
+        var retreat = combat.First(o => o.ActionId == "retreat");
+        Assert.Equal("${1.0 - combat.riskTolerance}", retreat.Preference);
+        Assert.Null(retreat.Risk);
+    }
+
+    [Fact]
+    public void Parse_OptionsBlock_ParsesDialogueOptions()
+    {
+        var yaml = TestFixtures.Load("parser_options");
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        var dialogue = result.Value!.Options!.OptionsByType["dialogue"];
+        Assert.Equal(2, dialogue.Count);
+
+        var greet = dialogue.First(o => o.ActionId == "greet_friendly");
+        Assert.Equal("${personality.extraversion * personality.agreeableness}", greet.Preference);
+        Assert.Equal("true", greet.Available);
+
+        var intimidate = dialogue.First(o => o.ActionId == "intimidate");
+        Assert.Equal("0.5", intimidate.Preference);
+        Assert.Equal("${personality.aggression > 0.5}", intimidate.Available);
+    }
+
+    [Fact]
+    public void Parse_NoOptionsBlock_ReturnsNull()
+    {
+        var yaml = TestFixtures.Load("parser_valid_doc");
+
+        var result = _parser.Parse(yaml);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value!.Options);
+    }
+
+    // =========================================================================
     // ERROR HANDLING TESTS
     // =========================================================================
 

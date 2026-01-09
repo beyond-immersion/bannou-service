@@ -828,6 +828,12 @@
             Maps goal name to its definition with priority and conditions.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Options">
+            <summary>
+            Options block for actor self-description.
+            Enables Event Brain queries via /actor/query-options endpoint.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Abml.Documents.AbmlDocument.Flows">
             <summary>
             Named flows containing action sequences.
@@ -1028,6 +1034,58 @@
             Conditions that define goal satisfaction.
             Keys are world state property names, values are literal conditions.
             Examples: "hunger" -> "&lt;= 0.3", "gold" -> "&gt;= 50"
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.OptionsDefinition">
+            <summary>
+            Options definition for actor self-description.
+            Maps option types (combat, dialogue, etc.) to their option definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionsDefinition.OptionsByType">
+            <summary>
+            Options grouped by type (combat, dialogue, social, exploration, or custom).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition">
+            <summary>
+            Definition of a single option within an options block.
+            Expressions are evaluated at runtime to produce ActorOption values.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.ActionId">
+            <summary>
+            Unique identifier for this action within the option type.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.Preference">
+            <summary>
+            Preference expression (0-1). Can be a literal float or an expression like "${combat.style == 'aggressive' ? 0.9 : 0.6}".
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.Risk">
+            <summary>
+            Risk expression (0-1). Can be a literal float or an expression. Optional.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.Available">
+            <summary>
+            Availability expression. Can be a literal bool or an expression like "${equipment.has_sword}".
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.Requirements">
+            <summary>
+            Human-readable requirements for this option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.CooldownMs">
+            <summary>
+            Cooldown in milliseconds. Can be a literal int or an expression. Optional.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Documents.OptionDefinition.Tags">
+            <summary>
+            Tags for categorization (e.g., "melee", "offensive", "loud").
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Documents.GoapFlowMetadata">
@@ -3011,6 +3069,11 @@
             </summary>
             <param name="yaml">The YAML content to parse.</param>
             <returns>Parse result with document or errors.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Parser.DocumentParser.ConvertToExpressionString(System.Object)">
+            <summary>
+            Converts a value to an expression string. Handles literals and expressions.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Parser.IDocumentResolver">
             <summary>

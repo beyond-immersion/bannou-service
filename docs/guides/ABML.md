@@ -87,6 +87,11 @@ context:
   requirements: { ... }   # Required world state to execute
   services: [ ... ]       # Service dependencies
 
+options:                  # Declarative actor options (for Event Brain queries)
+  combat: [ ... ]         # Combat options (attack, defend, etc.)
+  dialogue: [ ... ]       # Dialogue options (greet, threaten, etc.)
+  # ... other option types
+
 events:
   - pattern: string       # Event pattern to subscribe to
     handler: string       # Flow/channel to invoke
@@ -114,6 +119,101 @@ on_error: flow_name       # Document-level error handler
 | `timeline` | `channels` | Generic parallel sequences |
 
 The `type` field is a hint to runtimes and tooling. The actual structure (flows vs channels) determines execution model.
+
+### 2.3 Options Block (Actor Self-Description)
+
+The `options` block enables actors to declaratively define their available options for Event Brain queries. Options are evaluated at runtime against the current scope and stored in `state.memories.{type}_options`.
+
+```yaml
+options:
+  combat:
+    - actionId: "sword_slash"
+      preference: "${combat.style == 'aggressive' ? 0.9 : 0.6}"
+      risk: 0.3
+      available: "${equipment.has_sword}"
+      requirements: ["has_sword"]
+      tags: ["melee", "offensive"]
+
+    - actionId: "shield_bash"
+      preference: "${combat.style == 'defensive' ? 0.7 : 0.4}"
+      risk: 0.2
+      available: "${equipment.has_shield}"
+      requirements: ["has_shield"]
+      tags: ["melee", "defensive", "stun"]
+
+    - actionId: "retreat"
+      preference: "${1.0 - combat.riskTolerance}"
+      risk: 0.0
+      available: true
+      tags: ["movement", "defensive"]
+
+  dialogue:
+    - actionId: "greet_friendly"
+      preference: "${personality.extraversion * personality.agreeableness}"
+      available: true
+      tags: ["social", "friendly"]
+
+    - actionId: "intimidate"
+      preference: "${personality.aggression * (1.0 - personality.agreeableness)}"
+      available: true
+      tags: ["social", "hostile"]
+```
+
+**Option Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `actionId` | string | Yes | Unique identifier for this action |
+| `preference` | float or expression | Yes | How much the actor prefers this option (0-1) |
+| `risk` | float or expression | No | Estimated risk of this action (0-1) |
+| `available` | bool or expression | Yes | Whether this option is currently available |
+| `requirements` | string[] | No | Human-readable requirements |
+| `cooldownMs` | int or expression | No | Cooldown in milliseconds |
+| `tags` | string[] | No | Tags for categorization |
+
+**Expression Evaluation:**
+
+Properties that accept expressions (denoted with `${...}`) are evaluated each time options are computed:
+- `preference`, `risk`, `available`, `cooldownMs` can be expressions
+- Expressions have access to the full actor scope (personality, combat, backstory, state, etc.)
+- Static values (no `${}`) are used directly without evaluation
+
+**Option Types:**
+
+Well-known option types match the `OptionsQueryType` enum:
+- `combat` - Combat actions (attack, defend, retreat, etc.)
+- `dialogue` - Dialogue options (greet, threaten, negotiate, etc.)
+- `exploration` - Exploration options (investigate, climb, search, etc.)
+- `social` - Social interactions (trade, persuade, intimidate, etc.)
+- Custom types are also supported
+
+**Runtime Behavior:**
+
+1. **On Document Load**: Options expressions are parsed and validated
+2. **On Each Tick**: Options are re-evaluated and stored in `state.memories.{type}_options` with timestamp
+3. **On Query**: `/actor/query-options` returns the cached options (respecting freshness level)
+
+**Integration with Event Brain:**
+
+```yaml
+# Event Brain querying a character's combat options
+- query_options:
+    actor_id: "${participant.actorId}"
+    query_type: combat
+    freshness: cached
+    max_age_ms: 3000
+    result_variable: "participant_options"
+
+# Use options to compose choreography
+- for_each:
+    collection: "${participant_options.options}"
+    as: "option"
+    do:
+      - cond:
+          - when: "${option.available && option.preference > 0.5}"
+            then:
+              - log: "Considering option ${option.actionId}"
+```
 
 ---
 

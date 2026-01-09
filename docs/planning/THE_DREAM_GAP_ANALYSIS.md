@@ -765,7 +765,7 @@ Remaining:
 | **Combat Preferences** | 6 preference fields, combat experience evolution | ✅ Complete (lib-character-personality) |
 | **Character History** | 9 backstory types, event participation, ABML provider | ✅ Complete (lib-character-history) |
 | **Character Agent Query API** | Generalized `/actor/query-options` endpoint | ✅ Complete |
-| **Event Brain Design** | ABML schema, choreography format, action handlers | ✅ Complete (DESIGN_-_EVENT_BRAIN_ABML.md) |
+| **Event Brain Design** | ABML schema, choreography format, action handlers | ✅ Complete (ACTOR_SYSTEM.md §6) |
 
 ### What Remains (Bannou-side)
 

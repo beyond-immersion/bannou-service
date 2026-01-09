@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
@@ -77,6 +78,7 @@ public class ActorRunnerTests
         var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
         var personalityCacheMock = new Mock<IPersonalityCache>();
         var executorMock = new Mock<IDocumentExecutor>();
+        var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
 
         // Set up behavior cache to return a valid document with a main flow
         var document = new AbmlDocument
@@ -115,6 +117,7 @@ public class ActorRunnerTests
             behaviorCacheMock.Object,
             personalityCacheMock.Object,
             executorMock.Object,
+            expressionEvaluatorMock.Object,
             loggerMock.Object,
             initialState);
 

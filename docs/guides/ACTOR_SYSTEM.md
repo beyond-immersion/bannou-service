@@ -675,6 +675,41 @@ handlers:
 
 See also: `docs/planning/ACTOR_BEHAVIORS_GAP_ANALYSIS.md` §6.9 for detailed analysis.
 
+### 6.7 Event Brain Design Decisions
+
+These architectural decisions guide Event Brain implementation:
+
+**Why Event Brain Runs as a Standard Actor**
+
+Event Brains use the same `ActorRunner` infrastructure as character agents, not a separate runtime class. This provides:
+- Same execution model reduces complexity
+- Event Brain behaviors use standard ABML syntax
+- State persistence, hot reload, and cache invalidation work automatically
+- Only difference is perception subscriptions (region-level vs character-level)
+
+**Why Choreography Uses Perception Events**
+
+Event Brains emit choreography as perception events to participants, not direct RPC:
+- Consistent with existing pub/sub architecture
+- Character agents can accept, reject, or modify choreography
+- Supports async execution with natural timeout handling
+- Works with existing sync point infrastructure (CutsceneCoordinator)
+
+**Why Options Are Self-Described by Actors**
+
+The `/actor/query-options` endpoint reads from actor state rather than computing options:
+- Actors are self-describing - they know their own capabilities
+- Options can depend on arbitrary actor state (mood, memories, goals)
+- Keeps the query endpoint thin and generic
+- Same pattern works for any actor type (characters, event brains, NPCs)
+
+**Why Requester Determines Freshness**
+
+The caller specifies desired freshness level (fresh, cached, stale_ok):
+- Consistent with lib-mapping's AffordanceFreshness pattern
+- Event Brain knows urgency better than the system
+- Enables optimization: stale_ok for batch queries, fresh for critical decisions
+
 ---
 
 ## 7. Behavior Integration
