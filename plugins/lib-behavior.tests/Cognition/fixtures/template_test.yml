@@ -1,0 +1,9 @@
+id: test-template
+description: Test template from YAML
+stages:
+  filter:
+    handlers:
+      - id: attention_filter
+        handler: filter_attention
+        parameters:
+          attention_budget: 100

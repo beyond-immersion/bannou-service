@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    health: { type: float, default: 50 }
+
+flows:
+  main:
+    actions:
+      - cond:
+          - when: "${health < 25}"
+            then:
+              - log: { message: "Low health" }

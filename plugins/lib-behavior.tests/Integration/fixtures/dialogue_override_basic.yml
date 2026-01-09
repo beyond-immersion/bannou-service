@@ -1,0 +1,6 @@
+overrides:
+  - condition: "true"
+    text: "Special greeting!"
+    priority: 10
+localizations:
+  en: "Normal greeting"

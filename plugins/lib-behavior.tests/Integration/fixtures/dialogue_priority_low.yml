@@ -1,0 +1,4 @@
+overrides:
+  - condition: "true"
+    text: "Low priority"
+    priority: 1

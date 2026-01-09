@@ -1,0 +1,10 @@
+overrides:
+  - condition: "low"
+    text: "Low priority"
+    priority: 5
+  - condition: "high"
+    text: "High priority"
+    priority: 100
+  - condition: "medium"
+    text: "Medium priority"
+    priority: 50

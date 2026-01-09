@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BeyondImmersion.BannouService.Auth</RootNamespace>
+    <ServiceLib>auth</ServiceLib>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-account/lib-account.csproj" />
+    <ProjectReference Include="../lib-subscription/lib-subscription.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.AspNetCore.Authentication.JwtBearer comes from bannou-service -->
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+  <Import Project="../../ServiceLib.targets" />
+
+</Project>

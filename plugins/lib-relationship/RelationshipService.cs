@@ -1,0 +1,926 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace BeyondImmersion.BannouService.Relationship;
+
+/// <summary>
+/// Implementation of the Relationship service.
+/// Manages entity-to-entity relationships with composite uniqueness validation,
+/// bidirectional support, and soft-delete capability.
+/// </summary>
+[BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped)]
+public partial class RelationshipService : IRelationshipService
+{
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IMessageBus _messageBus;
+    private readonly ILogger<RelationshipService> _logger;
+    private readonly RelationshipServiceConfiguration _configuration;
+
+    private const string STATE_STORE = "relationship-statestore";
+    private const string RELATIONSHIP_KEY_PREFIX = "rel:";
+    private const string ENTITY_INDEX_PREFIX = "entity-idx:";
+    private const string TYPE_INDEX_PREFIX = "type-idx:";
+    private const string COMPOSITE_KEY_PREFIX = "composite:";
+    private const string ALL_RELATIONSHIPS_KEY = "all-relationships";
+
+    /// <summary>
+    /// Initializes a new instance of the RelationshipService.
+    /// </summary>
+    /// <param name="stateStoreFactory">Factory for getting state stores.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="configuration">Service configuration.</param>
+    /// <param name="errorEventEmitter">Error event emitter for publishing error events.</param>
+    public RelationshipService(
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
+        ILogger<RelationshipService> logger,
+        RelationshipServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
+    {
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
+
+        // Register event handlers via partial class (RelationshipServiceEvents.cs)
+        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
+    }
+
+    #region Read Operations
+
+    /// <summary>
+    /// Retrieves a relationship by its unique identifier.
+    /// </summary>
+    /// <param name="body">Request containing the relationship ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and relationship response if found.</returns>
+    public async Task<(StatusCodes, RelationshipResponse?)> GetRelationshipAsync(
+        GetRelationshipRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
+
+            var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var response = MapToResponse(model);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("GetRelationship", "post:/relationship/get", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Lists all relationships for a specific entity, with optional filtering.
+    /// </summary>
+    /// <param name="body">Request containing entity ID, type, and filter options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and paginated list of relationships.</returns>
+    public async Task<(StatusCodes, RelationshipListResponse?)> ListRelationshipsByEntityAsync(
+        ListRelationshipsByEntityRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Listing relationships for entity: {EntityId} ({EntityType})",
+                body.EntityId, body.EntityType);
+
+            // Get all relationship IDs for this entity from the entity index
+            var entityIndexKey = BuildEntityIndexKey(body.EntityType.ToString(), body.EntityId.ToString());
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(entityIndexKey, cancellationToken) ?? new List<string>();
+
+            if (relationshipIds.Count == 0)
+            {
+                return (StatusCodes.OK, CreateEmptyListResponse(body.Page, body.PageSize));
+            }
+
+            // Bulk load all relationships
+            var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
+
+            var relationships = new List<RelationshipModel>();
+            foreach (var (key, model) in bulkResults)
+            {
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
+            }
+
+            // Apply filters
+            var filtered = relationships.AsEnumerable();
+
+            // Filter out ended relationships by default
+            if (body.IncludeEnded != true)
+            {
+                filtered = filtered.Where(r => !r.EndedAt.HasValue);
+            }
+
+            // Filter by relationship type
+            if (body.RelationshipTypeId.HasValue)
+            {
+                var typeIdStr = body.RelationshipTypeId.Value.ToString();
+                filtered = filtered.Where(r => r.RelationshipTypeId == typeIdStr);
+            }
+
+            // Filter by other entity type
+            if (body.OtherEntityType.HasValue)
+            {
+                var otherType = body.OtherEntityType.Value.ToString();
+                var entityIdStr = body.EntityId.ToString();
+                filtered = filtered.Where(r =>
+                    (r.Entity1Id == entityIdStr && r.Entity2Type == otherType) ||
+                    (r.Entity2Id == entityIdStr && r.Entity1Type == otherType));
+            }
+
+            // Apply pagination
+            var page = body.Page;
+            var pageSize = body.PageSize;
+            var totalCount = filtered.Count();
+            var pagedResults = filtered
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = pagedResults.Select(MapToResponse).ToList();
+
+            return (StatusCodes.OK, new RelationshipListResponse
+            {
+                Relationships = responses,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                HasNextPage = (page * pageSize) < totalCount,
+                HasPreviousPage = page > 1
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing relationships for entity: {EntityId}", body.EntityId);
+            await EmitErrorAsync("ListRelationshipsByEntity", "post:/relationship/list-by-entity", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets all relationships between two specific entities.
+    /// </summary>
+    /// <param name="body">Request containing both entity IDs and types.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and list of relationships between the entities.</returns>
+    public async Task<(StatusCodes, RelationshipListResponse?)> GetRelationshipsBetweenAsync(
+        GetRelationshipsBetweenRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Getting relationships between {Entity1Id} and {Entity2Id}",
+                body.Entity1Id, body.Entity2Id);
+
+            // Get relationships from entity1's index
+            var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type.ToString(), body.Entity1Id.ToString());
+            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(entity1IndexKey, cancellationToken) ?? new List<string>();
+
+            if (entity1RelationshipIds.Count == 0)
+            {
+                return (StatusCodes.OK, CreateEmptyListResponse(1, 20));
+            }
+
+            // Bulk load all relationships from entity1
+            var keys = entity1RelationshipIds.Select(BuildRelationshipKey).ToList();
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
+
+            var relationships = new List<RelationshipModel>();
+            var entity2IdStr = body.Entity2Id.ToString();
+
+            foreach (var (key, model) in bulkResults)
+            {
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+
+                // Filter to only include relationships with entity2
+                if (model.Entity1Id == entity2IdStr || model.Entity2Id == entity2IdStr)
+                {
+                    relationships.Add(model);
+                }
+            }
+
+            // Apply filters
+            var filtered = relationships.AsEnumerable();
+
+            // Filter out ended relationships by default
+            if (body.IncludeEnded != true)
+            {
+                filtered = filtered.Where(r => !r.EndedAt.HasValue);
+            }
+
+            // Filter by relationship type
+            if (body.RelationshipTypeId.HasValue)
+            {
+                var typeIdStr = body.RelationshipTypeId.Value.ToString();
+                filtered = filtered.Where(r => r.RelationshipTypeId == typeIdStr);
+            }
+
+            var results = filtered.OrderByDescending(r => r.CreatedAt).ToList();
+            var responses = results.Select(MapToResponse).ToList();
+
+            return (StatusCodes.OK, new RelationshipListResponse
+            {
+                Relationships = responses,
+                TotalCount = responses.Count,
+                Page = 1,
+                PageSize = responses.Count,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relationships between entities");
+            await EmitErrorAsync("GetRelationshipsBetween", "post:/relationship/get-between", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Lists all relationships of a specific type with optional filtering.
+    /// </summary>
+    /// <param name="body">Request containing relationship type ID and filter options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and paginated list of relationships.</returns>
+    public async Task<(StatusCodes, RelationshipListResponse?)> ListRelationshipsByTypeAsync(
+        ListRelationshipsByTypeRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Listing relationships by type: {RelationshipTypeId}", body.RelationshipTypeId);
+
+            // Get all relationship IDs for this type from the type index
+            var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId.ToString());
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+                .GetAsync(typeIndexKey, cancellationToken) ?? new List<string>();
+
+            if (relationshipIds.Count == 0)
+            {
+                return (StatusCodes.OK, CreateEmptyListResponse(body.Page, body.PageSize));
+            }
+
+            // Bulk load all relationships
+            var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetBulkAsync(keys, cancellationToken);
+
+            var relationships = new List<RelationshipModel>();
+            foreach (var (key, model) in bulkResults)
+            {
+                if (model == null)
+                {
+                    _logger.LogError("Relationship {Key} in index but failed to load - data inconsistency detected", key);
+                    continue;
+                }
+                relationships.Add(model);
+            }
+
+            // Apply filters
+            var filtered = relationships.AsEnumerable();
+
+            // Filter out ended relationships by default
+            if (body.IncludeEnded != true)
+            {
+                filtered = filtered.Where(r => !r.EndedAt.HasValue);
+            }
+
+            // Filter by entity1 type
+            if (body.Entity1Type.HasValue)
+            {
+                var entity1Type = body.Entity1Type.Value.ToString();
+                filtered = filtered.Where(r => r.Entity1Type == entity1Type);
+            }
+
+            // Filter by entity2 type
+            if (body.Entity2Type.HasValue)
+            {
+                var entity2Type = body.Entity2Type.Value.ToString();
+                filtered = filtered.Where(r => r.Entity2Type == entity2Type);
+            }
+
+            // Apply pagination
+            var page = body.Page;
+            var pageSize = body.PageSize;
+            var totalCount = filtered.Count();
+            var pagedResults = filtered
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = pagedResults.Select(MapToResponse).ToList();
+
+            return (StatusCodes.OK, new RelationshipListResponse
+            {
+                Relationships = responses,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                HasNextPage = (page * pageSize) < totalCount,
+                HasPreviousPage = page > 1
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing relationships by type: {TypeId}", body.RelationshipTypeId);
+            await EmitErrorAsync("ListRelationshipsByType", "post:/relationship/list-by-type", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Write Operations
+
+    /// <summary>
+    /// Creates a new relationship between two entities.
+    /// Validates composite uniqueness (entity1 + entity2 + type).
+    /// </summary>
+    /// <param name="body">Request containing relationship details.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and created relationship response.</returns>
+    public async Task<(StatusCodes, RelationshipResponse?)> CreateRelationshipAsync(
+        CreateRelationshipRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
+                body.Entity1Id, body.Entity1Type, body.Entity2Id, body.Entity2Type, body.RelationshipTypeId);
+
+            // Validate that entities are different
+            if (body.Entity1Id == body.Entity2Id && body.Entity1Type == body.Entity2Type)
+            {
+                _logger.LogWarning("Cannot create relationship between an entity and itself");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check composite uniqueness - normalize entity order for consistent key
+            var compositeKey = BuildCompositeKey(
+                body.Entity1Id.ToString(), body.Entity1Type.ToString(),
+                body.Entity2Id.ToString(), body.Entity2Type.ToString(),
+                body.RelationshipTypeId.ToString());
+
+            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .GetAsync(compositeKey, cancellationToken);
+
+            if (!string.IsNullOrEmpty(existingId))
+            {
+                _logger.LogWarning("Relationship already exists with composite key: {CompositeKey}", compositeKey);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var relationshipId = Guid.NewGuid();
+            var now = DateTimeOffset.UtcNow;
+
+            var model = new RelationshipModel
+            {
+                RelationshipId = relationshipId.ToString(),
+                Entity1Id = body.Entity1Id.ToString(),
+                Entity1Type = body.Entity1Type.ToString(),
+                Entity2Id = body.Entity2Id.ToString(),
+                Entity2Type = body.Entity2Type.ToString(),
+                RelationshipTypeId = body.RelationshipTypeId.ToString(),
+                StartedAt = body.StartedAt,
+                Metadata = body.Metadata,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            // Save the relationship
+            var relationshipKey = BuildRelationshipKey(relationshipId.ToString());
+            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+            // Update composite uniqueness index
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
+
+            // Update entity indices (both entities)
+            await AddToEntityIndexAsync(body.Entity1Type.ToString(), body.Entity1Id.ToString(), relationshipId.ToString(), cancellationToken);
+            await AddToEntityIndexAsync(body.Entity2Type.ToString(), body.Entity2Id.ToString(), relationshipId.ToString(), cancellationToken);
+
+            // Update type index
+            await AddToTypeIndexAsync(body.RelationshipTypeId.ToString(), relationshipId.ToString(), cancellationToken);
+
+            // Update all relationships list
+            await AddToAllRelationshipsListAsync(relationshipId.ToString(), cancellationToken);
+
+            // Publish relationship created event
+            await PublishRelationshipCreatedEventAsync(model, cancellationToken);
+
+            _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
+            return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating relationship");
+            await EmitErrorAsync("CreateRelationship", "post:/relationship/create", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Updates a relationship's metadata. Entity IDs and types cannot be changed.
+    /// </summary>
+    /// <param name="body">Request containing relationship ID and new metadata.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and updated relationship response.</returns>
+    public async Task<(StatusCodes, RelationshipResponse?)> UpdateRelationshipAsync(
+        UpdateRelationshipRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Updating relationship: {RelationshipId}", body.RelationshipId);
+
+            var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if relationship has ended
+            if (model.EndedAt.HasValue)
+            {
+                _logger.LogWarning("Cannot update ended relationship: {RelationshipId}", body.RelationshipId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Track changed fields
+            var changedFields = new List<string>();
+            var needsSave = false;
+
+            // Handle relationship type migration (used for type merge operations)
+            if (body.RelationshipTypeId.HasValue && body.RelationshipTypeId.Value.ToString() != model.RelationshipTypeId)
+            {
+                // Update type indexes: remove from old, add to new
+                await RemoveFromTypeIndexAsync(model.RelationshipTypeId, model.RelationshipId, cancellationToken);
+                await AddToTypeIndexAsync(body.RelationshipTypeId.Value.ToString(), model.RelationshipId, cancellationToken);
+
+                changedFields.Add("relationshipTypeId");
+                model.RelationshipTypeId = body.RelationshipTypeId.Value.ToString();
+                needsSave = true;
+            }
+
+            // Handle metadata updates
+            if (body.Metadata != null)
+            {
+                changedFields.Add("metadata");
+                model.Metadata = body.Metadata;
+                needsSave = true;
+            }
+
+            if (needsSave)
+            {
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+                await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                    .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                // Publish relationship updated event
+                await PublishRelationshipUpdatedEventAsync(model, changedFields, cancellationToken);
+
+                _logger.LogInformation("Updated relationship: {RelationshipId}, ChangedFields: {ChangedFields}",
+                    body.RelationshipId, string.Join(", ", changedFields));
+            }
+            else
+            {
+                _logger.LogDebug("No changes to update for relationship: {RelationshipId}", body.RelationshipId);
+            }
+
+            return (StatusCodes.OK, MapToResponse(model));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("UpdateRelationship", "post:/relationship/update", ex);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Ends a relationship by setting the endedAt timestamp.
+    /// The composite uniqueness key is cleared to allow new relationships
+    /// between the same entities with the same type.
+    /// </summary>
+    /// <param name="body">Request containing relationship ID and optional end timestamp.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code indicating success.</returns>
+    public async Task<StatusCodes> EndRelationshipAsync(
+        EndRelationshipRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Ending relationship: {RelationshipId}", body.RelationshipId);
+
+            var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .GetAsync(relationshipKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Relationship not found: {RelationshipId}", body.RelationshipId);
+                return StatusCodes.NotFound;
+            }
+
+            // Check if already ended
+            if (model.EndedAt.HasValue)
+            {
+                _logger.LogWarning("Relationship already ended: {RelationshipId}", body.RelationshipId);
+                return StatusCodes.Conflict;
+            }
+
+            // Set ended timestamp (use current time if not specified or default)
+            model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+            // Clear composite uniqueness key to allow new relationships
+            var compositeKey = BuildCompositeKey(
+                model.Entity1Id, model.Entity1Type,
+                model.Entity2Id, model.Entity2Type,
+                model.RelationshipTypeId);
+            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+                .DeleteAsync(compositeKey, cancellationToken);
+
+            // Publish relationship deleted/ended event
+            await PublishRelationshipDeletedEventAsync(model, "Relationship ended", cancellationToken);
+
+            _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ending relationship: {RelationshipId}", body.RelationshipId);
+            await EmitErrorAsync("EndRelationship", "post:/relationship/end", ex);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Builds the state store key for a relationship record.
+    /// </summary>
+    private static string BuildRelationshipKey(string relationshipId) =>
+        $"{RELATIONSHIP_KEY_PREFIX}{relationshipId}";
+
+    /// <summary>
+    /// Builds the state store key for an entity's relationship index.
+    /// </summary>
+    private static string BuildEntityIndexKey(string entityType, string entityId) =>
+        $"{ENTITY_INDEX_PREFIX}{entityType}:{entityId}";
+
+    /// <summary>
+    /// Builds the state store key for a relationship type's index.
+    /// </summary>
+    private static string BuildTypeIndexKey(string relationshipTypeId) =>
+        $"{TYPE_INDEX_PREFIX}{relationshipTypeId}";
+
+    /// <summary>
+    /// Builds the composite uniqueness key for a relationship.
+    /// Normalizes entity order to ensure consistent key regardless of entity order in request.
+    /// </summary>
+    private static string BuildCompositeKey(
+        string entity1Id, string entity1Type,
+        string entity2Id, string entity2Type,
+        string relationshipTypeId)
+    {
+        // Normalize entity order for consistent composite key
+        var key1 = $"{entity1Type}:{entity1Id}";
+        var key2 = $"{entity2Type}:{entity2Id}";
+
+        // Sort to ensure consistent ordering
+        if (string.Compare(key1, key2, StringComparison.Ordinal) > 0)
+        {
+            (key1, key2) = (key2, key1);
+        }
+
+        return $"{COMPOSITE_KEY_PREFIX}{key1}:{key2}:{relationshipTypeId}";
+    }
+
+    /// <summary>
+    /// Adds a relationship ID to an entity's index.
+    /// </summary>
+    private async Task AddToEntityIndexAsync(
+        string entityType, string entityId, string relationshipId,
+        CancellationToken cancellationToken)
+    {
+        var indexKey = BuildEntityIndexKey(entityType, entityId);
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+
+        if (!relationshipIds.Contains(relationshipId))
+        {
+            relationshipIds.Add(relationshipId);
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Adds a relationship ID to a type's index.
+    /// </summary>
+    private async Task AddToTypeIndexAsync(
+        string relationshipTypeId, string relationshipId,
+        CancellationToken cancellationToken)
+    {
+        var indexKey = BuildTypeIndexKey(relationshipTypeId);
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+
+        if (!relationshipIds.Contains(relationshipId))
+        {
+            relationshipIds.Add(relationshipId);
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Removes a relationship ID from a type's index.
+    /// </summary>
+    private async Task RemoveFromTypeIndexAsync(
+        string relationshipTypeId, string relationshipId,
+        CancellationToken cancellationToken)
+    {
+        var indexKey = BuildTypeIndexKey(relationshipTypeId);
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
+
+        if (relationshipIds.Remove(relationshipId))
+        {
+            await store.SaveAsync(indexKey, relationshipIds, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Adds a relationship ID to the master list of all relationships.
+    /// </summary>
+    private async Task AddToAllRelationshipsListAsync(string relationshipId, CancellationToken cancellationToken)
+    {
+        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var allRelationships = await store.GetAsync(ALL_RELATIONSHIPS_KEY, cancellationToken) ?? new List<string>();
+
+        if (!allRelationships.Contains(relationshipId))
+        {
+            allRelationships.Add(relationshipId);
+            await store.SaveAsync(ALL_RELATIONSHIPS_KEY, allRelationships, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Creates an empty paginated list response.
+    /// </summary>
+    private static RelationshipListResponse CreateEmptyListResponse(int page, int pageSize)
+    {
+        return new RelationshipListResponse
+        {
+            Relationships = new List<RelationshipResponse>(),
+            TotalCount = 0,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = false,
+            HasPreviousPage = false
+        };
+    }
+
+    /// <summary>
+    /// Maps an internal relationship model to the API response model.
+    /// </summary>
+    private static RelationshipResponse MapToResponse(RelationshipModel model)
+    {
+        return new RelationshipResponse
+        {
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = Enum.Parse<EntityType>(model.Entity1Type),
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = Enum.Parse<EntityType>(model.Entity2Type),
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt,
+            Metadata = model.Metadata,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
+    }
+
+    /// <summary>
+    /// Publishes a relationship created event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
+    private async Task PublishRelationshipCreatedEventAsync(RelationshipModel model, CancellationToken cancellationToken)
+    {
+        var eventModel = new RelationshipCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt
+        };
+
+        await _messageBus.TryPublishAsync("relationship.created", eventModel);
+        _logger.LogDebug("Published relationship.created event for {RelationshipId}", model.RelationshipId);
+    }
+
+    /// <summary>
+    /// Publishes a relationship updated event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
+    private async Task PublishRelationshipUpdatedEventAsync(
+        RelationshipModel model,
+        IEnumerable<string> changedFields,
+        CancellationToken cancellationToken)
+    {
+        var eventModel = new RelationshipUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? default,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            ChangedFields = changedFields.ToList()
+        };
+
+        await _messageBus.TryPublishAsync("relationship.updated", eventModel);
+        _logger.LogDebug("Published relationship.updated event for {RelationshipId}", model.RelationshipId);
+    }
+
+    /// <summary>
+    /// Publishes a relationship deleted event. TryPublishAsync handles buffering, retry, and error logging.
+    /// </summary>
+    private async Task PublishRelationshipDeletedEventAsync(RelationshipModel model, string? deletedReason, CancellationToken cancellationToken)
+    {
+        var eventModel = new RelationshipDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipId = Guid.Parse(model.RelationshipId),
+            Entity1Id = Guid.Parse(model.Entity1Id),
+            Entity1Type = model.Entity1Type,
+            Entity2Id = Guid.Parse(model.Entity2Id),
+            Entity2Type = model.Entity2Type,
+            RelationshipTypeId = Guid.Parse(model.RelationshipTypeId),
+            StartedAt = model.StartedAt,
+            EndedAt = model.EndedAt ?? DateTimeOffset.UtcNow,
+            Metadata = model.Metadata ?? new Dictionary<string, object>(),
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt ?? DateTimeOffset.UtcNow,
+            DeletedReason = deletedReason
+        };
+
+        await _messageBus.TryPublishAsync("relationship.deleted", eventModel);
+        _logger.LogDebug("Published relationship.deleted event for {RelationshipId}", model.RelationshipId);
+    }
+
+    /// <summary>
+    /// Emits an error event for monitoring and alerting.
+    /// </summary>
+    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
+    {
+        await _messageBus.TryPublishErrorAsync(
+            "relationship",
+            operation,
+            "unexpected_exception",
+            ex.Message,
+            dependency: null,
+            endpoint: endpoint,
+            details: null,
+            stack: ex.StackTrace);
+    }
+
+    #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permission service on startup.
+    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Relationship service permissions...");
+        await RelationshipPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Internal model for storing relationships in state store.
+/// </summary>
+internal class RelationshipModel
+{
+    /// <summary>
+    /// Unique identifier for the relationship.
+    /// </summary>
+    public string RelationshipId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID of the first entity in the relationship.
+    /// </summary>
+    public string Entity1Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Type of the first entity (CHARACTER, NPC, ITEM, etc.).
+    /// </summary>
+    public string Entity1Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID of the second entity in the relationship.
+    /// </summary>
+    public string Entity2Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Type of the second entity.
+    /// </summary>
+    public string Entity2Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID of the relationship type (from RelationshipType service).
+    /// </summary>
+    public string RelationshipTypeId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// In-game timestamp when the relationship started.
+    /// </summary>
+    public DateTimeOffset StartedAt { get; set; }
+
+    /// <summary>
+    /// In-game timestamp when the relationship ended (null if active).
+    /// </summary>
+    public DateTimeOffset? EndedAt { get; set; }
+
+    /// <summary>
+    /// Type-specific metadata for the relationship.
+    /// </summary>
+    public object? Metadata { get; set; }
+
+    /// <summary>
+    /// Timestamp when the record was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Timestamp when the record was last updated.
+    /// </summary>
+    public DateTimeOffset? UpdatedAt { get; set; }
+}

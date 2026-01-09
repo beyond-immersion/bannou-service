@@ -60,4 +60,3 @@ edge_test_output*.log
 
 # Empty files
 bannou-service/{}
-plugins/

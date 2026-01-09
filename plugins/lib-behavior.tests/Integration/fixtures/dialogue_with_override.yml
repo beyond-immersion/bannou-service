@@ -1,0 +1,4 @@
+overrides:
+  - condition: "true"
+    text: "Special greeting!"
+    priority: 10
