@@ -126,6 +126,26 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InjectPerceptionResponse>> InjectPerceptionAsync(InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Query an actor for its available options
+    /// </summary>
+
+    /// <remarks>
+    /// Query an actor for its available options (combat, dialogue, exploration, etc.).
+    /// <br/>Options are maintained by the actor in its state and returned based on requested
+    /// <br/>freshness level. This enables Event Brain actors to ask participants "what can
+    /// <br/>you do?" for choreography and coordination.
+    /// <br/>
+    /// <br/>Freshness levels:
+    /// <br/>- fresh: Inject context and wait for actor to recompute options
+    /// <br/>- cached: Return cached options if within maxAgeMs, else recompute
+    /// <br/>- stale_ok: Return cached options regardless of age
+    /// </remarks>
+
+    /// <returns>Options retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptionsAsync(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -312,6 +332,30 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.InjectPerceptionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Query an actor for its available options
+    /// </summary>
+    /// <remarks>
+    /// Query an actor for its available options (combat, dialogue, exploration, etc.).
+    /// <br/>Options are maintained by the actor in its state and returned based on requested
+    /// <br/>freshness level. This enables Event Brain actors to ask participants "what can
+    /// <br/>you do?" for choreography and coordination.
+    /// <br/>
+    /// <br/>Freshness levels:
+    /// <br/>- fresh: Inject context and wait for actor to recompute options
+    /// <br/>- cached: Return cached options if within maxAgeMs, else recompute
+    /// <br/>- stale_ok: Return cached options regardless of age
+    /// </remarks>
+    /// <returns>Options retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/query-options")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.QueryOptionsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -2269,6 +2313,329 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             _InjectPerception_Info,
             _InjectPerception_RequestSchema,
             _InjectPerception_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for QueryOptions
+
+    private static readonly string _QueryOptions_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryOptionsRequest",
+    "$defs": {
+        "QueryOptionsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Query an actor for its available options. Options are maintained by the actor\ nin its state.memories.{queryType}_options and returned based on requested freshness.\n",
+            "required": [
+                "actorId",
+                "queryType"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor to query"
+                },
+                "queryType": {
+                    "$ref": "#/$defs/OptionsQueryType",
+                    "description": "Type of options to query"
+                },
+                "freshness": {
+                    "$ref": "#/$defs/OptionsFreshness",
+                    "description": "Requested freshness level. Defaults to 'cached'.\n- fresh: Inject context and wait for actor to recompute\n- cached: Return cached options if within maxAgeMs\n- stale_ok: Return whatever is cached, even if expired\n"
+                },
+                "maxAgeMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 60000,
+                    "nullable": true,
+                    "description": "Maximum age of cached options in milliseconds (for 'cached' freshness).\nDefaults to 5000ms. If cached options are older, behavior depends on\nfreshness level.\n"
+                },
+                "context": {
+                    "$ref": "#/$defs/OptionsQueryContext",
+                    "nullable": true,
+                    "description": "Optional context for the query. When provided with freshness='fresh',\nthis context is injected as a perception to the actor, triggering\ncontext-sensitive option recomputation.\n"
+                }
+            }
+        },
+        "OptionsQueryType": {
+            "type": "string",
+            "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\ nWell-known types are defined; actors can also expose custom types.\n",
+            "enum": [
+                "combat",
+                "dialogue",
+                "exploration",
+                "social",
+                "custom"
+            ]
+        },
+        "OptionsFreshness": {
+            "type": "string",
+            "description": "Controls caching behavior for options queries",
+            "enum": [
+                "fresh",
+                "cached",
+                "stale_ok"
+            ],
+            "default": "cached"
+        },
+        "OptionsQueryContext": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Context provided with a fresh query. Injected as a perception to the actor\nto trigger context-sensitive option recomputation.\n",
+            "properties": {
+                "combatState": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Current combat state (approaching, engaged, retreating, etc.)"
+                },
+                "opponentIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "IDs of opponents in the current encounter",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allyIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "IDs of allies in the current encounter",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "environmentTags": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "Environment tags (indoor, elevated, destructibles, narrow, etc.)",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "urgency": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "How urgent is this query (affects option prioritization)"
+                },
+                "customContext": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Actor-specific context data"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryOptions_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryOptionsResponse",
+    "$defs": {
+        "QueryOptionsResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing the actor's available options",
+            "required": [
+                "actorId",
+                "queryType",
+                "options",
+                "computedAt",
+                "ageMs"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the queried actor"
+                },
+                "queryType": {
+                    "$ref": "#/$defs/OptionsQueryType",
+                    "description": "Type of options returned"
+                },
+                "options": {
+                    "type": "array",
+                    "description": "Available options for the queried type",
+                    "items": {
+                        "$ref": "#/$defs/ActorOption"
+                    }
+                },
+                "computedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When these options were last computed by the actor"
+                },
+                "ageMs": {
+                    "type": "integer",
+                    "description": "Age of options in milliseconds (now - computedAt)"
+                },
+                "characterContext": {
+                    "$ref": "#/$defs/CharacterOptionContext",
+                    "nullable": true,
+                    "description": "Character-specific context that influenced these options.\nOnly present for character-based actors.\n"
+                }
+            }
+        },
+        "OptionsQueryType": {
+            "type": "string",
+            "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\nWell-known types are defined; actors can also expose custom types.\n",
+            "enum": [
+                "combat",
+                "dialogue",
+                "exploration",
+                "social",
+                "custom"
+            ]
+        },
+        "ActorOption": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "A single option available to the actor. The standardized fields enable\nEvent Brain to reason about options; additional fields allow actor-specific data.\n",
+            "required": [
+                "actionId",
+                "preference",
+                "available"
+            ],
+            "properties": {
+                "actionId": {
+                    "type": "string",
+                    "description": "Unique identifier for this action within the option type.\nExamples: \"sword_slash\", \"greet_friendly\", \"climb_wall\"\n"
+                },
+                "preference": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "How much the actor prefers this option (0-1), based on personality,\ncombat preferences, current state, etc. Higher = more preferred.\n"
+                },
+                "risk": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Estimated risk of this action (0=safe, 1=very risky)"
+                },
+                "available": {
+                    "type": "boolean",
+                    "description": "Whether this option is currently available (requirements met)"
+                },
+                "requirements": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "Requirements that must be met for this option",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cooldownMs": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Milliseconds until this option becomes available again (if on cooldown)"
+                },
+                "tags": {
+                    "type": "array",
+                    "nullable": true,
+                    "description": "Tags for categorization (e.g., [\"melee\", \"aggressive\", \"loud\"])",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "CharacterOptionContext": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Character-specific context that influenced option computation",
+            "properties": {
+                "combatStyle": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Character's combat style (aggressive, defensive, balanced, etc.)"
+                },
+                "riskTolerance": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Character's risk tolerance (0=cautious, 1=reckless)"
+                },
+                "protectAllies": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether character prioritizes ally protection"
+                },
+                "currentGoal": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Character's current primary goal"
+                },
+                "emotionalState": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Character's current dominant emotion"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryOptions_Info = """
+{
+    "summary": "Query an actor for its available options",
+    "description": "Query an actor for its available options (combat, dialogue, exploration, etc.).\nOptions are maintained by the actor in its state and returned based on requested\nfreshness level. This enables Event Brain actors to ask participants \"what can\nyou do?\" for choreography and coordination.\n\nFreshness levels:\n- fresh: Inject context and wait for actor to recompute options\n- cached: Return cached options if within maxAgeMs, else recompute\n- stale_ok: Return cached options regardless of age\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "QueryOptions"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryOptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/query-options/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryOptions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "Post",
+            "actor/query-options",
+            _QueryOptions_Info));
+
+    /// <summary>Returns request schema for QueryOptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/query-options/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryOptions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/query-options",
+            "request-schema",
+            _QueryOptions_RequestSchema));
+
+    /// <summary>Returns response schema for QueryOptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/query-options/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryOptions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/query-options",
+            "response-schema",
+            _QueryOptions_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryOptions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/query-options/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryOptions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/query-options",
+            _QueryOptions_Info,
+            _QueryOptions_RequestSchema,
+            _QueryOptions_ResponseSchema));
 
     #endregion
 

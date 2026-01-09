@@ -943,6 +943,341 @@ public partial class InjectPerceptionResponse
 
 }
 
+/// <summary>
+/// Query an actor for its available options. Options are maintained by the actor
+/// <br/>in its state.memories.{queryType}_options and returned based on requested freshness.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryOptionsRequest
+{
+
+    /// <summary>
+    /// ID of the actor to query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of options to query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("queryType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OptionsQueryType QueryType { get; set; } = default!;
+
+    /// <summary>
+    /// Requested freshness level. Defaults to 'cached'.
+    /// <br/>- fresh: Inject context and wait for actor to recompute
+    /// <br/>- cached: Return cached options if within maxAgeMs
+    /// <br/>- stale_ok: Return whatever is cached, even if expired
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("freshness")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OptionsFreshness Freshness { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum age of cached options in milliseconds (for 'cached' freshness).
+    /// <br/>Defaults to 5000ms. If cached options are older, behavior depends on
+    /// <br/>freshness level.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxAgeMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, 60000)]
+    public int? MaxAgeMs { get; set; } = default!;
+
+    /// <summary>
+    /// Optional context for the query. When provided with freshness='fresh',
+    /// <br/>this context is injected as a perception to the actor, triggering
+    /// <br/>context-sensitive option recomputation.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("context")]
+    public OptionsQueryContext? Context { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response containing the actor's available options
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryOptionsResponse
+{
+
+    /// <summary>
+    /// ID of the queried actor
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of options returned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("queryType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OptionsQueryType QueryType { get; set; } = default!;
+
+    /// <summary>
+    /// Available options for the queried type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("options")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ActorOption> Options { get; set; } = new System.Collections.ObjectModel.Collection<ActorOption>();
+
+    /// <summary>
+    /// When these options were last computed by the actor
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("computedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ComputedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Age of options in milliseconds (now - computedAt)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ageMs")]
+    public int AgeMs { get; set; } = default!;
+
+    /// <summary>
+    /// Character-specific context that influenced these options.
+    /// <br/>Only present for character-based actors.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
+    public CharacterOptionContext? CharacterContext { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Type of options to query. Actors maintain options in state.memories.{type}_options.
+/// <br/>Well-known types are defined; actors can also expose custom types.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum OptionsQueryType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"combat")]
+    Combat = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"dialogue")]
+    Dialogue = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exploration")]
+    Exploration = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"social")]
+    Social = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    Custom = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Controls caching behavior for options queries
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum OptionsFreshness
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"fresh")]
+    Fresh = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cached")]
+    Cached = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stale_ok")]
+    Stale_ok = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// A single option available to the actor. The standardized fields enable
+/// <br/>Event Brain to reason about options; additional fields allow actor-specific data.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorOption
+{
+
+    /// <summary>
+    /// Unique identifier for this action within the option type.
+    /// <br/>Examples: "sword_slash", "greet_friendly", "climb_wall"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActionId { get; set; } = default!;
+
+    /// <summary>
+    /// How much the actor prefers this option (0-1), based on personality,
+    /// <br/>combat preferences, current state, etc. Higher = more preferred.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("preference")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float Preference { get; set; } = default!;
+
+    /// <summary>
+    /// Estimated risk of this action (0=safe, 1=very risky)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("risk")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Risk { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this option is currently available (requirements met)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("available")]
+    public bool Available { get; set; } = default!;
+
+    /// <summary>
+    /// Requirements that must be met for this option
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requirements")]
+    public System.Collections.Generic.ICollection<string>? Requirements { get; set; } = default!;
+
+    /// <summary>
+    /// Milliseconds until this option becomes available again (if on cooldown)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cooldownMs")]
+    public int? CooldownMs { get; set; } = default!;
+
+    /// <summary>
+    /// Tags for categorization (e.g., ["melee", "aggressive", "loud"])
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Context provided with a fresh query. Injected as a perception to the actor
+/// <br/>to trigger context-sensitive option recomputation.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class OptionsQueryContext
+{
+
+    /// <summary>
+    /// Current combat state (approaching, engaged, retreating, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatState")]
+    public string? CombatState { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of opponents in the current encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("opponentIds")]
+    public System.Collections.Generic.ICollection<string>? OpponentIds { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of allies in the current encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allyIds")]
+    public System.Collections.Generic.ICollection<string>? AllyIds { get; set; } = default!;
+
+    /// <summary>
+    /// Environment tags (indoor, elevated, destructibles, narrow, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("environmentTags")]
+    public System.Collections.Generic.ICollection<string>? EnvironmentTags { get; set; } = default!;
+
+    /// <summary>
+    /// How urgent is this query (affects option prioritization)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("urgency")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? Urgency { get; set; } = default!;
+
+    /// <summary>
+    /// Actor-specific context data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customContext")]
+    public object? CustomContext { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Character-specific context that influenced option computation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterOptionContext
+{
+
+    /// <summary>
+    /// Character's combat style (aggressive, defensive, balanced, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatStyle")]
+    public string? CombatStyle { get; set; } = default!;
+
+    /// <summary>
+    /// Character's risk tolerance (0=cautious, 1=reckless)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("riskTolerance")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float? RiskTolerance { get; set; } = default!;
+
+    /// <summary>
+    /// Whether character prioritizes ally protection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("protectAllies")]
+    public bool? ProtectAllies { get; set; } = default!;
+
+    /// <summary>
+    /// Character's current primary goal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentGoal")]
+    public string? CurrentGoal { get; set; } = default!;
+
+    /// <summary>
+    /// Character's current dominant emotion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("emotionalState")]
+    public string? EmotionalState { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

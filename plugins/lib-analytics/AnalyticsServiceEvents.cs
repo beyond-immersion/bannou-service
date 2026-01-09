@@ -35,6 +35,10 @@ public partial class AnalyticsService
             "character-history.participation.recorded",
             async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterParticipationRecordedAsync(evt));
 
+        eventConsumer.RegisterHandler<IAnalyticsService, CharacterBackstoryCreatedEvent>(
+            "character-history.backstory.created",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterBackstoryCreatedAsync(evt));
+
         eventConsumer.RegisterHandler<IAnalyticsService, CharacterBackstoryUpdatedEvent>(
             "character-history.backstory.updated",
             async (svc, evt) => await ((AnalyticsService)svc).HandleCharacterBackstoryUpdatedAsync(evt));
@@ -43,6 +47,10 @@ public partial class AnalyticsService
         eventConsumer.RegisterHandler<IAnalyticsService, RealmParticipationRecordedEvent>(
             "realm-history.participation.recorded",
             async (svc, evt) => await ((AnalyticsService)svc).HandleRealmParticipationRecordedAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, RealmLoreCreatedEvent>(
+            "realm-history.lore.created",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleRealmLoreCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<IAnalyticsService, RealmLoreUpdatedEvent>(
             "realm-history.lore.updated",
@@ -318,6 +326,52 @@ public partial class AnalyticsService
     }
 
     /// <summary>
+    /// Handles character-history.backstory.created events.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleCharacterBackstoryCreatedAsync(CharacterBackstoryCreatedEvent evt)
+    {
+        try
+        {
+            _logger.LogDebug(
+                "Buffering character backstory created event for character {CharacterId}",
+                evt.CharacterId);
+
+            var metadata = new Dictionary<string, object>
+            {
+                ["elementCount"] = evt.ElementCount
+            };
+
+            await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
+            {
+                EventId = evt.EventId,
+                GameServiceId = Guid.Empty, // History events are game-agnostic
+                EntityId = evt.CharacterId,
+                EntityType = EntityType.Character,
+                EventType = "history.backstory.created",
+                Timestamp = evt.Timestamp,
+                Value = evt.ElementCount,
+                SessionId = null,
+                Metadata = metadata
+            }, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling character-history.backstory.created event for character {CharacterId}", evt.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "HandleCharacterBackstoryCreated",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "event:character-history.backstory.created",
+                details: $"characterId:{evt.CharacterId}",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
     /// Handles character-history.backstory.updated events.
     /// </summary>
     /// <param name="evt">The event data.</param>
@@ -410,6 +464,52 @@ public partial class AnalyticsService
                 ex.Message,
                 dependency: null,
                 endpoint: "event:realm-history.participation.recorded",
+                details: $"realmId:{evt.RealmId}",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles realm-history.lore.created events.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleRealmLoreCreatedAsync(RealmLoreCreatedEvent evt)
+    {
+        try
+        {
+            _logger.LogDebug(
+                "Buffering realm lore created event for realm {RealmId}",
+                evt.RealmId);
+
+            var metadata = new Dictionary<string, object>
+            {
+                ["elementCount"] = evt.ElementCount
+            };
+
+            await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
+            {
+                EventId = evt.EventId,
+                GameServiceId = Guid.Empty, // History events are game-agnostic
+                EntityId = evt.RealmId,
+                EntityType = EntityType.Custom, // Realm is not in EntityType enum
+                EventType = "history.lore.created",
+                Timestamp = evt.Timestamp,
+                Value = evt.ElementCount,
+                SessionId = null,
+                Metadata = metadata
+            }, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling realm-history.lore.created event for realm {RealmId}", evt.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "HandleRealmLoreCreated",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "event:realm-history.lore.created",
                 details: $"realmId:{evt.RealmId}",
                 stack: ex.StackTrace,
                 cancellationToken: CancellationToken.None);

@@ -79,4 +79,9 @@ public partial interface IActorService : IBannouService
         /// </summary>
         Task<(StatusCodes, InjectPerceptionResponse?)> InjectPerceptionAsync(InjectPerceptionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// QueryOptions operation
+        /// </summary>
+        Task<(StatusCodes, QueryOptionsResponse?)> QueryOptionsAsync(QueryOptionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

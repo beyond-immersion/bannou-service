@@ -3,6 +3,7 @@
 // Caches character personality data for actor behavior execution with TTL.
 // =============================================================================
 
+using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public sealed class PersonalityCache : IPersonalityCache
     private readonly ILogger<PersonalityCache> _logger;
     private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
     private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
+    private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
 
     /// <summary>
     /// Time-to-live for cached personality data (5 minutes).
@@ -126,11 +128,56 @@ public sealed class PersonalityCache : IPersonalityCache
     }
 
     /// <inheritdoc/>
+    public async Task<BackstoryResponse?> GetBackstoryOrLoadAsync(Guid characterId, CancellationToken ct = default)
+    {
+        // Check cache first
+        if (_backstoryCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
+        {
+            _logger.LogDebug("Backstory cache hit for character {CharacterId}", characterId);
+            return cached.Backstory;
+        }
+
+        // Load from service
+        _logger.LogDebug("Backstory cache miss for character {CharacterId}, loading from service", characterId);
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var client = scope.ServiceProvider.GetRequiredService<ICharacterHistoryClient>();
+
+            var response = await client.GetBackstoryAsync(
+                new GetBackstoryRequest { CharacterId = characterId },
+                ct);
+
+            if (response != null)
+            {
+                var newCached = new CachedBackstory(response, DateTimeOffset.UtcNow.Add(CacheTtl));
+                _backstoryCache[characterId] = newCached;
+                _logger.LogDebug("Cached backstory for character {CharacterId} with {ElementCount} elements",
+                    characterId, response.Elements.Count);
+            }
+
+            return response;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("No backstory found for character {CharacterId}", characterId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load backstory for character {CharacterId}", characterId);
+            return cached?.Backstory; // Return stale data if available
+        }
+    }
+
+    /// <inheritdoc/>
     public void Invalidate(Guid characterId)
     {
         _personalityCache.TryRemove(characterId, out _);
         _combatCache.TryRemove(characterId, out _);
-        _logger.LogDebug("Invalidated personality cache for character {CharacterId}", characterId);
+        _backstoryCache.TryRemove(characterId, out _);
+        _logger.LogDebug("Invalidated character data cache for character {CharacterId}", characterId);
     }
 
     /// <inheritdoc/>
@@ -138,7 +185,8 @@ public sealed class PersonalityCache : IPersonalityCache
     {
         _personalityCache.Clear();
         _combatCache.Clear();
-        _logger.LogInformation("Cleared all personality cache entries");
+        _backstoryCache.Clear();
+        _logger.LogInformation("Cleared all character data cache entries");
     }
 
     /// <summary>
@@ -153,6 +201,14 @@ public sealed class PersonalityCache : IPersonalityCache
     /// Cached combat preferences data with expiration time.
     /// </summary>
     private sealed record CachedCombatPreferences(CombatPreferencesResponse? Preferences, DateTimeOffset ExpiresAt)
+    {
+        public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
+    }
+
+    /// <summary>
+    /// Cached backstory data with expiration time.
+    /// </summary>
+    private sealed record CachedBackstory(BackstoryResponse? Backstory, DateTimeOffset ExpiresAt)
     {
         public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
     }

@@ -538,7 +538,7 @@ public class ActorRunner : IActorRunner
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
 
-        // Load personality and combat preferences for character-based actors
+        // Load personality, combat preferences, and backstory for character-based actors
         if (CharacterId.HasValue)
         {
             var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
@@ -546,12 +546,16 @@ public class ActorRunner : IActorRunner
 
             var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
             scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
+
+            var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
+            scope.RegisterProvider(new BackstoryProvider(backstory));
         }
         else
         {
             // Register empty providers for non-character actors to avoid null reference issues
             scope.RegisterProvider(new PersonalityProvider(null));
             scope.RegisterProvider(new CombatPreferencesProvider(null));
+            scope.RegisterProvider(new BackstoryProvider(null));
         }
 
         return scope;

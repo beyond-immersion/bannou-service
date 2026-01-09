@@ -1033,4 +1033,232 @@ public partial class ActorService : IActorService
     }
 
     #endregion
+
+    #region Query Options
+
+    // Default tick interval for waiting on fresh queries (matches ActorRunner default)
+    private const int DefaultTickIntervalMs = 100;
+
+    /// <summary>
+    /// Queries an actor for its available options.
+    /// </summary>
+    /// <remarks>
+    /// Options are maintained by the actor in its state.memories.{queryType}_options.
+    /// This endpoint reads from the actor's state based on requested freshness level.
+    /// </remarks>
+    public async Task<(StatusCodes, QueryOptionsResponse?)> QueryOptionsAsync(
+        QueryOptionsRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Querying options from actor {ActorId} (type: {QueryType}, freshness: {Freshness})",
+            body.ActorId, body.QueryType, body.Freshness);
+
+        try
+        {
+            // Find the actor
+            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+            {
+                // In pool mode, actor might be on another node
+                if (_configuration.DeploymentMode != "bannou")
+                {
+                    var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+                    if (assignment != null)
+                    {
+                        _logger.LogWarning(
+                            "Actor {ActorId} is on pool node {NodeId} - query-options requires local actor",
+                            body.ActorId, assignment.NodeId);
+                        return (StatusCodes.BadRequest, null);
+                    }
+                }
+                return (StatusCodes.NotFound, null);
+            }
+
+            var freshness = body.Freshness;
+            var maxAgeMs = body.MaxAgeMs ?? 5000;
+            var optionsKey = $"{body.QueryType.ToString().ToLowerInvariant()}_options";
+
+            // Get actor state snapshot
+            var stateSnapshot = runner.GetStateSnapshot();
+
+            // Handle fresh queries by injecting context as perception
+            if (freshness == OptionsFreshness.Fresh && body.Context != null)
+            {
+                // Inject query context as a perception to trigger recomputation
+                var queryPerception = new PerceptionData
+                {
+                    PerceptionType = "options_query",
+                    SourceId = "query-options-endpoint",
+                    SourceType = "system",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["queryType"] = body.QueryType.ToString(),
+                        ["context"] = body.Context
+                    },
+                    Urgency = body.Context.Urgency ?? 0.5f
+                };
+                runner.InjectPerception(queryPerception);
+
+                // Wait briefly for actor to process (one tick)
+                await Task.Delay(DefaultTickIntervalMs, cancellationToken);
+
+                // Re-fetch state after processing
+                stateSnapshot = runner.GetStateSnapshot();
+            }
+
+            // Read options from actor's memories (list of MemoryEntry)
+            var options = new List<ActorOption>();
+            DateTimeOffset computedAt = DateTimeOffset.UtcNow;
+
+            // Find the options memory entry by key
+            var optionsEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == optionsKey);
+            if (optionsEntry?.MemoryValue != null)
+            {
+                // Options are stored as a memory with value being the list
+                if (optionsEntry.MemoryValue is IEnumerable<ActorOption> optionsList)
+                {
+                    options = optionsList.ToList();
+                }
+                else if (optionsEntry.MemoryValue is IEnumerable<object> objectList)
+                {
+                    // Try to convert from generic objects
+                    foreach (var obj in objectList)
+                    {
+                        if (obj is ActorOption option)
+                        {
+                            options.Add(option);
+                        }
+                        else if (obj is IDictionary<string, object?> dict)
+                        {
+                            options.Add(ConvertDictToOption(dict));
+                        }
+                    }
+                }
+
+                computedAt = optionsEntry.CreatedAt;
+            }
+
+            // Try to get computed timestamp from separate memory entry
+            var timestampKey = $"{optionsKey}_timestamp";
+            var timestampEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == timestampKey);
+            if (timestampEntry?.MemoryValue is DateTimeOffset storedTimestamp)
+            {
+                computedAt = storedTimestamp;
+            }
+
+            // Check freshness requirements
+            var ageMs = (int)(DateTimeOffset.UtcNow - computedAt).TotalMilliseconds;
+            if (freshness == OptionsFreshness.Cached && ageMs > maxAgeMs && options.Count == 0)
+            {
+                // Options too old and empty - actor may not support this query type
+                _logger.LogDebug("Actor {ActorId} has no {QueryType} options (or they're stale)",
+                    body.ActorId, body.QueryType);
+            }
+
+            // Build character context if this is a character-based actor
+            CharacterOptionContext? characterContext = null;
+            if (runner.CharacterId.HasValue)
+            {
+                characterContext = new CharacterOptionContext();
+
+                // Extract combat preferences from memories if available
+                var combatStyleEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "combat_style");
+                if (combatStyleEntry?.MemoryValue != null)
+                {
+                    characterContext.CombatStyle = combatStyleEntry.MemoryValue.ToString();
+                }
+
+                var riskEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "risk_tolerance");
+                if (riskEntry?.MemoryValue is float riskValue)
+                {
+                    characterContext.RiskTolerance = riskValue;
+                }
+                else if (riskEntry?.MemoryValue is double riskDouble)
+                {
+                    characterContext.RiskTolerance = (float)riskDouble;
+                }
+
+                var protectEntry = stateSnapshot.Memories.FirstOrDefault(m => m.MemoryKey == "protect_allies");
+                if (protectEntry?.MemoryValue is bool protectValue)
+                {
+                    characterContext.ProtectAllies = protectValue;
+                }
+
+                if (stateSnapshot.Goals?.PrimaryGoal != null)
+                {
+                    characterContext.CurrentGoal = stateSnapshot.Goals.PrimaryGoal;
+                }
+
+                // Get dominant emotion
+                var dominantEmotion = stateSnapshot.Feelings
+                    .OrderByDescending(f => f.Value)
+                    .FirstOrDefault();
+                if (!string.IsNullOrEmpty(dominantEmotion.Key))
+                {
+                    characterContext.EmotionalState = dominantEmotion.Key;
+                }
+            }
+
+            _logger.LogDebug("Returning {Count} options for actor {ActorId} (type: {QueryType}, age: {AgeMs}ms)",
+                options.Count, body.ActorId, body.QueryType, ageMs);
+
+            return (StatusCodes.OK, new QueryOptionsResponse
+            {
+                ActorId = body.ActorId,
+                QueryType = body.QueryType,
+                Options = options,
+                ComputedAt = computedAt,
+                AgeMs = ageMs,
+                CharacterContext = characterContext
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error querying options from actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "QueryOptions",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Converts a dictionary to an ActorOption.
+    /// </summary>
+    private static ActorOption ConvertDictToOption(IDictionary<string, object?> dict)
+    {
+        var option = new ActorOption
+        {
+            ActionId = dict.TryGetValue("actionId", out var actionId) ? actionId?.ToString() ?? "" : "",
+            Preference = dict.TryGetValue("preference", out var pref) && pref is float prefFloat ? prefFloat : 0.5f,
+            Available = dict.TryGetValue("available", out var avail) && avail is bool availBool && availBool
+        };
+
+        if (dict.TryGetValue("risk", out var risk) && risk is float riskFloat)
+        {
+            option.Risk = riskFloat;
+        }
+
+        if (dict.TryGetValue("cooldownMs", out var cooldown) && cooldown is int cooldownInt)
+        {
+            option.CooldownMs = cooldownInt;
+        }
+
+        if (dict.TryGetValue("requirements", out var reqs) && reqs is IEnumerable<string> reqsList)
+        {
+            option.Requirements = reqsList.ToList();
+        }
+
+        if (dict.TryGetValue("tags", out var tags) && tags is IEnumerable<string> tagsList)
+        {
+            option.Tags = tagsList.ToList();
+        }
+
+        return option;
+    }
+
+    #endregion
 }

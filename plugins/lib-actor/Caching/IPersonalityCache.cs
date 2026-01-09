@@ -3,6 +3,7 @@
 // Caches character personality data for actor behavior execution.
 // =============================================================================
 
+using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 
 namespace BeyondImmersion.BannouService.Actor.Caching;
@@ -28,6 +29,14 @@ public interface IPersonalityCache
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The combat preferences response, or null if not found.</returns>
     Task<CombatPreferencesResponse?> GetCombatPreferencesOrLoadAsync(Guid characterId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets backstory for a character, loading from service if not cached or expired.
+    /// </summary>
+    /// <param name="characterId">The character ID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The backstory response, or null if not found.</returns>
+    Task<BackstoryResponse?> GetBackstoryOrLoadAsync(Guid characterId, CancellationToken ct = default);
 
     /// <summary>
     /// Invalidates cached personality data for a character.

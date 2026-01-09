@@ -27,6 +27,9 @@ info:
     - topic: character-history.participation.recorded
       event: CharacterParticipationRecordedEvent
       handler: HandleCharacterParticipationRecorded
+    - topic: character-history.backstory.created
+      event: CharacterBackstoryCreatedEvent
+      handler: HandleCharacterBackstoryCreated
     - topic: character-history.backstory.updated
       event: CharacterBackstoryUpdatedEvent
       handler: HandleCharacterBackstoryUpdated
@@ -34,6 +37,9 @@ info:
     - topic: realm-history.participation.recorded
       event: RealmParticipationRecordedEvent
       handler: HandleRealmParticipationRecorded
+    - topic: realm-history.lore.created
+      event: RealmLoreCreatedEvent
+      handler: HandleRealmLoreCreated
     - topic: realm-history.lore.updated
       event: RealmLoreUpdatedEvent
       handler: HandleRealmLoreUpdated
