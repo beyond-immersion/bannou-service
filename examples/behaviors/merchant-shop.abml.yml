@@ -1,0 +1,661 @@
+# =============================================================================
+# Merchant Shop Behavior
+# Professional behavior for shopkeepers - greeting, selling, haggling.
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: merchant-shop
+  type: behavior
+  description: "Shopkeeper behavior for running a store"
+  tags:
+    - professional
+    - merchant
+    - commerce
+
+# -----------------------------------------------------------------------------
+# Context
+# -----------------------------------------------------------------------------
+context:
+  variables:
+    # Shop configuration
+    shop_name:
+      type: string
+    specialty:
+      type: string
+    haggle_tolerance:
+      type: float
+      default: 0.15
+
+    # Shop state
+    shop_open:
+      source: "${agent.shop.is_open}"
+      type: bool
+    customers_in_shop:
+      source: "${agent.perception.customers_nearby}"
+      type: array
+    current_customer:
+      type: entity_ref
+      default: null
+
+    # Transaction state
+    active_transaction:
+      type: bool
+      default: false
+    current_item:
+      type: object
+      default: null
+    asking_price:
+      type: int
+      default: 0
+    lowest_acceptable:
+      type: int
+      default: 0
+
+    # Time
+    current_hour:
+      source: "${world.time.hour}"
+      type: int
+
+    # Agent state
+    energy:
+      source: "${agent.stats.energy}"
+      type: float
+    mood:
+      source: "${agent.emotional_state.mood}"
+      type: string
+
+  requirements:
+    has_shop: "${agent.shop != null}"
+
+# -----------------------------------------------------------------------------
+# GOAP Goals
+# -----------------------------------------------------------------------------
+goals:
+  make_sales:
+    description: "Sell merchandise to customers"
+    priority: 70
+    conditions:
+      daily_sales_met: true
+
+  maintain_shop:
+    description: "Keep shop organized and stocked"
+    priority: 50
+    conditions:
+      shop_maintained: true
+
+  customer_satisfaction:
+    description: "Keep customers happy"
+    priority: 65
+    conditions:
+      no_angry_customers: true
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+events:
+  - pattern: "shop.customer_entered"
+    handler: greet_customer
+
+  - pattern: "shop.customer_left"
+    handler: farewell_customer
+
+  - pattern: "shop.item_interest"
+    handler: discuss_item
+
+  - pattern: "shop.purchase_request"
+    handler: process_purchase
+
+  - pattern: "shop.haggle_attempt"
+    handler: handle_haggle
+
+  - pattern: "shop.theft_detected"
+    handler: handle_theft
+
+  - pattern: "time.hour_changed"
+    handler: check_shop_hours
+
+# -----------------------------------------------------------------------------
+# Flows
+# -----------------------------------------------------------------------------
+flows:
+  # ===========================================================================
+  # SHOP MANAGEMENT
+  # ===========================================================================
+
+  shop_routine:
+    description: "Main shopkeeping routine"
+    triggers:
+      - condition: "${shop_open && !active_transaction}"
+
+    actions:
+      - cond:
+          # Customers present - be attentive
+          - when: "${customers_in_shop.length > 0}"
+            then:
+              - call: { flow: attend_customers }
+
+          # No customers - maintain shop
+          - else:
+              - call: { flow: idle_shopkeeping }
+
+      - goto: { flow: shop_routine }
+
+  attend_customers:
+    description: "Monitor and assist customers"
+    actions:
+      # Attentive stance
+      - emit_intent:
+          channel: stance
+          action: attentive
+          urgency: 0.5
+
+      # Watch customers (for assistance and theft prevention)
+      - emit_intent:
+          channel: attention
+          action: monitor_area
+          focus: customers
+          urgency: 0.6
+
+      # Be ready to help
+      - emit_intent:
+          channel: expression
+          action: pleasant
+          urgency: 0.4
+
+      - return: {}
+
+  idle_shopkeeping:
+    description: "Maintain shop when no customers"
+    actions:
+      - cond:
+          - when: "${random() < 0.3}"
+            then:
+              # Organize merchandise
+              - emit_intent:
+                  channel: interaction
+                  action: arrange_display
+                  urgency: 0.3
+
+          - when: "${random() < 0.5}"
+            then:
+              # Polish items
+              - emit_intent:
+                  channel: interaction
+                  action: polish_merchandise
+                  urgency: 0.25
+
+          - else:
+              # Stand at counter
+              - emit_intent:
+                  channel: idle
+                  action: stand_ready
+                  location: counter
+                  urgency: 0.2
+
+      - return: {}
+
+  open_shop:
+    description: "Open shop for business"
+    triggers:
+      - condition: "${current_hour >= 8 && current_hour < 20 && !shop_open}"
+
+    goap:
+      preconditions:
+        energy: "> 0.3"
+      effects:
+        shop_open: true
+      cost: 1
+
+    actions:
+      - emit_intent:
+          channel: interaction
+          action: unlock_door
+          urgency: 0.6
+
+      - emit_intent:
+          channel: interaction
+          action: flip_sign
+          to: open
+          urgency: 0.5
+
+      - set: { variable: shop_open, value: true }
+
+      - emit_intent:
+          channel: expression
+          action: satisfied
+          urgency: 0.3
+
+      - emit_intent:
+          channel: speech
+          action: mutter
+          text: "Another day, another coin."
+          urgency: 0.2
+
+      - goto: { flow: shop_routine }
+
+  close_shop:
+    description: "Close shop for the day"
+    triggers:
+      - condition: "${current_hour >= 20 && shop_open}"
+
+    actions:
+      # Wait for customers to leave
+      - cond:
+          - when: "${customers_in_shop.length > 0}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: announce
+                  dialogue_ref: "dialogue/merchant/closing_soon"
+                  urgency: 0.6
+              - wait: { duration: 60.0, until: "${customers_in_shop.length == 0}" }
+
+      - emit_intent:
+          channel: interaction
+          action: flip_sign
+          to: closed
+          urgency: 0.5
+
+      - emit_intent:
+          channel: interaction
+          action: lock_door
+          urgency: 0.6
+
+      - set: { variable: shop_open, value: false }
+
+      - emit_intent:
+          channel: expression
+          action: tired_satisfied
+          urgency: 0.3
+
+  # ===========================================================================
+  # CUSTOMER INTERACTION
+  # ===========================================================================
+
+  greet_customer:
+    description: "Welcome customer to shop"
+    actions:
+      - set:
+          variable: customer
+          value: "${event.customer}"
+
+      # Face customer
+      - emit_intent:
+          channel: attention
+          action: look_at
+          target: "${customer.id}"
+          urgency: 0.7
+
+      # Friendly expression
+      - emit_intent:
+          channel: expression
+          action: smile
+          style: welcoming
+          urgency: 0.6
+
+      # Greeting based on relationship
+      - cond:
+          - when: "${customer.relationship == 'regular'}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/greet_regular"
+                  target: "${customer.id}"
+                  urgency: 0.7
+
+          - when: "${customer.faction == 'city_watch'}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/greet_guard"
+                  target: "${customer.id}"
+                  urgency: 0.7
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/greet_customer"
+                  target: "${customer.id}"
+                  urgency: 0.65
+
+  farewell_customer:
+    description: "Say goodbye to leaving customer"
+    actions:
+      - emit_intent:
+          channel: attention
+          action: look_at
+          target: "${event.customer.id}"
+          urgency: 0.5
+
+      - cond:
+          - when: "${event.made_purchase}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/farewell_buyer"
+                  urgency: 0.6
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/farewell_browser"
+                  urgency: 0.5
+
+  discuss_item:
+    description: "Talk about an item customer is interested in"
+    actions:
+      - set:
+          variable: item
+          value: "${event.item}"
+      - set:
+          variable: current_customer
+          value: "${event.customer}"
+
+      # Move to item if not nearby
+      - cond:
+          - when: "${distance(agent.position, item.position) > 2.0}"
+            then:
+              - emit_intent:
+                  channel: movement
+                  action: walk
+                  target: "${item.position}"
+                  urgency: 0.6
+
+      # Pick up or gesture to item
+      - emit_intent:
+          channel: interaction
+          action: present_item
+          item: "${item.id}"
+          urgency: 0.7
+
+      # Describe item based on type
+      - cond:
+          - when: "${item.type == 'shield'}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/describe_shield"
+                  item: "${item}"
+                  urgency: 0.7
+
+          - when: "${item.type == 'sword'}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/describe_sword"
+                  item: "${item}"
+                  urgency: 0.7
+
+          - when: "${item.type == 'armor'}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/describe_armor"
+                  item: "${item}"
+                  urgency: 0.7
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/describe_generic"
+                  item: "${item}"
+                  urgency: 0.65
+
+      # State price
+      - set:
+          variable: asking_price
+          value: "${calculate_price(item, current_customer)}"
+
+      - emit_intent:
+          channel: speech
+          action: speak
+          dialogue_ref: "dialogue/merchant/state_price"
+          price: "${asking_price}"
+          urgency: 0.7
+
+  # ===========================================================================
+  # TRANSACTIONS
+  # ===========================================================================
+
+  process_purchase:
+    description: "Handle customer wanting to buy"
+    actions:
+      - set:
+          variable: current_item
+          value: "${event.item}"
+      - set:
+          variable: current_customer
+          value: "${event.customer}"
+      - set:
+          variable: active_transaction
+          value: true
+
+      # Calculate prices
+      - set:
+          variable: asking_price
+          value: "${calculate_price(current_item, current_customer)}"
+      - set:
+          variable: lowest_acceptable
+          value: "${floor(asking_price * (1 - haggle_tolerance))}"
+
+      # Check if customer can afford
+      - cond:
+          - when: "${current_customer.gold >= asking_price}"
+            then:
+              - goto: { flow: complete_sale }
+
+          - when: "${current_customer.gold >= lowest_acceptable}"
+            then:
+              # They might haggle
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/state_price"
+                  price: "${asking_price}"
+                  urgency: 0.7
+
+          - else:
+              - emit_intent:
+                  channel: expression
+                  action: sympathetic
+                  urgency: 0.5
+
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/cant_afford"
+                  urgency: 0.6
+
+              - set: { variable: active_transaction, value: false }
+
+  handle_haggle:
+    description: "Negotiate price with customer"
+    actions:
+      - set:
+          variable: offer
+          value: "${event.offered_price}"
+
+      # Evaluate offer
+      - cond:
+          # Good offer - accept
+          - when: "${offer >= asking_price}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: pleased
+                  urgency: 0.6
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  text: "Done!"
+                  urgency: 0.7
+              - set: { variable: asking_price, value: "${offer}" }
+              - goto: { flow: complete_sale }
+
+          # Acceptable offer
+          - when: "${offer >= lowest_acceptable}"
+            then:
+              - cond:
+                  # Close enough - accept with show of reluctance
+                  - when: "${offer >= asking_price * 0.95}"
+                    then:
+                      - emit_intent:
+                          channel: expression
+                          action: consider
+                          urgency: 0.5
+                      - emit_intent:
+                          channel: speech
+                          action: speak
+                          dialogue_ref: "dialogue/merchant/accept_haggle"
+                          urgency: 0.7
+                      - set: { variable: asking_price, value: "${offer}" }
+                      - goto: { flow: complete_sale }
+
+                  # Counter-offer
+                  - else:
+                      - set:
+                          variable: counter
+                          value: "${floor((offer + asking_price) / 2)}"
+                      - emit_intent:
+                          channel: expression
+                          action: thoughtful
+                          urgency: 0.5
+                      - emit_intent:
+                          channel: speech
+                          action: speak
+                          dialogue_ref: "dialogue/merchant/counter_offer"
+                          counter: "${counter}"
+                          urgency: 0.7
+                      - set: { variable: asking_price, value: "${counter}" }
+
+          # Too low - reject
+          - else:
+              - emit_intent:
+                  channel: expression
+                  action: offended_mild
+                  urgency: 0.6
+
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/merchant/reject_offer"
+                  urgency: 0.7
+
+  complete_sale:
+    description: "Finalize the transaction"
+    goap:
+      effects:
+        sale_made: true
+        daily_sales_progress: "+1"
+      cost: 0
+
+    actions:
+      # Take payment
+      - emit_intent:
+          channel: interaction
+          action: receive_payment
+          from: "${current_customer.id}"
+          amount: "${asking_price}"
+          urgency: 0.8
+
+      # Hand over item
+      - emit_intent:
+          channel: interaction
+          action: hand_item
+          item: "${current_item.id}"
+          to: "${current_customer.id}"
+          urgency: 0.8
+
+      # Pleased expression
+      - emit_intent:
+          channel: expression
+          action: satisfied
+          urgency: 0.6
+
+      # Thank customer
+      - emit_intent:
+          channel: speech
+          action: speak
+          dialogue_ref: "dialogue/merchant/thank_purchase"
+          urgency: 0.7
+
+      # Update shop inventory
+      - emit_intent:
+          channel: interaction
+          action: update_inventory
+          remove: "${current_item.id}"
+          urgency: 0.5
+
+      # Clear transaction state
+      - set: { variable: active_transaction, value: false }
+      - set: { variable: current_item, value: null }
+      - set: { variable: current_customer, value: null }
+
+  # ===========================================================================
+  # SECURITY
+  # ===========================================================================
+
+  handle_theft:
+    description: "Respond to theft attempt"
+    actions:
+      - emit_intent:
+          channel: expression
+          action: angry
+          urgency: 0.9
+
+      - emit_intent:
+          channel: speech
+          action: shout
+          dialogue_ref: "dialogue/merchant/thief"
+          urgency: 0.95
+
+      # Point at thief
+      - emit_intent:
+          channel: idle
+          action: point
+          target: "${event.thief.id}"
+          urgency: 0.85
+
+      # Call for guards
+      - emit_intent:
+          channel: speech
+          action: shout
+          text: "Guards! Thief!"
+          urgency: 0.95
+
+      # Try to block exit if safe
+      - cond:
+          - when: "${event.thief.threat_level < 0.5}"
+            then:
+              - emit_intent:
+                  channel: movement
+                  action: move_to_block
+                  target: shop_exit
+                  urgency: 0.8
+
+  # ===========================================================================
+  # TIME MANAGEMENT
+  # ===========================================================================
+
+  check_shop_hours:
+    description: "Check if shop should open or close"
+    actions:
+      - cond:
+          - when: "${current_hour == 8 && !shop_open}"
+            then:
+              - goto: { flow: open_shop }
+
+          - when: "${current_hour == 20 && shop_open}"
+            then:
+              - goto: { flow: close_shop }

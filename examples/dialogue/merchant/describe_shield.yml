@@ -1,0 +1,47 @@
+# =============================================================================
+# Merchant - Describe Shield
+# Pitch for shields, highlighting craftsmanship
+# =============================================================================
+
+localizations:
+  en: "Ah, the {{ item.name }}. {{ item.material }} construction, {{ item.weight }} pounds. Solid protection."
+  es: "Ah, el {{ item.name }}. Construcción de {{ item.material }}, {{ item.weight }} libras. Protección sólida."
+  de: "Ah, der {{ item.name }}. {{ item.material }}-Konstruktion, {{ item.weight }} Pfund. Solider Schutz."
+  ja: "ああ、{{ item.name }}ですね。{{ item.material }}製、{{ item.weight }}ポンド。しっかりした防御です。"
+  fr: "Ah, le {{ item.name }}. Construction en {{ item.material }}, {{ item.weight }} livres. Protection solide."
+
+overrides:
+  # High quality shield
+  - condition: "${item.quality >= 0.8}"
+    priority: 20
+    localizations:
+      en: "Now THIS is a fine piece. {{ item.name }} - I made this one myself. See how the {{ item.material }} catches the light? That's quality craftsmanship."
+      es: "ESTO sí que es una pieza fina. {{ item.name }} - lo hice yo mismo. ¿Ves cómo el {{ item.material }} refleja la luz? Eso es artesanía de calidad."
+
+  # Shield for guards specifically
+  - condition: "${customer.faction == 'city_watch'}"
+    priority: 15
+    localizations:
+      en: "The {{ item.name }} - popular with the watch. Good balance, won't tire your arm on a long patrol. The {{ item.material }} holds up well to street brawls."
+      es: "El {{ item.name }} - popular entre la guardia. Buen equilibrio, no cansará tu brazo en una patrulla larga. El {{ item.material }} aguanta bien las peleas callejeras."
+
+  # Replacement for damaged shield
+  - condition: "${customer.equipment.shield.condition < 0.3}"
+    priority: 25
+    localizations:
+      en: "Looking to replace that beaten-up thing? The {{ item.name }} won't let you down. Sturdy {{ item.material }}, proper rivets - this one's built to last."
+      es: "¿Buscas reemplazar esa cosa maltratada? El {{ item.name }} no te fallará. {{ item.material }} resistente, remaches apropiados - este está hecho para durar."
+
+  # Budget option
+  - condition: "${item.price < 50}"
+    priority: 5
+    localizations:
+      en: "The {{ item.name }} - simple but effective. Won't win any beauty contests, but it'll stop a blade."
+      es: "El {{ item.name }} - simple pero efectivo. No ganará concursos de belleza, pero detendrá una hoja."
+
+  # Premium option
+  - condition: "${item.price > 200}"
+    priority: 10
+    localizations:
+      en: "The {{ item.name }}. Now, this isn't cheap, but you're paying for the finest {{ item.material }} and my best work. This shield could save your life."
+      es: "El {{ item.name }}. Ahora, esto no es barato, pero estás pagando por el mejor {{ item.material }} y mi mejor trabajo. Este escudo podría salvarte la vida."

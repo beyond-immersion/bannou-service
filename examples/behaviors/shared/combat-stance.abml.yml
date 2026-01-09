@@ -1,0 +1,445 @@
+# =============================================================================
+# Combat Stance Behavior
+# Situational layer that activates during combat.
+# Provides combat-specific behaviors that override normal activities.
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: combat-stance
+  type: behavior
+  description: "Combat stance and response behaviors"
+  tags:
+    - situational
+    - combat
+
+context:
+  variables:
+    # Combat state
+    current_target:
+      source: "${agent.combat.target}"
+      type: entity_ref
+    threats:
+      source: "${agent.perception.threats}"
+      type: array
+    active_threats:
+      source: "${agent.combat.active_threats}"
+      type: array
+
+    # Agent state
+    health:
+      source: "${agent.stats.health}"
+      type: float
+    stamina:
+      source: "${agent.stats.stamina}"
+      type: float
+    has_shield:
+      source: "${agent.equipment.shield != null}"
+      type: bool
+
+    # Combat style (from character config)
+    combat_style:
+      source: "${agent.config.combat_style}"
+      type: string
+      default: "balanced"     # aggressive | defensive | balanced
+
+# -----------------------------------------------------------------------------
+# GOAP Goals for Combat
+# -----------------------------------------------------------------------------
+goals:
+  defeat_enemy:
+    description: "Defeat the current threat"
+    priority: 85
+    conditions:
+      threat_neutralized: true
+
+  stay_alive:
+    description: "Survive the encounter"
+    priority: 100
+    conditions:
+      health: "> 0.1"
+
+  protect_allies:
+    description: "Keep nearby allies safe"
+    priority: 75
+    conditions:
+      allies_safe: true
+
+# -----------------------------------------------------------------------------
+# Event Handlers
+# -----------------------------------------------------------------------------
+events:
+  - pattern: "combat.enemy_attack_incoming"
+    handler: react_to_attack
+
+  - pattern: "combat.opening_detected"
+    handler: exploit_opening
+
+  - pattern: "combat.ally_attacked"
+    handler: assist_ally
+
+  - pattern: "combat.target_fled"
+    handler: handle_fleeing_target
+
+  - pattern: "combat.target_surrendered"
+    handler: handle_surrender
+
+# -----------------------------------------------------------------------------
+# Flows
+# -----------------------------------------------------------------------------
+flows:
+  # ===========================================================================
+  # MAIN COMBAT LOOP
+  # ===========================================================================
+
+  combat_active:
+    description: "Main combat engagement loop"
+    triggers:
+      - condition: "${active_threats.length > 0}"
+
+    actions:
+      # Maintain combat stance
+      - emit_intent:
+          channel: stance
+          action: combat
+          style: "${combat_style}"
+          urgency: 0.85
+
+      # Keep attention on threats
+      - emit_intent:
+          channel: attention
+          action: combat_awareness
+          primary_target: "${current_target}"
+          secondary_targets: "${active_threats}"
+          urgency: 0.9
+
+      # Combat behavior based on style
+      - cond:
+          - when: "${combat_style == 'aggressive'}"
+            then:
+              - call: { flow: aggressive_combat }
+
+          - when: "${combat_style == 'defensive'}"
+            then:
+              - call: { flow: defensive_combat }
+
+          - else:
+              - call: { flow: balanced_combat }
+
+      # Check if combat should continue
+      - cond:
+          - when: "${active_threats.length == 0}"
+            then:
+              - goto: { flow: combat_end }
+
+          - when: "${health < 0.2}"
+            then:
+              - goto: { flow: desperate_measures }
+
+          - else:
+              - goto: { flow: combat_active }
+
+  # ===========================================================================
+  # COMBAT STYLES
+  # ===========================================================================
+
+  aggressive_combat:
+    description: "Aggressive fighting style - press the attack"
+    actions:
+      - emit_intent:
+          channel: movement
+          action: close_distance
+          target: "${current_target}"
+          urgency: 0.75
+
+      - emit_intent:
+          channel: combat
+          action: attack
+          target: "${current_target}"
+          style: aggressive
+          urgency: 0.8
+
+      # Chain attacks when stamina permits
+      - cond:
+          - when: "${stamina > 0.5}"
+            then:
+              - emit_intent:
+                  channel: combat
+                  action: combo_attack
+                  urgency: 0.75
+
+      - return: {}
+
+  defensive_combat:
+    description: "Defensive fighting style - wait for openings"
+    actions:
+      - emit_intent:
+          channel: movement
+          action: maintain_distance
+          target: "${current_target}"
+          preferred_range: medium
+          urgency: 0.7
+
+      # Prioritize blocking
+      - cond:
+          - when: "${has_shield}"
+            then:
+              - emit_intent:
+                  channel: combat
+                  action: shield_ready
+                  urgency: 0.8
+
+          - else:
+              - emit_intent:
+                  channel: combat
+                  action: guard
+                  urgency: 0.75
+
+      # Counter-attack on openings
+      - emit_intent:
+          channel: combat
+          action: watch_for_opening
+          target: "${current_target}"
+          urgency: 0.7
+
+      - return: {}
+
+  balanced_combat:
+    description: "Balanced fighting style - adapt to situation"
+    actions:
+      # Assess situation
+      - set:
+          variable: advantage
+          value: "${calculate_combat_advantage(agent, current_target)}"
+
+      - cond:
+          - when: "${advantage > 0.3}"
+            then:
+              # We have advantage - be more aggressive
+              - emit_intent:
+                  channel: combat
+                  action: attack
+                  target: "${current_target}"
+                  style: pressing
+                  urgency: 0.75
+
+          - when: "${advantage < -0.3}"
+            then:
+              # They have advantage - be defensive
+              - emit_intent:
+                  channel: combat
+                  action: guard
+                  urgency: 0.8
+              - emit_intent:
+                  channel: movement
+                  action: create_distance
+                  urgency: 0.7
+
+          - else:
+              # Even - test their defenses
+              - emit_intent:
+                  channel: combat
+                  action: probe_attack
+                  target: "${current_target}"
+                  urgency: 0.7
+
+      - return: {}
+
+  # ===========================================================================
+  # REACTIVE FLOWS
+  # ===========================================================================
+
+  react_to_attack:
+    description: "React to incoming enemy attack"
+    actions:
+      - set:
+          variable: attack
+          value: "${event.attack}"
+
+      # Determine best response
+      - cond:
+          - when: "${attack.can_block && has_shield}"
+            then:
+              - emit_intent:
+                  channel: combat
+                  action: block
+                  direction: "${attack.direction}"
+                  urgency: 0.95
+
+          - when: "${attack.can_parry && stamina > 0.2}"
+            then:
+              - emit_intent:
+                  channel: combat
+                  action: parry
+                  timing: "${attack.timing}"
+                  urgency: 0.95
+
+          - when: "${attack.can_dodge}"
+            then:
+              - emit_intent:
+                  channel: movement
+                  action: dodge
+                  direction: "${attack.dodge_direction}"
+                  urgency: 0.95
+
+          - else:
+              # Can't avoid - brace for impact
+              - emit_intent:
+                  channel: combat
+                  action: brace
+                  urgency: 0.9
+
+  exploit_opening:
+    description: "Attack when enemy shows opening"
+    actions:
+      - emit_intent:
+          channel: combat
+          action: quick_attack
+          target: "${event.target}"
+          opening: "${event.opening_type}"
+          urgency: 0.85
+
+  assist_ally:
+    description: "Help an ally under attack"
+    actions:
+      - set:
+          variable: ally
+          value: "${event.ally}"
+
+      - cond:
+          # If ally is in critical danger, prioritize them
+          - when: "${ally.health < 0.3}"
+            then:
+              - emit_intent:
+                  channel: movement
+                  action: rush_to
+                  target: "${ally.position}"
+                  urgency: 0.85
+
+              - emit_intent:
+                  channel: combat
+                  action: intercept_attack
+                  protecting: "${ally.id}"
+                  urgency: 0.9
+
+          # Otherwise, flank their attacker
+          - else:
+              - emit_intent:
+                  channel: movement
+                  action: flank
+                  target: "${ally.attacker}"
+                  urgency: 0.7
+
+              - emit_intent:
+                  channel: combat
+                  action: attack
+                  target: "${ally.attacker}"
+                  urgency: 0.75
+
+  # ===========================================================================
+  # SPECIAL SITUATIONS
+  # ===========================================================================
+
+  handle_fleeing_target:
+    description: "Decide whether to pursue fleeing enemy"
+    actions:
+      - cond:
+          # Don't pursue if we're hurt or there are other threats
+          - when: "${health < 0.5 || active_threats.length > 1}"
+            then:
+              - emit_intent:
+                  channel: combat
+                  action: let_flee
+                  urgency: 0.6
+
+          # Pursue if they're dangerous and we're capable
+          - when: "${event.target.threat_level > 0.7 && stamina > 0.4}"
+            then:
+              - emit_intent:
+                  channel: movement
+                  action: pursue
+                  target: "${event.target}"
+                  max_distance: 50.0
+                  urgency: 0.7
+
+          - else:
+              - emit_intent:
+                  channel: attention
+                  action: track
+                  target: "${event.target}"
+                  urgency: 0.5
+
+  handle_surrender:
+    description: "Enemy has surrendered"
+    actions:
+      - emit_intent:
+          channel: combat
+          action: ready_stance
+          urgency: 0.7
+
+      - emit_intent:
+          channel: attention
+          action: watch
+          target: "${event.target}"
+          urgency: 0.8
+
+      - emit_intent:
+          channel: speech
+          action: command
+          text: "Don't move! Hands where I can see them!"
+          urgency: 0.75
+
+      # Wait for backup or secure prisoner
+      - set:
+          variable: current_target
+          value: null
+
+  desperate_measures:
+    description: "Low health - fight for survival"
+    actions:
+      - emit_intent:
+          channel: expression
+          action: desperate
+          urgency: 0.8
+
+      # All-out defense
+      - emit_intent:
+          channel: combat
+          action: desperate_defense
+          urgency: 0.95
+
+      # Look for escape route
+      - emit_intent:
+          channel: attention
+          action: find_escape
+          urgency: 0.85
+
+      # Call for help
+      - emit_intent:
+          channel: speech
+          action: shout
+          text: "Need backup! Now!"
+          urgency: 0.9
+
+  combat_end:
+    description: "Combat has ended"
+    actions:
+      # Transition out of combat stance (with vigilance)
+      - emit_intent:
+          channel: stance
+          action: alert
+          urgency: 0.6
+
+      # Scan for additional threats
+      - emit_intent:
+          channel: attention
+          action: scan_area
+          thorough: true
+          urgency: 0.7
+
+      # Catch breath
+      - wait: { duration: 3.0 }
+
+      # Layer will deactivate, returning control to normal behavior stack
+      - return: {}

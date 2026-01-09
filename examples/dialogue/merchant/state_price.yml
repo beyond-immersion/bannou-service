@@ -1,0 +1,40 @@
+# =============================================================================
+# Merchant - State Price
+# Telling customer how much an item costs
+# =============================================================================
+
+localizations:
+  en: "That'll be {{ price }} gold."
+  es: "Serán {{ price }} monedas de oro."
+  de: "Das macht {{ price }} Gold."
+  ja: "{{ price }}ゴールドになります。"
+  fr: "Ça fera {{ price }} pièces d'or."
+
+overrides:
+  # Expensive item - justify price
+  - condition: "${price > 150}"
+    priority: 10
+    localizations:
+      en: "{{ price }} gold. I know it's not cheap, but quality costs."
+      es: "{{ price }} oro. Sé que no es barato, pero la calidad cuesta."
+
+  # Regular customer discount applied
+  - condition: "${customer.relationship == 'regular'}"
+    priority: 15
+    localizations:
+      en: "For you? {{ price }} gold. Regular customer discount."
+      es: "¿Para ti? {{ price }} oro. Descuento de cliente habitual."
+
+  # Guard discount
+  - condition: "${customer.faction == 'city_watch'}"
+    priority: 15
+    localizations:
+      en: "{{ price }} gold - and that's the watch discount. You lot keep my shop safe."
+      es: "{{ price }} oro - y eso es con descuento de la guardia. Ustedes mantienen mi tienda segura."
+
+  # Near closing time - eager to sell
+  - condition: "${world.time.hour >= 19}"
+    priority: 5
+    localizations:
+      en: "{{ price }} gold. Tell you what, I'm about to close - I could go a bit lower."
+      es: "{{ price }} oro. Te digo qué, estoy por cerrar - podría bajarlo un poco."

@@ -490,375 +490,556 @@
         <member name="F:BeyondImmersion.Bannou.Client.SDK.ConnectionStatus.Failed">
             <summary>Connection failed and reconnect attempts exhausted.</summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaType">
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler">
             <summary>
-            Meta endpoint types for requesting endpoint metadata instead of executing.
-            When the Meta flag (0x80) is set, this value is encoded in the Channel field.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.EndpointInfo">
-            <summary>Human-readable endpoint description (summary, tags, deprecated)</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.RequestSchema">
-            <summary>JSON Schema for the request body</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.ResponseSchema">
-            <summary>JSON Schema for the response body</summary>
-        </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.FullSchema">
-            <summary>Complete endpoint schema (info + request + response combined)</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1">
-            <summary>
-            Response wrapper for meta endpoint requests.
-            Contains endpoint metadata, schema information, or full schema data.
-            </summary>
-            <typeparam name="T">The type of data contained in this meta response.</typeparam>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.MetaType">
-            <summary>
-            Type of metadata returned.
-            Values: "endpoint-info", "request-schema", "response-schema", "full-schema"
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.EndpointKey">
-            <summary>
-            Endpoint key in format "METHOD:/path" (e.g., "POST:/account/get")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.ServiceName">
-            <summary>
-            Service name that owns this endpoint (e.g., "Account")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Method">
-            <summary>
-            HTTP method (POST, GET, PUT, DELETE, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Path">
-            <summary>
-            Endpoint path (e.g., "/account/get")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Data">
-            <summary>
-            Metadata payload. Structure varies by MetaType.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.GeneratedAt">
-            <summary>
-            When this response was generated (UTC)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.SchemaVersion">
-            <summary>
-            Schema version (assembly version) for cache invalidation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData">
-            <summary>
-            Endpoint info metadata containing human-readable endpoint description.
-            Returned when MetaType is EndpointInfo.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Summary">
-            <summary>
-            Brief summary of what the endpoint does.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Description">
-            <summary>
-            Detailed description of endpoint behavior.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Tags">
-            <summary>
-            Categorization tags for the endpoint.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Deprecated">
-            <summary>
-            Whether this endpoint is deprecated.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.OperationId">
-            <summary>
-            Operation ID from OpenAPI specification.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData">
-            <summary>
-            JSON Schema data for request or response bodies.
-            Returned when MetaType is RequestSchema or ResponseSchema.
-            This is a flexible container that holds any valid JSON Schema.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Schema">
-            <summary>
-            JSON Schema draft specification (e.g., "http://json-schema.org/draft-07/schema#")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Type">
-            <summary>
-            Root type of the schema (e.g., "object", "array", "string")
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Required">
-            <summary>
-            List of required property names (for object types).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Properties">
-            <summary>
-            Property definitions (for object types).
-            Values are JSON Schema property definitions.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Defs">
-            <summary>
-            Shared definitions referenced via $ref.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.ExtensionData">
-            <summary>
-            Additional properties beyond standard JSON Schema fields.
-            Captured via JsonExtensionData to preserve all schema content.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.FullSchemaData">
-            <summary>
-            Full schema data combining info, request schema, and response schema.
-            Returned when MetaType is FullSchema.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Info">
-            <summary>
-            Endpoint info (summary, description, tags, deprecated).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Request">
-            <summary>
-            JSON Schema for the request body.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Response">
-            <summary>
-            JSON Schema for the response body.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1">
-            <summary>
-            Caches assets downloaded from remote URLs with optional CRC32 verification
-            and disk persistence.
-            </summary>
-            <typeparam name="T">The type of asset being cached.</typeparam>
-            <remarks>
-            This class provides:
-            - Memory caching with ConcurrentDictionary for thread safety
-            - Optional disk persistence for offline access
-            - CRC32 verification for data integrity
-            - Automatic URL-based asset ID extraction
-            </remarks>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.#ctor(System.Net.Http.HttpClient,System.Func{System.Byte[],`0},System.String,System.String,Microsoft.Extensions.Logging.ILogger)">
-            <summary>
-            Creates a new RemoteAssetCache.
-            </summary>
-            <param name="httpClient">HTTP client for downloading assets.</param>
-            <param name="deserializer">Function to deserialize bytes to asset type T.</param>
-            <param name="cacheDirectory">Directory for disk persistence (null to use temp).</param>
-            <param name="fileExtension">File extension for cached files (default: ".asset").</param>
-            <param name="logger">Optional logger instance.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetOrDownloadAsync(System.String,System.Nullable{System.UInt32},System.Threading.CancellationToken)">
-            <summary>
-            Gets a cached asset by URL, downloading if not cached.
-            </summary>
-            <param name="assetUrl">URL to the asset (may be pre-signed).</param>
-            <param name="expectedCrc">Optional CRC32 for verification.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>The cached asset entry, or null if download/verification failed.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.TryGet(System.String)">
-            <summary>
-            Gets a cached asset by URL without downloading.
-            </summary>
-            <param name="assetUrl">URL key for the cached asset.</param>
-            <returns>The cached asset if found, null otherwise.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Add(System.String,System.Byte[],`0)">
-            <summary>
-            Adds an asset to the cache without downloading.
-            Useful for pre-loading assets from local storage.
-            </summary>
-            <param name="assetUrl">URL key for the asset.</param>
-            <param name="data">Raw asset data.</param>
-            <param name="asset">Deserialized asset.</param>
-            <returns>The cached asset entry.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Invalidate(System.String)">
-            <summary>
-            Removes an asset from the cache.
-            </summary>
-            <param name="assetUrl">URL key of the asset to remove.</param>
-            <returns>True if the asset was removed, false if not found.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Clear">
-            <summary>
-            Clears all cached assets from memory.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetStats">
-            <summary>
-            Gets cache statistics.
-            </summary>
-            <returns>Current cache statistics.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.LoadFromDiskAsync(System.String,System.Threading.CancellationToken)">
-            <summary>
-            Loads an asset from disk cache if available.
-            </summary>
-            <param name="assetId">Asset ID to load.</param>
-            <param name="cancellationToken">Cancellation token.</param>
-            <returns>The loaded asset, or null if not found on disk.</returns>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1">
-            <summary>
-            A cached asset with metadata.
-            </summary>
-            <typeparam name="T">The asset type.</typeparam>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.AssetId">
-            <summary>
-            Unique asset identifier.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.SourceUrl">
-            <summary>
-            Source URL this was downloaded from.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Data">
-            <summary>
-            Raw asset binary data.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Asset">
-            <summary>
-            Deserialized asset instance.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Crc32">
-            <summary>
-            CRC32 checksum of the data.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.CachedAt">
-            <summary>
-            When this asset was cached.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats">
-            <summary>
-            Asset cache statistics.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.CachedCount">
-            <summary>Number of assets in cache.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.TotalBytes">
-            <summary>Total size of cached assets in bytes.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.OldestEntry">
-            <summary>Timestamp of oldest cached entry.</summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.NewestEntry">
-            <summary>Timestamp of newest cached entry.</summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.Crc32">
-            <summary>
-            CRC32 checksum utility.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.Byte[])">
-            <summary>
-            Computes the CRC32 checksum of the given data.
-            </summary>
-            <param name="data">Data to compute checksum for.</param>
-            <returns>CRC32 checksum.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.ReadOnlySpan{System.Byte})">
-            <summary>
-            Computes the CRC32 checksum of the given data span.
-            </summary>
-            <param name="data">Data span to compute checksum for.</param>
-            <returns>CRC32 checksum.</returns>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.Client.SDK.ResponseCodes">
-            <summary>
-            Response codes used in the binary WebSocket protocol for success/error indication.
-            These codes are returned in the response header's ResponseCode field.
+            Client-side cutscene handler for game engine integration.
             </summary>
             <remarks>
-            Codes 0-49 are protocol-level errors (Connect service).
-            Codes 50-69 are service-level errors (downstream service responses).
-            Codes 70+ are shortcut-specific errors.
+            <para>
+            Implement this interface in your game engine to receive cutscene commands
+            from the behavior system and translate them into game actions.
+            </para>
+            <para>
+            The typical flow is:
+            </para>
+            <list type="number">
+            <item><see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnCutsceneStartAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.Guid},System.Threading.CancellationToken)"/> - Take control of entities, disable player input</item>
+            <item><see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.ExecuteActionAsync(System.Guid,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)"/> - Execute choreographed actions (walk_to, attack, look_at)</item>
+            <item><see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnSyncPointReachedAsync(System.String,System.Guid,System.Threading.CancellationToken)"/> - Report when local entity reaches sync point</item>
+            <item><see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnSyncPointReleasedAsync(System.String,System.Threading.CancellationToken)"/> - Resume execution when server releases sync</item>
+            <item><see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnCutsceneEndAsync(System.String,System.Boolean,System.Threading.CancellationToken)"/> - Return control, re-enable player input</item>
+            </list>
             </remarks>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.OK">
-            <summary>Request completed successfully.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnCutsceneStartAsync(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Called when a cutscene begins.
+            </summary>
+            <remarks>
+            The game engine should:
+            <list type="bullet">
+            <item>Disable player input for controlled entities</item>
+            <item>Prepare visual elements (letterbox, UI hide)</item>
+            <item>Store current entity states for potential skip-to-end</item>
+            </list>
+            </remarks>
+            <param name="sessionId">The cutscene session ID.</param>
+            <param name="cinematicId">The cinematic being executed.</param>
+            <param name="controlledEntities">Entities under cutscene control.</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestError">
-            <summary>Generic request error (malformed message, invalid format).</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnCutsceneEndAsync(System.String,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Called when a cutscene ends.
+            </summary>
+            <remarks>
+            The game engine should:
+            <list type="bullet">
+            <item>Re-enable player input for controlled entities</item>
+            <item>Remove visual elements (letterbox, etc.)</item>
+            <item>Sync final entity states if necessary</item>
+            </list>
+            </remarks>
+            <param name="sessionId">The cutscene session ID.</param>
+            <param name="wasAborted">Whether the cutscene was aborted (vs completed normally).</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestTooLarge">
-            <summary>Request payload exceeds maximum allowed size.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.ExecuteActionAsync(System.Guid,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executes a cinematic action on an entity.
+            </summary>
+            <remarks>
+            <para>
+            Common actions include:
+            </para>
+            <list type="bullet">
+            <item><c>walk_to</c> - Move entity to position/mark</item>
+            <item><c>attack</c> - Execute attack animation</item>
+            <item><c>look_at</c> - Face toward target</item>
+            <item><c>play_animation</c> - Play specific animation clip</item>
+            <item><c>emote</c> - Display emotion/expression</item>
+            <item><c>speak</c> - Show dialogue/speech</item>
+            </list>
+            <para>
+            The game engine is responsible for interpreting action names and
+            parameters according to its own animation/movement systems.
+            </para>
+            </remarks>
+            <param name="entityId">The target entity.</param>
+            <param name="action">The action name.</param>
+            <param name="parameters">Action-specific parameters.</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.TooManyRequests">
-            <summary>Rate limit exceeded for this client/session.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnSyncPointReachedAsync(System.String,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Called when a local entity reaches a sync point.
+            </summary>
+            <remarks>
+            The game engine should pause execution for this entity until
+            <see cref="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnSyncPointReleasedAsync(System.String,System.Threading.CancellationToken)"/> is called for this sync point.
+            </remarks>
+            <param name="syncPointId">The sync point ID.</param>
+            <param name="entityId">The entity that reached it.</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.InvalidRequestChannel">
-            <summary>Invalid channel number in request header.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.OnSyncPointReleasedAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Called when server releases a sync point (all participants reached).
+            </summary>
+            <remarks>
+            All entities waiting at this sync point should resume execution.
+            </remarks>
+            <param name="syncPointId">The sync point ID.</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Unauthorized">
-            <summary>Authentication required but not provided or invalid.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientCutsceneHandler.ExecuteCameraActionAsync(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Called when a camera action is requested.
+            </summary>
+            <remarks>
+            Camera actions are separate from entity actions and typically include:
+            <list type="bullet">
+            <item><c>move_to</c> - Move camera to position</item>
+            <item><c>track</c> - Follow/track an entity</item>
+            <item><c>shake</c> - Apply camera shake effect</item>
+            <item><c>zoom</c> - Zoom in/out</item>
+            <item><c>cut_to</c> - Instant camera cut</item>
+            </list>
+            </remarks>
+            <param name="action">The camera action name.</param>
+            <param name="parameters">Action-specific parameters.</param>
+            <param name="ct">Cancellation token.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ServiceNotFound">
-            <summary>Target service GUID not found in capability manifest.</summary>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientInputHandler">
+            <summary>
+            Client-side input handler for QTEs and player choices.
+            </summary>
+            <remarks>
+            <para>
+            Implement this interface in your game engine to display input prompts
+            and collect player input during cutscenes and dialogues.
+            </para>
+            <para>
+            The "blue/red/gray box" mental model:
+            </para>
+            <list type="bullet">
+            <item><b>Blue box</b>: Your turn to input (local player is target)</item>
+            <item><b>Red box</b>: Their turn (waiting for another player)</item>
+            <item><b>Gray box</b>: No input allowed (cinematic in progress)</item>
+            </list>
+            <para>
+            All input is server-adjudicated - player input is a "suggestion" that
+            may be accepted, modified, or replaced by timeout defaults.
+            </para>
+            </remarks>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ClientNotFound">
-            <summary>Target client GUID not found (for client-to-client messages).</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientInputHandler.OnInputWindowOpened(BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow,System.Boolean)">
+            <summary>
+            Called when an input window opens.
+            </summary>
+            <remarks>
+            <para>
+            The <paramref name="isForLocalPlayer"/> parameter determines the box color:
+            </para>
+            <list type="bullet">
+            <item><c>true</c> = Blue box (player should provide input)</item>
+            <item><c>false</c> = Red box (waiting for another player)</item>
+            </list>
+            <para>
+            The game engine should display appropriate UI based on window type
+            and start any timeout timers.
+            </para>
+            </remarks>
+            <param name="window">The input window details.</param>
+            <param name="isForLocalPlayer">True if this player should provide input.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.MessageNotFound">
-            <summary>Referenced message ID not found.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientInputHandler.OnInputWindowClosed(System.String,BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult)">
+            <summary>
+            Called when an input window closes.
+            </summary>
+            <remarks>
+            The game engine should hide the input UI and may display feedback
+            based on the result (success, timeout, rejected).
+            </remarks>
+            <param name="windowId">The window ID.</param>
+            <param name="result">The final result.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.BroadcastNotAllowed">
-            <summary>Broadcast not allowed in this connection mode (External mode blocks broadcast).</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientInputHandler.OnInputWindowTimeUpdate(System.String,System.TimeSpan)">
+            <summary>
+            Called to update the remaining time on an input window.
+            </summary>
+            <param name="windowId">The window ID.</param>
+            <param name="remaining">Time remaining before timeout.</param>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_BadRequest">
-            <summary>Service returned 400 Bad Request.</summary>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IClientInputHandler.SubmitInputAsync(System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Submits player input for an active window.
+            </summary>
+            <remarks>
+            This method sends input to the server for adjudication.
+            The server may accept, reject, or modify the input.
+            </remarks>
+            <param name="windowId">The window ID.</param>
+            <param name="input">The player's input value.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The server-adjudicated result.</returns>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_NotFound">
-            <summary>Service returned 404 Not Found.</summary>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType">
+            <summary>
+            Type of input window.
+            </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Unauthorized">
-            <summary>Service returned 401/403 Unauthorized/Forbidden.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.Choice">
+            <summary>Multiple choice selection.</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Conflict">
-            <summary>Service returned 409 Conflict.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.QuickTimeEvent">
+            <summary>QTE button press.</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_InternalServerError">
-            <summary>Service returned 500 Internal Server Error.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.Direction">
+            <summary>Directional input (e.g., dodge direction).</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutExpired">
-            <summary>Shortcut has expired and is no longer valid.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.Timing">
+            <summary>Timing-based input (e.g., hit at right moment).</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutTargetNotFound">
-            <summary>Shortcut target endpoint no longer exists.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.Text">
+            <summary>Free-form text input.</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutRevoked">
-            <summary>Shortcut was explicitly revoked.</summary>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindowType.Confirmation">
+            <summary>Yes/no confirmation.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow">
+            <summary>
+            Client-side representation of an input window.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.WindowId">
+            <summary>
+            Unique window identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.WindowType">
+            <summary>
+            Type of input expected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.PromptText">
+            <summary>
+            Human-readable prompt text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.Options">
+            <summary>
+            Available options (for Choice type).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.TimeRemaining">
+            <summary>
+            Time remaining until timeout (null = indefinite).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.TargetEntity">
+            <summary>
+            The entity this input is for.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.ButtonHint">
+            <summary>
+            Optional button hint for QTE (e.g., "A", "X", "Space").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputWindow.IsForced">
+            <summary>
+            Whether this is a forced input (blocks gameplay until resolved).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption">
+            <summary>
+            A selectable option in a choice input window.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.Value">
+            <summary>
+            The option value (sent back to server).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.Label">
+            <summary>
+            Display label for the option.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.Description">
+            <summary>
+            Optional description/tooltip.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.IsDefault">
+            <summary>
+            Whether this is the default option (used on timeout).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.IsAvailable">
+            <summary>
+            Whether this option is currently available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputOption.UnavailableReason">
+            <summary>
+            Reason why option is unavailable (if applicable).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult">
+            <summary>
+            Result of a client input submission.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.Accepted">
+            <summary>
+            Whether the input was accepted by the server.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.FinalValue">
+            <summary>
+            The final adjudicated value (may differ from submitted).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.WasTimeout">
+            <summary>
+            Whether this result came from timeout (used default).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.WasBehaviorDefault">
+            <summary>
+            Whether this result came from behavior default (QTE computed answer).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.RejectionReason">
+            <summary>
+            Reason if input was rejected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.ResponseTime">
+            <summary>
+            Time from window open to result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.Accept(System.Object,System.TimeSpan)">
+            <summary>
+            Creates an accepted result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.Reject(System.String)">
+            <summary>
+            Creates a rejected result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.Timeout(System.Object,System.TimeSpan)">
+            <summary>
+            Creates a timeout result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.ClientInputResult.BehaviorDefault(System.Object,System.TimeSpan)">
+            <summary>
+            Creates a behavior default result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate">
+            <summary>
+            Controls which system writes to entity intent channels.
+            </summary>
+            <remarks>
+            <para>
+            The control gate determines the priority of different input sources:
+            </para>
+            <list type="number">
+            <item><b>Cinematic</b> (highest) - Forced, takes full control</item>
+            <item><b>Player</b> - Direct player commands</item>
+            <item><b>Opportunity</b> - Optional, becomes cinematic if accepted</item>
+            <item><b>Behavior</b> (lowest) - Autonomous AI behavior stack</item>
+            </list>
+            <para>
+            During cinematics, the behavior stack continues evaluating (for QTE defaults)
+            but its outputs are masked and not applied to entities.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.GetControlMode(System.Guid)">
+            <summary>
+            Gets the current control mode for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The current control mode.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.TakeCinematicControl(System.Collections.Generic.IReadOnlyList{System.Guid},System.String)">
+            <summary>
+            Takes cinematic control of entities.
+            </summary>
+            <remarks>
+            While under cinematic control:
+            <list type="bullet">
+            <item>Behavior stack continues evaluating (for QTE defaults)</item>
+            <item>Behavior outputs are masked (not sent to entities)</item>
+            <item>Player input is disabled (except for QTEs)</item>
+            <item>Cinematic commands are sent directly to entities</item>
+            </list>
+            </remarks>
+            <param name="entities">Entities to take control of.</param>
+            <param name="sessionId">The cutscene session ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.ReturnControl(System.Collections.Generic.IReadOnlyList{System.Guid})">
+            <summary>
+            Returns control to normal behavior for entities.
+            </summary>
+            <remarks>
+            <para>
+            When control is returned:
+            </para>
+            <list type="bullet">
+            <item>Behavior stack outputs are unmasked</item>
+            <item>Player input is re-enabled</item>
+            <item>Entity state may need sync (see handoff options)</item>
+            </list>
+            </remarks>
+            <param name="entities">Entities to return control for.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.GetSessionId(System.Guid)">
+            <summary>
+            Gets the session ID for an entity under cinematic control.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The session ID, or null if not under cinematic control.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.GetEntitiesInSession(System.String)">
+            <summary>
+            Gets all entities currently in a cutscene session.
+            </summary>
+            <param name="sessionId">The session ID.</param>
+            <returns>Entities in the session.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.GetBehaviorDefault(System.Guid)">
+            <summary>
+            Gets the behavior stack's computed output for an entity.
+            </summary>
+            <remarks>
+            <para>
+            This returns what the behavior stack WOULD output if it had control.
+            Useful for QTE defaults where the character agent computes "what I would do."
+            </para>
+            <para>
+            Returns null if the entity has no active behavior stack.
+            </para>
+            </remarks>
+            <param name="entityId">The entity ID.</param>
+            <returns>The behavior stack's computed intent, or null.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.IsPlayerInputAllowed(System.Guid)">
+            <summary>
+            Checks if an entity is currently accepting player input.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>True if player input is accepted.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.AllowPlayerInputForWindow(System.Guid,System.String)">
+            <summary>
+            Temporarily allows player input during cinematic (for QTE).
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="windowId">The input window ID.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.RevokePlayerInputForWindow(System.Guid,System.String)">
+            <summary>
+            Revokes temporary player input allowance.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="windowId">The input window ID.</param>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.SDK.Behavior.IControlGate.ControlModeChanged">
+            <summary>
+            Event raised when control mode changes for an entity.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlMode">
+            <summary>
+            Control mode for an entity.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlMode.Behavior">
+            <summary>Normal behavior stack control.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlMode.Cinematic">
+            <summary>Cinematic has full control, behavior masked.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlMode.Player">
+            <summary>Player has direct control.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlMode.Opportunity">
+            <summary>Opportunity is being presented (may become cinematic).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlModeChangedEventArgs">
+            <summary>
+            Event args for control mode changes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlModeChangedEventArgs.EntityId">
+            <summary>
+            The entity whose control mode changed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlModeChangedEventArgs.PreviousMode">
+            <summary>
+            The previous control mode.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlModeChangedEventArgs.NewMode">
+            <summary>
+            The new control mode.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.ControlModeChangedEventArgs.SessionId">
+            <summary>
+            The session ID (if entering/exiting cinematic).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate">
+            <summary>
+            Default implementation of control gate.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.ControlModeChanged">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.RegisterBehaviorProvider(System.Guid,System.Func{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent}})">
+            <summary>
+            Registers an entity's behavior stack for QTE defaults.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="behaviorProvider">Function that returns the current merged intent.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.GetControlMode(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.TakeCinematicControl(System.Collections.Generic.IReadOnlyList{System.Guid},System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.ReturnControl(System.Collections.Generic.IReadOnlyList{System.Guid})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.GetSessionId(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.GetEntitiesInSession(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.GetBehaviorDefault(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.IsPlayerInputAllowed(System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.AllowPlayerInputForWindow(System.Guid,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.DefaultControlGate.RevokePlayerInputForWindow(System.Guid,System.String)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.BehaviorEvaluatorBase">
              <summary>
@@ -3223,6 +3404,376 @@
             <summary>
             FNV-1a hash for variable name lookup.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaType">
+            <summary>
+            Meta endpoint types for requesting endpoint metadata instead of executing.
+            When the Meta flag (0x80) is set, this value is encoded in the Channel field.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.EndpointInfo">
+            <summary>Human-readable endpoint description (summary, tags, deprecated)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.RequestSchema">
+            <summary>JSON Schema for the request body</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.ResponseSchema">
+            <summary>JSON Schema for the response body</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.MetaType.FullSchema">
+            <summary>Complete endpoint schema (info + request + response combined)</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1">
+            <summary>
+            Response wrapper for meta endpoint requests.
+            Contains endpoint metadata, schema information, or full schema data.
+            </summary>
+            <typeparam name="T">The type of data contained in this meta response.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.MetaType">
+            <summary>
+            Type of metadata returned.
+            Values: "endpoint-info", "request-schema", "response-schema", "full-schema"
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.EndpointKey">
+            <summary>
+            Endpoint key in format "METHOD:/path" (e.g., "POST:/account/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.ServiceName">
+            <summary>
+            Service name that owns this endpoint (e.g., "Account")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Method">
+            <summary>
+            HTTP method (POST, GET, PUT, DELETE, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Path">
+            <summary>
+            Endpoint path (e.g., "/account/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.Data">
+            <summary>
+            Metadata payload. Structure varies by MetaType.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.GeneratedAt">
+            <summary>
+            When this response was generated (UTC)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.MetaResponse`1.SchemaVersion">
+            <summary>
+            Schema version (assembly version) for cache invalidation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData">
+            <summary>
+            Endpoint info metadata containing human-readable endpoint description.
+            Returned when MetaType is EndpointInfo.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Summary">
+            <summary>
+            Brief summary of what the endpoint does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Description">
+            <summary>
+            Detailed description of endpoint behavior.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Tags">
+            <summary>
+            Categorization tags for the endpoint.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.Deprecated">
+            <summary>
+            Whether this endpoint is deprecated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.EndpointInfoData.OperationId">
+            <summary>
+            Operation ID from OpenAPI specification.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData">
+            <summary>
+            JSON Schema data for request or response bodies.
+            Returned when MetaType is RequestSchema or ResponseSchema.
+            This is a flexible container that holds any valid JSON Schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Schema">
+            <summary>
+            JSON Schema draft specification (e.g., "http://json-schema.org/draft-07/schema#")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Type">
+            <summary>
+            Root type of the schema (e.g., "object", "array", "string")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Required">
+            <summary>
+            List of required property names (for object types).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Properties">
+            <summary>
+            Property definitions (for object types).
+            Values are JSON Schema property definitions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.Defs">
+            <summary>
+            Shared definitions referenced via $ref.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.JsonSchemaData.ExtensionData">
+            <summary>
+            Additional properties beyond standard JSON Schema fields.
+            Captured via JsonExtensionData to preserve all schema content.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.FullSchemaData">
+            <summary>
+            Full schema data combining info, request schema, and response schema.
+            Returned when MetaType is FullSchema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Info">
+            <summary>
+            Endpoint info (summary, description, tags, deprecated).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Request">
+            <summary>
+            JSON Schema for the request body.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.FullSchemaData.Response">
+            <summary>
+            JSON Schema for the response body.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1">
+            <summary>
+            Caches assets downloaded from remote URLs with optional CRC32 verification
+            and disk persistence.
+            </summary>
+            <typeparam name="T">The type of asset being cached.</typeparam>
+            <remarks>
+            This class provides:
+            - Memory caching with ConcurrentDictionary for thread safety
+            - Optional disk persistence for offline access
+            - CRC32 verification for data integrity
+            - Automatic URL-based asset ID extraction
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.#ctor(System.Net.Http.HttpClient,System.Func{System.Byte[],`0},System.String,System.String,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Creates a new RemoteAssetCache.
+            </summary>
+            <param name="httpClient">HTTP client for downloading assets.</param>
+            <param name="deserializer">Function to deserialize bytes to asset type T.</param>
+            <param name="cacheDirectory">Directory for disk persistence (null to use temp).</param>
+            <param name="fileExtension">File extension for cached files (default: ".asset").</param>
+            <param name="logger">Optional logger instance.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetOrDownloadAsync(System.String,System.Nullable{System.UInt32},System.Threading.CancellationToken)">
+            <summary>
+            Gets a cached asset by URL, downloading if not cached.
+            </summary>
+            <param name="assetUrl">URL to the asset (may be pre-signed).</param>
+            <param name="expectedCrc">Optional CRC32 for verification.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The cached asset entry, or null if download/verification failed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.TryGet(System.String)">
+            <summary>
+            Gets a cached asset by URL without downloading.
+            </summary>
+            <param name="assetUrl">URL key for the cached asset.</param>
+            <returns>The cached asset if found, null otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Add(System.String,System.Byte[],`0)">
+            <summary>
+            Adds an asset to the cache without downloading.
+            Useful for pre-loading assets from local storage.
+            </summary>
+            <param name="assetUrl">URL key for the asset.</param>
+            <param name="data">Raw asset data.</param>
+            <param name="asset">Deserialized asset.</param>
+            <returns>The cached asset entry.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Invalidate(System.String)">
+            <summary>
+            Removes an asset from the cache.
+            </summary>
+            <param name="assetUrl">URL key of the asset to remove.</param>
+            <returns>True if the asset was removed, false if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.Clear">
+            <summary>
+            Clears all cached assets from memory.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.GetStats">
+            <summary>
+            Gets cache statistics.
+            </summary>
+            <returns>Current cache statistics.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCache`1.LoadFromDiskAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads an asset from disk cache if available.
+            </summary>
+            <param name="assetId">Asset ID to load.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The loaded asset, or null if not found on disk.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1">
+            <summary>
+            A cached asset with metadata.
+            </summary>
+            <typeparam name="T">The asset type.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.AssetId">
+            <summary>
+            Unique asset identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.SourceUrl">
+            <summary>
+            Source URL this was downloaded from.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Data">
+            <summary>
+            Raw asset binary data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Asset">
+            <summary>
+            Deserialized asset instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.Crc32">
+            <summary>
+            CRC32 checksum of the data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.CachedAsset`1.CachedAt">
+            <summary>
+            When this asset was cached.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats">
+            <summary>
+            Asset cache statistics.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.CachedCount">
+            <summary>Number of assets in cache.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.TotalBytes">
+            <summary>Total size of cached assets in bytes.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.OldestEntry">
+            <summary>Timestamp of oldest cached entry.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.RemoteAssetCacheStats.NewestEntry">
+            <summary>Timestamp of newest cached entry.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Crc32">
+            <summary>
+            CRC32 checksum utility.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.Byte[])">
+            <summary>
+            Computes the CRC32 checksum of the given data.
+            </summary>
+            <param name="data">Data to compute checksum for.</param>
+            <returns>CRC32 checksum.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Crc32.Compute(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Computes the CRC32 checksum of the given data span.
+            </summary>
+            <param name="data">Data span to compute checksum for.</param>
+            <returns>CRC32 checksum.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.ResponseCodes">
+            <summary>
+            Response codes used in the binary WebSocket protocol for success/error indication.
+            These codes are returned in the response header's ResponseCode field.
+            </summary>
+            <remarks>
+            Codes 0-49 are protocol-level errors (Connect service).
+            Codes 50-69 are service-level errors (downstream service responses).
+            Codes 70+ are shortcut-specific errors.
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.OK">
+            <summary>Request completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestError">
+            <summary>Generic request error (malformed message, invalid format).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.RequestTooLarge">
+            <summary>Request payload exceeds maximum allowed size.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.TooManyRequests">
+            <summary>Rate limit exceeded for this client/session.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.InvalidRequestChannel">
+            <summary>Invalid channel number in request header.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Unauthorized">
+            <summary>Authentication required but not provided or invalid.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ServiceNotFound">
+            <summary>Target service GUID not found in capability manifest.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ClientNotFound">
+            <summary>Target client GUID not found (for client-to-client messages).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.MessageNotFound">
+            <summary>Referenced message ID not found.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.BroadcastNotAllowed">
+            <summary>Broadcast not allowed in this connection mode (External mode blocks broadcast).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_BadRequest">
+            <summary>Service returned 400 Bad Request.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_NotFound">
+            <summary>Service returned 404 Not Found.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Unauthorized">
+            <summary>Service returned 401/403 Unauthorized/Forbidden.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_Conflict">
+            <summary>Service returned 409 Conflict.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.Service_InternalServerError">
+            <summary>Service returned 500 Internal Server Error.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutExpired">
+            <summary>Shortcut has expired and is no longer valid.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutTargetNotFound">
+            <summary>Shortcut target endpoint no longer exists.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Client.SDK.ResponseCodes.ShortcutRevoked">
+            <summary>Shortcut was explicitly revoked.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.GameProtocol.GameMessageType">
             <summary>

@@ -1,0 +1,32 @@
+# =============================================================================
+# Merchant Greeting - General Customer
+# =============================================================================
+
+localizations:
+  en: "Welcome to {{ shop_name }}! Take a look around."
+  es: "¡Bienvenido a {{ shop_name }}! Echa un vistazo."
+  de: "Willkommen bei {{ shop_name }}! Schaut Euch um."
+  ja: "{{ shop_name }}へようこそ！ごゆっくりどうぞ。"
+  fr: "Bienvenue chez {{ shop_name }} ! Faites le tour."
+
+overrides:
+  # Morning greeting
+  - condition: "${world.time.hour < 12}"
+    priority: 5
+    localizations:
+      en: "Good morning! Welcome to {{ shop_name }}."
+      es: "¡Buenos días! Bienvenido a {{ shop_name }}."
+
+  # Evening greeting
+  - condition: "${world.time.hour >= 18}"
+    priority: 5
+    localizations:
+      en: "Good evening! Still open for another hour or two."
+      es: "¡Buenas noches! Todavía abierto por una hora o dos."
+
+  # Busy shop
+  - condition: "${customers_in_shop.length > 3}"
+    priority: 10
+    localizations:
+      en: "Welcome! I'll be with you shortly."
+      es: "¡Bienvenido! Estaré contigo en un momento."

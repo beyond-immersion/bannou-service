@@ -258,10 +258,10 @@ public class MappingTestHandler : BaseHttpTestHandler
             if (!publishResponse.Accepted)
                 return TestResult.Failed("Object changes were not accepted");
 
-            if (publishResponse.ProcessedCount != 2)
-                return TestResult.Failed($"Expected 2 processed, got {publishResponse.ProcessedCount}");
+            if (publishResponse.AcceptedCount != 2)
+                return TestResult.Failed($"Expected 2 accepted, got {publishResponse.AcceptedCount}");
 
-            return TestResult.Successful($"Object changes published: ProcessedCount={publishResponse.ProcessedCount}, Version={publishResponse.Version}");
+            return TestResult.Successful($"Object changes published: AcceptedCount={publishResponse.AcceptedCount}, Version={publishResponse.Version}");
         }, "Object changes publish");
 
     private static async Task<TestResult> TestPublishWithInvalidToken(ITestClient client, string[] args) =>
@@ -318,10 +318,11 @@ public class MappingTestHandler : BaseHttpTestHandler
             };
             var snapshotResponse = await mappingClient.RequestSnapshotAsync(snapshotRequest);
 
-            if (!snapshotResponse.Requested)
-                return TestResult.Failed("Snapshot request was not accepted");
+            // Snapshot returns the actual data, not a request ID
+            if (snapshotResponse.Objects == null)
+                return TestResult.Failed("Snapshot objects is null");
 
-            return TestResult.Successful($"Snapshot requested: RequestId={snapshotResponse.RequestId}");
+            return TestResult.Successful($"Snapshot retrieved: RegionId={snapshotResponse.RegionId}, Objects={snapshotResponse.Objects.Count}");
         }, "Snapshot request");
 
     #endregion

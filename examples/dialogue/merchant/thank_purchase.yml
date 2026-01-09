@@ -1,0 +1,40 @@
+# =============================================================================
+# Merchant - Thank for Purchase
+# After completing a sale
+# =============================================================================
+
+localizations:
+  en: "Pleasure doing business. That {{ item.name }} will serve you well."
+  es: "Un placer hacer negocios. Ese {{ item.name }} te servirá bien."
+  de: "Freut mich, Geschäfte zu machen. Der {{ item.name }} wird Euch gut dienen."
+  ja: "お買い上げありがとうございます。その{{ item.name }}はきっと役に立ちますよ。"
+  fr: "C'est un plaisir de faire affaire. Ce {{ item.name }} vous servira bien."
+
+overrides:
+  # Large purchase
+  - condition: "${asking_price > 200}"
+    priority: 15
+    localizations:
+      en: "Thank you kindly! A fine purchase. If you ever need repairs, you know where to find me."
+      es: "¡Muchas gracias! Una buena compra. Si alguna vez necesitas reparaciones, ya sabes dónde encontrarme."
+
+  # Guard customer
+  - condition: "${customer.faction == 'city_watch'}"
+    priority: 20
+    localizations:
+      en: "Stay safe out there. That {{ item.name }} will keep you in one piece."
+      es: "Mantente a salvo ahí fuera. Ese {{ item.name }} te mantendrá entero."
+
+  # Shield specifically
+  - condition: "${item.type == 'shield'}"
+    priority: 10
+    localizations:
+      en: "Good choice. Remember - shield arm up, stay behind it. That {{ item.name }} will take the hits."
+      es: "Buena elección. Recuerda - brazo del escudo arriba, mantente detrás. Ese {{ item.name }} recibirá los golpes."
+
+  # Return customer
+  - condition: "${customer.purchase_history.length > 2}"
+    priority: 15
+    localizations:
+      en: "Always good to see a familiar face. Come back anytime!"
+      es: "Siempre es bueno ver una cara conocida. ¡Vuelve cuando quieras!"

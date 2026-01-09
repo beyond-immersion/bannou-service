@@ -2632,12 +2632,9 @@ Tests: Archetype + Stack + Cognition full entity
 | DialogueIntegrationTests | 14 | MEDIUM | ✅ DONE 2026-01-08 |
 | IntentEmissionIntegrationTests | 14 | MEDIUM | ✅ DONE 2026-01-08 |
 | EntityLifecycleIntegrationTests | 12 | MEDIUM | ✅ DONE 2026-01-08 |
-| AbmlEmissionIntegrationTests | 10 | HIGH* | ☐ Blocked (needs factory fix) |
+| AbmlEmissionIntegrationTests | 10 | HIGH* | ✅ DONE 2026-01-08 |
 
-**Total: 100 integration tests implemented (7 of 8 test files complete)**
-
-*AbmlEmissionIntegrationTests is HIGH priority - **UNBLOCKED** as of 2026-01-08 (DocumentExecutorFactory fixed).
-However, this test file is in lib-actor.tests and requires additional ABML infrastructure setup.
+**Total: 110 integration tests implemented (8 of 8 test files complete)**
 
 ---
 

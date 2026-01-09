@@ -1,0 +1,33 @@
+# =============================================================================
+# Guard Alert - Calling Other Guards
+# Shouted when alerting nearby guards to a threat
+# =============================================================================
+
+localizations:
+  en: "To arms! Threat spotted!"
+  es: "¡A las armas! ¡Amenaza detectada!"
+  de: "Zu den Waffen! Feind gesichtet!"
+  ja: "武器を取れ！敵だ！"
+  fr: "Aux armes ! Menace repérée !"
+
+overrides:
+  # Multiple threats
+  - condition: "${threats.length > 2}"
+    priority: 10
+    localizations:
+      en: "We're under attack! Multiple hostiles!"
+      es: "¡Estamos bajo ataque! ¡Múltiples hostiles!"
+
+  # High-value target
+  - condition: "${threat.bounty > 1000}"
+    priority: 15
+    localizations:
+      en: "It's the wanted one! Don't let them escape!"
+      es: "¡Es el buscado! ¡Que no escape!"
+
+  # Monster/creature
+  - condition: "${threat.entity_type == 'creature'}"
+    priority: 20
+    localizations:
+      en: "Monster! Form up!"
+      es: "¡Monstruo! ¡Formación!"

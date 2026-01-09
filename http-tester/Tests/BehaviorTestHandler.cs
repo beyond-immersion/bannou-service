@@ -106,6 +106,19 @@ public class BehaviorTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGoapPlanGeneration, "GoapPlanGeneration", "Behavior", "Test GOAP plan generation from compiled behavior"),
         new ServiceTest(TestGoapPlanNonExistentBehavior, "GoapPlanNonExistentBehavior", "Behavior", "Test GOAP plan 404 for non-existent behavior"),
         new ServiceTest(TestGoapPlanValidation, "GoapPlanValidation", "Behavior", "Test GOAP plan validation against world state"),
+
+        // Behavior stack tests
+        new ServiceTest(TestCompileBehaviorStack, "CompileBehaviorStack", "Behavior", "Test compiling stackable behavior sets"),
+        new ServiceTest(TestCompileBehaviorStackWithPriority, "CompileStackPriority", "Behavior", "Test behavior stack priority merging"),
+        new ServiceTest(TestCompileBehaviorStackEmptySets, "CompileStackEmpty", "Behavior", "Test behavior stack with empty sets"),
+
+        // Cache invalidation tests
+        new ServiceTest(TestInvalidateCachedBehavior, "InvalidateCachedBehavior", "Behavior", "Test invalidating cached behavior"),
+        new ServiceTest(TestInvalidateNonExistentBehavior, "InvalidateNonExistent", "Behavior", "Test invalidating non-existent behavior"),
+
+        // Context variable resolution tests
+        new ServiceTest(TestResolveContextVariables, "ResolveContextVariables", "Behavior", "Test context variable resolution"),
+        new ServiceTest(TestResolveContextMissingVariables, "ResolveContextMissing", "Behavior", "Test context resolution with missing variables"),
     ];
 
     private static async Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
@@ -516,4 +529,290 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"suggested_action={response.SuggestedAction}, " +
                 $"reason={response.Reason}");
         }, "GOAP plan validation");
+
+    #region Behavior Stack Tests
+
+    /// <summary>
+    /// Sample ABML YAML for base behavior in stacks.
+    /// </summary>
+    private const string BaseBehaviorAbml = """
+        version: "1.0"
+        name: base-behavior
+        context:
+        variables:
+            health: 100
+        flows:
+        main:
+            - emit:
+                channel: action
+                intent: idle
+                urgency: 0.3
+        """;
+
+    /// <summary>
+    /// Sample ABML YAML for cultural behavior in stacks.
+    /// </summary>
+    private const string CulturalBehaviorAbml = """
+        version: "1.0"
+        name: cultural-behavior
+        context:
+        variables:
+            greeting_style: "formal"
+        flows:
+        main:
+            - emit:
+                channel: social
+                intent: bow
+                urgency: 0.5
+        """;
+
+    private static async Task<TestResult> TestCompileBehaviorStack(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new BehaviorStackRequest
+            {
+                BehaviorSets = new List<BehaviorSetDefinition>
+                {
+                    new BehaviorSetDefinition
+                    {
+                        Id = "base-set",
+                        Priority = 10,
+                        Category = BehaviorSetDefinitionCategory.Base,
+                        AbmlContent = BaseBehaviorAbml
+                    },
+                    new BehaviorSetDefinition
+                    {
+                        Id = "cultural-set",
+                        Priority = 50,
+                        Category = BehaviorSetDefinitionCategory.Cultural,
+                        AbmlContent = CulturalBehaviorAbml
+                    }
+                },
+                CompilationOptions = new CompilationOptions
+                {
+                    EnableOptimizations = true,
+                    CacheCompiledResult = false
+                }
+            };
+
+            var response = await behaviorClient.CompileBehaviorStackAsync(request);
+
+            if (!response.Success)
+            {
+                var warnings = response.Warnings != null
+                    ? string.Join(", ", response.Warnings)
+                    : "no warnings";
+                return TestResult.Failed($"Stack compilation failed: {warnings}");
+            }
+
+            if (string.IsNullOrEmpty(response.BehaviorId))
+                return TestResult.Failed("Behavior ID is empty");
+
+            return TestResult.Successful(
+                $"Stack compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
+        }, "Compile behavior stack");
+
+    private static async Task<TestResult> TestCompileBehaviorStackWithPriority(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            // Higher priority behavior should override lower priority
+            var request = new BehaviorStackRequest
+            {
+                BehaviorSets = new List<BehaviorSetDefinition>
+                {
+                    new BehaviorSetDefinition
+                    {
+                        Id = "low-priority",
+                        Priority = 10,
+                        Category = BehaviorSetDefinitionCategory.Base,
+                        AbmlContent = BaseBehaviorAbml
+                    },
+                    new BehaviorSetDefinition
+                    {
+                        Id = "high-priority",
+                        Priority = 90,
+                        Category = BehaviorSetDefinitionCategory.Personal,
+                        AbmlContent = CulturalBehaviorAbml
+                    }
+                },
+                CompilationOptions = new CompilationOptions
+                {
+                    EnableOptimizations = true,
+                    CacheCompiledResult = false
+                }
+            };
+
+            var response = await behaviorClient.CompileBehaviorStackAsync(request);
+
+            if (!response.Success)
+            {
+                var warnings = response.Warnings != null
+                    ? string.Join(", ", response.Warnings)
+                    : "no warnings";
+                return TestResult.Failed($"Priority stack compilation failed: {warnings}");
+            }
+
+            return TestResult.Successful(
+                $"Priority stack compiled: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
+        }, "Compile behavior stack with priority");
+
+    private static async Task<TestResult> TestCompileBehaviorStackEmptySets(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new BehaviorStackRequest
+            {
+                BehaviorSets = new List<BehaviorSetDefinition>(),
+                CompilationOptions = new CompilationOptions
+                {
+                    CacheCompiledResult = false
+                }
+            };
+
+            try
+            {
+                var response = await behaviorClient.CompileBehaviorStackAsync(request);
+
+                // Empty stack should fail
+                if (response.Success)
+                    return TestResult.Failed("Expected empty stack to fail compilation");
+
+                return TestResult.Successful("Correctly rejected empty behavior stack");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                return TestResult.Successful("Correctly returned 400 for empty behavior stack");
+            }
+        }, "Compile empty behavior stack");
+
+    #endregion
+
+    #region Cache Invalidation Tests
+
+    private static async Task<TestResult> TestInvalidateCachedBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            // First compile a behavior to cache it
+            var compileRequest = new CompileBehaviorRequest
+            {
+                AbmlContent = ValidAbmlYaml,
+                BehaviorName = "invalidation-test-behavior",
+                CompilationOptions = new CompilationOptions
+                {
+                    EnableOptimizations = true,
+                    CacheCompiledResult = true
+                }
+            };
+
+            var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(
+                BannouJson.Serialize(compileRequest));
+
+            if (!compileResponse.Success || string.IsNullOrEmpty(compileResponse.BehaviorId))
+                return TestResult.Failed("Failed to compile behavior for invalidation test");
+
+            // Now invalidate it - void return means no exception = success
+            var invalidateRequest = new InvalidateCacheRequest
+            {
+                BehaviorId = compileResponse.BehaviorId
+            };
+
+            await behaviorClient.InvalidateCachedBehaviorAsync(invalidateRequest);
+
+            return TestResult.Successful(
+                $"Successfully invalidated cached behavior: {compileResponse.BehaviorId}");
+        }, "Invalidate cached behavior");
+
+    private static async Task<TestResult> TestInvalidateNonExistentBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new InvalidateCacheRequest
+            {
+                BehaviorId = "nonexistent-behavior-xyz-12345"
+            };
+
+            try
+            {
+                // Void return - no exception means operation completed
+                await behaviorClient.InvalidateCachedBehaviorAsync(request);
+
+                // Invalidating non-existent is typically a no-op, not an error
+                return TestResult.Successful("Invalidation request completed (no-op for non-existent)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("Correctly returned 404 for non-existent behavior");
+            }
+        }, "Invalidate non-existent behavior");
+
+    #endregion
+
+    #region Context Variable Resolution Tests
+
+    private static async Task<TestResult> TestResolveContextVariables(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new ResolveContextRequest
+            {
+                ContextExpression = "${npc.stats.health}",
+                CharacterContext = new CharacterContext
+                {
+                    NpcId = "test-npc-123",
+                    Stats = new Dictionary<string, double>
+                    {
+                        { "health", 100 },
+                        { "energy", 75 }
+                    }
+                }
+            };
+
+            var response = await behaviorClient.ResolveContextVariablesAsync(request);
+
+            if (response.ResolvedValue == null)
+                return TestResult.Failed("Resolved value is null");
+
+            var variablesUsed = response.ContextVariablesUsed?.Count ?? 0;
+            return TestResult.Successful(
+                $"Resolved context: value={response.ResolvedValue}, type={response.ResolvedType}, variables used={variablesUsed}");
+        }, "Resolve context variables");
+
+    private static async Task<TestResult> TestResolveContextMissingVariables(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new ResolveContextRequest
+            {
+                ContextExpression = "${nonexistent.path}",
+                CharacterContext = new CharacterContext
+                {
+                    NpcId = "test-npc-123"
+                }
+            };
+
+            try
+            {
+                var response = await behaviorClient.ResolveContextVariablesAsync(request);
+
+                // If it resolved anyway, the value might be null or a default
+                return TestResult.Successful(
+                    $"Missing variable handled: value={response.ResolvedValue}, type={response.ResolvedType}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                return TestResult.Successful("Correctly returned 400 for unresolvable expression");
+            }
+        }, "Resolve context with missing variables");
+
+    #endregion
 }
