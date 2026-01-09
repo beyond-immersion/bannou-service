@@ -27,6 +27,15 @@ public partial class ActorService
             "session.disconnected",
             async (svc, evt) => await ((ActorService)svc).HandleSessionDisconnectedAsync(evt));
 
+        // Personality cache invalidation - invalidate when personality or combat preferences evolve
+        eventConsumer.RegisterHandler<IActorService, PersonalityEvolvedEvent>(
+            "personality.evolved",
+            async (svc, evt) => await ((ActorService)svc).HandlePersonalityEvolvedAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, CombatPreferencesEvolvedEvent>(
+            "combat-preferences.evolved",
+            async (svc, evt) => await ((ActorService)svc).HandleCombatPreferencesEvolvedAsync(evt));
+
         // Pool node events (control plane only - when _poolManager is available)
         eventConsumer.RegisterHandler<IActorService, PoolNodeRegisteredEvent>(
             "actor.pool-node.registered",
@@ -147,6 +156,42 @@ public partial class ActorService
 
         // For NPC brain actors, they continue running even when players disconnect.
         // For session-bound actors (future), we would stop them here.
+    }
+
+    /// <summary>
+    /// Handles personality.evolved events.
+    /// Invalidates the personality cache for the affected character so actors
+    /// pick up the updated personality data.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public Task HandlePersonalityEvolvedAsync(PersonalityEvolvedEvent evt)
+    {
+        _logger.LogInformation(
+            "Received personality.evolved event for character {CharacterId}, experience type {ExperienceType}",
+            evt.CharacterId, evt.ExperienceType);
+
+        _personalityCache.Invalidate(evt.CharacterId);
+        _logger.LogDebug("Invalidated personality cache for character {CharacterId}", evt.CharacterId);
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles combat-preferences.evolved events.
+    /// Invalidates the personality cache for the affected character so actors
+    /// pick up the updated combat preferences data.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public Task HandleCombatPreferencesEvolvedAsync(CombatPreferencesEvolvedEvent evt)
+    {
+        _logger.LogInformation(
+            "Received combat-preferences.evolved event for character {CharacterId}, experience type {ExperienceType}",
+            evt.CharacterId, evt.ExperienceType);
+
+        _personalityCache.Invalidate(evt.CharacterId);
+        _logger.LogDebug("Invalidated personality/combat cache for character {CharacterId}", evt.CharacterId);
+
+        return Task.CompletedTask;
     }
 
     #region Pool Node Event Handlers

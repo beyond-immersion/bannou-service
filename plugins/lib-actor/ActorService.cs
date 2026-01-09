@@ -45,6 +45,7 @@ public partial class ActorService : IActorService
     private readonly IEventConsumer _eventConsumer;
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IActorPoolManager _poolManager;
+    private readonly IPersonalityCache _personalityCache;
 
     // State store names now come from configuration (TemplateStatestoreName, InstanceStatestoreName)
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -61,6 +62,7 @@ public partial class ActorService : IActorService
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
+    /// <param name="personalityCache">Cache for character personality data.</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -70,7 +72,8 @@ public partial class ActorService : IActorService
         IActorRunnerFactory actorRunnerFactory,
         IEventConsumer eventConsumer,
         IBehaviorDocumentCache behaviorCache,
-        IActorPoolManager poolManager)
+        IActorPoolManager poolManager,
+        IPersonalityCache personalityCache)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -81,6 +84,7 @@ public partial class ActorService : IActorService
         _eventConsumer = eventConsumer;
         _behaviorCache = behaviorCache;
         _poolManager = poolManager;
+        _personalityCache = personalityCache;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);

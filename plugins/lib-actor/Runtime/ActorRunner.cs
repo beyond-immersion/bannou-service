@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Abml.Documents;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -43,6 +44,8 @@ public class ActorRunner : IActorRunner
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
+    // Event Brain integration: subscription to actor-addressed perception events (choreography, etc.)
+    private IAsyncDisposable? _actorPerceptionSubscription;
     private string? _lastSourceAppId;
 
     /// <inheritdoc/>
@@ -175,11 +178,14 @@ public class ActorRunner : IActorRunner
         // Start the behavior loop in background
         _loopTask = RunBehaviorLoopAsync(_loopCts.Token);
 
-        // Setup perception subscription for NPC brain actors
+        // Setup perception subscription for NPC brain actors (character-addressed)
         if (CharacterId.HasValue)
         {
             await SetupPerceptionSubscriptionAsync(cancellationToken);
         }
+
+        // Setup actor perception subscription for Event Brain coordination (actor-addressed)
+        await SetupActorPerceptionSubscriptionAsync(cancellationToken);
 
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
@@ -224,7 +230,7 @@ public class ActorRunner : IActorRunner
             await PersistStateAsync(cancellationToken);
         }
 
-        // Clean up perception subscription
+        // Clean up perception subscriptions
         if (_perceptionSubscription != null)
         {
             try
@@ -236,6 +242,19 @@ public class ActorRunner : IActorRunner
                 _logger.LogWarning(ex, "Actor {ActorId} error disposing perception subscription", ActorId);
             }
             _perceptionSubscription = null;
+        }
+
+        if (_actorPerceptionSubscription != null)
+        {
+            try
+            {
+                await _actorPerceptionSubscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} error disposing actor perception subscription", ActorId);
+            }
+            _actorPerceptionSubscription = null;
         }
 
         Status = ActorStatus.Stopped;
@@ -289,7 +308,7 @@ public class ActorRunner : IActorRunner
             await StopAsync(graceful: false);
         }
 
-        // Ensure perception subscription is cleaned up (belt-and-suspenders)
+        // Ensure perception subscriptions are cleaned up (belt-and-suspenders)
         if (_perceptionSubscription != null)
         {
             try
@@ -301,6 +320,19 @@ public class ActorRunner : IActorRunner
                 // Swallow - we're disposing
             }
             _perceptionSubscription = null;
+        }
+
+        if (_actorPerceptionSubscription != null)
+        {
+            try
+            {
+                await _actorPerceptionSubscription.DisposeAsync();
+            }
+            catch (Exception)
+            {
+                // Swallow - we're disposing
+            }
+            _actorPerceptionSubscription = null;
         }
 
         _loopCts?.Dispose();
@@ -891,6 +923,62 @@ public class ActorRunner : IActorRunner
 
         _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
             ActorId, evt.SourceAppId, perception.PerceptionType);
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Sets up a dynamic subscription to receive perception events addressed directly to this actor.
+    /// Subscribes to actor.{actorId}.perceptions topic for Event Brain choreography instructions, etc.
+    /// </summary>
+    private async Task SetupActorPerceptionSubscriptionAsync(CancellationToken ct)
+    {
+        var topic = $"actor.{ActorId}.perceptions";
+        _logger.LogInformation("Actor {ActorId} subscribing to actor perception topic {Topic}", ActorId, topic);
+
+        try
+        {
+            _actorPerceptionSubscription = await _messageSubscriber.SubscribeDynamicAsync<PerceptionEvent>(
+                topic,
+                async (evt, innerCt) => await HandleActorPerceptionEventAsync(evt, innerCt),
+                exchangeType: SubscriptionExchangeType.Topic,
+                cancellationToken: ct);
+
+            _logger.LogDebug("Actor {ActorId} subscribed to actor perception stream", ActorId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Actor {ActorId} failed to subscribe to actor perception stream", ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "SetupActorPerceptionSubscription",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { ActorId });
+            // Don't throw - actor can still function without this subscription
+        }
+    }
+
+    /// <summary>
+    /// Handles a perception event addressed directly to this actor (from Event Brain).
+    /// Converts PerceptionEvent to PerceptionData and injects into the queue.
+    /// </summary>
+    private Task HandleActorPerceptionEventAsync(PerceptionEvent evt, CancellationToken ct)
+    {
+        // Convert to PerceptionData and inject into the queue
+        var perception = new PerceptionData
+        {
+            PerceptionType = evt.PerceptionType,
+            SourceId = "event-brain",
+            SourceType = "coordinator",
+            Data = evt.Data,
+            Urgency = 0.8f // Event Brain instructions are generally high priority
+        };
+
+        InjectPerception(perception);
+
+        _logger.LogDebug("Actor {ActorId} received actor perception (type: {Type})",
+            ActorId, perception.PerceptionType);
 
         return Task.CompletedTask;
     }

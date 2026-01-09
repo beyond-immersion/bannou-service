@@ -20,6 +20,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Actor;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -790,9 +805,9 @@ public partial class SpatialContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -841,9 +856,9 @@ public partial class NearbyObject
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -887,9 +902,9 @@ public partial class HazardInfo
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1170,9 +1185,9 @@ public partial class ActorOption
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1230,9 +1245,9 @@ public partial class OptionsQueryContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1275,6 +1290,284 @@ public partial class CharacterOptionContext
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emotionalState")]
     public string? EmotionalState { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Instruction sent to a participant actor by Event Brain to execute a choreographed sequence.
+/// <br/>Delivered via emit_perception with perception_type "choreography_instruction".
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChoreographyInstruction
+{
+
+    /// <summary>
+    /// ID of the coordinated encounter this instruction belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique ID for this sequence within the choreography.
+    /// <br/>Used for acknowledgment and sync point coordination.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SequenceId { get; set; } = default!;
+
+    /// <summary>
+    /// Ordered list of actions for the participant to execute.
+    /// <br/>Multiple actions allow for combos or reaction sequences.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ChoreographyAction> Actions { get; set; } = new System.Collections.ObjectModel.Collection<ChoreographyAction>();
+
+    /// <summary>
+    /// When and how to start executing this sequence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timing")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public ChoreographyTiming Timing { get; set; } = new ChoreographyTiming();
+
+    /// <summary>
+    /// How strongly to prefer this choreography over actor's own choices.
+    /// <br/>Higher priority may interrupt current actions.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("priority")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChoreographyPriority Priority { get; set; } = default!;
+
+    /// <summary>
+    /// Whether participant can interrupt the sequence if a better opportunity arises.
+    /// <br/>If false, participant should complete the sequence unless impossible.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canInterrupt")]
+    public bool? CanInterrupt { get; set; } = default!;
+
+    /// <summary>
+    /// Expected outcome of this sequence (e.g., "hit", "miss", "block").
+    /// <br/>Used for coordinating reactions with other participants.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedOutcome")]
+    public string? ExpectedOutcome { get; set; } = default!;
+
+    /// <summary>
+    /// Event to emit when sequence completes (e.g., "sync_point.attack_landed").
+    /// <br/>Other participants may be waiting on this.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("onComplete")]
+    public string? OnComplete { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single action within a choreographed sequence.
+/// <br/>ActionId should match one from the participant's options.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChoreographyAction
+{
+
+    /// <summary>
+    /// Action identifier matching one from the actor's options.
+    /// <br/>Examples: "sword_slash", "dodge_roll", "taunt"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActionId { get; set; } = default!;
+
+    /// <summary>
+    /// Target actor ID for the action, if applicable.
+    /// <br/>Null for untargeted actions like movement or taunts.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
+    public string? TargetId { get; set; } = default!;
+
+    /// <summary>
+    /// Target position for movement or placement actions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("position")]
+    public ChoreographyPosition? Position { get; set; } = default!;
+
+    /// <summary>
+    /// Expected duration in milliseconds.
+    /// <br/>Used for timing subsequent actions and sync points.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? DurationMs { get; set; } = default!;
+
+    /// <summary>
+    /// Stylistic modifier for the action (e.g., "dramatic", "desperate", "confident").
+    /// <br/>Actors may adjust animation/presentation based on style.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("style")]
+    public string? Style { get; set; } = default!;
+
+    /// <summary>
+    /// Delay before starting this action (relative to previous action completion).
+    /// <br/>Allows precise timing within sequences.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("delayMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? DelayMs { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Controls when a choreographed sequence should begin execution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChoreographyTiming
+{
+
+    /// <summary>
+    /// When to start executing the sequence.
+    /// <br/>- immediate: Start as soon as instruction received
+    /// <br/>- after_previous: Start after current action completes
+    /// <br/>- sync_point: Wait for specified sync point event
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChoreographyStartCondition StartAt { get; set; } = default!;
+
+    /// <summary>
+    /// Sync point to wait for (required when startAt=sync_point).
+    /// <br/>Examples: "attack_landed", "guard_raised", "combo_ready"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("syncPointId")]
+    public string? SyncPointId { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum time to wait for sync point in milliseconds.
+    /// <br/>If exceeded, sequence may start anyway or be cancelled.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxWaitMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? MaxWaitMs { get; set; } = default!;
+
+    /// <summary>
+    /// Time window during which the action can start.
+    /// <br/>Allows for natural timing variation.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowMs")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? WindowMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// How strongly the actor should prefer the choreographed action over their own choices.
+/// <br/>- low: Suggestion; actor may ignore if they prefer something else
+/// <br/>- normal: Standard choreography; follow unless clearly suboptimal
+/// <br/>- high: Important sequence; should follow even if not preferred
+/// <br/>- override: Critical moment; must follow unless physically impossible
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ChoreographyPriority
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"low")]
+    Low = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"normal")]
+    Normal = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"high")]
+    High = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"override")]
+    Override = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// When to begin executing a choreographed sequence
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ChoreographyStartCondition
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    Immediate = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"after_previous")]
+    After_previous = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"sync_point")]
+    Sync_point = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// 3D position for choreography movement and placement actions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChoreographyPosition
+{
+
+    /// <summary>
+    /// X coordinate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public float X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate (vertical)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public float Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public float Z { get; set; } = default!;
 
 }
 

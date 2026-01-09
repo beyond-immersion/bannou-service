@@ -87,7 +87,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Default exchange name for publishing
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
-    public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultExchange { get; set; } = "bannou";
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability

@@ -13740,6 +13740,187 @@
             Character's current dominant emotion
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyInstruction">
+            <summary>
+            Instruction sent to a participant actor by Event Brain to execute a choreographed sequence.
+            <br/>Delivered via emit_perception with perception_type "choreography_instruction".
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.EncounterId">
+            <summary>
+            ID of the coordinated encounter this instruction belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.SequenceId">
+            <summary>
+            Unique ID for this sequence within the choreography.
+            <br/>Used for acknowledgment and sync point coordination.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.Actions">
+            <summary>
+            Ordered list of actions for the participant to execute.
+            <br/>Multiple actions allow for combos or reaction sequences.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.Timing">
+            <summary>
+            When and how to start executing this sequence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.Priority">
+            <summary>
+            How strongly to prefer this choreography over actor's own choices.
+            <br/>Higher priority may interrupt current actions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.CanInterrupt">
+            <summary>
+            Whether participant can interrupt the sequence if a better opportunity arises.
+            <br/>If false, participant should complete the sequence unless impossible.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.ExpectedOutcome">
+            <summary>
+            Expected outcome of this sequence (e.g., "hit", "miss", "block").
+            <br/>Used for coordinating reactions with other participants.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyInstruction.OnComplete">
+            <summary>
+            Event to emit when sequence completes (e.g., "sync_point.attack_landed").
+            <br/>Other participants may be waiting on this.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyAction">
+            <summary>
+            A single action within a choreographed sequence.
+            <br/>ActionId should match one from the participant's options.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.ActionId">
+            <summary>
+            Action identifier matching one from the actor's options.
+            <br/>Examples: "sword_slash", "dodge_roll", "taunt"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.TargetId">
+            <summary>
+            Target actor ID for the action, if applicable.
+            <br/>Null for untargeted actions like movement or taunts.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.Position">
+            <summary>
+            Target position for movement or placement actions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.DurationMs">
+            <summary>
+            Expected duration in milliseconds.
+            <br/>Used for timing subsequent actions and sync points.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.Style">
+            <summary>
+            Stylistic modifier for the action (e.g., "dramatic", "desperate", "confident").
+            <br/>Actors may adjust animation/presentation based on style.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.DelayMs">
+            <summary>
+            Delay before starting this action (relative to previous action completion).
+            <br/>Allows precise timing within sequences.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyAction.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyTiming">
+            <summary>
+            Controls when a choreographed sequence should begin execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyTiming.StartAt">
+            <summary>
+            When to start executing the sequence.
+            <br/>- immediate: Start as soon as instruction received
+            <br/>- after_previous: Start after current action completes
+            <br/>- sync_point: Wait for specified sync point event
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyTiming.SyncPointId">
+            <summary>
+            Sync point to wait for (required when startAt=sync_point).
+            <br/>Examples: "attack_landed", "guard_raised", "combo_ready"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyTiming.MaxWaitMs">
+            <summary>
+            Maximum time to wait for sync point in milliseconds.
+            <br/>If exceeded, sequence may start anyway or be cancelled.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyTiming.WindowMs">
+            <summary>
+            Time window during which the action can start.
+            <br/>Allows for natural timing variation.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyPriority">
+            <summary>
+            How strongly the actor should prefer the choreographed action over their own choices.
+            <br/>- low: Suggestion; actor may ignore if they prefer something else
+            <br/>- normal: Standard choreography; follow unless clearly suboptimal
+            <br/>- high: Important sequence; should follow even if not preferred
+            <br/>- override: Critical moment; must follow unless physically impossible
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyStartCondition">
+            <summary>
+            When to begin executing a choreographed sequence
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.ChoreographyPosition">
+            <summary>
+            3D position for choreography movement and placement actions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyPosition.X">
+            <summary>
+            X coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyPosition.Y">
+            <summary>
+            Y coordinate (vertical)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyPosition.Z">
+            <summary>
+            Z coordinate
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.IAnalyticsClient">
             <summary>
             Client interface for the Analytics service.

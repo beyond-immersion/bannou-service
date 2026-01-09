@@ -1722,3 +1722,179 @@ components:
           type: string
           nullable: true
           description: Character's current dominant emotion
+
+    # === Choreography (Event Brain coordination) ===
+    ChoreographyInstruction:
+      type: object
+      additionalProperties: false
+      description: |
+        Instruction sent to a participant actor by Event Brain to execute a choreographed sequence.
+        Delivered via emit_perception with perception_type "choreography_instruction".
+      required:
+      - encounterId
+      - sequenceId
+      - actions
+      - timing
+      - priority
+      properties:
+        encounterId:
+          type: string
+          description: ID of the coordinated encounter this instruction belongs to
+        sequenceId:
+          type: string
+          description: |
+            Unique ID for this sequence within the choreography.
+            Used for acknowledgment and sync point coordination.
+        actions:
+          type: array
+          description: |
+            Ordered list of actions for the participant to execute.
+            Multiple actions allow for combos or reaction sequences.
+          items:
+            $ref: '#/components/schemas/ChoreographyAction'
+        timing:
+          $ref: '#/components/schemas/ChoreographyTiming'
+          description: When and how to start executing this sequence
+        priority:
+          $ref: '#/components/schemas/ChoreographyPriority'
+          description: |
+            How strongly to prefer this choreography over actor's own choices.
+            Higher priority may interrupt current actions.
+        canInterrupt:
+          type: boolean
+          nullable: true
+          description: |
+            Whether participant can interrupt the sequence if a better opportunity arises.
+            If false, participant should complete the sequence unless impossible.
+        expectedOutcome:
+          type: string
+          nullable: true
+          description: |
+            Expected outcome of this sequence (e.g., "hit", "miss", "block").
+            Used for coordinating reactions with other participants.
+        onComplete:
+          type: string
+          nullable: true
+          description: |
+            Event to emit when sequence completes (e.g., "sync_point.attack_landed").
+            Other participants may be waiting on this.
+
+    ChoreographyAction:
+      type: object
+      additionalProperties: true
+      description: |
+        A single action within a choreographed sequence.
+        ActionId should match one from the participant's options.
+      required:
+      - actionId
+      properties:
+        actionId:
+          type: string
+          description: |
+            Action identifier matching one from the actor's options.
+            Examples: "sword_slash", "dodge_roll", "taunt"
+        targetId:
+          type: string
+          nullable: true
+          description: |
+            Target actor ID for the action, if applicable.
+            Null for untargeted actions like movement or taunts.
+        position:
+          $ref: '#/components/schemas/ChoreographyPosition'
+          nullable: true
+          description: Target position for movement or placement actions
+        durationMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Expected duration in milliseconds.
+            Used for timing subsequent actions and sync points.
+        style:
+          type: string
+          nullable: true
+          description: |
+            Stylistic modifier for the action (e.g., "dramatic", "desperate", "confident").
+            Actors may adjust animation/presentation based on style.
+        delayMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Delay before starting this action (relative to previous action completion).
+            Allows precise timing within sequences.
+
+    ChoreographyTiming:
+      type: object
+      additionalProperties: false
+      description: Controls when a choreographed sequence should begin execution
+      required:
+      - startAt
+      properties:
+        startAt:
+          $ref: '#/components/schemas/ChoreographyStartCondition'
+          description: |
+            When to start executing the sequence.
+            - immediate: Start as soon as instruction received
+            - after_previous: Start after current action completes
+            - sync_point: Wait for specified sync point event
+        syncPointId:
+          type: string
+          nullable: true
+          description: |
+            Sync point to wait for (required when startAt=sync_point).
+            Examples: "attack_landed", "guard_raised", "combo_ready"
+        maxWaitMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Maximum time to wait for sync point in milliseconds.
+            If exceeded, sequence may start anyway or be cancelled.
+        windowMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Time window during which the action can start.
+            Allows for natural timing variation.
+
+    ChoreographyPriority:
+      type: string
+      description: |
+        How strongly the actor should prefer the choreographed action over their own choices.
+        - low: Suggestion; actor may ignore if they prefer something else
+        - normal: Standard choreography; follow unless clearly suboptimal
+        - high: Important sequence; should follow even if not preferred
+        - override: Critical moment; must follow unless physically impossible
+      enum:
+      - low
+      - normal
+      - high
+      - override
+
+    ChoreographyStartCondition:
+      type: string
+      description: When to begin executing a choreographed sequence
+      enum:
+      - immediate
+      - after_previous
+      - sync_point
+
+    ChoreographyPosition:
+      type: object
+      additionalProperties: false
+      description: 3D position for choreography movement and placement actions
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate
