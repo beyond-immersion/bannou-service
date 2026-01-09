@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Tests;
 /// <summary>
 /// Unit tests for CharacterHistoryService.
 /// Tests participation recording, backstory management, and event publishing.
+/// Now uses shared History infrastructure helpers (DualIndexHelper, BackstoryStorageHelper).
 /// </summary>
 public class CharacterHistoryServiceTests
 {
@@ -19,7 +21,7 @@ public class CharacterHistoryServiceTests
     private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<ParticipationData>> _mockParticipationStore;
-    private readonly Mock<IStateStore<ParticipationIndexData>> _mockIndexStore;
+    private readonly Mock<IStateStore<HistoryIndexData>> _mockIndexStore;
     private readonly Mock<IStateStore<BackstoryData>> _mockBackstoryStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
@@ -32,7 +34,7 @@ public class CharacterHistoryServiceTests
         _configuration = new CharacterHistoryServiceConfiguration();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockParticipationStore = new Mock<IStateStore<ParticipationData>>();
-        _mockIndexStore = new Mock<IStateStore<ParticipationIndexData>>();
+        _mockIndexStore = new Mock<IStateStore<HistoryIndexData>>();
         _mockBackstoryStore = new Mock<IStateStore<BackstoryData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -42,7 +44,7 @@ public class CharacterHistoryServiceTests
             .Setup(f => f.GetStore<ParticipationData>(STATE_STORE))
             .Returns(_mockParticipationStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<ParticipationIndexData>(STATE_STORE))
+            .Setup(f => f.GetStore<HistoryIndexData>(STATE_STORE))
             .Returns(_mockIndexStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<BackstoryData>(STATE_STORE))
@@ -107,7 +109,7 @@ public class CharacterHistoryServiceTests
         };
 
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         var (status, result) = await service.RecordParticipationAsync(request, CancellationToken.None);
@@ -142,10 +144,10 @@ public class CharacterHistoryServiceTests
         // Arrange
         var service = CreateService();
         var characterId = Guid.NewGuid();
-        var existingIndex = new ParticipationIndexData
+        var existingIndex = new HistoryIndexData
         {
-            CharacterId = characterId.ToString(),
-            ParticipationIds = new List<string> { "existing-id" }
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { "existing-id" }
         };
 
         var request = new RecordParticipationRequest
@@ -162,15 +164,15 @@ public class CharacterHistoryServiceTests
         _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingIndex);
         _mockIndexStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("participation-event-")), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         await service.RecordParticipationAsync(request, CancellationToken.None);
 
-        // Assert - Index should now have 2 participation IDs
+        // Assert - Index should now have 2 record IDs
         _mockIndexStore.Verify(s => s.SaveAsync(
             $"participation-index-{characterId}",
-            It.Is<ParticipationIndexData>(i => i.ParticipationIds.Count == 2),
+            It.Is<HistoryIndexData>(i => i.RecordIds.Count == 2),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -194,7 +196,7 @@ public class CharacterHistoryServiceTests
         };
 
         _mockIndexStore.Setup(s => s.GetAsync($"participation-index-{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ParticipationIndexData?)null);
+            .ReturnsAsync((HistoryIndexData?)null);
 
         // Act
         var (status, result) = await service.GetParticipationAsync(request, CancellationToken.None);
@@ -218,10 +220,10 @@ public class CharacterHistoryServiceTests
         var warParticipationId = Guid.NewGuid();
         var culturalParticipationId = Guid.NewGuid();
 
-        var index = new ParticipationIndexData
+        var index = new HistoryIndexData
         {
-            CharacterId = characterId.ToString(),
-            ParticipationIds = new List<string> { warParticipationId.ToString(), culturalParticipationId.ToString() }
+            EntityId = characterId.ToString(),
+            RecordIds = new List<string> { warParticipationId.ToString(), culturalParticipationId.ToString() }
         };
 
         var warParticipation = new ParticipationData
@@ -256,6 +258,21 @@ public class CharacterHistoryServiceTests
             .ReturnsAsync(warParticipation);
         _mockParticipationStore.Setup(s => s.GetAsync($"participation-{culturalParticipationId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(culturalParticipation);
+
+        // DualIndexHelper uses GetBulkAsync, so we need to mock that too
+        _mockParticipationStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken ct) =>
+            {
+                var results = new Dictionary<string, ParticipationData>();
+                foreach (var key in keys)
+                {
+                    if (key == $"participation-{warParticipationId}")
+                        results[key] = warParticipation;
+                    else if (key == $"participation-{culturalParticipationId}")
+                        results[key] = culturalParticipation;
+                }
+                return results;
+            });
 
         var request = new GetParticipationRequest
         {

@@ -55,6 +55,7 @@ msbuild.wrn
 megalinter-reports/
 
 # Test output and log files
+test-logs/
 *.log
 edge_test_output*.log
 

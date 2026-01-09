@@ -8,12 +8,14 @@ using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-character-history.tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.CharacterHistory;
 
 /// <summary>
 /// Service implementation for character history and backstory management.
 /// Provides storage for historical event participation and machine-readable backstory elements.
+/// Uses shared History infrastructure helpers for dual-index and backstory storage patterns.
 /// </summary>
 [BannouService("character-history", typeof(ICharacterHistoryService), lifetime: ServiceLifetime.Scoped)]
 public partial class CharacterHistoryService : ICharacterHistoryService
@@ -22,6 +24,8 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<CharacterHistoryService> _logger;
     private readonly CharacterHistoryServiceConfiguration _configuration;
+    private readonly IDualIndexHelper<ParticipationData> _participationHelper;
+    private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
     private const string STATE_STORE = "character-history-statestore";
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
@@ -52,6 +56,50 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
+        // Initialize participation helper using shared dual-index infrastructure
+        _participationHelper = new DualIndexHelper<ParticipationData>(
+            stateStoreFactory,
+            STATE_STORE,
+            PARTICIPATION_KEY_PREFIX,
+            PARTICIPATION_INDEX_KEY_PREFIX,
+            PARTICIPATION_BY_EVENT_KEY_PREFIX);
+
+        // Initialize backstory helper using shared backstory storage infrastructure
+        _backstoryHelper = new BackstoryStorageHelper<BackstoryData, BackstoryElementData>(
+            new BackstoryStorageConfiguration<BackstoryData, BackstoryElementData>
+            {
+                StateStoreFactory = stateStoreFactory,
+                StateStoreName = STATE_STORE,
+                KeyPrefix = BACKSTORY_KEY_PREFIX,
+                ElementMatcher = new BackstoryElementMatcher<BackstoryElementData>(
+                    getType: e => e.ElementType,
+                    getKey: e => e.Key,
+                    copyValues: (src, tgt) =>
+                    {
+                        tgt.Value = src.Value;
+                        tgt.Strength = src.Strength;
+                        tgt.RelatedEntityId = src.RelatedEntityId;
+                        tgt.RelatedEntityType = src.RelatedEntityType;
+                    },
+                    clone: e => new BackstoryElementData
+                    {
+                        ElementType = e.ElementType,
+                        Key = e.Key,
+                        Value = e.Value,
+                        Strength = e.Strength,
+                        RelatedEntityId = e.RelatedEntityId,
+                        RelatedEntityType = e.RelatedEntityType
+                    }),
+                GetEntityId = b => b.CharacterId,
+                SetEntityId = (b, id) => b.CharacterId = id,
+                GetElements = b => b.Elements,
+                SetElements = (b, els) => b.Elements = els,
+                GetCreatedAtUnix = b => b.CreatedAtUnix,
+                SetCreatedAtUnix = (b, ts) => b.CreatedAtUnix = ts,
+                GetUpdatedAtUnix = b => b.UpdatedAtUnix,
+                SetUpdatedAtUnix = (b, ts) => b.UpdatedAtUnix = ts
+            });
+
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -72,22 +120,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             var participationId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
 
-            var participation = new HistoricalParticipation
-            {
-                ParticipationId = participationId,
-                CharacterId = body.CharacterId,
-                EventId = body.EventId,
-                EventName = body.EventName,
-                EventCategory = body.EventCategory,
-                Role = body.Role,
-                EventDate = body.EventDate,
-                Significance = body.Significance,
-                Metadata = body.Metadata,
-                CreatedAt = now
-            };
-
-            // Store the participation record
-            var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
             var participationData = new ParticipationData
             {
                 ParticipationId = participationId.ToString(),
@@ -102,20 +134,13 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 CreatedAtUnix = now.ToUnixTimeSeconds()
             };
 
-            await participationStore.SaveAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", participationData, cancellationToken: cancellationToken);
-
-            // Update the character's participation index
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.CharacterId}";
-            var index = await indexStore.GetAsync(indexKey, cancellationToken) ?? new ParticipationIndexData { CharacterId = body.CharacterId.ToString() };
-            index.ParticipationIds.Add(participationId.ToString());
-            await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken);
-
-            // Update the event's participant index
-            var eventIndexKey = $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{body.EventId}";
-            var eventIndex = await indexStore.GetAsync(eventIndexKey, cancellationToken) ?? new ParticipationIndexData { CharacterId = body.EventId.ToString() };
-            eventIndex.ParticipationIds.Add(participationId.ToString());
-            await indexStore.SaveAsync(eventIndexKey, eventIndex, cancellationToken: cancellationToken);
+            // Use helper to store record and update both indices
+            await _participationHelper.AddRecordAsync(
+                participationData,
+                participationId.ToString(),
+                body.CharacterId.ToString(),
+                body.EventId.ToString(),
+                cancellationToken);
 
             // Publish typed event (T5 compliant)
             await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
@@ -131,7 +156,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",
                 participationId, body.CharacterId);
 
-            return (StatusCodes.OK, participation);
+            return (StatusCodes.OK, MapToHistoricalParticipation(participationData));
         }
         catch (Exception ex)
         {
@@ -159,11 +184,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.CharacterId}";
-            var index = await indexStore.GetAsync(indexKey, cancellationToken);
+            // Use helper to get all records for this character
+            var allRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
 
-            if (index == null || index.ParticipationIds.Count == 0)
+            if (allRecords.Count == 0)
             {
                 return (StatusCodes.OK, new ParticipationListResponse
                 {
@@ -176,45 +202,27 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 });
             }
 
-            var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
-            var allParticipations = new List<HistoricalParticipation>();
+            // Map and filter
+            var allParticipations = allRecords
+                .Select(MapToHistoricalParticipation)
+                .Where(p =>
+                    (!body.EventCategory.HasValue || p.EventCategory == body.EventCategory.Value) &&
+                    (!body.MinimumSignificance.HasValue || p.Significance >= body.MinimumSignificance.Value))
+                .OrderByDescending(p => p.EventDate)
+                .ToList();
 
-            foreach (var participationId in index.ParticipationIds)
+            // Use pagination helper
+            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+
+            return (StatusCodes.OK, new ParticipationListResponse
             {
-                var data = await participationStore.GetAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", cancellationToken);
-                if (data != null)
-                {
-                    var participation = MapToHistoricalParticipation(data);
-
-                    // Apply filters
-                    if (body.EventCategory.HasValue && participation.EventCategory != body.EventCategory.Value)
-                        continue;
-                    if (body.MinimumSignificance.HasValue && participation.Significance < body.MinimumSignificance.Value)
-                        continue;
-
-                    allParticipations.Add(participation);
-                }
-            }
-
-            // Sort by event date descending (most recent first)
-            allParticipations = allParticipations.OrderByDescending(p => p.EventDate).ToList();
-
-            // Paginate
-            var totalCount = allParticipations.Count;
-            var skip = (body.Page - 1) * body.PageSize;
-            var paged = allParticipations.Skip(skip).Take(body.PageSize).ToList();
-
-            var response = new ParticipationListResponse
-            {
-                Participations = paged,
-                TotalCount = totalCount,
-                Page = body.Page,
-                PageSize = body.PageSize,
-                HasNextPage = skip + paged.Count < totalCount,
-                HasPreviousPage = body.Page > 1
-            };
-
-            return (StatusCodes.OK, response);
+                Participations = paginatedResult.Items.ToList(),
+                TotalCount = paginatedResult.TotalCount,
+                Page = paginatedResult.Page,
+                PageSize = paginatedResult.PageSize,
+                HasNextPage = paginatedResult.HasNextPage,
+                HasPreviousPage = paginatedResult.HasPreviousPage
+            });
         }
         catch (Exception ex)
         {
@@ -242,11 +250,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var indexKey = $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{body.EventId}";
-            var index = await indexStore.GetAsync(indexKey, cancellationToken);
+            // Use helper to get all records for this event (via secondary index)
+            var allRecords = await _participationHelper.GetRecordsBySecondaryKeyAsync(
+                body.EventId.ToString(),
+                cancellationToken);
 
-            if (index == null || index.ParticipationIds.Count == 0)
+            if (allRecords.Count == 0)
             {
                 return (StatusCodes.OK, new ParticipationListResponse
                 {
@@ -259,43 +268,25 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 });
             }
 
-            var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
-            var allParticipations = new List<HistoricalParticipation>();
+            // Map and filter by role if specified
+            var allParticipations = allRecords
+                .Select(MapToHistoricalParticipation)
+                .Where(p => !body.Role.HasValue || p.Role == body.Role.Value)
+                .OrderByDescending(p => p.Significance)
+                .ToList();
 
-            foreach (var participationId in index.ParticipationIds)
+            // Use pagination helper
+            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+
+            return (StatusCodes.OK, new ParticipationListResponse
             {
-                var data = await participationStore.GetAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", cancellationToken);
-                if (data != null)
-                {
-                    var participation = MapToHistoricalParticipation(data);
-
-                    // Apply role filter
-                    if (body.Role.HasValue && participation.Role != body.Role.Value)
-                        continue;
-
-                    allParticipations.Add(participation);
-                }
-            }
-
-            // Sort by significance descending
-            allParticipations = allParticipations.OrderByDescending(p => p.Significance).ToList();
-
-            // Paginate
-            var totalCount = allParticipations.Count;
-            var skip = (body.Page - 1) * body.PageSize;
-            var paged = allParticipations.Skip(skip).Take(body.PageSize).ToList();
-
-            var response = new ParticipationListResponse
-            {
-                Participations = paged,
-                TotalCount = totalCount,
-                Page = body.Page,
-                PageSize = body.PageSize,
-                HasNextPage = skip + paged.Count < totalCount,
-                HasPreviousPage = body.Page > 1
-            };
-
-            return (StatusCodes.OK, response);
+                Participations = paginatedResult.Items.ToList(),
+                TotalCount = paginatedResult.TotalCount,
+                Page = paginatedResult.Page,
+                PageSize = paginatedResult.PageSize,
+                HasNextPage = paginatedResult.HasNextPage,
+                HasPreviousPage = paginatedResult.HasPreviousPage
+            });
         }
         catch (Exception ex)
         {
@@ -323,36 +314,20 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
-            var participationKey = $"{PARTICIPATION_KEY_PREFIX}{body.ParticipationId}";
-            var data = await participationStore.GetAsync(participationKey, cancellationToken);
+            // First get the record to know the keys for index cleanup
+            var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
 
             if (data == null)
             {
                 return StatusCodes.NotFound;
             }
 
-            // Delete from main store
-            await participationStore.DeleteAsync(participationKey, cancellationToken);
-
-            // Remove from character index
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{data.CharacterId}";
-            var index = await indexStore.GetAsync(indexKey, cancellationToken);
-            if (index != null)
-            {
-                index.ParticipationIds.Remove(body.ParticipationId.ToString());
-                await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken);
-            }
-
-            // Remove from event index
-            var eventIndexKey = $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{data.EventId}";
-            var eventIndex = await indexStore.GetAsync(eventIndexKey, cancellationToken);
-            if (eventIndex != null)
-            {
-                eventIndex.ParticipationIds.Remove(body.ParticipationId.ToString());
-                await indexStore.SaveAsync(eventIndexKey, eventIndex, cancellationToken: cancellationToken);
-            }
+            // Use helper to remove record and update both indices
+            await _participationHelper.RemoveRecordAsync(
+                body.ParticipationId.ToString(),
+                data.CharacterId,
+                data.EventId,
+                cancellationToken);
 
             // Publish typed event (T5 compliant)
             await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
@@ -397,8 +372,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var data = await store.GetAsync($"{BACKSTORY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var data = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
 
             if (data == null)
             {
@@ -422,9 +396,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             {
                 CharacterId = body.CharacterId,
                 Elements = elements,
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
+                CreatedAt = TimestampHelper.FromUnixSeconds(data.CreatedAtUnix),
                 UpdatedAt = data.UpdatedAtUnix != data.CreatedAtUnix
-                    ? DateTimeOffset.FromUnixTimeSeconds(data.UpdatedAtUnix)
+                    ? TimestampHelper.FromUnixSeconds(data.UpdatedAtUnix)
                     : null
             };
 
@@ -457,65 +431,32 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var key = $"{BACKSTORY_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
-            var isNew = existing == null;
-            var now = DateTimeOffset.UtcNow;
+            var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
 
-            BackstoryData data;
-            if (body.ReplaceExisting || isNew)
-            {
-                data = new BackstoryData
-                {
-                    CharacterId = body.CharacterId.ToString(),
-                    Elements = body.Elements.Select(MapToBackstoryElementData).ToList(),
-                    CreatedAtUnix = isNew ? now.ToUnixTimeSeconds() : existing!.CreatedAtUnix,
-                    UpdatedAtUnix = now.ToUnixTimeSeconds()
-                };
-            }
-            else
-            {
-                // Merge: update matching type+key pairs, add new ones
-                data = existing!;
-                foreach (var newElement in body.Elements)
-                {
-                    var existingElement = data.Elements.FirstOrDefault(
-                        e => e.ElementType == newElement.ElementType.ToString() && e.Key == newElement.Key);
-                    if (existingElement != null)
-                    {
-                        existingElement.Value = newElement.Value;
-                        existingElement.Strength = newElement.Strength;
-                        existingElement.RelatedEntityId = newElement.RelatedEntityId?.ToString();
-                        existingElement.RelatedEntityType = newElement.RelatedEntityType;
-                    }
-                    else
-                    {
-                        data.Elements.Add(MapToBackstoryElementData(newElement));
-                    }
-                }
-                data.UpdatedAtUnix = now.ToUnixTimeSeconds();
-            }
-
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+            var result = await _backstoryHelper.SetAsync(
+                body.CharacterId.ToString(),
+                elementDataList,
+                body.ReplaceExisting,
+                cancellationToken);
 
             var response = new BackstoryResponse
             {
                 CharacterId = body.CharacterId,
-                Elements = data.Elements.Select(MapToBackstoryElement).ToList(),
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
-                UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(data.UpdatedAtUnix)
+                Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
+                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
             };
 
             // Publish typed event (T5 compliant)
-            if (isNew)
+            var now = DateTimeOffset.UtcNow;
+            if (result.IsNew)
             {
                 await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     CharacterId = body.CharacterId,
-                    ElementCount = data.Elements.Count
+                    ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
             }
             else
@@ -525,13 +466,13 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     CharacterId = body.CharacterId,
-                    ElementCount = data.Elements.Count,
+                    ElementCount = result.Backstory.Elements.Count,
                     ReplaceExisting = body.ReplaceExisting
                 }, cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation("Backstory {Action} for character {CharacterId}, {Count} elements",
-                isNew ? "created" : "updated", body.CharacterId, data.Elements.Count);
+                result.IsNew ? "created" : "updated", body.CharacterId, result.Backstory.Elements.Count);
 
             return (StatusCodes.OK, response);
         }
@@ -562,62 +503,31 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var key = $"{BACKSTORY_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
-            var isNew = existing == null;
-            var now = DateTimeOffset.UtcNow;
+            var elementData = MapToBackstoryElementData(body.Element);
 
-            BackstoryData data;
-            if (isNew)
-            {
-                data = new BackstoryData
-                {
-                    CharacterId = body.CharacterId.ToString(),
-                    Elements = new List<BackstoryElementData> { MapToBackstoryElementData(body.Element) },
-                    CreatedAtUnix = now.ToUnixTimeSeconds(),
-                    UpdatedAtUnix = now.ToUnixTimeSeconds()
-                };
-            }
-            else
-            {
-                data = existing!;
-                // Check for existing element with same type+key and update it
-                var existingElement = data.Elements.FirstOrDefault(
-                    e => e.ElementType == body.Element.ElementType.ToString() && e.Key == body.Element.Key);
-                if (existingElement != null)
-                {
-                    existingElement.Value = body.Element.Value;
-                    existingElement.Strength = body.Element.Strength;
-                    existingElement.RelatedEntityId = body.Element.RelatedEntityId?.ToString();
-                    existingElement.RelatedEntityType = body.Element.RelatedEntityType;
-                }
-                else
-                {
-                    data.Elements.Add(MapToBackstoryElementData(body.Element));
-                }
-                data.UpdatedAtUnix = now.ToUnixTimeSeconds();
-            }
-
-            await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+            var result = await _backstoryHelper.AddElementAsync(
+                body.CharacterId.ToString(),
+                elementData,
+                cancellationToken);
 
             var response = new BackstoryResponse
             {
                 CharacterId = body.CharacterId,
-                Elements = data.Elements.Select(MapToBackstoryElement).ToList(),
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix),
-                UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(data.UpdatedAtUnix)
+                Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
+                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
             };
 
             // Publish typed event (T5 compliant)
-            if (isNew)
+            var now = DateTimeOffset.UtcNow;
+            if (result.IsNew)
             {
                 await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     CharacterId = body.CharacterId,
-                    ElementCount = data.Elements.Count
+                    ElementCount = result.Backstory.Elements.Count
                 }, cancellationToken: cancellationToken);
             }
             else
@@ -627,13 +537,13 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
                     CharacterId = body.CharacterId,
-                    ElementCount = data.Elements.Count,
+                    ElementCount = result.Backstory.Elements.Count,
                     ReplaceExisting = false
                 }, cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation("Backstory element added for character {CharacterId}, now {Count} elements",
-                body.CharacterId, data.Elements.Count);
+                body.CharacterId, result.Backstory.Elements.Count);
 
             return (StatusCodes.OK, response);
         }
@@ -663,16 +573,12 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var key = $"{BACKSTORY_KEY_PREFIX}{body.CharacterId}";
-            var existing = await store.GetAsync(key, cancellationToken);
+            var deleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
-            if (existing == null)
+            if (!deleted)
             {
                 return StatusCodes.NotFound;
             }
-
-            await store.DeleteAsync(key, cancellationToken);
 
             // Publish typed event (T5 compliant)
             await _messageBus.TryPublishAsync(BACKSTORY_DELETED_TOPIC, new CharacterBackstoryDeletedEvent
@@ -716,49 +622,14 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
         try
         {
-            var participationsDeleted = 0;
-            var backstoryDeleted = false;
+            // Use helper to delete all participations and update event indices
+            var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                record => record.EventId,
+                cancellationToken);
 
-            // Delete all participation records
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.CharacterId}";
-            var index = await indexStore.GetAsync(indexKey, cancellationToken);
-
-            if (index != null)
-            {
-                var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
-                foreach (var participationId in index.ParticipationIds.ToList())
-                {
-                    var data = await participationStore.GetAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", cancellationToken);
-                    if (data != null)
-                    {
-                        await participationStore.DeleteAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", cancellationToken);
-
-                        // Remove from event index
-                        var eventIndexKey = $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{data.EventId}";
-                        var eventIndex = await indexStore.GetAsync(eventIndexKey, cancellationToken);
-                        if (eventIndex != null)
-                        {
-                            eventIndex.ParticipationIds.Remove(participationId);
-                            await indexStore.SaveAsync(eventIndexKey, eventIndex, cancellationToken: cancellationToken);
-                        }
-
-                        participationsDeleted++;
-                    }
-                }
-
-                await indexStore.DeleteAsync(indexKey, cancellationToken);
-            }
-
-            // Delete backstory
-            var backstoryStore = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var backstoryKey = $"{BACKSTORY_KEY_PREFIX}{body.CharacterId}";
-            var backstory = await backstoryStore.GetAsync(backstoryKey, cancellationToken);
-            if (backstory != null)
-            {
-                await backstoryStore.DeleteAsync(backstoryKey, cancellationToken);
-                backstoryDeleted = true;
-            }
+            // Use helper to delete backstory
+            var backstoryDeleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
             // Publish typed event (T5 compliant)
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new CharacterHistoryDeletedEvent
@@ -810,8 +681,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             var majorLifeEvents = new List<string>();
 
             // Get backstory and create summaries
-            var backstoryStore = _stateStoreFactory.GetStore<BackstoryData>(STATE_STORE);
-            var backstory = await backstoryStore.GetAsync($"{BACKSTORY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            var backstory = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
 
             if (backstory != null)
             {
@@ -830,24 +700,13 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 }
             }
 
-            // Get participation and create summaries
-            var indexStore = _stateStoreFactory.GetStore<ParticipationIndexData>(STATE_STORE);
-            var index = await indexStore.GetAsync($"{PARTICIPATION_INDEX_KEY_PREFIX}{body.CharacterId}", cancellationToken);
+            // Get participation and create summaries using helper
+            var participations = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
 
-            if (index != null && index.ParticipationIds.Count > 0)
+            if (participations.Count > 0)
             {
-                var participationStore = _stateStoreFactory.GetStore<ParticipationData>(STATE_STORE);
-                var participations = new List<ParticipationData>();
-
-                foreach (var participationId in index.ParticipationIds)
-                {
-                    var data = await participationStore.GetAsync($"{PARTICIPATION_KEY_PREFIX}{participationId}", cancellationToken);
-                    if (data != null)
-                    {
-                        participations.Add(data);
-                    }
-                }
-
                 // Sort by significance and take top N
                 var topParticipations = participations
                     .OrderByDescending(p => p.Significance)
@@ -906,10 +765,10 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             EventName = data.EventName,
             EventCategory = Enum.Parse<EventCategory>(data.EventCategory),
             Role = Enum.Parse<ParticipationRole>(data.Role),
-            EventDate = DateTimeOffset.FromUnixTimeSeconds(data.EventDateUnix),
+            EventDate = TimestampHelper.FromUnixSeconds(data.EventDateUnix),
             Significance = data.Significance,
             Metadata = data.Metadata,
-            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.CreatedAtUnix)
+            CreatedAt = TimestampHelper.FromUnixSeconds(data.CreatedAtUnix)
         };
     }
 
@@ -1028,15 +887,6 @@ internal class ParticipationData
     public float Significance { get; set; }
     public object? Metadata { get; set; }
     public long CreatedAtUnix { get; set; }
-}
-
-/// <summary>
-/// Internal storage model for participation index (by character or event).
-/// </summary>
-internal class ParticipationIndexData
-{
-    public string CharacterId { get; set; } = string.Empty;
-    public List<string> ParticipationIds { get; set; } = new();
 }
 
 /// <summary>

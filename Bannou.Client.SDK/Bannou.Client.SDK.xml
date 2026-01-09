@@ -7813,6 +7813,176 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent">
+            <summary>
+            Published when a character's participation in a historical event is recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.CharacterId">
+            <summary>
+            ID of the character that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.ParticipationId">
+            <summary>
+            ID of the participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.Role">
+            <summary>
+            Role the character played in the event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent">
+            <summary>
+            Published when a character's participation record is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.ParticipationId">
+            <summary>
+            ID of the deleted participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.CharacterId">
+            <summary>
+            ID of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent">
+            <summary>
+            Published when a character's backstory is first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.ElementCount">
+            <summary>
+            Number of backstory elements created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent">
+            <summary>
+            Published when a character's backstory is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.ElementCount">
+            <summary>
+            Current number of backstory elements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.ReplaceExisting">
+            <summary>
+            Whether existing elements were replaced
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent">
+            <summary>
+            Published when a character's backstory is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent">
+            <summary>
+            Published when all history data for a character is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.CharacterId">
+            <summary>
+            ID of the character whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.BackstoryDeleted">
+            <summary>
+            Whether backstory was deleted
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterCreatedEvent">
             <summary>
             Published to character.created when a character is created
@@ -10041,6 +10211,176 @@
         <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.Metadata">
             <summary>
             Additional context about the state change
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent">
+            <summary>
+            Published when a realm's participation in a historical event is recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.ParticipationId">
+            <summary>
+            ID of the participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.Role">
+            <summary>
+            Role the realm played in the event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent">
+            <summary>
+            Published when a realm's participation record is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.ParticipationId">
+            <summary>
+            ID of the deleted participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.RealmId">
+            <summary>
+            ID of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent">
+            <summary>
+            Published when a realm's lore is first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.ElementCount">
+            <summary>
+            Number of lore elements created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent">
+            <summary>
+            Published when a realm's lore is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.ElementCount">
+            <summary>
+            Current number of lore elements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.ReplaceExisting">
+            <summary>
+            Whether existing elements were replaced
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent">
+            <summary>
+            Published when a realm's lore is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent">
+            <summary>
+            Published when all history data for a realm is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.RealmId">
+            <summary>
+            ID of the realm whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.LoreDeleted">
+            <summary>
+            Whether lore was deleted
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RealmCreatedEvent">
@@ -18059,6 +18399,432 @@
             Unique identifier for the failed request
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.EventCategory">
+            <summary>
+            Categories of historical events that characters can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.ParticipationRole">
+            <summary>
+            How the character participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryElementType">
+            <summary>
+            Types of backstory elements. Each type represents a different aspect
+            <br/>of the character's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation">
+            <summary>
+            Record of a character's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.CharacterId">
+            <summary>
+            ID of the character who participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Role">
+            <summary>
+            How the character participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Significance">
+            <summary>
+            How significant this event was for the character (0.0 to 1.0).
+            <br/>Affects behavior system weighting of this memory.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement">
+            <summary>
+            A machine-readable backstory element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.ElementType">
+            <summary>
+            Category of this backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Key">
+            <summary>
+            Machine-readable key (e.g., "homeland", "trained_by", "past_job").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Value">
+            <summary>
+            Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse">
+            <summary>
+            Complete backstory data for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.CharacterId">
+            <summary>
+            ID of the character this backstory belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.Elements">
+            <summary>
+            All backstory elements for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.CreatedAt">
+            <summary>
+            When this backstory was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.BackstoryResponse.UpdatedAt">
+            <summary>
+            When this backstory was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest">
+            <summary>
+            Request payload for recording event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.CharacterId">
+            <summary>
+            ID of the character who participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventName">
+            <summary>
+            Name of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventCategory">
+            <summary>
+            Category of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Role">
+            <summary>
+            How the character participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Significance">
+            <summary>
+            How significant this event was for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.RecordParticipationRequest.Metadata">
+            <summary>
+            Optional event-specific details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest">
+            <summary>
+            Request payload for getting a character's event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.CharacterId">
+            <summary>
+            ID of the character to get participation for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.EventCategory">
+            <summary>
+            Filter by event category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.MinimumSignificance">
+            <summary>
+            Filter by minimum significance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetParticipationRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest">
+            <summary>
+            Request payload for getting participants of an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.Role">
+            <summary>
+            Filter by participation role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetEventParticipantsRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest">
+            <summary>
+            Request payload for deleting a participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteParticipationRequest.ParticipationId">
+            <summary>
+            ID of the participation record to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest">
+            <summary>
+            Request payload for getting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to get backstory for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.ElementTypes">
+            <summary>
+            Filter by element types (null for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.GetBackstoryRequest.MinimumStrength">
+            <summary>
+            Filter by minimum strength
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest">
+            <summary>
+            Request payload for setting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to set backstory for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.Elements">
+            <summary>
+            Backstory elements to set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SetBackstoryRequest.ReplaceExisting">
+            <summary>
+            If true, replace all existing elements.
+            <br/>If false, merge with existing (update matching type+key pairs).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest">
+            <summary>
+            Request payload for adding a single backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest.CharacterId">
+            <summary>
+            ID of the character to add element to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.AddBackstoryElementRequest.Element">
+            <summary>
+            The backstory element to add
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest">
+            <summary>
+            Request payload for deleting a character's backstory
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteBackstoryRequest.CharacterId">
+            <summary>
+            ID of the character to delete backstory for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest">
+            <summary>
+            Request payload for deleting all history data for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryRequest.CharacterId">
+            <summary>
+            ID of the character to delete history for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest">
+            <summary>
+            Request payload for generating history summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.CharacterId">
+            <summary>
+            ID of the character to summarize history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.MaxBackstoryPoints">
+            <summary>
+            Maximum number of key backstory points to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.SummarizeHistoryRequest.MaxLifeEvents">
+            <summary>
+            Maximum number of major life events to include
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse">
+            <summary>
+            Paginated list of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.Participations">
+            <summary>
+            List of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.TotalCount">
+            <summary>
+            Total number of matching records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.Page">
+            <summary>
+            Current page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.HasNextPage">
+            <summary>
+            Whether there are more results after this page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.ParticipationListResponse.HasPreviousPage">
+            <summary>
+            Whether there are results before this page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse">
+            <summary>
+            Result of deleting all history data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.CharacterId">
+            <summary>
+            ID of the character whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.DeleteAllHistoryResponse.BackstoryDeleted">
+            <summary>
+            Whether backstory was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse">
+            <summary>
+            Generated text summaries for character compression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.CharacterId">
+            <summary>
+            ID of the character summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.KeyBackstoryPoints">
+            <summary>
+            Key backstory elements as text summaries.
+            <br/>e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterHistory.HistorySummaryResponse.MajorLifeEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Character.CharacterStatus">
             <summary>
             Character lifecycle status
@@ -18347,6 +19113,810 @@
         <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmLeftEvent.Reason">
             <summary>
             Reason for leaving (death, transfer, deletion)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest">
+            <summary>
+            Request payload for retrieving a character with optional related data.
+            <br/>Each include flag fetches data from its respective service (zero overhead if not requested).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.CharacterId">
+            <summary>
+            ID of the character to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludePersonality">
+            <summary>
+            Include personality traits from character-personality service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeBackstory">
+            <summary>
+            Include backstory elements from character-history service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeFamilyTree">
+            <summary>
+            Include family relationships from relationship service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeCombatPreferences">
+            <summary>
+            Include combat preferences from character-personality service
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse">
+            <summary>
+            Character data with optional enriched fields.
+            <br/>Fields are only populated if the corresponding include flag was set in the request.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CharacterId">
+            <summary>
+            Unique identifier for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Name">
+            <summary>
+            Display name of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.RealmId">
+            <summary>
+            Realm ID (partition key)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.SpeciesId">
+            <summary>
+            Species ID (foreign key to Species service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.BirthDate">
+            <summary>
+            In-game birth timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.DeathDate">
+            <summary>
+            In-game death timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Status">
+            <summary>
+            Current lifecycle status of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CreatedAt">
+            <summary>
+            Real-world creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.UpdatedAt">
+            <summary>
+            Real-world last update timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Personality">
+            <summary>
+            Personality traits (included if includePersonality=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Backstory">
+            <summary>
+            Backstory elements (included if includeBackstory=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.FamilyTree">
+            <summary>
+            Family relationships (included if includeFamilyTree=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CombatPreferences">
+            <summary>
+            Combat preferences (included if includeCombatPreferences=true)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.PersonalitySnapshot">
+            <summary>
+            Snapshot of personality traits for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PersonalitySnapshot.Traits">
+            <summary>
+            Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PersonalitySnapshot.Version">
+            <summary>
+            Personality version number (increments on evolution)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.BackstorySnapshot">
+            <summary>
+            Snapshot of backstory for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstorySnapshot.Elements">
+            <summary>
+            List of backstory elements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot">
+            <summary>
+            Single backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.ElementType">
+            <summary>
+            Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Key">
+            <summary>
+            Machine-readable key (homeland, past_job, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Value">
+            <summary>
+            Machine-readable value (northlands, blacksmith, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Strength">
+            <summary>
+            How strongly this affects behavior (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot">
+            <summary>
+            Snapshot of combat preferences for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.Style">
+            <summary>
+            Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.PreferredRange">
+            <summary>
+            Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.GroupRole">
+            <summary>
+            Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.RiskTolerance">
+            <summary>
+            Willingness to take risky actions (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.RetreatThreshold">
+            <summary>
+            Health percentage at which retreat is considered (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.ProtectAllies">
+            <summary>
+            Whether to prioritize ally protection
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.FamilyTreeResponse">
+            <summary>
+            Family relationships for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Parents">
+            <summary>
+            Parent relationships (biological and adoptive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Children">
+            <summary>
+            Child relationships
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Siblings">
+            <summary>
+            Sibling relationships (including half-siblings)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Spouse">
+            <summary>
+            Current spouse (if any)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.PastLives">
+            <summary>
+            Previous incarnations (if reincarnation tracked)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.FamilyMember">
+            <summary>
+            Reference to a family member
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.CharacterId">
+            <summary>
+            ID of the related character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.Name">
+            <summary>
+            Display name (if available)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.RelationshipType">
+            <summary>
+            Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.IsAlive">
+            <summary>
+            Whether the related character is alive
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.PastLifeReference">
+            <summary>
+            Reference to a past incarnation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.CharacterId">
+            <summary>
+            ID of the previous incarnation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.Name">
+            <summary>
+            Display name of the past life
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.DeathDate">
+            <summary>
+            When the past life ended
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CompressCharacterRequest">
+            <summary>
+            Request to compress a dead character for archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CompressCharacterRequest.CharacterId">
+            <summary>
+            ID of the dead character to compress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CompressCharacterRequest.DeleteSourceData">
+            <summary>
+            If true, delete personality/backstory data after compression.
+            <br/>The archive becomes the only record of this information.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest">
+            <summary>
+            Request to retrieve a character's compressed archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest.CharacterId">
+            <summary>
+            ID of the character to get archive for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CheckReferencesRequest">
+            <summary>
+            Request to check reference count for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CheckReferencesRequest.CharacterId">
+            <summary>
+            ID of the character to check references for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterArchive">
+            <summary>
+            Compressed archive of a dead character.
+            <br/>Contains text summaries instead of structured data for long-term storage.
+            <br/>Self-contained with no external references (suitable for cleanup).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.CharacterId">
+            <summary>
+            Original character ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.Name">
+            <summary>
+            Character display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.RealmId">
+            <summary>
+            Realm the character belonged to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.SpeciesId">
+            <summary>
+            Character's species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.BirthDate">
+            <summary>
+            In-game birth date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.DeathDate">
+            <summary>
+            In-game death date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.CompressedAt">
+            <summary>
+            When this archive was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.PersonalitySummary">
+            <summary>
+            Text summary of personality traits.
+            <br/>Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.KeyBackstoryPoints">
+            <summary>
+            Key backstory elements as text.
+            <br/>Example: ["Trained by the Knights Guild", "Born in the Northlands"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.MajorLifeEvents">
+            <summary>
+            Significant life events as text.
+            <br/>Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.FamilySummary">
+            <summary>
+            Text summary of family relationships.
+            <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterRefCount">
+            <summary>
+            Reference count information for cleanup eligibility
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.CharacterId">
+            <summary>
+            Character ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ReferenceCount">
+            <summary>
+            Number of active references to this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ReferenceTypes">
+            <summary>
+            Types of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.IsCompressed">
+            <summary>
+            Whether the character has been compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.IsEligibleForCleanup">
+            <summary>
+            True if compressed, refCount=0, and grace period has passed.
+            <br/>Safe to permanently delete if true.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ZeroRefSince">
+            <summary>
+            When refCount first reached zero (null if refCount &gt; 0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.TraitAxis">
+            <summary>
+            Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
+            <br/>Based on psychological research (Big Five + game-relevant extensions).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.ExperienceType">
+            <summary>
+            Categories of significant experiences that may cause personality evolution.
+            <br/>Each type has predefined trait impact tendencies.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatStyle">
+            <summary>
+            Overall approach to combat situations. Affects target selection,
+            <br/>ability usage, and engagement decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.PreferredRange">
+            <summary>
+            Preferred engagement distance. Influences positioning and
+            <br/>ability selection in combat.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GroupRole">
+            <summary>
+            Preferred role when fighting in groups. Affects positioning,
+            <br/>target priority, and coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatExperienceType">
+            <summary>
+            Categories of combat experiences that may cause preference evolution.
+            <br/>Each type affects different aspects of combat behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.TraitValue">
+            <summary>
+            A single personality trait with its current value and evolution history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.Axis">
+            <summary>
+            The personality axis this value represents
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.Value">
+            <summary>
+            Current trait value on the spectrum (-1.0 to +1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.LastChangedAt">
+            <summary>
+            When this trait last evolved (null if never changed since creation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.TraitValue.ChangeCount">
+            <summary>
+            Number of times this trait has evolved
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse">
+            <summary>
+            Complete personality profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.CharacterId">
+            <summary>
+            Character this personality belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.Traits">
+            <summary>
+            All trait axis values for this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.Version">
+            <summary>
+            Personality version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.ArchetypeHint">
+            <summary>
+            Optional archetype code for behavior optimization (e.g., "guardian",
+            <br/>"merchant", "scholar", "trickster"). Allows behavior system to use
+            <br/>pre-compiled behavior variants for common personality patterns.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.CreatedAt">
+            <summary>
+            When this personality was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.PersonalityResponse.UpdatedAt">
+            <summary>
+            When this personality was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult">
+            <summary>
+            Result of recording an experience, including any personality evolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.CharacterId">
+            <summary>
+            Character who had the experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.ExperienceRecorded">
+            <summary>
+            Whether the experience was recorded successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.PersonalityEvolved">
+            <summary>
+            Whether any traits changed as a result of this experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.ChangedTraits">
+            <summary>
+            Traits that evolved (empty array if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.ExperienceResult.NewVersion">
+            <summary>
+            New personality version if evolved (null if no change)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest">
+            <summary>
+            Request payload for retrieving a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.GetPersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to get personality for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest">
+            <summary>
+            Request payload for creating or updating a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to set personality for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.Traits">
+            <summary>
+            Initial trait values. All 8 trait axes should be provided.
+            <br/>Missing axes will default to 0.0 (neutral).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetPersonalityRequest.ArchetypeHint">
+            <summary>
+            Optional archetype code for behavior optimization
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest">
+            <summary>
+            Request payload for recording an experience that may evolve personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.CharacterId">
+            <summary>
+            ID of the character who had the experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.ExperienceType">
+            <summary>
+            Category of significant experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.Intensity">
+            <summary>
+            How significant the experience was (0.0 to 1.0).
+            <br/>Higher intensity = higher probability of trait evolution.
+            <br/>Typical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.RecordExperienceRequest.ContextData">
+            <summary>
+            Optional context for logging and debugging.
+            <br/>Not used in evolution calculations.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest">
+            <summary>
+            Request payload for bulk loading personalities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchGetPersonalitiesRequest.CharacterIds">
+            <summary>
+            IDs of characters to get personalities for (max 100)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest">
+            <summary>
+            Request payload for deleting a character's personality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.DeletePersonalityRequest.CharacterId">
+            <summary>
+            ID of the character to delete personality for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse">
+            <summary>
+            Response containing personalities for multiple characters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse.Personalities">
+            <summary>
+            Successfully retrieved personalities
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.BatchPersonalityResponse.NotFound">
+            <summary>
+            Character IDs that have no personality defined
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences">
+            <summary>
+            Combat behavior preferences that influence tactical decisions.
+            <br/>These values affect GOAP action selection, retreat conditions,
+            <br/>and group coordination behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.Style">
+            <summary>
+            Overall combat approach
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.PreferredRange">
+            <summary>
+            Preferred engagement distance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.GroupRole">
+            <summary>
+            Role when fighting in groups
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.RiskTolerance">
+            <summary>
+            Willingness to take dangerous actions (0.0 = very cautious, 1.0 = reckless).
+            <br/>Affects ability selection and target prioritization.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.RetreatThreshold">
+            <summary>
+            Health percentage at which retreat is considered (0.0 = fight to death,
+            <br/>0.5 = retreat at half health, 1.0 = retreat at any damage).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferences.ProtectAllies">
+            <summary>
+            Whether to prioritize ally protection over self-preservation.
+            <br/>Affects target selection and positioning decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse">
+            <summary>
+            Combat preferences profile for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.CharacterId">
+            <summary>
+            Character these preferences belong to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.Preferences">
+            <summary>
+            The combat preferences values
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.Version">
+            <summary>
+            Preferences version number (increments on each evolution)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.CreatedAt">
+            <summary>
+            When these preferences were first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatPreferencesResponse.UpdatedAt">
+            <summary>
+            When these preferences were last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult">
+            <summary>
+            Result of recording a combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.CharacterId">
+            <summary>
+            Character who had the combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.ExperienceRecorded">
+            <summary>
+            Whether the experience was recorded successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.PreferencesEvolved">
+            <summary>
+            Whether any preferences changed as a result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.PreviousPreferences">
+            <summary>
+            Previous preferences (null if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.NewPreferences">
+            <summary>
+            New preferences after evolution (null if no change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.CombatEvolutionResult.NewVersion">
+            <summary>
+            New version number if evolved (null if no change)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest">
+            <summary>
+            Request payload for retrieving combat preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.GetCombatPreferencesRequest.CharacterId">
+            <summary>
+            ID of the character to get combat preferences for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest">
+            <summary>
+            Request payload for creating or updating combat preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest.CharacterId">
+            <summary>
+            ID of the character to set combat preferences for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.SetCombatPreferencesRequest.Preferences">
+            <summary>
+            The combat preferences to set
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest">
+            <summary>
+            Request payload for recording combat experience that may evolve preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.CharacterId">
+            <summary>
+            ID of the character who had the combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.ExperienceType">
+            <summary>
+            Category of combat experience
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.Intensity">
+            <summary>
+            How significant the combat experience was (0.0 to 1.0).
+            <br/>Higher intensity = higher probability of preference evolution.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.CharacterPersonality.EvolveCombatRequest.ContextData">
+            <summary>
+            Optional context for logging and debugging (e.g., enemy type,
+            <br/>ally count, location). Not used in evolution calculations.
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Documentation.DocumentCategory">
@@ -26359,6 +27929,432 @@
             Number of API endpoints registered by this service
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmEventCategory">
+            <summary>
+            Categories of historical events that realms can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmEventRole">
+            <summary>
+            How the realm participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreElementType">
+            <summary>
+            Types of lore elements. Each type represents a different aspect
+            <br/>of the realm's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation">
+            <summary>
+            Record of a realm's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Role">
+            <summary>
+            How the realm participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Impact">
+            <summary>
+            How significant this event was for the realm (0.0 to 1.0).
+            <br/>Affects behavior system weighting.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement">
+            <summary>
+            A machine-readable lore element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.ElementType">
+            <summary>
+            Category of this lore element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Key">
+            <summary>
+            Machine-readable key (e.g., "founding_year", "primary_export", "capital_city").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Value">
+            <summary>
+            Machine-readable value (e.g., "year_of_the_dragon", "iron_ore", "stormgate").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse">
+            <summary>
+            Complete lore data for a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.RealmId">
+            <summary>
+            ID of the realm this lore belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.Elements">
+            <summary>
+            All lore elements for this realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.CreatedAt">
+            <summary>
+            When this lore was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.UpdatedAt">
+            <summary>
+            When this lore was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest">
+            <summary>
+            Request payload for recording event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventName">
+            <summary>
+            Name of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventCategory">
+            <summary>
+            Category of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Role">
+            <summary>
+            How the realm participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Impact">
+            <summary>
+            How significant this event was for the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Metadata">
+            <summary>
+            Optional event-specific details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest">
+            <summary>
+            Request payload for getting a realm's event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.RealmId">
+            <summary>
+            ID of the realm to get participation for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.EventCategory">
+            <summary>
+            Filter by event category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.MinimumImpact">
+            <summary>
+            Filter by minimum impact
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest">
+            <summary>
+            Request payload for getting participants of an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.Role">
+            <summary>
+            Filter by participation role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest">
+            <summary>
+            Request payload for deleting a participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest.ParticipationId">
+            <summary>
+            ID of the participation record to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest">
+            <summary>
+            Request payload for getting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to get lore for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.ElementTypes">
+            <summary>
+            Filter by element types (null for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.MinimumStrength">
+            <summary>
+            Filter by minimum strength
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest">
+            <summary>
+            Request payload for setting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to set lore for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.Elements">
+            <summary>
+            Lore elements to set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.ReplaceExisting">
+            <summary>
+            If true, replace all existing elements.
+            <br/>If false, merge with existing (update matching type+key pairs).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest">
+            <summary>
+            Request payload for adding a single lore element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest.RealmId">
+            <summary>
+            ID of the realm to add element to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest.Element">
+            <summary>
+            The lore element to add
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest">
+            <summary>
+            Request payload for deleting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to delete lore for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest">
+            <summary>
+            Request payload for deleting all history data for a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest.RealmId">
+            <summary>
+            ID of the realm to delete history for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest">
+            <summary>
+            Request payload for generating history summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.RealmId">
+            <summary>
+            ID of the realm to summarize history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.MaxLorePoints">
+            <summary>
+            Maximum number of key lore points to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.MaxHistoricalEvents">
+            <summary>
+            Maximum number of major historical events to include
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse">
+            <summary>
+            Paginated list of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.Participations">
+            <summary>
+            List of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.TotalCount">
+            <summary>
+            Total number of matching records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.Page">
+            <summary>
+            Current page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.HasNextPage">
+            <summary>
+            Whether there are more results after this page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.HasPreviousPage">
+            <summary>
+            Whether there are results before this page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse">
+            <summary>
+            Result of deleting all history data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.RealmId">
+            <summary>
+            ID of the realm whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.LoreDeleted">
+            <summary>
+            Whether lore was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse">
+            <summary>
+            Generated text summaries for realm archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.RealmId">
+            <summary>
+            ID of the realm summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.KeyLorePoints">
+            <summary>
+            Key lore elements as text summaries.
+            <br/>e.g., ["Founded during Year of the Dragon", "Primary export: Iron ore"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.MajorHistoricalEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Realm.GetRealmRequest">
             <summary>
             Request to retrieve a specific realm by its unique identifier
@@ -26730,6 +28726,7 @@
             <br/>- ORGANIZATION: Guilds, companies, groups
             <br/>- FACTION: Political or social factions
             <br/>- REALM: Game realms/worlds
+            <br/>- SOUL: Immortal soul entity for reincarnation chains
             <br/>- OTHER: Catch-all for future entity types
             <br/>
             </summary>
