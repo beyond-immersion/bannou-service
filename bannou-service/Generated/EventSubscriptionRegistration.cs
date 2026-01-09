@@ -40,6 +40,10 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
         EventSubscriptionRegistry.Register<GameSessionCreatedEvent>("game-session.created");
         EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+        EventSubscriptionRegistry.Register<CharacterParticipationRecordedEvent>("character-history.participation.recorded");
+        EventSubscriptionRegistry.Register<CharacterBackstoryUpdatedEvent>("character-history.backstory.updated");
+        EventSubscriptionRegistry.Register<RealmParticipationRecordedEvent>("realm-history.participation.recorded");
+        EventSubscriptionRegistry.Register<RealmLoreUpdatedEvent>("realm-history.lore.updated");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

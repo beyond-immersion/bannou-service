@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Realm History Service Events
+  description: |
+    Event models for Realm History service RabbitMQ pub/sub via MassTransit.
+    These events are published when historical participation or lore data changes.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Realm History doesn't subscribe to external events
+  x-event-publications:
+    - topic: realm-history.participation.recorded
+      event: RealmParticipationRecordedEvent
+      description: Published when a realm's participation in a historical event is recorded
+    - topic: realm-history.participation.deleted
+      event: RealmParticipationDeletedEvent
+      description: Published when a realm's participation record is deleted
+    - topic: realm-history.lore.created
+      event: RealmLoreCreatedEvent
+      description: Published when a realm's lore is first created
+    - topic: realm-history.lore.updated
+      event: RealmLoreUpdatedEvent
+      description: Published when a realm's lore is updated
+    - topic: realm-history.lore.deleted
+      event: RealmLoreDeletedEvent
+      description: Published when a realm's lore is deleted
+    - topic: realm-history.deleted
+      event: RealmHistoryDeletedEvent
+      description: Published when all history data for a realm is deleted
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    RealmParticipationRecordedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a realm's participation in a historical event is recorded
+      required:
+        - eventId
+        - timestamp
+        - realmId
+        - historicalEventId
+        - participationId
+        - role
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that participated
+        historicalEventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the participation record
+        role:
+          type: string
+          description: Role the realm played in the event
+
+    RealmParticipationDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a realm's participation record is deleted
+      required:
+        - eventId
+        - timestamp
+        - participationId
+        - realmId
+        - historicalEventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the deleted participation record
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm
+        historicalEventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+
+    RealmLoreCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a realm's lore is first created
+      required:
+        - eventId
+        - timestamp
+        - realmId
+        - elementCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose lore was created
+        elementCount:
+          type: integer
+          description: Number of lore elements created
+
+    RealmLoreUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a realm's lore is updated
+      required:
+        - eventId
+        - timestamp
+        - realmId
+        - elementCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose lore was updated
+        elementCount:
+          type: integer
+          description: Current number of lore elements
+        replaceExisting:
+          type: boolean
+          nullable: true
+          description: Whether existing elements were replaced
+
+    RealmLoreDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a realm's lore is deleted
+      required:
+        - eventId
+        - timestamp
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose lore was deleted
+
+    RealmHistoryDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when all history data for a realm is deleted
+      required:
+        - eventId
+        - timestamp
+        - realmId
+        - participationsDeleted
+        - loreDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose history was deleted
+        participationsDeleted:
+          type: integer
+          description: Number of participation records deleted
+        loreDeleted:
+          type: boolean
+          description: Whether lore was deleted

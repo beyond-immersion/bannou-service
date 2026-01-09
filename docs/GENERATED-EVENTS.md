@@ -98,6 +98,17 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
 
+### Character History
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CharacterBackstoryCreatedEvent` | Lifecycle (Created) | `character-backstory.created` | Published when a character's backstory is first cr... |
+| `CharacterBackstoryDeletedEvent` | Lifecycle (Deleted) | `character-backstory.deleted` | Published when a character's backstory is deleted |
+| `CharacterBackstoryUpdatedEvent` | Lifecycle (Updated) | `character-backstory.updated` | Published when a character's backstory is updated |
+| `CharacterHistoryDeletedEvent` | Lifecycle (Deleted) | `character-history.deleted` | Published when all history data for a character is... |
+| `CharacterParticipationDeletedEvent` | Lifecycle (Deleted) | `character-participation.deleted` | Published when a character's participation record ... |
+| `CharacterParticipationRecordedEvent` | Custom | `character-participation-recorded` | Published when a character's participation in a hi... |
+
 ### Common (client)
 
 | Event | Type | Likely Topic | Description |
@@ -192,6 +203,17 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
+
+### Realm History
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `RealmHistoryDeletedEvent` | Lifecycle (Deleted) | `realm-history.deleted` | Published when all history data for a realm is del... |
+| `RealmLoreCreatedEvent` | Lifecycle (Created) | `realm-lore.created` | Published when a realm's lore is first created |
+| `RealmLoreDeletedEvent` | Lifecycle (Deleted) | `realm-lore.deleted` | Published when a realm's lore is deleted |
+| `RealmLoreUpdatedEvent` | Lifecycle (Updated) | `realm-lore.updated` | Published when a realm's lore is updated |
+| `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
+| `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
 
 ### Species
 

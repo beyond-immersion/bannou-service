@@ -32,6 +32,7 @@ Des... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
+| [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
@@ -828,6 +829,39 @@ Realm management service for Arcadia game world.
 
 ---
 
+## Realm History {#realm-history}
+
+**Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml`
+
+Historical event participation and lore management for realms.
+
+### Historical Events
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/delete-participation` | Delete a participation record | admin |
+| `POST` | `/realm-history/get-event-participants` | Get all realms that participated in a historical event | user |
+| `POST` | `/realm-history/get-participation` | Get all historical events a realm participated in | user |
+| `POST` | `/realm-history/record-participation` | Record realm participation in a historical event | service |
+
+### History Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/delete-all` | Delete all history data for a realm | admin |
+| `POST` | `/realm-history/summarize` | Generate text summaries for realm archival | service |
+
+### Lore
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/add-lore-element` | Add a single lore element | admin |
+| `POST` | `/realm-history/delete-lore` | Delete all lore for a realm | admin |
+| `POST` | `/realm-history/get-lore` | Get machine-readable lore elements for behavior system | user |
+| `POST` | `/realm-history/set-lore` | Set lore elements for a realm | admin |
+
+---
+
 ## Relationship {#relationship}
 
 **Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml`
@@ -1032,8 +1066,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 29
-- **Total endpoints**: 312
+- **Total services**: 30
+- **Total endpoints**: 322
 
 ---
 

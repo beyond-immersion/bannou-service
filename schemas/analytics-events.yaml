@@ -23,6 +23,20 @@ info:
     - topic: game-session.deleted
       event: GameSessionDeletedEvent
       handler: HandleGameSessionDeleted
+    # Character history events for historical analytics
+    - topic: character-history.participation.recorded
+      event: CharacterParticipationRecordedEvent
+      handler: HandleCharacterParticipationRecorded
+    - topic: character-history.backstory.updated
+      event: CharacterBackstoryUpdatedEvent
+      handler: HandleCharacterBackstoryUpdated
+    # Realm history events for historical analytics
+    - topic: realm-history.participation.recorded
+      event: RealmParticipationRecordedEvent
+      handler: HandleRealmParticipationRecorded
+    - topic: realm-history.lore.updated
+      event: RealmLoreUpdatedEvent
+      handler: HandleRealmLoreUpdated
   x-event-publications:
     # Published when a score/stat is updated (leaderboards and achievements subscribe)
     - topic: analytics.score.updated

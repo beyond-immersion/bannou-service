@@ -2648,6 +2648,176 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent">
+            <summary>
+            Published when a character's participation in a historical event is recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.CharacterId">
+            <summary>
+            ID of the character that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.ParticipationId">
+            <summary>
+            ID of the participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationRecordedEvent.Role">
+            <summary>
+            Role the character played in the event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent">
+            <summary>
+            Published when a character's participation record is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.ParticipationId">
+            <summary>
+            ID of the deleted participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.CharacterId">
+            <summary>
+            ID of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterParticipationDeletedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent">
+            <summary>
+            Published when a character's backstory is first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryCreatedEvent.ElementCount">
+            <summary>
+            Number of backstory elements created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent">
+            <summary>
+            Published when a character's backstory is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.ElementCount">
+            <summary>
+            Current number of backstory elements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryUpdatedEvent.ReplaceExisting">
+            <summary>
+            Whether existing elements were replaced
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent">
+            <summary>
+            Published when a character's backstory is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterBackstoryDeletedEvent.CharacterId">
+            <summary>
+            ID of the character whose backstory was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent">
+            <summary>
+            Published when all history data for a character is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.CharacterId">
+            <summary>
+            ID of the character whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CharacterHistoryDeletedEvent.BackstoryDeleted">
+            <summary>
+            Whether backstory was deleted
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CharacterCreatedEvent">
             <summary>
             Published to character.created when a character is created
@@ -4876,6 +5046,176 @@
         <member name="P:BeyondImmersion.BannouService.Events.SessionStateChangeEvent.Metadata">
             <summary>
             Additional context about the state change
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent">
+            <summary>
+            Published when a realm's participation in a historical event is recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.ParticipationId">
+            <summary>
+            ID of the participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationRecordedEvent.Role">
+            <summary>
+            Role the realm played in the event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent">
+            <summary>
+            Published when a realm's participation record is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.ParticipationId">
+            <summary>
+            ID of the deleted participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.RealmId">
+            <summary>
+            ID of the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmParticipationDeletedEvent.HistoricalEventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent">
+            <summary>
+            Published when a realm's lore is first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreCreatedEvent.ElementCount">
+            <summary>
+            Number of lore elements created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent">
+            <summary>
+            Published when a realm's lore is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.ElementCount">
+            <summary>
+            Current number of lore elements
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreUpdatedEvent.ReplaceExisting">
+            <summary>
+            Whether existing elements were replaced
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent">
+            <summary>
+            Published when a realm's lore is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmLoreDeletedEvent.RealmId">
+            <summary>
+            ID of the realm whose lore was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent">
+            <summary>
+            Published when all history data for a realm is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.Timestamp">
+            <summary>
+            When this event was published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.RealmId">
+            <summary>
+            ID of the realm whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.RealmHistoryDeletedEvent.LoreDeleted">
+            <summary>
+            Whether lore was deleted
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.RealmCreatedEvent">
@@ -31794,6 +32134,814 @@
         <member name="P:BeyondImmersion.BannouService.Realm.SeedRealmsResponse.Errors">
             <summary>
             List of error messages for realms that failed to seed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient">
+            <summary>
+            Client interface for the RealmHistory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.RecordRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record realm participation in a historical event
+            </summary>
+            <remarks>
+            Records that a realm participated in a historical event. Events are
+            <br/>identified by eventId (typically managed by a game-specific event system).
+            <br/>The impact level affects how strongly this event influences behavior.
+            </remarks>
+            <returns>Participation recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.GetRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all historical events a realm participated in
+            </summary>
+            <remarks>
+            Retrieves all historical event participation records for a realm.
+            <br/>Supports filtering by event category and minimum impact.
+            </remarks>
+            <returns>Participation records retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.GetRealmEventParticipantsAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all realms that participated in a historical event
+            </summary>
+            <remarks>
+            Retrieves all realms that participated in a specific historical event.
+            <br/>Useful for generating event summaries or finding related realms.
+            </remarks>
+            <returns>Participants retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.DeleteRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a participation record
+            </summary>
+            <remarks>
+            Removes a specific participation record. Used during realm deletion
+            <br/>or to correct erroneous records.
+            </remarks>
+            <returns>Participation deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.GetRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get machine-readable lore elements for behavior system
+            </summary>
+            <remarks>
+            Retrieves structured lore elements for a realm. These elements
+            <br/>are machine-readable key-value pairs used by the behavior system for
+            <br/>decision-making, not narrative text for players.
+            </remarks>
+            <returns>Lore retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.SetRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set lore elements for a realm
+            </summary>
+            <remarks>
+            Creates or updates lore elements for a realm. Can either replace
+            <br/>all existing elements or merge with them based on the replaceExisting flag.
+            </remarks>
+            <returns>Lore saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.AddRealmLoreElementAsync(BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add a single lore element
+            </summary>
+            <remarks>
+            Adds a single lore element to a realm's existing lore.
+            <br/>If an element with the same type and key exists, it will be updated.
+            </remarks>
+            <returns>Element added successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.DeleteRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all lore for a realm
+            </summary>
+            <remarks>
+            Removes all lore elements for a realm. Used during realm
+            <br/>deletion.
+            </remarks>
+            <returns>Lore deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.DeleteAllRealmHistoryAsync(BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all history data for a realm
+            </summary>
+            <remarks>
+            Removes all history data (participation records and lore) for a
+            <br/>realm. Used during realm deletion.
+            </remarks>
+            <returns>All history deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient.SummarizeRealmHistoryAsync(BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate text summaries for realm archival
+            </summary>
+            <remarks>
+            Generates text summaries of a realm's lore and historical
+            <br/>participation.
+            </remarks>
+            <returns>Summaries generated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient">
+            <summary>
+            Client implementation for the RealmHistory service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.RecordRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Record realm participation in a historical event
+            </summary>
+            <remarks>
+            Records that a realm participated in a historical event. Events are
+            <br/>identified by eventId (typically managed by a game-specific event system).
+            <br/>The impact level affects how strongly this event influences behavior.
+            </remarks>
+            <returns>Participation recorded successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.GetRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all historical events a realm participated in
+            </summary>
+            <remarks>
+            Retrieves all historical event participation records for a realm.
+            <br/>Supports filtering by event category and minimum impact.
+            </remarks>
+            <returns>Participation records retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.GetRealmEventParticipantsAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get all realms that participated in a historical event
+            </summary>
+            <remarks>
+            Retrieves all realms that participated in a specific historical event.
+            <br/>Useful for generating event summaries or finding related realms.
+            </remarks>
+            <returns>Participants retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.DeleteRealmParticipationAsync(BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a participation record
+            </summary>
+            <remarks>
+            Removes a specific participation record. Used during realm deletion
+            <br/>or to correct erroneous records.
+            </remarks>
+            <returns>Participation deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.GetRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get machine-readable lore elements for behavior system
+            </summary>
+            <remarks>
+            Retrieves structured lore elements for a realm. These elements
+            <br/>are machine-readable key-value pairs used by the behavior system for
+            <br/>decision-making, not narrative text for players.
+            </remarks>
+            <returns>Lore retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.SetRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Set lore elements for a realm
+            </summary>
+            <remarks>
+            Creates or updates lore elements for a realm. Can either replace
+            <br/>all existing elements or merge with them based on the replaceExisting flag.
+            </remarks>
+            <returns>Lore saved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.AddRealmLoreElementAsync(BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Add a single lore element
+            </summary>
+            <remarks>
+            Adds a single lore element to a realm's existing lore.
+            <br/>If an element with the same type and key exists, it will be updated.
+            </remarks>
+            <returns>Element added successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.DeleteRealmLoreAsync(BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all lore for a realm
+            </summary>
+            <remarks>
+            Removes all lore elements for a realm. Used during realm
+            <br/>deletion.
+            </remarks>
+            <returns>Lore deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.DeleteAllRealmHistoryAsync(BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete all history data for a realm
+            </summary>
+            <remarks>
+            Removes all history data (participation records and lore) for a
+            <br/>realm. Used during realm deletion.
+            </remarks>
+            <returns>All history deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.SummarizeRealmHistoryAsync(BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Generate text summaries for realm archival
+            </summary>
+            <remarks>
+            Generates text summaries of a realm's lore and historical
+            <br/>participation.
+            </remarks>
+            <returns>Summaries generated</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RealmHistory.RealmHistoryClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmEventCategory">
+            <summary>
+            Categories of historical events that realms can participate in
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmEventRole">
+            <summary>
+            How the realm participated in the historical event
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreElementType">
+            <summary>
+            Types of lore elements. Each type represents a different aspect
+            <br/>of the realm's background that influences behavior.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation">
+            <summary>
+            Record of a realm's participation in a historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.ParticipationId">
+            <summary>
+            Unique ID for this participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventName">
+            <summary>
+            Name of the event (for display and summarization)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventCategory">
+            <summary>
+            Category of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Role">
+            <summary>
+            How the realm participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Impact">
+            <summary>
+            How significant this event was for the realm (0.0 to 1.0).
+            <br/>Affects behavior system weighting.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.Metadata">
+            <summary>
+            Event-specific details for behavior decisions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistoricalParticipation.CreatedAt">
+            <summary>
+            When this record was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement">
+            <summary>
+            A machine-readable lore element for behavior system consumption
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.ElementType">
+            <summary>
+            Category of this lore element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Key">
+            <summary>
+            Machine-readable key (e.g., "founding_year", "primary_export", "capital_city").
+            <br/>Used by behavior system to query specific aspects.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Value">
+            <summary>
+            Machine-readable value (e.g., "year_of_the_dragon", "iron_ore", "stormgate").
+            <br/>Referenced in behavior rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.Strength">
+            <summary>
+            How strongly this element affects behavior (0.0 to 1.0).
+            <br/>Higher strength = greater influence on decisions.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.RelatedEntityId">
+            <summary>
+            Optional related entity (location, organization, character)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreElement.RelatedEntityType">
+            <summary>
+            Type of the related entity (if any)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse">
+            <summary>
+            Complete lore data for a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.RealmId">
+            <summary>
+            ID of the realm this lore belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.Elements">
+            <summary>
+            All lore elements for this realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.CreatedAt">
+            <summary>
+            When this lore was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmLoreResponse.UpdatedAt">
+            <summary>
+            When this lore was last modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest">
+            <summary>
+            Request payload for recording event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.RealmId">
+            <summary>
+            ID of the realm that participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventName">
+            <summary>
+            Name of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventCategory">
+            <summary>
+            Category of the event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Role">
+            <summary>
+            How the realm participated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.EventDate">
+            <summary>
+            In-game date when the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Impact">
+            <summary>
+            How significant this event was for the realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RecordRealmParticipationRequest.Metadata">
+            <summary>
+            Optional event-specific details
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest">
+            <summary>
+            Request payload for getting a realm's event participation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.RealmId">
+            <summary>
+            ID of the realm to get participation for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.EventCategory">
+            <summary>
+            Filter by event category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.MinimumImpact">
+            <summary>
+            Filter by minimum impact
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmParticipationRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest">
+            <summary>
+            Request payload for getting participants of an event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.EventId">
+            <summary>
+            ID of the historical event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.Role">
+            <summary>
+            Filter by participation role
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.Page">
+            <summary>
+            Page number for pagination (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmEventParticipantsRequest.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest">
+            <summary>
+            Request payload for deleting a participation record
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteRealmParticipationRequest.ParticipationId">
+            <summary>
+            ID of the participation record to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest">
+            <summary>
+            Request payload for getting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to get lore for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.ElementTypes">
+            <summary>
+            Filter by element types (null for all)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.GetRealmLoreRequest.MinimumStrength">
+            <summary>
+            Filter by minimum strength
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest">
+            <summary>
+            Request payload for setting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to set lore for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.Elements">
+            <summary>
+            Lore elements to set
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SetRealmLoreRequest.ReplaceExisting">
+            <summary>
+            If true, replace all existing elements.
+            <br/>If false, merge with existing (update matching type+key pairs).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest">
+            <summary>
+            Request payload for adding a single lore element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest.RealmId">
+            <summary>
+            ID of the realm to add element to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.AddRealmLoreElementRequest.Element">
+            <summary>
+            The lore element to add
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest">
+            <summary>
+            Request payload for deleting a realm's lore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteRealmLoreRequest.RealmId">
+            <summary>
+            ID of the realm to delete lore for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest">
+            <summary>
+            Request payload for deleting all history data for a realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryRequest.RealmId">
+            <summary>
+            ID of the realm to delete history for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest">
+            <summary>
+            Request payload for generating history summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.RealmId">
+            <summary>
+            ID of the realm to summarize history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.MaxLorePoints">
+            <summary>
+            Maximum number of key lore points to include
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.SummarizeRealmHistoryRequest.MaxHistoricalEvents">
+            <summary>
+            Maximum number of major historical events to include
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse">
+            <summary>
+            Paginated list of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.Participations">
+            <summary>
+            List of participation records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.TotalCount">
+            <summary>
+            Total number of matching records
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.Page">
+            <summary>
+            Current page number (1-based)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.PageSize">
+            <summary>
+            Number of results per page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.HasNextPage">
+            <summary>
+            Whether there are more results after this page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmParticipationListResponse.HasPreviousPage">
+            <summary>
+            Whether there are results before this page
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse">
+            <summary>
+            Result of deleting all history data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.RealmId">
+            <summary>
+            ID of the realm whose history was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.ParticipationsDeleted">
+            <summary>
+            Number of participation records deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.DeleteAllRealmHistoryResponse.LoreDeleted">
+            <summary>
+            Whether lore was deleted
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse">
+            <summary>
+            Generated text summaries for realm archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.RealmId">
+            <summary>
+            ID of the realm summarized
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.KeyLorePoints">
+            <summary>
+            Key lore elements as text summaries.
+            <br/>e.g., ["Founded during Year of the Dragon", "Primary export: Iron ore"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.RealmHistory.RealmHistorySummaryResponse.MajorHistoricalEvents">
+            <summary>
+            Major historical events as text summaries.
+            <br/>e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Relationship.IRelationshipClient">
