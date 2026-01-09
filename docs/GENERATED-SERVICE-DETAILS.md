@@ -16,7 +16,9 @@ This document provides a compact reference of all Bannou services and their API 
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
+| [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
+| [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
+| [Character Personality](#character-personality) | 1.0.0 | 8 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
@@ -305,11 +307,20 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 Character management service for Arcadia game world.
 
+### Character Compression
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character/check-references` | Check reference count for cleanup eligibility | admin |
+| `POST` | `/character/compress` | Compress a dead character to archive format | admin |
+| `POST` | `/character/get-archive` | Get compressed archive data for a character | user |
+
 ### Character Lookup
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/character/by-realm` | Get all characters in a realm (primary query pattern) | user |
+| `POST` | `/character/get-enriched` | Get character with optional related data (personality, backstory, family) | user |
 
 ### Character Management
 
@@ -320,6 +331,70 @@ Character management service for Arcadia game world.
 | `POST` | `/character/get` | Get character by ID | user |
 | `POST` | `/character/list` | List characters with filtering | user |
 | `POST` | `/character/update` | Update character | admin |
+
+---
+
+## Character History {#character-history}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml`
+
+Historical event participation and backstory management for characters.
+
+### Backstory
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/add-backstory-element` | Add a single backstory element | admin |
+| `POST` | `/character-history/delete-backstory` | Delete all backstory for a character | admin |
+| `POST` | `/character-history/get-backstory` | Get machine-readable backstory elements for behavior system | user |
+| `POST` | `/character-history/set-backstory` | Set backstory elements for a character | admin |
+
+### Historical Events
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/delete-participation` | Delete a participation record | admin |
+| `POST` | `/character-history/get-event-participants` | Get all characters who participated in a historical event | user |
+| `POST` | `/character-history/get-participation` | Get all historical events a character participated in | user |
+| `POST` | `/character-history/record-participation` | Record character participation in a historical event | service |
+
+### History Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/delete-all` | Delete all history data for a character | admin |
+| `POST` | `/character-history/summarize` | Generate text summaries for character compression | service |
+
+---
+
+## Character Personality {#character-personality}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml`
+
+Machine-readable personality traits for NPC behavior decisions.
+
+### Combat Preferences
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | service |
+| `POST` | `/character-personality/get-combat` | Get combat preferences for a character | user |
+| `POST` | `/character-personality/set-combat` | Create or update combat preferences for a character | admin |
+
+### Personality Evolution
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/evolve` | Record an experience that may evolve personality | service |
+
+### Personality Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/batch-get` | Get personalities for multiple characters | service |
+| `POST` | `/character-personality/delete` | Delete personality for a character | admin |
+| `POST` | `/character-personality/get` | Get personality for a character | user |
+| `POST` | `/character-personality/set` | Create or update personality for a character | admin |
 
 ---
 
@@ -957,8 +1032,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 27
-- **Total endpoints**: 290
+- **Total services**: 29
+- **Total endpoints**: 312
 
 ---
 
