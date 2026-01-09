@@ -877,19 +877,114 @@ Actors execute ABML documents via the behavior service:
 - **GOAP** planner for goal-directed action selection
 - **Cognition handlers** for perception processing
 
-### 9.4 lib-asset Integration
+### 9.4 Behavior Storage and Distribution
 
-Compiled behaviors are stored and distributed via lib-asset:
+Behaviors follow the **Asset Service pattern** - the same architecture used for textures, models, and other game assets. Large behavior files are never transferred directly through the system; instead, presigned URLs provide direct access to MinIO/S3 storage.
+
+#### Compilation and Storage Flow
 
 ```
-Actor Template → behaviorRef: "asset://behaviors/npc-brain-v1"
-                                       │
-                                       ▼
-                              lib-asset Storage
-                                       │
-                                       ▼ (pre-signed URL)
-                              Game Server Download
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. COMPILE                                                      │
+│    POST /behavior/compile                                       │
+│    Body: { yaml: "behavior_version: 1\nname: npc-brain\n..." }  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. BEHAVIOR SERVICE                                             │
+│    DocumentParser → SemanticAnalyzer → BytecodeEmitter          │
+│    Output: Binary bytecode (.bbm format)                        │
+│    BehaviorId: Deterministic hash of content                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+│ ASSET SERVICE    │ │ STATE STORE      │ │ MESSAGE BUS      │
+│                  │ │                  │ │                  │
+│ Presigned upload │ │ behavior-        │ │ behavior.created │
+│ to MinIO/S3      │ │ metadata:{id}    │ │ behavior.updated │
+│                  │ │                  │ │                  │
+│ Key: behaviors/  │ │ - behaviorId     │ │                  │
+│ {id}.bbm         │ │ - assetId        │ │                  │
+│                  │ │ - name, category │ │                  │
+│                  │ │ - bytecodeSize   │ │                  │
+└──────────────────┘ └──────────────────┘ └──────────────────┘
 ```
+
+#### Retrieval Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Game Server / Actor                                             │
+│ POST /behavior/cache/get { behaviorId: "abc123..." }            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ BEHAVIOR SERVICE                                                │
+│ 1. Lookup metadata in state store                               │
+│ 2. Request presigned download URL from Asset Service            │
+│ 3. Return URL (or inline bytecode for small behaviors)          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ RESPONSE                                                        │
+│ {                                                               │
+│   "behaviorId": "abc123...",                                    │
+│   "downloadUrl": "https://minio:9000/...?X-Amz-Signature=...",  │
+│   "bytecodeSize": 4096,                                         │
+│   "expiresAt": "2026-01-08T21:15:00Z"                           │
+│ }                                                               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Game Server downloads directly from MinIO (bypasses services)   │
+│ Caches locally via RemoteAssetCache<T> with CRC verification    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Bundle Grouping
+
+Related behaviors can be grouped into bundles for efficient bulk download:
+
+```csharp
+// Compile with bundle assignment
+POST /behavior/compile
+{
+  "yaml": "...",
+  "bundleId": "merchant-behaviors-v1"
+}
+
+// Later: download entire bundle
+POST /behavior/bundle/get
+{
+  "bundleId": "merchant-behaviors-v1"
+}
+// Returns list of behaviorIds + combined download URL
+```
+
+#### Key Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `lib-behavior/BehaviorService.cs:414-471` | Asset Service upload integration |
+| `lib-behavior/BehaviorBundleManager.cs` | Bundle grouping and management |
+| `lib-actor/Caching/BehaviorDocumentCache.cs` | YAML document caching for actors |
+| `Bannou.Client.SDK/Cache/RemoteAssetCache.cs` | Client-side caching with CRC |
+
+#### Actor Template Reference
+
+```yaml
+category: npc-brain
+behaviorRef: "asset://behaviors/npc-brain-v1"
+autoSaveIntervalSeconds: 30
+```
+
+The `behaviorRef` format `asset://behaviors/{behaviorId}` is resolved by the actor runtime to fetch the compiled bytecode via the flow above.
 
 ### 9.5 lib-orchestrator Integration
 
