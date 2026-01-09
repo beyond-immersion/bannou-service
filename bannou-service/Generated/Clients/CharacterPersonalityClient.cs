@@ -151,6 +151,19 @@ public partial interface ICharacterPersonalityClient
     /// <returns>Combat experience recorded and evaluated</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CombatEvolutionResult> EvolveCombatPreferencesAsync(EvolveCombatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete combat preferences for a character
+    /// </summary>
+    /// <remarks>
+    /// Removes the combat preferences for a character. Typically called during
+    /// <br/>character compression or deletion.
+    /// </remarks>
+    /// <returns>Combat preferences deleted successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -992,6 +1005,90 @@ public partial class CharacterPersonalityClient : ICharacterPersonalityClient, B
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("Character combat preferences not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete combat preferences for a character
+    /// </summary>
+    /// <remarks>
+    /// Removes the combat preferences for a character. Typically called during
+    /// <br/>character compression or deletion.
+    /// </remarks>
+    /// <returns>Combat preferences deleted successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-personality/delete-combat"
+        urlBuilder_.Append("character-personality/delete-combat");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("No combat preferences found for this character", status_, responseText_, headers_, null);
                     }
                     else
                     {

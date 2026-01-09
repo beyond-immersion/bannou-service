@@ -752,6 +752,43 @@ paths:
         but focused on combat-specific traits.\\n\\nCombat experiences can shift style (e.g., repeated losses may make a\\
         ncharacter more defensive), adjust risk tolerance, or change retreat thresholds.\\n\",\n    \"tags\": [\n        \"\
         Combat Preferences\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"evolveCombatPreferences\"\n}"
+
+  /character-personality/delete-combat:
+    post:
+      summary: Delete combat preferences for a character
+      operationId: deleteCombatPreferences
+      tags:
+      - Combat Preferences
+      description: |
+        Removes the combat preferences for a character. Typically called during
+        character compression or deletion.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCombatPreferencesRequest'
+      responses:
+        '200':
+          description: Combat preferences deleted successfully
+        '404':
+          description: No combat preferences found for this character
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCombatPreferencesRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteCombatPreferencesRequest\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Request payload for deleting a character's combat preferences\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the character to delete combat preferences for\"\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete combat preferences for a character\",\n    \"description\": \"Removes
+        the combat preferences for a character. Typically called during\\ncharacter compression or deletion.\\n\",\n    \"\
+        tags\": [\n        \"Combat Preferences\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCombatPreferences\"\
+        \n}"
 components:
   schemas:
     # Enums
@@ -1033,6 +1070,18 @@ components:
           type: string
           format: uuid
           description: ID of the character to delete personality for
+
+    DeleteCombatPreferencesRequest:
+      type: object
+      description: Request payload for deleting a character's combat preferences
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to delete combat preferences for
 
     # Response Models
     BatchPersonalityResponse:

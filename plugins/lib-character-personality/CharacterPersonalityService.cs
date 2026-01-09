@@ -34,6 +34,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private const string COMBAT_PREFERENCES_CREATED_TOPIC = "combat-preferences.created";
     private const string COMBAT_PREFERENCES_UPDATED_TOPIC = "combat-preferences.updated";
     private const string COMBAT_PREFERENCES_EVOLVED_TOPIC = "combat-preferences.evolved";
+    private const string COMBAT_PREFERENCES_DELETED_TOPIC = "combat-preferences.deleted";
 
     // Evolution probability constants
     private const float BASE_EVOLUTION_PROBABILITY = 0.15f; // 15% base chance
@@ -491,6 +492,54 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Deletes combat preferences for a character.
+    /// </summary>
+    public async Task<StatusCodes> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Deleting combat preferences for character {CharacterId}", body.CharacterId);
+
+        try
+        {
+            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(PERSONALITY_STATE_STORE);
+            var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+            var existing = await store.GetAsync(key, cancellationToken);
+
+            if (existing == null)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            await store.DeleteAsync(key, cancellationToken);
+
+            // Publish deletion event using typed events per IMPLEMENTATION TENETS
+            await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CharacterId = body.CharacterId
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Combat preferences deleted for character {CharacterId}", body.CharacterId);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting combat preferences for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-personality",
+                "DeleteCombatPreferences",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/character-personality/delete-combat",
+                details: new { body.CharacterId },
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCodes.InternalServerError;
         }
     }
 

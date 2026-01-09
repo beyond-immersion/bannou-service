@@ -251,7 +251,8 @@ public class OptionsEvaluatorTests
 
         // Assert
         var option = result["combat"].Options[0];
-        Assert.Equal(2, option.Requirements.Count);
+        Assert.NotNull(option.Requirements);
+        Assert.Equal(2, option.Requirements!.Count);
         Assert.Contains("has_mana", option.Requirements);
         Assert.Contains("level_10", option.Requirements);
     }
@@ -274,7 +275,8 @@ public class OptionsEvaluatorTests
 
         // Assert
         var option = result["combat"].Options[0];
-        Assert.Equal(3, option.Tags.Count);
+        Assert.NotNull(option.Tags);
+        Assert.Equal(3, option.Tags!.Count);
         Assert.Contains("melee", option.Tags);
         Assert.Contains("offensive", option.Tags);
         Assert.Contains("physical", option.Tags);

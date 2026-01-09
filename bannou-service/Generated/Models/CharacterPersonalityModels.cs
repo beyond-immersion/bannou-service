@@ -490,6 +490,23 @@ public partial class DeletePersonalityRequest
 }
 
 /// <summary>
+/// Request payload for deleting a character's combat preferences
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteCombatPreferencesRequest
+{
+
+    /// <summary>
+    /// ID of the character to delete combat preferences for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Response containing personalities for multiple characters
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

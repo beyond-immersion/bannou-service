@@ -185,6 +185,21 @@ public static class CharacterPersonalityPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-personality/delete-combat",
+            Method = ServiceEndpointMethod.POST,
+            Description = "deleteCombatPreferences",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

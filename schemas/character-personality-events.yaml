@@ -31,6 +31,9 @@ info:
     - topic: combat-preferences.evolved
       event: CombatPreferencesEvolvedEvent
       description: Published when a character's combat preferences evolve due to combat experience
+    - topic: combat-preferences.deleted
+      event: CombatPreferencesDeletedEvent
+      description: Published when a character's combat preferences are deleted
 
 paths: {}  # Events don't have HTTP paths
 
@@ -237,3 +240,25 @@ components:
         version:
           type: integer
           description: New version number of the combat preferences data
+
+    CombatPreferencesDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's combat preferences are deleted
+      required:
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose combat preferences were deleted

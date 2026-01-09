@@ -33,7 +33,10 @@ This document tracks events that need to be added to complete the eventing cover
 | `BehaviorCompilationFailedEvent` | `behavior.compilation-failed` | When ABML compilation fails (for monitoring/alerting) | P2 |
 | `BehaviorBundleCreatedEvent` | `behavior.bundle.created` | When a behavior bundle is created | P3 |
 | `BehaviorBundleUpdatedEvent` | `behavior.bundle.updated` | When bundle metadata changes | P3 |
+| `BehaviorBundleDeletedEvent` | `behavior.bundle.deleted` | When a behavior bundle is deleted | P3 |
 | `GoapPlanGeneratedEvent` | `behavior.goap.plan-generated` | When GOAP planner generates new plan | P3 |
+
+> **Note**: BehaviorBundle events (created/updated/deleted) could be implemented as x-lifecycle events for consistency.
 
 ---
 
@@ -60,7 +63,7 @@ This document tracks events that need to be added to complete the eventing cover
 
 ## Implementation Status
 
-- [ ] CombatPreferencesDeletedEvent (lib-character-personality)
+- [x] CombatPreferencesDeletedEvent (lib-character-personality)
 - [ ] ActorInstanceStartedEvent (lib-actor)
 - [ ] ActorInstancePausedEvent (lib-actor)
 - [ ] ActorInstanceResumedEvent (lib-actor)
@@ -71,6 +74,7 @@ This document tracks events that need to be added to complete the eventing cover
 - [ ] BehaviorCompilationFailedEvent (lib-behavior)
 - [ ] BehaviorBundleCreatedEvent (lib-behavior)
 - [ ] BehaviorBundleUpdatedEvent (lib-behavior)
+- [ ] BehaviorBundleDeletedEvent (lib-behavior)
 - [ ] GoapPlanGeneratedEvent (lib-behavior)
 - [ ] MappingAuthorityGrantedEvent (lib-mapping)
 - [ ] MappingAuthorityReleasedEvent (lib-mapping)

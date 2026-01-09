@@ -69,4 +69,9 @@ public partial interface ICharacterPersonalityService : IBannouService
         /// </summary>
         Task<(StatusCodes, CombatEvolutionResult?)> EvolveCombatPreferencesAsync(EvolveCombatRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// DeleteCombatPreferences operation
+        /// </summary>
+        Task<StatusCodes> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

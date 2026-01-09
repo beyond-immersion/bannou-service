@@ -325,6 +325,39 @@ public partial class CombatPreferencesEvolvedEvent
 
 }
 
+/// <summary>
+/// Published when a character's combat preferences are deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CombatPreferencesDeletedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this event was published
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the character whose combat preferences were deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

@@ -144,6 +144,19 @@ public interface ICharacterPersonalityController : BeyondImmersion.BannouService
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CombatEvolutionResult>> EvolveCombatPreferencesAsync(EvolveCombatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Delete combat preferences for a character
+    /// </summary>
+
+    /// <remarks>
+    /// Removes the combat preferences for a character. Typically called during
+    /// <br/>character compression or deletion.
+    /// </remarks>
+
+    /// <returns>Combat preferences deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCombatPreferencesAsync(DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -341,6 +354,23 @@ public partial class CharacterPersonalityController : Microsoft.AspNetCore.Mvc.C
 
         var (statusCode, result) = await _implementation.EvolveCombatPreferencesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete combat preferences for a character
+    /// </summary>
+    /// <remarks>
+    /// Removes the combat preferences for a character. Typically called during
+    /// <br/>character compression or deletion.
+    /// </remarks>
+    /// <returns>Combat preferences deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-personality/delete-combat")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteCombatPreferences([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteCombatPreferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.DeleteCombatPreferencesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
 
@@ -1997,6 +2027,90 @@ public partial class CharacterPersonalityController : Microsoft.AspNetCore.Mvc.C
             _EvolveCombatPreferences_Info,
             _EvolveCombatPreferences_RequestSchema,
             _EvolveCombatPreferences_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteCombatPreferences
+
+    private static readonly string _DeleteCombatPreferences_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteCombatPreferencesRequest",
+    "$defs": {
+        "DeleteCombatPreferencesRequest": {
+            "type": "object",
+            "description": "Request payload for deleting a character's combat preferences",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to delete combat preferences for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteCombatPreferences_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DeleteCombatPreferences_Info = """
+{
+    "summary": "Delete combat preferences for a character",
+    "description": "Removes the combat preferences for a character. Typically called during\ncharacter compression or deletion.\n",
+    "tags": [
+        "Combat Preferences"
+    ],
+    "deprecated": false,
+    "operationId": "deleteCombatPreferences"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteCombatPreferences</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character-personality/delete-combat/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCombatPreferences_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterPersonality",
+            "Post",
+            "character-personality/delete-combat",
+            _DeleteCombatPreferences_Info));
+
+    /// <summary>Returns request schema for DeleteCombatPreferences</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character-personality/delete-combat/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCombatPreferences_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "Post",
+            "character-personality/delete-combat",
+            "request-schema",
+            _DeleteCombatPreferences_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteCombatPreferences</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character-personality/delete-combat/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCombatPreferences_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterPersonality",
+            "Post",
+            "character-personality/delete-combat",
+            "response-schema",
+            _DeleteCombatPreferences_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteCombatPreferences</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("character-personality/delete-combat/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteCombatPreferences_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterPersonality",
+            "Post",
+            "character-personality/delete-combat",
+            _DeleteCombatPreferences_Info,
+            _DeleteCombatPreferences_RequestSchema,
+            _DeleteCombatPreferences_ResponseSchema));
 
     #endregion
 
