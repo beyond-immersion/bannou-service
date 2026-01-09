@@ -167,10 +167,18 @@ public sealed class StateSync : IStateSync
                 break;
 
             case HandoffStyle.Blend:
-                // Blend interpolation not yet implemented - sync final state immediately
-                // The blend animation would happen on the game client side
+                // INTENTIONAL DESIGN: Blend handoff syncs the TARGET state to the registry.
+                // The actual animation blending is a game client (Stride) responsibility.
+                //
+                // Why server-side blend would be wrong:
+                // - Server doesn't render animations or know current visual state
+                // - Interpolating at 60fps from server would have impossible latency
+                // - Animation systems are game-engine specific (Stride, Unity, etc.)
+                //
+                // The HandoffStyle.Blend flag signals to the game client:
+                // "Smoothly interpolate to this final state" vs Instant's "snap immediately"
                 _logger?.LogDebug(
-                    "Blend handoff for entity {EntityId} using instant sync (blend interpolation deferred to client)",
+                    "Blend handoff for entity {EntityId}: target state synced to registry (client handles interpolation)",
                     entityId);
                 await SyncInstantAsync(entityId, finalCinematicState, ct);
                 break;

@@ -798,7 +798,35 @@ Current implementation uses keyword-based relevance matching:
 | Recency bonus | 0.1 | Memories < 1 hour old get boost |
 | Significance bonus | 0.1 | Higher significance memories score higher |
 
-**Future**: Interface designed for migration to embedding-based semantic similarity.
+**When Keyword Matching is Sufficient:**
+- Game-defined perception categories ("threat", "social", "routine")
+- Entity-based relationships (entity IDs in metadata)
+- Structured events (combat encounters, dialogue exchanges)
+- NPCs writing their own memories (consistent terminology)
+- No player-generated content requiring fuzzy matching
+
+**When to Consider Embedding Migration:**
+- Semantic similarity needed: "The merchant cheated me" ↔ "I was swindled at the market"
+- Cross-language or cross-cultural concept matching
+- Player-generated content (names, descriptions)
+- Large memory stores (1000+ memories per entity) where keyword matching degrades
+- Narrative-driven games where emotional/thematic connections matter
+
+**Migration Path:**
+1. `IMemoryStore` interface is already designed for swappable implementations
+2. Create `EmbeddingMemoryStore` implementing the same interface
+3. Configure via `BehaviorServiceConfiguration` which implementation to use
+4. No changes needed to cognition pipeline or handlers
+
+**Trade-offs:**
+
+| Aspect | Keyword (MVP) | Embedding (Future) |
+|--------|---------------|-------------------|
+| Latency | Fast (in-memory) | Slower (external service) |
+| Accuracy | Exact matches only | Semantic similarity |
+| Infrastructure | None | LLM/embedding service |
+| Cost | Free | Per-query cost |
+| Debugging | Transparent | Black box |
 
 ### 7.4 Cognition Constants
 
@@ -1055,6 +1083,67 @@ Key properties:
 - Initial delivery is **complete** - game server can execute independently
 - Extensions are **additive** - don't modify what's executing
 - Missing extensions are **fine** - original completes gracefully
+
+### 8.6 Control Handoff and State Sync
+
+When cinematics complete and return control to behavior, state synchronization follows a clear architectural boundary:
+
+**Server (Bannou) Responsibility:**
+- Communicate the **target state** (position, health, stance, etc.)
+- Signal the **handoff style** to the game client
+- Update the `EntityStateRegistry` for behavior evaluation
+
+**Client (Game Engine) Responsibility:**
+- Receive the target state from the registry
+- Apply the appropriate transition based on handoff style
+- Render animations and visual interpolation
+
+```csharp
+// Server-side: StateSync writes target state
+await _stateSync.SyncStateAsync(
+    entityId,
+    finalCinematicState,  // Target state from cinematic
+    new ControlHandoff
+    {
+        Style = HandoffStyle.Blend,  // Signal to client: interpolate smoothly
+        SyncState = true
+    },
+    ct);
+```
+
+**HandoffStyle Semantics:**
+
+| Style | Server Action | Client Action |
+|-------|---------------|---------------|
+| `Instant` | Write target state | Snap immediately to target |
+| `Blend` | Write target state | Smoothly interpolate to target |
+| `Explicit` | Write target state | Handoff already handled externally |
+
+**Why server-side blending would be wrong:**
+- Server doesn't render or know current visual state
+- Frame-rate interpolation requires client-side timing
+- Animation systems are engine-specific (Stride, Unity, etc.)
+
+**Game Server Integration (Stride-side):**
+```csharp
+// Subscribe to state updates from EntityStateRegistry
+_stateRegistry.StateUpdated += (sender, args) =>
+{
+    var entity = GetEntity(args.EntityId);
+
+    // Apply based on handoff style (from cinematic metadata)
+    if (args.HandoffStyle == HandoffStyle.Blend)
+    {
+        // Start smooth interpolation over ~0.5s
+        entity.StartStateBlend(args.NewState, duration: 0.5f);
+    }
+    else
+    {
+        // Snap immediately
+        entity.ApplyState(args.NewState);
+    }
+};
+```
 
 ---
 

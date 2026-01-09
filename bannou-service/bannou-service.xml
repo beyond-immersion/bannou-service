@@ -47,6 +47,9 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.IExpressionVisitor`1.VisitNullCoalesce(BeyondImmersion.BannouService.Abml.Compiler.Ast.NullCoalesceNode)">
             <summary>Visits a null coalesce node.</summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.IExpressionVisitor`1.VisitArrayLiteral(BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode)">
+            <summary>Visits an array literal node.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.Ast.LiteralNode">
             <summary>
             Literal value (number, string, boolean, null).
@@ -291,6 +294,23 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.NullCoalesceNode.ToString">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode">
+            <summary>
+            Array literal ([a, b, c]).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode.Elements">
+            <summary>Gets the array elements.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Compiler.Ast.ExpressionNode})">
+            <summary>Creates a new array literal node.</summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode.Accept``1(BeyondImmersion.BannouService.Abml.Compiler.Ast.IExpressionVisitor{``0})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode.ToString">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.CompiledExpression">
             <summary>
             A compiled ABML expression ready for execution.
@@ -500,6 +520,14 @@
         <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitNullCoalesce(BeyondImmersion.BannouService.Abml.Compiler.Ast.NullCoalesceNode)">
             <inheritdoc/>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.VisitArrayLiteral(BeyondImmersion.BannouService.Abml.Compiler.Ast.ArrayLiteralNode)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Abml.Compiler.CompilerVisitor.AllLiterals(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Abml.Compiler.Ast.ExpressionNode},System.Object[]@)">
+            <summary>
+            Checks if all elements are literals and extracts their values.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Abml.Compiler.ExpressionParser">
             <summary>
             Parses ABML expressions into AST nodes using Parlot.
@@ -519,7 +547,8 @@
             unary          = ("!" | "-") unary | membership
             membership     = postfix ("in" postfix)?
             postfix        = primary (("." IDENT) | ("[" expression "]") | ("?." IDENT) | ("?[" expression "]") | ("(" args ")"))*
-            primary        = "null" | "true" | "false" | NUMBER | STRING | IDENT | "(" expression ")"
+            primary        = "null" | "true" | "false" | NUMBER | STRING | arrayLiteral | IDENT | "(" expression ")"
+            arrayLiteral   = "[" (expression ("," expression)*)? "]"
             </code>
             </remarks>
         </member>
@@ -21233,6 +21262,19 @@
             <returns>Asset metadata with download URL</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.DeleteAssetAsync(BeyondImmersion.BannouService.Asset.DeleteAssetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete an asset
+            </summary>
+            <remarks>
+            Delete an asset from storage. If versionId is specified, only that version is deleted.
+            <br/>If versionId is omitted, all versions are deleted.
+            </remarks>
+            <returns>Asset deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.ListAssetVersionsAsync(BeyondImmersion.BannouService.Asset.ListVersionsRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -21410,6 +21452,19 @@
             <br/>Specify version to download a specific version, or omit for latest.
             </remarks>
             <returns>Asset metadata with download URL</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.DeleteAssetAsync(BeyondImmersion.BannouService.Asset.DeleteAssetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete an asset
+            </summary>
+            <remarks>
+            Delete an asset from storage. If versionId is specified, only that version is deleted.
+            <br/>If versionId is omitted, all versions are deleted.
+            </remarks>
+            <returns>Asset deleted successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ListAssetVersionsAsync(BeyondImmersion.BannouService.Asset.ListVersionsRequest,System.Threading.CancellationToken)">
@@ -21828,6 +21883,37 @@
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Metadata">
             <summary>
             Complete asset metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.DeleteAssetRequest">
+            <summary>
+            Request to delete an asset from storage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteAssetRequest.AssetId">
+            <summary>
+            Asset identifier to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteAssetRequest.VersionId">
+            <summary>
+            Specific version to delete. If omitted, all versions are deleted.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.DeleteAssetResponse">
+            <summary>
+            Response confirming asset deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteAssetResponse.AssetId">
+            <summary>
+            Deleted asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteAssetResponse.VersionsDeleted">
+            <summary>
+            Number of versions deleted
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ListVersionsRequest">
@@ -23302,12 +23388,12 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.ListCharactersRequest">
             <summary>
-            Request payload for listing characters with optional filtering and pagination
+            Request payload for listing characters with filtering and pagination
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.ListCharactersRequest.RealmId">
             <summary>
-            Filter by realm
+            Realm to list characters from (required for efficiency)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Character.ListCharactersRequest.SpeciesId">

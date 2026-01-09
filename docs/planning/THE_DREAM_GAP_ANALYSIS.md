@@ -2,7 +2,7 @@
 
 > **Status**: ANALYSIS DOCUMENT (Revised)
 > **Created**: 2025-12-28
-> **Revised**: 2026-01-09 (Updated for lib-character-personality/history + BackstoryProvider + Query API completion)
+> **Revised**: 2026-01-09 (Updated for StateSync integration, T23 fixes, removed unused endpoints)
 > **Related**: [THE_DREAM.md](./THE_DREAM.md), [ABML_LOCAL_RUNTIME.md](./ONGOING_-_ABML_LOCAL_RUNTIME.md), [BEHAVIOR_PLUGIN_V2](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 This document analyzes the gap between THE_DREAM's vision and our current ABML implementation. Unlike the original gap analysis (written before ABML existed), this revision is grounded in what we've actually built and the architectural decisions we've made.
@@ -197,6 +197,8 @@ This is fundamentally different from:
 | **Intent Channel Factory** | `lib-behavior/Archetypes/` | ✅ Complete | Per-archetype channel creation |
 | **Control Gates** | `lib-behavior/Control/` | ✅ Complete | Cinematic handoff from basic behavior |
 | **Control Gate Manager** | `lib-behavior/Control/` | ✅ Complete | Multi-gate coordination |
+| **StateSync** | `lib-behavior/Control/` | ✅ Complete | Entity state sync to registry on cinematic return |
+| **EntityStateRegistry** | `lib-behavior/Control/` | ✅ Complete | Thread-safe entity state tracking with events |
 | **Cutscene Coordinator** | `lib-behavior/Coordination/` | ✅ Complete | Multi-participant session management |
 | **Cutscene Sessions** | `lib-behavior/Coordination/` | ✅ Complete | Session state, events, lifecycle |
 | **Sync Point Manager** | `lib-behavior/Coordination/` | ✅ Complete | Cross-participant synchronization |
@@ -224,7 +226,7 @@ This is fundamentally different from:
 
 **Total**: 6,934 LOC in lib-actor
 
-**Total tests**: 900+ tests passing (585 ABML + 226 compiler + 140 SDK)
+**Total tests**: 940+ tests passing (585 ABML + 226 compiler + 140 SDK + 14 StateSync integration tests)
 
 ### 3.1.1 SDK Enhancements (2026-01-05)
 
@@ -755,7 +757,7 @@ Remaining:
 | **Intent System** | Channels, Merging, Archetypes | ✅ Complete |
 | **Behavior Stacks** | Layers, Categories, Situational Triggers | ✅ Complete |
 | **Cutscene Coordination** | Sessions, Sync Points, Input Windows | ✅ Complete |
-| **Control Handoff** | Gates, Manager, State Sync | ✅ Complete |
+| **Control Handoff** | Gates, Manager, StateSync→EntityStateRegistry | ✅ Complete |
 | **Cognition Pipeline** | All 6 handlers, Memory, GOAP integration | ✅ Complete |
 | **Dialogue System** | Resolution, Localization, External Loading | ✅ Complete |
 | **Actor Plugin** | Template CRUD, Pool Nodes, ActorRunner, State Persistence | ✅ Complete |

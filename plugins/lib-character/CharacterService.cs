@@ -364,35 +364,19 @@ public partial class CharacterService : ICharacterService
             var page = body.Page > 0 ? body.Page : 1;
             var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogInformation("Listing characters - Page: {Page}, PageSize: {PageSize}", page, pageSize);
+            _logger.LogInformation(
+                "Listing characters - RealmId: {RealmId}, Page: {Page}, PageSize: {PageSize}",
+                body.RealmId,
+                page,
+                pageSize);
 
-            // If realm filter is provided, use realm-specific query
-            if (body.RealmId.HasValue)
-            {
-                return await GetCharactersByRealmInternalAsync(
-                    body.RealmId.Value.ToString(),
-                    body.Status,
-                    body.SpeciesId,
-                    page,
-                    pageSize,
-                    cancellationToken);
-            }
-
-            // Without realm filter, we need to scan all realms (less efficient)
-            // For now, return empty - in production you'd want a global index
-            _logger.LogWarning("ListCharacters called without realmId filter - returning empty for efficiency");
-
-            var response = new CharacterListResponse
-            {
-                Characters = new List<CharacterResponse>(),
-                TotalCount = 0,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = false,
-                HasPreviousPage = false
-            };
-
-            return (StatusCodes.OK, response);
+            return await GetCharactersByRealmInternalAsync(
+                body.RealmId.ToString(),
+                body.Status,
+                body.SpeciesId,
+                page,
+                pageSize,
+                cancellationToken);
         }
         catch (Exception ex)
         {

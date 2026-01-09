@@ -27,7 +27,8 @@ namespace BeyondImmersion.BannouService.Abml.Compiler;
 /// unary          = ("!" | "-") unary | membership
 /// membership     = postfix ("in" postfix)?
 /// postfix        = primary (("." IDENT) | ("[" expression "]") | ("?." IDENT) | ("?[" expression "]") | ("(" args ")"))*
-/// primary        = "null" | "true" | "false" | NUMBER | STRING | IDENT | "(" expression ")"
+/// primary        = "null" | "true" | "false" | NUMBER | STRING | arrayLiteral | IDENT | "(" expression ")"
+/// arrayLiteral   = "[" (expression ("," expression)*)? "]"
 /// </code>
 /// </remarks>
 public sealed class ExpressionParser
@@ -101,13 +102,24 @@ public sealed class ExpressionParser
         var closeParen = Terms.Char(')');
         var groupedExpression = Between(openParen, expression, closeParen);
 
-        // Primary expressions (ordered for efficiency - keywords first)
+        // Array literal: [a, b, c] or []
+        var openBracket = Terms.Char('[');
+        var closeBracket = Terms.Char(']');
+        var arrayElements = Separated(Terms.Char(','), expression);
+        var emptyArray = openBracket.AndSkip(closeBracket)
+            .Then<ExpressionNode>(static _ => new ArrayLiteralNode(Array.Empty<ExpressionNode>()));
+        var nonEmptyArray = Between(openBracket, arrayElements, closeBracket)
+            .Then<ExpressionNode>(static elements => new ArrayLiteralNode(elements));
+        var arrayLiteral = emptyArray.Or(nonEmptyArray);
+
+        // Primary expressions (ordered for efficiency - keywords first, array before variable)
         var primary = nullLiteral
             .Or(trueLiteral)
             .Or(falseLiteral)
             .Or(number)
             .Or(stringLiteral)
             .Or(groupedExpression)
+            .Or(arrayLiteral)
             .Or(variable);
 
         // ═══════════════════════════════════════════════════════════════════

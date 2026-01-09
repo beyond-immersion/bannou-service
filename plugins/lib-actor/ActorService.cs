@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -46,6 +47,7 @@ public partial class ActorService : IActorService
     private readonly IBehaviorDocumentCache _behaviorCache;
     private readonly IActorPoolManager _poolManager;
     private readonly IPersonalityCache _personalityCache;
+    private readonly IMeshInvocationClient _meshClient;
 
     // State store names now come from configuration (TemplateStatestoreName, InstanceStatestoreName)
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -63,6 +65,7 @@ public partial class ActorService : IActorService
     /// <param name="behaviorCache">Behavior document cache for hot-reload invalidation.</param>
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     /// <param name="personalityCache">Cache for character personality data.</param>
+    /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -73,7 +76,8 @@ public partial class ActorService : IActorService
         IEventConsumer eventConsumer,
         IBehaviorDocumentCache behaviorCache,
         IActorPoolManager poolManager,
-        IPersonalityCache personalityCache)
+        IPersonalityCache personalityCache,
+        IMeshInvocationClient meshClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -85,6 +89,7 @@ public partial class ActorService : IActorService
         _behaviorCache = behaviorCache;
         _poolManager = poolManager;
         _personalityCache = personalityCache;
+        _meshClient = meshClient;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -1280,8 +1285,21 @@ public partial class ActorService : IActorService
         try
         {
             // Find the actor (may be local or remote)
-            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
-            if (!found || runner == null)
+            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+            // If actor is on a remote node, forward the request
+            if (remoteNodeId != null)
+            {
+                var remoteResponse = await InvokeRemoteAsync<StartEncounterRequest, StartEncounterResponse>(
+                    remoteNodeId,
+                    "actor/encounter/start",
+                    body,
+                    cancellationToken);
+                return (StatusCodes.OK, remoteResponse);
+            }
+
+            // Actor not found anywhere
+            if (localRunner == null)
             {
                 return (StatusCodes.NotFound, new StartEncounterResponse
                 {
@@ -1291,6 +1309,8 @@ public partial class ActorService : IActorService
                     Error = $"Actor {body.ActorId} not found"
                 });
             }
+
+            var runner = localRunner;
 
             // Convert initialData to Dictionary<string, object?> if it's a dictionary
             Dictionary<string, object?>? initialData = null;
@@ -1364,8 +1384,21 @@ public partial class ActorService : IActorService
         try
         {
             // Find the actor (may be local or remote)
-            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
-            if (!found || runner == null)
+            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+            // If actor is on a remote node, forward the request
+            if (remoteNodeId != null)
+            {
+                var remoteResponse = await InvokeRemoteAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
+                    remoteNodeId,
+                    "actor/encounter/phase/update",
+                    body,
+                    cancellationToken);
+                return (StatusCodes.OK, remoteResponse);
+            }
+
+            // Actor not found anywhere
+            if (localRunner == null)
             {
                 return (StatusCodes.NotFound, new UpdateEncounterPhaseResponse
                 {
@@ -1375,6 +1408,8 @@ public partial class ActorService : IActorService
                     CurrentPhase = null
                 });
             }
+
+            var runner = localRunner;
 
             // Get previous phase for response
             var snapshot = runner.GetStateSnapshot();
@@ -1417,8 +1452,21 @@ public partial class ActorService : IActorService
         try
         {
             // Find the actor (may be local or remote)
-            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
-            if (!found || runner == null)
+            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+            // If actor is on a remote node, forward the request
+            if (remoteNodeId != null)
+            {
+                var remoteResponse = await InvokeRemoteAsync<EndEncounterRequest, EndEncounterResponse>(
+                    remoteNodeId,
+                    "actor/encounter/end",
+                    body,
+                    cancellationToken);
+                return (StatusCodes.OK, remoteResponse);
+            }
+
+            // Actor not found anywhere
+            if (localRunner == null)
             {
                 return (StatusCodes.NotFound, new EndEncounterResponse
                 {
@@ -1428,6 +1476,8 @@ public partial class ActorService : IActorService
                     DurationMs = null
                 });
             }
+
+            var runner = localRunner;
 
             // Get encounter info before ending
             var snapshot = runner.GetStateSnapshot();
@@ -1479,8 +1529,21 @@ public partial class ActorService : IActorService
         try
         {
             // Find the actor (may be local or remote)
-            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
-            if (!found || runner == null)
+            var (localRunner, remoteNodeId) = await FindActorAsync(body.ActorId, cancellationToken);
+
+            // If actor is on a remote node, forward the request
+            if (remoteNodeId != null)
+            {
+                var remoteResponse = await InvokeRemoteAsync<GetEncounterRequest, GetEncounterResponse>(
+                    remoteNodeId,
+                    "actor/encounter/get",
+                    body,
+                    cancellationToken);
+                return (StatusCodes.OK, remoteResponse);
+            }
+
+            // Actor not found anywhere
+            if (localRunner == null)
             {
                 return (StatusCodes.NotFound, new GetEncounterResponse
                 {
@@ -1490,6 +1553,7 @@ public partial class ActorService : IActorService
                 });
             }
 
+            var runner = localRunner;
             var snapshot = runner.GetStateSnapshot();
             var encounterData = snapshot.Encounter;
 
@@ -1533,30 +1597,54 @@ public partial class ActorService : IActorService
     }
 
     /// <summary>
-    /// Finds an actor by ID, handling local and remote lookups.
+    /// Finds an actor by ID, returning either a local runner or the remote node ID.
     /// </summary>
-    private async Task<(bool Found, IActorRunner? Runner)> FindActorAsync(
+    /// <returns>
+    /// A tuple containing:
+    /// - LocalRunner: The local actor runner if the actor is running locally, null otherwise
+    /// - RemoteNodeId: The node ID where the actor is running if remote, null if local or not found
+    /// </returns>
+    private async Task<(IActorRunner? LocalRunner, string? RemoteNodeId)> FindActorAsync(
         string actorId,
         CancellationToken cancellationToken)
     {
         // First check local registry
         if (_actorRegistry.TryGet(actorId, out var localRunner))
         {
-            return (true, localRunner);
+            return (localRunner, null);
         }
 
         // For distributed deployments, check pool manager for actor assignment
-        // This enables finding actors running on other nodes in the cluster
         var assignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
         if (assignment != null)
         {
-            _logger.LogDebug("Actor {ActorId} found on remote node {NodeId}, local lookup only supported for now",
-                actorId, assignment.NodeId);
-            // Remote actor invocation would go here in a future implementation
-            // For now, we only support local actors
+            _logger.LogDebug(
+                "Actor {ActorId} found on remote node {NodeId}, forwarding request",
+                actorId,
+                assignment.NodeId);
+            return (null, assignment.NodeId);
         }
 
-        return (false, null);
+        return (null, null);
+    }
+
+    /// <summary>
+    /// Invokes a method on a remote actor service node.
+    /// </summary>
+    private async Task<TResponse> InvokeRemoteAsync<TRequest, TResponse>(
+        string nodeId,
+        string endpoint,
+        TRequest request,
+        CancellationToken cancellationToken)
+        where TRequest : class
+        where TResponse : class
+    {
+        _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
+        return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
+            nodeId,
+            endpoint,
+            request,
+            cancellationToken);
     }
 
     #endregion

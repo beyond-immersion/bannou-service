@@ -172,17 +172,19 @@ public partial class DeleteCharacterRequest
 }
 
 /// <summary>
-/// Request payload for listing characters with optional filtering and pagination
+/// Request payload for listing characters with filtering and pagination
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListCharactersRequest
 {
 
     /// <summary>
-    /// Filter by realm
+    /// Realm to list characters from (required for efficiency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Filter by species

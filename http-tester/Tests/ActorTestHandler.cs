@@ -47,6 +47,14 @@ public class ActorTestHandler : BaseHttpTestHandler
         // Perception injection tests
         new ServiceTest(TestInjectPerception, "InjectPerception", "Actor", "Inject perception into running actor"),
         new ServiceTest(TestInjectPerceptionActorNotFound, "InjectPerceptionNotFound", "Actor", "Inject perception to non-existent actor returns 404"),
+
+        // Encounter management tests
+        new ServiceTest(TestStartEncounter, "StartEncounter", "Actor", "Start encounter on actor"),
+        new ServiceTest(TestGetEncounter, "GetEncounter", "Actor", "Get active encounter from actor"),
+        new ServiceTest(TestUpdateEncounterPhase, "UpdatePhase", "Actor", "Update encounter phase"),
+        new ServiceTest(TestEndEncounter, "EndEncounter", "Actor", "End active encounter"),
+        new ServiceTest(TestEncounterFullFlow, "EncounterFlow", "Actor", "Full encounter lifecycle flow"),
+        new ServiceTest(TestStartEncounterActorNotFound, "EncounterNotFound", "Actor", "Start encounter on non-existent actor returns 404"),
     ];
 
     #region Template CRUD Tests
@@ -682,6 +690,332 @@ public class ActorTestHandler : BaseHttpTestHandler
             },
             404,
             "InjectPerceptionActorNotFound");
+
+    #endregion
+
+    #region Encounter Management Tests
+
+    private static async Task<TestResult> TestStartEncounter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("encounter-start");
+            var actorId = GenerateTestSlug("event-brain");
+
+            // Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/event-brain",
+                TickIntervalMs = 1000
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            // Give the actor a moment to start
+            await Task.Delay(100);
+
+            // Start encounter
+            var participantId = Guid.NewGuid();
+            var encounterId = GenerateTestSlug("enc");
+            var response = await actorClient.StartEncounterAsync(new StartEncounterRequest
+            {
+                ActorId = actorId,
+                EncounterId = encounterId,
+                EncounterType = "combat",
+                Participants = new List<Guid> { participantId }
+            });
+
+            if (!response.Success)
+                return TestResult.Failed($"Failed to start encounter: {response.Error}");
+
+            if (response.EncounterId != encounterId)
+                return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.EncounterId}");
+
+            // Cleanup
+            await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Started encounter {encounterId} on actor {actorId}");
+        }, "StartEncounter");
+
+    private static async Task<TestResult> TestGetEncounter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("encounter-get");
+            var actorId = GenerateTestSlug("event-brain");
+
+            // Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/event-brain",
+                TickIntervalMs = 1000
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            await Task.Delay(100);
+
+            // Start encounter
+            var participantId = Guid.NewGuid();
+            var encounterId = GenerateTestSlug("enc");
+            await actorClient.StartEncounterAsync(new StartEncounterRequest
+            {
+                ActorId = actorId,
+                EncounterId = encounterId,
+                EncounterType = "dialogue",
+                Participants = new List<Guid> { participantId }
+            });
+
+            // Get encounter
+            var response = await actorClient.GetEncounterAsync(new GetEncounterRequest
+            {
+                ActorId = actorId
+            });
+
+            if (!response.HasActiveEncounter)
+                return TestResult.Failed("Expected active encounter but none found");
+
+            if (response.Encounter == null)
+                return TestResult.Failed("Encounter object is null");
+
+            if (response.Encounter.EncounterId != encounterId)
+                return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.Encounter.EncounterId}");
+
+            if (response.Encounter.EncounterType != "dialogue")
+                return TestResult.Failed($"Encounter type mismatch: expected dialogue, got {response.Encounter.EncounterType}");
+
+            // Cleanup
+            await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Retrieved encounter {encounterId} from actor {actorId}");
+        }, "GetEncounter");
+
+    private static async Task<TestResult> TestUpdateEncounterPhase(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("encounter-phase");
+            var actorId = GenerateTestSlug("event-brain");
+
+            // Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/event-brain",
+                TickIntervalMs = 1000
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            await Task.Delay(100);
+
+            // Start encounter
+            var encounterId = GenerateTestSlug("enc");
+            await actorClient.StartEncounterAsync(new StartEncounterRequest
+            {
+                ActorId = actorId,
+                EncounterId = encounterId,
+                EncounterType = "combat",
+                Participants = new List<Guid> { Guid.NewGuid() }
+            });
+
+            // Update phase
+            var response = await actorClient.UpdateEncounterPhaseAsync(new UpdateEncounterPhaseRequest
+            {
+                ActorId = actorId,
+                Phase = "executing"
+            });
+
+            if (!response.Success)
+                return TestResult.Failed("Failed to update encounter phase");
+
+            if (response.CurrentPhase != "executing")
+                return TestResult.Failed($"Phase not updated: expected executing, got {response.CurrentPhase}");
+
+            // Cleanup
+            await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Updated encounter phase to executing");
+        }, "UpdateEncounterPhase");
+
+    private static async Task<TestResult> TestEndEncounter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("encounter-end");
+            var actorId = GenerateTestSlug("event-brain");
+
+            // Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/event-brain",
+                TickIntervalMs = 1000
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            await Task.Delay(100);
+
+            // Start encounter
+            var encounterId = GenerateTestSlug("enc");
+            await actorClient.StartEncounterAsync(new StartEncounterRequest
+            {
+                ActorId = actorId,
+                EncounterId = encounterId,
+                EncounterType = "combat",
+                Participants = new List<Guid> { Guid.NewGuid() }
+            });
+
+            // End encounter
+            var response = await actorClient.EndEncounterAsync(new EndEncounterRequest
+            {
+                ActorId = actorId
+            });
+
+            if (!response.Success)
+                return TestResult.Failed("Failed to end encounter");
+
+            if (response.EncounterId != encounterId)
+                return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.EncounterId}");
+
+            if (response.DurationMs == null || response.DurationMs < 0)
+                return TestResult.Failed($"Invalid duration: {response.DurationMs}");
+
+            // Verify no active encounter
+            var getResponse = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
+            if (getResponse.HasActiveEncounter)
+                return TestResult.Failed("Encounter still active after ending");
+
+            // Cleanup
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Ended encounter {encounterId} (duration: {response.DurationMs}ms)");
+        }, "EndEncounter");
+
+    private static async Task<TestResult> TestEncounterFullFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var actorClient = GetServiceClient<IActorClient>();
+            var category = GenerateTestSlug("encounter-flow");
+            var actorId = GenerateTestSlug("event-brain");
+
+            // 1. Create template and spawn actor
+            var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
+            {
+                Category = category,
+                BehaviorRef = "asset://behaviors/event-brain",
+                TickIntervalMs = 100
+            });
+
+            await actorClient.SpawnActorAsync(new SpawnActorRequest
+            {
+                TemplateId = template.TemplateId,
+                ActorId = actorId
+            });
+
+            await Task.Delay(100);
+
+            // 2. Verify no active encounter initially
+            var initial = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
+            if (initial.HasActiveEncounter)
+                return TestResult.Failed("Unexpected active encounter on fresh actor");
+
+            // 3. Start encounter
+            var participantId = Guid.NewGuid();
+            var encounterId = GenerateTestSlug("full-flow-enc");
+            var startResp = await actorClient.StartEncounterAsync(new StartEncounterRequest
+            {
+                ActorId = actorId,
+                EncounterId = encounterId,
+                EncounterType = "combat",
+                Participants = new List<Guid> { participantId }
+            });
+
+            if (!startResp.Success)
+                return TestResult.Failed($"Failed to start: {startResp.Error}");
+
+            // 4. Verify encounter started
+            var afterStart = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
+            if (!afterStart.HasActiveEncounter)
+                return TestResult.Failed("No active encounter after starting");
+
+            // 5. Update phase: initializing -> executing
+            var phase1 = await actorClient.UpdateEncounterPhaseAsync(new UpdateEncounterPhaseRequest
+            {
+                ActorId = actorId,
+                Phase = "executing"
+            });
+            if (!phase1.Success || phase1.CurrentPhase != "executing")
+                return TestResult.Failed("Phase update to executing failed");
+
+            // 6. Update phase: executing -> complete
+            var phase2 = await actorClient.UpdateEncounterPhaseAsync(new UpdateEncounterPhaseRequest
+            {
+                ActorId = actorId,
+                Phase = "complete"
+            });
+            if (!phase2.Success || phase2.CurrentPhase != "complete")
+                return TestResult.Failed("Phase update to complete failed");
+
+            // 7. End encounter
+            var endResp = await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
+            if (!endResp.Success)
+                return TestResult.Failed("Failed to end encounter");
+
+            // 8. Verify encounter ended
+            var afterEnd = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
+            if (afterEnd.HasActiveEncounter)
+                return TestResult.Failed("Encounter still active after ending");
+
+            // Cleanup
+            await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
+            await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest { TemplateId = template.TemplateId });
+
+            return TestResult.Successful($"Full encounter flow: start -> get -> phase updates -> end -> verify");
+        }, "EncounterFullFlow");
+
+    private static async Task<TestResult> TestStartEncounterActorNotFound(ITestClient client, string[] args) =>
+        await
+        ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var actorClient = GetServiceClient<IActorClient>();
+                await actorClient.StartEncounterAsync(new StartEncounterRequest
+                {
+                    ActorId = "nonexistent-actor-12345",
+                    EncounterId = "test-encounter",
+                    EncounterType = "combat",
+                    Participants = new List<Guid> { Guid.NewGuid() }
+                });
+            },
+            404,
+            "StartEncounterActorNotFound");
 
     #endregion
 }

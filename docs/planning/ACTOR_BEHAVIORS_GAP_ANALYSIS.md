@@ -5,6 +5,7 @@
 > **Peer Reviewed**: 2026-01-09
 > **Revised**: 2026-01-09 (Updated for lib-character-personality/history completion)
 > **Revised**: 2026-01-09 (Event Brain Communication Architecture analysis - see §6)
+> **Revised**: 2026-01-09 (StateSync integration tests, T23 fixes, removed unused endpoints)
 > **Related**: [ACTOR_BEHAVIORS.md](ACTOR_BEHAVIORS.md), [THE_DREAM.md](THE_DREAM.md), [THE_DREAM_GAP_ANALYSIS.md](THE_DREAM_GAP_ANALYSIS.md)
 
 This document identifies gaps between the design in ACTOR_BEHAVIORS.md and current implementation.
@@ -142,36 +143,26 @@ The foundation is **significantly more complete than expected**. The core archit
 
 ## 2. Partially Implemented / Clarifications Needed
 
-### 2.1 Behavior Stack Compilation Service Endpoint
+### ~~2.1 Behavior Stack Compilation Service Endpoint~~ RESOLVED
 
-**Status**: Runtime class complete, service endpoint returns NotImplemented
+**Status**: ✅ REMOVED (2026-01-09)
 
-**Clarification**: There are TWO distinct components:
-1. **Runtime BehaviorStack class** (`lib-behavior/Stack/BehaviorStack.cs`, 387 lines) - **COMPLETE**
+The `CompileBehaviorStackAsync` and `ResolveContextVariablesAsync` endpoints were removed from the API entirely. They represented an inferior architecture that conflicted with the established ABML compilation pipeline.
+
+**What existed**:
+1. **Runtime BehaviorStack class** (`lib-behavior/Stack/BehaviorStack.cs`, 387 lines) - **COMPLETE and unchanged**
    - Layer management (add/remove/get with thread-safety)
    - Priority-based ordering (categories then priority)
    - Active layer filtering
    - `EvaluateAsync()` with per-channel intent merging
 
-2. **Service endpoint** (`BehaviorService.CompileBehaviorStackAsync`) - **NotImplemented**
-   - Line 481: `return (StatusCodes.NotImplemented, null);`
-   - Also: `ResolveContextVariablesAsync` at line 677 returns NotImplemented
+2. ~~**Service endpoints**~~ - **REMOVED**
+   - `CompileBehaviorStackAsync` - removed from schema and service
+   - `ResolveContextVariablesAsync` - removed from schema and service
 
-```csharp
-// From http-tester/Tests/BehaviorTestHandler.cs:600
-var response = await behaviorClient.CompileBehaviorStackAsync(request);
-// Currently returns 501 NotImplemented
-```
+**Resolution**: The existing ABML compilation pipeline (`/behavior/compile`) handles individual behaviors. Behavior stacking happens at runtime via the BehaviorStack class, not via a separate compilation endpoint. This is the correct architecture.
 
-**Gap**: The service endpoint that compiles multiple ABML sources into a merged behavior stack is not implemented. The runtime stack evaluation IS complete.
-
-**Required Work**:
-- Implement `CompileBehaviorStackAsync` to accept multiple ABML sources with priorities
-- Use existing `BehaviorCompiler` for individual layers
-- Use existing `IntentStackMerger` patterns for merging strategy
-- Wire to existing `BehaviorStack` runtime class
-
-**Effort**: ~2-3 days (mostly integration, not new architecture)
+**Effort**: None (removal, not implementation)
 
 ### 2.2 Cognition Pipeline Handlers
 
@@ -420,7 +411,7 @@ QueryOptionsResponse:
 | ~~Add cognition intent channel~~ | ✅ N/A | Not needed - cognition modifies state, not intents |
 | ~~Test end-to-end cognition flow~~ | ✅ Complete | Cognition handlers tested |
 
-**Remaining**: `CompileBehaviorStackAsync` endpoint (returns NotImplemented) - Medium priority, not blocking Event Brain work.
+**Note**: `CompileBehaviorStackAsync` and `ResolveContextVariablesAsync` endpoints were **removed** (2026-01-09) as they represented inferior design.
 
 ### ~~Phase 3: Event Brain Infrastructure~~ ✅ DESIGN COMPLETE
 
@@ -789,9 +780,10 @@ This means the `StartEncounter` flow applies to cinematics/quests, but QTEs and 
 | Cognition types/constants | Complete | ✅ Complete (CognitionTypes.cs 633 lines) | None |
 | Cognition handlers (6 stages) | Complete | ✅ Complete | None |
 | Runtime BehaviorStack | Complete | ✅ Complete (387 lines) | None |
-| BehaviorStack service endpoint | Complete | ❌ NotImplemented | Medium |
+| ~~BehaviorStack service endpoint~~ | ~~Complete~~ | ✅ REMOVED | None (inferior design) |
 | Cutscene coordination | Complete | ✅ Complete | None |
 | Control gates | Complete | ✅ Complete | None |
+| **StateSync→EntityStateRegistry** | Complete | ✅ Complete (14 integration tests) | None |
 | Intent channels (5) | Complete | ✅ Complete | None |
 | **Character personality traits** | Complete | ✅ Complete (lib-character-personality) | None |
 | **Combat preferences** | Complete | ✅ Complete (lib-character-personality) | None |
@@ -942,3 +934,29 @@ Regional Watcher auto-spawning is a larger architectural decision tracked separa
 6. Move PerceptionEvent to schema if keeping any direct perception pattern
 
 See §6 (Event Brain Communication Architecture) for full analysis.
+
+### Revision 2026-01-09 (StateSync, T23, Endpoint Cleanup)
+
+| Original Status | Correction | Reason |
+|-----------------|------------|--------|
+| StateSync "placeholder" | ✅ Fully implemented | StateSync now writes to EntityStateRegistry with proper events |
+| EntityStateRegistry N/A | ✅ Complete | Thread-safe registry with StateUpdated events, source tracking |
+| StateSync integration tests | ✅ 14 tests added | `lib-behavior.tests/Integration/StateSyncIntegrationTests.cs` |
+| T23 violations (10+ methods) | ✅ All fixed | Converted to `await Task.Yield()` pattern per IMPLEMENTATION TENETS |
+| `CompileBehaviorStackAsync` NotImplemented | ✅ REMOVED | Inferior design conflicting with ABML compilation pipeline |
+| `ResolveContextVariablesAsync` NotImplemented | ✅ REMOVED | Inferior design conflicting with ABML compilation pipeline |
+
+**StateSync Implementation Details**:
+- CinematicController.ReturnEntityControlAsync calls StateSync.SyncStateAsync
+- StateSync writes entity state to EntityStateRegistry with source="cinematic"
+- EntityStateRegistry raises StateUpdated events for downstream consumers
+- 14 integration tests cover StateSync→Registry, CinematicController→StateSync, and end-to-end flows
+
+**T23 Fixes Applied**:
+- `lib-actor/ActorServiceEvents.cs` - 3 handlers
+- `lib-actor/Runtime/ActorRunner.cs` - 2 methods
+- `lib-actor/PoolNode/ActorPoolNodeWorker.cs` - 1 method
+- `lib-behavior/Coordination/InputWindowManager.cs` - 2 methods
+- `lib-behavior/Coordination/SyncPointManager.cs` - 1 method
+- `lib-behavior/Coordination/CutsceneCoordinator.cs` - 1 method
+- `lib-behavior/Coordination/CutsceneSession.cs` - 4 methods

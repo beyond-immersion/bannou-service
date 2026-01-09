@@ -112,6 +112,21 @@ public static class AssetPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/assets/delete",
+            Method = ServiceEndpointMethod.POST,
+            Description = "deleteAsset",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/assets/list-versions",
             Method = ServiceEndpointMethod.POST,
             Description = "listAssetVersions",

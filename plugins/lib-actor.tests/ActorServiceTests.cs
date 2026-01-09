@@ -27,6 +27,7 @@ public class ActorServiceTests
     private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
     private readonly Mock<IActorPoolManager> _mockPoolManager;
     private readonly Mock<IPersonalityCache> _mockPersonalityCache;
+    private readonly Mock<IMeshInvocationClient> _mockMeshClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
 
@@ -48,6 +49,7 @@ public class ActorServiceTests
         _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
         _mockPoolManager = new Mock<IActorPoolManager>();
         _mockPersonalityCache = new Mock<IPersonalityCache>();
+        _mockMeshClient = new Mock<IMeshInvocationClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
 
@@ -72,7 +74,8 @@ public class ActorServiceTests
             _mockEventConsumer.Object,
             _mockBehaviorCache.Object,
             _mockPoolManager.Object,
-            _mockPersonalityCache.Object);
+            _mockPersonalityCache.Object,
+            _mockMeshClient.Object);
     }
 
     #region Constructor Tests
@@ -1274,6 +1277,313 @@ public class ActorServiceTests
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.NotNull(response);
         Assert.False(response.HasActiveEncounter);
+    }
+
+    #endregion
+
+    #region Remote Actor Invocation Tests
+
+    [Fact]
+    public async Task StartEncounterAsync_RemoteActor_ForwardsRequestViaMesh()
+    {
+        // Arrange
+        var service = CreateService();
+        var remoteNodeId = "remote-node-001";
+        var request = new StartEncounterRequest
+        {
+            ActorId = "remote-actor-1",
+            EncounterId = "encounter-001",
+            EncounterType = "combat",
+            Participants = new List<Guid> { Guid.NewGuid() }
+        };
+
+        // Actor not in local registry
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("remote-actor-1", out runner)).Returns(false);
+
+        // Actor found on remote node
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync("remote-actor-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ActorAssignment
+            {
+                ActorId = "remote-actor-1",
+                NodeId = remoteNodeId,
+                NodeAppId = "app-remote-001",
+                TemplateId = Guid.NewGuid().ToString(),
+                Category = "event-brain",
+                Status = "running"
+            });
+
+        // Mock the remote invocation response
+        var expectedResponse = new StartEncounterResponse
+        {
+            Success = true,
+            ActorId = "remote-actor-1",
+            EncounterId = "encounter-001",
+            Error = null
+        };
+
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+            remoteNodeId,
+            "actor/encounter/start",
+            It.IsAny<StartEncounterRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("encounter-001", response.EncounterId);
+
+        // Verify mesh client was called
+        _mockMeshClient.Verify(
+            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+                remoteNodeId,
+                "actor/encounter/start",
+                It.Is<StartEncounterRequest>(r => r.ActorId == "remote-actor-1"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateEncounterPhaseAsync_RemoteActor_ForwardsRequestViaMesh()
+    {
+        // Arrange
+        var service = CreateService();
+        var remoteNodeId = "remote-node-002";
+        var request = new UpdateEncounterPhaseRequest
+        {
+            ActorId = "remote-actor-2",
+            Phase = "executing"
+        };
+
+        // Actor not in local registry
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("remote-actor-2", out runner)).Returns(false);
+
+        // Actor found on remote node
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync("remote-actor-2", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ActorAssignment
+            {
+                ActorId = "remote-actor-2",
+                NodeId = remoteNodeId,
+                NodeAppId = "app-remote-002",
+                TemplateId = Guid.NewGuid().ToString(),
+                Category = "event-brain",
+                Status = "running"
+            });
+
+        // Mock the remote invocation response
+        var expectedResponse = new UpdateEncounterPhaseResponse
+        {
+            Success = true,
+            ActorId = "remote-actor-2",
+            PreviousPhase = "initializing",
+            CurrentPhase = "executing"
+        };
+
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
+            remoteNodeId,
+            "actor/encounter/phase/update",
+            It.IsAny<UpdateEncounterPhaseRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("executing", response.CurrentPhase);
+
+        // Verify mesh client was called
+        _mockMeshClient.Verify(
+            m => m.InvokeMethodAsync<UpdateEncounterPhaseRequest, UpdateEncounterPhaseResponse>(
+                remoteNodeId,
+                "actor/encounter/phase/update",
+                It.Is<UpdateEncounterPhaseRequest>(r => r.ActorId == "remote-actor-2" && r.Phase == "executing"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EndEncounterAsync_RemoteActor_ForwardsRequestViaMesh()
+    {
+        // Arrange
+        var service = CreateService();
+        var remoteNodeId = "remote-node-003";
+        var request = new EndEncounterRequest
+        {
+            ActorId = "remote-actor-3"
+        };
+
+        // Actor not in local registry
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("remote-actor-3", out runner)).Returns(false);
+
+        // Actor found on remote node
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync("remote-actor-3", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ActorAssignment
+            {
+                ActorId = "remote-actor-3",
+                NodeId = remoteNodeId,
+                NodeAppId = "app-remote-003",
+                TemplateId = Guid.NewGuid().ToString(),
+                Category = "event-brain",
+                Status = "running"
+            });
+
+        // Mock the remote invocation response
+        var expectedResponse = new EndEncounterResponse
+        {
+            Success = true,
+            ActorId = "remote-actor-3",
+            EncounterId = "encounter-003",
+            DurationMs = 5000
+        };
+
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync<EndEncounterRequest, EndEncounterResponse>(
+            remoteNodeId,
+            "actor/encounter/end",
+            It.IsAny<EndEncounterRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("encounter-003", response.EncounterId);
+        Assert.Equal(5000, response.DurationMs);
+
+        // Verify mesh client was called
+        _mockMeshClient.Verify(
+            m => m.InvokeMethodAsync<EndEncounterRequest, EndEncounterResponse>(
+                remoteNodeId,
+                "actor/encounter/end",
+                It.Is<EndEncounterRequest>(r => r.ActorId == "remote-actor-3"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetEncounterAsync_RemoteActor_ForwardsRequestViaMesh()
+    {
+        // Arrange
+        var service = CreateService();
+        var remoteNodeId = "remote-node-004";
+        var participantId = Guid.NewGuid();
+        var request = new GetEncounterRequest
+        {
+            ActorId = "remote-actor-4"
+        };
+
+        // Actor not in local registry
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("remote-actor-4", out runner)).Returns(false);
+
+        // Actor found on remote node
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync("remote-actor-4", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ActorAssignment
+            {
+                ActorId = "remote-actor-4",
+                NodeId = remoteNodeId,
+                NodeAppId = "app-remote-004",
+                TemplateId = Guid.NewGuid().ToString(),
+                Category = "event-brain",
+                Status = "running"
+            });
+
+        // Mock the remote invocation response
+        var expectedResponse = new GetEncounterResponse
+        {
+            ActorId = "remote-actor-4",
+            HasActiveEncounter = true,
+            Encounter = new EncounterState
+            {
+                EncounterId = "encounter-004",
+                EncounterType = "dialogue",
+                Participants = new List<Guid> { participantId },
+                Phase = "active",
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync<GetEncounterRequest, GetEncounterResponse>(
+            remoteNodeId,
+            "actor/encounter/get",
+            It.IsAny<GetEncounterRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.HasActiveEncounter);
+        Assert.NotNull(response.Encounter);
+        Assert.Equal("encounter-004", response.Encounter.EncounterId);
+        Assert.Equal("dialogue", response.Encounter.EncounterType);
+        Assert.Contains(participantId, response.Encounter.Participants);
+
+        // Verify mesh client was called
+        _mockMeshClient.Verify(
+            m => m.InvokeMethodAsync<GetEncounterRequest, GetEncounterResponse>(
+                remoteNodeId,
+                "actor/encounter/get",
+                It.Is<GetEncounterRequest>(r => r.ActorId == "remote-actor-4"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task StartEncounterAsync_LocalAndRemoteNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new StartEncounterRequest
+        {
+            ActorId = "nonexistent-actor",
+            EncounterId = "encounter-999",
+            EncounterType = "combat",
+            Participants = new List<Guid> { Guid.NewGuid() }
+        };
+
+        // Actor not in local registry
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
+
+        // Actor not found in pool manager either
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync("nonexistent-actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ActorAssignment?)null);
+
+        // Act
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("not found", response.Error);
+
+        // Verify mesh client was NOT called (no remote node to forward to)
+        _mockMeshClient.Verify(
+            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<StartEncounterRequest>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     #endregion

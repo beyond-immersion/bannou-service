@@ -972,15 +972,17 @@ public partial class CharacterController : Microsoft.AspNetCore.Mvc.ControllerBa
     "$ref": "#/$defs/ListCharactersRequest",
     "$defs": {
         "ListCharactersRequest": {
-            "description": "Request payload for listing characters with optional filtering and pagination",
+            "description": "Request payload for listing characters with filtering and pagination",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "realmId"
+            ],
             "properties": {
                 "realmId": {
                     "type": "string",
                     "format": "uuid",
-                    "nullable": true,
-                    "description": "Filter by realm"
+                    "description": "Realm to list characters from (required for efficiency)"
                 },
                 "speciesId": {
                     "type": "string",

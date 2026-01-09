@@ -294,22 +294,23 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCharactersRequest\"\
         ,\n    \"$defs\": {\n        \"ListCharactersRequest\": {\n            \"description\": \"Request payload for listing
-        characters with optional filtering and pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by realm\"\n                },\n                \"speciesId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by species\"\n                },\n                \"status\": {\n                    \"allOf\": [\n   \
-        \                     {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\n                     \
-        \   }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"Filter
-        by status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n       \
-        \             \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number
-        for pagination (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\"\
-        : 20,\n                    \"description\": \"Number of results per page\"\n                }\n            }\n   \
-        \     },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n            \
-        \    \"dormant\"\n            ]\n        }\n    }\n}"
+        characters with filtering and pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm to list characters from (required for efficiency)\"\n            \
+        \    },\n                \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by species\"\n\
+        \                },\n                \"status\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/CharacterStatus\"\n                        }\n                  \
+        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by status\"\n      \
+        \          },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"default\": 1,\n                    \"description\": \"Page number for pagination (1-based)\"\
+        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
+        \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
+        CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\"\
+        ,\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n \
+        \           ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -900,15 +901,16 @@ components:
           description: ID of the character to delete
 
     ListCharactersRequest:
-      description: Request payload for listing characters with optional filtering and pagination
+      description: Request payload for listing characters with filtering and pagination
       type: object
       additionalProperties: false
+      required:
+      - realmId
       properties:
         realmId:
           type: string
           format: uuid
-          nullable: true
-          description: Filter by realm
+          description: Realm to list characters from (required for efficiency)
         speciesId:
           type: string
           format: uuid

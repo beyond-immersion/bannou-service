@@ -45,6 +45,11 @@ public partial interface IAssetService : IBannouService
         Task<(StatusCodes, AssetWithDownloadUrl?)> GetAssetAsync(GetAssetRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteAsset operation
+        /// </summary>
+        Task<(StatusCodes, DeleteAssetResponse?)> DeleteAssetAsync(DeleteAssetRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ListAssetVersions operation
         /// </summary>
         Task<(StatusCodes, AssetVersionList?)> ListAssetVersionsAsync(ListVersionsRequest body, CancellationToken cancellationToken = default(CancellationToken));

@@ -39,6 +39,8 @@ public interface IExpressionVisitor<T>
     T VisitFunctionCall(FunctionCallNode node);
     /// <summary>Visits a null coalesce node.</summary>
     T VisitNullCoalesce(NullCoalesceNode node);
+    /// <summary>Visits an array literal node.</summary>
+    T VisitArrayLiteral(ArrayLiteralNode node);
 }
 
 /// <summary>
@@ -351,4 +353,25 @@ public sealed class NullCoalesceNode : ExpressionNode
 
     /// <inheritdoc/>
     public override string ToString() => $"({Left} ?? {Right})";
+}
+
+/// <summary>
+/// Array literal ([a, b, c]).
+/// </summary>
+public sealed class ArrayLiteralNode : ExpressionNode
+{
+    /// <summary>Gets the array elements.</summary>
+    public IReadOnlyList<ExpressionNode> Elements { get; }
+
+    /// <summary>Creates a new array literal node.</summary>
+    public ArrayLiteralNode(IReadOnlyList<ExpressionNode> elements)
+    {
+        Elements = elements ?? throw new ArgumentNullException(nameof(elements));
+    }
+
+    /// <inheritdoc/>
+    public override T Accept<T>(IExpressionVisitor<T> visitor) => visitor.VisitArrayLiteral(this);
+
+    /// <inheritdoc/>
+    public override string ToString() => $"[{string.Join(", ", Elements)}]";
 }

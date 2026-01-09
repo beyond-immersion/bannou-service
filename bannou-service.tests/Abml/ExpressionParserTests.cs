@@ -395,4 +395,102 @@ public class ExpressionParserTests
         Assert.False(success);
         Assert.Null(result);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Array Literal Tests
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Parse_EmptyArray_ReturnsArrayLiteralNode()
+    {
+        var result = _parser.Parse("[]");
+        Assert.IsType<ArrayLiteralNode>(result);
+        var array = (ArrayLiteralNode)result;
+        Assert.Empty(array.Elements);
+    }
+
+    [Fact]
+    public void Parse_SingleElementArray_ReturnsArrayLiteralNode()
+    {
+        var result = _parser.Parse("['a']");
+        Assert.IsType<ArrayLiteralNode>(result);
+        var array = (ArrayLiteralNode)result;
+        Assert.Single(array.Elements);
+        Assert.IsType<LiteralNode>(array.Elements[0]);
+        Assert.Equal("a", ((LiteralNode)array.Elements[0]).Value);
+    }
+
+    [Fact]
+    public void Parse_MultiElementArray_ReturnsArrayLiteralNode()
+    {
+        var result = _parser.Parse("['a', 'b', 'c']");
+        Assert.IsType<ArrayLiteralNode>(result);
+        var array = (ArrayLiteralNode)result;
+        Assert.Equal(3, array.Elements.Count);
+    }
+
+    [Fact]
+    public void Parse_MixedTypeArray_ReturnsArrayLiteralNode()
+    {
+        var result = _parser.Parse("[1, 'hello', true, null]");
+        Assert.IsType<ArrayLiteralNode>(result);
+        var array = (ArrayLiteralNode)result;
+        Assert.Equal(4, array.Elements.Count);
+
+        Assert.IsType<LiteralNode>(array.Elements[0]);
+        Assert.Equal(1.0, ((LiteralNode)array.Elements[0]).Value);
+
+        Assert.IsType<LiteralNode>(array.Elements[1]);
+        Assert.Equal("hello", ((LiteralNode)array.Elements[1]).Value);
+
+        Assert.IsType<LiteralNode>(array.Elements[2]);
+        Assert.Equal(true, ((LiteralNode)array.Elements[2]).Value);
+
+        Assert.IsType<LiteralNode>(array.Elements[3]);
+        Assert.Null(((LiteralNode)array.Elements[3]).Value);
+    }
+
+    [Fact]
+    public void Parse_InWithArrayLiteral_ReturnsBinaryNodeWithArrayRhs()
+    {
+        var result = _parser.Parse("x in ['idle', 'walking']");
+        Assert.IsType<BinaryNode>(result);
+        var binary = (BinaryNode)result;
+        Assert.Equal(BinaryOperator.In, binary.Operator);
+        Assert.IsType<VariableNode>(binary.Left);
+        Assert.IsType<ArrayLiteralNode>(binary.Right);
+
+        var array = (ArrayLiteralNode)binary.Right;
+        Assert.Equal(2, array.Elements.Count);
+    }
+
+    [Fact]
+    public void Parse_InWithEmptyArray_ReturnsBinaryNodeWithEmptyArrayRhs()
+    {
+        var result = _parser.Parse("x in []");
+        Assert.IsType<BinaryNode>(result);
+        var binary = (BinaryNode)result;
+        Assert.Equal(BinaryOperator.In, binary.Operator);
+        Assert.IsType<ArrayLiteralNode>(binary.Right);
+        Assert.Empty(((ArrayLiteralNode)binary.Right).Elements);
+    }
+
+    [Fact]
+    public void Parse_ArrayWithExpressions_ReturnsNestedExpressions()
+    {
+        var result = _parser.Parse("[1 + 2, a * b]");
+        Assert.IsType<ArrayLiteralNode>(result);
+        var array = (ArrayLiteralNode)result;
+        Assert.Equal(2, array.Elements.Count);
+        Assert.IsType<BinaryNode>(array.Elements[0]);
+        Assert.IsType<BinaryNode>(array.Elements[1]);
+    }
+
+    [Fact]
+    public void Parse_ArrayIndexAccessAfterArray_DistinguishesFromArrayLiteral()
+    {
+        // arr[0] should be index access, not array literal
+        var result = _parser.Parse("arr[0]");
+        Assert.IsType<IndexAccessNode>(result);
+    }
 }

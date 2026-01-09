@@ -100,10 +100,22 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <summary>
     /// Applies configuration overrides to a template.
     /// </summary>
+    /// <remarks>
+    /// Configuration overrides REPLACE the template configuration entirely (no merge).
+    /// This is intentional:
+    /// - Configuration is generic (object?) - deep merging arbitrary types is error-prone
+    /// - Explicit > implicit: callers who need partial overrides should merge at the call site
+    /// - Simple semantics: "override = replace" is unambiguous
+    ///
+    /// If partial overrides are needed, the caller should:
+    /// 1. Get the template configuration
+    /// 2. Merge their changes into a new configuration object
+    /// 3. Pass the merged configuration as the override
+    /// </remarks>
     private static ActorTemplateData ApplyConfigurationOverrides(ActorTemplateData template, object overrides)
     {
-        // Create a copy with overrides applied
-        // For now, just return the template - override logic would parse the object
+        // Configuration overrides replace the template configuration entirely (no merge).
+        // Callers requiring partial overrides should merge before calling.
         return new ActorTemplateData
         {
             TemplateId = template.TemplateId,

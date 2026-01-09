@@ -10,11 +10,28 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
 /// <summary>
-/// Actor-local memory store using lib-state.
-/// Stores memories in agent's state store with index-based retrieval.
-/// This MVP implementation uses keyword matching for relevance.
-/// The interface allows future migration to a dedicated Memory service with embeddings.
+/// Actor-local memory store using lib-state with keyword-based relevance matching.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>MVP Status Acknowledged</b>: This implementation uses keyword matching for relevance
+/// scoring. This is appropriate for structured game data (categories, entity IDs, metadata keys)
+/// where terminology is consistent. See ACTOR_SYSTEM.md section 7.3 for migration criteria.
+/// </para>
+/// <para>
+/// <b>When keyword matching works well</b>:
+/// <list type="bullet">
+/// <item>Game-defined perception categories ("threat", "social", "routine")</item>
+/// <item>Entity-based relationships (entity IDs in metadata)</item>
+/// <item>Structured events where NPCs write their own memories</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>Migration path</b>: The <see cref="IMemoryStore"/> interface is designed for swappable
+/// implementations. An embedding-based store can be created without changes to the cognition
+/// pipeline.
+/// </para>
+/// </remarks>
 public sealed class ActorLocalMemoryStore : IMemoryStore
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -384,8 +401,9 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This is an MVP implementation using keyword matching. Future versions may use
-    /// embeddings via a dedicated Memory service for semantic similarity.
+    /// Keyword-based scoring is appropriate for structured game data where terminology
+    /// is consistent. For semantic similarity (e.g., player-generated content), consider
+    /// an embedding-based <see cref="IMemoryStore"/> implementation.
     /// </para>
     /// <para>
     /// Score components (see <see cref="CognitionConstants"/> for weights):

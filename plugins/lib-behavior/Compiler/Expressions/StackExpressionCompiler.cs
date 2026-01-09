@@ -177,6 +177,13 @@ public sealed class StackExpressionCompiler : IExpressionVisitor<Unit>
             return Unit.Value;
         }
 
+        // Handle 'in' operator with static set expansion
+        if (node.Operator == BinaryOperator.In)
+        {
+            CompileInOperator(node);
+            return Unit.Value;
+        }
+
         // Compile left operand (pushes to stack)
         node.Left.Accept(this);
 
@@ -203,6 +210,103 @@ public sealed class StackExpressionCompiler : IExpressionVisitor<Unit>
 
         emitter.Emit(opcode);
         return Unit.Value;
+    }
+
+    /// <summary>
+    /// Compiles the 'in' operator by expanding static array literals to OR chains.
+    /// For example: x in ['a', 'b', 'c'] becomes x == 'a' || x == 'b' || x == 'c'
+    /// </summary>
+    private void CompileInOperator(BinaryNode node)
+    {
+        // Check if RHS is an array literal with static elements
+        if (node.Right is not ArrayLiteralNode arrayNode)
+        {
+            _context.AddError(
+                "'in' operator requires an array literal on the right-hand side in bytecode. " +
+                "For dynamic collections, use cloud-side execution or pre-compute a boolean input flag.");
+            // Push false as fallback
+            var falseIdx = _context.Constants.GetOrAdd(0.0);
+            _context.Emitter.EmitPushConst(falseIdx);
+            return;
+        }
+
+        var elements = arrayNode.Elements;
+
+        // Empty array - always false
+        if (elements.Count == 0)
+        {
+            var falseIdx = _context.Constants.GetOrAdd(0.0);
+            _context.Emitter.EmitPushConst(falseIdx);
+            return;
+        }
+
+        // Limit expansion to prevent bytecode bloat (max 16 elements)
+        const int maxElements = 16;
+        if (elements.Count > maxElements)
+        {
+            _context.AddError(
+                $"'in' operator with array literal exceeds maximum of {maxElements} elements. " +
+                "Consider using multiple conditions or pre-computing a boolean input flag.");
+            var falseIdx = _context.Constants.GetOrAdd(0.0);
+            _context.Emitter.EmitPushConst(falseIdx);
+            return;
+        }
+
+        // Single element - just equality check
+        if (elements.Count == 1)
+        {
+            node.Left.Accept(this);
+            elements[0].Accept(this);
+            _context.Emitter.Emit(BehaviorOpcode.Eq);
+            return;
+        }
+
+        // Multiple elements - expand to OR chain with short-circuit evaluation
+        // x in [a, b, c] => x == a || x == b || x == c
+        //
+        // We need to evaluate the left-hand side once and compare against each element.
+        // For efficiency, we store LHS in a local variable to avoid re-evaluation.
+
+        var emitter = _context.Emitter;
+        var labels = _context.Labels;
+
+        // Allocate a local for the LHS value (to avoid re-evaluation)
+        var lhsLocal = _context.GetOrAllocateLocal($"__in_lhs_{labels.AllocateLabel()}");
+
+        // Compile LHS and store in local
+        node.Left.Accept(this);
+        emitter.EmitStoreLocal(lhsLocal);
+
+        var endLabel = labels.AllocateLabel();
+        var trueLabel = labels.AllocateLabel();
+
+        // For each element except the last, check equality and jump to true if match
+        for (var i = 0; i < elements.Count - 1; i++)
+        {
+            // Push LHS from local
+            emitter.EmitPushLocal(lhsLocal);
+            // Compile element
+            elements[i].Accept(this);
+            // Compare
+            emitter.Emit(BehaviorOpcode.Eq);
+            // If true, jump to true label (short-circuit)
+            emitter.EmitJmpIf(trueLabel);
+        }
+
+        // Last element - just check equality, result stays on stack
+        emitter.EmitPushLocal(lhsLocal);
+        elements[^1].Accept(this);
+        emitter.Emit(BehaviorOpcode.Eq);
+        // Jump to end (result is on stack)
+        emitter.EmitJmp(endLabel);
+
+        // True label - push true value
+        emitter.DefineLabel(trueLabel);
+        var trueIdx = _context.Constants.GetOrAdd(1.0);
+        emitter.EmitPushConst(trueIdx);
+
+        // End label
+        emitter.DefineLabel(endLabel);
     }
 
     private void CompileShortCircuitAnd(BinaryNode node)
@@ -457,6 +561,22 @@ public sealed class StackExpressionCompiler : IExpressionVisitor<Unit>
         node.Right.Accept(this);
 
         emitter.DefineLabel(endLabel);
+
+        return Unit.Value;
+    }
+
+    /// <inheritdoc/>
+    public Unit VisitArrayLiteral(ArrayLiteralNode node)
+    {
+        // Array literals are only supported as the RHS of 'in' operator (handled by CompileInOperator).
+        // Standalone array literals are not supported in bytecode.
+        _context.AddError(
+            "Array literals are only supported with the 'in' operator in bytecode " +
+            "(e.g., 'x in [1, 2, 3]'). Standalone arrays require cloud-side execution.");
+
+        // Push 0 as placeholder
+        var idx = _context.Constants.GetOrAdd(0.0);
+        _context.Emitter.EmitPushConst(idx);
 
         return Unit.Value;
     }

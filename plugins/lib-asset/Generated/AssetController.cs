@@ -67,6 +67,19 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetWithDownloadUrl>> GetAssetAsync(GetAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Delete an asset
+    /// </summary>
+
+    /// <remarks>
+    /// Delete an asset from storage. If versionId is specified, only that version is deleted.
+    /// <br/>If versionId is omitted, all versions are deleted.
+    /// </remarks>
+
+    /// <returns>Asset deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAssetResponse>> DeleteAssetAsync(DeleteAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// List all versions of an asset
     /// </summary>
 
@@ -230,6 +243,23 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.GetAssetAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Delete an asset
+    /// </summary>
+    /// <remarks>
+    /// Delete an asset from storage. If versionId is specified, only that version is deleted.
+    /// <br/>If versionId is omitted, all versions are deleted.
+    /// </remarks>
+    /// <returns>Asset deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("assets/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAssetResponse>> DeleteAsset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeleteAssetAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -1045,6 +1075,118 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             _GetAsset_Info,
             _GetAsset_RequestSchema,
             _GetAsset_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteAsset
+
+    private static readonly string _DeleteAsset_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteAssetRequest",
+    "$defs": {
+        "DeleteAssetRequest": {
+            "description": "Request to delete an asset from storage",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "assetId"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Asset identifier to delete"
+                },
+                "versionId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Specific version to delete. If omitted, all versions are deleted.\n"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteAsset_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteAssetResponse",
+    "$defs": {
+        "DeleteAssetResponse": {
+            "description": "Response confirming asset deletion",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "assetId",
+                "versionsDeleted"
+            ],
+            "properties": {
+                "assetId": {
+                    "type": "string",
+                    "description": "Deleted asset identifier"
+                },
+                "versionsDeleted": {
+                    "type": "integer",
+                    "description": "Number of versions deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteAsset_Info = """
+{
+    "summary": "Delete an asset",
+    "description": "Delete an asset from storage. If versionId is specified, only that version is deleted.\nIf versionId is omitted, all versions are deleted.\n",
+    "tags": [
+        "Assets"
+    ],
+    "deprecated": false,
+    "operationId": "deleteAsset"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteAsset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("assets/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAsset_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "assets/delete",
+            _DeleteAsset_Info));
+
+    /// <summary>Returns request schema for DeleteAsset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("assets/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAsset_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "assets/delete",
+            "request-schema",
+            _DeleteAsset_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteAsset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("assets/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAsset_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "assets/delete",
+            "response-schema",
+            _DeleteAsset_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteAsset</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("assets/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteAsset_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "assets/delete",
+            _DeleteAsset_Info,
+            _DeleteAsset_RequestSchema,
+            _DeleteAsset_ResponseSchema));
 
     #endregion
 

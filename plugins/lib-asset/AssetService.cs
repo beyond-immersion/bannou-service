@@ -494,6 +494,99 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
+    /// Implementation of DeleteAsset operation.
+    /// Deletes an asset from storage. If versionId is specified, only that version is deleted.
+    /// </summary>
+    public async Task<(StatusCodes, DeleteAssetResponse?)> DeleteAssetAsync(DeleteAssetRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("DeleteAsset: assetId={AssetId}, versionId={VersionId}", body.AssetId, body.VersionId);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(body.AssetId))
+            {
+                _logger.LogWarning("DeleteAsset: Missing AssetId");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Retrieve internal asset record to get storage details
+            var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+            var assetKey = $"{_configuration.AssetKeyPrefix}{body.AssetId}";
+            var internalRecord = await assetStore.GetAsync(assetKey, cancellationToken).ConfigureAwait(false);
+
+            if (internalRecord == null)
+            {
+                _logger.LogWarning("DeleteAsset: Asset not found {AssetId}", body.AssetId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            int versionsDeleted;
+
+            if (!string.IsNullOrEmpty(body.VersionId))
+            {
+                // Delete specific version
+                await _storageProvider.DeleteObjectAsync(
+                    internalRecord.Bucket,
+                    internalRecord.StorageKey,
+                    body.VersionId).ConfigureAwait(false);
+                versionsDeleted = 1;
+
+                _logger.LogInformation(
+                    "DeleteAsset: Deleted version {VersionId} for asset {AssetId}",
+                    body.VersionId,
+                    body.AssetId);
+            }
+            else
+            {
+                // Delete all versions - list them first
+                var versions = await _storageProvider.ListVersionsAsync(
+                    internalRecord.Bucket,
+                    internalRecord.StorageKey).ConfigureAwait(false);
+
+                foreach (var version in versions)
+                {
+                    await _storageProvider.DeleteObjectAsync(
+                        internalRecord.Bucket,
+                        internalRecord.StorageKey,
+                        version.VersionId).ConfigureAwait(false);
+                }
+
+                versionsDeleted = versions.Count;
+
+                // Also delete the asset metadata from state store
+                await assetStore.DeleteAsync(assetKey, cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "DeleteAsset: Deleted all {Count} versions for asset {AssetId}",
+                    versionsDeleted,
+                    body.AssetId);
+            }
+
+            var response = new DeleteAssetResponse
+            {
+                AssetId = body.AssetId,
+                VersionsDeleted = versionsDeleted
+            };
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing DeleteAsset operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "DeleteAsset",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/assets/delete",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
     /// Implementation of ListAssetVersions operation.
     /// Returns list of all versions for an asset.
     /// </summary>

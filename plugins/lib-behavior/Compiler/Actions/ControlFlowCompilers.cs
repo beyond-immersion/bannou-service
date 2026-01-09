@@ -191,15 +191,25 @@ public sealed class GotoCompiler : ActionCompilerBase<GotoAction>
 /// <summary>
 /// Compiles call (subroutine) actions.
 /// </summary>
+/// <remarks>
+/// The call/return pattern is NOT supported in bytecode - the bytecode VM is intentionally
+/// a flat state machine without a call stack. This is by design: bytecode behaviors are
+/// meant for simple, fast per-frame decisions. Complex orchestration with subroutines
+/// belongs in cloud-side execution (tree-walker), which has full call stack support.
+/// </remarks>
 public sealed class CallCompiler : ActionCompilerBase<CallAction>
 {
     /// <inheritdoc/>
     protected override void CompileTyped(CallAction action, CompilationContext context)
     {
-        // Call is similar to goto but with return
-        // For now, we treat it as a jump since our simple VM doesn't have a call stack
-        context.AddError("call is not fully supported in behavior bytecode. Use goto for now.");
+        // Bytecode VM is intentionally a flat state machine without a call stack.
+        // call/return is only supported in cloud-side execution (tree-walker).
+        context.AddError(
+            "call/return is not supported in bytecode behaviors. " +
+            "Use 'goto' for flow transitions (tail call semantics). " +
+            "For subroutine semantics, use cloud-side execution.");
 
+        // Emit a jump as fallback to avoid subsequent compilation errors
         var emitter = context.Emitter;
         var labels = context.Labels;
         var flowLabel = labels.GetOrAllocateFlowLabel(action.Flow);
@@ -210,6 +220,11 @@ public sealed class CallCompiler : ActionCompilerBase<CallAction>
 /// <summary>
 /// Compiles return actions.
 /// </summary>
+/// <remarks>
+/// In bytecode, 'return' halts execution and optionally sets an output value.
+/// Note: This does NOT return to a caller (there is no call stack in bytecode).
+/// For call/return semantics, use cloud-side execution.
+/// </remarks>
 public sealed class ReturnCompiler : ActionCompilerBase<ReturnAction>
 {
     private readonly StackExpressionCompiler _exprCompiler;

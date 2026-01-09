@@ -648,16 +648,11 @@ public partial class BehaviorService : IBehaviorService
     // Context resolution happens dynamically within BehaviorStack layer evaluation.
 
     /// <summary>
-    /// Invalidates a cached compiled behavior.
+    /// Invalidates a cached compiled behavior by deleting it from storage.
     /// </summary>
-    /// <remarks>
-    /// Currently not fully implemented - the asset service does not support asset deletion.
-    /// This endpoint will verify the asset exists but cannot remove it from storage.
-    /// Future implementation will support soft-delete or versioning to mark assets as invalid.
-    /// </remarks>
     /// <param name="body">Request containing the behavior ID to invalidate.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>OK if behavior was found (marking for invalidation), NotFound if not in cache.</returns>
+    /// <returns>OK if behavior was deleted, NotFound if not in cache.</returns>
     public async Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
         try
@@ -708,10 +703,25 @@ public partial class BehaviorService : IBehaviorService
                 }
             }
 
-            // Note: Asset service doesn't currently support deletion
-            _logger.LogInformation(
-                "Behavior {BehaviorId} invalidated (deleted event published)",
-                body.BehaviorId);
+            // Delete the asset from storage
+            var deleteRequest = new DeleteAssetRequest
+            {
+                AssetId = body.BehaviorId
+            };
+
+            try
+            {
+                await _assetClient.DeleteAssetAsync(deleteRequest, cancellationToken);
+                _logger.LogInformation(
+                    "Behavior {BehaviorId} deleted from asset storage",
+                    body.BehaviorId);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug(
+                    "Behavior {BehaviorId} not found in asset storage (may have been deleted already)",
+                    body.BehaviorId);
+            }
 
             return StatusCodes.OK;
         }

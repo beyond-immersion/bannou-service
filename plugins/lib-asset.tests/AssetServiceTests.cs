@@ -1190,6 +1190,182 @@ public class AssetServiceTests
 
     #endregion
 
+    #region DeleteAssetAsync Tests
+
+    [Fact]
+    public async Task DeleteAssetAsync_WithEmptyAssetId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteAssetRequest
+        {
+            AssetId = ""
+        };
+
+        // Act
+        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteAssetAsync_WhenAssetNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new DeleteAssetRequest
+        {
+            AssetId = "non-existent-asset"
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((InternalAssetRecord?)null);
+
+        // Act
+        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteAssetAsync_WithSpecificVersion_ShouldDeleteSingleVersion()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var assetId = "test-asset-123";
+        var versionId = "v1";
+        var request = new DeleteAssetRequest
+        {
+            AssetId = assetId,
+            VersionId = versionId
+        };
+
+        var internalRecord = new InternalAssetRecord
+        {
+            AssetId = assetId,
+            Filename = "test.png",
+            ContentType = "image/png",
+            ContentHash = "abc123",
+            Size = 1024,
+            AssetType = AssetType.Texture,
+            Realm = Realm.Arcadia,
+            StorageKey = $"assets/texture/{assetId}.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(internalRecord);
+
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(assetId, result.AssetId);
+        Assert.Equal(1, result.VersionsDeleted);
+
+        // Verify specific version was deleted
+        _mockStorageProvider.Verify(
+            s => s.DeleteObjectAsync(
+                "test-bucket",
+                $"assets/texture/{assetId}.png",
+                versionId),
+            Times.Once);
+
+        // Verify asset record was NOT deleted (only deleted version)
+        _mockAssetStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAssetAsync_WithoutVersion_ShouldDeleteAllVersions()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var assetId = "test-asset-456";
+        var request = new DeleteAssetRequest
+        {
+            AssetId = assetId
+            // No VersionId - delete all versions
+        };
+
+        var internalRecord = new InternalAssetRecord
+        {
+            AssetId = assetId,
+            Filename = "test.png",
+            ContentType = "image/png",
+            ContentHash = "abc123",
+            Size = 1024,
+            AssetType = AssetType.Texture,
+            Realm = Realm.Arcadia,
+            StorageKey = $"assets/texture/{assetId}.png",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        var versions = new List<ObjectVersionInfo>
+        {
+            new ObjectVersionInfo("v3", true, DateTime.UtcNow, 2048, "etag3", false, "STANDARD"),
+            new ObjectVersionInfo("v2", false, DateTime.UtcNow.AddDays(-1), 1536, "etag2", false, "STANDARD"),
+            new ObjectVersionInfo("v1", false, DateTime.UtcNow.AddDays(-2), 1024, "etag1", false, "GLACIER")
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(internalRecord);
+
+        _mockStorageProvider
+            .Setup(s => s.ListVersionsAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(versions);
+
+        _mockStorageProvider
+            .Setup(s => s.DeleteObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, result) = await service.DeleteAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(assetId, result.AssetId);
+        Assert.Equal(3, result.VersionsDeleted);
+
+        // Verify all versions were deleted
+        _mockStorageProvider.Verify(
+            s => s.DeleteObjectAsync(
+                "test-bucket",
+                $"assets/texture/{assetId}.png",
+                It.IsAny<string?>()),
+            Times.Exactly(3));
+
+        // Verify asset record was deleted
+        _mockAssetStore.Verify(
+            s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region RequestBundleUploadAsync Tests
 
     [Fact]

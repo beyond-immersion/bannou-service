@@ -1,16 +1,30 @@
 // =============================================================================
 // Memory Store Interface
-// Actor-local memory storage interface for MVP.
-// Can be swapped for service-based implementation later.
+// Abstraction for memory storage in the cognition pipeline.
+// Designed for swappable implementations (keyword-based MVP, embedding-based future).
 // =============================================================================
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 
 /// <summary>
 /// Memory storage interface for the cognition pipeline.
-/// This MVP implementation uses actor-local storage via lib-state.
-/// The interface allows future migration to a dedicated Memory service.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This interface abstracts memory storage and retrieval, enabling different implementations:
+/// <list type="bullet">
+/// <item><see cref="ActorLocalMemoryStore"/>: MVP using keyword-based relevance (current)</item>
+/// <item>EmbeddingMemoryStore: Future option using semantic similarity via LLM embeddings</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>Implementation Selection Criteria</b> (see ACTOR_SYSTEM.md section 7.3):
+/// <list type="bullet">
+/// <item>Keyword: Fast, free, transparent - good for structured game data</item>
+/// <item>Embedding: Semantic similarity - needed for player content or thematic matching</item>
+/// </list>
+/// </para>
+/// </remarks>
 public interface IMemoryStore
 {
     /// <summary>

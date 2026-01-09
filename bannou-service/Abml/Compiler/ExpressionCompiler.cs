@@ -358,4 +358,55 @@ internal sealed class CompilerVisitor : IExpressionVisitor<byte>
 
         return rightReg;
     }
+
+    /// <inheritdoc/>
+    public byte VisitArrayLiteral(ArrayLiteralNode node)
+    {
+        // For cloud-side execution, we build the array at runtime.
+        // Each element is evaluated and stored, then combined into an array.
+        var destReg = Builder.Registers.Allocate();
+
+        if (node.Elements.Count == 0)
+        {
+            // Empty array - load as constant
+            var emptyArrayIdx = Builder.Constants.Add(Array.Empty<object>());
+            Builder.Emit(OpCode.LoadConst, destReg, emptyArrayIdx);
+            return destReg;
+        }
+
+        // For static arrays (all literals), we can pre-build the array
+        if (AllLiterals(node.Elements, out var values))
+        {
+            var arrayIdx = Builder.Constants.Add(values);
+            Builder.Emit(OpCode.LoadConst, destReg, arrayIdx);
+            return destReg;
+        }
+
+        // For dynamic arrays, we need runtime array building
+        // This is more complex - for now, we only support all-literal arrays
+        throw new AbmlCompilationException(
+            "Array literals with non-literal elements are not supported. " +
+            "Use only literals in array expressions (e.g., ['a', 'b', 1, 2]).");
+    }
+
+    /// <summary>
+    /// Checks if all elements are literals and extracts their values.
+    /// </summary>
+    private static bool AllLiterals(IReadOnlyList<ExpressionNode> elements, out object?[] values)
+    {
+        values = new object?[elements.Count];
+        for (var i = 0; i < elements.Count; i++)
+        {
+            if (elements[i] is LiteralNode literal)
+            {
+                values[i] = literal.Value;
+            }
+            else
+            {
+                values = Array.Empty<object?>();
+                return false;
+            }
+        }
+        return true;
+    }
 }

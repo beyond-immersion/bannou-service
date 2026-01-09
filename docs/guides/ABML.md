@@ -371,6 +371,7 @@ Expressions are enclosed in `${}` and support:
 # Membership
 "${item in collection}"
 "${key in map}"
+"${state in ['idle', 'walking', 'running']}"  # Array literal (static sets)
 
 # Ternary
 "${condition ? value_if_true : value_if_false}"
@@ -417,6 +418,52 @@ Expressions are enclosed in `${}` and support:
 "${type_of(value)}"        # Returns type name
 "${is_null(value)}"
 "${is_empty(collection)}"
+```
+
+### 5.2.1 Collection Membership (`in` operator)
+
+The `in` operator tests membership in collections. Support varies by execution context:
+
+**Cloud-Side Execution** (tree-walking interpreter):
+```yaml
+# All forms supported - dynamic collections resolved at runtime
+- cond:
+    if: "${state in valid_states}"           # Variable reference to collection
+    then:
+      - log: "State is valid"
+
+- cond:
+    if: "${item in ['sword', 'shield']}"     # Array literal
+    then:
+      - log: "Combat equipment detected"
+```
+
+**Bytecode Execution** (behavior models, compiled behaviors):
+```yaml
+# Only array literals with static values are supported
+# Compiled to efficient OR-chain: state == 'idle' || state == 'walking' || ...
+- cond:
+    if: "${state in ['idle', 'walking', 'running']}"  # Works - static set expansion
+    then:
+      - goto: movement_flow
+
+# NOT supported in bytecode - requires runtime collection resolution
+# - cond:
+#     if: "${item in inventory}"  # Error: use input flags instead
+```
+
+**Bytecode Constraints**:
+- Array literals only (no variable references)
+- Maximum 16 elements per array
+- All elements must be literals (no expressions)
+
+**Workaround for Dynamic Collections**: Pre-compute membership as a boolean input:
+```yaml
+# Game server computes: is_valid_state = valid_states.contains(current_state)
+- cond:
+    if: "${is_valid_state}"  # Boolean input from game server
+    then:
+      - goto: valid_state_handling
 ```
 
 ### 5.3 Template Syntax (Text Interpolation)
@@ -613,6 +660,40 @@ Multiple `when` clauses are evaluated in order; first match executes.
 
 # Branch to channel (in channel-based documents)
 - branch: channel_name
+```
+
+**Execution Context Notes**:
+
+| Action | Cloud-Side (Tree-Walker) | Bytecode |
+|--------|--------------------------|----------|
+| `goto` | Flow transition | Flow transition (same) |
+| `call` | Subroutine with return | **Not supported** - use `goto` |
+| `return` | Return to caller | Halt execution (no caller) |
+
+The bytecode VM is intentionally a flat state machine without a call stack. This design choice enables:
+- Zero-allocation per-frame evaluation
+- Simple, predictable execution flow
+- Optimized for game engine integration
+
+**For subroutine semantics in bytecode behaviors**, refactor to use `goto`:
+```yaml
+# Instead of:
+# - call: { flow: validate }
+# - process_result: { ... }
+
+# Use explicit flow transitions:
+- goto: { flow: validate }
+
+# In validate flow, goto back to the next step:
+flows:
+  validate:
+    actions:
+      - cond:
+          if: "${is_valid}"
+          then:
+            - goto: { flow: process_result }
+          else:
+            - goto: { flow: handle_error }
 ```
 
 ---
