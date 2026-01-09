@@ -6177,6 +6177,106 @@
             Creates empty context.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry">
+            <summary>
+            Registry for tracking entity state used by the behavior system.
+            </summary>
+            <remarks>
+            <para>
+            When cinematics complete, they must sync their final state back to this registry
+            so that subsequent behavior evaluations have accurate world knowledge.
+            </para>
+            <para>
+            Implementations must be thread-safe as state may be updated from multiple sources
+            (cinematics completing, game server updates, perception events).
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.UpdateState(System.Guid,BeyondImmersion.BannouService.Behavior.EntityState,System.String)">
+            <summary>
+            Updates the state for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="state">The new state.</param>
+            <param name="source">Source of the update (for debugging/tracing).</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.GetState(System.Guid)">
+            <summary>
+            Gets the current state for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The current state, or null if no state is tracked.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.GetStateOrEmpty(System.Guid)">
+            <summary>
+            Gets the current state for an entity, or empty state if not found.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>The current state, or EntityState.Empty if not tracked.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.RemoveState(System.Guid)">
+            <summary>
+            Removes state tracking for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>True if state was removed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.HasState(System.Guid)">
+            <summary>
+            Checks if state is tracked for an entity.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <returns>True if state is tracked.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.GetTrackedEntityIds">
+            <summary>
+            Gets all tracked entity IDs.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.Count">
+            <summary>
+            Gets the count of tracked entities.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.Clear">
+            <summary>
+            Clears all tracked state.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Behavior.IEntityStateRegistry.StateUpdated">
+            <summary>
+            Event raised when entity state is updated.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs">
+            <summary>
+            Event args for entity state updates.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.#ctor(System.Guid,BeyondImmersion.BannouService.Behavior.EntityState,BeyondImmersion.BannouService.Behavior.EntityState,System.String)">
+            <summary>
+            Creates new event args.
+            </summary>
+            <param name="entityId">The entity ID.</param>
+            <param name="previousState">The previous state (null if first update).</param>
+            <param name="newState">The new state.</param>
+            <param name="source">The source of the update.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.EntityId">
+            <summary>Gets the entity ID.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.PreviousState">
+            <summary>Gets the previous state (null if first update).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.NewState">
+            <summary>Gets the new state.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.Source">
+            <summary>Gets the source of the update.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Behavior.EntityStateUpdatedEventArgs.UpdatedAt">
+            <summary>Gets when the update occurred.</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.IExternalDialogueLoader">
              <summary>
              Loads external dialogue files containing localizations and conditional overrides.

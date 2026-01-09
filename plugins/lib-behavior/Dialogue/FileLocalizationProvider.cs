@@ -344,6 +344,10 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
         }
     }
 
+    /// <summary>
+    /// Synchronously loads a locale if not already loaded.
+    /// Uses synchronous file I/O to avoid sync-over-async per IMPLEMENTATION TENETS.
+    /// </summary>
     private void EnsureLocaleLoaded(string locale)
     {
         if (_localeData.ContainsKey(locale))
@@ -364,13 +368,50 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
 
             if (File.Exists(filePath))
             {
-                LoadLocaleFileAsync(locale, filePath, CancellationToken.None)
-                    .GetAwaiter().GetResult();
+                // Use synchronous file read since this method is inherently synchronous.
+                // The GetText interface is sync for hot-path performance, so we use
+                // sync IO rather than sync-over-async which could cause deadlocks.
+                LoadLocaleFileSync(locale, filePath);
             }
         }
         finally
         {
             _loadLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Synchronously loads a locale file.
+    /// </summary>
+    private void LoadLocaleFileSync(string locale, string filePath)
+    {
+        try
+        {
+            var content = File.ReadAllText(filePath);
+            var raw = _deserializer.Deserialize<Dictionary<string, object>>(content);
+
+            if (raw == null)
+            {
+                return;
+            }
+
+            var flattened = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            FlattenDictionary(raw, "", flattened);
+
+            _localeData[locale] = flattened;
+
+            _logger?.LogDebug(
+                "Loaded localization file: {FilePath}, locale: {Locale}, keys: {KeyCount}",
+                filePath,
+                locale,
+                flattened.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(
+                ex,
+                "Failed to load localization file: {FilePath}",
+                filePath);
         }
     }
 

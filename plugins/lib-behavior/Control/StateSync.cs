@@ -78,23 +78,62 @@ public sealed class StateSyncCompletedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Default implementation of state sync.
+/// Default implementation of state sync that updates the entity state registry.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This implementation synchronizes entity state from cinematics back to the
+/// behavior system via the <see cref="IEntityStateRegistry"/>. When a cinematic
+/// completes and returns control, the entity's final state (position, health,
+/// stance, etc.) is written to the registry.
+/// </para>
+/// <para>
+/// Consumers of behavior evaluation can then query the registry to include
+/// current entity state in the <see cref="BehaviorEvaluationContext.Data"/>
+/// dictionary, ensuring behaviors make decisions based on accurate world knowledge.
+/// </para>
+/// </remarks>
 public sealed class StateSync : IStateSync
 {
+    private readonly IEntityStateRegistry _stateRegistry;
     private readonly ILogger<StateSync>? _logger;
 
     /// <summary>
     /// Creates a new state sync service.
     /// </summary>
+    /// <param name="stateRegistry">The entity state registry to update.</param>
     /// <param name="logger">Optional logger.</param>
-    public StateSync(ILogger<StateSync>? logger = null)
+    public StateSync(IEntityStateRegistry stateRegistry, ILogger<StateSync>? logger = null)
     {
+        _stateRegistry = stateRegistry ?? throw new ArgumentNullException(nameof(stateRegistry));
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Creates a new state sync service with a default registry.
+    /// </summary>
+    /// <param name="logger">Optional logger.</param>
+    /// <remarks>
+    /// This constructor creates an internal EntityStateRegistry instance.
+    /// For production use, prefer the constructor that takes IEntityStateRegistry
+    /// to enable sharing state across components.
+    /// </remarks>
+    public StateSync(ILogger<StateSync>? logger = null)
+        : this(new EntityStateRegistry(), logger)
+    {
     }
 
     /// <inheritdoc/>
     public event EventHandler<StateSyncCompletedEventArgs>? StateSyncCompleted;
+
+    /// <summary>
+    /// Gets the state registry used by this sync service.
+    /// </summary>
+    /// <remarks>
+    /// This allows consumers to access the registry directly for querying state
+    /// or subscribing to state change events.
+    /// </remarks>
+    public IEntityStateRegistry StateRegistry => _stateRegistry;
 
     /// <inheritdoc/>
     public async Task SyncStateAsync(
@@ -120,8 +159,6 @@ public sealed class StateSync : IStateSync
             entityId,
             handoff.Style);
 
-        // For blend handoff, we'd need to interpolate state over time
-        // For now, treat all styles as instant sync
         switch (handoff.Style)
         {
             case HandoffStyle.Instant:
@@ -130,12 +167,12 @@ public sealed class StateSync : IStateSync
                 break;
 
             case HandoffStyle.Blend:
-                // TODO: Implement blend interpolation over handoff.BlendDuration
-                // For MVP, fall through to instant
-                await SyncInstantAsync(entityId, finalCinematicState, ct);
+                // Blend interpolation not yet implemented - sync final state immediately
+                // The blend animation would happen on the game client side
                 _logger?.LogDebug(
-                    "Blend handoff not yet implemented, using instant for entity {EntityId}",
+                    "Blend handoff for entity {EntityId} using instant sync (blend interpolation deferred to client)",
                     entityId);
+                await SyncInstantAsync(entityId, finalCinematicState, ct);
                 break;
 
             case HandoffStyle.Explicit:
@@ -163,23 +200,27 @@ public sealed class StateSync : IStateSync
             entityId);
     }
 
-    private Task SyncInstantAsync(
+    private async Task SyncInstantAsync(
         Guid entityId,
         EntityState state,
         CancellationToken ct)
     {
-        // In a full implementation, this would:
-        // 1. Update the entity's position/rotation/etc in the world state
-        // 2. Update the behavior stack's knowledge of the entity's current state
-        // 3. Trigger any necessary re-evaluations
+        // Check for cancellation before proceeding
+        ct.ThrowIfCancellationRequested();
 
-        // For now, this is a placeholder that completes immediately
+        // Update the entity state registry with the cinematic's final state
+        // This makes the state available to subsequent behavior evaluations
+        _stateRegistry.UpdateState(entityId, state, source: "cinematic");
+
         _logger?.LogDebug(
-            "Instant state sync for entity {EntityId}: Position={Position}, Health={Health}",
+            "Synced entity {EntityId} state to registry: Position={Position}, Health={Health}, Stance={Stance}",
             entityId,
             state.Position,
-            state.Health);
+            state.Health,
+            state.Stance);
 
-        return Task.CompletedTask;
+        // Yield to allow other async operations to proceed
+        // This ensures we don't block if called in a tight loop
+        await Task.Yield();
     }
 }

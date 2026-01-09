@@ -919,6 +919,364 @@ public class ActorServiceTests
     }
 
     #endregion
+
+    #region StartEncounterAsync Tests
+
+    [Fact]
+    public async Task StartEncounterAsync_ValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var service = CreateService();
+        var participantId = Guid.NewGuid();
+        var request = new StartEncounterRequest
+        {
+            ActorId = "event-brain-1",
+            EncounterId = "encounter-001",
+            EncounterType = "combat",
+            Participants = new List<Guid> { participantId }
+        };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.StartEncounter(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<Guid>>(),
+            It.IsAny<Dictionary<string, object?>?>()))
+            .Returns(true);
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("encounter-001", response.EncounterId);
+        Assert.Null(response.Error);
+    }
+
+    [Fact]
+    public async Task StartEncounterAsync_ActorNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new StartEncounterRequest
+        {
+            ActorId = "nonexistent-actor",
+            EncounterId = "encounter-001",
+            EncounterType = "combat",
+            Participants = new List<Guid> { Guid.NewGuid() }
+        };
+
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
+
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ActorAssignment?)null);
+
+        // Act
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+    }
+
+    [Fact]
+    public async Task StartEncounterAsync_AlreadyHasActiveEncounter_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new StartEncounterRequest
+        {
+            ActorId = "event-brain-1",
+            EncounterId = "encounter-002",
+            EncounterType = "combat",
+            Participants = new List<Guid> { Guid.NewGuid() }
+        };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.StartEncounter(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<Guid>>(),
+            It.IsAny<Dictionary<string, object?>?>()))
+            .Returns(false); // Returns false when encounter already active
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("already has an active encounter", response.Error);
+    }
+
+    #endregion
+
+    #region UpdateEncounterPhaseAsync Tests
+
+    [Fact]
+    public async Task UpdateEncounterPhaseAsync_ValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateEncounterPhaseRequest
+        {
+            ActorId = "event-brain-1",
+            Phase = "executing"
+        };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "event-brain-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "event-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow,
+            Encounter = new EncounterStateData
+            {
+                EncounterId = "encounter-001",
+                EncounterType = "combat",
+                Participants = new List<Guid>(),
+                Phase = "initializing",
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        });
+        mockRunner.Setup(r => r.SetEncounterPhase("executing")).Returns(true);
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("initializing", response.PreviousPhase);
+        Assert.Equal("executing", response.CurrentPhase);
+    }
+
+    [Fact]
+    public async Task UpdateEncounterPhaseAsync_ActorNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateEncounterPhaseRequest
+        {
+            ActorId = "nonexistent-actor",
+            Phase = "executing"
+        };
+
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
+
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ActorAssignment?)null);
+
+        // Act
+        var (status, response) = await service.UpdateEncounterPhaseAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+    }
+
+    #endregion
+
+    #region EndEncounterAsync Tests
+
+    [Fact]
+    public async Task EndEncounterAsync_ValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new EndEncounterRequest
+        {
+            ActorId = "event-brain-1"
+        };
+
+        var startedAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "event-brain-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "event-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow,
+            Encounter = new EncounterStateData
+            {
+                EncounterId = "encounter-001",
+                EncounterType = "combat",
+                Participants = new List<Guid>(),
+                Phase = "complete",
+                StartedAt = startedAt
+            }
+        });
+        mockRunner.Setup(r => r.EndEncounter()).Returns(true);
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("encounter-001", response.EncounterId);
+        Assert.True(response.DurationMs > 0);
+    }
+
+    [Fact]
+    public async Task EndEncounterAsync_ActorNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new EndEncounterRequest
+        {
+            ActorId = "nonexistent-actor"
+        };
+
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
+
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ActorAssignment?)null);
+
+        // Act
+        var (status, response) = await service.EndEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+    }
+
+    #endregion
+
+    #region GetEncounterAsync Tests
+
+    [Fact]
+    public async Task GetEncounterAsync_WithActiveEncounter_ReturnsEncounterState()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetEncounterRequest
+        {
+            ActorId = "event-brain-1"
+        };
+
+        var participantId = Guid.NewGuid();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "event-brain-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "event-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow,
+            Encounter = new EncounterStateData
+            {
+                EncounterId = "encounter-001",
+                EncounterType = "combat",
+                Participants = new List<Guid> { participantId },
+                Phase = "executing",
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        });
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.HasActiveEncounter);
+        Assert.NotNull(response.Encounter);
+        Assert.Equal("encounter-001", response.Encounter.EncounterId);
+        Assert.Equal("combat", response.Encounter.EncounterType);
+        Assert.Equal("executing", response.Encounter.Phase);
+        Assert.Contains(participantId, response.Encounter.Participants);
+    }
+
+    [Fact]
+    public async Task GetEncounterAsync_NoActiveEncounter_ReturnsHasActiveEncounterFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetEncounterRequest
+        {
+            ActorId = "event-brain-1"
+        };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "event-brain-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "event-brain",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow,
+            Encounter = null
+        });
+
+        IActorRunner? runner = mockRunner.Object;
+        _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
+
+        // Act
+        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.HasActiveEncounter);
+        Assert.Null(response.Encounter);
+    }
+
+    [Fact]
+    public async Task GetEncounterAsync_ActorNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetEncounterRequest
+        {
+            ActorId = "nonexistent-actor"
+        };
+
+        IActorRunner? runner = null;
+        _mockActorRegistry.Setup(r => r.TryGet("nonexistent-actor", out runner)).Returns(false);
+
+        _mockPoolManager.Setup(p => p.GetActorAssignmentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ActorAssignment?)null);
+
+        // Act
+        var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.NotNull(response);
+        Assert.False(response.HasActiveEncounter);
+    }
+
+    #endregion
 }
 
 /// <summary>

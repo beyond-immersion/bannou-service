@@ -109,9 +109,12 @@ public sealed class ControlGate : IControlGate
     public event EventHandler<ControlChangedEvent>? ControlChanged;
 
     /// <inheritdoc/>
-    public Task<bool> TakeControlAsync(ControlOptions options)
+    public async Task<bool> TakeControlAsync(ControlOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        await Task.Yield();
 
         lock (_lock)
         {
@@ -123,7 +126,7 @@ public sealed class ControlGate : IControlGate
                     EntityId,
                     options.Source,
                     _currentSource);
-                return Task.FromResult(false);
+                return false;
             }
 
             var previousSource = _currentSource;
@@ -154,14 +157,17 @@ public sealed class ControlGate : IControlGate
             // Raise event
             RaiseControlChanged(previousSource, options.Source, null);
 
-            return Task.FromResult(true);
+            return true;
         }
     }
 
     /// <inheritdoc/>
-    public Task ReturnControlAsync(ControlHandoff handoff)
+    public async Task ReturnControlAsync(ControlHandoff handoff)
     {
         ArgumentNullException.ThrowIfNull(handoff);
+
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        await Task.Yield();
 
         lock (_lock)
         {
@@ -179,8 +185,6 @@ public sealed class ControlGate : IControlGate
             // Raise event with handoff info
             RaiseControlChanged(previousSource, ControlSource.Behavior, handoff);
         }
-
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

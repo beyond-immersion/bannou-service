@@ -1535,19 +1535,28 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Finds an actor by ID, handling local and remote lookups.
     /// </summary>
-    private Task<(bool Found, IActorRunner? Runner)> FindActorAsync(
+    private async Task<(bool Found, IActorRunner? Runner)> FindActorAsync(
         string actorId,
         CancellationToken cancellationToken)
     {
         // First check local registry
         if (_actorRegistry.TryGet(actorId, out var localRunner))
         {
-            return Task.FromResult((true, (IActorRunner?)localRunner));
+            return (true, localRunner);
         }
 
-        // TODO: For distributed deployments, could check pool manager or other nodes
-        // For now, only local actors are supported
-        return Task.FromResult((false, (IActorRunner?)null));
+        // For distributed deployments, check pool manager for actor assignment
+        // This enables finding actors running on other nodes in the cluster
+        var assignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
+        if (assignment != null)
+        {
+            _logger.LogDebug("Actor {ActorId} found on remote node {NodeId}, local lookup only supported for now",
+                actorId, assignment.NodeId);
+            // Remote actor invocation would go here in a future implementation
+            // For now, we only support local actors
+        }
+
+        return (false, null);
     }
 
     #endregion

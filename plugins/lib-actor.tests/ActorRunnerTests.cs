@@ -635,4 +635,173 @@ public class ActorRunnerTests
     }
 
     #endregion
+
+    #region Encounter Management Tests
+
+    [Fact]
+    public void StartEncounter_NoActiveEncounter_ReturnsTrue()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        var participants = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+
+        // Act
+        var result = runner.StartEncounter("encounter-001", "combat", participants);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal("encounter-001", runner.CurrentEncounterId);
+    }
+
+    [Fact]
+    public void StartEncounter_AlreadyHasActiveEncounter_ReturnsFalse()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        var participants = new List<Guid> { Guid.NewGuid() };
+
+        // Start first encounter
+        runner.StartEncounter("encounter-001", "combat", participants);
+
+        // Act - try to start another
+        var result = runner.StartEncounter("encounter-002", "combat", participants);
+
+        // Assert
+        Assert.False(result);
+        Assert.Equal("encounter-001", runner.CurrentEncounterId); // Original still active
+    }
+
+    [Fact]
+    public void StartEncounter_WithInitialData_StoresData()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        var participants = new List<Guid> { Guid.NewGuid() };
+        var initialData = new Dictionary<string, object?>
+        {
+            ["difficulty"] = "hard",
+            ["wave"] = 1
+        };
+
+        // Act
+        runner.StartEncounter("encounter-001", "combat", participants, initialData);
+        var snapshot = runner.GetStateSnapshot();
+
+        // Assert
+        Assert.NotNull(snapshot.Encounter);
+        Assert.NotNull(snapshot.Encounter.Data);
+        Assert.Equal("hard", snapshot.Encounter.Data["difficulty"]);
+        Assert.Equal(1, snapshot.Encounter.Data["wave"]);
+    }
+
+    [Fact]
+    public void SetEncounterPhase_WithActiveEncounter_ReturnsTrue()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+
+        // Act
+        var result = runner.SetEncounterPhase("executing");
+
+        // Assert
+        Assert.True(result);
+        var snapshot = runner.GetStateSnapshot();
+        Assert.Equal("executing", snapshot.Encounter?.Phase);
+    }
+
+    [Fact]
+    public void SetEncounterPhase_NoActiveEncounter_ReturnsFalse()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+
+        // Act
+        var result = runner.SetEncounterPhase("executing");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void EndEncounter_WithActiveEncounter_ReturnsTrue()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+
+        // Act
+        var result = runner.EndEncounter();
+
+        // Assert
+        Assert.True(result);
+        Assert.Null(runner.CurrentEncounterId);
+        var snapshot = runner.GetStateSnapshot();
+        Assert.Null(snapshot.Encounter);
+    }
+
+    [Fact]
+    public void EndEncounter_NoActiveEncounter_ReturnsFalse()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+
+        // Act
+        var result = runner.EndEncounter();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void GetStateSnapshot_WithActiveEncounter_IncludesEncounterData()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        var participant1 = Guid.NewGuid();
+        var participant2 = Guid.NewGuid();
+
+        runner.StartEncounter("encounter-001", "conversation", new List<Guid> { participant1, participant2 });
+        runner.SetEncounterPhase("gathering_options");
+
+        // Act
+        var snapshot = runner.GetStateSnapshot();
+
+        // Assert
+        Assert.NotNull(snapshot.Encounter);
+        Assert.Equal("encounter-001", snapshot.Encounter.EncounterId);
+        Assert.Equal("conversation", snapshot.Encounter.EncounterType);
+        Assert.Equal("gathering_options", snapshot.Encounter.Phase);
+        Assert.Contains(participant1, snapshot.Encounter.Participants);
+        Assert.Contains(participant2, snapshot.Encounter.Participants);
+    }
+
+    [Fact]
+    public void CurrentEncounterId_NoEncounter_ReturnsNull()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+
+        // Assert
+        Assert.Null(runner.CurrentEncounterId);
+    }
+
+    [Fact]
+    public void StartEncounter_SetsStartedAtTimestamp()
+    {
+        // Arrange
+        var (runner, _) = CreateRunner();
+        var beforeStart = DateTimeOffset.UtcNow;
+
+        // Act
+        runner.StartEncounter("encounter-001", "combat", new List<Guid> { Guid.NewGuid() });
+        var snapshot = runner.GetStateSnapshot();
+
+        // Assert
+        Assert.NotNull(snapshot.Encounter);
+        Assert.True(snapshot.Encounter.StartedAt >= beforeStart);
+        Assert.True(snapshot.Encounter.StartedAt <= DateTimeOffset.UtcNow);
+    }
+
+    #endregion
 }

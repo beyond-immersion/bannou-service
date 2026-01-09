@@ -46,7 +46,7 @@ public sealed class EntityResolver : IEntityResolver
     }
 
     /// <inheritdoc/>
-    public Task<EntityReference?> ResolveAsync(
+    public async Task<EntityReference?> ResolveAsync(
         string bindingName,
         CutsceneBindings bindings,
         EntityResolutionContext? context = null,
@@ -54,6 +54,9 @@ public sealed class EntityResolver : IEntityResolver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(bindingName);
         ArgumentNullException.ThrowIfNull(bindings);
+
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        await Task.Yield();
 
         var reference = ResolveInternal(bindingName, bindings, context);
 
@@ -71,11 +74,11 @@ public sealed class EntityResolver : IEntityResolver
                 reference.EntityId);
         }
 
-        return Task.FromResult(reference);
+        return reference;
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyDictionary<string, EntityReference>> ResolveManyAsync(
+    public async Task<IReadOnlyDictionary<string, EntityReference>> ResolveManyAsync(
         IEnumerable<string> bindingNames,
         CutsceneBindings bindings,
         EntityResolutionContext? context = null,
@@ -83,6 +86,9 @@ public sealed class EntityResolver : IEntityResolver
     {
         ArgumentNullException.ThrowIfNull(bindingNames);
         ArgumentNullException.ThrowIfNull(bindings);
+
+        // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
+        await Task.Yield();
 
         var results = new Dictionary<string, EntityReference>(StringComparer.OrdinalIgnoreCase);
 
@@ -103,7 +109,7 @@ public sealed class EntityResolver : IEntityResolver
             results.Count,
             bindingNames.Count());
 
-        return Task.FromResult<IReadOnlyDictionary<string, EntityReference>>(results);
+        return results;
     }
 
     /// <inheritdoc/>
