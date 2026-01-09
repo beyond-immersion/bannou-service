@@ -15857,6 +15857,58 @@
             <returns>Characters retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.GetEnrichedCharacterAsync(BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character with optional related data (personality, backstory, family)
+            </summary>
+            <remarks>
+            Retrieves a character with optional include flags for related data.
+            <br/>Use this endpoint when you need aggregated character data from multiple services.
+            <br/>Each included dataset is fetched from its respective service.
+            </remarks>
+            <returns>Character retrieved with requested includes</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.CompressCharacterAsync(BeyondImmersion.BannouService.Character.CompressCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compress a dead character to archive format
+            </summary>
+            <remarks>
+            Compresses a dead character's data for long-term storage.
+            <br/>Generates text summaries of personality, backstory, and relationships.
+            <br/>After compression, detailed data can be deleted to save storage.
+            <br/>Only works on characters with status 'dead'.
+            </remarks>
+            <returns>Character compressed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.GetCharacterArchiveAsync(BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get compressed archive data for a character
+            </summary>
+            <returns>Archive retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.CheckCharacterReferencesAsync(BeyondImmersion.BannouService.Character.CheckReferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check reference count for cleanup eligibility
+            </summary>
+            <remarks>
+            Returns the current reference count for a compressed character.
+            <br/>Characters with refCount=0 for the grace period are eligible for deletion.
+            <br/>References include: family relationships, past lives, historical events, memories.
+            </remarks>
+            <returns>Reference count retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Character.ICharacterClient.GetCharactersByRealmAsync(BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -15982,6 +16034,58 @@
             List characters with filtering
             </summary>
             <returns>Characters retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.GetEnrichedCharacterAsync(BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get character with optional related data (personality, backstory, family)
+            </summary>
+            <remarks>
+            Retrieves a character with optional include flags for related data.
+            <br/>Use this endpoint when you need aggregated character data from multiple services.
+            <br/>Each included dataset is fetched from its respective service.
+            </remarks>
+            <returns>Character retrieved with requested includes</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.CompressCharacterAsync(BeyondImmersion.BannouService.Character.CompressCharacterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compress a dead character to archive format
+            </summary>
+            <remarks>
+            Compresses a dead character's data for long-term storage.
+            <br/>Generates text summaries of personality, backstory, and relationships.
+            <br/>After compression, detailed data can be deleted to save storage.
+            <br/>Only works on characters with status 'dead'.
+            </remarks>
+            <returns>Character compressed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.GetCharacterArchiveAsync(BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get compressed archive data for a character
+            </summary>
+            <returns>Archive retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.CheckCharacterReferencesAsync(BeyondImmersion.BannouService.Character.CheckReferencesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Check reference count for cleanup eligibility
+            </summary>
+            <remarks>
+            Returns the current reference count for a compressed character.
+            <br/>Characters with refCount=0 for the grace period are eligible for deletion.
+            <br/>References include: family relationships, past lives, historical events, memories.
+            </remarks>
+            <returns>Reference count retrieved</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Character.CharacterClient.GetCharactersByRealmAsync(BeyondImmersion.BannouService.Character.GetCharactersByRealmRequest,System.Threading.CancellationToken)">
@@ -16320,6 +16424,415 @@
         <member name="P:BeyondImmersion.BannouService.Character.CharacterRealmLeftEvent.Reason">
             <summary>
             Reason for leaving (death, transfer, deletion)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest">
+            <summary>
+            Request payload for retrieving a character with optional related data.
+            <br/>Each include flag fetches data from its respective service (zero overhead if not requested).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.CharacterId">
+            <summary>
+            ID of the character to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludePersonality">
+            <summary>
+            Include personality traits from character-personality service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeBackstory">
+            <summary>
+            Include backstory elements from character-history service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeFamilyTree">
+            <summary>
+            Include family relationships from relationship service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetEnrichedCharacterRequest.IncludeCombatPreferences">
+            <summary>
+            Include combat preferences from character-personality service
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse">
+            <summary>
+            Character data with optional enriched fields.
+            <br/>Fields are only populated if the corresponding include flag was set in the request.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CharacterId">
+            <summary>
+            Unique identifier for the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Name">
+            <summary>
+            Display name of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.RealmId">
+            <summary>
+            Realm ID (partition key)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.SpeciesId">
+            <summary>
+            Species ID (foreign key to Species service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.BirthDate">
+            <summary>
+            In-game birth timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.DeathDate">
+            <summary>
+            In-game death timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Status">
+            <summary>
+            Current lifecycle status of the character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CreatedAt">
+            <summary>
+            Real-world creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.UpdatedAt">
+            <summary>
+            Real-world last update timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Personality">
+            <summary>
+            Personality traits (included if includePersonality=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.Backstory">
+            <summary>
+            Backstory elements (included if includeBackstory=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.FamilyTree">
+            <summary>
+            Family relationships (included if includeFamilyTree=true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.EnrichedCharacterResponse.CombatPreferences">
+            <summary>
+            Combat preferences (included if includeCombatPreferences=true)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.PersonalitySnapshot">
+            <summary>
+            Snapshot of personality traits for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PersonalitySnapshot.Traits">
+            <summary>
+            Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PersonalitySnapshot.Version">
+            <summary>
+            Personality version number (increments on evolution)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.BackstorySnapshot">
+            <summary>
+            Snapshot of backstory for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstorySnapshot.Elements">
+            <summary>
+            List of backstory elements
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot">
+            <summary>
+            Single backstory element
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.ElementType">
+            <summary>
+            Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Key">
+            <summary>
+            Machine-readable key (homeland, past_job, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Value">
+            <summary>
+            Machine-readable value (northlands, blacksmith, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.BackstoryElementSnapshot.Strength">
+            <summary>
+            How strongly this affects behavior (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot">
+            <summary>
+            Snapshot of combat preferences for enriched response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.Style">
+            <summary>
+            Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.PreferredRange">
+            <summary>
+            Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.GroupRole">
+            <summary>
+            Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.RiskTolerance">
+            <summary>
+            Willingness to take risky actions (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.RetreatThreshold">
+            <summary>
+            Health percentage at which retreat is considered (0.0 to 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CombatPreferencesSnapshot.ProtectAllies">
+            <summary>
+            Whether to prioritize ally protection
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.FamilyTreeResponse">
+            <summary>
+            Family relationships for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Parents">
+            <summary>
+            Parent relationships (biological and adoptive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Children">
+            <summary>
+            Child relationships
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Siblings">
+            <summary>
+            Sibling relationships (including half-siblings)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.Spouse">
+            <summary>
+            Current spouse (if any)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyTreeResponse.PastLives">
+            <summary>
+            Previous incarnations (if reincarnation tracked)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.FamilyMember">
+            <summary>
+            Reference to a family member
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.CharacterId">
+            <summary>
+            ID of the related character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.Name">
+            <summary>
+            Display name (if available)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.RelationshipType">
+            <summary>
+            Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.FamilyMember.IsAlive">
+            <summary>
+            Whether the related character is alive
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.PastLifeReference">
+            <summary>
+            Reference to a past incarnation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.CharacterId">
+            <summary>
+            ID of the previous incarnation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.Name">
+            <summary>
+            Display name of the past life
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.PastLifeReference.DeathDate">
+            <summary>
+            When the past life ended
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CompressCharacterRequest">
+            <summary>
+            Request to compress a dead character for archival
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CompressCharacterRequest.CharacterId">
+            <summary>
+            ID of the dead character to compress
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CompressCharacterRequest.DeleteSourceData">
+            <summary>
+            If true, delete personality/backstory data after compression.
+            <br/>The archive becomes the only record of this information.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest">
+            <summary>
+            Request to retrieve a character's compressed archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.GetCharacterArchiveRequest.CharacterId">
+            <summary>
+            ID of the character to get archive for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CheckReferencesRequest">
+            <summary>
+            Request to check reference count for a character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CheckReferencesRequest.CharacterId">
+            <summary>
+            ID of the character to check references for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterArchive">
+            <summary>
+            Compressed archive of a dead character.
+            <br/>Contains text summaries instead of structured data for long-term storage.
+            <br/>Self-contained with no external references (suitable for cleanup).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.CharacterId">
+            <summary>
+            Original character ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.Name">
+            <summary>
+            Character display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.RealmId">
+            <summary>
+            Realm the character belonged to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.SpeciesId">
+            <summary>
+            Character's species
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.BirthDate">
+            <summary>
+            In-game birth date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.DeathDate">
+            <summary>
+            In-game death date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.CompressedAt">
+            <summary>
+            When this archive was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.PersonalitySummary">
+            <summary>
+            Text summary of personality traits.
+            <br/>Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.KeyBackstoryPoints">
+            <summary>
+            Key backstory elements as text.
+            <br/>Example: ["Trained by the Knights Guild", "Born in the Northlands"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.MajorLifeEvents">
+            <summary>
+            Significant life events as text.
+            <br/>Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterArchive.FamilySummary">
+            <summary>
+            Text summary of family relationships.
+            <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Character.CharacterRefCount">
+            <summary>
+            Reference count information for cleanup eligibility
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.CharacterId">
+            <summary>
+            Character ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ReferenceCount">
+            <summary>
+            Number of active references to this character
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ReferenceTypes">
+            <summary>
+            Types of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.IsCompressed">
+            <summary>
+            Whether the character has been compressed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.IsEligibleForCleanup">
+            <summary>
+            True if compressed, refCount=0, and grace period has passed.
+            <br/>Safe to permanently delete if true.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Character.CharacterRefCount.ZeroRefSince">
+            <summary>
+            When refCount first reached zero (null if refCount &gt; 0)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient">

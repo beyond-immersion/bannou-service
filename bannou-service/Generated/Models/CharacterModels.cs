@@ -476,6 +476,596 @@ public partial class CharacterRealmLeftEvent
 
 }
 
+/// <summary>
+/// Request payload for retrieving a character with optional related data.
+/// <br/>Each include flag fetches data from its respective service (zero overhead if not requested).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEnrichedCharacterRequest
+{
+
+    /// <summary>
+    /// ID of the character to retrieve
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Include personality traits from character-personality service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includePersonality")]
+    public bool IncludePersonality { get; set; } = false;
+
+    /// <summary>
+    /// Include backstory elements from character-history service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeBackstory")]
+    public bool IncludeBackstory { get; set; } = false;
+
+    /// <summary>
+    /// Include family relationships from relationship service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeFamilyTree")]
+    public bool IncludeFamilyTree { get; set; } = false;
+
+    /// <summary>
+    /// Include combat preferences from character-personality service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeCombatPreferences")]
+    public bool IncludeCombatPreferences { get; set; } = false;
+
+}
+
+/// <summary>
+/// Character data with optional enriched fields.
+/// <br/>Fields are only populated if the corresponding include flag was set in the request.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EnrichedCharacterResponse
+{
+
+    /// <summary>
+    /// Unique identifier for the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Realm ID (partition key)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Species ID (foreign key to Species service)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// In-game birth timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
+
+    /// <summary>
+    /// In-game death timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    public System.DateTimeOffset? DeathDate { get; set; } = default!;
+
+    /// <summary>
+    /// Current lifecycle status of the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world creation timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world last update timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Personality traits (included if includePersonality=true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personality")]
+    public PersonalitySnapshot? Personality { get; set; } = default!;
+
+    /// <summary>
+    /// Backstory elements (included if includeBackstory=true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("backstory")]
+    public BackstorySnapshot? Backstory { get; set; } = default!;
+
+    /// <summary>
+    /// Family relationships (included if includeFamilyTree=true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("familyTree")]
+    public FamilyTreeResponse? FamilyTree { get; set; } = default!;
+
+    /// <summary>
+    /// Combat preferences (included if includeCombatPreferences=true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatPreferences")]
+    public CombatPreferencesSnapshot? CombatPreferences { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Snapshot of personality traits for enriched response
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PersonalitySnapshot
+{
+
+    /// <summary>
+    /// Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("traits")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, float> Traits { get; set; } = new System.Collections.Generic.Dictionary<string, float>();
+
+    /// <summary>
+    /// Personality version number (increments on evolution)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Snapshot of backstory for enriched response
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BackstorySnapshot
+{
+
+    /// <summary>
+    /// List of backstory elements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("elements")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BackstoryElementSnapshot> Elements { get; set; } = new System.Collections.ObjectModel.Collection<BackstoryElementSnapshot>();
+
+}
+
+/// <summary>
+/// Single backstory element
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BackstoryElementSnapshot
+{
+
+    /// <summary>
+    /// Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("elementType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ElementType { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable key (homeland, past_job, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable value (northlands, blacksmith, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("value")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Value { get; set; } = default!;
+
+    /// <summary>
+    /// How strongly this affects behavior (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("strength")]
+    public float Strength { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Snapshot of combat preferences for enriched response
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CombatPreferencesSnapshot
+{
+
+    /// <summary>
+    /// Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("style")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Style { get; set; } = default!;
+
+    /// <summary>
+    /// Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("preferredRange")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PreferredRange { get; set; } = default!;
+
+    /// <summary>
+    /// Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("groupRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GroupRole { get; set; } = default!;
+
+    /// <summary>
+    /// Willingness to take risky actions (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("riskTolerance")]
+    public float RiskTolerance { get; set; } = default!;
+
+    /// <summary>
+    /// Health percentage at which retreat is considered (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retreatThreshold")]
+    public float RetreatThreshold { get; set; } = default!;
+
+    /// <summary>
+    /// Whether to prioritize ally protection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("protectAllies")]
+    public bool ProtectAllies { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Family relationships for a character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FamilyTreeResponse
+{
+
+    /// <summary>
+    /// Parent relationships (biological and adoptive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parents")]
+    public System.Collections.Generic.ICollection<FamilyMember> Parents { get; set; } = default!;
+
+    /// <summary>
+    /// Child relationships
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("children")]
+    public System.Collections.Generic.ICollection<FamilyMember> Children { get; set; } = default!;
+
+    /// <summary>
+    /// Sibling relationships (including half-siblings)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("siblings")]
+    public System.Collections.Generic.ICollection<FamilyMember> Siblings { get; set; } = default!;
+
+    /// <summary>
+    /// Current spouse (if any)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("spouse")]
+    public FamilyMember? Spouse { get; set; } = default!;
+
+    /// <summary>
+    /// Previous incarnations (if reincarnation tracked)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pastLives")]
+    public System.Collections.Generic.ICollection<PastLifeReference> PastLives { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reference to a family member
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FamilyMember
+{
+
+    /// <summary>
+    /// ID of the related character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name (if available)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string RelationshipType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the related character is alive
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isAlive")]
+    public bool IsAlive { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reference to a past incarnation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PastLifeReference
+{
+
+    /// <summary>
+    /// ID of the previous incarnation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the past life
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// When the past life ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    public System.DateTimeOffset? DeathDate { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to compress a dead character for archival
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompressCharacterRequest
+{
+
+    /// <summary>
+    /// ID of the dead character to compress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, delete personality/backstory data after compression.
+    /// <br/>The archive becomes the only record of this information.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleteSourceData")]
+    public bool DeleteSourceData { get; set; } = false;
+
+}
+
+/// <summary>
+/// Request to retrieve a character's compressed archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCharacterArchiveRequest
+{
+
+    /// <summary>
+    /// ID of the character to get archive for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to check reference count for a character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CheckReferencesRequest
+{
+
+    /// <summary>
+    /// ID of the character to check references for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Compressed archive of a dead character.
+/// <br/>Contains text summaries instead of structured data for long-term storage.
+/// <br/>Self-contained with no external references (suitable for cleanup).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterArchive
+{
+
+    /// <summary>
+    /// Original character ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Character display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Realm the character belonged to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Character's species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// In-game birth date
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
+
+    /// <summary>
+    /// In-game death date
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DeathDate { get; set; } = default!;
+
+    /// <summary>
+    /// When this archive was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CompressedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Text summary of personality traits.
+    /// <br/>Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personalitySummary")]
+    public string? PersonalitySummary { get; set; } = default!;
+
+    /// <summary>
+    /// Key backstory elements as text.
+    /// <br/>Example: ["Trained by the Knights Guild", "Born in the Northlands"]
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("keyBackstoryPoints")]
+    public System.Collections.Generic.ICollection<string> KeyBackstoryPoints { get; set; } = default!;
+
+    /// <summary>
+    /// Significant life events as text.
+    /// <br/>Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("majorLifeEvents")]
+    public System.Collections.Generic.ICollection<string> MajorLifeEvents { get; set; } = default!;
+
+    /// <summary>
+    /// Text summary of family relationships.
+    /// <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("familySummary")]
+    public string? FamilySummary { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reference count information for cleanup eligibility
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterRefCount
+{
+
+    /// <summary>
+    /// Character ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of active references to this character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceCount")]
+    public int ReferenceCount { get; set; } = default!;
+
+    /// <summary>
+    /// Types of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceTypes")]
+    public System.Collections.Generic.ICollection<string> ReferenceTypes { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the character has been compressed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCompressed")]
+    public bool IsCompressed { get; set; } = default!;
+
+    /// <summary>
+    /// True if compressed, refCount=0, and grace period has passed.
+    /// <br/>Safe to permanently delete if true.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isEligibleForCleanup")]
+    public bool IsEligibleForCleanup { get; set; } = default!;
+
+    /// <summary>
+    /// When refCount first reached zero (null if refCount &gt; 0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("zeroRefSince")]
+    public System.DateTimeOffset? ZeroRefSince { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108
