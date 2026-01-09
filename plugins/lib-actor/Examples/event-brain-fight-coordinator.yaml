@@ -1,0 +1,227 @@
+# =============================================================================
+# Example Event Brain Behavior: Fight Coordinator
+# This demonstrates how an Event Brain actor coordinates multi-character combat.
+# =============================================================================
+#
+# Event Brain actors are "orchestrators" that:
+# - Have no physical presence in the game world
+# - Subscribe to regional events to detect interesting situations
+# - Query participant actors for their available options
+# - Compose choreographed sequences that create dramatic moments
+# - Send choreography instructions via character perception channels
+#
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: "fight-coordinator-v1"
+  type: "event_brain"
+  description: "Orchestrates combat encounters for dramatic effect"
+  tags:
+    - event-brain
+    - combat
+    - coordinator
+
+# Event Brain configuration
+config:
+  # How dramatic should the choreography be? (0-1)
+  dramatic_intensity: 0.7
+
+  # Maximum participants to coordinate at once
+  max_participants: 6
+
+  # Choreography style: cinematic, realistic, chaotic
+  dramatic_style: "cinematic"
+
+# =============================================================================
+# BEHAVIOR FLOWS
+# =============================================================================
+
+# Main flow: Executed each tick to evaluate encounter state
+flow: main
+flows:
+  main:
+    # Check if we have an active encounter
+    - if:
+        condition: "${encounter != null}"
+        then:
+          - call: manage_active_encounter
+        else:
+          - call: await_encounter_start
+
+  # Wait for an encounter to be started via API
+  await_encounter_start:
+    # Event Brain is idle until encounter/start API is called
+    - log:
+        level: debug
+        message: "Awaiting encounter start..."
+
+  # Manage an active encounter
+  manage_active_encounter:
+    # Branch based on current phase
+    - switch:
+        value: "${encounter.phase}"
+        cases:
+          initializing:
+            - call: initialize_encounter
+          gathering_options:
+            - call: gather_participant_options
+          composing:
+            - call: compose_choreography
+          executing:
+            - call: monitor_execution
+          complete:
+            - call: cleanup_encounter
+
+  # ==========================================================================
+  # Phase: Initialize the encounter
+  # ==========================================================================
+  initialize_encounter:
+    - log:
+        level: info
+        message: "Initializing encounter ${encounter.id} with ${encounter.participants.length} participants"
+
+    # Query each participant for their combat options
+    - foreach:
+        collection: "${encounter.participants}"
+        as: "participant_id"
+        do:
+          - query_actor_options:
+              actor_id: "npc-brain-${participant_id}"
+              query_type: "combat"
+              freshness: "fresh"
+              store_as: "combat_options_${participant_id}"
+
+    # Move to gathering phase
+    - set_encounter_phase:
+        phase: "gathering_options"
+
+  # ==========================================================================
+  # Phase: Gather options from all participants
+  # ==========================================================================
+  gather_participant_options:
+    - log:
+        level: debug
+        message: "Gathering options from participants..."
+
+    # Check if we have options from all participants
+    - if:
+        condition: "${all_participants_responded()}"
+        then:
+          - set_encounter_phase:
+              phase: "composing"
+        else:
+          # Still waiting for some participants
+          - log:
+              level: debug
+              message: "Waiting for participant options..."
+
+  # ==========================================================================
+  # Phase: Compose choreography based on options
+  # ==========================================================================
+  compose_choreography:
+    - log:
+        level: info
+        message: "Composing choreography for encounter ${encounter.id}"
+
+    # Select best actions for dramatic effect
+    # (In production, this would use LLM or rule engine)
+    - foreach:
+        collection: "${encounter.participants}"
+        as: "participant_id"
+        do:
+          # Get this participant's best option
+          - set:
+              name: "best_option"
+              value: "${get_best_option(participant_id)}"
+
+          # Send choreography instruction via perception channel
+          - emit_perception:
+              target_character: "${participant_id}"
+              perception_type: "choreography_instruction"
+              source_id: "${encounter.id}"
+              urgency: 0.9
+              data:
+                instruction_type: "execute_action"
+                action_id: "${best_option.actionId}"
+                timing: "immediate"
+                priority: "high"
+
+    # Schedule a timeout to check execution
+    - schedule_event:
+        delay_ms: 5000
+        event_type: "choreography.timeout"
+        data:
+          encounter_id: "${encounter.id}"
+
+    # Move to executing phase
+    - set_encounter_phase:
+        phase: "executing"
+
+  # ==========================================================================
+  # Phase: Monitor execution
+  # ==========================================================================
+  monitor_execution:
+    - log:
+        level: debug
+        message: "Monitoring choreography execution..."
+
+    # Check if all participants have executed their actions
+    # (Would check via perception events or state queries in production)
+    - if:
+        condition: "${all_actions_complete()}"
+        then:
+          - set_encounter_phase:
+              phase: "complete"
+
+  # ==========================================================================
+  # Phase: Cleanup and end encounter
+  # ==========================================================================
+  cleanup_encounter:
+    - log:
+        level: info
+        message: "Encounter ${encounter.id} complete, cleaning up"
+
+    # Record outcome in memory for learning
+    - store_memory:
+        key: "last_encounter_outcome"
+        value:
+          encounter_id: "${encounter.id}"
+          participant_count: "${encounter.participants.length}"
+          completed_at: "${now()}"
+
+# =============================================================================
+# ABML FUNCTIONS (for expression evaluation)
+# =============================================================================
+
+functions:
+  # Check if all participants have responded with options
+  all_participants_responded:
+    description: "Returns true if all participants have provided combat options"
+    returns: boolean
+    body: |
+      # Implementation would check working_memory for each participant's options
+      return true
+
+  # Get the best option for a participant based on dramatic criteria
+  get_best_option:
+    description: "Selects the most dramatically appropriate option"
+    params:
+      - name: participant_id
+        type: string
+    returns: object
+    body: |
+      # In production, would apply dramatic heuristics:
+      # - Prefer risky moves for aggressive characters
+      # - Consider character relationships (don't have friends hurt each other early)
+      # - Build toward climactic moments
+      return working_memory["combat_options_" + participant_id][0]
+
+  # Check if all choreographed actions have completed
+  all_actions_complete:
+    description: "Returns true if all participants have executed their actions"
+    returns: boolean
+    body: |
+      # Would check perception feedback from participants
+      return true

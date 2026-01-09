@@ -1,10 +1,12 @@
 // =============================================================================
 // Emit Perception Handler
-// ABML action handler for sending perceptions to other actors (Event Brain support).
+// ABML action handler for sending perceptions to characters (Event Brain support).
+// Uses character.{characterId}.perceptions topic per ACTOR_BEHAVIORS_GAP_ANALYSIS §6.
 // =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
@@ -12,23 +14,27 @@ using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.Execut
 namespace BeyondImmersion.BannouService.Actor.Handlers;
 
 /// <summary>
-/// ABML action handler for emitting perception events to other actors.
-/// Enables Event Brain to send choreography instructions to participants.
+/// ABML action handler for emitting perception events to character actors.
+/// Enables Event Brain to send choreography instructions to participants via the character perception channel.
 /// </summary>
 /// <remarks>
 /// <para>
 /// ABML usage:
 /// <code>
 /// - emit_perception:
-///     target_actor: "${participant.actorId}"
-///     perception_type: "choreography_instruction"
+///     target_character: "${participant.characterId}"
+///     perception_type: "encounter_instruction"
+///     source_id: "${encounter.id}"
+///     urgency: 0.8
 ///     data:
-///       encounter_id: "${encounter.id}"
-///       sequence_id: "${sequence.id}"
-///       actions: "${sequence.actions}"
-///       timing: "${sequence.timing}"
-///       priority: "high"
+///       instruction_type: "move_to_position"
+///       position: "${sequence.target_position}"
+///       speed: "walk"
 /// </code>
+/// </para>
+/// <para>
+/// Publishes to: character.{characterId}.perceptions (same channel game servers use).
+/// This follows the "tap" pattern - actors subscribe to their character's perception channel.
 /// </para>
 /// </remarks>
 public sealed class EmitPerceptionHandler : IActionHandler
@@ -67,97 +73,81 @@ public sealed class EmitPerceptionHandler : IActionHandler
         var evaluatedParams = ValueEvaluator.EvaluateParameters(
             domainAction.Parameters, scope, context.Evaluator);
 
-        // Get required parameters
-        var targetActor = evaluatedParams.GetValueOrDefault("target_actor")?.ToString();
-        if (string.IsNullOrEmpty(targetActor))
+        // Get required target_character parameter (must be a Guid)
+        var targetCharacterStr = evaluatedParams.GetValueOrDefault("target_character")?.ToString();
+        if (string.IsNullOrEmpty(targetCharacterStr))
         {
-            throw new InvalidOperationException("emit_perception requires target_actor parameter");
+            throw new InvalidOperationException("emit_perception requires target_character parameter (character ID)");
         }
 
+        if (!Guid.TryParse(targetCharacterStr, out var targetCharacterId))
+        {
+            throw new InvalidOperationException($"emit_perception target_character must be a valid GUID, got: {targetCharacterStr}");
+        }
+
+        // Get required perception_type
         var perceptionType = evaluatedParams.GetValueOrDefault("perception_type")?.ToString();
         if (string.IsNullOrEmpty(perceptionType))
         {
             throw new InvalidOperationException("emit_perception requires perception_type parameter");
         }
 
-        // Get perception data
-        var data = evaluatedParams.GetValueOrDefault("data") ?? throw new InvalidOperationException("emit_perception requires data parameter");
+        // Get source_id (who/what is sending this perception)
+        var sourceId = evaluatedParams.GetValueOrDefault("source_id")?.ToString() ?? "event-brain";
 
-        // Build perception event
-        var perceptionEvent = new PerceptionEvent
+        // Get optional source_type
+        var sourceType = evaluatedParams.GetValueOrDefault("source_type")?.ToString() ?? "coordinator";
+
+        // Get urgency (default 0.8 for Event Brain instructions)
+        var urgency = 0.8f;
+        if (evaluatedParams.TryGetValue("urgency", out var urgencyObj) && urgencyObj != null)
         {
-            TargetActorId = targetActor,
-            PerceptionType = perceptionType,
+            if (urgencyObj is float f)
+                urgency = f;
+            else if (urgencyObj is double d)
+                urgency = (float)d;
+            else if (float.TryParse(urgencyObj.ToString(), out var parsed))
+                urgency = parsed;
+        }
+
+        // Get perception data
+        var data = evaluatedParams.GetValueOrDefault("data");
+
+        // Build the CharacterPerceptionEvent using existing schema types
+        var perceptionEvent = new CharacterPerceptionEvent
+        {
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Data = ConvertToDictionary(data)
+            CharacterId = targetCharacterId,
+            SourceAppId = "bannou", // Event Brain runs within Bannou
+            Perception = new Events.PerceptionData
+            {
+                PerceptionType = perceptionType,
+                SourceId = sourceId,
+                SourceType = sourceType,
+                Data = data,
+                Urgency = urgency
+            }
         };
 
-        // Determine topic - perceptions route to character.{characterId}.perceptions
-        // For actor-based routing, we use actor.{actorId}.perceptions
-        var topic = $"actor.{targetActor}.perceptions";
+        // Use the standard character perception topic (tap pattern)
+        var topic = $"character.{targetCharacterId}.perceptions";
 
         try
         {
-            _logger.LogDebug("Emitting perception to actor {TargetActor}, type {PerceptionType}",
-                targetActor, perceptionType);
+            _logger.LogDebug("Emitting perception to character {TargetCharacterId}, type {PerceptionType}, urgency {Urgency}",
+                targetCharacterId, perceptionType, urgency);
 
             await _messageBus.TryPublishAsync(topic, perceptionEvent, ct);
 
-            _logger.LogDebug("Successfully emitted perception to actor {TargetActor}", targetActor);
+            _logger.LogDebug("Successfully emitted perception to character {TargetCharacterId}", targetCharacterId);
 
             return ActionResult.Continue;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to emit perception to actor {TargetActor}", targetActor);
+            _logger.LogError(ex, "Failed to emit perception to character {TargetCharacterId}", targetCharacterId);
             throw;
         }
     }
-
-    private static Dictionary<string, object?> ConvertToDictionary(object? data)
-    {
-        if (data == null)
-        {
-            return new Dictionary<string, object?>();
-        }
-
-        if (data is Dictionary<string, object?> dict)
-        {
-            return dict;
-        }
-
-        if (data is IReadOnlyDictionary<string, object?> roDict)
-        {
-            return new Dictionary<string, object?>(roDict);
-        }
-
-        // For other types, wrap in a "value" key
-        return new Dictionary<string, object?> { ["value"] = data };
-    }
-}
-
-/// <summary>
-/// Perception event sent to actors by Event Brain.
-/// </summary>
-public sealed class PerceptionEvent
-{
-    /// <summary>
-    /// Target actor ID.
-    /// </summary>
-    public required string TargetActorId { get; init; }
-
-    /// <summary>
-    /// Type of perception (e.g., "choreography_instruction", "combat_started").
-    /// </summary>
-    public required string PerceptionType { get; init; }
-
-    /// <summary>
-    /// When this perception was emitted.
-    /// </summary>
-    public DateTimeOffset Timestamp { get; init; }
-
-    /// <summary>
-    /// Perception data payload.
-    /// </summary>
-    public Dictionary<string, object?>? Data { get; init; }
 }

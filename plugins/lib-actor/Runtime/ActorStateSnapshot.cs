@@ -72,6 +72,12 @@ public class ActorStateSnapshot
     public IReadOnlyDictionary<string, object> WorkingMemory { get; init; } = new Dictionary<string, object>();
 
     /// <summary>
+    /// Gets the current encounter state for Event Brain actors.
+    /// Null if this actor is not managing an encounter.
+    /// </summary>
+    public EncounterStateData? Encounter { get; init; }
+
+    /// <summary>
     /// Converts to API response model.
     /// </summary>
     public ActorInstanceResponse ToResponse(string? nodeId = null, string? nodeAppId = null)
@@ -137,4 +143,41 @@ public class MemoryEntry
     /// Gets or sets when this memory was created.
     /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Internal data model for encounter state (Event Brain actors).
+/// Tracks the encounter an Event Brain is coordinating.
+/// </summary>
+public class EncounterStateData
+{
+    /// <summary>
+    /// Gets or sets the unique encounter identifier.
+    /// </summary>
+    public string EncounterId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the encounter type (e.g., "combat", "conversation", "choreography").
+    /// </summary>
+    public string EncounterType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the character IDs participating in this encounter.
+    /// </summary>
+    public List<Guid> Participants { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the current phase of the encounter.
+    /// </summary>
+    public string Phase { get; set; } = "initializing";
+
+    /// <summary>
+    /// Gets or sets when the encounter started.
+    /// </summary>
+    public DateTimeOffset StartedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom encounter-specific data.
+    /// </summary>
+    public Dictionary<string, object?> Data { get; set; } = new();
 }

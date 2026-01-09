@@ -17,21 +17,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -160,6 +145,59 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
     /// <returns>Options retrieved successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptionsAsync(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Start an encounter managed by an Event Brain actor
+    /// </summary>
+
+    /// <remarks>
+    /// Initializes an encounter with the specified participants. The Event Brain actor
+    /// <br/>will coordinate the encounter, sending instructions to participant NPC Brain actors
+    /// <br/>via their character perception channels.
+    /// </remarks>
+
+    /// <returns>Encounter started successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update the phase of an active encounter
+    /// </summary>
+
+    /// <remarks>
+    /// Updates the phase of an encounter being managed by an Event Brain actor.
+    /// <br/>Phase changes are logged and can trigger behavior changes in participant actors.
+    /// </remarks>
+
+    /// <returns>Encounter phase updated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateEncounterPhaseResponse>> UpdateEncounterPhaseAsync(UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// End an active encounter
+    /// </summary>
+
+    /// <remarks>
+    /// Ends an encounter being managed by an Event Brain actor. This clears the
+    /// <br/>encounter state and allows the actor to manage a new encounter.
+    /// </remarks>
+
+    /// <returns>Encounter ended successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EndEncounterResponse>> EndEncounterAsync(EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get the current encounter state for an actor
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves the current encounter state for an Event Brain actor. Returns
+    /// <br/>null encounter data if the actor is not managing an encounter.
+    /// </remarks>
+
+    /// <returns>Encounter state retrieved successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEncounterResponse>> GetEncounterAsync(GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -371,6 +409,75 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.QueryOptionsAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Start an encounter managed by an Event Brain actor
+    /// </summary>
+    /// <remarks>
+    /// Initializes an encounter with the specified participants. The Event Brain actor
+    /// <br/>will coordinate the encounter, sending instructions to participant NPC Brain actors
+    /// <br/>via their character perception channels.
+    /// </remarks>
+    /// <returns>Encounter started successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.StartEncounterAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update the phase of an active encounter
+    /// </summary>
+    /// <remarks>
+    /// Updates the phase of an encounter being managed by an Event Brain actor.
+    /// <br/>Phase changes are logged and can trigger behavior changes in participant actors.
+    /// </remarks>
+    /// <returns>Encounter phase updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/update-phase")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateEncounterPhaseResponse>> UpdateEncounterPhase([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateEncounterPhaseAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// End an active encounter
+    /// </summary>
+    /// <remarks>
+    /// Ends an encounter being managed by an Event Brain actor. This clears the
+    /// <br/>encounter state and allows the actor to manage a new encounter.
+    /// </remarks>
+    /// <returns>Encounter ended successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/end")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EndEncounterResponse>> EndEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.EndEncounterAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get the current encounter state for an actor
+    /// </summary>
+    /// <remarks>
+    /// Retrieves the current encounter state for an Event Brain actor. Returns
+    /// <br/>null encounter data if the actor is not managing an encounter.
+    /// </remarks>
+    /// <returns>Encounter state retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/get")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEncounterResponse>> GetEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetEncounterAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -2651,6 +2758,536 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             _QueryOptions_Info,
             _QueryOptions_RequestSchema,
             _QueryOptions_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for StartEncounter
+
+    private static readonly string _StartEncounter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartEncounterRequest",
+    "$defs": {
+        "StartEncounterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to start an encounter managed by an Event Brain actor",
+            "required": [
+                "actorId",
+                "encounterId",
+                "encounterType",
+                "participants"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the Event Brain actor that will manage this encounter"
+                },
+                "encounterId": {
+                    "type": "string",
+                    "description": "Unique identifier for this encounter"
+                },
+                "encounterType": {
+                    "type": "string",
+                    "description": "Type of encounter (e.g., \"combat\", \"conversation\", \"choreography\")"
+                },
+                "participants": {
+                    "type": "array",
+                    "description": "Character IDs of participants in the encounter",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "initialData": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Optional initial data for the encounter"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartEncounter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartEncounterResponse",
+    "$defs": {
+        "StartEncounterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after starting an encounter",
+            "required": [
+                "success",
+                "actorId"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the encounter was started successfully"
+                },
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor managing the encounter"
+                },
+                "encounterId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the started encounter (null if failed)"
+                },
+                "error": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error message if the encounter could not be started"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _StartEncounter_Info = """
+{
+    "summary": "Start an encounter managed by an Event Brain actor",
+    "description": "Initializes an encounter with the specified participants. The Event Brain actor\nwill coordinate the encounter, sending instructions to participant NPC Brain actors\nvia their character perception channels.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "StartEncounter"
+}
+""";
+
+    /// <summary>Returns endpoint information for StartEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartEncounter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/start",
+            _StartEncounter_Info));
+
+    /// <summary>Returns request schema for StartEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartEncounter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/start",
+            "request-schema",
+            _StartEncounter_RequestSchema));
+
+    /// <summary>Returns response schema for StartEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartEncounter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/start",
+            "response-schema",
+            _StartEncounter_ResponseSchema));
+
+    /// <summary>Returns full schema for StartEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> StartEncounter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/start",
+            _StartEncounter_Info,
+            _StartEncounter_RequestSchema,
+            _StartEncounter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateEncounterPhase
+
+    private static readonly string _UpdateEncounterPhase_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateEncounterPhaseRequest",
+    "$defs": {
+        "UpdateEncounterPhaseRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update the phase of an active encounter",
+            "required": [
+                "actorId",
+                "phase"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the Event Brain actor managing the encounter"
+                },
+                "phase": {
+                    "type": "string",
+                    "description": "New phase name for the encounter"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateEncounterPhase_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateEncounterPhaseResponse",
+    "$defs": {
+        "UpdateEncounterPhaseResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after updating encounter phase",
+            "required": [
+                "success",
+                "actorId"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the phase was updated successfully"
+                },
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor managing the encounter"
+                },
+                "previousPhase": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Previous phase name (null if no encounter was active)"
+                },
+                "currentPhase": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Current phase name after update"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateEncounterPhase_Info = """
+{
+    "summary": "Update the phase of an active encounter",
+    "description": "Updates the phase of an encounter being managed by an Event Brain actor.\nPhase changes are logged and can trigger behavior changes in participant actors.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "UpdateEncounterPhase"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateEncounterPhase</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/update-phase/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEncounterPhase_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/update-phase",
+            _UpdateEncounterPhase_Info));
+
+    /// <summary>Returns request schema for UpdateEncounterPhase</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/update-phase/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEncounterPhase_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/update-phase",
+            "request-schema",
+            _UpdateEncounterPhase_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateEncounterPhase</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/update-phase/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEncounterPhase_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/update-phase",
+            "response-schema",
+            _UpdateEncounterPhase_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateEncounterPhase</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/update-phase/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEncounterPhase_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/update-phase",
+            _UpdateEncounterPhase_Info,
+            _UpdateEncounterPhase_RequestSchema,
+            _UpdateEncounterPhase_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for EndEncounter
+
+    private static readonly string _EndEncounter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EndEncounterRequest",
+    "$defs": {
+        "EndEncounterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to end an active encounter",
+            "required": [
+                "actorId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the Event Brain actor managing the encounter"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EndEncounter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EndEncounterResponse",
+    "$defs": {
+        "EndEncounterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after ending an encounter",
+            "required": [
+                "success",
+                "actorId"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether an encounter was ended"
+                },
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor"
+                },
+                "encounterId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the ended encounter (null if no encounter was active)"
+                },
+                "durationMs": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Duration of the encounter in milliseconds"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EndEncounter_Info = """
+{
+    "summary": "End an active encounter",
+    "description": "Ends an encounter being managed by an Event Brain actor. This clears the\nencounter state and allows the actor to manage a new encounter.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "EndEncounter"
+}
+""";
+
+    /// <summary>Returns endpoint information for EndEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/end/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndEncounter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/end",
+            _EndEncounter_Info));
+
+    /// <summary>Returns request schema for EndEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/end/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndEncounter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/end",
+            "request-schema",
+            _EndEncounter_RequestSchema));
+
+    /// <summary>Returns response schema for EndEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/end/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndEncounter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/end",
+            "response-schema",
+            _EndEncounter_ResponseSchema));
+
+    /// <summary>Returns full schema for EndEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/end/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndEncounter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/end",
+            _EndEncounter_Info,
+            _EndEncounter_RequestSchema,
+            _EndEncounter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetEncounter
+
+    private static readonly string _GetEncounter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEncounterRequest",
+    "$defs": {
+        "GetEncounterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get the current encounter state for an actor",
+            "required": [
+                "actorId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the Event Brain actor to query"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEncounter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEncounterResponse",
+    "$defs": {
+        "GetEncounterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing the current encounter state",
+            "required": [
+                "actorId",
+                "hasActiveEncounter"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the queried actor"
+                },
+                "hasActiveEncounter": {
+                    "type": "boolean",
+                    "description": "Whether the actor is currently managing an encounter"
+                },
+                "encounter": {
+                    "nullable": true,
+                    "description": "Current encounter state (null if no active encounter)",
+                    "$ref": "#/$defs/EncounterState"
+                }
+            }
+        },
+        "EncounterState": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "State of an active encounter being managed by an Event Brain actor",
+            "required": [
+                "encounterId",
+                "encounterType",
+                "participants",
+                "phase",
+                "startedAt"
+            ],
+            "properties": {
+                "encounterId": {
+                    "type": "string",
+                    "description": "Unique identifier for this encounter"
+                },
+                "encounterType": {
+                    "type": "string",
+                    "description": "Type of encounter"
+                },
+                "participants": {
+                    "type": "array",
+                    "description": "Character IDs participating in the encounter",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "phase": {
+                    "type": "string",
+                    "description": "Current phase of the encounter"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the encounter started"
+                },
+                "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom encounter-specific data"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEncounter_Info = """
+{
+    "summary": "Get the current encounter state for an actor",
+    "description": "Retrieves the current encounter state for an Event Brain actor. Returns\nnull encounter data if the actor is not managing an encounter.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "GetEncounter"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEncounter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/get",
+            _GetEncounter_Info));
+
+    /// <summary>Returns request schema for GetEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEncounter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/get",
+            "request-schema",
+            _GetEncounter_RequestSchema));
+
+    /// <summary>Returns response schema for GetEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEncounter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/get",
+            "response-schema",
+            _GetEncounter_ResponseSchema));
+
+    /// <summary>Returns full schema for GetEncounter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("actor/encounter/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEncounter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "Post",
+            "actor/encounter/get",
+            _GetEncounter_Info,
+            _GetEncounter_RequestSchema,
+            _GetEncounter_ResponseSchema));
 
     #endregion
 

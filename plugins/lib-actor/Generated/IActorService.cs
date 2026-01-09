@@ -84,4 +84,24 @@ public partial interface IActorService : IBannouService
         /// </summary>
         Task<(StatusCodes, QueryOptionsResponse?)> QueryOptionsAsync(QueryOptionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// StartEncounter operation
+        /// </summary>
+        Task<(StatusCodes, StartEncounterResponse?)> StartEncounterAsync(StartEncounterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UpdateEncounterPhase operation
+        /// </summary>
+        Task<(StatusCodes, UpdateEncounterPhaseResponse?)> UpdateEncounterPhaseAsync(UpdateEncounterPhaseRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// EndEncounter operation
+        /// </summary>
+        Task<(StatusCodes, EndEncounterResponse?)> EndEncounterAsync(EndEncounterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetEncounter operation
+        /// </summary>
+        Task<(StatusCodes, GetEncounterResponse?)> GetEncounterAsync(GetEncounterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService.Abml.Expressions;
 using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
@@ -34,9 +35,10 @@ public sealed class EventBrainHandlerTests
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
 
+        var targetCharacterId = Guid.NewGuid();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
         {
-            ["target_actor"] = "actor-123",
+            ["target_character"] = targetCharacterId.ToString(),
             ["perception_type"] = "choreography_instruction",
             ["data"] = new Dictionary<string, object?> { ["test"] = "value" }
         });
@@ -79,10 +81,11 @@ public sealed class EventBrainHandlerTests
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object);
 
+        var targetCharacterId = Guid.Parse("00000000-0000-0000-0000-000000000123");
         var (context, scope) = CreateExecutionContext();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
         {
-            ["target_actor"] = "actor-123",
+            ["target_character"] = targetCharacterId.ToString(),
             ["perception_type"] = "choreography_instruction",
             ["data"] = new Dictionary<string, object?>
             {
@@ -97,15 +100,16 @@ public sealed class EventBrainHandlerTests
         // Assert
         Assert.Equal(ActionResult.Continue, result);
         messageBus.Verify(m => m.TryPublishAsync(
-            "actor.actor-123.perceptions",
-            It.Is<PerceptionEvent>(e =>
-                e.TargetActorId == "actor-123" &&
-                e.PerceptionType == "choreography_instruction"),
+            $"character.{targetCharacterId}.perceptions",
+            It.Is<CharacterPerceptionEvent>(e =>
+                e.CharacterId == targetCharacterId &&
+                e.Perception != null &&
+                e.Perception.PerceptionType == "choreography_instruction"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task EmitPerceptionHandler_ExecuteAsync_ThrowsOnMissingTargetActor()
+    public async Task EmitPerceptionHandler_ExecuteAsync_ThrowsOnMissingTargetCharacter()
     {
         // Arrange
         var messageBus = new Mock<IMessageBus>();
@@ -286,8 +290,10 @@ public sealed class EventBrainHandlerTests
         var logger = new Mock<ILogger<ScheduleEventHandler>>();
         var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object);
 
+        var characterId = Guid.Parse("00000000-0000-0000-0000-000000000456");
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("actor_id", "actor-456");
+        scope.SetValue("character_id", characterId.ToString()); // NPC Brain actors have character_id in scope
 
         var action = new DomainAction("schedule_event", new Dictionary<string, object?>
         {
@@ -305,7 +311,8 @@ public sealed class EventBrainHandlerTests
         // Assert
         Assert.Equal(ActionResult.Continue, result);
         Assert.NotNull(capturedEvent);
-        Assert.Equal("actor-456", capturedEvent.TargetActorId);
+        Assert.Equal(characterId, capturedEvent.TargetCharacterId);
+        Assert.Equal("actor-456", capturedEvent.SourceActorId);
         Assert.Equal("choreography.timeout", capturedEvent.EventType);
         Assert.True((capturedEvent.FireAt - capturedEvent.ScheduledAt).TotalMilliseconds >= 3000);
     }

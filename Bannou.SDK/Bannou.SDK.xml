@@ -12859,6 +12859,59 @@
             <returns>Options retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.StartEncounterAsync(BeyondImmersion.BannouService.Actor.StartEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Start an encounter managed by an Event Brain actor
+            </summary>
+            <remarks>
+            Initializes an encounter with the specified participants. The Event Brain actor
+            <br/>will coordinate the encounter, sending instructions to participant NPC Brain actors
+            <br/>via their character perception channels.
+            </remarks>
+            <returns>Encounter started successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.UpdateEncounterPhaseAsync(BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update the phase of an active encounter
+            </summary>
+            <remarks>
+            Updates the phase of an encounter being managed by an Event Brain actor.
+            <br/>Phase changes are logged and can trigger behavior changes in participant actors.
+            </remarks>
+            <returns>Encounter phase updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.EndEncounterAsync(BeyondImmersion.BannouService.Actor.EndEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            End an active encounter
+            </summary>
+            <remarks>
+            Ends an encounter being managed by an Event Brain actor. This clears the
+            <br/>encounter state and allows the actor to manage a new encounter.
+            </remarks>
+            <returns>Encounter ended successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.IActorClient.GetEncounterAsync(BeyondImmersion.BannouService.Actor.GetEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get the current encounter state for an actor
+            </summary>
+            <remarks>
+            Retrieves the current encounter state for an Event Brain actor. Returns
+            <br/>null encounter data if the actor is not managing an encounter.
+            </remarks>
+            <returns>Encounter state retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.ActorClient">
             <summary>
             Client implementation for the Actor service.
@@ -13050,6 +13103,59 @@
             <br/>- stale_ok: Return cached options regardless of age
             </remarks>
             <returns>Options retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.StartEncounterAsync(BeyondImmersion.BannouService.Actor.StartEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Start an encounter managed by an Event Brain actor
+            </summary>
+            <remarks>
+            Initializes an encounter with the specified participants. The Event Brain actor
+            <br/>will coordinate the encounter, sending instructions to participant NPC Brain actors
+            <br/>via their character perception channels.
+            </remarks>
+            <returns>Encounter started successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.UpdateEncounterPhaseAsync(BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update the phase of an active encounter
+            </summary>
+            <remarks>
+            Updates the phase of an encounter being managed by an Event Brain actor.
+            <br/>Phase changes are logged and can trigger behavior changes in participant actors.
+            </remarks>
+            <returns>Encounter phase updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.EndEncounterAsync(BeyondImmersion.BannouService.Actor.EndEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            End an active encounter
+            </summary>
+            <remarks>
+            Ends an encounter being managed by an Event Brain actor. This clears the
+            <br/>encounter state and allows the actor to manage a new encounter.
+            </remarks>
+            <returns>Encounter ended successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Actor.ActorClient.GetEncounterAsync(BeyondImmersion.BannouService.Actor.GetEncounterRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get the current encounter state for an actor
+            </summary>
+            <remarks>
+            Retrieves the current encounter state for an Event Brain actor. Returns
+            <br/>null encounter data if the actor is not managing an encounter.
+            </remarks>
+            <returns>Encounter state retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.ActorClient.ObjectResponseResult`1">
@@ -14114,6 +14220,201 @@
         <member name="P:BeyondImmersion.BannouService.Actor.ChoreographyPosition.Z">
             <summary>
             Z coordinate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.StartEncounterRequest">
+            <summary>
+            Request to start an encounter managed by an Event Brain actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterRequest.ActorId">
+            <summary>
+            ID of the Event Brain actor that will manage this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterRequest.EncounterId">
+            <summary>
+            Unique identifier for this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterRequest.EncounterType">
+            <summary>
+            Type of encounter (e.g., "combat", "conversation", "choreography")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterRequest.Participants">
+            <summary>
+            Character IDs of participants in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterRequest.InitialData">
+            <summary>
+            Optional initial data for the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.StartEncounterResponse">
+            <summary>
+            Response after starting an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Success">
+            <summary>
+            Whether the encounter was started successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.ActorId">
+            <summary>
+            ID of the actor managing the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.EncounterId">
+            <summary>
+            ID of the started encounter (null if failed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Error">
+            <summary>
+            Error message if the encounter could not be started
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest">
+            <summary>
+            Request to update the phase of an active encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest.ActorId">
+            <summary>
+            ID of the Event Brain actor managing the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest.Phase">
+            <summary>
+            New phase name for the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse">
+            <summary>
+            Response after updating encounter phase
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.Success">
+            <summary>
+            Whether the phase was updated successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.ActorId">
+            <summary>
+            ID of the actor managing the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.PreviousPhase">
+            <summary>
+            Previous phase name (null if no encounter was active)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.CurrentPhase">
+            <summary>
+            Current phase name after update
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.EndEncounterRequest">
+            <summary>
+            Request to end an active encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterRequest.ActorId">
+            <summary>
+            ID of the Event Brain actor managing the encounter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.EndEncounterResponse">
+            <summary>
+            Response after ending an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.Success">
+            <summary>
+            Whether an encounter was ended
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.ActorId">
+            <summary>
+            ID of the actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.EncounterId">
+            <summary>
+            ID of the ended encounter (null if no encounter was active)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.DurationMs">
+            <summary>
+            Duration of the encounter in milliseconds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.GetEncounterRequest">
+            <summary>
+            Request to get the current encounter state for an actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetEncounterRequest.ActorId">
+            <summary>
+            ID of the Event Brain actor to query
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.GetEncounterResponse">
+            <summary>
+            Response containing the current encounter state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetEncounterResponse.ActorId">
+            <summary>
+            ID of the queried actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetEncounterResponse.HasActiveEncounter">
+            <summary>
+            Whether the actor is currently managing an encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.GetEncounterResponse.Encounter">
+            <summary>
+            Current encounter state (null if no active encounter)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Actor.EncounterState">
+            <summary>
+            State of an active encounter being managed by an Event Brain actor
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.EncounterId">
+            <summary>
+            Unique identifier for this encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.EncounterType">
+            <summary>
+            Type of encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.Participants">
+            <summary>
+            Character IDs participating in the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.Phase">
+            <summary>
+            Current phase of the encounter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.StartedAt">
+            <summary>
+            When the encounter started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Actor.EncounterState.Data">
+            <summary>
+            Custom encounter-specific data
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Analytics.IAnalyticsClient">

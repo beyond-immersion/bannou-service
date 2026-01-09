@@ -78,4 +78,32 @@ public interface IActorRunner : IAsyncDisposable
     /// </summary>
     /// <returns>A snapshot of the actor's current state.</returns>
     ActorStateSnapshot GetStateSnapshot();
+
+    /// <summary>
+    /// Gets the current encounter ID if this actor is managing one (Event Brain).
+    /// </summary>
+    string? CurrentEncounterId { get; }
+
+    /// <summary>
+    /// Starts a new encounter managed by this actor (Event Brain).
+    /// </summary>
+    /// <param name="encounterId">Unique identifier for the encounter.</param>
+    /// <param name="encounterType">Type of encounter (e.g., "combat", "conversation").</param>
+    /// <param name="participants">Character IDs participating in the encounter.</param>
+    /// <param name="initialData">Optional initial encounter data.</param>
+    /// <returns>True if the encounter was started, false if one is already active.</returns>
+    bool StartEncounter(string encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null);
+
+    /// <summary>
+    /// Updates the current encounter's phase.
+    /// </summary>
+    /// <param name="phase">The new phase name.</param>
+    /// <returns>True if the phase was updated, false if no encounter is active.</returns>
+    bool SetEncounterPhase(string phase);
+
+    /// <summary>
+    /// Ends the current encounter managed by this actor.
+    /// </summary>
+    /// <returns>True if an encounter was ended, false if none was active.</returns>
+    bool EndEncounter();
 }

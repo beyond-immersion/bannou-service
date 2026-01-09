@@ -1265,4 +1265,290 @@ public partial class ActorService : IActorService
     }
 
     #endregion
+
+    #region Encounter Management
+
+    /// <summary>
+    /// Starts an encounter managed by an Event Brain actor.
+    /// </summary>
+    public async Task<(StatusCodes, StartEncounterResponse?)> StartEncounterAsync(
+        StartEncounterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Starting encounter {EncounterId} on actor {ActorId}", body.EncounterId, body.ActorId);
+
+        try
+        {
+            // Find the actor (may be local or remote)
+            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
+            if (!found || runner == null)
+            {
+                return (StatusCodes.NotFound, new StartEncounterResponse
+                {
+                    Success = false,
+                    ActorId = body.ActorId,
+                    EncounterId = null,
+                    Error = $"Actor {body.ActorId} not found"
+                });
+            }
+
+            // Convert initialData to Dictionary<string, object?> if it's a dictionary
+            Dictionary<string, object?>? initialData = null;
+            if (body.InitialData is IDictionary<string, object?> dict)
+            {
+                initialData = new Dictionary<string, object?>(dict);
+            }
+            else if (body.InitialData is System.Text.Json.JsonElement jsonElement &&
+                     jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                initialData = new Dictionary<string, object?>();
+                foreach (var prop in jsonElement.EnumerateObject())
+                {
+                    initialData[prop.Name] = prop.Value.Clone();
+                }
+            }
+
+            // Start the encounter (Participants is already ICollection<Guid>)
+            var success = runner.StartEncounter(
+                body.EncounterId,
+                body.EncounterType,
+                body.Participants.ToList(),
+                initialData);
+
+            if (!success)
+            {
+                return (StatusCodes.Conflict, new StartEncounterResponse
+                {
+                    Success = false,
+                    ActorId = body.ActorId,
+                    EncounterId = null,
+                    Error = $"Actor {body.ActorId} already has an active encounter"
+                });
+            }
+
+            _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
+                body.EncounterId, body.ActorId, body.Participants.Count);
+
+            return (StatusCodes.OK, new StartEncounterResponse
+            {
+                Success = true,
+                ActorId = body.ActorId,
+                EncounterId = body.EncounterId,
+                Error = null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting encounter {EncounterId} on actor {ActorId}",
+                body.EncounterId, body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "StartEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Updates the phase of an active encounter.
+    /// </summary>
+    public async Task<(StatusCodes, UpdateEncounterPhaseResponse?)> UpdateEncounterPhaseAsync(
+        UpdateEncounterPhaseRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Updating encounter phase on actor {ActorId} to {Phase}", body.ActorId, body.Phase);
+
+        try
+        {
+            // Find the actor (may be local or remote)
+            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
+            if (!found || runner == null)
+            {
+                return (StatusCodes.NotFound, new UpdateEncounterPhaseResponse
+                {
+                    Success = false,
+                    ActorId = body.ActorId,
+                    PreviousPhase = null,
+                    CurrentPhase = null
+                });
+            }
+
+            // Get previous phase for response
+            var snapshot = runner.GetStateSnapshot();
+            var previousPhase = snapshot.Encounter?.Phase;
+
+            // Update the phase
+            var success = runner.SetEncounterPhase(body.Phase);
+
+            return (StatusCodes.OK, new UpdateEncounterPhaseResponse
+            {
+                Success = success,
+                ActorId = body.ActorId,
+                PreviousPhase = previousPhase,
+                CurrentPhase = success ? body.Phase : previousPhase
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating encounter phase on actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "UpdateEncounterPhase",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Ends an active encounter.
+    /// </summary>
+    public async Task<(StatusCodes, EndEncounterResponse?)> EndEncounterAsync(
+        EndEncounterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Ending encounter on actor {ActorId}", body.ActorId);
+
+        try
+        {
+            // Find the actor (may be local or remote)
+            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
+            if (!found || runner == null)
+            {
+                return (StatusCodes.NotFound, new EndEncounterResponse
+                {
+                    Success = false,
+                    ActorId = body.ActorId,
+                    EncounterId = null,
+                    DurationMs = null
+                });
+            }
+
+            // Get encounter info before ending
+            var snapshot = runner.GetStateSnapshot();
+            var encounterId = snapshot.Encounter?.EncounterId;
+            var startedAt = snapshot.Encounter?.StartedAt;
+
+            // End the encounter
+            var success = runner.EndEncounter();
+
+            var durationMs = startedAt.HasValue
+                ? (int)(DateTimeOffset.UtcNow - startedAt.Value).TotalMilliseconds
+                : (int?)null;
+
+            if (success)
+            {
+                _logger.LogInformation("Ended encounter {EncounterId} on actor {ActorId} (duration: {Duration}ms)",
+                    encounterId, body.ActorId, durationMs);
+            }
+
+            return (StatusCodes.OK, new EndEncounterResponse
+            {
+                Success = success,
+                ActorId = body.ActorId,
+                EncounterId = encounterId,
+                DurationMs = durationMs
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ending encounter on actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "EndEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets the current encounter state for an actor.
+    /// </summary>
+    public async Task<(StatusCodes, GetEncounterResponse?)> GetEncounterAsync(
+        GetEncounterRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Find the actor (may be local or remote)
+            var (found, runner) = await FindActorAsync(body.ActorId, cancellationToken);
+            if (!found || runner == null)
+            {
+                return (StatusCodes.NotFound, new GetEncounterResponse
+                {
+                    ActorId = body.ActorId,
+                    HasActiveEncounter = false,
+                    Encounter = null
+                });
+            }
+
+            var snapshot = runner.GetStateSnapshot();
+            var encounterData = snapshot.Encounter;
+
+            if (encounterData == null)
+            {
+                return (StatusCodes.OK, new GetEncounterResponse
+                {
+                    ActorId = body.ActorId,
+                    HasActiveEncounter = false,
+                    Encounter = null
+                });
+            }
+
+            return (StatusCodes.OK, new GetEncounterResponse
+            {
+                ActorId = body.ActorId,
+                HasActiveEncounter = true,
+                Encounter = new EncounterState
+                {
+                    EncounterId = encounterData.EncounterId,
+                    EncounterType = encounterData.EncounterType,
+                    Participants = encounterData.Participants,
+                    Phase = encounterData.Phase,
+                    StartedAt = encounterData.StartedAt,
+                    Data = encounterData.Data
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting encounter for actor {ActorId}", body.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "GetEncounter",
+                "unexpected_exception",
+                ex.Message,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Finds an actor by ID, handling local and remote lookups.
+    /// </summary>
+    private Task<(bool Found, IActorRunner? Runner)> FindActorAsync(
+        string actorId,
+        CancellationToken cancellationToken)
+    {
+        // First check local registry
+        if (_actorRegistry.TryGet(actorId, out var localRunner))
+        {
+            return Task.FromResult((true, (IActorRunner?)localRunner));
+        }
+
+        // TODO: For distributed deployments, could check pool manager or other nodes
+        // For now, only local actors are supported
+        return Task.FromResult((false, (IActorRunner?)null));
+    }
+
+    #endregion
 }

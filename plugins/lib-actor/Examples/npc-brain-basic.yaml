@@ -1,0 +1,171 @@
+# =============================================================================
+# Example NPC Brain Behavior: Basic Character Agent
+# This demonstrates a simple NPC Brain actor that controls a single character.
+# =============================================================================
+#
+# NPC Brain actors:
+# - Have a CharacterId (bound to one character)
+# - Subscribe to their character's perception channel
+# - Make decisions based on personality, backstory, and context
+# - Output intentions (movement, actions, dialogue)
+#
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: "npc-brain-basic-v1"
+  type: "npc_brain"
+  description: "Basic autonomous NPC behavior"
+  tags:
+    - npc-brain
+    - character
+    - basic
+
+# =============================================================================
+# BEHAVIOR FLOWS
+# =============================================================================
+
+flow: main
+flows:
+  main:
+    # Process any incoming perceptions first
+    - if:
+        condition: "${perceptions.length > 0}"
+        then:
+          - call: process_perceptions
+
+    # Check for and handle choreography instructions
+    - if:
+        condition: "${has_choreography_instruction()}"
+        then:
+          - call: execute_choreography
+        else:
+          # No choreography - make autonomous decisions
+          - call: autonomous_behavior
+
+  # ==========================================================================
+  # Process incoming perceptions
+  # ==========================================================================
+  process_perceptions:
+    - foreach:
+        collection: "${perceptions}"
+        as: "perception"
+        do:
+          - switch:
+              value: "${perception.type}"
+              cases:
+                # Choreography instruction from Event Brain
+                choreography_instruction:
+                  - store_working_memory:
+                      key: "pending_choreography"
+                      value: "${perception.data}"
+
+                # Dialogue from another character
+                dialogue_heard:
+                  - call: process_dialogue
+                    args:
+                      speaker: "${perception.source_id}"
+                      content: "${perception.data.content}"
+
+                # Combat event
+                combat_action:
+                  - call: react_to_combat
+                    args:
+                      action: "${perception.data}"
+
+  # ==========================================================================
+  # Execute choreography instruction from Event Brain
+  # ==========================================================================
+  execute_choreography:
+    - log:
+        level: info
+        message: "Executing choreography: ${working_memory.pending_choreography.instruction_type}"
+
+    # Get the instruction details
+    - set:
+        name: "instruction"
+        value: "${working_memory.pending_choreography}"
+
+    # Execute based on instruction type
+    - switch:
+        value: "${instruction.instruction_type}"
+        cases:
+          execute_action:
+            - emit_action:
+                action_id: "${instruction.action_id}"
+                priority: "${instruction.priority}"
+
+          move_to_position:
+            - emit_movement:
+                target_position: "${instruction.position}"
+                speed: "${instruction.speed ?? 'walk'}"
+
+          speak_dialogue:
+            - emit_dialogue:
+                content: "${instruction.dialogue}"
+                emotion: "${instruction.emotion ?? 'neutral'}"
+
+    # Clear the pending choreography
+    - clear_working_memory:
+        key: "pending_choreography"
+
+  # ==========================================================================
+  # Autonomous behavior (no choreography)
+  # ==========================================================================
+  autonomous_behavior:
+    # Evaluate current state and goals
+    - if:
+        condition: "${goals.primary == 'combat' && has_target()}"
+        then:
+          - call: combat_behavior
+        else:
+          - call: idle_behavior
+
+  # Combat behavior: Select and execute combat action
+  combat_behavior:
+    # Get available combat options (computed by actor's options logic)
+    - set:
+        name: "options"
+        value: "${state.memories.combat_options ?? []}"
+
+    # Filter for available options
+    - set:
+        name: "available"
+        value: "${options.filter(o => o.available)}"
+
+    # Select best option based on personality
+    - if:
+        condition: "${available.length > 0}"
+        then:
+          # Select based on preference scores (personality-weighted)
+          - set:
+              name: "selected"
+              value: "${available.sort_by(o => -o.preference)[0]}"
+
+          - emit_action:
+              action_id: "${selected.actionId}"
+
+  # Idle behavior: Wander, observe, etc.
+  idle_behavior:
+    # Simple idle: just observe surroundings
+    - log:
+        level: debug
+        message: "Idling..."
+
+# =============================================================================
+# ABML FUNCTIONS
+# =============================================================================
+
+functions:
+  has_choreography_instruction:
+    description: "Check if we have a pending choreography instruction"
+    returns: boolean
+    body: |
+      return working_memory.pending_choreography != null
+
+  has_target:
+    description: "Check if we have a combat target"
+    returns: boolean
+    body: |
+      return working_memory.combat_target != null

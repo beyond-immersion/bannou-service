@@ -44,9 +44,10 @@ public class ActorRunner : IActorRunner
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
-    // Event Brain integration: subscription to actor-addressed perception events (choreography, etc.)
-    private IAsyncDisposable? _actorPerceptionSubscription;
     private string? _lastSourceAppId;
+
+    // Event Brain encounter state (for actors managing encounters)
+    private EncounterStateData? _encounter;
 
     /// <inheritdoc/>
     public string ActorId { get; }
@@ -90,6 +91,9 @@ public class ActorRunner : IActorRunner
 
     /// <inheritdoc/>
     public int PerceptionQueueDepth => _perceptionQueue.Reader.Count;
+
+    /// <inheritdoc/>
+    public string? CurrentEncounterId => _encounter?.EncounterId;
 
     /// <summary>
     /// Creates a new actor runner instance.
@@ -184,9 +188,6 @@ public class ActorRunner : IActorRunner
             await SetupPerceptionSubscriptionAsync(cancellationToken);
         }
 
-        // Setup actor perception subscription for Event Brain coordination (actor-addressed)
-        await SetupActorPerceptionSubscriptionAsync(cancellationToken);
-
         Status = ActorStatus.Running;
         _logger.LogInformation("Actor {ActorId} started successfully", ActorId);
     }
@@ -244,19 +245,6 @@ public class ActorRunner : IActorRunner
             _perceptionSubscription = null;
         }
 
-        if (_actorPerceptionSubscription != null)
-        {
-            try
-            {
-                await _actorPerceptionSubscription.DisposeAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Actor {ActorId} error disposing actor perception subscription", ActorId);
-            }
-            _actorPerceptionSubscription = null;
-        }
-
         Status = ActorStatus.Stopped;
         _logger.LogInformation("Actor {ActorId} stopped (iterations: {Iterations})", ActorId, LoopIterations);
     }
@@ -290,8 +278,70 @@ public class ActorRunner : IActorRunner
             Feelings = _state.GetAllFeelings(),
             Goals = _state.GetGoals(),
             Memories = _state.GetAllMemories(),
-            WorkingMemory = _state.GetAllWorkingMemory()
+            WorkingMemory = _state.GetAllWorkingMemory(),
+            Encounter = _encounter
         };
+    }
+
+    /// <inheritdoc/>
+    public bool StartEncounter(string encounterId, string encounterType, IReadOnlyList<Guid> participants, Dictionary<string, object?>? initialData = null)
+    {
+        if (_disposed)
+            return false;
+
+        // Cannot start a new encounter if one is already active
+        if (_encounter != null)
+        {
+            _logger.LogWarning("Actor {ActorId} attempted to start encounter {EncounterId} but encounter {ActiveEncounterId} is already active",
+                ActorId, encounterId, _encounter.EncounterId);
+            return false;
+        }
+
+        _encounter = new EncounterStateData
+        {
+            EncounterId = encounterId,
+            EncounterType = encounterType,
+            Participants = new List<Guid>(participants),
+            Phase = "initializing",
+            StartedAt = DateTimeOffset.UtcNow,
+            Data = initialData ?? new Dictionary<string, object?>()
+        };
+
+        _logger.LogInformation("Actor {ActorId} started encounter {EncounterId} (type: {Type}, participants: {Count})",
+            ActorId, encounterId, encounterType, participants.Count);
+
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public bool SetEncounterPhase(string phase)
+    {
+        if (_disposed || _encounter == null)
+            return false;
+
+        var oldPhase = _encounter.Phase;
+        _encounter.Phase = phase;
+
+        _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
+            ActorId, _encounter.EncounterId, oldPhase, phase);
+
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public bool EndEncounter()
+    {
+        if (_disposed || _encounter == null)
+            return false;
+
+        var encounterId = _encounter.EncounterId;
+        var duration = DateTimeOffset.UtcNow - _encounter.StartedAt;
+        _encounter = null;
+
+        _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
+            ActorId, encounterId, duration);
+
+        return true;
     }
 
     /// <inheritdoc/>
@@ -320,19 +370,6 @@ public class ActorRunner : IActorRunner
                 // Swallow - we're disposing
             }
             _perceptionSubscription = null;
-        }
-
-        if (_actorPerceptionSubscription != null)
-        {
-            try
-            {
-                await _actorPerceptionSubscription.DisposeAsync();
-            }
-            catch (Exception)
-            {
-                // Swallow - we're disposing
-            }
-            _actorPerceptionSubscription = null;
         }
 
         _loopCts?.Dispose();
@@ -569,6 +606,25 @@ public class ActorRunner : IActorRunner
 
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
+
+        // Encounter state for Event Brain actors
+        if (_encounter != null)
+        {
+            scope.SetValue("encounter", new Dictionary<string, object?>
+            {
+                ["id"] = _encounter.EncounterId,
+                ["type"] = _encounter.EncounterType,
+                ["participants"] = _encounter.Participants.Select(p => p.ToString()).ToList(),
+                ["phase"] = _encounter.Phase,
+                ["started_at"] = _encounter.StartedAt.ToString("o"),
+                ["data"] = _encounter.Data
+            });
+        }
+        else
+        {
+            // No active encounter
+            scope.SetValue("encounter", null);
+        }
 
         // Load personality, combat preferences, and backstory for character-based actors
         if (CharacterId.HasValue)
@@ -923,62 +979,6 @@ public class ActorRunner : IActorRunner
 
         _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
             ActorId, evt.SourceAppId, perception.PerceptionType);
-
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Sets up a dynamic subscription to receive perception events addressed directly to this actor.
-    /// Subscribes to actor.{actorId}.perceptions topic for Event Brain choreography instructions, etc.
-    /// </summary>
-    private async Task SetupActorPerceptionSubscriptionAsync(CancellationToken ct)
-    {
-        var topic = $"actor.{ActorId}.perceptions";
-        _logger.LogInformation("Actor {ActorId} subscribing to actor perception topic {Topic}", ActorId, topic);
-
-        try
-        {
-            _actorPerceptionSubscription = await _messageSubscriber.SubscribeDynamicAsync<PerceptionEvent>(
-                topic,
-                async (evt, innerCt) => await HandleActorPerceptionEventAsync(evt, innerCt),
-                exchangeType: SubscriptionExchangeType.Topic,
-                cancellationToken: ct);
-
-            _logger.LogDebug("Actor {ActorId} subscribed to actor perception stream", ActorId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Actor {ActorId} failed to subscribe to actor perception stream", ActorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "SetupActorPerceptionSubscription",
-                ex.GetType().Name,
-                ex.Message,
-                details: new { ActorId });
-            // Don't throw - actor can still function without this subscription
-        }
-    }
-
-    /// <summary>
-    /// Handles a perception event addressed directly to this actor (from Event Brain).
-    /// Converts PerceptionEvent to PerceptionData and injects into the queue.
-    /// </summary>
-    private Task HandleActorPerceptionEventAsync(PerceptionEvent evt, CancellationToken ct)
-    {
-        // Convert to PerceptionData and inject into the queue
-        var perception = new PerceptionData
-        {
-            PerceptionType = evt.PerceptionType,
-            SourceId = "event-brain",
-            SourceType = "coordinator",
-            Data = evt.Data,
-            Urgency = 0.8f // Event Brain instructions are generally high priority
-        };
-
-        InjectPerception(perception);
-
-        _logger.LogDebug("Actor {ActorId} received actor perception (type: {Type})",
-            ActorId, perception.PerceptionType);
 
         return Task.CompletedTask;
     }

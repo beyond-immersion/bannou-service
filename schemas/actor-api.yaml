@@ -884,6 +884,213 @@ paths:
         for actor to recompute options\\n- cached: Return cached options if within maxAgeMs, else recompute\\n- stale_ok:
         Return cached options regardless of age\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"QueryOptions\"\n}"
+
+  # === Encounter Management (Event Brain) ===
+  /actor/encounter/start:
+    post:
+      operationId: StartEncounter
+      summary: Start an encounter managed by an Event Brain actor
+      description: |
+        Initializes an encounter with the specified participants. The Event Brain actor
+        will coordinate the encounter, sending instructions to participant NPC Brain actors
+        via their character perception channels.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartEncounterRequest'
+      responses:
+        '200':
+          description: Encounter started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartEncounterResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"StartEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to start an encounter managed by an Event Brain actor\",\n      \
+        \      \"required\": [\n                \"actorId\",\n                \"encounterId\",\n                \"encounterType\"\
+        ,\n                \"participants\"\n            ],\n            \"properties\": {\n                \"actorId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor that
+        will manage this encounter\"\n                },\n                \"encounterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n                },\n\
+        \                \"encounterType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of encounter (e.g., \\\"combat\\\", \\\"conversation\\\", \\\"choreography\\\")\"\n                },\n \
+        \               \"participants\": {\n                    \"type\": \"array\",\n                    \"description\"\
+        : \"Character IDs of participants in the encounter\",\n                    \"items\": {\n                        \"\
+        type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n                },\n   \
+        \             \"initialData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Optional initial data for
+        the encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"StartEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after starting an encounter\",\n            \"required\": [\n  \
+        \              \"success\",\n                \"actorId\"\n            ],\n            \"properties\": {\n        \
+        \        \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the encounter was started successfully\"\n                },\n                \"actorId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"ID of the actor managing the encounter\"\n       \
+        \         },\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"ID of the started encounter (null if failed)\"\n       \
+        \         },\n                \"error\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Error message if the encounter could not be started\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
+        : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
+        sending instructions to participant NPC Brain actors\\nvia their character perception channels.\\n\",\n    \"tags\"\
+        : [],\n    \"deprecated\": false,\n    \"operationId\": \"StartEncounter\"\n}"
+  /actor/encounter/update-phase:
+    post:
+      operationId: UpdateEncounterPhase
+      summary: Update the phase of an active encounter
+      description: |
+        Updates the phase of an encounter being managed by an Event Brain actor.
+        Phase changes are logged and can trigger behavior changes in participant actors.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEncounterPhaseRequest'
+      responses:
+        '200':
+          description: Encounter phase updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateEncounterPhaseResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterPhaseRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateEncounterPhaseRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to update the phase of an active encounter\"\
+        ,\n            \"required\": [\n                \"actorId\",\n                \"phase\"\n            ],\n        \
+        \    \"properties\": {\n                \"actorId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"ID of the Event Brain actor managing the encounter\"\n                },\n             \
+        \   \"phase\": {\n                    \"type\": \"string\",\n                    \"description\": \"New phase name
+        for the encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterPhaseResponse\"\
+        ,\n    \"$defs\": {\n        \"UpdateEncounterPhaseResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Response after updating encounter phase\",\n      \
+        \      \"required\": [\n                \"success\",\n                \"actorId\"\n            ],\n            \"\
+        properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether the phase was updated successfully\"\n                },\n                \"actorId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"ID of the actor managing the encounter\"\
+        \n                },\n                \"previousPhase\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Previous phase name (null if no encounter was
+        active)\"\n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Current phase name after update\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update the phase of an active encounter\",\n    \"description\": \"Updates
+        the phase of an encounter being managed by an Event Brain actor.\\nPhase changes are logged and can trigger behavior
+        changes in participant actors.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateEncounterPhase\"\
+        \n}"
+  /actor/encounter/end:
+    post:
+      operationId: EndEncounter
+      summary: End an active encounter
+      description: |
+        Ends an encounter being managed by an Event Brain actor. This clears the
+        encounter state and allows the actor to manage a new encounter.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndEncounterRequest'
+      responses:
+        '200':
+          description: Encounter ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndEncounterResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"EndEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to end an active encounter\",\n            \"required\": [\n    \
+        \            \"actorId\"\n            ],\n            \"properties\": {\n                \"actorId\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor managing the
+        encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"EndEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after ending an encounter\",\n            \"required\": [\n    \
+        \            \"success\",\n                \"actorId\"\n            ],\n            \"properties\": {\n          \
+        \      \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        an encounter was ended\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"ID of the actor\"\n                },\n                \"encounterId\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"ID of the ended encounter (null if no encounter was active)\"\n                },\n                \"durationMs\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Duration of the encounter in milliseconds\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"End an active encounter\",\n    \"description\": \"Ends an encounter being
+        managed by an Event Brain actor. This clears the\\nencounter state and allows the actor to manage a new encounter.\\\
+        n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"EndEncounter\"\n}"
+  /actor/encounter/get:
+    post:
+      operationId: GetEncounter
+      summary: Get the current encounter state for an actor
+      description: |
+        Retrieves the current encounter state for an Event Brain actor. Returns
+        null encounter data if the actor is not managing an encounter.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEncounterRequest'
+      responses:
+        '200':
+          description: Encounter state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEncounterResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the current encounter state for an actor\",\n            \"\
+        required\": [\n                \"actorId\"\n            ],\n            \"properties\": {\n                \"actorId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor
+        to query\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"GetEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing the current encounter state\",\n            \"required\"\
+        : [\n                \"actorId\",\n                \"hasActiveEncounter\"\n            ],\n            \"properties\"\
+        : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"ID of the queried actor\"\n                },\n                \"hasActiveEncounter\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"description\": \"Whether the actor is currently managing an encounter\"\
+        \n                },\n                \"encounter\": {\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Current encounter state (null if no active encounter)\",\n                    \"$ref\": \"\
+        #/$defs/EncounterState\"\n                }\n            }\n        },\n        \"EncounterState\": {\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"State of an
+        active encounter being managed by an Event Brain actor\",\n            \"required\": [\n                \"encounterId\"\
+        ,\n                \"encounterType\",\n                \"participants\",\n                \"phase\",\n           \
+        \     \"startedAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n\
+        \                },\n                \"encounterType\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Type of encounter\"\n                },\n                \"participants\": {\n      \
+        \              \"type\": \"array\",\n                    \"description\": \"Character IDs participating in the encounter\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    }\n                },\n                \"phase\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Current phase of the encounter\"\n                },\n     \
+        \           \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the encounter started\"\n                },\n                \"data\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Custom encounter-specific data\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get the current encounter state for an actor\",\n    \"description\": \"\
+        Retrieves the current encounter state for an Event Brain actor. Returns\\nnull encounter data if the actor is not
+        managing an encounter.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetEncounter\"\
+        \n}"
 components:
   schemas:
     # === Actor Templates ===
@@ -1898,3 +2105,196 @@ components:
           type: number
           format: float
           description: Z coordinate
+
+    # === Encounter Management ===
+    StartEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start an encounter managed by an Event Brain actor
+      required:
+      - actorId
+      - encounterId
+      - encounterType
+      - participants
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor that will manage this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          description: Type of encounter (e.g., "combat", "conversation", "choreography")
+        participants:
+          type: array
+          description: Character IDs of participants in the encounter
+          items:
+            type: string
+            format: uuid
+        initialData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Optional initial data for the encounter
+
+    StartEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response after starting an encounter
+      required:
+      - success
+      - actorId
+      properties:
+        success:
+          type: boolean
+          description: Whether the encounter was started successfully
+        actorId:
+          type: string
+          description: ID of the actor managing the encounter
+        encounterId:
+          type: string
+          nullable: true
+          description: ID of the started encounter (null if failed)
+        error:
+          type: string
+          nullable: true
+          description: Error message if the encounter could not be started
+
+    UpdateEncounterPhaseRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update the phase of an active encounter
+      required:
+      - actorId
+      - phase
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor managing the encounter
+        phase:
+          type: string
+          description: New phase name for the encounter
+
+    UpdateEncounterPhaseResponse:
+      type: object
+      additionalProperties: false
+      description: Response after updating encounter phase
+      required:
+      - success
+      - actorId
+      properties:
+        success:
+          type: boolean
+          description: Whether the phase was updated successfully
+        actorId:
+          type: string
+          description: ID of the actor managing the encounter
+        previousPhase:
+          type: string
+          nullable: true
+          description: Previous phase name (null if no encounter was active)
+        currentPhase:
+          type: string
+          nullable: true
+          description: Current phase name after update
+
+    EndEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to end an active encounter
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor managing the encounter
+
+    EndEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response after ending an encounter
+      required:
+      - success
+      - actorId
+      properties:
+        success:
+          type: boolean
+          description: Whether an encounter was ended
+        actorId:
+          type: string
+          description: ID of the actor
+        encounterId:
+          type: string
+          nullable: true
+          description: ID of the ended encounter (null if no encounter was active)
+        durationMs:
+          type: integer
+          nullable: true
+          description: Duration of the encounter in milliseconds
+
+    GetEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the current encounter state for an actor
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor to query
+
+    GetEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing the current encounter state
+      required:
+      - actorId
+      - hasActiveEncounter
+      properties:
+        actorId:
+          type: string
+          description: ID of the queried actor
+        hasActiveEncounter:
+          type: boolean
+          description: Whether the actor is currently managing an encounter
+        encounter:
+          nullable: true
+          description: Current encounter state (null if no active encounter)
+          $ref: '#/components/schemas/EncounterState'
+
+    EncounterState:
+      type: object
+      additionalProperties: false
+      description: State of an active encounter being managed by an Event Brain actor
+      required:
+      - encounterId
+      - encounterType
+      - participants
+      - phase
+      - startedAt
+      properties:
+        encounterId:
+          type: string
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          description: Type of encounter
+        participants:
+          type: array
+          description: Character IDs participating in the encounter
+          items:
+            type: string
+            format: uuid
+        phase:
+          type: string
+          description: Current phase of the encounter
+        startedAt:
+          type: string
+          format: date-time
+          description: When the encounter started
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Custom encounter-specific data

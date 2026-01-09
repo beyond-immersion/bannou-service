@@ -1,10 +1,12 @@
 // =============================================================================
 // Schedule Event Handler
 // ABML action handler for scheduling delayed events (Event Brain support).
+// Uses character.{characterId}.perceptions topic per ACTOR_BEHAVIORS_GAP_ANALYSIS §6.
 // =============================================================================
 
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -18,7 +20,7 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// </summary>
 /// <remarks>
 /// <para>
-/// ABML usage:
+/// ABML usage for scheduling self-events (no target, uses executing actor's character):
 /// <code>
 /// - schedule_event:
 ///     delay_ms: 5000
@@ -28,9 +30,19 @@ namespace BeyondImmersion.BannouService.Actor.Handlers;
 /// </code>
 /// </para>
 /// <para>
-/// Events are scheduled to be published to the actor's perception topic
-/// after the specified delay. The executing actor's ID is automatically
-/// used as the target.
+/// ABML usage for scheduling events to a specific character:
+/// <code>
+/// - schedule_event:
+///     delay_ms: 5000
+///     target_character: "${participant.characterId}"
+///     event_type: "encounter_instruction"
+///     data:
+///       instruction_type: "timeout_warning"
+/// </code>
+/// </para>
+/// <para>
+/// Events are scheduled to be published to the character's perception topic
+/// after the specified delay. Uses the standard tap pattern.
 /// </para>
 /// </remarks>
 public sealed class ScheduleEventHandler : IActionHandler
@@ -69,7 +81,7 @@ public sealed class ScheduleEventHandler : IActionHandler
         var evaluatedParams = ValueEvaluator.EvaluateParameters(
             domainAction.Parameters, scope, context.Evaluator);
 
-        // Get required parameters
+        // Get required delay
         var delayMs = 0;
         if (evaluatedParams.TryGetValue("delay_ms", out var delayObj) && delayObj != null)
         {
@@ -86,22 +98,49 @@ public sealed class ScheduleEventHandler : IActionHandler
             throw new InvalidOperationException("schedule_event requires event_type parameter");
         }
 
+        // Get target character - if not specified, try to get executing actor's character
+        Guid? targetCharacterId = null;
+        var targetCharacterStr = evaluatedParams.GetValueOrDefault("target_character")?.ToString();
+        if (!string.IsNullOrEmpty(targetCharacterStr))
+        {
+            if (Guid.TryParse(targetCharacterStr, out var parsed))
+            {
+                targetCharacterId = parsed;
+            }
+            else
+            {
+                throw new InvalidOperationException($"schedule_event target_character must be a valid GUID, got: {targetCharacterStr}");
+            }
+        }
+        else
+        {
+            // Try to get character_id from scope (for NPC Brain actors scheduling self-events)
+            var characterIdStr = scope.GetValue("character_id")?.ToString()
+                ?? context.RootScope.GetValue("character_id")?.ToString();
+            if (!string.IsNullOrEmpty(characterIdStr) && Guid.TryParse(characterIdStr, out var charId))
+            {
+                targetCharacterId = charId;
+            }
+        }
+
+        // Get actor ID for logging
+        var actorId = scope.GetValue("actor_id")?.ToString()
+            ?? context.RootScope.GetValue("actor_id")?.ToString()
+            ?? "unknown";
+
         // Get event data
         var data = evaluatedParams.GetValueOrDefault("data");
 
-        // Get the executing actor's ID from scope (should be registered by ActorRunner)
-        var actorId = scope.GetValue("actor_id")?.ToString();
-        if (string.IsNullOrEmpty(actorId))
-        {
-            // Fallback: try root scope
-            actorId = context.RootScope.GetValue("actor_id")?.ToString() ?? "unknown";
-        }
+        // Get source_id (who/what is sending this perception)
+        var sourceId = evaluatedParams.GetValueOrDefault("source_id")?.ToString() ?? actorId;
 
         // Schedule the event
         var scheduledEvent = new ScheduledEvent
         {
             Id = Guid.NewGuid().ToString(),
-            TargetActorId = actorId,
+            TargetCharacterId = targetCharacterId,
+            SourceActorId = actorId,
+            SourceId = sourceId,
             EventType = eventType,
             ScheduledAt = DateTimeOffset.UtcNow,
             FireAt = DateTimeOffset.UtcNow.AddMilliseconds(delayMs),
@@ -110,8 +149,8 @@ public sealed class ScheduleEventHandler : IActionHandler
 
         _scheduledEventManager.Schedule(scheduledEvent);
 
-        _logger.LogDebug("Scheduled event {EventType} for actor {ActorId} in {DelayMs}ms",
-            eventType, actorId, delayMs);
+        _logger.LogDebug("Scheduled event {EventType} for character {TargetCharacterId} from actor {ActorId} in {DelayMs}ms",
+            eventType, targetCharacterId?.ToString() ?? "(self)", actorId, delayMs);
 
         return ValueTask.FromResult(ActionResult.Continue);
     }
@@ -148,9 +187,19 @@ public sealed class ScheduledEvent
     public required string Id { get; init; }
 
     /// <summary>
-    /// Target actor to receive the event.
+    /// Target character to receive the event. Null if Event Brain self-event.
     /// </summary>
-    public required string TargetActorId { get; init; }
+    public Guid? TargetCharacterId { get; init; }
+
+    /// <summary>
+    /// Actor that scheduled this event (for logging/tracking).
+    /// </summary>
+    public required string SourceActorId { get; init; }
+
+    /// <summary>
+    /// Source ID for the perception event.
+    /// </summary>
+    public required string SourceId { get; init; }
 
     /// <summary>
     /// Event type to emit.
@@ -259,19 +308,38 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     {
         try
         {
-            var perceptionEvent = new PerceptionEvent
+            if (!evt.TargetCharacterId.HasValue)
             {
-                TargetActorId = evt.TargetActorId,
-                PerceptionType = evt.EventType,
+                // Event Brain self-event without character target - log warning and skip
+                // These should be handled via internal state rather than message bus
+                _logger.LogWarning("Scheduled event {EventType} has no target character, skipping (Event Brain self-events should use internal state)",
+                    evt.EventType);
+                return;
+            }
+
+            // Build CharacterPerceptionEvent for the target character
+            var perceptionEvent = new CharacterPerceptionEvent
+            {
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Data = evt.Data
+                CharacterId = evt.TargetCharacterId.Value,
+                SourceAppId = "bannou", // Scheduled events come from Bannou
+                Perception = new Events.PerceptionData
+                {
+                    PerceptionType = evt.EventType,
+                    SourceId = evt.SourceId,
+                    SourceType = "scheduled",
+                    Data = evt.Data,
+                    Urgency = 0.7f // Scheduled events are moderately urgent
+                }
             };
 
-            var topic = $"actor.{evt.TargetActorId}.perceptions";
+            // Use the standard character perception topic (tap pattern)
+            var topic = $"character.{evt.TargetCharacterId}.perceptions";
             await _messageBus.TryPublishAsync(topic, perceptionEvent, CancellationToken.None);
 
-            _logger.LogDebug("Fired scheduled event {EventType} for actor {ActorId}",
-                evt.EventType, evt.TargetActorId);
+            _logger.LogDebug("Fired scheduled event {EventType} for character {CharacterId}",
+                evt.EventType, evt.TargetCharacterId);
         }
         catch (Exception ex)
         {
