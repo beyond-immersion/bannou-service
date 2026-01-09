@@ -109,6 +109,18 @@ This document lists all events defined in Bannou's event schemas.
 | `CharacterParticipationDeletedEvent` | Lifecycle (Deleted) | `character-participation.deleted` | Published when a character's participation record ... |
 | `CharacterParticipationRecordedEvent` | Custom | `character-participation-recorded` | Published when a character's participation in a hi... |
 
+### Character Personality
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CombatPreferencesCreatedEvent` | Lifecycle (Created) | `combat-preferences.created` | Published when a character's combat preferences ar... |
+| `CombatPreferencesEvolvedEvent` | Custom | `combat-preferences-evolved` | Published when a character's combat preferences ev... |
+| `CombatPreferencesUpdatedEvent` | Lifecycle (Updated) | `combat-preferences.updated` | Published when a character's combat preferences ar... |
+| `PersonalityCreatedEvent` | Lifecycle (Created) | `personality.created` | Published when a character's personality is first ... |
+| `PersonalityDeletedEvent` | Lifecycle (Deleted) | `personality.deleted` | Published when a character's personality is delete... |
+| `PersonalityEvolvedEvent` | Custom | `personality-evolved` | Published when a character's personality evolves d... |
+| `PersonalityUpdatedEvent` | Lifecycle (Updated) | `personality.updated` | Published when a character's personality traits ar... |
+
 ### Common (client)
 
 | Event | Type | Likely Topic | Description |

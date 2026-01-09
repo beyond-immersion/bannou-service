@@ -110,7 +110,8 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
             _ = StartTimeoutTimerAsync(windowId, timeout, ct);
         }
 
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         return window;
     }
 
@@ -170,7 +171,8 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
 
         RaiseWindowCompleted(window, wasDefault: false);
 
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         return InputSubmitResult.Accept(adjudicatedValue);
     }
 

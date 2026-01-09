@@ -1299,7 +1299,7 @@ public partial class ActorService : IActorService
                 initialData = new Dictionary<string, object?>(dict);
             }
             else if (body.InitialData is System.Text.Json.JsonElement jsonElement &&
-                     jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                    jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
             {
                 initialData = new Dictionary<string, object?>();
                 foreach (var prop in jsonElement.EnumerateObject())

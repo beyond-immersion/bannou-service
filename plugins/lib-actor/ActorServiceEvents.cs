@@ -150,7 +150,8 @@ public partial class ActorService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         _logger.LogInformation(
             "Received session.disconnected event for session {SessionId}",
             evt.SessionId);
@@ -169,7 +170,7 @@ public partial class ActorService
     /// pick up the updated personality data.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandlePersonalityEvolvedAsync(PersonalityEvolvedEvent evt)
+    public async Task HandlePersonalityEvolvedAsync(PersonalityEvolvedEvent evt)
     {
         _logger.LogInformation(
             "Received personality.evolved event for character {CharacterId}, experience type {ExperienceType}",
@@ -178,7 +179,8 @@ public partial class ActorService
         _personalityCache.Invalidate(evt.CharacterId);
         _logger.LogDebug("Invalidated personality cache for character {CharacterId}", evt.CharacterId);
 
-        return Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 
     /// <summary>
@@ -187,7 +189,7 @@ public partial class ActorService
     /// pick up the updated combat preferences data.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleCombatPreferencesEvolvedAsync(CombatPreferencesEvolvedEvent evt)
+    public async Task HandleCombatPreferencesEvolvedAsync(CombatPreferencesEvolvedEvent evt)
     {
         _logger.LogInformation(
             "Received combat-preferences.evolved event for character {CharacterId}, experience type {ExperienceType}",
@@ -196,7 +198,8 @@ public partial class ActorService
         _personalityCache.Invalidate(evt.CharacterId);
         _logger.LogDebug("Invalidated personality/combat cache for character {CharacterId}", evt.CharacterId);
 
-        return Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 
     #region Pool Node Event Handlers

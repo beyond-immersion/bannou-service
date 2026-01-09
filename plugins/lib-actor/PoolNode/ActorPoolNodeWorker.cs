@@ -321,7 +321,8 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// <returns>True if message was delivered, false if actor not found.</returns>
     public async Task<bool> HandleMessageCommandAsync(SendMessageCommand command, CancellationToken ct)
     {
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         _logger.LogDebug(
             "Received message command for actor {ActorId} (type: {MessageType})",
             command.ActorId, command.MessageType);

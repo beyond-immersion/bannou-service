@@ -469,30 +469,8 @@ public partial class BehaviorService : IBehaviorService
             return null;
         }
     }
-
-    /// <summary>
-    /// Compiles a stack of behaviors with priority resolution. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(BehaviorStackRequest body, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogWarning("Method CompileBehaviorStackAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error compiling behavior stack");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "CompileBehaviorStack",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
+    // NOTE: CompileBehaviorStackAsync removed - see docs/guides/ABML.md for rationale
+    // Runtime BehaviorStack (lib-behavior/Stack/) provides superior dynamic layer evaluation.
 
     /// <summary>
     /// Validates ABML YAML syntax and semantics without full compilation.
@@ -666,29 +644,8 @@ public partial class BehaviorService : IBehaviorService
         }
     }
 
-    /// <summary>
-    /// Resolves context variables and cultural adaptations. Not yet implemented - planned for future release.
-    /// </summary>
-    public async Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogWarning("Method ResolveContextVariablesAsync called but not implemented");
-            return (StatusCodes.NotImplemented, null);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resolving context variables");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "ResolveContextVariables",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
+    // NOTE: ResolveContextVariablesAsync removed - see docs/guides/ABML.md for rationale
+    // Context resolution happens dynamically within BehaviorStack layer evaluation.
 
     /// <summary>
     /// Invalidates a cached compiled behavior.

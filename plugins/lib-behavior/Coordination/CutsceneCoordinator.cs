@@ -94,7 +94,8 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
             cinematicId,
             participants.Count);
 
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         return session;
     }
 

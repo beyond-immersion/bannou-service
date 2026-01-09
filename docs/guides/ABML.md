@@ -1908,4 +1908,95 @@ This can be added without changing `DialogueResolver` - it only knows about `IEx
 
 ---
 
+## Appendix E: Removed API Endpoints
+
+This section documents API endpoints that were designed but removed because the runtime BehaviorStack provides a superior approach.
+
+### E.1 CompileBehaviorStack (Removed)
+
+**Original Design**: `/stack/compile` endpoint that would compile multiple ABML files with priority-based merging at compile time, producing a single merged bytecode artifact.
+
+**Schema Definition**:
+```yaml
+# Removed from behavior-api.yaml
+/stack/compile:
+  post:
+    operationId: CompileBehaviorStack
+    requestBody:
+      $ref: '#/components/schemas/BehaviorStackRequest'
+```
+
+**Why It Was Removed**:
+
+The runtime `BehaviorStack` (located in `lib-behavior/Stack/`) provides **superior dynamic layer evaluation** compared to compile-time merging:
+
+| Aspect | Compile-Time Merging | Runtime BehaviorStack |
+|--------|---------------------|----------------------|
+| Layer addition | Requires recompilation | Add layer instantly |
+| Layer removal | Requires recompilation | Remove layer instantly |
+| Priority changes | Requires recompilation | Adjust at runtime |
+| Debugging | Merged bytecode is opaque | Inspect each layer contribution |
+| Flexibility | Static archetypes only | Dynamic situational layers |
+
+**Alternative Approach**: Compile each ABML file separately with `/compile`, then load them as layers in a `BehaviorStack` at runtime. The `IntentStackMerger` handles priority-based merging dynamically.
+
+**Git History**: The original implementation returned `501 Not Implemented`. Schema and implementation removed in commit related to this document update.
+
+### E.2 ResolveContextVariables (Removed)
+
+**Original Design**: `/context/resolve` endpoint that would evaluate context variable expressions against character and world state.
+
+**Schema Definition**:
+```yaml
+# Removed from behavior-api.yaml
+/context/resolve:
+  post:
+    operationId: ResolveContextVariables
+    requestBody:
+      $ref: '#/components/schemas/ResolveContextRequest'
+```
+
+**Why It Was Removed**:
+
+Context variable resolution happens **dynamically within BehaviorStack layer evaluation**:
+
+1. When `BehaviorStack.EvaluateAsync()` is called, it receives a `BehaviorEvaluationContext` with the current entity state in `context.Data`
+2. Each layer's ABML expressions are evaluated with this context
+3. The `IntentStackMerger` combines contributions from all layers
+
+**The standalone endpoint was redundant because**:
+- Context resolution is inherently tied to specific layer evaluation
+- Resolving context outside of layer evaluation produces incomplete results
+- Debugging tools can inspect `BehaviorEvaluationContext` directly
+
+**Alternative Approaches**:
+- For testing expressions: Use the ABML compiler's validation mode
+- For debugging: Inspect `BehaviorEvaluationContext.Data` at runtime
+- For tooling: Use the expression VM directly with a test context
+
+### E.3 Related Removed Schemas
+
+The following schema definitions were removed along with the endpoints:
+
+| Schema | Purpose |
+|--------|---------|
+| `BehaviorStackRequest` | Request body for compile-time stack merging |
+| `BehaviorSetDefinition` | Definition of a behavior set with priority |
+| `ResolveContextRequest` | Request body for context resolution |
+| `ResolveContextResponse` | Response with resolved value |
+
+**Note**: `CharacterContext` schema was **retained** as it's used by `CompileBehaviorRequest` for single-file compilation with context.
+
+### E.4 Restoration Guide
+
+If these endpoints need to be restored in the future:
+
+1. **Schema**: Check git history for the removed YAML definitions in `schemas/behavior-api.yaml`
+2. **Implementation**: Create implementations in `lib-behavior/BehaviorService.cs`
+3. **Tests**: Add proper behavioral tests (not just "doesn't throw")
+
+**Caution**: Before restoring, consider whether the runtime BehaviorStack approach already solves the use case better.
+
+---
+
 *This document is the authoritative reference for ABML.*

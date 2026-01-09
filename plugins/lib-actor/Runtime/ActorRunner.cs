@@ -508,7 +508,8 @@ public class ActorRunner : IActorRunner
             _logger.LogDebug("Actor {ActorId} processed {Count} perceptions", ActorId, processedCount);
         }
 
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 
     /// <summary>
@@ -960,7 +961,7 @@ public class ActorRunner : IActorRunner
     /// Handles a perception event received from the message bus.
     /// Tracks the source app-id for routing state updates back, then injects the perception.
     /// </summary>
-    private Task HandlePerceptionEventAsync(CharacterPerceptionEvent evt, CancellationToken ct)
+    private async Task HandlePerceptionEventAsync(CharacterPerceptionEvent evt, CancellationToken ct)
     {
         // Track source app-id for routing state updates back to the game server
         _lastSourceAppId = evt.SourceAppId;
@@ -980,6 +981,7 @@ public class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
             ActorId, evt.SourceAppId, perception.PerceptionType);
 
-        return Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 }

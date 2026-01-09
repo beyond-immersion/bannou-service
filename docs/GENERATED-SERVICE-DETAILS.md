@@ -11,11 +11,11 @@ This document provides a compact reference of all Bannou services and their API 
 |---------|---------|-----------|-------------|
 | [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
-| [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
+| [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
-| [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
+| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
 | [Character Personality](#character-personality) | 1.0.0 | 8 | Machine-readable personality traits for NPC behavior decisio... |
@@ -131,9 +131,14 @@ goals, memories) to characters - NOT ...
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/actor/encounter/end` | End an active encounter | developer |
+| `POST` | `/actor/encounter/get` | Get the current encounter state for an actor | user |
+| `POST` | `/actor/encounter/start` | Start an encounter managed by an Event Brain actor | developer |
+| `POST` | `/actor/encounter/update-phase` | Update the phase of an active encounter | developer |
 | `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | user |
 | `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
 | `POST` | `/actor/list` | List actors with optional filters | user |
+| `POST` | `/actor/query-options` | Query an actor for its available options | user |
 | `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
 | `POST` | `/actor/stop` | Stop a running actor | developer |
 | `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
@@ -268,24 +273,12 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 |--------|------|---------|--------|
 | `POST` | `/compile` | Compile ABML behavior definition | developer |
 
-### BehaviorStacks
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/stack/compile` | Compile stackable behavior sets | developer |
-
 ### Cache
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/cache/get` | Get cached compiled behavior | developer |
 | `POST` | `/cache/invalidate` | Invalidate cached behavior | developer |
-
-### Context
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/context/resolve` | Resolve context variables | developer |
 
 ### GOAP
 
@@ -1067,7 +1060,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 30
-- **Total endpoints**: 322
+- **Total endpoints**: 325
 
 ---
 

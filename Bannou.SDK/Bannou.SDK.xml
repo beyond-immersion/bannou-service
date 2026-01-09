@@ -16032,19 +16032,6 @@
             <returns>ABML behavior compiled successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile stackable behavior sets
-            </summary>
-            <remarks>
-            Compiles multiple ABML behavior sets with priority-based merging.
-            <br/>Handles cultural adaptations, profession specializations, and context resolution.
-            </remarks>
-            <returns>Behavior stack compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -16082,19 +16069,6 @@
             <br/>Used when behavior definitions are updated.
             </remarks>
             <returns>Cache invalidated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Resolve context variables
-            </summary>
-            <remarks>
-            Resolves context variables in ABML definitions against character and world state.
-            <br/>Used for dynamic behavior adaptation based on current game state.
-            </remarks>
-            <returns>Context variables resolved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
@@ -16209,19 +16183,6 @@
             <returns>ABML behavior compiled successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.CompileBehaviorStackAsync(BeyondImmersion.BannouService.Behavior.BehaviorStackRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Compile stackable behavior sets
-            </summary>
-            <remarks>
-            Compiles multiple ABML behavior sets with priority-based merging.
-            <br/>Handles cultural adaptations, profession specializations, and context resolution.
-            </remarks>
-            <returns>Behavior stack compiled successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ValidateAbmlAsync(System.String,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -16259,19 +16220,6 @@
             <br/>Used when behavior definitions are updated.
             </remarks>
             <returns>Cache invalidated successfully</returns>
-            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.ResolveContextVariablesAsync(BeyondImmersion.BannouService.Behavior.ResolveContextRequest,System.Threading.CancellationToken)">
-            <param name="body">The body parameter.</param>
-            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-            <summary>
-            Resolve context variables
-            </summary>
-            <remarks>
-            Resolves context variables in ABML definitions against character and world state.
-            <br/>Used for dynamic behavior adaptation based on current game state.
-            </remarks>
-            <returns>Context variables resolved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.BehaviorClient.GenerateGoapPlanAsync(BeyondImmersion.BannouService.Behavior.GoapPlanRequest,System.Threading.CancellationToken)">
@@ -16402,26 +16350,6 @@
             Options controlling the compilation process
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest">
-            <summary>
-            Request to compile multiple stackable behavior sets with priority-based merging
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.BehaviorSets">
-            <summary>
-            Array of behavior sets to compile together
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CharacterContext">
-            <summary>
-            Character context for context variable resolution during compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorStackRequest.CompilationOptions">
-            <summary>
-            Options controlling the compilation process
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest">
             <summary>
             Request to validate ABML YAML content against schema and semantic rules
@@ -16435,21 +16363,6 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidateAbmlRequest.StrictMode">
             <summary>
             Enable strict validation mode with enhanced checking
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextRequest">
-            <summary>
-            Request to resolve context variable expressions against character and world state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.ContextExpression">
-            <summary>
-            Context variable expression to resolve
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextRequest.CharacterContext">
-            <summary>
-            Character context providing values for variable resolution
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse">
@@ -16550,56 +16463,6 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.CachedBehaviorResponse.CacheHit">
             <summary>
             Whether this was a cache hit or miss
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.ResolveContextResponse">
-            <summary>
-            Response containing the resolved value of a context variable expression
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedValue">
-            <summary>
-            The resolved value of the context expression
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ResolvedType">
-            <summary>
-            Type of the resolved value
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.ResolveContextResponse.ContextVariablesUsed">
-            <summary>
-            List of context variables referenced in the expression
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition">
-            <summary>
-            Definition of a behavior set with priority for stackable behavior merging
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Id">
-            <summary>
-            Unique identifier for the behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Priority">
-            <summary>
-            Priority level for merging (higher priority overrides lower)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Category">
-            <summary>
-            Category of the behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.AbmlContent">
-            <summary>
-            Raw ABML YAML content for this behavior set
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.BehaviorSetDefinition.Metadata">
-            <summary>
-            Additional metadata for the behavior set
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.CharacterContext">

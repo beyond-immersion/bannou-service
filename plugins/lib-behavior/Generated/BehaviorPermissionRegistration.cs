@@ -82,21 +82,6 @@ public static class BehaviorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/stack/compile",
-            Method = ServiceEndpointMethod.POST,
-            Description = "CompileBehaviorStack",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/validate",
             Method = ServiceEndpointMethod.POST,
             Description = "ValidateAbml",
@@ -130,21 +115,6 @@ public static class BehaviorPermissionRegistration
             Path = "/cache/invalidate",
             Method = ServiceEndpointMethod.POST,
             Description = "InvalidateCachedBehavior",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/context/resolve",
-            Method = ServiceEndpointMethod.POST,
-            Description = "ResolveContextVariables",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

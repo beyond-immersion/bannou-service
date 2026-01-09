@@ -227,13 +227,13 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
     }
 
     /// <inheritdoc/>
-    public Task CompleteAsync(CancellationToken ct = default)
+    public async Task CompleteAsync(CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CutsceneSessionState.Completed || _state == CutsceneSessionState.Aborted)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         SetState(CutsceneSessionState.Completed, "Session completed successfully");
@@ -243,17 +243,18 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
             SessionId,
             (DateTime.UtcNow - StartedAt).TotalMilliseconds);
 
-        return Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 
     /// <inheritdoc/>
-    public Task AbortAsync(string reason, CancellationToken ct = default)
+    public async Task AbortAsync(string reason, CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CutsceneSessionState.Completed || _state == CutsceneSessionState.Aborted)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         _abortReason = reason;
@@ -264,7 +265,8 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
             SessionId,
             reason);
 
-        return Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
     }
 
     private void SetState(CutsceneSessionState newState, string? reason = null)

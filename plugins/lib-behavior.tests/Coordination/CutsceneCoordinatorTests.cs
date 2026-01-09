@@ -174,10 +174,17 @@ public sealed class CutsceneCoordinatorTests : IDisposable
     }
 
     [Fact]
-    public async Task EndSessionAsync_NonexistentSession_DoesNotThrow()
+    public async Task EndSessionAsync_NonexistentSession_NoOpAndNoException()
     {
-        // Act & Assert - should not throw
+        // Arrange
+        var initialCount = _coordinator.ActiveSessions.Count;
+
+        // Act
         await _coordinator.EndSessionAsync("nonexistent");
+
+        // Assert - state unchanged, no exception
+        Assert.Equal(initialCount, _coordinator.ActiveSessions.Count);
+        Assert.Null(_coordinator.GetSession("nonexistent"));
     }
 
     [Fact]

@@ -138,7 +138,8 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
             }
         }
 
-        await Task.CompletedTask;
+        // Yield to honor async contract per IMPLEMENTATION TENETS
+        await Task.Yield();
         return tracker.GetStatus();
     }
 

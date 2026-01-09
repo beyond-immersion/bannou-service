@@ -58,26 +58,35 @@ public class HeartbeatEmitterTests
     #region Lifecycle Edge Cases
 
     [Fact]
-    public async Task StopAsync_NotStarted_DoesNotThrow()
+    public async Task StopAsync_NotStarted_NoOpAndNoException()
     {
         // Arrange
         var emitter = CreateEmitter();
 
-        // Act & Assert - should not throw
-        await emitter.StopAsync();
+        // Act
+        var exception = await Record.ExceptionAsync(() => emitter.StopAsync());
+
+        // Assert - stop on unstarted emitter is a no-op
+        Assert.Null(exception);
         emitter.Dispose();
     }
 
     [Fact]
-    public void Dispose_MultipleTimes_DoesNotThrow()
+    public void Dispose_MultipleTimes_NoException()
     {
         // Arrange
         var emitter = CreateEmitter();
 
-        // Act & Assert - IDisposable contract requires this to be safe
+        // Act - IDisposable contract requires multiple Dispose calls to be safe
         emitter.Dispose();
-        emitter.Dispose();
-        emitter.Dispose();
+        var exception = Record.Exception(() =>
+        {
+            emitter.Dispose();
+            emitter.Dispose();
+        });
+
+        // Assert
+        Assert.Null(exception);
     }
 
     #endregion

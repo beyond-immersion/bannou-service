@@ -35,11 +35,6 @@ public partial interface IBehaviorService : IBannouService
         Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// CompileBehaviorStack operation
-        /// </summary>
-        Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(BehaviorStackRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
         /// ValidateAbml operation
         /// </summary>
         Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default(CancellationToken));
@@ -53,11 +48,6 @@ public partial interface IBehaviorService : IBannouService
         /// InvalidateCachedBehavior operation
         /// </summary>
         Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// ResolveContextVariables operation
-        /// </summary>
-        Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// GenerateGoapPlan operation
