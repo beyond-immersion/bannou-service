@@ -415,13 +415,415 @@ tournament_id_required: true  # Links to tournament system
 
 ---
 
+## Shortcut/Prebound API Pattern
+
+Matchmaking must use the shortcut API pattern for state-dependent endpoints. This mirrors how game-session works.
+
+### Permission Model Overview
+
+Bannou has two permission mechanisms:
+1. **Role-based** (`x-permissions.role`): Static based on authentication level
+2. **State-based** (`x-permissions.states`): Dynamic, changes during session
+
+When session state changes, the server publishes `ShortcutPublishedEvent` with new GUIDs for newly-available APIs. When state reverts, `ShortcutRevokedEvent` removes access.
+
+### Matchmaking API Permission Design
+
+| Endpoint | Permission Type | Rationale |
+|----------|----------------|-----------|
+| `/matchmaking/queue/list` | Role: `user` | Anyone can browse available queues |
+| `/matchmaking/queue/create` | Role: `admin` | Only admins create queues |
+| `/matchmaking/queue/update` | Role: `admin` | Only admins modify queues |
+| `/matchmaking/queue/delete` | Role: `admin` | Only admins delete queues |
+| `/matchmaking/queue/get` | Role: `user` | Anyone can view queue details |
+| `/matchmaking/join` | Role: `user` | Any authenticated user can join |
+| `/matchmaking/leave` | **Prebound** (state: `in_queue`) | Only available after joining |
+| `/matchmaking/status` | **Prebound** (state: `in_queue`) | Own queue status, only when queued |
+| `/matchmaking/accept` | **Prebound** (state: `match_pending`) | Only when match found |
+| `/matchmaking/decline` | **Prebound** (state: `match_pending`) | Only when match found |
+
+### Session State Transitions
+
+```
+[not_queued] --(/join)--> [in_queue] --(/leave or timeout)--> [not_queued]
+                              |
+                              v (match formed)
+                        [match_pending] --(/accept)--> [not_queued] + game session
+                              |
+                              v (/decline or timeout)
+                        [not_queued]
+```
+
+### Shortcut Publishing Flow
+
+1. Player calls `/matchmaking/join`
+2. Matchmaking service:
+   - Creates ticket in Redis
+   - Updates session state: `matchmaking: in_queue`
+   - Publishes `ShortcutPublishedEvent` for `/leave` and `/status`
+3. Player can now call `/leave` or `/status` via shortcuts
+4. Match forms:
+   - Updates session state: `matchmaking: match_pending`
+   - Publishes `ShortcutPublishedEvent` for `/accept` and `/decline`
+   - Revokes `/leave` shortcut (can't leave once matched)
+5. Player accepts:
+   - Clears matchmaking state
+   - Revokes all matchmaking shortcuts
+   - Game session created, new shortcuts for game session APIs
+
+### Implementation Notes
+
+- Use `IClientEventPublisher.PublishToSessionAsync()` for shortcut events
+- Session state stored via Permission service (`/permission/update-session-state`)
+- Shortcuts use `common-client-events.yaml` `ShortcutPublishedEvent` / `ShortcutRevokedEvent`
+- State key format: `matchmaking` with values `in_queue`, `match_pending`, or absent
+
+---
+
+## Game Session Service Analysis
+
+> **Purpose**: Evaluate lib-game-session readiness for matchmaking integration.
+> **Status**: ANALYSIS COMPLETE - ENHANCEMENTS REQUIRED
+
+### Current Architecture Summary
+
+The game-session service is built around a **lobby model**:
+- One persistent lobby per game type (`arcadia`, `generic`)
+- All players for a game type join the same lobby
+- Lobbies auto-created when first subscribed user connects
+- Join is by `gameType`, not by `session_id`
+
+**Key files examined:**
+- `schemas/game-session-api.yaml` - API definitions
+- `schemas/game-session-events.yaml` - Event subscriptions/publications
+- `schemas/game-session-client-events.yaml` - WebSocket push events
+- `plugins/lib-game-session/GameSessionService.cs` - 1600+ line implementation
+
+### What Works Well
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| State-based permissions | `game-session: in_game` state correctly gates `/leave`, `/action`, `/chat` |
+| Shortcut publishing | `ShortcutPublishedEvent` mechanism works, just needs different payloads |
+| Client event publishing | `IClientEventPublisher` usage is correct |
+| Service events | `GameSessionPlayerJoinedEvent`, `GameSessionPlayerLeftEvent` etc. are good |
+| Client events | `PlayerJoinedEvent`, `PlayerLeftEvent`, etc. are comprehensive |
+| Voice integration | Voice room creation/join/leave is implemented |
+| Permission service integration | Sets/clears `game-session: in_game` state via Permission client |
+
+### Critical Problems for Matchmaking
+
+#### Problem 1: Lobby-Only Architecture
+
+**Current**: `/sessions/join` takes `gameType` and finds the ONE lobby for that game type.
+
+```csharp
+// Current JoinGameSessionRequest requires:
+- sessionId: WebSocket session ID (for event delivery)
+- accountId: Player account
+- gameType: "arcadia" | "generic"  ← determines which lobby to join
+```
+
+**Needed**: Matchmaking creates sessions with specific players. We need to join a specific session by ID, not "the lobby for this game type."
+
+#### Problem 2: No Session-Specific Join
+
+**Current flow**:
+```
+Player connects → service publishes shortcut with gameType →
+Player calls shortcut → joins lobby for gameType
+```
+
+**Matchmaking needs**:
+```
+Players queue → Match formed → Matchmaking calls /sessions/create →
+Matchmaking pushes MatchFoundEvent with session_id →
+Players call /sessions/join with that specific session_id
+```
+
+There's no way to join by `session_id` - the join is always lobby-based.
+
+#### Problem 3: No Reservation System
+
+Matchmaking typically:
+1. Creates session with expected player list
+2. Reserves slots (only matched players can join)
+3. Players have a window to join (30-60 seconds)
+4. Unreserved slots timeout → session cancelled or backfill
+
+Current game-session has **none of this**. Any subscribed user can join any lobby.
+
+#### Problem 4: Shortcut Binding is Wrong for Matchmaking
+
+**Current**: Shortcut `join_game_arcadia` is bound to:
+```json
+{
+  "sessionId": "<websocket-session>",
+  "accountId": "<account>",
+  "gameType": "arcadia"
+}
+```
+
+**Matchmaking needs**: Shortcut `join_match_<match-id>` bound to:
+```json
+{
+  "sessionId": "<websocket-session>",
+  "accountId": "<account>",
+  "targetSessionId": "<the-specific-game-session-id>"
+}
+```
+
+#### Problem 5: No Session Type Distinction
+
+**Current**: All sessions are treated the same (lobbies).
+
+**Needed**: Distinguish between:
+- `lobby` - Persistent, anyone can join, casual
+- `matchmade` - Created by matchmaking, reserved slots, time-limited
+
+### Required Enhancements
+
+#### Enhancement 1: Add Session-Specific Join Endpoint
+
+**New endpoint**: `/sessions/join-session` (or modify existing `/sessions/join`)
+
+```yaml
+/sessions/join-session:
+  post:
+    summary: Join a specific game session by ID
+    description: |
+      Join a session by its session_id. Used for matchmade games where
+      the session is pre-created and the player has a reservation.
+    operationId: joinGameSessionById
+    x-permissions: []  # Controlled by reservation, not role
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [sessionId, accountId, targetSessionId]
+            properties:
+              sessionId:
+                type: string
+                format: uuid
+                description: WebSocket session ID (for event delivery)
+              accountId:
+                type: string
+                format: uuid
+                description: Account joining
+              targetSessionId:
+                type: string
+                format: uuid
+                description: The game session to join
+              reservationToken:
+                type: string
+                nullable: true
+                description: Token proving reservation (for matchmade sessions)
+```
+
+#### Enhancement 2: Add Reservation System
+
+**New schema additions**:
+```yaml
+GameSessionModel:
+  # Add these fields:
+  sessionType:
+    type: string
+    enum: [lobby, matchmade]
+    description: Type of session
+  reservations:
+    type: array
+    items:
+      $ref: '#/components/schemas/PlayerReservation'
+    description: Reserved slots for expected players
+  reservationExpiresAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: When reservations expire (null for lobbies)
+
+PlayerReservation:
+  type: object
+  required: [accountId, reservedAt, token]
+  properties:
+    accountId:
+      type: string
+      format: uuid
+    reservedAt:
+      type: string
+      format: date-time
+    token:
+      type: string
+      description: One-time use token for claiming reservation
+    claimed:
+      type: boolean
+      default: false
+```
+
+#### Enhancement 3: Enhance Session Creation for Matchmaking
+
+**Modified `/sessions/create`**:
+```yaml
+CreateGameSessionRequest:
+  # Add these fields:
+  sessionType:
+    type: string
+    enum: [lobby, matchmade]
+    default: lobby
+  expectedPlayers:
+    type: array
+    items:
+      type: string
+      format: uuid
+    nullable: true
+    description: For matchmade sessions - accounts expected to join
+  reservationTtlSeconds:
+    type: integer
+    default: 60
+    description: How long reservations last before expiring
+```
+
+**Modified response**:
+```yaml
+CreateGameSessionResponse:
+  # Add:
+  reservations:
+    type: array
+    items:
+      $ref: '#/components/schemas/ReservationInfo'
+    description: Reservation tokens for each expected player
+
+ReservationInfo:
+  type: object
+  properties:
+    accountId:
+      type: string
+      format: uuid
+    token:
+      type: string
+      description: Token to claim this reservation
+    expiresAt:
+      type: string
+      format: date-time
+```
+
+#### Enhancement 4: Add Shortcut Publishing for Matchmade Sessions
+
+Matchmaking service needs to be able to publish session-specific shortcuts:
+
+**Option A**: Matchmaking publishes shortcuts directly (using `IClientEventPublisher`)
+- Matchmaking becomes responsible for shortcut format
+- More coupling between services
+
+**Option B**: Game-session exposes internal endpoint for shortcut publishing
+```yaml
+/sessions/publish-join-shortcut:
+  post:
+    summary: Publish join shortcut to specific session
+    description: Internal endpoint for matchmaking to trigger shortcut publishing
+    operationId: publishJoinShortcut
+    x-permissions:
+      - role: service  # Internal service-to-service only
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [targetWebSocketSessionId, accountId, gameSessionId, reservationToken]
+            properties:
+              targetWebSocketSessionId:
+                type: string
+                description: WebSocket session to receive the shortcut
+              accountId:
+                type: string
+                format: uuid
+              gameSessionId:
+                type: string
+                format: uuid
+                description: The game session to join
+              reservationToken:
+                type: string
+                description: Token for this player's reservation
+```
+
+**Recommendation**: Option B - keeps shortcut logic in game-session, matchmaking just triggers it.
+
+#### Enhancement 5: Reservation Cleanup Background Service
+
+Need a background service to:
+- Check for expired reservations
+- Cancel matchmade sessions where not enough players claimed
+- Publish `SessionCancelledEvent` to remaining players
+- Clean up orphaned sessions
+
+### Implementation Priority
+
+| Enhancement | Priority | Reason |
+|-------------|----------|--------|
+| 1. Session-specific join | **HIGH** | Core requirement - can't join matchmade games without it |
+| 2. Reservation system | **HIGH** | Prevents random players joining matchmade sessions |
+| 3. Enhanced session creation | **HIGH** | Matchmaking needs to create sessions with player list |
+| 4. Shortcut publishing endpoint | **MEDIUM** | Could work around by having matchmaking publish directly |
+| 5. Reservation cleanup | **MEDIUM** | Important but can be basic initially |
+
+### Migration Strategy
+
+**Phase 1**: Add session-specific join without breaking lobbies
+- Add `/sessions/join-session` endpoint
+- Existing `/sessions/join` continues to work for lobbies
+- Add `sessionType` field (default: `lobby`)
+
+**Phase 2**: Add reservation system
+- Add reservation fields to `GameSessionModel`
+- Modify `/sessions/create` to accept `expectedPlayers`
+- Return reservation tokens
+
+**Phase 3**: Add matchmaking integration
+- Add `/sessions/publish-join-shortcut` endpoint
+- Add reservation cleanup service
+- Wire up to matchmaking service
+
+### Code Changes Required
+
+**Schema files**:
+- `schemas/game-session-api.yaml` - New endpoint, modified request/response models
+
+**Implementation files**:
+- `plugins/lib-game-session/GameSessionService.cs` - New `JoinGameSessionByIdAsync` method
+- `plugins/lib-game-session/GameSessionService.cs` - Modify `CreateGameSessionAsync` for reservations
+- New: `plugins/lib-game-session/ReservationCleanupService.cs` - Background cleanup
+
+**State store**:
+- Add reservation data to `GameSessionModel`
+- Add reservation token index for fast lookup
+
+### Open Questions for Game Session Enhancements
+
+**Q-GS1**: Should we keep the lobby system at all, or migrate everything to session-specific?
+- **Keep lobbies**: Some games want persistent "hang out" spaces
+- **Remove lobbies**: Simpler, everything goes through matchmaking
+- **Recommendation**: Keep both, distinguish by `sessionType`
+
+**Q-GS2**: Where should reservation tokens be validated?
+- **In game-session**: Simple, contained
+- **In permission service**: Centralized auth
+- **Recommendation**: In game-session - reservations are game-session's concern
+
+**Q-GS3**: Should matchmaking create the session, or should game-session create it on request?
+- **Matchmaking creates**: Matchmaking calls `/sessions/create` with player list
+- **Game-session creates on event**: Matchmaking publishes event, game-session handles creation
+- **Recommendation**: Matchmaking creates via RPC - we decided this in Q9
+
+---
+
 ## Next Steps
 
-1. **Schema Design**: Define `matchmaking-api.yaml`, `matchmaking-events.yaml`, `matchmaking-client-events.yaml`, `matchmaking-configuration.yaml`
-2. **Endpoint Specification**: Request/response models for each operation
-3. **Helper Services**: Design internal services (QueueManager, MatchProcessor, TicketStore, QueryParser)
-4. **Event Definitions**: Service events + client events for match lifecycle
-5. **Implementation Plan**: Ordered implementation steps
+1. **PREREQUISITE**: Analyze and enhance lib-game-session if needed
+2. **Schema Design**: Define `matchmaking-api.yaml`, `matchmaking-events.yaml`, `matchmaking-client-events.yaml`, `matchmaking-configuration.yaml`
+3. **Endpoint Specification**: Request/response models for each operation
+4. **Helper Services**: Design internal services (QueueManager, MatchProcessor, TicketStore, QueryParser)
+5. **Event Definitions**: Service events + client events for match lifecycle
+6. **Implementation Plan**: Ordered implementation steps
 
 ---
 
