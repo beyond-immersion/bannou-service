@@ -31,8 +31,8 @@ copy_behavior_files() {
 
     # Copy and transform Runtime files
     # EXCLUDE cloud-side files that depend on server infrastructure:
-    #   - CinematicController.cs: Depends on Control/* types (server-side orchestration)
-    local exclude_runtime="CinematicController.cs"
+    #   - CinematicRunner.cs: Depends on Control/* types (server-side orchestration)
+    local exclude_runtime="CinematicRunner.cs"
 
     for file in ./plugins/lib-behavior/Runtime/*.cs; do
         if [ -f "$file" ]; then

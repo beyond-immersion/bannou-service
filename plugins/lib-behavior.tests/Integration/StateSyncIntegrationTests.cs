@@ -162,12 +162,12 @@ public sealed class StateSyncIntegrationTests : IDisposable
     // =========================================================================
 
     [Fact]
-    public async Task CinematicController_Complete_SyncsEntityStateToRegistry()
+    public async Task CinematicRunner_Complete_SyncsEntityStateToRegistry()
     {
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(
+        var controller = new CinematicRunner(
             interpreter,
             _controlGates,
             _stateSync);
@@ -202,12 +202,12 @@ public sealed class StateSyncIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task CinematicController_MultipleEntities_SyncsAllToRegistry()
+    public async Task CinematicRunner_MultipleEntities_SyncsAllToRegistry()
     {
         // Arrange
         var entities = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(
+        var controller = new CinematicRunner(
             interpreter,
             _controlGates,
             _stateSync);
@@ -252,12 +252,12 @@ public sealed class StateSyncIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task CinematicController_Abort_DoesNotSyncState()
+    public async Task CinematicRunner_Abort_DoesNotSyncState()
     {
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(
+        var controller = new CinematicRunner(
             interpreter,
             _controlGates,
             _stateSync);
@@ -281,12 +281,12 @@ public sealed class StateSyncIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task CinematicController_Complete_WithSyncStateFalse_DoesNotSyncState()
+    public async Task CinematicRunner_Complete_WithSyncStateFalse_DoesNotSyncState()
     {
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(
+        var controller = new CinematicRunner(
             interpreter,
             _controlGates,
             _stateSync);
@@ -319,7 +319,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange - Full end-to-end scenario
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(
+        var controller = new CinematicRunner(
             interpreter,
             _controlGates,
             _stateSync);
@@ -382,8 +382,8 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller1 = new CinematicController(interpreter, _controlGates, _stateSync);
-        var controller2 = new CinematicController(CreateMockInterpreter(), _controlGates, _stateSync);
+        var controller1 = new CinematicRunner(interpreter, _controlGates, _stateSync);
+        var controller2 = new CinematicRunner(CreateMockInterpreter(), _controlGates, _stateSync);
 
         // First cinematic
         await controller1.StartAsync("cinematic-1", new[] { entityId }, null, ControlHandoff.Instant());
@@ -421,7 +421,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicController(interpreter, _controlGates, _stateSync);
+        var controller = new CinematicRunner(interpreter, _controlGates, _stateSync);
 
         var finalState = new EntityState
         {

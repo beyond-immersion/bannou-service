@@ -194,12 +194,12 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
 }
 
 /// <summary>
-/// Extension methods for integrating CutsceneCoordinator with CinematicController.
+/// Extension methods for integrating CutsceneCoordinator with CinematicRunner.
 /// </summary>
 public static class CutsceneCoordinatorExtensions
 {
     /// <summary>
-    /// Creates a coordinated session that integrates with a CinematicController.
+    /// Creates a coordinated session that integrates with a CinematicRunner.
     /// </summary>
     /// <param name="coordinator">The coordinator.</param>
     /// <param name="sessionId">Session ID.</param>
@@ -210,7 +210,7 @@ public static class CutsceneCoordinatorExtensions
     public static async Task<ICutsceneSession> CreateCoordinatedSessionAsync(
         this ICutsceneCoordinator coordinator,
         string sessionId,
-        Runtime.CinematicController controller,
+        Runtime.CinematicRunner controller,
         CutsceneSessionOptions? options = null,
         CancellationToken ct = default)
     {

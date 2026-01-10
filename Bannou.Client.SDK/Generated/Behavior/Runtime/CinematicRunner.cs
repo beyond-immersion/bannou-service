@@ -4,18 +4,18 @@
 // Manages entity control acquisition/release and state synchronization.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.Bannou.Client.SDK.Behavior;
+using BeyondImmersion.Bannou.Client.SDK.Behavior.Control;
 using Microsoft.Extensions.Logging;
 
-namespace BeyondImmersion.BannouService.Behavior.Runtime;
+namespace BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime;
 
 /// <summary>
 /// High-level controller for cinematic playback with entity control management.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The CinematicController wraps a CinematicInterpreter and manages the
+/// The CinematicRunner wraps a CinematicInterpreter and manages the
 /// control gating lifecycle for participating entities:
 /// </para>
 /// <list type="number">
@@ -25,17 +25,17 @@ namespace BeyondImmersion.BannouService.Behavior.Runtime;
 /// <item>Synchronizes entity state on completion</item>
 /// </list>
 /// </remarks>
-public sealed class CinematicController : IDisposable
+public sealed class CinematicRunner : IDisposable
 {
     private readonly CinematicInterpreter _interpreter;
     private readonly ControlGateManager _controlGates;
     private readonly IStateSync _stateSync;
-    private readonly ILogger<CinematicController>? _logger;
+    private readonly ILogger<CinematicRunner>? _logger;
 
     private string _cinematicId = string.Empty;
     private HashSet<Guid> _controlledEntities = new();
     private IReadOnlySet<string>? _allowBehaviorChannels;
-    private CinematicControllerState _state;
+    private CinematicRunnerState _state;
     private Dictionary<Guid, EntityState> _entityFinalStates = new();
     private ControlHandoff _defaultHandoff = ControlHandoff.Instant();
     private bool _disposed;
@@ -47,23 +47,23 @@ public sealed class CinematicController : IDisposable
     /// <param name="controlGates">The control gate manager.</param>
     /// <param name="stateSync">The state sync service.</param>
     /// <param name="logger">Optional logger.</param>
-    public CinematicController(
+    public CinematicRunner(
         CinematicInterpreter interpreter,
         ControlGateManager controlGates,
         IStateSync stateSync,
-        ILogger<CinematicController>? logger = null)
+        ILogger<CinematicRunner>? logger = null)
     {
         _interpreter = interpreter ?? throw new ArgumentNullException(nameof(interpreter));
         _controlGates = controlGates ?? throw new ArgumentNullException(nameof(controlGates));
         _stateSync = stateSync ?? throw new ArgumentNullException(nameof(stateSync));
         _logger = logger;
-        _state = CinematicControllerState.Idle;
+        _state = CinematicRunnerState.Idle;
     }
 
     /// <summary>
     /// Gets the current controller state.
     /// </summary>
-    public CinematicControllerState State => _state;
+    public CinematicRunnerState State => _state;
 
     /// <summary>
     /// Gets the cinematic ID.
@@ -78,8 +78,8 @@ public sealed class CinematicController : IDisposable
     /// <summary>
     /// Gets whether the cinematic is currently running.
     /// </summary>
-    public bool IsRunning => _state == CinematicControllerState.Running ||
-                            _state == CinematicControllerState.WaitingForExtension;
+    public bool IsRunning => _state == CinematicRunnerState.Running ||
+                            _state == CinematicRunnerState.WaitingForExtension;
 
     /// <summary>
     /// Gets the underlying interpreter.
@@ -126,7 +126,7 @@ public sealed class CinematicController : IDisposable
 
         ArgumentNullException.ThrowIfNull(entities);
 
-        if (_state != CinematicControllerState.Idle)
+        if (_state != CinematicRunnerState.Idle)
         {
             _logger?.LogWarning(
                 "Cannot start cinematic {CinematicId}: controller is in state {State}",
@@ -162,7 +162,7 @@ public sealed class CinematicController : IDisposable
             // Continue anyway - partial control is acceptable
         }
 
-        _state = CinematicControllerState.Running;
+        _state = CinematicRunnerState.Running;
 
         _logger?.LogInformation(
             "Started cinematic {CinematicId} with {EntityCount} entities",
@@ -186,7 +186,7 @@ public sealed class CinematicController : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        if (_state == CinematicControllerState.Idle)
+        if (_state == CinematicRunnerState.Idle)
         {
             return new CinematicEvaluationResult(
                 CinematicStatus.Completed,
@@ -194,7 +194,7 @@ public sealed class CinematicController : IDisposable
                 "Cinematic not started");
         }
 
-        if (_state == CinematicControllerState.Completed)
+        if (_state == CinematicRunnerState.Completed)
         {
             return new CinematicEvaluationResult(
                 CinematicStatus.Completed,
@@ -207,15 +207,15 @@ public sealed class CinematicController : IDisposable
         // Update state based on result
         if (result.IsWaiting)
         {
-            _state = CinematicControllerState.WaitingForExtension;
+            _state = CinematicRunnerState.WaitingForExtension;
         }
         else if (result.IsCompleted)
         {
-            _state = CinematicControllerState.Completed;
+            _state = CinematicRunnerState.Completed;
         }
         else
         {
-            _state = CinematicControllerState.Running;
+            _state = CinematicRunnerState.Running;
         }
 
         return result;
@@ -245,7 +245,7 @@ public sealed class CinematicController : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        if (_state == CinematicControllerState.Idle)
+        if (_state == CinematicRunnerState.Idle)
         {
             _logger?.LogDebug("Cannot complete cinematic: not started");
             return;
@@ -267,7 +267,7 @@ public sealed class CinematicController : IDisposable
         // Return control via manager
         await _controlGates.ReturnCinematicControlAsync(_controlledEntities, effectiveHandoff);
 
-        _state = CinematicControllerState.Completed;
+        _state = CinematicRunnerState.Completed;
 
         // Raise completed event
         CinematicCompleted?.Invoke(this, new CinematicCompletedEventArgs(
@@ -289,7 +289,7 @@ public sealed class CinematicController : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        if (_state == CinematicControllerState.Idle)
+        if (_state == CinematicRunnerState.Idle)
         {
             return;
         }
@@ -309,7 +309,7 @@ public sealed class CinematicController : IDisposable
             }
         }
 
-        _state = CinematicControllerState.Completed;
+        _state = CinematicRunnerState.Completed;
 
         // Raise completed event with abort indication
         CinematicCompleted?.Invoke(this, new CinematicCompletedEventArgs(
@@ -331,7 +331,7 @@ public sealed class CinematicController : IDisposable
         _controlledEntities.Clear();
         _allowBehaviorChannels = null;
         _entityFinalStates.Clear();
-        _state = CinematicControllerState.Idle;
+        _state = CinematicRunnerState.Idle;
 
         _logger?.LogDebug("Cinematic controller reset");
     }
@@ -388,7 +388,7 @@ public sealed class CinematicController : IDisposable
 /// <summary>
 /// State of a cinematic controller.
 /// </summary>
-public enum CinematicControllerState
+public enum CinematicRunnerState
 {
     /// <summary>Not started or reset.</summary>
     Idle,

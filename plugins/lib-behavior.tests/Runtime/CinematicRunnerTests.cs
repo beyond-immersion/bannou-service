@@ -12,9 +12,9 @@ using Xunit;
 namespace BeyondImmersion.BannouService.Behavior.Tests.Runtime;
 
 /// <summary>
-/// Tests for <see cref="CinematicController"/> integration with control gating.
+/// Tests for <see cref="CinematicRunner"/> integration with control gating.
 /// </summary>
-public sealed class CinematicControllerTests
+public sealed class CinematicRunnerTests
 {
     private readonly BehaviorCompiler _compiler = new();
 
@@ -33,21 +33,21 @@ public sealed class CinematicControllerTests
         return BehaviorModel.Deserialize(result.Bytecode);
     }
 
-    private CinematicController CreateController(BehaviorModel model)
+    private CinematicRunner CreateController(BehaviorModel model)
     {
         var interpreter = new CinematicInterpreter(model);
         var controlGates = new ControlGateManager();
         var stateSync = new StateSync();
-        return new CinematicController(interpreter, controlGates, stateSync);
+        return new CinematicRunner(interpreter, controlGates, stateSync);
     }
 
-    private CinematicController CreateController(
+    private CinematicRunner CreateController(
         BehaviorModel model,
         ControlGateManager controlGates,
         IStateSync stateSync)
     {
         var interpreter = new CinematicInterpreter(model);
-        return new CinematicController(interpreter, controlGates, stateSync);
+        return new CinematicRunner(interpreter, controlGates, stateSync);
     }
 
     // =========================================================================
@@ -73,7 +73,7 @@ public sealed class CinematicControllerTests
 
         // Assert
         Assert.True(started);
-        Assert.Equal(CinematicControllerState.Running, controller.State);
+        Assert.Equal(CinematicRunnerState.Running, controller.State);
         Assert.Equal("test_cinematic", controller.CinematicId);
 
         // Verify control was taken
@@ -183,7 +183,7 @@ public sealed class CinematicControllerTests
 
         // Assert - should pause at continuation point like the interpreter
         Assert.True(result.IsWaiting);
-        Assert.Equal(CinematicControllerState.WaitingForExtension, controller.State);
+        Assert.Equal(CinematicRunnerState.WaitingForExtension, controller.State);
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public sealed class CinematicControllerTests
         await controller.CompleteAsync();
 
         // Assert
-        Assert.Equal(CinematicControllerState.Completed, controller.State);
+        Assert.Equal(CinematicRunnerState.Completed, controller.State);
         Assert.Equal(ControlSource.Behavior, controlGates.Get(entity1)!.CurrentSource);
         Assert.Equal(ControlSource.Behavior, controlGates.Get(entity2)!.CurrentSource);
     }
@@ -333,7 +333,7 @@ public sealed class CinematicControllerTests
         await controller.AbortAsync();
 
         // Assert
-        Assert.Equal(CinematicControllerState.Completed, controller.State);
+        Assert.Equal(CinematicRunnerState.Completed, controller.State);
         Assert.Equal(ControlSource.Behavior, controlGates.Get(entity)!.CurrentSource);
     }
 
@@ -371,7 +371,7 @@ public sealed class CinematicControllerTests
         await controller.AbortAsync();
 
         // Assert
-        Assert.Equal(CinematicControllerState.Idle, controller.State);
+        Assert.Equal(CinematicRunnerState.Idle, controller.State);
     }
 
     // =========================================================================
@@ -394,7 +394,7 @@ public sealed class CinematicControllerTests
         controller.Reset();
 
         // Assert
-        Assert.Equal(CinematicControllerState.Idle, controller.State);
+        Assert.Equal(CinematicRunnerState.Idle, controller.State);
         Assert.Empty(controller.CinematicId);
         Assert.Empty(controller.ControlledEntities);
     }

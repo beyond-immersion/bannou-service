@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,6 +22,9 @@ public static class ServiceClientsDependencyInjection
 
         // Event consumer for cross-plugin event dispatch
         services.AddEventConsumer();
+
+        // ABML runtime services (required by actor plugin for behavior execution)
+        services.AddSingleton<IExpressionEvaluator, ExpressionEvaluator>();
 
         return services;
     }
