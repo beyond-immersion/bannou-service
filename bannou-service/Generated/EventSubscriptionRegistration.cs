@@ -69,6 +69,11 @@ public static class EventSubscriptionRegistration
         // From mapping-events.yaml
         EventSubscriptionRegistry.Register<MapIngestEvent>("map.ingest.*");
 
+        // From matchmaking-events.yaml
+        EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
+        EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+        EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
+
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");
         EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou-full-service-mappings");

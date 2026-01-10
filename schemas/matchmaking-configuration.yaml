@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service Configuration
+  description: |
+    Configuration schema for Matchmaking service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Matchmaking service
+      default: true
+      env: MATCHMAKING_ENABLED
+    ServerSalt:
+      type: string
+      description: Server salt for GUID generation. REQUIRED - must be shared across all instances for matchmaking GUIDs to work correctly.
+      env: MATCHMAKING_SERVER_SALT
+      example: "your-server-salt-for-matchmaking-guids"
+    ProcessingIntervalSeconds:
+      type: integer
+      description: Default interval between match processing cycles
+      default: 15
+      env: MATCHMAKING_PROCESSING_INTERVAL_SECONDS
+    DefaultMaxIntervals:
+      type: integer
+      description: Default maximum intervals before timeout/relaxation
+      default: 6
+      env: MATCHMAKING_DEFAULT_MAX_INTERVALS
+    MaxConcurrentTicketsPerPlayer:
+      type: integer
+      description: Maximum number of concurrent tickets a player can have
+      default: 3
+      env: MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER
+    DefaultMatchAcceptTimeoutSeconds:
+      type: integer
+      description: Default time for players to accept a formed match
+      default: 30
+      env: MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS
+    StatsPublishIntervalSeconds:
+      type: integer
+      description: Interval between stats event publications
+      default: 60
+      env: MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS
+    PendingMatchRedisKeyTtlSeconds:
+      type: integer
+      description: TTL for pending match data in Redis (for reconnection handling)
+      default: 300
+      env: MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS
+    ImmediateMatchCheckEnabled:
+      type: boolean
+      description: Enable immediate match check on ticket creation (quick matches)
+      default: true
+      env: MATCHMAKING_IMMEDIATE_MATCH_CHECK_ENABLED
+    AutoRequeueOnDecline:
+      type: boolean
+      description: Automatically requeue non-declining players when a match is declined
+      default: true
+      env: MATCHMAKING_AUTO_REQUEUE_ON_DECLINE
