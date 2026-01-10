@@ -33,16 +33,7 @@ public class BehaviorCompilerTests
     [Fact]
     public void CompileYaml_MinimalDocument_Succeeds()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - log: { message: ""Hello"" }
-";
+        var yaml = TestFixtures.Load("compiler_minimal");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -61,16 +52,7 @@ flows:
     [Fact]
     public void CompileYaml_WithSetAction_GeneratesCorrectBytecode()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - set: { variable: result, value: ""10"" }
-";
+        var yaml = TestFixtures.Load("compiler_set_action");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -109,19 +91,7 @@ flows:
     [Fact]
     public void CompileYaml_WithGoto_GeneratesJmp()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - goto: { flow: other }
-  other:
-    actions:
-    - log: { message: ""Done"" }
-";
+        var yaml = TestFixtures.Load("compiler_goto");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -144,21 +114,7 @@ flows:
     [Fact]
     public void CompileYaml_ArithmeticExpression_GeneratesCorrectOpcodes()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    a: { type: float, default: 5 }
-    b: { type: float, default: 3 }
-
-flows:
-  main:
-    actions:
-    - set: { variable: result, value: ""${a + b * 2}"" }
-";
+        var yaml = TestFixtures.Load("compiler_arithmetic");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -221,19 +177,7 @@ flows:
     [Fact]
     public void CompileYaml_RepeatSmall_UnrollsLoop()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - repeat:
-        times: 3
-        do:
-            - log: { message: ""iteration"" }
-";
+        var yaml = TestFixtures.Load("compiler_repeat_small");
 
         // Use a deterministic ModelId to avoid flaky tests - the output binary includes the
         // model ID bytes, and random GUIDs might coincidentally contain the Trace opcode (0xF1)
@@ -256,19 +200,7 @@ flows:
     [Fact]
     public void CompileYaml_RepeatLarge_GeneratesLoop()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - repeat:
-        times: 10
-        do:
-            - log: { message: ""iteration"" }
-";
+        var yaml = TestFixtures.Load("compiler_repeat_large");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -288,16 +220,7 @@ flows:
     [Fact]
     public void CompileYaml_Return_GeneratesHalt()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - return: null
-";
+        var yaml = TestFixtures.Load("compiler_return");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -320,17 +243,7 @@ flows:
     [Fact]
     public void CompileYaml_LocalVariable_UsesLocalStorage()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - local: { variable: temp, value: ""42"" }
-    - set: { variable: result, value: ""${temp + 1}"" }
-";
+        var yaml = TestFixtures.Load("compiler_local_variable");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -350,17 +263,7 @@ flows:
     [Fact]
     public void CompileYaml_Increment_GeneratesAddStore()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - local: { variable: counter, value: ""0"" }
-    - increment: { variable: counter, by: 1 }
-";
+        var yaml = TestFixtures.Load("compiler_increment");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -380,17 +283,7 @@ flows:
     [Fact]
     public void CompileYaml_Decrement_GeneratesSubStore()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - local: { variable: counter, value: ""10"" }
-    - decrement: { variable: counter, by: 1 }
-";
+        var yaml = TestFixtures.Load("compiler_decrement");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -414,22 +307,7 @@ flows:
     [Fact]
     public void CompileYaml_ContinuationPoint_GeneratesCpOpcode()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - continuation_point:
-        name: ""before_action""
-        timeout: ""2s""
-        default_flow: fallback
-  fallback:
-    actions:
-    - log: { message: ""Fallback path"" }
-";
+        var yaml = TestFixtures.Load("compiler_continuation_point");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -452,19 +330,7 @@ flows:
     [Fact]
     public void CompileYaml_EmitIntent_GeneratesIntentOpcode()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - emit_intent:
-        action: ""attack""
-        channel: ""action""
-        urgency: ""0.8""
-";
+        var yaml = TestFixtures.Load("compiler_emit_intent");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -487,16 +353,7 @@ flows:
     [Fact]
     public void CompileYaml_UndefinedFlow_ReturnsError()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - goto: { flow: nonexistent }
-";
+        var yaml = TestFixtures.Load("compiler_undefined_flow");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -507,16 +364,7 @@ flows:
     [Fact]
     public void CompileYaml_EmptyConditional_ReturnsError()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - cond: []
-";
+        var yaml = TestFixtures.Load("compiler_empty_conditional");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -530,16 +378,7 @@ flows:
     [Fact]
     public void CompileYaml_RandFunction_GeneratesRandOpcode()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - set: { variable: r, value: ""${rand()}"" }
-";
+        var yaml = TestFixtures.Load("compiler_rand_function");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -558,20 +397,7 @@ flows:
     [Fact]
     public void CompileYaml_ClampFunction_GeneratesClampOpcode()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    value: { type: float, default: 5 }
-
-flows:
-  main:
-    actions:
-    - set: { variable: clamped, value: ""${clamp(value, 0, 10)}"" }
-";
+        var yaml = TestFixtures.Load("compiler_clamp_function");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -590,22 +416,7 @@ flows:
     [Fact]
     public void CompileYaml_MinMaxFunctions_GenerateCorrectOpcodes()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-context:
-  variables:
-    a: { type: float, default: 5 }
-    b: { type: float, default: 10 }
-
-flows:
-  main:
-    actions:
-    - set: { variable: minimum, value: ""${min(a, b)}"" }
-    - set: { variable: maximum, value: ""${max(a, b)}"" }
-";
+        var yaml = TestFixtures.Load("compiler_min_max_functions");
 
         var result = _compiler.CompileYaml(yaml);
 
@@ -629,16 +440,7 @@ flows:
     [Fact]
     public void CompileYaml_WithModelId_UsesProvidedId()
     {
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - log: { message: ""Hello"" }
-";
+        var yaml = TestFixtures.Load("compiler_model_id");
         var modelId = Guid.NewGuid();
         var options = new CompilationOptions { ModelId = modelId };
 
@@ -658,16 +460,7 @@ flows:
     public void CompileYaml_SkipSemanticAnalysis_SkipsValidation()
     {
         // This YAML has an undefined flow reference
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-flows:
-  main:
-    actions:
-    - goto: { flow: undefined_flow }
-";
+        var yaml = TestFixtures.Load("compiler_skip_semantic");
         var options = new CompilationOptions { SkipSemanticAnalysis = true };
 
         var result = _compiler.CompileYaml(yaml, options);

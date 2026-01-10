@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - continuation_point:
+        name: "before_action"
+        timeout: "2s"
+        default_flow: fallback
+  fallback:
+    actions:
+    - log: { message: "Fallback path" }

@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - repeat:
+        times: 3
+        do:
+            - log: { message: "iteration" }

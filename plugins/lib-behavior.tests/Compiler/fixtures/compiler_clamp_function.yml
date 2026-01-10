@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    value: { type: float, default: 5 }
+
+flows:
+  main:
+    actions:
+    - set: { variable: clamped, value: "${clamp(value, 0, 10)}" }
