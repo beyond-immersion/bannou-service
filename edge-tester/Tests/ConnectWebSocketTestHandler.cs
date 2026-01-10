@@ -666,6 +666,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             var registerBody = await registerResponse.Content.ReadAsStringAsync();
             var registerObj = JsonNode.Parse(registerBody)?.AsObject();
             userAccessToken = registerObj?["accessToken"]?.GetValue<string>() ?? "";
+            var accountIdString = registerObj?["accountId"]?.GetValue<string>();
 
             if (string.IsNullOrEmpty(userAccessToken))
             {
@@ -673,21 +674,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 return false;
             }
 
-            // Extract account ID from JWT claims (nameid or sub)
-            var jwtParts = userAccessToken.Split('.');
-            if (jwtParts.Length < 2)
-            {
-                Console.WriteLine("❌ Invalid JWT format");
-                return false;
-            }
-
-            var payloadJson = Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(jwtParts[1])));
-            var jwtPayload = JsonNode.Parse(payloadJson)?.AsObject();
-            var accountIdString = jwtPayload?["nameid"]?.GetValue<string>() ?? jwtPayload?["sub"]?.GetValue<string>();
-
             if (string.IsNullOrEmpty(accountIdString) || !Guid.TryParse(accountIdString, out accountId))
             {
-                Console.WriteLine($"❌ Could not extract account ID from JWT: {payloadJson}");
+                Console.WriteLine("❌ Registration response missing or invalid accountId");
                 return false;
             }
 
@@ -1482,25 +1471,6 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
 
         return Guid.Empty;
-    }
-
-    /// <summary>
-    /// Pads a base64 string to the correct length for decoding.
-    /// JWT base64url encoding omits padding characters.
-    /// </summary>
-    private static string PadBase64(string base64)
-    {
-        // Replace URL-safe characters with standard base64
-        var result = base64.Replace('-', '+').Replace('_', '/');
-
-        // Add padding if needed
-        switch (result.Length % 4)
-        {
-            case 2: result += "=="; break;
-            case 3: result += "="; break;
-        }
-
-        return result;
     }
 
     /// <summary>

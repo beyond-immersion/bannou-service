@@ -34,9 +34,9 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
     #region Helper Methods
 
     /// <summary>
-    /// Creates a dedicated test account and returns the access token and connect URL.
+    /// Creates a dedicated test account and returns the access token, connect URL, email, and account ID.
     /// </summary>
-    private async Task<(string accessToken, string connectUrl, string email)?> CreateTestAccountAsync(string testPrefix)
+    private async Task<(string accessToken, string connectUrl, string email, Guid accountId)?> CreateTestAccountAsync(string testPrefix)
     {
         if (Program.Configuration == null)
         {
@@ -73,6 +73,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
             var responseObj = JsonDocument.Parse(responseBody);
             var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
             var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
+            var accountIdString = responseObj.RootElement.GetProperty("accountId").GetString();
 
             if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(connectUrl))
             {
@@ -80,8 +81,14 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                 return null;
             }
 
-            Console.WriteLine($"   Created test account: {testEmail}");
-            return (accessToken, connectUrl, testEmail);
+            if (string.IsNullOrEmpty(accountIdString) || !Guid.TryParse(accountIdString, out var accountId))
+            {
+                Console.WriteLine("   Missing or invalid accountId in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail} (ID: {accountId})");
+            return (accessToken, connectUrl, testEmail, accountId);
         }
         catch (Exception ex)
         {
@@ -457,7 +464,12 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     var joinResponse = await userClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/matchmaking/join",
-                        new { queueId = queueId },
+                        new
+                        {
+                            queueId = queueId,
+                            accountId = authResult.Value.accountId,
+                            webSocketSessionId = userClient.SessionId
+                        },
                         timeout: TimeSpan.FromSeconds(5));
 
                     if (!joinResponse.IsSuccess)

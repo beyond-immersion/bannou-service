@@ -140,9 +140,12 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from successful user registration\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"accessToken\",\n                \"connectUrl\"\n            ],\n            \"properties\"\
-        : {\n                \"accessToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"JWT access token for immediate authentication\",\n                    \"example\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature\"\
+        : [\n                \"accountId\",\n                \"accessToken\",\n                \"connectUrl\"\n          \
+        \  ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the newly
+        created account\"\n                },\n                \"accessToken\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"JWT access token for immediate authentication\",\n                    \"\
+        example\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature\"\
         \n                },\n                \"refreshToken\": {\n                    \"type\": \"string\",\n           \
         \         \"description\": \"Refresh token for obtaining new access tokens\",\n                    \"nullable\": true,\n\
         \                    \"example\": \"refresh_token_abc123xyz789\"\n                },\n                \"connectUrl\"\
@@ -758,9 +761,14 @@ components:
       description: Response from successful user registration
       additionalProperties: false
       required:
+      - accountId
       - accessToken
       - connectUrl
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Unique identifier for the newly created account
         accessToken:
           type: string
           description: JWT access token for immediate authentication
