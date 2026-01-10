@@ -642,17 +642,12 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
             "additionalProperties": false,
             "required": [
                 "serviceId",
-                "success",
                 "affectedSessions"
             ],
             "properties": {
                 "serviceId": {
                     "type": "string",
                     "description": "Service ID that was registered"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether registration was successful"
                 },
                 "message": {
                     "type": "string",
@@ -789,7 +784,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
             "additionalProperties": false,
             "required": [
                 "sessionId",
-                "success",
                 "permissionsChanged"
             ],
             "properties": {
@@ -797,10 +791,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                     "type": "string",
                     "format": "uuid",
                     "description": "Session ID that was updated"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether update was successful"
                 },
                 "message": {
                     "type": "string",
@@ -932,7 +922,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
             "additionalProperties": false,
             "required": [
                 "sessionId",
-                "success",
                 "permissionsChanged"
             ],
             "properties": {
@@ -940,10 +929,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                     "type": "string",
                     "format": "uuid",
                     "description": "Session ID that was updated"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether update was successful"
                 },
                 "message": {
                     "type": "string",
@@ -1078,7 +1063,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
             "additionalProperties": false,
             "required": [
                 "sessionId",
-                "success",
                 "permissionsChanged"
             ],
             "properties": {
@@ -1086,10 +1070,6 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                     "type": "string",
                     "format": "uuid",
                     "description": "Session ID that was updated"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether update was successful"
                 },
                 "message": {
                     "type": "string",

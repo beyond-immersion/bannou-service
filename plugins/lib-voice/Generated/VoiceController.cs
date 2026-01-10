@@ -801,15 +801,10 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "description": "Response after joining a voice room",
             "required": [
-                "success",
                 "roomId",
                 "tier"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether join was successful"
-                },
                 "roomId": {
                     "type": "string",
                     "format": "uuid",

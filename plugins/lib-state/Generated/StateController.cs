@@ -420,17 +420,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     "$ref": "#/$defs/SaveStateResponse",
     "$defs": {
         "SaveStateResponse": {
-            "description": "Response from a save operation containing the new ETag and success status",
+            "description": "Response from a save operation containing the new ETag",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "etag": {
                     "type": "string",
                     "description": "New ETag after save"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the save succeeded"
                 }
             }
         }

@@ -2378,16 +2378,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "deploymentId",
                 "backend",
                 "duration"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Deployment succeeded"
-                },
                 "deploymentId": {
                     "type": "string",
                     "description": "Unique deployment identifier for tracking"
@@ -3422,14 +3417,9 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "duration"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether teardown completed successfully"
-                },
                 "duration": {
                     "type": "string",
                     "description": "Time taken to complete teardown"
@@ -3597,14 +3587,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "description": "Result of a cleanup operation including reclaimed space and removed resource counts",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
-                },
                 "reclaimedSpaceMb": {
                     "type": "integer",
                     "description": "Disk space reclaimed (MB)"
@@ -4034,14 +4017,9 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "appliedChanges"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all topology changes were applied successfully"
-                },
                 "appliedChanges": {
                     "type": "array",
                     "items": {
@@ -4757,15 +4735,10 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "previousVersion",
                 "currentVersion"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether rollback completed successfully"
-                },
                 "previousVersion": {
                     "type": "integer",
                     "description": "Config version before rollback"

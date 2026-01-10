@@ -146,12 +146,6 @@ public partial class CompileBehaviorResponse
 {
 
     /// <summary>
-    /// Whether compilation was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Unique identifier for the compiled behavior (content-addressable hash)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
@@ -592,17 +586,11 @@ public partial class GoapPlanRequest
 }
 
 /// <summary>
-/// Response containing the generated GOAP plan or failure information
+/// Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanResponse
 {
-
-    /// <summary>
-    /// Whether planning was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// The generated plan if successful

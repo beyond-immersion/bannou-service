@@ -1611,12 +1611,6 @@ public partial class StartEncounterResponse
 {
 
     /// <summary>
-    /// Whether the encounter was started successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// ID of the actor managing the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
@@ -1625,16 +1619,12 @@ public partial class StartEncounterResponse
     public string ActorId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the started encounter (null if failed)
+    /// ID of the started encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
-    public string? EncounterId { get; set; } = default!;
-
-    /// <summary>
-    /// Error message if the encounter could not be started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    public string? Error { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
 
 }
 
@@ -1671,12 +1661,6 @@ public partial class UpdateEncounterPhaseResponse
 {
 
     /// <summary>
-    /// Whether the phase was updated successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// ID of the actor managing the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
@@ -1685,7 +1669,7 @@ public partial class UpdateEncounterPhaseResponse
     public string ActorId { get; set; } = default!;
 
     /// <summary>
-    /// Previous phase name (null if no encounter was active)
+    /// Previous phase name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
     public string? PreviousPhase { get; set; } = default!;
@@ -1694,7 +1678,9 @@ public partial class UpdateEncounterPhaseResponse
     /// Current phase name after update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    public string? CurrentPhase { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CurrentPhase { get; set; } = default!;
 
 }
 
@@ -1723,12 +1709,6 @@ public partial class EndEncounterResponse
 {
 
     /// <summary>
-    /// Whether an encounter was ended
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// ID of the actor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
@@ -1737,10 +1717,12 @@ public partial class EndEncounterResponse
     public string ActorId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the ended encounter (null if no encounter was active)
+    /// ID of the ended encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
-    public string? EncounterId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
 
     /// <summary>
     /// Duration of the encounter in milliseconds

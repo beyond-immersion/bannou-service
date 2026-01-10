@@ -826,14 +826,9 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
             "description": "Response after registering endpoint",
             "additionalProperties": false,
             "required": [
-                "success",
                 "endpoint"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the registration was successful"
-                },
                 "endpoint": {
                     "$ref": "#/$defs/MeshEndpoint",
                     "description": "The registered endpoint details"
@@ -1135,14 +1130,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "description": "Response after heartbeat processed",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the heartbeat was processed successfully"
-                },
                 "nextHeartbeatSeconds": {
                     "type": "integer",
                     "description": "Recommended seconds until next heartbeat"

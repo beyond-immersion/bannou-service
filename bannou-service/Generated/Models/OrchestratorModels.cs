@@ -1341,12 +1341,6 @@ public partial class DeployResponse
 {
 
     /// <summary>
-    /// Deployment succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Unique deployment identifier for tracking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
@@ -1656,12 +1650,6 @@ public partial class TeardownResponse
 {
 
     /// <summary>
-    /// Whether teardown completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Time taken to complete teardown
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
@@ -1775,12 +1763,6 @@ public partial class CleanRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanResponse
 {
-
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Disk space reclaimed (MB)
@@ -1977,12 +1959,6 @@ public partial class TopologyChange
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TopologyUpdateResponse
 {
-
-    /// <summary>
-    /// Whether all topology changes were applied successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Details of each applied change
@@ -2469,12 +2445,6 @@ public partial class ConfigRollbackRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConfigRollbackResponse
 {
-
-    /// <summary>
-    /// Whether rollback completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Config version before rollback

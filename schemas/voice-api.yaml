@@ -247,47 +247,45 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinVoiceRoomResponse\"\
         ,\n    \"$defs\": {\n        \"JoinVoiceRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after joining a voice room\",\n            \"required\": [\n   \
-        \             \"success\",\n                \"roomId\",\n                \"tier\"\n            ],\n            \"\
-        properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether join was successful\"\n                },\n                \"roomId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Voice
-        room ID\"\n                },\n                \"tier\": {\n                    \"$ref\": \"#/$defs/VoiceTier\",\n\
-        \                    \"description\": \"Current voice tier\"\n                },\n                \"codec\": {\n \
-        \                   \"$ref\": \"#/$defs/VoiceCodec\",\n                    \"description\": \"Codec to use\"\n   \
-        \             },\n                \"peers\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/VoicePeer\"\n                    },\n                    \"description\"\
-        : \"Current peers to connect to (P2P mode only)\"\n                },\n                \"rtpServerUri\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"RTP server URI (scaled mode only)\"\n                },\n                \"stunServers\": {\n                \
-        \    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
-        \              },\n                    \"description\": \"STUN server URIs for NAT traversal\"\n                },\n\
-        \                \"tierUpgradePending\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"True if room is about to upgrade to scaled tier\"\n             \
-        \   }\n            }\n        },\n        \"VoiceTier\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"p2p\",\n                \"scaled\"\n            ],\n            \"description\": \"Voice communication
-        tier:\\n- p2p: Direct peer-to-peer connections (up to 6 participants)\\n- scaled: RTP server-mediated communication
-        (unlimited participants)\\n\"\n        },\n        \"VoiceCodec\": {\n            \"type\": \"string\",\n        \
-        \    \"enum\": [\n                \"opus\",\n                \"g711\",\n                \"g722\"\n            ],\n\
-        \            \"description\": \"Audio codec for voice communication\"\n        },\n        \"VoicePeer\": {\n    \
-        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Peer
-        endpoint details for P2P connection\",\n            \"required\": [\n                \"sessionId\",\n            \
-        \    \"sipEndpoint\"\n            ],\n            \"properties\": {\n                \"sessionId\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"WebSocket session ID for this peer (ephemeral
-        identifier)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n\
-        \                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\",\n                    \"\
-        description\": \"Peer's SIP endpoint for direct connection\"\n                }\n            }\n        },\n     \
-        \   \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
-        \    \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\": [\n          \
-        \      \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\n      \
-        \          },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Public IP address
-        if known\"\n                },\n                \"port\": {\n                    \"type\": \"integer\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n                }\n \
-        \           }\n        }\n    }\n}"
+        \             \"roomId\",\n                \"tier\"\n            ],\n            \"properties\": {\n             \
+        \   \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"description\": \"Voice room ID\"\n                },\n                \"tier\": {\n               \
+        \     \"$ref\": \"#/$defs/VoiceTier\",\n                    \"description\": \"Current voice tier\"\n            \
+        \    },\n                \"codec\": {\n                    \"$ref\": \"#/$defs/VoiceCodec\",\n                   \
+        \ \"description\": \"Codec to use\"\n                },\n                \"peers\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/VoicePeer\"\n        \
+        \            },\n                    \"description\": \"Current peers to connect to (P2P mode only)\"\n          \
+        \      },\n                \"rtpServerUri\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"RTP server URI (scaled mode only)\"\n                },\n\
+        \                \"stunServers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"STUN
+        server URIs for NAT traversal\"\n                },\n                \"tierUpgradePending\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"True if
+        room is about to upgrade to scaled tier\"\n                }\n            }\n        },\n        \"VoiceTier\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"p2p\",\n                \"scaled\"\n\
+        \            ],\n            \"description\": \"Voice communication tier:\\n- p2p: Direct peer-to-peer connections
+        (up to 6 participants)\\n- scaled: RTP server-mediated communication (unlimited participants)\\n\"\n        },\n \
+        \       \"VoiceCodec\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"opus\",\n\
+        \                \"g711\",\n                \"g722\"\n            ],\n            \"description\": \"Audio codec for
+        voice communication\"\n        },\n        \"VoicePeer\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Peer endpoint details for P2P connection\",\n            \"required\": [\n\
+        \                \"sessionId\",\n                \"sipEndpoint\"\n            ],\n            \"properties\": {\n\
+        \                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"WebSocket session ID for this peer (ephemeral identifier)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Display name\"\n                },\n                \"sipEndpoint\": {\n                    \"$ref\": \"#/$defs/SipEndpoint\"\
+        ,\n                    \"description\": \"Peer's SIP endpoint for direct connection\"\n                }\n       \
+        \     }\n        },\n        \"SipEndpoint\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"SIP/WebRTC endpoint details for a participant\",\n            \"required\"\
+        : [\n                \"sdpOffer\"\n            ],\n            \"properties\": {\n                \"sdpOffer\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"SDP offer for WebRTC negotiation\"\
+        \n                },\n                \"iceCandidates\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \ \"description\": \"ICE candidates for NAT traversal\"\n                },\n                \"publicIp\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Public IP address if known\"\n                },\n                \"port\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"UDP port for RTP\"\n \
+        \               }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join voice room and register SIP endpoint\",\n    \"description\": \"Registers
         a participant's SIP endpoint with the voice room.\\nCalled by GameSession service when a player joins a session.\\
         nReturns connection info and current peer list for P2P mode,\\nor RTP server details for scaled mode.\\n\",\n    \"\
@@ -666,13 +664,9 @@ components:
       additionalProperties: false
       description: Response after joining a voice room
       required:
-      - success
       - roomId
       - tier
       properties:
-        success:
-          type: boolean
-          description: Whether join was successful
         roomId:
           type: string
           format: uuid

@@ -1085,15 +1085,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "sessionId",
                 "playerRole"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the join operation was successful"
-                },
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
@@ -1610,14 +1605,9 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "actionId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the action was executed successfully"
-                },
                 "actionId": {
                     "type": "string",
                     "format": "uuid",

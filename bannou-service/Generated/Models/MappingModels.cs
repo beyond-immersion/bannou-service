@@ -1842,12 +1842,6 @@ public partial class AuthoringCheckoutResponse
 {
 
     /// <summary>
-    /// Whether checkout was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Token for publishing changes (if successful)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authorityToken")]
@@ -1943,12 +1937,6 @@ public partial class AuthoringCommitRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthoringCommitResponse
 {
-
-    /// <summary>
-    /// Whether commit was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Committed version number

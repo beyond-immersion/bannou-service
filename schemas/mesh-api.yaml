@@ -247,17 +247,15 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterEndpointResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterEndpointResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after registering endpoint\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"success\",\n                \"endpoint\"\n            ],\n            \"properties\": {\n \
-        \               \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the registration was successful\"\n                },\n                \"endpoint\": {\n                 \
-        \   \"$ref\": \"#/$defs/MeshEndpoint\",\n                    \"description\": \"The registered endpoint details\"\n\
-        \                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"TTL for the registration (requires heartbeat refresh)\"\n                }\n          \
-        \  }\n        },\n        \"MeshEndpoint\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        A service endpoint in the mesh\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
-        \             \"instanceId\",\n                \"appId\",\n                \"host\",\n                \"port\",\n\
-        \                \"status\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : [\n                \"endpoint\"\n            ],\n            \"properties\": {\n                \"endpoint\": {\n\
+        \                    \"$ref\": \"#/$defs/MeshEndpoint\",\n                    \"description\": \"The registered endpoint
+        details\"\n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"TTL for the registration (requires heartbeat refresh)\"\n                }\n\
+        \            }\n        },\n        \"MeshEndpoint\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A service endpoint in the mesh\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"instanceId\",\n                \"appId\",\n                \"host\",\n                \"port\"\
+        ,\n                \"status\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique identifier for this instance\"\n                },\n                \"appId\": {\n                    \"\
         type\": \"string\",\n                    \"description\": \"Bannou app-id (e.g., \\\"bannou\\\", \\\"bannou-npc-01\\\
         \")\"\n                },\n                \"host\": {\n                    \"type\": \"string\",\n              \
@@ -371,13 +369,11 @@ paths:
         \         \"ShuttingDown\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HeartbeatResponse\"\
         ,\n    \"$defs\": {\n        \"HeartbeatResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after heartbeat processed\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"success\"\n            ],\n            \"properties\": {\n                \"success\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether the heartbeat was processed
-        successfully\"\n                },\n                \"nextHeartbeatSeconds\": {\n                    \"type\": \"\
-        integer\",\n                    \"description\": \"Recommended seconds until next heartbeat\"\n                },\n\
-        \                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Remaining TTL for registration\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response after heartbeat processed\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"nextHeartbeatSeconds\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Recommended seconds until next heartbeat\"\n                },\n                \"ttlSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Remaining TTL for registration\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update endpoint health and load\",\n    \"description\": \"Refreshes endpoint
         TTL and updates health/load metrics.\\nShould be called periodically (default: every 30 seconds).\\n\",\n    \"tags\"\
         : [\n        \"Registration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"heartbeat\"\n}"
@@ -821,12 +817,8 @@ components:
       description: Response after registering endpoint
       additionalProperties: false
       required:
-      - success
       - endpoint
       properties:
-        success:
-          type: boolean
-          description: Whether the registration was successful
         endpoint:
           $ref: '#/components/schemas/MeshEndpoint'
           description: The registered endpoint details
@@ -882,12 +874,7 @@ components:
       type: object
       description: Response after heartbeat processed
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether the heartbeat was processed successfully
         nextHeartbeatSeconds:
           type: integer
           description: Recommended seconds until next heartbeat

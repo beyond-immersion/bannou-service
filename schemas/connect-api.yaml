@@ -99,21 +99,19 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n    \"$defs\": {\n        \"InternalProxyResponse\": {\n            \"description\": \"Response from a proxied
         API call containing the target service's response data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"statusCode\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether the proxy request was successful\"\n                },\n              \
-        \  \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"description\": \"HTTP status
-        code from the target service\"\n                },\n                \"response\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"JSON response from
-        the target service (as string)\"\n                },\n                \"headers\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n   \
-        \                     \"items\": {\n                            \"type\": \"string\"\n                        }\n\
-        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Response
-        headers from the target service\"\n                },\n                \"error\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message if the
-        request failed\"\n                },\n                \"executionTime\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Request execution time in milliseconds\"\n                }\n          \
-        \  }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"statusCode\"\n            ],\n            \"properties\"\
+        : {\n                \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"HTTP status code from the target service\"\n                },\n                \"response\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"JSON
+        response from the target service (as string)\"\n                },\n                \"headers\": {\n             \
+        \       \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\":
+        \"array\",\n                        \"items\": {\n                            \"type\": \"string\"\n             \
+        \           }\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Response headers from the target service\"\n                },\n                \"error\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error
+        message if the request failed\"\n                },\n                \"executionTime\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Request execution time in milliseconds\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Internal API proxy for stateless requests\",\n    \"description\": \"Stateless
         HTTP proxy for internal requests that don't require persistent sessions.\\nApplies permission validation and rate
         limiting based on agent role and context.\\nPerfect for AI agents making one-off API calls or bulk operations.\\n\"\
@@ -688,12 +686,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - statusCode
       properties:
-        success:
-          type: boolean
-          description: Whether the proxy request was successful
         statusCode:
           type: integer
           description: HTTP status code from the target service

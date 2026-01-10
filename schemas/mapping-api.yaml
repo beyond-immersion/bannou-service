@@ -1094,17 +1094,16 @@ paths:
         combat_effects\",\n                \"visual_effects\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthoringCheckoutResponse\"\
         ,\n    \"$defs\": {\n        \"AuthoringCheckoutResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Checkout response\",\n            \"properties\": {\n                \"success\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether checkout was successful\"\n                },\n   \
-        \             \"authorityToken\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Token for publishing changes (if successful)\",\n                    \"nullable\": true\n                },\n\
-        \                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the checkout expires\",\n                    \"nullable\": true\n \
-        \               },\n                \"lockedBy\": {\n                    \"type\": \"string\",\n                 \
-        \   \"description\": \"Who has the lock (if checkout failed)\",\n                    \"nullable\": true\n        \
-        \        },\n                \"lockedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the lock was acquired (if checkout failed)\",\n    \
-        \                \"nullable\": true\n                }\n            }\n        }\n    }\n}"
+        : \"Checkout response\",\n            \"properties\": {\n                \"authorityToken\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Token for publishing changes (if successful)\",\n\
+        \                    \"nullable\": true\n                },\n                \"expiresAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the checkout expires\",\n                    \"nullable\": true\n                },\n                \"lockedBy\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Who has the lock (if checkout
+        failed)\",\n                    \"nullable\": true\n                },\n                \"lockedAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the lock was acquired (if checkout failed)\",\n                    \"nullable\": true\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Acquire exclusive edit lock for design-time editing\",\n    \"description\"\
         : \"For level editors and design tools only.\\nGame servers do NOT use this - they use create-channel for implicit
         authority.\\nReturns authority token for publishing edits.\\n\",\n    \"tags\": [\n        \"Authoring\"\n    ],\n\
@@ -1156,11 +1155,9 @@ paths:
         ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthoringCommitResponse\"\
         ,\n    \"$defs\": {\n        \"AuthoringCommitResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Commit response\",\n            \"properties\": {\n                \"success\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether commit was successful\"\n                },\n     \
-        \           \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"description\": \"Committed version number\",\n                    \"nullable\": true\n  \
-        \              }\n            }\n        }\n    }\n}"
+        : \"Commit response\",\n            \"properties\": {\n                \"version\": {\n                    \"type\"\
+        : \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Committed version
+        number\",\n                    \"nullable\": true\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Commit design-time changes\",\n    \"description\": \"Commits pending changes
         and releases the checkout lock.\\nOptionally includes a commit message for history.\\n\",\n    \"tags\": [\n     \
         \   \"Authoring\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"commitAuthoring\"\n}"
@@ -2632,9 +2629,6 @@ components:
       type: object
       description: Checkout response
       properties:
-        success:
-          type: boolean
-          description: Whether checkout was successful
         authorityToken:
           type: string
           description: Token for publishing changes (if successful)
@@ -2681,9 +2675,6 @@ components:
       type: object
       description: Commit response
       properties:
-        success:
-          type: boolean
-          description: Whether commit was successful
         version:
           type: integer
           format: int64

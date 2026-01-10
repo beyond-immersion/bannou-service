@@ -3345,10 +3345,6 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "description": "Checkout response",
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether checkout was successful"
-                },
                 "authorityToken": {
                     "type": "string",
                     "description": "Token for publishing changes (if successful)",
@@ -3498,10 +3494,6 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "description": "Commit response",
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether commit was successful"
-                },
                 "version": {
                     "type": "integer",
                     "format": "int64",

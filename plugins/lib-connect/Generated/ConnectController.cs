@@ -378,14 +378,9 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "statusCode"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the proxy request was successful"
-                },
                 "statusCode": {
                     "type": "integer",
                     "description": "HTTP status code from the target service"

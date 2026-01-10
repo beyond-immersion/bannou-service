@@ -76,11 +76,9 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n    \"$defs\": {\n        \"PublishEventResponse\": {\n            \"description\": \"Response confirming event
         publication with message identifier\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"success\",\n                \"messageId\"\n            ],\n      \
-        \      \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n           \
-        \         \"description\": \"Indicates whether the event was published successfully\"\n                },\n      \
-        \          \"messageId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Unique identifier assigned to the published message\"\n                }\n\
+        \            \"required\": [\n                \"messageId\"\n            ],\n            \"properties\": {\n     \
+        \           \"messageId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier assigned to the published message\"\n                }\n\
         \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Publish an event to a topic\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"publishEvent\"\n}"
@@ -172,10 +170,8 @@ paths:
         \           }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveSubscriptionResponse\"\
         ,\n    \"$defs\": {\n        \"RemoveSubscriptionResponse\": {\n            \"description\": \"Response confirming
-        subscription removal status\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"success\"\n            ],\n            \"properties\": {\n       \
-        \         \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Indicates
-        whether the subscription was removed successfully\"\n                }\n            }\n        }\n    }\n}"
+        subscription removal\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a dynamic subscription\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeSubscription\"\n}"
   /messaging/list-topics:
@@ -296,12 +292,8 @@ components:
       type: object
       additionalProperties: false
       required:  # NRT: Response properties server always sets (Rule 4)
-      - success
       - messageId
       properties:
-        success:
-          type: boolean
-          description: Indicates whether the event was published successfully
         messageId:
           type: string
           format: uuid
@@ -386,15 +378,10 @@ components:
           description: Unique identifier of the subscription to remove
 
     RemoveSubscriptionResponse:
-      description: Response confirming subscription removal status
+      description: Response confirming subscription removal
       type: object
       additionalProperties: false
-      required:  # NRT: Response properties server always sets (Rule 4)
-      - success
-      properties:
-        success:
-          type: boolean
-          description: Indicates whether the subscription was removed successfully
+      properties: {}
 
     ListTopicsRequest:
       type: object

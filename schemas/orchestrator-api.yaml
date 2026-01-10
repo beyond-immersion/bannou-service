@@ -676,57 +676,56 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeployResponse\"\
         ,\n    \"$defs\": {\n        \"DeployResponse\": {\n            \"description\": \"Result of a deployment operation
         including status and deployed service information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"deploymentId\",\n         \
-        \       \"backend\",\n                \"duration\"\n            ],\n            \"properties\": {\n              \
-        \  \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Deployment succeeded\"\
-        \n                },\n                \"deploymentId\": {\n                    \"type\": \"string\",\n           \
-        \         \"description\": \"Unique deployment identifier for tracking\"\n                },\n                \"backend\"\
-        : {\n                    \"$ref\": \"#/$defs/BackendType\",\n                    \"description\": \"Container orchestration
-        backend used for deployment\"\n                },\n                \"preset\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Preset used (if applicable)\"\n                },\n            \
-        \    \"duration\": {\n                    \"type\": \"string\",\n                    \"description\": \"Time taken
-        to deploy\"\n                },\n                \"topology\": {\n                    \"$ref\": \"#/$defs/ServiceTopology\"\
-        ,\n                    \"description\": \"Final applied topology\"\n                },\n                \"services\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/DeployedService\"\n                    },\n                    \"description\": \"Status of deployed services\"\
-        \n                },\n                \"warnings\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Non-fatal warnings during deployment\"\n                },\n                \"message\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Human-readable deployment summary\"\n          \
-        \      }\n            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n         \
-        \       \"compose\"\n            ],\n            \"description\": \"Container orchestration backend type.\\nPriority
-        order: kubernetes > portainer > swarm > compose\\n\"\n        },\n        \"ServiceTopology\": {\n            \"description\"\
-        : \"Service distribution topology defining which services run on which nodes\",\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"nodes\"\n        \
-        \    ],\n            \"properties\": {\n                \"nodes\": {\n                    \"type\": \"array\",\n \
-        \                   \"items\": {\n                        \"$ref\": \"#/$defs/TopologyNode\"\n                   \
-        \ },\n                    \"description\": \"Container/pod definitions with service assignments\"\n              \
-        \  },\n                \"infrastructure\": {\n                    \"$ref\": \"#/$defs/InfrastructureConfig\",\n  \
-        \                  \"description\": \"Infrastructure service configuration\"\n                }\n            }\n \
-        \       },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology
-        with its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"services\"\n            ],\n \
-        \           \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
-        node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
-        \           \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Node-specific environment overrides\"\n                },\n                \"meshEnabled\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        mesh routing is enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"App-id override for mesh routing (default derives from node name)\"\n  \
-        \              }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container
-        scheduling\",\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n       \
-        \         \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
+        : false,\n            \"required\": [\n                \"deploymentId\",\n                \"backend\",\n         \
+        \       \"duration\"\n            ],\n            \"properties\": {\n                \"deploymentId\": {\n       \
+        \             \"type\": \"string\",\n                    \"description\": \"Unique deployment identifier for tracking\"\
+        \n                },\n                \"backend\": {\n                    \"$ref\": \"#/$defs/BackendType\",\n   \
+        \                 \"description\": \"Container orchestration backend used for deployment\"\n                },\n \
+        \               \"preset\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Preset used (if applicable)\"\n                },\n                \"duration\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Time taken to deploy\"\n                },\n                \"\
+        topology\": {\n                    \"$ref\": \"#/$defs/ServiceTopology\",\n                    \"description\": \"\
+        Final applied topology\"\n                },\n                \"services\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeployedService\"\n             \
+        \       },\n                    \"description\": \"Status of deployed services\"\n                },\n           \
+        \     \"warnings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
+        \          \"type\": \"string\"\n                    },\n                    \"description\": \"Non-fatal warnings
+        during deployment\"\n                },\n                \"message\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Human-readable deployment summary\"\n                }\n            }\n\
+        \        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"enum\": [\n            \
+        \    \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n                \"compose\"\n  \
+        \          ],\n            \"description\": \"Container orchestration backend type.\\nPriority order: kubernetes >
+        portainer > swarm > compose\\n\"\n        },\n        \"ServiceTopology\": {\n            \"description\": \"Service
+        distribution topology defining which services run on which nodes\",\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"nodes\"\n            ],\n   \
+        \         \"properties\": {\n                \"nodes\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/TopologyNode\"\n                    },\n      \
+        \              \"description\": \"Container/pod definitions with service assignments\"\n                },\n     \
+        \           \"infrastructure\": {\n                    \"$ref\": \"#/$defs/InfrastructureConfig\",\n             \
+        \       \"description\": \"Infrastructure service configuration\"\n                }\n            }\n        },\n\
+        \        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology with its assigned
+        services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"name\",\n                \"services\"\n            ],\n           \
+        \ \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n    \
+        \            \"services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"type\": \"string\"\n                    },\n                    \"description\": \"Services enabled
+        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permission\\\
+        \"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"integer\",\n      \
+        \              \"default\": 1,\n                    \"description\": \"Number of replicas for this node\"\n      \
+        \          },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n     \
+        \               \"description\": \"Resource limits and requests for this node\"\n                },\n            \
+        \    \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
+        {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"Node-specific
+        environment overrides\"\n                },\n                \"meshEnabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether mesh routing is
+        enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"App-id override for mesh routing (default derives from node name)\"\n             \
+        \   }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container scheduling\"\
+        ,\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n            \
+        \    \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
         limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
         \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
@@ -1097,18 +1096,16 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TeardownResponse\"\
         ,\n    \"$defs\": {\n        \"TeardownResponse\": {\n            \"description\": \"Result of an environment teardown
         including removed resources and any errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"duration\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether teardown completed successfully\"\n                },\n               \
-        \ \"duration\": {\n                    \"type\": \"string\",\n                    \"description\": \"Time taken to
-        complete teardown\"\n                },\n                \"stoppedContainers\": {\n                    \"type\": \"\
+        : false,\n            \"required\": [\n                \"duration\"\n            ],\n            \"properties\": {\n\
+        \                \"duration\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Time taken to complete teardown\"\n                },\n                \"stoppedContainers\": {\n              \
+        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
+        \                },\n                    \"description\": \"Container IDs that were stopped\"\n                },\n\
+        \                \"removedVolumes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Volumes
+        that were removed\"\n                },\n                \"removedNetworks\": {\n                    \"type\": \"\
         array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Container IDs that were stopped\"\n                },\n                \"\
-        removedVolumes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Volumes that were removed\"\
-        \n                },\n                \"removedNetworks\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"type\": \"string\"\n                    },\n                 \
-        \   \"description\": \"Networks that were removed\"\n                },\n                \"removedInfrastructure\"\
+        \                    \"description\": \"Networks that were removed\"\n                },\n                \"removedInfrastructure\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
         : \"string\"\n                    },\n                    \"description\": \"Infrastructure services that were removed
         (Redis, RabbitMQ, MySQL, etc.)\"\n                },\n                \"errors\": {\n                    \"type\"\
@@ -1176,21 +1173,19 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanResponse\"\
         ,\n    \"$defs\": {\n        \"CleanResponse\": {\n            \"description\": \"Result of a cleanup operation including
         reclaimed space and removed resource counts\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\"\n            ],\n            \"properties\": {\n\
-        \                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether cleanup completed successfully\"\n                },\n                \"reclaimedSpaceMb\": {\n        \
-        \            \"type\": \"integer\",\n                    \"description\": \"Disk space reclaimed (MB)\"\n        \
-        \        },\n                \"removedContainers\": {\n                    \"type\": \"integer\",\n              \
-        \      \"description\": \"Number of containers removed\"\n                },\n                \"removedNetworks\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of networks removed\"\
-        \n                },\n                \"removedVolumes\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Number of volumes removed\"\n                },\n                \"removedImages\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of images removed\"\
-        \n                },\n                \"errors\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Non-fatal errors during cleanup\"\n                },\n                \"message\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Human-readable cleanup summary\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        : false,\n            \"properties\": {\n                \"reclaimedSpaceMb\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Disk space reclaimed (MB)\"\n                },\n             \
+        \   \"removedContainers\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Number of containers removed\"\n                },\n                \"removedNetworks\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of networks removed\"\n                },\n  \
+        \              \"removedVolumes\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of volumes removed\"\n                },\n                \"removedImages\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of images removed\"\n                },\n    \
+        \            \"errors\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
+        \               \"type\": \"string\"\n                    },\n                    \"description\": \"Non-fatal errors
+        during cleanup\"\n                },\n                \"message\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable cleanup summary\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Clean up unused resources\",\n    \"description\": \"Prunes unused Docker
         resources to reclaim disk space and clean up\\norphaned containers, networks, volumes, and images.\\n\\nEquivalent
         to running various `docker system prune` commands.\\n\\n**Clean Targets**:\\n- `containers`: Remove stopped containers\\
@@ -1366,10 +1361,8 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TopologyUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"TopologyUpdateResponse\": {\n            \"description\": \"Result of a topology update
         including applied changes and the new topology state\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"appliedChanges\"\n        \
-        \    ],\n            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether all topology changes were applied successfully\"\n             \
-        \   },\n                \"appliedChanges\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : false,\n            \"required\": [\n                \"appliedChanges\"\n            ],\n            \"properties\"\
+        : {\n                \"appliedChanges\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"$ref\": \"#/$defs/AppliedChange\"\n                    },\n                    \"description\"\
         : \"Details of each applied change\"\n                },\n                \"topology\": {\n                    \"\
         $ref\": \"#/$defs/ServiceTopology\",\n                    \"description\": \"New topology after changes\"\n      \
@@ -1679,17 +1672,15 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfigRollbackResponse\"\
         ,\n    \"$defs\": {\n        \"ConfigRollbackResponse\": {\n            \"description\": \"Result of a configuration
         rollback including version changes and affected keys\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"previousVersion\",\n      \
-        \          \"currentVersion\"\n            ],\n            \"properties\": {\n                \"success\": {\n   \
-        \                 \"type\": \"boolean\",\n                    \"description\": \"Whether rollback completed successfully\"\
-        \n                },\n                \"previousVersion\": {\n                    \"type\": \"integer\",\n       \
-        \             \"description\": \"Config version before rollback\"\n                },\n                \"currentVersion\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Config version after rollback
-        (now active)\"\n                },\n                \"changedKeys\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Keys that were reverted\"\n                },\n                \"message\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Human-readable rollback summary\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"previousVersion\",\n                \"currentVersion\"\n\
+        \            ],\n            \"properties\": {\n                \"previousVersion\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Config version before rollback\"\n                },\n    \
+        \            \"currentVersion\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Config version after rollback (now active)\"\n                },\n                \"changedKeys\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Keys that were reverted\"\n                },\n \
+        \               \"message\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Human-readable rollback summary\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Rollback to previous configuration\",\n    \"description\": \"Quickly rollback
         to the previous configuration without waiting for CI.\\nSwaps currentConfig with previousConfig and publishes ConfigurationChangedEvent\\
         nwith the reverted keys so services can request restart.\\n\\n**Note**: This is a quick fix. GitHub secrets should
@@ -2863,14 +2854,10 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - deploymentId
       - backend
       - duration
       properties:
-        success:
-          type: boolean
-          description: Deployment succeeded
         deploymentId:
           type: string
           description: Unique deployment identifier for tracking
@@ -3051,12 +3038,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - duration
       properties:
-        success:
-          type: boolean
-          description: Whether teardown completed successfully
         duration:
           type: string
           description: Time taken to complete teardown
@@ -3125,12 +3108,7 @@ components:
       description: Result of a cleanup operation including reclaimed space and removed resource counts
       type: object
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
         reclaimedSpaceMb:
           type: integer
           description: Disk space reclaimed (MB)
@@ -3254,12 +3232,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - appliedChanges
       properties:
-        success:
-          type: boolean
-          description: Whether all topology changes were applied successfully
         appliedChanges:
           type: array
           items:
@@ -3573,13 +3547,9 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - previousVersion
       - currentVersion
       properties:
-        success:
-          type: boolean
-          description: Whether rollback completed successfully
         previousVersion:
           type: integer
           description: Config version before rollback

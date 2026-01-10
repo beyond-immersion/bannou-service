@@ -929,15 +929,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterResponse\"\
         ,\n    \"$defs\": {\n        \"StartEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after starting an encounter\",\n            \"required\": [\n  \
-        \              \"success\",\n                \"actorId\"\n            ],\n            \"properties\": {\n        \
-        \        \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the encounter was started successfully\"\n                },\n                \"actorId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"ID of the actor managing the encounter\"\n       \
-        \         },\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"ID of the started encounter (null if failed)\"\n       \
-        \         },\n                \"error\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Error message if the encounter could not be started\"\n          \
-        \      }\n            }\n        }\n    }\n}"
+        \              \"actorId\",\n                \"encounterId\"\n            ],\n            \"properties\": {\n    \
+        \            \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID
+        of the actor managing the encounter\"\n                },\n                \"encounterId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"description\": \"ID of the started encounter\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
         : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
         sending instructions to participant NPC Brain actors\\nvia their character perception channels.\\n\",\n    \"tags\"\
@@ -976,15 +972,13 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterPhaseResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateEncounterPhaseResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Response after updating encounter phase\",\n      \
-        \      \"required\": [\n                \"success\",\n                \"actorId\"\n            ],\n            \"\
-        properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether the phase was updated successfully\"\n                },\n                \"actorId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"ID of the actor managing the encounter\"\
-        \n                },\n                \"previousPhase\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Previous phase name (null if no encounter was
-        active)\"\n                },\n                \"currentPhase\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Current phase name after update\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        \      \"required\": [\n                \"actorId\",\n                \"currentPhase\"\n            ],\n         \
+        \   \"properties\": {\n                \"actorId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"ID of the actor managing the encounter\"\n                },\n                \"previousPhase\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Previous phase name\"\n                },\n                \"currentPhase\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Current phase name after update\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update the phase of an active encounter\",\n    \"description\": \"Updates
         the phase of an encounter being managed by an Event Brain actor.\\nPhase changes are logged and can trigger behavior
         changes in participant actors.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateEncounterPhase\"\
@@ -1021,12 +1015,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndEncounterResponse\"\
         ,\n    \"$defs\": {\n        \"EndEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after ending an encounter\",\n            \"required\": [\n    \
-        \            \"success\",\n                \"actorId\"\n            ],\n            \"properties\": {\n          \
-        \      \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        an encounter was ended\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"ID of the actor\"\n                },\n                \"encounterId\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ID of the ended encounter (null if no encounter was active)\"\n                },\n                \"durationMs\"\
+        \            \"actorId\",\n                \"encounterId\"\n            ],\n            \"properties\": {\n      \
+        \          \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of
+        the actor\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\",\n \
+        \                   \"description\": \"ID of the ended encounter\"\n                },\n                \"durationMs\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Duration of the encounter in milliseconds\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"End an active encounter\",\n    \"description\": \"Ends an encounter being
@@ -2143,23 +2135,15 @@ components:
       additionalProperties: false
       description: Response after starting an encounter
       required:
-      - success
       - actorId
+      - encounterId
       properties:
-        success:
-          type: boolean
-          description: Whether the encounter was started successfully
         actorId:
           type: string
           description: ID of the actor managing the encounter
         encounterId:
           type: string
-          nullable: true
-          description: ID of the started encounter (null if failed)
-        error:
-          type: string
-          nullable: true
-          description: Error message if the encounter could not be started
+          description: ID of the started encounter
 
     UpdateEncounterPhaseRequest:
       type: object
@@ -2181,22 +2165,18 @@ components:
       additionalProperties: false
       description: Response after updating encounter phase
       required:
-      - success
       - actorId
+      - currentPhase
       properties:
-        success:
-          type: boolean
-          description: Whether the phase was updated successfully
         actorId:
           type: string
           description: ID of the actor managing the encounter
         previousPhase:
           type: string
           nullable: true
-          description: Previous phase name (null if no encounter was active)
+          description: Previous phase name
         currentPhase:
           type: string
-          nullable: true
           description: Current phase name after update
 
     EndEncounterRequest:
@@ -2215,19 +2195,15 @@ components:
       additionalProperties: false
       description: Response after ending an encounter
       required:
-      - success
       - actorId
+      - encounterId
       properties:
-        success:
-          type: boolean
-          description: Whether an encounter was ended
         actorId:
           type: string
           description: ID of the actor
         encounterId:
           type: string
-          nullable: true
-          description: ID of the ended encounter (null if no encounter was active)
+          description: ID of the ended encounter
         durationMs:
           type: integer
           nullable: true

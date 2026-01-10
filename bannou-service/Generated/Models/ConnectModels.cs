@@ -368,12 +368,6 @@ public partial class InternalProxyResponse
 {
 
     /// <summary>
-    /// Whether the proxy request was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// HTTP status code from the target service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusCode")]

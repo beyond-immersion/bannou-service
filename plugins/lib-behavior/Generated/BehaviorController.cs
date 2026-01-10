@@ -471,14 +471,9 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "behaviorId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether compilation was successful"
-                },
                 "behaviorId": {
                     "type": "string",
                     "description": "Unique identifier for the compiled behavior (content-addressable hash)",
@@ -1355,17 +1350,10 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$ref": "#/$defs/GoapPlanResponse",
     "$defs": {
         "GoapPlanResponse": {
-            "description": "Response containing the generated GOAP plan or failure information",
+            "description": "Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether planning was successful"
-                },
                 "plan": {
                     "$ref": "#/$defs/GoapPlanResult",
                     "nullable": true,

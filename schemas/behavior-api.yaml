@@ -172,62 +172,60 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompileBehaviorResponse\"\
         ,\n    \"$defs\": {\n        \"CompileBehaviorResponse\": {\n            \"description\": \"Response containing the
         results of an ABML behavior compilation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"behaviorId\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether compilation was successful\"\n                },\n                \"behaviorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for the compiled
-        behavior (content-addressable hash)\",\n                    \"example\": \"behavior-a1b2c3d4e5f6g7h8\"\n         \
-        \       },\n                \"behaviorName\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Human-readable name of the behavior\",\n               \
-        \     \"example\": \"blacksmith_daily_routine\"\n                },\n                \"compiledBehavior\": {\n   \
-        \                 \"$ref\": \"#/$defs/CompiledBehavior\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"The compiled behavior data including behavior tree and metadata\"\n                },\n\
-        \                \"compilationTimeMs\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Time taken to compile the behavior in milliseconds\"\n                },\n                \"assetId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Asset service ID where the compiled bytecode is stored. Null only when caching is explicitly disabled.\"\n   \
-        \             },\n                \"bundleId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Bundle ID if the behavior was added to a bundle. Null
-        if not bundled.\"\n                },\n                \"isUpdate\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"True if this replaced an existing behavior with the same content hash\"\n\
-        \                },\n                \"warnings\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Non-fatal warnings during compilation\"\n                }\n     \
-        \       }\n        },\n        \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior containing
-        behavior tree, context schema, and GOAP integration data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"behaviorTree\",\n                \"contextSchema\"\n    \
-        \        ],\n            \"properties\": {\n                \"behaviorTree\": {\n                    \"$ref\": \"\
-        #/$defs/BehaviorTreeData\",\n                    \"description\": \"Compiled behavior tree data with bytecode or download
-        reference\"\n                },\n                \"contextSchema\": {\n                    \"$ref\": \"#/$defs/ContextSchemaData\"\
-        ,\n                    \"description\": \"Schema defining required context variables for execution\"\n           \
-        \     },\n                \"serviceDependencies\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"List of required services for this behavior\"\n                },\n\
-        \                \"goapGoals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/GoapGoal\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"GOAP goals extracted from the behavior\"\n                },\n           \
-        \     \"executionMetadata\": {\n                    \"$ref\": \"#/$defs/ExecutionMetadata\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Metadata for behavior execution including performance
-        hints and resource requirements\"\n                }\n            }\n        },\n        \"BehaviorTreeData\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Compiled behavior tree data with bytecode or download reference\",\n            \"properties\": {\n              \
-        \  \"bytecode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Base64-encoded compiled bytecode for the behavior tree\"\n                },\n    \
-        \            \"bytecodeSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Size of the bytecode in bytes\"\n                },\n                \"downloadUrl\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"URL to download
-        the compiled behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\": {\n  \
-        \          \"type\": \"object\",\n            \"description\": \"Schema defining required context variables for behavior
-        execution\",\n            \"additionalProperties\": true\n        },\n        \"GoapGoal\": {\n            \"description\"\
-        : \"Goal definition for GOAP planning with conditions and priority\",\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n                \"\
-        conditions\",\n                \"priority\"\n            ],\n            \"properties\": {\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the goal\",\n     \
-        \               \"example\": \"satisfy_hunger\"\n                },\n                \"description\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Human-readable description of the goal\"\n                },\n                \"conditions\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"World state conditions that satisfy this
+        : false,\n            \"required\": [\n                \"behaviorId\"\n            ],\n            \"properties\"\
+        : {\n                \"behaviorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique identifier for the compiled behavior (content-addressable hash)\",\n                    \"example\": \"\
+        behavior-a1b2c3d4e5f6g7h8\"\n                },\n                \"behaviorName\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable name
+        of the behavior\",\n                    \"example\": \"blacksmith_daily_routine\"\n                },\n          \
+        \      \"compiledBehavior\": {\n                    \"$ref\": \"#/$defs/CompiledBehavior\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"The compiled behavior data including behavior tree and metadata\"\
+        \n                },\n                \"compilationTimeMs\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Time taken to compile the behavior in milliseconds\"\n                },\n    \
+        \            \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Asset service ID where the compiled bytecode is stored. Null only when caching
+        is explicitly disabled.\"\n                },\n                \"bundleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Bundle ID if the behavior was added
+        to a bundle. Null if not bundled.\"\n                },\n                \"isUpdate\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this replaced an existing behavior with the same content
+        hash\"\n                },\n                \"warnings\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Non-fatal warnings during compilation\"\n         \
+        \       }\n            }\n        },\n        \"CompiledBehavior\": {\n            \"description\": \"Compiled behavior
+        containing behavior tree, context schema, and GOAP integration data\",\n            \"type\": \"object\",\n      \
+        \      \"additionalProperties\": false,\n            \"required\": [\n                \"behaviorTree\",\n        \
+        \        \"contextSchema\"\n            ],\n            \"properties\": {\n                \"behaviorTree\": {\n \
+        \                   \"$ref\": \"#/$defs/BehaviorTreeData\",\n                    \"description\": \"Compiled behavior
+        tree data with bytecode or download reference\"\n                },\n                \"contextSchema\": {\n      \
+        \              \"$ref\": \"#/$defs/ContextSchemaData\",\n                    \"description\": \"Schema defining required
+        context variables for execution\"\n                },\n                \"serviceDependencies\": {\n              \
+        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
+        \                },\n                    \"nullable\": true,\n                    \"description\": \"List of required
+        services for this behavior\"\n                },\n                \"goapGoals\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GoapGoal\"\n           \
+        \         },\n                    \"nullable\": true,\n                    \"description\": \"GOAP goals extracted
+        from the behavior\"\n                },\n                \"executionMetadata\": {\n                    \"$ref\": \"\
+        #/$defs/ExecutionMetadata\",\n                    \"nullable\": true,\n                    \"description\": \"Metadata
+        for behavior execution including performance hints and resource requirements\"\n                }\n            }\n\
+        \        },\n        \"BehaviorTreeData\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Compiled behavior tree data with bytecode or download reference\",\n    \
+        \        \"properties\": {\n                \"bytecode\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Base64-encoded compiled bytecode for the behavior
+        tree\"\n                },\n                \"bytecodeSize\": {\n                    \"type\": \"integer\",\n    \
+        \                \"description\": \"Size of the bytecode in bytes\"\n                },\n                \"downloadUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"URL to download the compiled behavior asset\"\n                }\n            }\n        },\n        \"ContextSchemaData\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Schema defining required context variables
+        for behavior execution\",\n            \"additionalProperties\": true\n        },\n        \"GoapGoal\": {\n     \
+        \       \"description\": \"Goal definition for GOAP planning with conditions and priority\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"name\"\
+        ,\n                \"conditions\",\n                \"priority\"\n            ],\n            \"properties\": {\n\
+        \                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name
+        of the goal\",\n                    \"example\": \"satisfy_hunger\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description of the goal\"\n                },\n                \"conditions\": {\n            \
+        \        \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"World state conditions that satisfy this
         goal (literal conditions)\",\n                    \"example\": {\n                        \"hunger\": \"<= 0.3\",\n\
         \                        \"gold\": \">= 50\"\n                    }\n                },\n                \"priority\"\
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
@@ -535,36 +533,34 @@ paths:
         milliseconds\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GoapPlanResponse\"\
         ,\n    \"$defs\": {\n        \"GoapPlanResponse\": {\n            \"description\": \"Response containing the generated
-        GOAP plan or failure information\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"success\"\n            ],\n            \"properties\": {\n       \
-        \         \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        planning was successful\"\n                },\n                \"plan\": {\n                    \"$ref\": \"#/$defs/GoapPlanResult\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"The generated plan if successful\"\
-        \n                },\n                \"planningTimeMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Time spent planning in milliseconds\"\n                },\n                \"nodesExpanded\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of nodes expanded during
-        A* search\"\n                },\n                \"failureReason\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Reason for planning failure if unsuccessful\"\
-        ,\n                    \"example\": \"No plan found - goal unreachable\"\n                }\n            }\n     \
-        \   },\n        \"GoapPlanResult\": {\n            \"description\": \"Result of GOAP planning containing the ordered
-        sequence of actions to achieve a goal\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"goalId\",\n                \"actions\",\n               \
-        \ \"totalCost\"\n            ],\n            \"properties\": {\n                \"goalId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"ID of the goal this plan achieves\"\n           \
-        \     },\n                \"actions\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/PlannedActionResponse\"\n                    },\n               \
-        \     \"description\": \"Ordered sequence of actions to execute\"\n                },\n                \"totalCost\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Total cost of all actions in the plan\"\n                }\n            }\n        },\n        \"\
-        PlannedActionResponse\": {\n            \"description\": \"Single action within a GOAP plan with position and cost
-        information\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"actionId\",\n                \"index\",\n                \"cost\"\n            ],\n       \
-        \     \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n            \
-        \        \"description\": \"ID of the action (flow name)\"\n                },\n                \"index\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"description\": \"Position in the plan sequence\"\n\
-        \                },\n                \"cost\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Cost of this action\"\n                }\n          \
-        \  }\n        }\n    }\n}"
+        GOAP plan. If no plan could be found, plan is null and failureReason explains why.\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"plan\": {\n    \
+        \                \"$ref\": \"#/$defs/GoapPlanResult\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"The generated plan if successful\"\n                },\n                \"planningTimeMs\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Time spent planning in milliseconds\"\
+        \n                },\n                \"nodesExpanded\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Number of nodes expanded during A* search\"\n                },\n                \"\
+        failureReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Reason for planning failure if unsuccessful\",\n                    \"example\": \"\
+        No plan found - goal unreachable\"\n                }\n            }\n        },\n        \"GoapPlanResult\": {\n\
+        \            \"description\": \"Result of GOAP planning containing the ordered sequence of actions to achieve a goal\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"goalId\",\n                \"actions\",\n                \"totalCost\"\n            ],\n      \
+        \      \"properties\": {\n                \"goalId\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"ID of the goal this plan achieves\"\n                },\n                \"actions\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/PlannedActionResponse\"\n                    },\n                    \"description\": \"Ordered sequence of
+        actions to execute\"\n                },\n                \"totalCost\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"description\": \"Total cost of all actions in
+        the plan\"\n                }\n            }\n        },\n        \"PlannedActionResponse\": {\n            \"description\"\
+        : \"Single action within a GOAP plan with position and cost information\",\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"actionId\",\n        \
+        \        \"index\",\n                \"cost\"\n            ],\n            \"properties\": {\n                \"actionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the action (flow name)\"\
+        \n                },\n                \"index\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Position in the plan sequence\"\n                },\n                \"cost\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Cost of this action\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate GOAP plan\",\n    \"description\": \"Generates a GOAP plan to
         achieve a goal from the current world state.\\nUses A* search to find the optimal sequence of actions.\\n\",\n   \
         \ \"tags\": [\n        \"GOAP\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GenerateGoapPlan\"\n}"
@@ -777,12 +773,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - behaviorId
       properties:
-        success:
-          type: boolean
-          description: Whether compilation was successful
         behaviorId:
           type: string
           description: Unique identifier for the compiled behavior (content-addressable hash)
@@ -1133,15 +1125,11 @@ components:
           description: Options controlling the planning process
 
     GoapPlanResponse:
-      description: Response containing the generated GOAP plan or failure information
+      description: Response containing the generated GOAP plan. If no plan could be found, plan is null and 
+        failureReason explains why.
       type: object
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether planning was successful
         plan:
           $ref: '#/components/schemas/GoapPlanResult'
           # NRT: Optional object MUST be nullable (Rule 2)

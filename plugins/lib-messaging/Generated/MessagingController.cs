@@ -268,14 +268,9 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "messageId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Indicates whether the event was published successfully"
-                },
                 "messageId": {
                     "type": "string",
                     "format": "uuid",
@@ -529,18 +524,10 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     "$ref": "#/$defs/RemoveSubscriptionResponse",
     "$defs": {
         "RemoveSubscriptionResponse": {
-            "description": "Response confirming subscription removal status",
+            "description": "Response confirming subscription removal",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
-            "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Indicates whether the subscription was removed successfully"
-                }
-            }
+            "properties": {}
         }
     }
 }

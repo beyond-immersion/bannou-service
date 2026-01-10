@@ -2821,27 +2821,17 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "description": "Response after starting an encounter",
             "required": [
-                "success",
-                "actorId"
+                "actorId",
+                "encounterId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the encounter was started successfully"
-                },
                 "actorId": {
                     "type": "string",
                     "description": "ID of the actor managing the encounter"
                 },
                 "encounterId": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "ID of the started encounter (null if failed)"
-                },
-                "error": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Error message if the encounter could not be started"
+                    "description": "ID of the started encounter"
                 }
             }
         }
@@ -2941,14 +2931,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "description": "Response after updating encounter phase",
             "required": [
-                "success",
-                "actorId"
+                "actorId",
+                "currentPhase"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the phase was updated successfully"
-                },
                 "actorId": {
                     "type": "string",
                     "description": "ID of the actor managing the encounter"
@@ -2956,11 +2942,10 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "previousPhase": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Previous phase name (null if no encounter was active)"
+                    "description": "Previous phase name"
                 },
                 "currentPhase": {
                     "type": "string",
-                    "nullable": true,
                     "description": "Current phase name after update"
                 }
             }
@@ -3056,22 +3041,17 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "description": "Response after ending an encounter",
             "required": [
-                "success",
-                "actorId"
+                "actorId",
+                "encounterId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether an encounter was ended"
-                },
                 "actorId": {
                     "type": "string",
                     "description": "ID of the actor"
                 },
                 "encounterId": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "ID of the ended encounter (null if no encounter was active)"
+                    "description": "ID of the ended encounter"
                 },
                 "durationMs": {
                     "type": "integer",
