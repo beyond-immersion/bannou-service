@@ -61,6 +61,11 @@ x-service-configuration:
       description: Automatically requeue non-declining players when a match is declined
       default: true
       env: MATCHMAKING_AUTO_REQUEUE_ON_DECLINE
+    BackgroundServiceStartupDelaySeconds:
+      type: integer
+      description: Delay before background service starts processing (allows other services to initialize)
+      default: 5
+      env: MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS
     DefaultReservationTtlSeconds:
       type: integer
       description: Default TTL for player reservations in game sessions created by matchmaking

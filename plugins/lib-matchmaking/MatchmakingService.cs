@@ -1817,6 +1817,185 @@ public partial class MatchmakingService : IMatchmakingService
 
     #endregion
 
+    #region Background Processing
+
+    /// <summary>
+    /// Processes all active queues for interval-based matching.
+    /// Called by MatchmakingBackgroundService at configured intervals.
+    /// </summary>
+    internal async Task ProcessAllQueuesAsync(CancellationToken cancellationToken)
+    {
+        var queueIds = await GetQueueIdsAsync(cancellationToken);
+        _logger.LogDebug("Processing {Count} queues for interval matching", queueIds.Count);
+
+        foreach (var queueId in queueIds)
+        {
+            try
+            {
+                await ProcessQueueIntervalAsync(queueId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing queue {QueueId} for interval matching", queueId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Processes a single queue for interval-based matching.
+    /// Increments ticket intervals and tries to form matches.
+    /// </summary>
+    private async Task ProcessQueueIntervalAsync(string queueId, CancellationToken cancellationToken)
+    {
+        var queue = await LoadQueueAsync(queueId, cancellationToken);
+        if (queue == null || !queue.Enabled)
+        {
+            return;
+        }
+
+        var ticketIds = await GetQueueTicketIdsAsync(queueId, cancellationToken);
+        if (ticketIds.Count == 0)
+        {
+            return;
+        }
+
+        var tickets = new List<TicketModel>();
+        var ticketsToTimeout = new List<TicketModel>();
+
+        foreach (var ticketId in ticketIds)
+        {
+            var ticket = await LoadTicketAsync(ticketId, cancellationToken);
+            if (ticket == null)
+            {
+                continue;
+            }
+
+            if (ticket.Status != TicketStatus.Searching)
+            {
+                continue;
+            }
+
+            // Increment interval counter
+            ticket.IntervalsElapsed++;
+            await SaveTicketAsync(ticket, cancellationToken);
+
+            // Check for timeout
+            if (ticket.IntervalsElapsed >= queue.MaxIntervals)
+            {
+                if (queue.StartWhenMinimumReached)
+                {
+                    // Will try to start with minimum players
+                    tickets.Add(ticket);
+                }
+                else
+                {
+                    // Mark for timeout cancellation
+                    ticketsToTimeout.Add(ticket);
+                }
+            }
+            else
+            {
+                tickets.Add(ticket);
+            }
+        }
+
+        // Cancel timed-out tickets
+        foreach (var ticket in ticketsToTimeout)
+        {
+            _logger.LogInformation("Ticket {TicketId} timed out after {Intervals} intervals",
+                ticket.TicketId, ticket.IntervalsElapsed);
+            await CancelTicketInternalAsync(
+                ticket.TicketId,
+                ClientCancelReason.Timeout,
+                cancellationToken);
+        }
+
+        // Try to form matches with remaining tickets
+        if (tickets.Count >= queue.MinCount)
+        {
+            // Group tickets by intervals elapsed and process highest first (longest wait)
+            var groups = tickets
+                .GroupBy(t => t.IntervalsElapsed)
+                .OrderByDescending(g => g.Key);
+
+            foreach (var group in groups)
+            {
+                var groupTickets = group.ToList();
+                var skillRange = GetCurrentSkillRange(queue, group.Key);
+
+                _logger.LogDebug("Processing {Count} tickets at interval {Interval} with skill range {Range}",
+                    groupTickets.Count, group.Key, skillRange?.ToString() ?? "unlimited");
+
+                // Try to match tickets in this interval group
+                while (groupTickets.Count >= queue.MinCount)
+                {
+                    var matched = TryMatchTickets(groupTickets, queue, skillRange);
+                    if (matched != null && matched.Count >= queue.MinCount)
+                    {
+                        await FormMatchAsync(matched, queue, cancellationToken);
+
+                        // Remove matched tickets from consideration
+                        foreach (var t in matched)
+                        {
+                            groupTickets.Remove(t);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Publishes matchmaking statistics event.
+    /// Called by MatchmakingBackgroundService at configured intervals.
+    /// </summary>
+    internal async Task PublishStatsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var queueIds = await GetQueueIdsAsync(cancellationToken);
+            var stats = new List<Events.QueueStatsSnapshot>();
+
+            foreach (var queueId in queueIds)
+            {
+                var queue = await LoadQueueAsync(queueId, cancellationToken);
+                if (queue == null)
+                {
+                    continue;
+                }
+
+                var ticketCount = await GetQueueTicketCountAsync(queueId, cancellationToken);
+                stats.Add(new Events.QueueStatsSnapshot
+                {
+                    QueueId = queueId,
+                    ActiveTickets = ticketCount,
+                    MatchesFormedSinceLastSnapshot = 0 // Would need tracking between snapshots
+                });
+            }
+
+            var statsEvent = new Events.MatchmakingStatsEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Stats = stats
+            };
+
+            await _messageBus.TryPublishAsync("matchmaking.stats", statsEvent, cancellationToken);
+            _logger.LogDebug("Published matchmaking stats: {QueueCount} queues, {TotalTickets} tickets",
+                stats.Count, stats.Sum(s => s.ActiveTickets));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish matchmaking stats event");
+        }
+    }
+
+    #endregion
+
     #region Permission Registration
 
     /// <summary>

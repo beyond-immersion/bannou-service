@@ -51,13 +51,9 @@ public partial class GameSessionService : IGameSessionService
     private const string PLAYER_LEFT_TOPIC = "game-session.player-left";
 
     /// <summary>
-    /// Game service stub names that this service handles. Matches gameType enum.
+    /// Game service stub names that this service handles, populated from configuration.
     /// </summary>
-    private static readonly HashSet<string> _supportedGameServices = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "arcadia",
-        "generic"
-    };
+    private readonly HashSet<string> _supportedGameServices;
 
     /// <summary>
     /// Local cache of subscribed accounts: AccountId -> Set of subscribed stubNames.
@@ -138,6 +134,10 @@ public partial class GameSessionService : IGameSessionService
         _voiceClient = voiceClient;
         _permissionClient = permissionClient;
         _subscriptionClient = subscriptionClient;
+
+        // Initialize supported game services from configuration
+        var configuredServices = configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        _supportedGameServices = new HashSet<string>(configuredServices ?? new[] { "arcadia", "generic" }, StringComparer.OrdinalIgnoreCase);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -1957,7 +1957,7 @@ public partial class GameSessionService : IGameSessionService
     /// <summary>
     /// Checks if a service stub name is handled by this service.
     /// </summary>
-    private static bool IsOurService(string stubName)
+    private bool IsOurService(string stubName)
     {
         return _supportedGameServices.Contains(stubName);
     }

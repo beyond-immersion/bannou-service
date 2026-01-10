@@ -34,6 +34,9 @@ public class MatchmakingServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
+        // Register background service for interval-based match processing
+        services.AddHostedService<MatchmakingBackgroundService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 

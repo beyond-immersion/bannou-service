@@ -84,4 +84,28 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultLobbyMaxPlayers { get; set; } = 100;
 
+    /// <summary>
+    /// Interval between reservation cleanup cycles
+    /// Environment variable: GAME_SESSION_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    public int CleanupIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Delay before cleanup service starts (allows other services to initialize)
+    /// Environment variable: GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int CleanupServiceStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Delay before startup service initializes subscription caches
+    /// Environment variable: GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS
+    /// </summary>
+    public int StartupServiceDelaySeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Comma-separated list of supported game service stub names
+    /// Environment variable: GAME_SESSION_SUPPORTED_GAME_SERVICES
+    /// </summary>
+    public string SupportedGameServices { get; set; } = "arcadia,generic";
+
 }

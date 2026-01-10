@@ -109,6 +109,12 @@ public class MatchmakingServiceConfiguration : IServiceConfiguration
     public bool AutoRequeueOnDecline { get; set; } = true;
 
     /// <summary>
+    /// Delay before background service starts processing (allows other services to initialize)
+    /// Environment variable: MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int BackgroundServiceStartupDelaySeconds { get; set; } = 5;
+
+    /// <summary>
     /// Default TTL for player reservations in game sessions created by matchmaking
     /// Environment variable: MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS
     /// </summary>
