@@ -107,18 +107,10 @@ public class BehaviorTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGoapPlanNonExistentBehavior, "GoapPlanNonExistentBehavior", "Behavior", "Test GOAP plan 404 for non-existent behavior"),
         new ServiceTest(TestGoapPlanValidation, "GoapPlanValidation", "Behavior", "Test GOAP plan validation against world state"),
 
-        // Behavior stack tests
-        new ServiceTest(TestCompileBehaviorStack, "CompileBehaviorStack", "Behavior", "Test compiling stackable behavior sets"),
-        new ServiceTest(TestCompileBehaviorStackWithPriority, "CompileStackPriority", "Behavior", "Test behavior stack priority merging"),
-        new ServiceTest(TestCompileBehaviorStackEmptySets, "CompileStackEmpty", "Behavior", "Test behavior stack with empty sets"),
-
         // Cache invalidation tests
         new ServiceTest(TestInvalidateCachedBehavior, "InvalidateCachedBehavior", "Behavior", "Test invalidating cached behavior"),
         new ServiceTest(TestInvalidateNonExistentBehavior, "InvalidateNonExistent", "Behavior", "Test invalidating non-existent behavior"),
 
-        // Context variable resolution tests
-        new ServiceTest(TestResolveContextVariables, "ResolveContextVariables", "Behavior", "Test context variable resolution"),
-        new ServiceTest(TestResolveContextMissingVariables, "ResolveContextMissing", "Behavior", "Test context resolution with missing variables"),
     ];
 
     private static async Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
@@ -138,22 +130,18 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
-
+            // Success is implied by getting a response without exception
             if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
             if (response.CompilationTimeMs < 0)
                 return TestResult.Failed("Invalid compilation time");
 
+            var warningInfo = response.Warnings != null && response.Warnings.Any()
+                ? $", Warnings: {string.Join(", ", response.Warnings)}"
+                : "";
             return TestResult.Successful(
-                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
+                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms{warningInfo}");
         }, "Compile valid ABML");
 
     private static async Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
@@ -175,15 +163,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-                // Should return success=false with warnings for semantic errors
-                if (response.Success)
-                    return TestResult.Failed("Expected compilation to fail for invalid ABML");
-
-                if (response.Warnings == null || !response.Warnings.Any())
-                    return TestResult.Failed("Expected warnings for invalid ABML");
-
-                return TestResult.Successful(
-                    $"Correctly detected errors: {string.Join(", ", response.Warnings)}");
+                // If we got a response, compilation unexpectedly succeeded
+                return TestResult.Failed($"Expected compilation to fail for invalid ABML, but got behaviorId: {response.BehaviorId}");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
             {
@@ -210,10 +191,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-                if (response.Success)
-                    return TestResult.Failed("Expected compilation to fail for empty ABML");
-
-                return TestResult.Successful("Correctly rejected empty ABML");
+                // If we got a response, compilation unexpectedly succeeded
+                return TestResult.Failed($"Expected compilation to fail for empty ABML, but got behaviorId: {response.BehaviorId}");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
             {
@@ -288,14 +267,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
-
+            // Success is implied by getting a response without exception
             if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
@@ -332,13 +304,9 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
+            // Success is implied by getting a response without exception
+            if (string.IsNullOrEmpty(response.BehaviorId))
+                return TestResult.Failed("Behavior ID is empty");
 
             if (response.BehaviorName != "blacksmith-daily-routine")
                 return TestResult.Failed($"Expected behavior_name 'blacksmith-daily-routine', got '{response.BehaviorName}'");
@@ -386,14 +354,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             };
 
             var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(compileRequest));
-            if (!compileResponse.Success)
-            {
-                var warnings = compileResponse.Warnings != null
-                    ? string.Join(", ", compileResponse.Warnings)
-                    : "unknown error";
-                return TestResult.Failed($"Failed to compile GOAP behavior: {warnings}");
-            }
 
+            // Success is implied by getting a response without exception
             var behaviorId = compileResponse.BehaviorId;
             if (string.IsNullOrEmpty(behaviorId))
                 return TestResult.Failed("Behavior ID is empty after compilation");
@@ -424,7 +386,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var planResponse = await behaviorClient.GenerateGoapPlanAsync(planRequest);
 
-            if (!planResponse.Success)
+            // Success is indicated by plan != null; failure has failureReason
+            if (planResponse.Plan == null)
             {
                 // The plan might not be found if the goal isn't achievable - that's still valid
                 // We mainly want to verify the endpoint works
@@ -434,9 +397,6 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Successful(
                     $"GOAP planning executed, result: {planResponse.FailureReason}, time={planResponse.PlanningTimeMs}ms");
             }
-
-            if (planResponse.Plan == null)
-                return TestResult.Failed("Plan response succeeded but plan is null");
 
             return TestResult.Successful(
                 $"GOAP plan generated: {planResponse.Plan.Actions?.Count ?? 0} actions, " +
@@ -468,13 +428,13 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 var response = await behaviorClient.GenerateGoapPlanAsync(request);
 
                 // If we get a response, it should indicate failure with "not found"
-                if (!response.Success && response.FailureReason != null &&
+                if (response.Plan == null && response.FailureReason != null &&
                     response.FailureReason.Contains("not found", StringComparison.OrdinalIgnoreCase))
                 {
                     return TestResult.Successful("Correctly indicated behavior not found in response");
                 }
 
-                return TestResult.Failed($"Expected not found indication, got: success={response.Success}");
+                return TestResult.Failed($"Expected not found indication, got: plan={response.Plan != null}, reason={response.FailureReason}");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
@@ -530,168 +490,6 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"reason={response.Reason}");
         }, "GOAP plan validation");
 
-    #region Behavior Stack Tests
-
-    /// <summary>
-    /// Sample ABML YAML for base behavior in stacks.
-    /// </summary>
-    private const string BaseBehaviorAbml = """
-        version: "1.0"
-        name: base-behavior
-        context:
-        variables:
-            health: 100
-        flows:
-        main:
-            - emit:
-                channel: action
-                intent: idle
-                urgency: 0.3
-        """;
-
-    /// <summary>
-    /// Sample ABML YAML for cultural behavior in stacks.
-    /// </summary>
-    private const string CulturalBehaviorAbml = """
-        version: "1.0"
-        name: cultural-behavior
-        context:
-        variables:
-            greeting_style: "formal"
-        flows:
-        main:
-            - emit:
-                channel: social
-                intent: bow
-                urgency: 0.5
-        """;
-
-    private static async Task<TestResult> TestCompileBehaviorStack(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var behaviorClient = GetServiceClient<IBehaviorClient>();
-
-            var request = new BehaviorStackRequest
-            {
-                BehaviorSets = new List<BehaviorSetDefinition>
-                {
-                    new BehaviorSetDefinition
-                    {
-                        Id = "base-set",
-                        Priority = 10,
-                        Category = BehaviorSetDefinitionCategory.Base,
-                        AbmlContent = BaseBehaviorAbml
-                    },
-                    new BehaviorSetDefinition
-                    {
-                        Id = "cultural-set",
-                        Priority = 50,
-                        Category = BehaviorSetDefinitionCategory.Cultural,
-                        AbmlContent = CulturalBehaviorAbml
-                    }
-                },
-                CompilationOptions = new CompilationOptions
-                {
-                    EnableOptimizations = true,
-                    CacheCompiledResult = false
-                }
-            };
-
-            var response = await behaviorClient.CompileBehaviorStackAsync(request);
-
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Stack compilation failed: {warnings}");
-            }
-
-            if (string.IsNullOrEmpty(response.BehaviorId))
-                return TestResult.Failed("Behavior ID is empty");
-
-            return TestResult.Successful(
-                $"Stack compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
-        }, "Compile behavior stack");
-
-    private static async Task<TestResult> TestCompileBehaviorStackWithPriority(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var behaviorClient = GetServiceClient<IBehaviorClient>();
-
-            // Higher priority behavior should override lower priority
-            var request = new BehaviorStackRequest
-            {
-                BehaviorSets = new List<BehaviorSetDefinition>
-                {
-                    new BehaviorSetDefinition
-                    {
-                        Id = "low-priority",
-                        Priority = 10,
-                        Category = BehaviorSetDefinitionCategory.Base,
-                        AbmlContent = BaseBehaviorAbml
-                    },
-                    new BehaviorSetDefinition
-                    {
-                        Id = "high-priority",
-                        Priority = 90,
-                        Category = BehaviorSetDefinitionCategory.Personal,
-                        AbmlContent = CulturalBehaviorAbml
-                    }
-                },
-                CompilationOptions = new CompilationOptions
-                {
-                    EnableOptimizations = true,
-                    CacheCompiledResult = false
-                }
-            };
-
-            var response = await behaviorClient.CompileBehaviorStackAsync(request);
-
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Priority stack compilation failed: {warnings}");
-            }
-
-            return TestResult.Successful(
-                $"Priority stack compiled: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
-        }, "Compile behavior stack with priority");
-
-    private static async Task<TestResult> TestCompileBehaviorStackEmptySets(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var behaviorClient = GetServiceClient<IBehaviorClient>();
-
-            var request = new BehaviorStackRequest
-            {
-                BehaviorSets = new List<BehaviorSetDefinition>(),
-                CompilationOptions = new CompilationOptions
-                {
-                    CacheCompiledResult = false
-                }
-            };
-
-            try
-            {
-                var response = await behaviorClient.CompileBehaviorStackAsync(request);
-
-                // Empty stack should fail
-                if (response.Success)
-                    return TestResult.Failed("Expected empty stack to fail compilation");
-
-                return TestResult.Successful("Correctly rejected empty behavior stack");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 400)
-            {
-                return TestResult.Successful("Correctly returned 400 for empty behavior stack");
-            }
-        }, "Compile empty behavior stack");
-
-    #endregion
-
     #region Cache Invalidation Tests
 
     private static async Task<TestResult> TestInvalidateCachedBehavior(ITestClient client, string[] args) =>
@@ -714,7 +512,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(
                 BannouJson.Serialize(compileRequest));
 
-            if (!compileResponse.Success || string.IsNullOrEmpty(compileResponse.BehaviorId))
+            // Success is implied by getting a response without exception
+            if (string.IsNullOrEmpty(compileResponse.BehaviorId))
                 return TestResult.Failed("Failed to compile behavior for invalidation test");
 
             // Now invalidate it - void return means no exception = success
@@ -755,64 +554,4 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
     #endregion
 
-    #region Context Variable Resolution Tests
-
-    private static async Task<TestResult> TestResolveContextVariables(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var behaviorClient = GetServiceClient<IBehaviorClient>();
-
-            var request = new ResolveContextRequest
-            {
-                ContextExpression = "${npc.stats.health}",
-                CharacterContext = new CharacterContext
-                {
-                    NpcId = "test-npc-123",
-                    Stats = new Dictionary<string, double>
-                    {
-                        { "health", 100 },
-                        { "energy", 75 }
-                    }
-                }
-            };
-
-            var response = await behaviorClient.ResolveContextVariablesAsync(request);
-
-            if (response.ResolvedValue == null)
-                return TestResult.Failed("Resolved value is null");
-
-            var variablesUsed = response.ContextVariablesUsed?.Count ?? 0;
-            return TestResult.Successful(
-                $"Resolved context: value={response.ResolvedValue}, type={response.ResolvedType}, variables used={variablesUsed}");
-        }, "Resolve context variables");
-
-    private static async Task<TestResult> TestResolveContextMissingVariables(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var behaviorClient = GetServiceClient<IBehaviorClient>();
-
-            var request = new ResolveContextRequest
-            {
-                ContextExpression = "${nonexistent.path}",
-                CharacterContext = new CharacterContext
-                {
-                    NpcId = "test-npc-123"
-                }
-            };
-
-            try
-            {
-                var response = await behaviorClient.ResolveContextVariablesAsync(request);
-
-                // If it resolved anyway, the value might be null or a default
-                return TestResult.Successful(
-                    $"Missing variable handled: value={response.ResolvedValue}, type={response.ResolvedType}");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 400)
-            {
-                return TestResult.Successful("Correctly returned 400 for unresolvable expression");
-            }
-        }, "Resolve context with missing variables");
-
-    #endregion
 }

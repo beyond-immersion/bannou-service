@@ -719,22 +719,16 @@ public class ActorTestHandler : BaseHttpTestHandler
             // Give the actor a moment to start
             await Task.Delay(100);
 
-            // Start encounter
+            // Start encounter (void return - success = no exception)
             var participantId = Guid.NewGuid();
             var encounterId = GenerateTestSlug("enc");
-            var response = await actorClient.StartEncounterAsync(new StartEncounterRequest
+            await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
                 EncounterId = encounterId,
                 EncounterType = "combat",
                 Participants = new List<Guid> { participantId }
             });
-
-            if (!response.Success)
-                return TestResult.Failed($"Failed to start encounter: {response.Error}");
-
-            if (response.EncounterId != encounterId)
-                return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.EncounterId}");
 
             // Cleanup
             await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
@@ -837,15 +831,12 @@ public class ActorTestHandler : BaseHttpTestHandler
                 Participants = new List<Guid> { Guid.NewGuid() }
             });
 
-            // Update phase
+            // Update phase (success = no exception)
             var response = await actorClient.UpdateEncounterPhaseAsync(new UpdateEncounterPhaseRequest
             {
                 ActorId = actorId,
                 Phase = "executing"
             });
-
-            if (!response.Success)
-                return TestResult.Failed("Failed to update encounter phase");
 
             if (response.CurrentPhase != "executing")
                 return TestResult.Failed($"Phase not updated: expected executing, got {response.CurrentPhase}");
@@ -891,14 +882,11 @@ public class ActorTestHandler : BaseHttpTestHandler
                 Participants = new List<Guid> { Guid.NewGuid() }
             });
 
-            // End encounter
+            // End encounter (success = no exception)
             var response = await actorClient.EndEncounterAsync(new EndEncounterRequest
             {
                 ActorId = actorId
             });
-
-            if (!response.Success)
-                return TestResult.Failed("Failed to end encounter");
 
             if (response.EncounterId != encounterId)
                 return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.EncounterId}");
@@ -946,19 +934,16 @@ public class ActorTestHandler : BaseHttpTestHandler
             if (initial.HasActiveEncounter)
                 return TestResult.Failed("Unexpected active encounter on fresh actor");
 
-            // 3. Start encounter
+            // 3. Start encounter (void return - throws on failure)
             var participantId = Guid.NewGuid();
             var encounterId = GenerateTestSlug("full-flow-enc");
-            var startResp = await actorClient.StartEncounterAsync(new StartEncounterRequest
+            await actorClient.StartEncounterAsync(new StartEncounterRequest
             {
                 ActorId = actorId,
                 EncounterId = encounterId,
                 EncounterType = "combat",
                 Participants = new List<Guid> { participantId }
             });
-
-            if (!startResp.Success)
-                return TestResult.Failed($"Failed to start: {startResp.Error}");
 
             // 4. Verify encounter started
             var afterStart = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
@@ -971,7 +956,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 ActorId = actorId,
                 Phase = "executing"
             });
-            if (!phase1.Success || phase1.CurrentPhase != "executing")
+            if (phase1.CurrentPhase != "executing")
                 return TestResult.Failed("Phase update to executing failed");
 
             // 6. Update phase: executing -> complete
@@ -980,13 +965,11 @@ public class ActorTestHandler : BaseHttpTestHandler
                 ActorId = actorId,
                 Phase = "complete"
             });
-            if (!phase2.Success || phase2.CurrentPhase != "complete")
+            if (phase2.CurrentPhase != "complete")
                 return TestResult.Failed("Phase update to complete failed");
 
-            // 7. End encounter
-            var endResp = await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
-            if (!endResp.Success)
-                return TestResult.Failed("Failed to end encounter");
+            // 7. End encounter (returns response with encounter details)
+            await actorClient.EndEncounterAsync(new EndEncounterRequest { ActorId = actorId });
 
             // 8. Verify encounter ended
             var afterEnd = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });

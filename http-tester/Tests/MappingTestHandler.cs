@@ -537,9 +537,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             };
             var checkoutResponse = await mappingClient.CheckoutForAuthoringAsync(checkoutRequest);
 
-            if (!checkoutResponse.Success)
-                return TestResult.Failed("Checkout was not successful");
-
+            // Success is indicated by authorityToken being present
             if (string.IsNullOrEmpty(checkoutResponse.AuthorityToken))
                 return TestResult.Failed("Checkout did not return authority token");
 
@@ -563,7 +561,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 EditorId = GenerateTestId("editor1")
             };
             var firstResponse = await mappingClient.CheckoutForAuthoringAsync(firstCheckout);
-            if (!firstResponse.Success)
+            // Success is indicated by authorityToken being present
+            if (string.IsNullOrEmpty(firstResponse.AuthorityToken))
                 return TestResult.Failed("First checkout failed");
 
             // Second checkout should conflict
@@ -578,7 +577,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                 var secondResponse = await mappingClient.CheckoutForAuthoringAsync(secondCheckout);
 
                 // If status 409 was returned but no exception, check response
-                if (!secondResponse.Success && !string.IsNullOrEmpty(secondResponse.LockedBy))
+                if (string.IsNullOrEmpty(secondResponse.AuthorityToken) && !string.IsNullOrEmpty(secondResponse.LockedBy))
                 {
                     return TestResult.Successful($"Correctly detected lock by: {secondResponse.LockedBy}");
                 }
@@ -604,7 +603,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 EditorId = GenerateTestId("editor")
             };
             var checkoutResponse = await mappingClient.CheckoutForAuthoringAsync(checkoutRequest);
-            if (!checkoutResponse.Success || string.IsNullOrEmpty(checkoutResponse.AuthorityToken))
+            // Success is indicated by authorityToken being present
+            if (string.IsNullOrEmpty(checkoutResponse.AuthorityToken))
                 return TestResult.Failed("Checkout failed");
 
             // Commit
@@ -616,8 +616,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             };
             var commitResponse = await mappingClient.CommitAuthoringAsync(commitRequest);
 
-            if (!commitResponse.Success)
-                return TestResult.Failed("Commit was not successful");
+            // Success is implied by getting a response without exception
 
             return TestResult.Successful($"Authoring commit successful: Version={commitResponse.Version}");
         }, "Authoring commit");
@@ -636,7 +635,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 EditorId = GenerateTestId("editor")
             };
             var checkoutResponse = await mappingClient.CheckoutForAuthoringAsync(checkoutRequest);
-            if (!checkoutResponse.Success || string.IsNullOrEmpty(checkoutResponse.AuthorityToken))
+            // Success is indicated by authorityToken being present
+            if (string.IsNullOrEmpty(checkoutResponse.AuthorityToken))
                 return TestResult.Failed("Checkout failed");
 
             // Release without commit

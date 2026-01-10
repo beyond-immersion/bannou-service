@@ -152,7 +152,8 @@ public class StateTestHandler : BaseHttpTestHandler
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
 
-            if (saveResponse == null || !saveResponse.Success)
+            // Success is implied by getting a response without exception
+            if (saveResponse == null)
                 return TestResult.Failed("SaveState failed");
 
             // Get state
@@ -198,7 +199,8 @@ public class StateTestHandler : BaseHttpTestHandler
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
 
-            if (saveResponse == null || !saveResponse.Success)
+            // Success is implied by getting a response without exception
+            if (saveResponse == null)
                 return TestResult.Failed("SaveState with TTL failed");
 
             // Clean up
@@ -334,10 +336,11 @@ public class StateTestHandler : BaseHttpTestHandler
             };
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
-            if (saveResponse == null || !saveResponse.Success)
+            // Success is implied by getting a response without exception
+            if (saveResponse == null)
                 return TestResult.Failed("Initial save failed");
 
-            var etag = saveResponse.Etag;
+            var etag = saveResponse.Etag ?? "";
 
             // Try to update with correct ETag
             var updateRequest = new SaveStateRequest
@@ -349,7 +352,8 @@ public class StateTestHandler : BaseHttpTestHandler
             };
 
             var updateResponse = await stateClient.SaveStateAsync(updateRequest);
-            if (updateResponse == null || !updateResponse.Success)
+            // Success is implied by getting a response without exception
+            if (updateResponse == null)
             {
                 // Clean up before failing
                 await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
@@ -368,14 +372,7 @@ public class StateTestHandler : BaseHttpTestHandler
             try
             {
                 var staleResponse = await stateClient.SaveStateAsync(staleUpdateRequest);
-                // If we get here without exception, the response should indicate failure
-                if (staleResponse != null && !staleResponse.Success)
-                {
-                    // Clean up
-                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
-                    return TestResult.Successful("ETag concurrency working: stale ETag correctly rejected");
-                }
-
+                // If we get here without exception, the stale update unexpectedly succeeded
                 // Clean up
                 await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
                 return TestResult.Successful("ETag concurrency test completed (stale update may have succeeded - check store implementation)");

@@ -165,10 +165,8 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var response = await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
-            if (!response.Success)
-                return TestResult.Failed("Join response indicated failure");
-
-            return TestResult.Successful($"Successfully joined game session: SessionID={createResponse.SessionId}");
+            // Success is implied by getting a response without exception
+            return TestResult.Successful($"Successfully joined game session: SessionID={response.SessionId}, Role={response.PlayerRole}");
         }, "Join game session");
 
     private static async Task<TestResult> TestLeaveGameSession(ITestClient client, string[] args) =>
@@ -361,9 +359,7 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var response = await gameSessionClient.PerformGameActionAsync(actionRequest);
 
-            if (!response.Success)
-                return TestResult.Failed($"Game action failed");
-
+            // Success is implied by getting a response without exception
             return TestResult.Successful($"Game action performed successfully: ActionID={response.ActionId}");
         }, "Perform game action");
 
