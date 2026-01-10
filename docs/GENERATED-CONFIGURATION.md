@@ -279,6 +279,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
+| `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
 | `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
@@ -332,6 +334,23 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_TTL_TERRAIN` | int | `-1` | TTL for terrain layer data (-1 = no TTL, durable) |
 | `MAPPING_TTL_VISUAL_EFFECTS` | int | `60` | TTL for visual effects layer data (short-lived, ephemeral) |
 | `MAPPING_TTL_WEATHER_EFFECTS` | int | `600` | TTL for weather effects layer data |
+
+### Matchmaking
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `MATCHMAKING_AUTO_REQUEUE_ON_DECLINE` | bool | `true` | Automatically requeue non-declining players when a match is ... |
+| `MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS` | int | `120` | Default deadline for players to join the game session after ... |
+| `MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS` | int | `30` | Default time for players to accept a formed match |
+| `MATCHMAKING_DEFAULT_MAX_INTERVALS` | int | `6` | Default maximum intervals before timeout/relaxation |
+| `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | int | `120` | Default TTL for player reservations in game sessions created... |
+| `MATCHMAKING_ENABLED` | bool | `true` | Enable/disable Matchmaking service |
+| `MATCHMAKING_IMMEDIATE_MATCH_CHECK_ENABLED` | bool | `true` | Enable immediate match check on ticket creation (quick match... |
+| `MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER` | int | `3` | Maximum number of concurrent tickets a player can have |
+| `MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS` | int | `300` | TTL for pending match data in Redis (for reconnection handli... |
+| `MATCHMAKING_PROCESSING_INTERVAL_SECONDS` | int | `15` | Default interval between match processing cycles |
+| `MATCHMAKING_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS` | int | `60` | Interval between stats event publications |
 
 ### Mesh
 
@@ -516,9 +535,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 367
-- **Required (no default)**: 46
-- **Optional (has default)**: 321
+- **Total properties**: 381
+- **Required (no default)**: 47
+- **Optional (has default)**: 334
 
 ## Environment Variable Naming Convention
 

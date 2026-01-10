@@ -199,6 +199,30 @@ This document lists all events defined in Bannou's event schemas.
 | `MappingAuthorityReleasedEvent` | Custom | `mapping-authority-released` | Published when authority is explicitly released ov... |
 | `ObjectChangeEvent` | Custom | `object-change` | A single object change in an event |
 
+### Matchmaking
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `MatchmakingMatchAcceptedEvent` | Custom | `matchmaking-match-accepted` | Published when all players accept a match |
+| `MatchmakingMatchDeclinedEvent` | Custom | `matchmaking-match-declined` | Published when a player declines a match |
+| `MatchmakingMatchFormedEvent` | Custom | `matchmaking-match-formed` | Published when a match is successfully formed from... |
+| `MatchmakingStatsEvent` | Custom | `matchmaking-stats` | Published periodically with queue statistics for m... |
+| `MatchmakingTicketCancelledEvent` | Custom | `matchmaking-ticket-cancelled` | Published when a matchmaking ticket is cancelled |
+| `MatchmakingTicketCreatedEvent` | Lifecycle (Created) | `matchmaking-ticket.created` | Published when a new matchmaking ticket is created |
+| `MatchmakingTicketUpdatedEvent` | Lifecycle (Updated) | `matchmaking-ticket.updated` | Published when a matchmaking ticket status changes |
+
+### Matchmaking (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `MatchConfirmedEvent` | Custom | `match-confirmed` | Sent to all match participants when all players ha... |
+| `MatchDeclinedEvent` | Custom | `match-declined` | Sent to all match participants when someone declin... |
+| `MatchFoundEvent` | Custom | `match-found` | Sent to all matched players when a match is formed... |
+| `MatchPlayerAcceptedEvent` | Custom | `match-player-accepted` | Sent to all match participants when a player accep... |
+| `MatchmakingCancelledEvent` | Custom | `matchmaking-cancelled` | Sent when matchmaking is cancelled for any reason. |
+| `MatchmakingStatusUpdateEvent` | Custom | `matchmaking-status-update` | Periodic status update sent to players in queue. |
+| `QueueJoinedEvent` | Custom | `queue-joined` | Sent to the player when they successfully join a m... |
+
 ### Mesh
 
 | Event | Type | Likely Topic | Description |
