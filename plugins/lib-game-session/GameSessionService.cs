@@ -485,7 +485,6 @@ public partial class GameSessionService : IGameSessionService
             // Build response (SessionId = lobby ID so client knows which game they joined)
             var response = new JoinGameSessionResponse
             {
-                Success = true,
                 SessionId = lobbyId,
                 PlayerRole = JoinGameSessionResponsePlayerRole.Player,
                 GameData = model.GameSettings ?? new object(),
@@ -586,7 +585,6 @@ public partial class GameSessionService : IGameSessionService
 
             var response = new GameActionResponse
             {
-                Success = true,
                 ActionId = actionId,
                 Result = new Dictionary<string, object?>
                 {

@@ -1341,10 +1341,8 @@ public partial class ActorService : IActorService
 
             return (StatusCodes.OK, new StartEncounterResponse
             {
-                Success = true,
                 ActorId = body.ActorId,
-                EncounterId = body.EncounterId,
-                Error = null
+                EncounterId = body.EncounterId
             });
         }
         catch (Exception ex)
@@ -1405,7 +1403,6 @@ public partial class ActorService : IActorService
 
             return (StatusCodes.OK, new UpdateEncounterPhaseResponse
             {
-                Success = success,
                 ActorId = body.ActorId,
                 PreviousPhase = previousPhase,
                 CurrentPhase = success ? body.Phase : previousPhase
@@ -1479,7 +1476,6 @@ public partial class ActorService : IActorService
 
             return (StatusCodes.OK, new EndEncounterResponse
             {
-                Success = success,
                 ActorId = body.ActorId,
                 EncounterId = encounterId,
                 DurationMs = durationMs

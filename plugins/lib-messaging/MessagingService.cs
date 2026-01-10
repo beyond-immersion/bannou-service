@@ -161,7 +161,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
 
             return (StatusCodes.OK, new PublishEventResponse
             {
-                Success = success,
                 MessageId = messageId
             });
         }
@@ -354,7 +353,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             _logger.LogInformation("Removed subscription {SubscriptionId} from topic {Topic}",
                 body.SubscriptionId, entry.Topic);
 
-            return (StatusCodes.OK, new RemoveSubscriptionResponse { Success = true });
+            return (StatusCodes.OK, new RemoveSubscriptionResponse());
         }
         catch (Exception ex)
         {

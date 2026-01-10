@@ -200,7 +200,6 @@ public partial class MeshService : IMeshService
 
             var response = new RegisterEndpointResponse
             {
-                Success = true,
                 Endpoint = endpoint,
                 TtlSeconds = DEFAULT_TTL_SECONDS
             };
@@ -314,7 +313,6 @@ public partial class MeshService : IMeshService
 
             var response = new HeartbeatResponse
             {
-                Success = true,
                 NextHeartbeatSeconds = Math.Max(DEFAULT_TTL_SECONDS / 3, 10),
                 TtlSeconds = DEFAULT_TTL_SECONDS
             };

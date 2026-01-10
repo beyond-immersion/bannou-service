@@ -304,7 +304,6 @@ public partial class VoiceService : IVoiceService
 
                 return (StatusCodes.OK, new JoinVoiceRoomResponse
                 {
-                    Success = true,
                     RoomId = body.RoomId,
                     Tier = VoiceTier.Scaled,
                     Codec = ParseVoiceCodec(roomData.Codec),
@@ -368,7 +367,6 @@ public partial class VoiceService : IVoiceService
 
             return (StatusCodes.OK, new JoinVoiceRoomResponse
             {
-                Success = true,
                 RoomId = body.RoomId,
                 Tier = VoiceTier.P2p,
                 Codec = ParseVoiceCodec(roomData.Codec),

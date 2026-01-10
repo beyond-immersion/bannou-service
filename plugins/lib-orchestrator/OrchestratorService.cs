@@ -596,9 +596,8 @@ public partial class OrchestratorService : IOrchestratorService
                 var resetResult = await ResetToDefaultTopologyAsync(orchestrator, deploymentId, cancellationToken);
 
                 var resetDuration = DateTime.UtcNow - startTime;
-                return (StatusCodes.OK, new DeployResponse
+                return (resetResult.Success ? StatusCodes.OK : StatusCodes.InternalServerError, resetResult.Success ? new DeployResponse
                 {
-                    Success = resetResult.Success,
                     DeploymentId = deploymentId,
                     Backend = orchestrator.BackendType,
                     Preset = "default",
@@ -611,7 +610,7 @@ public partial class OrchestratorService : IOrchestratorService
                         Status = DeployedServiceStatus.Stopped,
                         Node = AppConstants.DEFAULT_APP_NAME
                     }).ToList()
-                });
+                } : null);
             }
             else if (!string.IsNullOrEmpty(body.Preset))
             {
@@ -1012,7 +1011,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             var response = new DeployResponse
             {
-                Success = success,
                 DeploymentId = deploymentId,
                 Backend = orchestrator.BackendType,
                 Duration = $"{duration.TotalSeconds:F1}s",
@@ -1244,7 +1242,6 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 return (StatusCodes.OK, new TeardownResponse
                 {
-                    Success = true,
                     Duration = "0s",
                     StoppedContainers = stoppedContainers,
                     RemovedVolumes = removedVolumes
@@ -1262,7 +1259,6 @@ public partial class OrchestratorService : IOrchestratorService
             var previewDuration = DateTime.UtcNow - startTime;
             var previewResponse = new TeardownResponse
             {
-                Success = true,
                 Duration = $"{previewDuration.TotalSeconds:F1}s",
                 StoppedContainers = servicesToTeardown,
                 RemovedVolumes = new List<string>(),
@@ -1291,7 +1287,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             var response = new TeardownResponse
             {
-                Success = success,
                 Duration = $"{duration.TotalSeconds:F1}s",
                 StoppedContainers = result.Stopped,
                 RemovedVolumes = result.RemovedVolumes,
@@ -1559,7 +1554,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             var response = new CleanResponse
             {
-                Success = unsupportedOperations.Count == 0 || cleanContainers,
                 ReclaimedSpaceMb = (int)(reclaimedBytes / (1024 * 1024)),
                 RemovedContainers = removedContainers,
                 RemovedNetworks = removedNetworks,
@@ -2019,7 +2013,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             var response = new TopologyUpdateResponse
             {
-                Success = allSucceeded,
                 AppliedChanges = appliedChanges,
                 Duration = $"{duration.TotalSeconds:F1}s",
                 Warnings = warnings,
@@ -2028,7 +2021,8 @@ public partial class OrchestratorService : IOrchestratorService
                     : $"Applied {successCount} change(s), {failCount} failed"
             };
 
-            return (allSucceeded ? StatusCodes.OK : StatusCodes.InternalServerError, response);
+            // Partial failure returns response with details; complete failure returns null
+            return (allSucceeded ? StatusCodes.OK : StatusCodes.InternalServerError, allSucceeded ? response : null);
         }
         catch (Exception ex)
         {
@@ -2182,7 +2176,6 @@ public partial class OrchestratorService : IOrchestratorService
 
             return (StatusCodes.OK, new ConfigRollbackResponse
             {
-                Success = true,
                 PreviousVersion = currentVersion,
                 CurrentVersion = newVersion,
                 ChangedKeys = changedKeys,

@@ -1180,7 +1180,6 @@ public partial class MappingService : IMappingService
 
             return (StatusCodes.OK, new AuthoringCheckoutResponse
             {
-                Success = true,
                 AuthorityToken = authorityToken,
                 ExpiresAt = expiresAt,
                 LockedBy = null,
@@ -1228,7 +1227,6 @@ public partial class MappingService : IMappingService
 
             return (StatusCodes.OK, new AuthoringCommitResponse
             {
-                Success = true,
                 Version = version
             });
         }

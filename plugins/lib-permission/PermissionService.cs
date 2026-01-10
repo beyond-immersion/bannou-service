@@ -287,7 +287,6 @@ public partial class PermissionService : IPermissionService
                 return (StatusCodes.OK, new RegistrationResponse
                 {
                     ServiceId = body.ServiceId,
-                    Success = true,
                     Message = "Permissions unchanged (idempotent)"
                 });
             }
@@ -492,7 +491,6 @@ public partial class PermissionService : IPermissionService
             return (StatusCodes.OK, new RegistrationResponse
             {
                 ServiceId = body.ServiceId,
-                Success = true,
                 Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
             });
         }
@@ -561,7 +559,6 @@ public partial class PermissionService : IPermissionService
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 SessionId = body.SessionId,
-                Success = true,
                 Message = $"Updated {body.ServiceId} state to {body.NewState}, version {newVersion}"
             });
         }
@@ -616,7 +613,6 @@ public partial class PermissionService : IPermissionService
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 SessionId = body.SessionId,
-                Success = true,
                 Message = $"Updated role to {body.NewRole}"
             });
         }
@@ -658,7 +654,6 @@ public partial class PermissionService : IPermissionService
                 return (StatusCodes.OK, new SessionUpdateResponse
                 {
                     SessionId = body.SessionId,
-                    Success = true,
                     PermissionsChanged = false,
                     Message = "No states were set for this session"
                 });
@@ -678,7 +673,6 @@ public partial class PermissionService : IPermissionService
                 return (StatusCodes.OK, new SessionUpdateResponse
                 {
                     SessionId = body.SessionId,
-                    Success = true,
                     PermissionsChanged = true,
                     Message = $"Cleared all {stateCount} states for session"
                 });
@@ -693,7 +687,6 @@ public partial class PermissionService : IPermissionService
                 return (StatusCodes.OK, new SessionUpdateResponse
                 {
                     SessionId = body.SessionId,
-                    Success = true,
                     PermissionsChanged = false,
                     Message = $"No state was set for service {body.ServiceId}"
                 });
@@ -713,7 +706,6 @@ public partial class PermissionService : IPermissionService
                     return (StatusCodes.OK, new SessionUpdateResponse
                     {
                         SessionId = body.SessionId,
-                        Success = true,
                         PermissionsChanged = false,
                         Message = $"Current state '{currentState}' does not match filter; not cleared"
                     });
@@ -735,7 +727,6 @@ public partial class PermissionService : IPermissionService
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 SessionId = body.SessionId,
-                Success = true,
                 PermissionsChanged = true,
                 Message = $"Cleared state '{currentState}' for service {body.ServiceId}"
             });
@@ -1309,7 +1300,6 @@ public partial class PermissionService : IPermissionService
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
-                Success = true,
                 SessionId = Guid.Parse(sessionId),
                 Message = "Session connection registered and capabilities published"
             });
@@ -1372,7 +1362,6 @@ public partial class PermissionService : IPermissionService
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
-                Success = true,
                 SessionId = Guid.Parse(sessionId),
                 Message = reconnectable
                     ? "Session connection removed (reconnectable)"

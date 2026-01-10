@@ -124,7 +124,6 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
         var response = new JoinVoiceRoomResponse
         {
-            Success = true,
             RoomId = roomId,
             Tier = VoiceTier.Scaled,
             Codec = ParseVoiceCodec(codec),

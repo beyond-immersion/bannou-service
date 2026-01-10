@@ -256,7 +256,6 @@ public partial class ConnectService : IConnectService
 
                 var response = new InternalProxyResponse
                 {
-                    Success = httpResponse.IsSuccessStatusCode,
                     StatusCode = (int)httpResponse.StatusCode,
                     Response = responseContent,
                     Headers = responseHeaders,
@@ -273,13 +272,12 @@ public partial class ConnectService : IConnectService
 
                 var errorResponse = new InternalProxyResponse
                 {
-                    Success = false,
                     StatusCode = 503,
                     Error = $"Service invocation failed: {meshEx.Message}",
                     ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
                 };
 
-                return (StatusCodes.InternalServerError, errorResponse);
+                return (StatusCodes.ServiceUnavailable, errorResponse);
             }
         }
         catch (Exception ex)

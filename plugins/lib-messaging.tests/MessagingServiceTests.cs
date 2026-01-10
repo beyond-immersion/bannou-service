@@ -118,7 +118,6 @@ public class MessagingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.NotEqual(Guid.Empty, response.MessageId);
     }
 
@@ -185,10 +184,9 @@ public class MessagingServiceTests
         // Act
         var (statusCode, response) = await _service.PublishEventAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - errors return null per IMPLEMENTATION TENETS
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
 
         _mockMessageBus.Verify(
             m => m.TryPublishErrorAsync(
@@ -424,7 +422,6 @@ public class MessagingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
 
         // Verify the handle was disposed
         mockHandle.Verify(x => x.DisposeAsync(), Times.Once);
@@ -442,10 +439,9 @@ public class MessagingServiceTests
         // Act
         var (statusCode, response) = await _service.RemoveSubscriptionAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - errors return null per IMPLEMENTATION TENETS
         Assert.Equal(StatusCodes.NotFound, statusCode);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -483,10 +479,9 @@ public class MessagingServiceTests
         // Act
         var (statusCode, response) = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
 
-        // Assert
+        // Assert - errors return null per IMPLEMENTATION TENETS
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
 
         _mockMessageBus.Verify(
             m => m.TryPublishErrorAsync(

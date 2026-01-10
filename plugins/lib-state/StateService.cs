@@ -109,7 +109,7 @@ public partial class StateService : IStateService
                     return (StatusCodes.Conflict, null);
                 }
 
-                return (StatusCodes.OK, new SaveStateResponse { Success = true });
+                return (StatusCodes.OK, new SaveStateResponse());
             }
 
             // Standard save - pass options directly (generated StateOptions type)
@@ -118,7 +118,6 @@ public partial class StateService : IStateService
             _logger.LogDebug("Saved state to store {StoreName} with key {Key}", body.StoreName, body.Key);
             return (StatusCodes.OK, new SaveStateResponse
             {
-                Success = true,
                 Etag = newEtag
             });
         }

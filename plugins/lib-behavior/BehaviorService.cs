@@ -212,7 +212,6 @@ public partial class BehaviorService : IBehaviorService
 
             return (StatusCodes.OK, new CompileBehaviorResponse
             {
-                Success = true,
                 BehaviorId = behaviorId,
                 BehaviorName = behaviorName,
                 CompiledBehavior = new CompiledBehavior
@@ -819,7 +818,6 @@ public partial class BehaviorService : IBehaviorService
             {
                 return (StatusCodes.OK, new GoapPlanResponse
                 {
-                    Success = false,
                     FailureReason = "No GOAP actions available in the compiled behavior",
                     PlanningTimeMs = 0,
                     NodesExpanded = 0
@@ -854,7 +852,6 @@ public partial class BehaviorService : IBehaviorService
             {
                 return (StatusCodes.OK, new GoapPlanResponse
                 {
-                    Success = false,
                     FailureReason = "No valid plan found - goal may be unreachable from current state",
                     PlanningTimeMs = 0,
                     NodesExpanded = 0
@@ -895,7 +892,6 @@ public partial class BehaviorService : IBehaviorService
 
             return (StatusCodes.OK, new GoapPlanResponse
             {
-                Success = true,
                 Plan = planResult,
                 PlanningTimeMs = (int)plan.PlanningTimeMs,
                 NodesExpanded = plan.NodesExpanded

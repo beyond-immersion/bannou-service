@@ -119,7 +119,6 @@ public class P2PCoordinator : IP2PCoordinator
         await Task.CompletedTask;
         var response = new JoinVoiceRoomResponse
         {
-            Success = true,
             RoomId = roomId,
             Tier = VoiceTier.P2p,
             Codec = ParseVoiceCodec(defaultCodec),

@@ -9880,11 +9880,6 @@
             Response from a proxied API call containing the target service's response data
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyResponse.Success">
-            <summary>
-            Whether the proxy request was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyResponse.StatusCode">
             <summary>
             HTTP status code from the target service
@@ -15369,11 +15364,6 @@
             Response after starting an encounter
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Success">
-            <summary>
-            Whether the encounter was started successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.ActorId">
             <summary>
             ID of the actor managing the encounter
@@ -15381,12 +15371,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.EncounterId">
             <summary>
-            ID of the started encounter (null if failed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Error">
-            <summary>
-            Error message if the encounter could not be started
+            ID of the started encounter
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest">
@@ -15409,11 +15394,6 @@
             Response after updating encounter phase
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.Success">
-            <summary>
-            Whether the phase was updated successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.ActorId">
             <summary>
             ID of the actor managing the encounter
@@ -15421,7 +15401,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.PreviousPhase">
             <summary>
-            Previous phase name (null if no encounter was active)
+            Previous phase name
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.CurrentPhase">
@@ -15444,11 +15424,6 @@
             Response after ending an encounter
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.Success">
-            <summary>
-            Whether an encounter was ended
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.ActorId">
             <summary>
             ID of the actor
@@ -15456,7 +15431,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.EncounterId">
             <summary>
-            ID of the ended encounter (null if no encounter was active)
+            ID of the ended encounter
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.DurationMs">
@@ -17095,11 +17070,6 @@
             Response from routing preference update
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.Success">
-            <summary>
-            Whether the routing preference was updated successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
             <summary>
             The preferred Connect service instance ID
@@ -17482,11 +17452,6 @@
             Response containing the results of an ABML behavior compilation
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Success">
-            <summary>
-            Whether compilation was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorId">
             <summary>
             Unique identifier for the compiled behavior (content-addressable hash)
@@ -17804,12 +17769,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResponse">
             <summary>
-            Response containing the generated GOAP plan or failure information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
-            <summary>
-            Whether planning was successful
+            Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Plan">
@@ -24105,11 +24065,6 @@
             Response after successfully joining a game session with role and permissions
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.Success">
-            <summary>
-            Whether the join operation was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.SessionId">
             <summary>
             ID of the joined game session
@@ -24268,11 +24223,6 @@
         <member name="T:BeyondImmersion.BannouService.GameSession.GameActionResponse">
             <summary>
             Response indicating the result of a game action with any state changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.Success">
-            <summary>
-            Whether the action was executed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.ActionId">
@@ -28163,11 +28113,6 @@
             Checkout response
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.Success">
-            <summary>
-            Whether checkout was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.AuthorityToken">
             <summary>
             Token for publishing changes (if successful)
@@ -28226,11 +28171,6 @@
         <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse">
             <summary>
             Commit response
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Success">
-            <summary>
-            Whether commit was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Version">
@@ -29095,11 +29035,6 @@
             Response after registering endpoint
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Mesh.RegisterEndpointResponse.Success">
-            <summary>
-            Whether the registration was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.RegisterEndpointResponse.Endpoint">
             <summary>
             The registered endpoint details
@@ -29153,11 +29088,6 @@
         <member name="T:BeyondImmersion.BannouService.Mesh.HeartbeatResponse">
             <summary>
             Response after heartbeat processed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatResponse.Success">
-            <summary>
-            Whether the heartbeat was processed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatResponse.NextHeartbeatSeconds">
@@ -29540,11 +29470,6 @@
             Response confirming event publication with message identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.Success">
-            <summary>
-            Indicates whether the event was published successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.MessageId">
             <summary>
             Unique identifier assigned to the published message
@@ -29632,12 +29557,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse">
             <summary>
-            Response confirming subscription removal status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse.Success">
-            <summary>
-            Indicates whether the subscription was removed successfully
+            Response confirming subscription removal
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Messaging.ListTopicsRequest">
@@ -31474,11 +31394,6 @@
             Result of a deployment operation including status and deployed service information
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.Success">
-            <summary>
-            Deployment succeeded
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.DeploymentId">
             <summary>
             Unique deployment identifier for tracking
@@ -31699,11 +31614,6 @@
             Result of an environment teardown including removed resources and any errors
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Success">
-            <summary>
-            Whether teardown completed successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Duration">
             <summary>
             Time taken to complete teardown
@@ -31772,11 +31682,6 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanResponse">
             <summary>
             Result of a cleanup operation including reclaimed space and removed resource counts
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.Success">
-            <summary>
-            Whether cleanup completed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.ReclaimedSpaceMb">
@@ -31917,11 +31822,6 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse">
             <summary>
             Result of a topology update including applied changes and the new topology state
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.Success">
-            <summary>
-            Whether all topology changes were applied successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.AppliedChanges">
@@ -32255,11 +32155,6 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse">
             <summary>
             Result of a configuration rollback including version changes and affected keys
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse.Success">
-            <summary>
-            Whether rollback completed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse.PreviousVersion">
@@ -33038,11 +32933,6 @@
             Service ID that was registered
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Permission.RegistrationResponse.Success">
-            <summary>
-            Whether registration was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Permission.RegistrationResponse.Message">
             <summary>
             Success or error message
@@ -33144,11 +33034,6 @@
         <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.SessionId">
             <summary>
             Session ID that was updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.Success">
-            <summary>
-            Whether update was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.Message">
@@ -39758,17 +39643,12 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.State.SaveStateResponse">
             <summary>
-            Response from a save operation containing the new ETag and success status
+            Response from a save operation containing the new ETag
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Etag">
             <summary>
             New ETag after save
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Success">
-            <summary>
-            Whether the save succeeded
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.State.DeleteStateRequest">
@@ -41126,11 +41006,6 @@
         <member name="T:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse">
             <summary>
             Response after joining a voice room
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Success">
-            <summary>
-            Whether join was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.RoomId">
