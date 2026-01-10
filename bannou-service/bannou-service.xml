@@ -52117,7 +52117,7 @@
             <param name="value">The value to store.</param>
             <param name="etag">The expected ETag - save fails if mismatch.</param>
             <param name="cancellationToken">Cancellation token.</param>
-            <returns>True if save succeeded, false if ETag mismatch.</returns>
+            <returns>The new ETag if save succeeded, null if ETag mismatch (conflict).</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IStateStore`1.DeleteAsync(System.String,System.Threading.CancellationToken)">
             <summary>

@@ -1387,15 +1387,16 @@ public partial class AssetService : IAssetService
             index.Add(assetId);
 
             // Try to save with ETag (fails if state changed since read)
-            var saved = etag == null || await indexStore.TrySaveAsync(indexKey, index, etag, cancellationToken).ConfigureAwait(false); // No ETag means new entry, just save it
-
-            if (saved || etag == null)
+            if (etag == null)
             {
-                if (etag == null)
-                {
-                    // First time creating this index
-                    await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken).ConfigureAwait(false);
-                }
+                // First time creating this index
+                await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken).ConfigureAwait(false);
+                return; // Success
+            }
+
+            var savedEtag = await indexStore.TrySaveAsync(indexKey, index, etag, cancellationToken).ConfigureAwait(false);
+            if (savedEtag != null)
+            {
                 return; // Success
             }
 

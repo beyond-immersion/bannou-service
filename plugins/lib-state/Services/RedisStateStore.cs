@@ -139,7 +139,7 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
-    public async Task<bool> TrySaveAsync(
+    public async Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
@@ -158,7 +158,7 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         {
             _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
                 key, _keyPrefix, etag, currentVersion.ToString());
-            return false;
+            return null;
         }
 
         // Perform optimistic update
@@ -179,15 +179,17 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
 
         if (success)
         {
+            // New version is original + 1
+            var newVersion = long.Parse(etag) + 1;
             _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
+            return newVersion.ToString();
         }
         else
         {
             _logger.LogDebug("Optimistic save failed (concurrent modification) for key '{Key}' in store '{Store}'",
                 key, _keyPrefix);
+            return null;
         }
-
-        return success;
     }
 
     /// <inheritdoc/>

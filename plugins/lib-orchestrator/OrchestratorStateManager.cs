@@ -203,23 +203,22 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                 index.AppIds.Add(appId);
                 index.LastUpdated = DateTimeOffset.UtcNow;
 
-                bool saved;
+                string? savedEtag;
                 if (etag != null)
                 {
-                    saved = await _heartbeatIndexStore.TrySaveAsync(HEARTBEAT_INDEX_KEY, index, etag);
+                    savedEtag = await _heartbeatIndexStore.TrySaveAsync(HEARTBEAT_INDEX_KEY, index, etag);
                 }
                 else
                 {
-                    await _heartbeatIndexStore.SaveAsync(HEARTBEAT_INDEX_KEY, index);
-                    saved = true;
+                    savedEtag = await _heartbeatIndexStore.SaveAsync(HEARTBEAT_INDEX_KEY, index);
                 }
 
-                if (saved)
+                if (savedEtag != null)
                 {
                     return; // Success
                 }
 
-                // TrySaveAsync returned false (ETag mismatch due to concurrent modification) - retry
+                // TrySaveAsync returned null (ETag mismatch due to concurrent modification) - retry
                 _logger.LogDebug(
                     "Heartbeat index update for {AppId} failed due to concurrent modification, retrying ({Retry}/{MaxRetries})",
                     appId, retry + 1, maxRetries);

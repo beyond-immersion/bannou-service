@@ -1316,7 +1316,7 @@ public partial class CharacterService : ICharacterService
                 }
 
                 // Otherwise use optimistic concurrency
-                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken))
+                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken) != null)
                     break;
 
                 // Retry on conflict
@@ -1357,7 +1357,7 @@ public partial class CharacterService : ICharacterService
 
             if (characterIds.Remove(characterId))
             {
-                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken))
+                if (await store.TrySaveAsync(realmIndexKey, characterIds, etag, cancellationToken) != null)
                     break;
 
                 // Retry on conflict

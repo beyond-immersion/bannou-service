@@ -102,14 +102,14 @@ public partial class StateService : IStateService
             // If ETag is provided, use optimistic concurrency
             if (!string.IsNullOrEmpty(body.Options?.Etag))
             {
-                var success = await store.TrySaveAsync(body.Key, body.Value, body.Options.Etag, cancellationToken);
-                if (!success)
+                var optimisticEtag = await store.TrySaveAsync(body.Key, body.Value, body.Options.Etag, cancellationToken);
+                if (optimisticEtag == null)
                 {
                     _logger.LogDebug("ETag mismatch for key {Key} in store {StoreName}", body.Key, body.StoreName);
                     return (StatusCodes.Conflict, null);
                 }
 
-                return (StatusCodes.OK, new SaveStateResponse());
+                return (StatusCodes.OK, new SaveStateResponse { Etag = optimisticEtag });
             }
 
             // Standard save - pass options directly (generated StateOptions type)

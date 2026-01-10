@@ -367,8 +367,8 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
             // Use optimistic concurrency if we have an etag
             if (etag != null)
             {
-                var saved = await store.TrySaveAsync(indexKey, index, etag, ct);
-                if (saved)
+                var savedEtag = await store.TrySaveAsync(indexKey, index, etag, ct);
+                if (savedEtag != null)
                 {
                     return;
                 }

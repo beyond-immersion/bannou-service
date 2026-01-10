@@ -238,10 +238,10 @@ public class InMemoryStateStoreTests : IDisposable
 
         // Act
         entity.Value = 100;
-        var success = await _store.TrySaveAsync("key1", entity, etag);
+        var newEtag = await _store.TrySaveAsync("key1", entity, etag);
 
         // Assert
-        Assert.True(success);
+        Assert.NotNull(newEtag);
         var retrieved = await _store.GetAsync("key1");
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
@@ -256,40 +256,40 @@ public class InMemoryStateStoreTests : IDisposable
 
         // Act
         entity.Value = 100;
-        var success = await _store.TrySaveAsync("key1", entity, "999"); // Wrong etag
+        var newEtag = await _store.TrySaveAsync("key1", entity, "999"); // Wrong etag
 
         // Assert
-        Assert.False(success);
+        Assert.Null(newEtag);
         var retrieved = await _store.GetAsync("key1");
         Assert.NotNull(retrieved);
         Assert.Equal(42, retrieved.Value); // Original value preserved
     }
 
     [Fact]
-    public async Task TrySaveAsync_WithInvalidETagFormat_ReturnsFalse()
+    public async Task TrySaveAsync_WithInvalidETagFormat_ReturnsNull()
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
         await _store.SaveAsync("key1", entity);
 
         // Act
-        var success = await _store.TrySaveAsync("key1", entity, "not-a-number");
+        var newEtag = await _store.TrySaveAsync("key1", entity, "not-a-number");
 
         // Assert
-        Assert.False(success);
+        Assert.Null(newEtag);
     }
 
     [Fact]
-    public async Task TrySaveAsync_WithNonExistentKey_ReturnsFalse()
+    public async Task TrySaveAsync_WithNonExistentKey_ReturnsNull()
     {
         // Arrange
         var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
 
         // Act
-        var success = await _store.TrySaveAsync("nonexistent", entity, "1");
+        var newEtag = await _store.TrySaveAsync("nonexistent", entity, "1");
 
         // Assert
-        Assert.False(success);
+        Assert.Null(newEtag);
     }
 
     [Fact]
@@ -308,9 +308,9 @@ public class InMemoryStateStoreTests : IDisposable
 
         var results = await Task.WhenAll(tasks);
 
-        // Assert - Only one should succeed
-        Assert.Equal(1, results.Count(r => r == true));
-        Assert.Equal(9, results.Count(r => r == false));
+        // Assert - Only one should succeed (non-null etag)
+        Assert.Equal(1, results.Count(r => r != null));
+        Assert.Equal(9, results.Count(r => r == null));
     }
 
     #endregion

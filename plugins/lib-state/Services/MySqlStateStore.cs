@@ -143,7 +143,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <inheritdoc/>
-    public async Task<bool> TrySaveAsync(
+    public async Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
@@ -162,7 +162,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
                 key, _storeName, etag, existing?.ETag ?? "(not found)");
-            return false;
+            return null;
         }
 
         var json = BannouJson.Serialize(value);
@@ -177,13 +177,13 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _storeName);
-            return true;
+            return newEtag;
         }
         catch (DbUpdateConcurrencyException)
         {
             _logger.LogDebug("Optimistic save failed (concurrent modification) for key '{Key}' in store '{Store}'",
                 key, _storeName);
-            return false;
+            return null;
         }
     }
 

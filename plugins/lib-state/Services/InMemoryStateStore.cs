@@ -172,7 +172,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     }
 
     /// <inheritdoc/>
-    public async Task<bool> TrySaveAsync(
+    public async Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
@@ -186,7 +186,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         if (!long.TryParse(etag, out var expectedVersion))
         {
             _logger.LogDebug("Invalid ETag format for key '{Key}' in store '{Store}'", key, _storeName);
-            return false;
+            return null;
         }
 
         var json = BannouJson.Serialize(value);
@@ -198,7 +198,7 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             {
                 _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
                     key, _storeName, etag, existing.Version);
-                return false;
+                return null;
             }
 
             var newEntry = new StoreEntry
@@ -212,12 +212,12 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
             if (_store.TryUpdate(key, newEntry, existing))
             {
                 _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _storeName);
-                return true;
+                return newEntry.Version.ToString();
             }
         }
 
         _logger.LogDebug("Optimistic save failed for key '{Key}' in store '{Store}'", key, _storeName);
-        return false;
+        return null;
     }
 
     /// <inheritdoc/>

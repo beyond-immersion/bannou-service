@@ -280,7 +280,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
             // Try to save with ETag for concurrency safety
             if (etag != null)
             {
-                if (await store.TrySaveAsync(indexKey, index, etag, ct))
+                if (await store.TrySaveAsync(indexKey, index, etag, ct) != null)
                 {
                     return; // Success
                 }
@@ -327,7 +327,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
 
             if (etag != null)
             {
-                if (await store.TrySaveAsync(indexKey, currentIndex, etag, ct))
+                if (await store.TrySaveAsync(indexKey, currentIndex, etag, ct) != null)
                 {
                     return; // Success
                 }

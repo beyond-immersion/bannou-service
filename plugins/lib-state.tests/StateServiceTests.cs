@@ -210,7 +210,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "old-etag", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+            .ReturnsAsync((string?)null);
 
         // Act
         var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
@@ -236,7 +236,7 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.TrySaveAsync("test-key", It.IsAny<object>(), "matching-etag", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync("new-etag-456");
 
         // Act
         var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
@@ -244,6 +244,7 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
+        Assert.Equal("new-etag-456", response.Etag);
     }
 
     [Fact]

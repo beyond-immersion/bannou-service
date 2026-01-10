@@ -171,7 +171,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     }
 
     /// <inheritdoc/>
-    public async Task<bool> TrySaveAsync(
+    public async Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
@@ -190,7 +190,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         {
             _logger.LogDebug("ETag mismatch for key '{Key}' in store '{Store}' (expected: {Expected}, actual: {Actual})",
                 key, _keyPrefix, etag, currentVersion.ToString());
-            return false;
+            return null;
         }
 
         // Perform optimistic update using transaction
@@ -209,8 +209,10 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             new("updated", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
         });
 
+        // New version is original + 1
+        var newVersion = long.Parse(etag) + 1;
         _logger.LogDebug("Optimistic save succeeded for key '{Key}' in store '{Store}'", key, _keyPrefix);
-        return true;
+        return newVersion.ToString();
     }
 
     /// <inheritdoc/>

@@ -287,6 +287,8 @@ public partial class PermissionService : IPermissionService
                 return (StatusCodes.OK, new RegistrationResponse
                 {
                     ServiceId = body.ServiceId,
+                    Registered = true,
+                    AffectedSessions = 0,
                     Message = "Permissions unchanged (idempotent)"
                 });
             }
@@ -491,6 +493,8 @@ public partial class PermissionService : IPermissionService
             return (StatusCodes.OK, new RegistrationResponse
             {
                 ServiceId = body.ServiceId,
+                Registered = true,
+                AffectedSessions = recompiledCount,
                 Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
             });
         }

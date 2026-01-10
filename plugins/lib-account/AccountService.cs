@@ -1210,11 +1210,11 @@ public partial class AccountService : IAccountService
                     accountIds.Add(accountId);
 
                     // Use optimistic concurrency - retry if etag mismatch
-                    var saved = string.IsNullOrEmpty(etag)
-                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken) != null
+                    var savedEtag = string.IsNullOrEmpty(etag)
+                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken)
                         : await indexStore.TrySaveAsync(ACCOUNT_LIST_KEY, accountIds, etag, cancellationToken);
 
-                    if (saved)
+                    if (savedEtag != null)
                     {
                         _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
                         return;
@@ -1256,11 +1256,11 @@ public partial class AccountService : IAccountService
                 if (accountIds.Remove(accountId))
                 {
                     // Use optimistic concurrency - retry if etag mismatch
-                    var saved = string.IsNullOrEmpty(etag)
-                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken) != null
+                    var savedEtag = string.IsNullOrEmpty(etag)
+                        ? await indexStore.SaveAsync(ACCOUNT_LIST_KEY, accountIds, cancellationToken: cancellationToken)
                         : await indexStore.TrySaveAsync(ACCOUNT_LIST_KEY, accountIds, etag, cancellationToken);
 
-                    if (saved)
+                    if (savedEtag != null)
                     {
                         _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
                         return;

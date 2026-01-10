@@ -76,8 +76,8 @@ public interface IStateStore<TValue>
     /// <param name="value">The value to store.</param>
     /// <param name="etag">The expected ETag - save fails if mismatch.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if save succeeded, false if ETag mismatch.</returns>
-    Task<bool> TrySaveAsync(
+    /// <returns>The new ETag if save succeeded, null if ETag mismatch (conflict).</returns>
+    Task<string?> TrySaveAsync(
         string key,
         TValue value,
         string etag,
