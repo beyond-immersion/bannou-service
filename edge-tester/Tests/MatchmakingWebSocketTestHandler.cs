@@ -140,7 +140,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Listing matchmaking queues via WebSocket...");
                     var response = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/list",
+                        "/matchmaking/queue/list",
                         new { gameId = "test-game" },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -200,7 +200,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Creating queue {queueId} via WebSocket...");
                     var createResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/create",
+                        "/matchmaking/queue/create",
                         new
                         {
                             queueId = queueId,
@@ -235,7 +235,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Cleaning up - deleting queue...");
                     await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/delete",
+                        "/matchmaking/queue/delete",
                         new { queueId = queueId },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -286,7 +286,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Step 1: Creating queue {queueId}...");
                     var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/create",
+                        "/matchmaking/queue/create",
                         new
                         {
                             queueId = queueId,
@@ -303,7 +303,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 2: Getting queue...");
                     var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/get",
+                        "/matchmaking/queue/get",
                         new { queueId = queueId },
                         timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
 
@@ -315,7 +315,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 3: Updating queue...");
                     var updateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/update",
+                        "/matchmaking/queue/update",
                         new
                         {
                             queueId = queueId,
@@ -339,7 +339,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 4: Deleting queue...");
                     await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/delete",
+                        "/matchmaking/queue/delete",
                         new { queueId = queueId },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -349,7 +349,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Step 5: Verifying deletion...");
                     var verifyResponse = await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/get",
+                        "/matchmaking/queue/get",
                         new { queueId = queueId },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -376,7 +376,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     {
                         await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/matchmaking/queues/delete",
+                            "/matchmaking/queue/delete",
                             new { queueId = queueId },
                             timeout: TimeSpan.FromSeconds(2));
                     }
@@ -439,7 +439,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Step 2: Creating queue {queueId}...");
                     await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/create",
+                        "/matchmaking/queue/create",
                         new
                         {
                             queueId = queueId,
@@ -466,7 +466,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                         // Cleanup
                         await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/matchmaking/queues/delete",
+                            "/matchmaking/queue/delete",
                             new { queueId = queueId },
                             timeout: TimeSpan.FromSeconds(2));
                         return false;
@@ -490,7 +490,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine("   Cleaning up...");
                     await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
-                        "/matchmaking/queues/delete",
+                        "/matchmaking/queue/delete",
                         new { queueId = queueId },
                         timeout: TimeSpan.FromSeconds(5));
 
@@ -504,7 +504,7 @@ public class MatchmakingWebSocketTestHandler : IServiceTestHandler
                     {
                         await adminClient.InvokeAsync<object, JsonElement>(
                             "POST",
-                            "/matchmaking/queues/delete",
+                            "/matchmaking/queue/delete",
                             new { queueId = queueId },
                             timeout: TimeSpan.FromSeconds(2));
                     }
