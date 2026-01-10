@@ -1,0 +1,7 @@
+version: '2.0'
+metadata:
+  id: ceil-test
+flows:
+  main:
+    actions:
+      - global: { variable: result, value: 'ceil(42.1)' }

@@ -1,0 +1,8 @@
+version: '2.0'
+metadata:
+  id: minmax-test
+flows:
+  main:
+    actions:
+      - global: { variable: minResult, value: 'min(30, 50)' }
+      - global: { variable: maxResult, value: 'max(30, 50)' }

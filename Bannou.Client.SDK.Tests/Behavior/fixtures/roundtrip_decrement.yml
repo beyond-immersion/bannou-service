@@ -1,0 +1,10 @@
+version: '2.0'
+metadata:
+  id: decrement-test
+flows:
+  main:
+    actions:
+      - local: { variable: counter, value: '10' }
+      - decrement: { variable: counter }
+      - decrement: { variable: counter }
+      - global: { variable: result, value: 'counter' }

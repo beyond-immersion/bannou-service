@@ -23,15 +23,7 @@ public class RoundTripTests
     public void RoundTrip_SimpleSet_ProducesCorrectOutput()
     {
         // Use 'global:' to explicitly set output variables (set: treats unknowns as locals)
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: simple-set
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: '42' }
-";
+        var yaml = TestFixtures.Load("roundtrip_simple_set");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -41,15 +33,7 @@ flows:
     [Fact]
     public void RoundTrip_Addition_ProducesCorrectOutput()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: addition-test
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: '10 + 32' }
-";
+        var yaml = TestFixtures.Load("roundtrip_addition");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -59,15 +43,7 @@ flows:
     [Fact]
     public void RoundTrip_ComplexArithmetic_ProducesCorrectOutput()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: complex-arithmetic
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: '(10 + 5) * 2 - 8 / 2' }
-";
+        var yaml = TestFixtures.Load("roundtrip_complex_arithmetic");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -83,18 +59,7 @@ flows:
     public void RoundTrip_InputVariable_ReadsFromInput()
     {
         // Variables in context.variables are registered as inputs
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: input-test
-context:
-  variables:
-    health: { default: 100 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'health * 2' }
-";
+        var yaml = TestFixtures.Load("roundtrip_input_variable");
 
         var output = CompileAndExecute(yaml, inputs: new[] { 50.0 }, outputCount: 1);
 
@@ -104,20 +69,7 @@ flows:
     [Fact]
     public void RoundTrip_MultipleInputs_AllAccessible()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: multi-input-test
-context:
-  variables:
-    a: { default: 0 }
-    b: { default: 0 }
-    c: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'a + b * c' }
-";
+        var yaml = TestFixtures.Load("roundtrip_multiple_inputs");
 
         var output = CompileAndExecute(yaml, inputs: new[] { 10.0, 5.0, 3.0 }, outputCount: 1);
 
@@ -132,18 +84,7 @@ flows:
     [Fact]
     public void RoundTrip_Comparison_LessThan()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: comparison-test
-context:
-  variables:
-    x: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'x < 50 ? 1 : 0' }
-";
+        var yaml = TestFixtures.Load("roundtrip_comparison");
 
         var outputTrue = CompileAndExecute(yaml, inputs: new[] { 30.0 }, outputCount: 1);
         Assert.Equal(1.0, outputTrue[0]);  // 30 < 50 is true
@@ -155,18 +96,7 @@ flows:
     [Fact]
     public void RoundTrip_TernaryOperator_ChoosesBranch()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: ternary-test
-context:
-  variables:
-    value: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'value > 0 ? 100 : -100' }
-";
+        var yaml = TestFixtures.Load("roundtrip_ternary");
 
         var positive = CompileAndExecute(yaml, inputs: new[] { 5.0 }, outputCount: 1);
         Assert.Equal(100.0, positive[0]);
@@ -182,16 +112,7 @@ flows:
     [Fact]
     public void RoundTrip_LocalVariable_StoresAndReads()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: local-var-test
-flows:
-  main:
-    actions:
-    - local: { variable: temp, value: '21' }
-    - global: { variable: result, value: 'temp * 2' }
-";
+        var yaml = TestFixtures.Load("roundtrip_local_variable");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -201,18 +122,7 @@ flows:
     [Fact]
     public void RoundTrip_MultipleLocals_IndependentStorage()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: multi-local-test
-flows:
-  main:
-    actions:
-    - local: { variable: a, value: '10' }
-    - local: { variable: b, value: '20' }
-    - local: { variable: c, value: '12' }
-    - global: { variable: result, value: 'a + b + c' }
-";
+        var yaml = TestFixtures.Load("roundtrip_multiple_locals");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -226,15 +136,7 @@ flows:
     [Fact]
     public void RoundTrip_Abs_NegativeToPositive()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: abs-test
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'abs(-42)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_abs");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -244,18 +146,7 @@ flows:
     [Fact]
     public void RoundTrip_Clamp_BoundsValue()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: clamp-test
-context:
-  variables:
-    value: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'clamp(value, 0, 100)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_clamp");
 
         var low = CompileAndExecute(yaml, inputs: new[] { -50.0 }, outputCount: 1);
         Assert.Equal(0.0, low[0]);
@@ -270,16 +161,7 @@ flows:
     [Fact]
     public void RoundTrip_MinMax_SelectsExtreme()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: minmax-test
-flows:
-  main:
-    actions:
-    - global: { variable: minResult, value: 'min(30, 50)' }
-    - global: { variable: maxResult, value: 'max(30, 50)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_minmax");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 2);
 
@@ -290,15 +172,7 @@ flows:
     [Fact]
     public void RoundTrip_Lerp_Interpolates()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: lerp-test
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'lerp(0, 100, 0.5)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_lerp");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -308,15 +182,7 @@ flows:
     [Fact]
     public void RoundTrip_Floor_RoundsDown()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: floor-test
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'floor(42.9)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_floor");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -326,15 +192,7 @@ flows:
     [Fact]
     public void RoundTrip_Ceil_RoundsUp()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: ceil-test
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'ceil(42.1)' }
-";
+        var yaml = TestFixtures.Load("roundtrip_ceil");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -348,19 +206,7 @@ flows:
     [Fact]
     public void RoundTrip_LogicalAnd_ShortCircuits()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: logical-and-test
-context:
-  variables:
-    a: { default: 0 }
-    b: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'a > 0 && b > 0 ? 1 : 0' }
-";
+        var yaml = TestFixtures.Load("roundtrip_logical_and");
 
         var bothTrue = CompileAndExecute(yaml, inputs: new[] { 5.0, 10.0 }, outputCount: 1);
         Assert.Equal(1.0, bothTrue[0]);
@@ -375,19 +221,7 @@ flows:
     [Fact]
     public void RoundTrip_LogicalOr_ShortCircuits()
     {
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: logical-or-test
-context:
-  variables:
-    a: { default: 0 }
-    b: { default: 0 }
-flows:
-  main:
-    actions:
-    - global: { variable: result, value: 'a > 0 || b > 0 ? 1 : 0' }
-";
+        var yaml = TestFixtures.Load("roundtrip_logical_or");
 
         var bothFalse = CompileAndExecute(yaml, inputs: new[] { -5.0, -10.0 }, outputCount: 1);
         Assert.Equal(0.0, bothFalse[0]);
@@ -407,19 +241,7 @@ flows:
     public void RoundTrip_Increment_AddsOne()
     {
         // Use local for counter since outputs are write-only (no PushOutput opcode)
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: increment-test
-flows:
-  main:
-    actions:
-    - local: { variable: counter, value: '10' }
-    - increment: { variable: counter }
-    - increment: { variable: counter }
-    - increment: { variable: counter }
-    - global: { variable: result, value: 'counter' }
-";
+        var yaml = TestFixtures.Load("roundtrip_increment");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
@@ -430,18 +252,7 @@ flows:
     public void RoundTrip_Decrement_SubtractsOne()
     {
         // Use local for counter since outputs are write-only
-        const string yaml = @"
-version: '2.0'
-metadata:
-  id: decrement-test
-flows:
-  main:
-    actions:
-    - local: { variable: counter, value: '10' }
-    - decrement: { variable: counter }
-    - decrement: { variable: counter }
-    - global: { variable: result, value: 'counter' }
-";
+        var yaml = TestFixtures.Load("roundtrip_decrement");
 
         var output = CompileAndExecute(yaml, inputCount: 0, outputCount: 1);
 
