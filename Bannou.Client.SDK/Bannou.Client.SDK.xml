@@ -3827,6 +3827,21 @@
         <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.Entities">
             <summary>All entity states at this tick.</summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.Phase">
+            <summary>Current combat phase (0=Waiting, 1=Countdown, 2=Fighting, 3=Opportunity, 4=Cinematic, 5=Finished).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.CinematicId">
+            <summary>Cinematic ID when in cinematic phase (null otherwise).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.CinematicAttacker">
+            <summary>Cinematic attacker entity slot (0=MonsterA, 1=MonsterB).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.CinematicDefender">
+            <summary>Cinematic defender entity slot (0=MonsterA, 1=MonsterB).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameProtocol.Messages.ArenaStateSnapshot.CinematicTargetId">
+            <summary>Cinematic target object ID (e.g., boulder ID).</summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.GameProtocol.Messages.EntityState">
             <summary>
             Basic entity state for snapshots.
@@ -11733,6 +11748,550 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent">
+            <summary>
+            Published when a scene is instantiated in the game world.
+            <br/>Consumers (Mapping, Actor, etc.) react to spawn spatial objects and NPCs.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.InstanceId">
+            <summary>
+            Unique instance identifier (caller-provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.SceneAssetId">
+            <summary>
+            Source scene asset ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.SceneVersion">
+            <summary>
+            Version that was instantiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.SceneName">
+            <summary>
+            Scene name (for logging and display)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.GameId">
+            <summary>
+            Game ID from the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.SceneType">
+            <summary>
+            Scene type from the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.RegionId">
+            <summary>
+            Region where the scene was placed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.WorldTransform">
+            <summary>
+            World-space transform for scene origin
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.Metadata">
+            <summary>
+            Caller-provided metadata passed through to consumers
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent.InstantiatedBy">
+            <summary>
+            App-id of the instantiator
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneDestroyedEvent">
+            <summary>
+            Published when a scene instance is removed from the game world
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.InstanceId">
+            <summary>
+            Instance that was destroyed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.SceneAssetId">
+            <summary>
+            Source scene asset ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.RegionId">
+            <summary>
+            Region where the instance was located
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.DestroyedBy">
+            <summary>
+            App-id of the destroyer
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDestroyedEvent.Metadata">
+            <summary>
+            Caller-provided metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent">
+            <summary>
+            Published when a scene is locked for editing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent.SceneId">
+            <summary>
+            ID of the scene being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent.SceneName">
+            <summary>
+            Name of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent.GameId">
+            <summary>
+            Game ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent.CheckedOutBy">
+            <summary>
+            Identifier of the editor (accountId or app-id)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckedOutEvent.ExpiresAt">
+            <summary>
+            When the checkout lock expires
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneCommittedEvent">
+            <summary>
+            Published when checkout changes are committed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.SceneId">
+            <summary>
+            ID of the committed scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.SceneName">
+            <summary>
+            Name of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.GameId">
+            <summary>
+            Game ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.Version">
+            <summary>
+            New version after commit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.PreviousVersion">
+            <summary>
+            Version before commit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.CommittedBy">
+            <summary>
+            Identifier of the committer
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.ChangesSummary">
+            <summary>
+            Optional summary of changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCommittedEvent.NodeCount">
+            <summary>
+            Node count after commit
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneCheckoutDiscardedEvent">
+            <summary>
+            Published when a checkout is discarded without saving
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutDiscardedEvent.SceneId">
+            <summary>
+            ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutDiscardedEvent.SceneName">
+            <summary>
+            Name of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutDiscardedEvent.GameId">
+            <summary>
+            Game ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutDiscardedEvent.DiscardedBy">
+            <summary>
+            Identifier of who discarded
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent">
+            <summary>
+            Published when a checkout lock expires due to TTL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent.SceneId">
+            <summary>
+            ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent.SceneName">
+            <summary>
+            Name of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent.GameId">
+            <summary>
+            Game ID of the scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent.ExpiredAt">
+            <summary>
+            When the lock actually expired
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCheckoutExpiredEvent.OriginalCheckoutBy">
+            <summary>
+            Who originally checked out the scene
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneValidationRulesUpdatedEvent">
+            <summary>
+            Published when validation rules are registered or updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneValidationRulesUpdatedEvent.GameId">
+            <summary>
+            Game ID for the rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneValidationRulesUpdatedEvent.SceneType">
+            <summary>
+            Scene type for the rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneValidationRulesUpdatedEvent.RuleCount">
+            <summary>
+            Number of active rules after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneValidationRulesUpdatedEvent.UpdatedBy">
+            <summary>
+            Who updated the rules
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BrokenReferenceReason">
+            <summary>
+            Reason why a scene reference became broken
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent">
+            <summary>
+            Published when a referenced scene becomes unavailable.
+            <br/>This is an edge case event - normally deletion is blocked if references exist.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.AffectedSceneId">
+            <summary>
+            Scene containing the broken reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.AffectedSceneName">
+            <summary>
+            Name of the affected scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.AffectedNodeId">
+            <summary>
+            Node with the broken reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.AffectedNodeRefId">
+            <summary>
+            refId of the affected node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.BrokenReferenceSceneId">
+            <summary>
+            Scene that is no longer available
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.BrokenReferenceSceneName">
+            <summary>
+            Name of the scene that is no longer available
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneReferenceBrokenEvent.Reason">
+            <summary>
+            Why the reference broke
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventTransform">
+            <summary>
+            Transform for event payloads
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventTransform.Position">
+            <summary>
+            World position
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventTransform.Rotation">
+            <summary>
+            World rotation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventTransform.Scale">
+            <summary>
+            World scale
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventVector3">
+            <summary>
+            3D vector for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventVector3.X">
+            <summary>
+            X component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventVector3.Y">
+            <summary>
+            Y component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventVector3.Z">
+            <summary>
+            Z component
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventQuaternion">
+            <summary>
+            Quaternion for events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventQuaternion.X">
+            <summary>
+            X component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventQuaternion.Y">
+            <summary>
+            Y component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventQuaternion.Z">
+            <summary>
+            Z component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.EventQuaternion.W">
+            <summary>
+            W component
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneCreatedEvent">
+            <summary>
+            Published to scene.created when a scene is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.EventName">
+            <summary>
+            Event type identifier: scene.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.SceneId">
+            <summary>
+            Unique scene identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.GameId">
+            <summary>
+            Game service identifier for partitioning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.SceneType">
+            <summary>
+            Scene classification (region, building, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.Name">
+            <summary>
+            Human-readable scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.Description">
+            <summary>
+            Optional scene description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.Version">
+            <summary>
+            Semantic version (MAJOR.MINOR.PATCH)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.Tags">
+            <summary>
+            Searchable tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.NodeCount">
+            <summary>
+            Total number of nodes in scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneCreatedEvent.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneUpdatedEvent">
+            <summary>
+            Published to scene.updated when a scene is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: scene.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.SceneId">
+            <summary>
+            Unique scene identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.GameId">
+            <summary>
+            Game service identifier for partitioning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.SceneType">
+            <summary>
+            Scene classification (region, building, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.Name">
+            <summary>
+            Human-readable scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.Description">
+            <summary>
+            Optional scene description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.Version">
+            <summary>
+            Semantic version (MAJOR.MINOR.PATCH)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.Tags">
+            <summary>
+            Searchable tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.NodeCount">
+            <summary>
+            Total number of nodes in scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SceneDeletedEvent">
+            <summary>
+            Published to scene.deleted when a scene is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.EventName">
+            <summary>
+            Event type identifier: scene.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.SceneId">
+            <summary>
+            Unique scene identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.GameId">
+            <summary>
+            Game service identifier for partitioning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.SceneType">
+            <summary>
+            Scene classification (region, building, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.Name">
+            <summary>
+            Human-readable scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.Description">
+            <summary>
+            Optional scene description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.Version">
+            <summary>
+            Semantic version (MAJOR.MINOR.PATCH)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.Tags">
+            <summary>
+            Searchable tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.NodeCount">
+            <summary>
+            Total number of nodes in scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SceneDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.SpeciesMergedEvent">
             <summary>
             Published when two species are merged, with the source species being deprecated
@@ -14085,11 +14644,6 @@
             Response from a proxied API call containing the target service's response data
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyResponse.Success">
-            <summary>
-            Whether the proxy request was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyResponse.StatusCode">
             <summary>
             HTTP status code from the target service
@@ -14127,26 +14681,6 @@
             Connection state data returned for connection service requests.
             <br/>Currently a placeholder for future connection metadata.
             <br/>
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectErrorResponse">
-            <summary>
-            Error response returned when WebSocket connection establishment fails
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Error">
-            <summary>
-            Error type identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Message">
-            <summary>
-            Human-readable error description
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.StatusCode">
-            <summary>
-            HTTP status code
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
@@ -17855,31 +18389,6 @@
             Optional initial data for the encounter
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Actor.StartEncounterResponse">
-            <summary>
-            Response after starting an encounter
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Success">
-            <summary>
-            Whether the encounter was started successfully
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.ActorId">
-            <summary>
-            ID of the actor managing the encounter
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.EncounterId">
-            <summary>
-            ID of the started encounter (null if failed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.Error">
-            <summary>
-            Error message if the encounter could not be started
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest">
             <summary>
             Request to update the phase of an active encounter
@@ -17900,11 +18409,6 @@
             Response after updating encounter phase
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.Success">
-            <summary>
-            Whether the phase was updated successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.ActorId">
             <summary>
             ID of the actor managing the encounter
@@ -17912,7 +18416,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.PreviousPhase">
             <summary>
-            Previous phase name (null if no encounter was active)
+            Previous phase name
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseResponse.CurrentPhase">
@@ -17935,11 +18439,6 @@
             Response after ending an encounter
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.Success">
-            <summary>
-            Whether an encounter was ended
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.ActorId">
             <summary>
             ID of the actor
@@ -17947,7 +18446,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.EncounterId">
             <summary>
-            ID of the ended encounter (null if no encounter was active)
+            ID of the ended encounter
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Actor.EndEncounterResponse.DurationMs">
@@ -18882,11 +19381,6 @@
             Response from routing preference update
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.Success">
-            <summary>
-            Whether the routing preference was updated successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
             <summary>
             The preferred Connect service instance ID
@@ -18993,11 +19487,6 @@
         <member name="T:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse">
             <summary>
             Response containing the results of an ABML behavior compilation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.Success">
-            <summary>
-            Whether compilation was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.CompileBehaviorResponse.BehaviorId">
@@ -19317,12 +19806,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GoapPlanResponse">
             <summary>
-            Response containing the generated GOAP plan or failure information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Success">
-            <summary>
-            Whether planning was successful
+            Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Behavior.GoapPlanResponse.Plan">
@@ -19518,51 +20002,6 @@
         <member name="P:BeyondImmersion.BannouService.Behavior.ValidationError.YamlPath">
             <summary>
             YAML path to the problematic element
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse">
-            <summary>
-            Error response for ABML operations with detailed error information and context
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error">
-            <summary>
-            Error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ErrorCode">
-            <summary>
-            Specific error code for programmatic handling
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Details">
-            <summary>
-            Detailed error information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ValidationErrors">
-            <summary>
-            Validation errors encountered
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.YamlLine">
-            <summary>
-            Line number in YAML where error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Context">
-            <summary>
-            Additional context about the error
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Timestamp">
-            <summary>
-            When the error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
-            <summary>
-            Unique identifier for the failed request
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.CharacterHistory.EventCategory">
@@ -23231,11 +23670,6 @@
             Response after successfully joining a game session with role and permissions
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.Success">
-            <summary>
-            Whether the join operation was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionResponse.SessionId">
             <summary>
             ID of the joined game session
@@ -23394,11 +23828,6 @@
         <member name="T:BeyondImmersion.BannouService.GameSession.GameActionResponse">
             <summary>
             Response indicating the result of a game action with any state changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.Success">
-            <summary>
-            Whether the action was executed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameActionResponse.ActionId">
@@ -25689,11 +26118,6 @@
             Checkout response
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.Success">
-            <summary>
-            Whether checkout was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCheckoutResponse.AuthorityToken">
             <summary>
             Token for publishing changes (if successful)
@@ -25752,11 +26176,6 @@
         <member name="T:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse">
             <summary>
             Commit response
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Success">
-            <summary>
-            Whether commit was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mapping.AuthoringCommitResponse.Version">
@@ -26289,11 +26708,6 @@
             Response after registering endpoint
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Mesh.RegisterEndpointResponse.Success">
-            <summary>
-            Whether the registration was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.RegisterEndpointResponse.Endpoint">
             <summary>
             The registered endpoint details
@@ -26347,11 +26761,6 @@
         <member name="T:BeyondImmersion.BannouService.Mesh.HeartbeatResponse">
             <summary>
             Response after heartbeat processed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatResponse.Success">
-            <summary>
-            Whether the heartbeat was processed successfully
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Mesh.HeartbeatResponse.NextHeartbeatSeconds">
@@ -26544,11 +26953,6 @@
             Response confirming event publication with message identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.Success">
-            <summary>
-            Indicates whether the event was published successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Messaging.PublishEventResponse.MessageId">
             <summary>
             Unique identifier assigned to the published message
@@ -26632,16 +27036,6 @@
         <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionRequest.SubscriptionId">
             <summary>
             Unique identifier of the subscription to remove
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse">
-            <summary>
-            Response confirming subscription removal status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse.Success">
-            <summary>
-            Indicates whether the subscription was removed successfully
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Messaging.ListTopicsRequest">
@@ -27596,7 +27990,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.Success">
             <summary>
-            Deployment succeeded
+            Whether all nodes were deployed successfully (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.DeploymentId">
@@ -27821,7 +28215,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Success">
             <summary>
-            Whether teardown completed successfully
+            Whether all containers were torn down successfully (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Duration">
@@ -27896,7 +28290,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.Success">
             <summary>
-            Whether cleanup completed successfully
+            Whether all requested cleanup operations completed (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.ReclaimedSpaceMb">
@@ -28041,7 +28435,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.Success">
             <summary>
-            Whether all topology changes were applied successfully
+            Whether all topology changes were applied successfully (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.AppliedChanges">
@@ -28092,26 +28486,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AppliedChange.Error">
             <summary>
             Error message if failed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.ErrorResponse">
-            <summary>
-            Standard error response with code, message, and optional additional details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Error">
-            <summary>
-            Error code
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Message">
-            <summary>
-            Human-readable error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Details">
-            <summary>
-            Additional error context
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.DeploymentEvent">
@@ -28397,11 +28771,6 @@
             Result of a configuration rollback including version changes and affected keys
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse.Success">
-            <summary>
-            Whether rollback completed successfully
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigRollbackResponse.PreviousVersion">
             <summary>
             Config version before rollback
@@ -28500,31 +28869,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.ExpiresAt">
             <summary>
             When the lease expires (must release before this)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse">
-            <summary>
-            Response when all processors in a pool are busy with queue position and wait estimate
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.PoolType">
-            <summary>
-            Pool type that is busy
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.QueuePosition">
-            <summary>
-            Position in the wait queue (0 = not queued)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.EstimatedWaitSeconds">
-            <summary>
-            Estimated wait time until a processor is available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.Message">
-            <summary>
-            Human-readable status message
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest">
@@ -28877,11 +29221,6 @@
             Service ID that was registered
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Permission.RegistrationResponse.Success">
-            <summary>
-            Whether registration was successful
-            </summary>
-        </member>
         <member name="P:BeyondImmersion.BannouService.Permission.RegistrationResponse.Message">
             <summary>
             Success or error message
@@ -28983,11 +29322,6 @@
         <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.SessionId">
             <summary>
             Session ID that was updated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.Success">
-            <summary>
-            Whether update was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Permission.SessionUpdateResponse.Message">
@@ -30687,6 +31021,1551 @@
             Error message explaining why the migration failed
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SceneType">
+            <summary>
+            Scene classification for querying and validation rule lookup.
+            <br/>Different types may have different validation requirements per game.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.NodeType">
+            <summary>
+            Structural node type. Indicates what kind of data the node contains,
+            <br/>not how it will be used at runtime. Consumers interpret nodes according
+            <br/>to their own needs via tags and annotations.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.VolumeShape">
+            <summary>
+            Shape of a volume node for spatial bounds
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.UnresolvedReferenceReason">
+            <summary>
+            Reason why a scene reference could not be resolved
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationSeverity">
+            <summary>
+            Severity level of a validation issue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationRuleType">
+            <summary>
+            Type of validation check to perform
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SearchMatchType">
+            <summary>
+            Where the search match was found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.Vector3">
+            <summary>
+            A point or direction in 3D space
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Vector3.X">
+            <summary>
+            X coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Vector3.Y">
+            <summary>
+            Y coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Vector3.Z">
+            <summary>
+            Z coordinate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Vector3.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.Quaternion">
+            <summary>
+            Rotation represented as a quaternion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Quaternion.X">
+            <summary>
+            X component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Quaternion.Y">
+            <summary>
+            Y component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Quaternion.Z">
+            <summary>
+            Z component
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Quaternion.W">
+            <summary>
+            W component (scalar)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Quaternion.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.Transform">
+            <summary>
+            Position, rotation, and scale in 3D space
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Transform.Position">
+            <summary>
+            Position relative to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Transform.Rotation">
+            <summary>
+            Rotation relative to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Transform.Scale">
+            <summary>
+            Scale relative to parent
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Transform.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.AssetReference">
+            <summary>
+            Reference to an asset in lib-asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetReference.BundleId">
+            <summary>
+            Optional bundle containing the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetReference.AssetId">
+            <summary>
+            Asset identifier in lib-asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetReference.VariantId">
+            <summary>
+            Variant identifier (consumer interprets meaning)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetReference.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SceneNode">
+            <summary>
+            A node in the scene hierarchy. Nodes can contain children to form
+            <br/>a tree structure. Each node has a local transform relative to its parent.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.NodeId">
+            <summary>
+            Globally unique node identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.RefId">
+            <summary>
+            Scene-local reference identifier. Must be unique within the scene.
+            <br/>Used for scripting and cross-referencing. Examples: main_door, npc_spawn_1
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.ParentNodeId">
+            <summary>
+            Parent node ID. Null for the root node only.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Name">
+            <summary>
+            Human-readable display name for the node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.NodeType">
+            <summary>
+            The structural type of this node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.LocalTransform">
+            <summary>
+            Transform relative to parent node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Asset">
+            <summary>
+            Optional asset binding (mesh, sound, particle effect)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Children">
+            <summary>
+            Child nodes in the hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Enabled">
+            <summary>
+            Whether this node is active in the scene definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.SortOrder">
+            <summary>
+            Ordering among siblings for deterministic iteration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Tags">
+            <summary>
+            Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Annotations">
+            <summary>
+            Consumer-specific data stored without interpretation.
+            <br/>Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.Scene">
+            <summary>
+            A complete scene document with hierarchical node structure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Schema">
+            <summary>
+            Schema identifier for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.SceneId">
+            <summary>
+            Unique scene identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.GameId">
+            <summary>
+            Game service identifier for partitioning. Treated as opaque string.
+            <br/>Default is the nil UUID for unpartitioned scenes.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.SceneType">
+            <summary>
+            Scene classification for querying and validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Name">
+            <summary>
+            Human-readable scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Description">
+            <summary>
+            Optional scene description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Version">
+            <summary>
+            Semantic version (MAJOR.MINOR.PATCH)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Root">
+            <summary>
+            Root node of the scene hierarchy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Tags">
+            <summary>
+            Searchable tags for filtering scenes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.Metadata">
+            <summary>
+            Scene-level metadata. Not interpreted by Scene service.
+            <br/>Examples: author, thumbnail, editor preferences, generator config.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.CreatedAt">
+            <summary>
+            When the scene was first created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.UpdatedAt">
+            <summary>
+            When the scene was last modified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Scene.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.CreateSceneRequest">
+            <summary>
+            Request to create a new scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CreateSceneRequest.Scene">
+            <summary>
+            The scene document to create
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CreateSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.GetSceneRequest">
+            <summary>
+            Request to retrieve a scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneRequest.SceneId">
+            <summary>
+            ID of the scene to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneRequest.Version">
+            <summary>
+            Specific version to retrieve (null = latest)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneRequest.ResolveReferences">
+            <summary>
+            Whether to resolve and embed referenced scenes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneRequest.MaxReferenceDepth">
+            <summary>
+            Maximum depth for reference resolution (prevents infinite recursion)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.GetSceneResponse">
+            <summary>
+            Response containing a scene and resolution metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneResponse.Scene">
+            <summary>
+            The retrieved scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneResponse.ResolvedReferences">
+            <summary>
+            List of resolved references (if resolveReferences was true)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneResponse.UnresolvedReferences">
+            <summary>
+            References that could not be resolved (circular, missing, depth exceeded)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneResponse.ResolutionErrors">
+            <summary>
+            Error messages for reference resolution issues
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetSceneResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ResolvedReference">
+            <summary>
+            A successfully resolved scene reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.NodeId">
+            <summary>
+            Node ID containing the reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.RefId">
+            <summary>
+            refId of the referencing node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.ReferencedSceneId">
+            <summary>
+            ID of the referenced scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.ReferencedVersion">
+            <summary>
+            Version that was resolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.Scene">
+            <summary>
+            The resolved scene content
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.Depth">
+            <summary>
+            Depth level of this reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ResolvedReference.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.UnresolvedReference">
+            <summary>
+            A scene reference that could not be resolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.NodeId">
+            <summary>
+            Node ID containing the reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.RefId">
+            <summary>
+            refId of the referencing node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.ReferencedSceneId">
+            <summary>
+            ID of the scene that could not be resolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.Reason">
+            <summary>
+            Why the reference could not be resolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.CyclePath">
+            <summary>
+            For circular references, the cycle path (sceneId chain)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UnresolvedReference.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ListScenesRequest">
+            <summary>
+            Request to list scenes with optional filters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.GameId">
+            <summary>
+            Filter by game ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.SceneType">
+            <summary>
+            Filter by single scene type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.SceneTypes">
+            <summary>
+            Filter by multiple scene types (OR)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.Tags">
+            <summary>
+            Filter by tags (scenes must have ALL specified tags)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.NameContains">
+            <summary>
+            Filter by name containing this substring (case-insensitive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ListScenesResponse">
+            <summary>
+            Response containing scene list and pagination info
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesResponse.Scenes">
+            <summary>
+            List of scene summaries (not full documents)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesResponse.Total">
+            <summary>
+            Total number of matching scenes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesResponse.Offset">
+            <summary>
+            Current offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesResponse.Limit">
+            <summary>
+            Applied limit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ListScenesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SceneSummary">
+            <summary>
+            Summary of a scene for list results (excludes full node tree)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.SceneId">
+            <summary>
+            Unique scene identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.GameId">
+            <summary>
+            Game service identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.SceneType">
+            <summary>
+            Scene classification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.Name">
+            <summary>
+            Scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.Description">
+            <summary>
+            Scene description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.Version">
+            <summary>
+            Current version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.Tags">
+            <summary>
+            Scene tags
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.NodeCount">
+            <summary>
+            Total number of nodes in scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.UpdatedAt">
+            <summary>
+            Last update timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.IsCheckedOut">
+            <summary>
+            Whether scene is currently checked out
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneSummary.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.UpdateSceneRequest">
+            <summary>
+            Request to update an existing scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UpdateSceneRequest.Scene">
+            <summary>
+            The updated scene document (sceneId must match existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UpdateSceneRequest.CheckoutToken">
+            <summary>
+            Checkout token if updating via checkout workflow
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.UpdateSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DeleteSceneRequest">
+            <summary>
+            Request to delete a scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneRequest.SceneId">
+            <summary>
+            ID of the scene to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneRequest.Reason">
+            <summary>
+            Optional reason for deletion (included in event)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DeleteSceneResponse">
+            <summary>
+            Response confirming scene deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneResponse.Deleted">
+            <summary>
+            Whether the scene was successfully deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneResponse.SceneId">
+            <summary>
+            ID of the deleted scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneResponse.ReferencingScenes">
+            <summary>
+            If deletion failed, IDs of scenes that reference this one
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DeleteSceneResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SceneResponse">
+            <summary>
+            Standard response containing a scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneResponse.Scene">
+            <summary>
+            The scene document
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidateSceneRequest">
+            <summary>
+            Request to validate a scene structure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidateSceneRequest.Scene">
+            <summary>
+            The scene to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidateSceneRequest.ApplyGameRules">
+            <summary>
+            Whether to apply registered game-specific validation rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidateSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationResult">
+            <summary>
+            Result of scene validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationResult.Valid">
+            <summary>
+            Whether the scene passed all validation checks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationResult.Errors">
+            <summary>
+            Validation errors (severity = error)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationResult.Warnings">
+            <summary>
+            Validation warnings (severity = warning)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationError">
+            <summary>
+            A single validation error or warning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.RuleId">
+            <summary>
+            Identifier of the validation rule that triggered this
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.Severity">
+            <summary>
+            Severity level
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.NodePath">
+            <summary>
+            Path to the problematic node (e.g., root.children[0].children[2])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.NodeId">
+            <summary>
+            ID of the problematic node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.Context">
+            <summary>
+            Additional context for the error
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationError.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest">
+            <summary>
+            Request to record a scene instantiation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.SceneAssetId">
+            <summary>
+            Scene asset ID that was instantiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.Version">
+            <summary>
+            Specific version (null = validates latest exists)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.InstanceId">
+            <summary>
+            Caller-provided unique instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.RegionId">
+            <summary>
+            Region where scene was placed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.WorldTransform">
+            <summary>
+            World-space transform for scene origin
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.Metadata">
+            <summary>
+            Caller-provided metadata passed to event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.InstantiateSceneResponse">
+            <summary>
+            Response confirming instantiation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneResponse.InstanceId">
+            <summary>
+            The instance ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneResponse.SceneVersion">
+            <summary>
+            Version that was instantiated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneResponse.EventPublished">
+            <summary>
+            Whether the event was successfully published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.InstantiateSceneResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest">
+            <summary>
+            Request to record instance destruction
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest.InstanceId">
+            <summary>
+            Instance ID to destroy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest.RegionId">
+            <summary>
+            Region where instance was (for event metadata)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest.SceneAssetId">
+            <summary>
+            Scene asset ID (for event metadata)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest.Metadata">
+            <summary>
+            Caller-provided metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DestroyInstanceResponse">
+            <summary>
+            Response confirming destruction
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceResponse.Destroyed">
+            <summary>
+            Whether destruction was recorded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceResponse.EventPublished">
+            <summary>
+            Whether the event was successfully published
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DestroyInstanceResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.CheckoutRequest">
+            <summary>
+            Request to checkout a scene for editing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutRequest.SceneId">
+            <summary>
+            Scene to checkout
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutRequest.EditorId">
+            <summary>
+            Optional editor identifier (defaults to caller identity)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutRequest.TtlMinutes">
+            <summary>
+            Custom lock TTL (uses default if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.CheckoutResponse">
+            <summary>
+            Response containing checkout token and scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutResponse.CheckoutToken">
+            <summary>
+            Token required for commit/discard/heartbeat
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutResponse.Scene">
+            <summary>
+            Current scene document
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutResponse.ExpiresAt">
+            <summary>
+            When the checkout lock expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CheckoutResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.CommitRequest">
+            <summary>
+            Request to commit checkout changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitRequest.SceneId">
+            <summary>
+            Scene being committed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitRequest.CheckoutToken">
+            <summary>
+            Checkout token from checkout response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitRequest.Scene">
+            <summary>
+            Updated scene document
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitRequest.ChangesSummary">
+            <summary>
+            Optional summary of changes for audit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.CommitResponse">
+            <summary>
+            Response confirming commit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitResponse.Committed">
+            <summary>
+            Whether commit was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitResponse.NewVersion">
+            <summary>
+            New version after commit
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitResponse.Scene">
+            <summary>
+            Committed scene with updated metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.CommitResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DiscardRequest">
+            <summary>
+            Request to discard checkout
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DiscardRequest.SceneId">
+            <summary>
+            Scene to discard changes for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DiscardRequest.CheckoutToken">
+            <summary>
+            Checkout token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DiscardRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DiscardResponse">
+            <summary>
+            Response confirming discard
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DiscardResponse.Discarded">
+            <summary>
+            Whether discard was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DiscardResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.HeartbeatRequest">
+            <summary>
+            Request to extend checkout lock
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatRequest.SceneId">
+            <summary>
+            Scene being edited
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatRequest.CheckoutToken">
+            <summary>
+            Checkout token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.HeartbeatResponse">
+            <summary>
+            Response confirming lock extension
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatResponse.Extended">
+            <summary>
+            Whether extension was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatResponse.NewExpiresAt">
+            <summary>
+            New expiration time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatResponse.ExtensionsRemaining">
+            <summary>
+            Number of extensions remaining
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HeartbeatResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.HistoryRequest">
+            <summary>
+            Request for scene version history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryRequest.SceneId">
+            <summary>
+            Scene to get history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryRequest.Limit">
+            <summary>
+            Maximum versions to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.HistoryResponse">
+            <summary>
+            Scene version history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryResponse.SceneId">
+            <summary>
+            Scene ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryResponse.CurrentVersion">
+            <summary>
+            Current active version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryResponse.Versions">
+            <summary>
+            Version history entries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.HistoryResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.VersionInfo">
+            <summary>
+            Information about a specific version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.Version">
+            <summary>
+            Version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.CreatedAt">
+            <summary>
+            When this version was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.CreatedBy">
+            <summary>
+            Who created this version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.ChangesSummary">
+            <summary>
+            Summary of changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.NodeCount">
+            <summary>
+            Node count at this version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.VersionInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.RegisterValidationRulesRequest">
+            <summary>
+            Request to register validation rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesRequest.GameId">
+            <summary>
+            Game ID for these rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesRequest.SceneType">
+            <summary>
+            Scene type for these rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesRequest.Rules">
+            <summary>
+            Validation rules to register
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.RegisterValidationRulesResponse">
+            <summary>
+            Response confirming rule registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesResponse.Registered">
+            <summary>
+            Whether registration was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesResponse.RuleCount">
+            <summary>
+            Number of rules registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.RegisterValidationRulesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.GetValidationRulesRequest">
+            <summary>
+            Request to get validation rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesRequest.GameId">
+            <summary>
+            Game ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesRequest.SceneType">
+            <summary>
+            Scene type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.GetValidationRulesResponse">
+            <summary>
+            Response containing validation rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesResponse.GameId">
+            <summary>
+            Game ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesResponse.SceneType">
+            <summary>
+            Scene type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesResponse.Rules">
+            <summary>
+            Registered rules (empty if none)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.GetValidationRulesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationRule">
+            <summary>
+            A validation rule definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.RuleId">
+            <summary>
+            Unique rule identifier within the gameId+sceneType
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.Description">
+            <summary>
+            Human-readable description of the rule
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.Severity">
+            <summary>
+            Whether violation is an error or warning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.RuleType">
+            <summary>
+            Type of validation check
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.Config">
+            <summary>
+            Rule-specific configuration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRule.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ValidationRuleConfig">
+            <summary>
+            Configuration for a validation rule
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.NodeType">
+            <summary>
+            Filter to nodes of this type (for require_tag)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.Tag">
+            <summary>
+            Tag to check for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.MinCount">
+            <summary>
+            Minimum occurrences required
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.MaxCount">
+            <summary>
+            Maximum occurrences allowed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.AnnotationPath">
+            <summary>
+            JSONPath to required annotation field (for require_annotation)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.Expression">
+            <summary>
+            Custom validation expression (for custom_expression)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ValidationRuleConfig.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SearchScenesRequest">
+            <summary>
+            Request for full-text search
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.Query">
+            <summary>
+            Search query text
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.GameId">
+            <summary>
+            Filter by game ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.SceneTypes">
+            <summary>
+            Filter by scene types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.Limit">
+            <summary>
+            Maximum results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SearchScenesResponse">
+            <summary>
+            Search results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesResponse.Results">
+            <summary>
+            Matching scenes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesResponse.Total">
+            <summary>
+            Total matches
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchScenesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.SearchResult">
+            <summary>
+            A single search result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchResult.Scene">
+            <summary>
+            Matching scene summary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchResult.MatchType">
+            <summary>
+            Where the match was found
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchResult.MatchContext">
+            <summary>
+            Context around the match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SearchResult.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.FindReferencesRequest">
+            <summary>
+            Request to find referencing scenes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindReferencesRequest.SceneId">
+            <summary>
+            Scene ID to find references to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindReferencesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.FindReferencesResponse">
+            <summary>
+            Scenes that reference the target
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindReferencesResponse.ReferencingScenes">
+            <summary>
+            Scenes containing references
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindReferencesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.ReferenceInfo">
+            <summary>
+            Information about a reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.SceneId">
+            <summary>
+            Scene containing the reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.SceneName">
+            <summary>
+            Name of the referencing scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.NodeId">
+            <summary>
+            Node containing the reference
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.NodeRefId">
+            <summary>
+            refId of the referencing node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.NodeName">
+            <summary>
+            Name of the referencing node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.ReferenceInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.FindAssetUsageRequest">
+            <summary>
+            Request to find asset usage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindAssetUsageRequest.AssetId">
+            <summary>
+            Asset ID to find usage of
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindAssetUsageRequest.GameId">
+            <summary>
+            Optional game filter
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindAssetUsageRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.FindAssetUsageResponse">
+            <summary>
+            Scenes using the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindAssetUsageResponse.Usages">
+            <summary>
+            Asset usage instances
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.FindAssetUsageResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.AssetUsageInfo">
+            <summary>
+            Information about asset usage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.SceneId">
+            <summary>
+            Scene using the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.SceneName">
+            <summary>
+            Scene name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.NodeId">
+            <summary>
+            Node using the asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.NodeRefId">
+            <summary>
+            refId of the node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.NodeName">
+            <summary>
+            Node name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.NodeType">
+            <summary>
+            Type of the node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetUsageInfo.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest">
+            <summary>
+            Request to duplicate a scene
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest.SourceSceneId">
+            <summary>
+            Scene to duplicate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest.NewName">
+            <summary>
+            Name for the duplicate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest.NewGameId">
+            <summary>
+            Optional different game ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest.NewSceneType">
+            <summary>
+            Optional different scene type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.DuplicateSceneRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Species.GetSpeciesRequest">
             <summary>
             Request to retrieve a single species by its unique identifier
@@ -31244,17 +33123,12 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.State.SaveStateResponse">
             <summary>
-            Response from a save operation containing the new ETag and success status
+            Response from a save operation containing the new ETag
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Etag">
             <summary>
             New ETag after save
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.State.SaveStateResponse.Success">
-            <summary>
-            Whether the save succeeded
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.State.DeleteStateRequest">
@@ -32004,11 +33878,6 @@
         <member name="T:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse">
             <summary>
             Response after joining a voice room
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.Success">
-            <summary>
-            Whether join was successful
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Voice.JoinVoiceRoomResponse.RoomId">

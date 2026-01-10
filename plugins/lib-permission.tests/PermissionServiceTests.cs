@@ -189,10 +189,9 @@ public class PermissionServiceTests
         // Act
         var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
 
-        // Assert
+        // Assert - InternalServerError returns null response
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.NotNull(response);
-        Assert.Contains("lock", response.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(response);
     }
 
     [Fact]

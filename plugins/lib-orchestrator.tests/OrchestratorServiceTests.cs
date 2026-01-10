@@ -1779,11 +1779,9 @@ public class OrchestratorProcessingPoolTests
         // Act
         var (statusCode, response) = await service.ScalePoolAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - NotFound returns null response
         Assert.Equal(StatusCodes.NotFound, statusCode);
-        Assert.NotNull(response);
-        Assert.Equal("unknown-pool", response.PoolType);
-        Assert.Equal(0, response.ScaledUp);
+        Assert.Null(response);
     }
 
     #endregion
