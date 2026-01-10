@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: ternary_preference_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: adaptive_attack
+      preference: "${combat.style == 'aggressive' ? 0.9 : 0.5}"
+      available: true
+
+flows:
+  main:
+    actions:
+      - log: "tick"

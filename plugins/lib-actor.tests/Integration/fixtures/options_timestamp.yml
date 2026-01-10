@@ -1,0 +1,15 @@
+version: "2.0"
+metadata:
+  id: timestamp_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: attack
+      preference: 0.5
+      available: true
+
+flows:
+  main:
+    actions:
+      - log: "tick"

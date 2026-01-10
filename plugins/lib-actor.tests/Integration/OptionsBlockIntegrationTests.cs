@@ -35,31 +35,9 @@ public sealed class OptionsBlockIntegrationTests
     public void ParseAndEvaluate_LiteralOptions_EvaluatesCorrectly()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: literal_options_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: basic_attack
-    preference: 0.7
-    risk: 0.2
-    available: true
-    requirements:
-        - weapon_equipped
-    tags:
-        - melee
-        - physical
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_literal");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -91,27 +69,9 @@ flows:
     public void ParseAndEvaluate_ExpressionOptions_EvaluatesWithScope()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: expression_options_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: aggressive_strike
-    preference: ""${combat.aggressiveness}""
-    available: ""${equipment.has_weapon}""
-    tags:
-        - offensive
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_expression");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -140,36 +100,9 @@ flows:
     public void ParseAndEvaluate_MultipleOptionTypes_EvaluatesAll()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: multi_type_options_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: attack
-    preference: 0.8
-    available: true
-    - actionId: defend
-    preference: 0.5
-    available: true
-  dialogue:
-    - actionId: greet
-    preference: 0.9
-    available: true
-  exploration:
-    - actionId: investigate
-    preference: 0.6
-    available: true
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_multiple_types");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -192,27 +125,9 @@ flows:
     public void ParseAndEvaluate_ConditionalAvailability_DisablesOption()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: conditional_available_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: sword_slash
-    preference: 0.8
-    available: ""${equipment.has_sword}""
-    requirements:
-        - has_sword
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_conditional");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -237,25 +152,9 @@ flows:
     public void ParseAndEvaluate_TernaryPreference_EvaluatesCorrectly()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: ternary_preference_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: adaptive_attack
-    preference: ""${combat.style == 'aggressive' ? 0.9 : 0.5}""
-    available: true
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_ternary");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -280,30 +179,9 @@ flows:
     public void ParseAndEvaluate_WithCooldown_ParsesAndEvaluates()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: cooldown_options_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: special_attack
-    preference: 0.7
-    available: true
-    cooldownMs: 5000
-    - actionId: ultimate
-    preference: 0.9
-    available: true
-    cooldownMs: ""${skills.ultimate_cooldown}""
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_cooldown");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -328,28 +206,9 @@ flows:
     public void ParseAndEvaluate_ErrorInExpression_ContinuesWithOthers()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: error_handling_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: broken_option
-    preference: ""${throw_error}""
-    available: true
-    - actionId: valid_option
-    preference: 0.5
-    available: true
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_error_handling");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var scope = new VariableScope();
@@ -380,25 +239,9 @@ flows:
     public void ParseAndEvaluate_SetsTimestamp()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: timestamp_test
-  type: behavior
-
-options:
-  combat:
-    - actionId: attack
-    preference: 0.5
-    available: true
-
-flows:
-  main:
-    actions:
-    - log: ""tick""
-";
+        var yaml = TestFixtures.Load("options_timestamp");
         var parseResult = _parser.Parse(yaml);
-        Assert.True(parseResult.IsSuccess);
+        Assert.True(parseResult.IsSuccess, $"Parse failed: {string.Join(", ", parseResult.Errors.Select(e => e.Message))}");
         var document = parseResult.Value!;
 
         var before = DateTimeOffset.UtcNow;

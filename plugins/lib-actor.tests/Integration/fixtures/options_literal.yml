@@ -1,0 +1,21 @@
+version: "2.0"
+metadata:
+  id: literal_options_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: basic_attack
+      preference: 0.7
+      risk: 0.2
+      available: true
+      requirements:
+        - weapon_equipped
+      tags:
+        - melee
+        - physical
+
+flows:
+  main:
+    actions:
+      - log: "tick"

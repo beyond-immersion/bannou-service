@@ -32,4 +32,10 @@
     <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Integration\fixtures\**\*.yml" LinkBase="Integration\fixtures">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

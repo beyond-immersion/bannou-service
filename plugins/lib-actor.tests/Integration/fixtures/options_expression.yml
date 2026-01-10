@@ -1,0 +1,17 @@
+version: "2.0"
+metadata:
+  id: expression_options_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: aggressive_strike
+      preference: "${combat.aggressiveness}"
+      available: "${equipment.has_weapon}"
+      tags:
+        - offensive
+
+flows:
+  main:
+    actions:
+      - log: "tick"
