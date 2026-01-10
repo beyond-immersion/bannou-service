@@ -5,9 +5,8 @@ info:
   description: |
     Repository pattern state management with Redis and MySQL backends.
 
-    NOTE: This is an INTERNAL service API. No x-permissions are defined because
-    these endpoints are NOT exposed to WebSocket clients. Service-to-service
-    calls within the cluster are always permitted (per FOUNDATION TENETS).
+    NOTE: This is an INTERNAL service API using empty x-permissions (internal-only).
+    Service-to-service calls within the cluster are always permitted (per FOUNDATION TENETS).
 
     All endpoints use POST-only pattern per FOUNDATION TENETS to enable
     zero-copy WebSocket routing with static endpoint GUIDs.
@@ -24,6 +23,7 @@ paths:
       summary: Get state value by key
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -75,6 +75,7 @@ paths:
       summary: Save state value
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -124,6 +125,7 @@ paths:
       summary: Delete state value
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -160,6 +162,7 @@ paths:
       summary: Query state (MySQL JSON queries or Redis with search enabled)
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -230,6 +233,7 @@ paths:
       summary: Bulk get multiple keys
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -277,6 +281,7 @@ paths:
       summary: List configured state stores
       tags:
       - State
+      x-permissions: []
       requestBody:
         required: false
         content:

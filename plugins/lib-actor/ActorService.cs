@@ -1396,7 +1396,16 @@ public partial class ActorService : IActorService
 
             // Get previous phase for response
             var snapshot = runner.GetStateSnapshot();
-            var previousPhase = snapshot.Encounter?.Phase;
+            var encounter = snapshot.Encounter;
+
+            // No active encounter to update
+            if (encounter == null)
+            {
+                _logger.LogDebug("Actor {ActorId} has no active encounter to update phase", body.ActorId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var previousPhase = encounter.Phase;
 
             // Update the phase
             var success = runner.SetEncounterPhase(body.Phase);
@@ -1458,15 +1467,22 @@ public partial class ActorService : IActorService
 
             // Get encounter info before ending
             var snapshot = runner.GetStateSnapshot();
-            var encounterId = snapshot.Encounter?.EncounterId;
-            var startedAt = snapshot.Encounter?.StartedAt;
+            var encounter = snapshot.Encounter;
+
+            // No active encounter to end
+            if (encounter == null)
+            {
+                _logger.LogDebug("Actor {ActorId} has no active encounter to end", body.ActorId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var encounterId = encounter.EncounterId;
+            var startedAt = encounter.StartedAt;
 
             // End the encounter
             var success = runner.EndEncounter();
 
-            var durationMs = startedAt.HasValue
-                ? (int)(DateTimeOffset.UtcNow - startedAt.Value).TotalMilliseconds
-                : (int?)null;
+            var durationMs = (int)(DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
 
             if (success)
             {

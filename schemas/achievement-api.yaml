@@ -158,9 +158,7 @@ paths:
       operationId: getAchievementDefinition
       tags:
       - Definitions
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -818,9 +816,7 @@ paths:
       operationId: getPlatformSyncStatus
       tags:
       - Platform Sync
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

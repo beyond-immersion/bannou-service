@@ -97,36 +97,6 @@ public static class CharacterPersonalityPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/character-personality/evolve",
-            Method = ServiceEndpointMethod.POST,
-            Description = "recordExperience",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/character-personality/batch-get",
-            Method = ServiceEndpointMethod.POST,
-            Description = "batchGetPersonalities",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/character-personality/delete",
             Method = ServiceEndpointMethod.POST,
             Description = "deletePersonality",
@@ -165,21 +135,6 @@ public static class CharacterPersonalityPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/character-personality/evolve-combat",
-            Method = ServiceEndpointMethod.POST,
-            Description = "evolveCombatPreferences",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

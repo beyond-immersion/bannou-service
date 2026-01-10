@@ -67,21 +67,6 @@ public static class RealmHistoryPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/realm-history/record-participation",
-            Method = ServiceEndpointMethod.POST,
-            Description = "recordRealmParticipation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/realm-history/get-participation",
             Method = ServiceEndpointMethod.POST,
             Description = "getRealmParticipation",
@@ -195,21 +180,6 @@ public static class RealmHistoryPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/realm-history/summarize",
-            Method = ServiceEndpointMethod.POST,
-            Description = "summarizeRealmHistory",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

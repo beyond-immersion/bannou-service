@@ -31,7 +31,7 @@ servers:
 
 paths:
   # ============================================
-  # Room Management (internal-only, NO x-permissions)
+  # Room Management (internal-only)
   # ============================================
 
   /voice/room/create:
@@ -44,7 +44,7 @@ paths:
       operationId: createVoiceRoom
       tags:
       - Voice Rooms
-      # NO x-permissions = internal-only (FOUNDATION TENETS)
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -130,6 +130,7 @@ paths:
       operationId: getVoiceRoom
       tags:
       - Voice Rooms
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -202,6 +203,7 @@ paths:
       operationId: joinVoiceRoom
       tags:
       - Voice Rooms
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -299,6 +301,7 @@ paths:
       operationId: leaveVoiceRoom
       tags:
       - Voice Rooms
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -333,6 +336,7 @@ paths:
       operationId: deleteVoiceRoom
       tags:
       - Voice Rooms
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -370,6 +374,7 @@ paths:
       operationId: peerHeartbeat
       tags:
       - Voice Peers
+      x-permissions: []
       requestBody:
         required: true
         content:

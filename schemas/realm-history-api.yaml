@@ -47,9 +47,7 @@ paths:
         Records that a realm participated in a historical event. Events are
         identified by eventId (typically managed by a game-specific event system).
         The impact level affects how strongly this event influences behavior.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -758,9 +756,7 @@ paths:
       description: |
         Generates text summaries of a realm's lore and historical
         participation.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

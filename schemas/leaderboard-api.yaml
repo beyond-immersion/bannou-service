@@ -133,9 +133,7 @@ paths:
       operationId: getLeaderboardDefinition
       tags:
       - Definitions
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -208,9 +206,7 @@ paths:
       operationId: listLeaderboardDefinitions
       tags:
       - Definitions
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

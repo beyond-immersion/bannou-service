@@ -67,21 +67,6 @@ public static class CharacterHistoryPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/character-history/record-participation",
-            Method = ServiceEndpointMethod.POST,
-            Description = "recordParticipation",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/character-history/get-participation",
             Method = ServiceEndpointMethod.POST,
             Description = "getParticipation",
@@ -195,21 +180,6 @@ public static class CharacterHistoryPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/character-history/summarize",
-            Method = ServiceEndpointMethod.POST,
-            Description = "summarizeHistory",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

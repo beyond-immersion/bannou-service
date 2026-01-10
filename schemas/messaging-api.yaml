@@ -4,9 +4,8 @@ info:
   description: |
     Native RabbitMQ pub/sub messaging with native serialization.
 
-    **INTERNAL SERVICE API**: This API has NO x-permissions because these endpoints
-    are NOT exposed to WebSocket clients. Service-to-service calls within the cluster
-    are always permitted (per FOUNDATION TENETS).
+    **INTERNAL SERVICE API**: These endpoints use empty x-permissions (internal-only).
+    Service-to-service calls within the cluster are always permitted (per FOUNDATION TENETS).
 
     **POST-Only API Pattern**: All endpoints use POST with request bodies for
     consistency with WebSocket routing architecture.
@@ -26,7 +25,7 @@ paths:
       summary: Publish an event to a topic
       tags:
       - Messaging
-      # No x-permissions - internal service API only
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -88,7 +87,7 @@ paths:
       summary: Create a dynamic subscription to a topic
       tags:
       - Messaging
-      # No x-permissions - internal service API only
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -146,7 +145,7 @@ paths:
       summary: Remove a dynamic subscription
       tags:
       - Messaging
-      # No x-permissions - internal service API only
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -180,8 +179,7 @@ paths:
       summary: List all known topics
       tags:
       - Messaging
-      # No x-permissions - internal service API only
-      # POST-only pattern per FOUNDATION TENETS (enables zero-copy WebSocket routing)
+      x-permissions: []
       requestBody:
         required: false
         content:

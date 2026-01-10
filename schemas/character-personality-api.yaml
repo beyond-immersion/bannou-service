@@ -243,9 +243,7 @@ paths:
 
         This endpoint is typically called by the behavior service when significant
         events occur during gameplay.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -335,9 +333,7 @@ paths:
         returned in the notFound array.
 
         Maximum 100 characters per request.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -660,9 +656,7 @@ paths:
 
         Combat experiences can shift style (e.g., repeated losses may make a
         character more defensive), adjust risk tolerance, or change retreat thresholds.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

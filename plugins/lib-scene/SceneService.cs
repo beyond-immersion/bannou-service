@@ -1133,7 +1133,7 @@ public partial class SceneService : ISceneService
                     matchContext = indexEntry.Name;
                 }
                 else if (!string.IsNullOrEmpty(indexEntry.Description) &&
-                         indexEntry.Description.Contains(body.Query, StringComparison.OrdinalIgnoreCase))
+                        indexEntry.Description.Contains(body.Query, StringComparison.OrdinalIgnoreCase))
                 {
                     matchType = SearchMatchType.Description;
                     matchContext = indexEntry.Description;

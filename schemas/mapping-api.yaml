@@ -40,9 +40,7 @@ paths:
       operationId: createChannel
       tags:
       - Authority
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -164,9 +162,7 @@ paths:
       operationId: releaseAuthority
       tags:
       - Authority
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -208,9 +204,7 @@ paths:
       operationId: authorityHeartbeat
       tags:
       - Authority
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -259,9 +253,7 @@ paths:
       operationId: publishMapUpdate
       tags:
       - Runtime
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -348,9 +340,7 @@ paths:
       operationId: publishObjectChanges
       tags:
       - Runtime
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

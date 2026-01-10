@@ -1757,9 +1757,7 @@ paths:
         Returns the app-id of an available processor or 429 if none available.
         The processor is marked as busy until explicitly released.
       operationId: AcquireProcessor
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1813,9 +1811,7 @@ paths:
         Releases a previously acquired processor, making it available for other requests.
         Should be called when processing is complete or on error cleanup.
       operationId: ReleaseProcessor
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

@@ -157,36 +157,6 @@ public static class ScenePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/scene/instantiate",
-            Method = ServiceEndpointMethod.POST,
-            Description = "instantiateScene",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "game_server",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/scene/destroy-instance",
-            Method = ServiceEndpointMethod.POST,
-            Description = "destroyInstance",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "game_server",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/scene/checkout",
             Method = ServiceEndpointMethod.POST,
             Description = "checkoutScene",

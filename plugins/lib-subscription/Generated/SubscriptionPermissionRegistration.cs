@@ -82,21 +82,6 @@ public static class SubscriptionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/subscription/query",
-            Method = ServiceEndpointMethod.POST,
-            Description = "queryCurrentSubscriptions",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/subscription/get",
             Method = ServiceEndpointMethod.POST,
             Description = "getSubscription",

@@ -322,36 +322,6 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/orchestrator/processing-pool/acquire",
-            Method = ServiceEndpointMethod.POST,
-            Description = "AcquireProcessor",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/orchestrator/processing-pool/release",
-            Method = ServiceEndpointMethod.POST,
-            Description = "ReleaseProcessor",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/orchestrator/processing-pool/status",
             Method = ServiceEndpointMethod.POST,
             Description = "GetPoolStatus",

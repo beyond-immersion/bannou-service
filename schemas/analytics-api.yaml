@@ -154,9 +154,7 @@ paths:
       operationId: getEntitySummary
       tags:
       - Statistics
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -223,9 +221,7 @@ paths:
       operationId: queryEntitySummaries
       tags:
       - Statistics
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -305,9 +301,7 @@ paths:
       operationId: getSkillRating
       tags:
       - Skill Ratings
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -508,9 +502,7 @@ paths:
       operationId: queryControllerHistory
       tags:
       - Controller History
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

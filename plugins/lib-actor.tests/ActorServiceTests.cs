@@ -1264,10 +1264,9 @@ public class ActorServiceTests
         // Act
         var (status, response) = await service.GetEncounterAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - Actor not found returns NotFound with null response
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.HasActiveEncounter);
+        Assert.Null(response);
     }
 
     #endregion

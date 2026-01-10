@@ -1054,9 +1054,7 @@ paths:
       operationId: instantiateScene
       tags:
       - Instance
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -1137,9 +1135,7 @@ paths:
       operationId: destroyInstance
       tags:
       - Instance
-      x-permissions:
-      - role: game_server
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

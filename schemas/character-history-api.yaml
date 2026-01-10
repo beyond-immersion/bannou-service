@@ -51,9 +51,7 @@ paths:
         Records that a character participated in a historical event. Events are
         identified by eventId (typically managed by a game-specific event system).
         The significance rating affects how strongly this event influences behavior.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -765,9 +763,7 @@ paths:
         Generates text summaries of a character's backstory and historical
         participation for inclusion in the CharacterArchive. Called during
         character compression before history data is deleted.
-      x-permissions:
-      - role: service
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:

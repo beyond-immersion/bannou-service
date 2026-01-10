@@ -443,6 +443,28 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
+### Scene
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
+| `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
+| `SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS` | int | `60` | Interval for background checkout expiration detection |
+| `SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Expected heartbeat interval for checkout locks |
+| `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
+| `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
+| `SCENE_DEFAULT_VERSION_RETENTION_COUNT` | int | `3` | Default number of versions to retain per scene |
+| `SCENE_ENABLED` | bool | `true` | Enable/disable Scene service |
+| `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
+| `SCENE_MAX_LIST_RESULTS` | int | `200` | Maximum results returned in a single list query |
+| `SCENE_MAX_NODE_COUNT` | int | `10000` | Maximum nodes allowed in a single scene |
+| `SCENE_MAX_REFERENCE_DEPTH_LIMIT` | int | `10` | Hard limit on reference depth that cannot be exceeded by req... |
+| `SCENE_MAX_SCENE_SIZE_BYTES` | int | `10485760` | Maximum scene document size in bytes (default 10MB) |
+| `SCENE_MAX_SEARCH_RESULTS` | int | `100` | Maximum results returned in a single search query |
+| `SCENE_MAX_TAGS_PER_NODE` | int | `20` | Maximum tags allowed per node |
+| `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
+| `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
+
 ### Species
 
 | Environment Variable | Type | Default | Description |
@@ -494,9 +516,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 350
+- **Total properties**: 367
 - **Required (no default)**: 46
-- **Optional (has default)**: 304
+- **Optional (has default)**: 321
 
 ## Environment Variable Naming Convention
 

@@ -47,6 +47,7 @@ paths:
         Stateless HTTP proxy for internal requests that don't require persistent sessions.
         Applies permission validation and rate limiting based on agent role and context.
         Perfect for AI agents making one-off API calls or bulk operations.
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -259,6 +260,7 @@ paths:
       operationId: ConnectWebSocket
       tags:
       - WebSocket Connection
+      x-permissions: []
       x-controller-only: true
       parameters:
       - name: Connection
@@ -329,6 +331,7 @@ paths:
       operationId: ConnectWebSocketPost
       tags:
       - WebSocket Connection
+      x-permissions: []
       x-controller-only: true
       parameters:
       - name: Connection

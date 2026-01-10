@@ -82,21 +82,6 @@ public static class AchievementPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/achievement/definition/get",
-            Method = ServiceEndpointMethod.POST,
-            Description = "getAchievementDefinition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/achievement/definition/list",
             Method = ServiceEndpointMethod.POST,
             Description = "listAchievementDefinitions",
@@ -180,21 +165,6 @@ public static class AchievementPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/achievement/platform/status",
-            Method = ServiceEndpointMethod.POST,
-            Description = "getPlatformSyncStatus",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

@@ -1,5 +1,5 @@
-using System.Text;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using System.Text;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Connect.Tests;

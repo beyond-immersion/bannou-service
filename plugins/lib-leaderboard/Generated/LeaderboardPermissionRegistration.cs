@@ -82,36 +82,6 @@ public static class LeaderboardPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/leaderboard/definition/get",
-            Method = ServiceEndpointMethod.POST,
-            Description = "getLeaderboardDefinition",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/leaderboard/definition/list",
-            Method = ServiceEndpointMethod.POST,
-            Description = "listLeaderboardDefinitions",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/leaderboard/definition/update",
             Method = ServiceEndpointMethod.POST,
             Description = "updateLeaderboardDefinition",

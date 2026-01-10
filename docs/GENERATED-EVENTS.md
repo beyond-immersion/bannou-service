@@ -238,6 +238,23 @@ This document lists all events defined in Bannou's event schemas.
 | `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
 | `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
 
+### Scene
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` | Base type for all service events |
+| `EventQuaternion` | Custom | `event-quaternion` | Quaternion for events |
+| `EventTransform` | Custom | `event-transform` | Transform for event payloads |
+| `EventVector3` | Custom | `event-vector3` | 3D vector for events |
+| `SceneCheckedOutEvent` | Custom | `scene-checked-out` | Published when a scene is locked for editing |
+| `SceneCheckoutDiscardedEvent` | Custom | `scene-checkout-discarded` | Published when a checkout is discarded without sav... |
+| `SceneCheckoutExpiredEvent` | Expiration | `scene-checkout.expired` | Published when a checkout lock expires due to TTL |
+| `SceneCommittedEvent` | Custom | `scene-committed` | Published when checkout changes are committed |
+| `SceneDestroyedEvent` | Custom | `scene-destroyed` | Published when a scene instance is removed from th... |
+| `SceneInstantiatedEvent` | Custom | `scene-instantiated` | Published when a scene is instantiated in the game... |
+| `SceneReferenceBrokenEvent` | Custom | `scene-reference-broken` | Published when a referenced scene becomes unavaila... |
+| `SceneValidationRulesUpdatedEvent` | Lifecycle (Updated) | `scene-validation-rules.updated` | Published when validation rules are registered or ... |
+
 ### Species
 
 | Event | Type | Likely Topic | Description |

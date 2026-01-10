@@ -65,66 +65,6 @@ public static class AnalyticsPermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/analytics/summary/get",
-            Method = ServiceEndpointMethod.POST,
-            Description = "getEntitySummary",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/analytics/summary/query",
-            Method = ServiceEndpointMethod.POST,
-            Description = "queryEntitySummaries",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/analytics/rating/get",
-            Method = ServiceEndpointMethod.POST,
-            Description = "getSkillRating",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/analytics/controller-history/query",
-            Method = ServiceEndpointMethod.POST,
-            Description = "queryControllerHistory",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
         return endpoints;
     }
 

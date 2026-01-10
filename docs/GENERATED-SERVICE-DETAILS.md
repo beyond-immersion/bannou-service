@@ -35,6 +35,7 @@ Des... |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
+| [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
@@ -97,7 +98,7 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 |--------|------|---------|--------|
 | `POST` | `/achievement/definition/create` | Create a new achievement definition | developer |
 | `POST` | `/achievement/definition/delete` | Delete achievement definition | developer |
-| `POST` | `/achievement/definition/get` | Get achievement definition | service |
+| `POST` | `/achievement/definition/get` | Get achievement definition | authenticated |
 | `POST` | `/achievement/definition/list` | List achievement definitions | user |
 | `POST` | `/achievement/definition/update` | Update achievement definition | developer |
 
@@ -105,7 +106,7 @@ Achievement and trophy system with progress tracking and platform synchronizatio
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/achievement/platform/status` | Get platform sync status | service |
+| `POST` | `/achievement/platform/status` | Get platform sync status | authenticated |
 | `POST` | `/achievement/platform/sync` | Manually trigger platform sync | admin |
 
 ### Progress
@@ -159,7 +160,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/controller-history/query` | Query controller history | service |
+| `POST` | `/analytics/controller-history/query` | Query controller history | authenticated |
 | `POST` | `/analytics/controller-history/record` | Record controller possession event | authenticated |
 
 ### Event Ingestion
@@ -173,15 +174,15 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | service |
+| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | authenticated |
 | `POST` | `/analytics/rating/update` | Update entity skill rating after match | authenticated |
 
 ### Statistics
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/summary/get` | Get entity statistics summary | service |
-| `POST` | `/analytics/summary/query` | Query entity summaries with filters | service |
+| `POST` | `/analytics/summary/get` | Get entity statistics summary | authenticated |
+| `POST` | `/analytics/summary/query` | Query entity summaries with filters | authenticated |
 
 ---
 
@@ -351,14 +352,14 @@ Historical event participation and backstory management for characters.
 | `POST` | `/character-history/delete-participation` | Delete a participation record | admin |
 | `POST` | `/character-history/get-event-participants` | Get all characters who participated in a historical event | user |
 | `POST` | `/character-history/get-participation` | Get all historical events a character participated in | user |
-| `POST` | `/character-history/record-participation` | Record character participation in a historical event | service |
+| `POST` | `/character-history/record-participation` | Record character participation in a historical event | authenticated |
 
 ### History Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/character-history/delete-all` | Delete all history data for a character | admin |
-| `POST` | `/character-history/summarize` | Generate text summaries for character compression | service |
+| `POST` | `/character-history/summarize` | Generate text summaries for character compression | authenticated |
 
 ---
 
@@ -373,7 +374,7 @@ Machine-readable personality traits for NPC behavior decisions.
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/character-personality/delete-combat` | Delete combat preferences for a character | admin |
-| `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | service |
+| `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | authenticated |
 | `POST` | `/character-personality/get-combat` | Get combat preferences for a character | user |
 | `POST` | `/character-personality/set-combat` | Create or update combat preferences for a character | admin |
 
@@ -381,13 +382,13 @@ Machine-readable personality traits for NPC behavior decisions.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/character-personality/evolve` | Record an experience that may evolve personality | service |
+| `POST` | `/character-personality/evolve` | Record an experience that may evolve personality | authenticated |
 
 ### Personality Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/character-personality/batch-get` | Get personalities for multiple characters | service |
+| `POST` | `/character-personality/batch-get` | Get personalities for multiple characters | authenticated |
 | `POST` | `/character-personality/delete` | Delete personality for a character | admin |
 | `POST` | `/character-personality/get` | Get personality for a character | user |
 | `POST` | `/character-personality/set` | Create or update personality for a character | admin |
@@ -556,8 +557,8 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 |--------|------|---------|--------|
 | `POST` | `/leaderboard/definition/create` | Create a new leaderboard definition | developer |
 | `POST` | `/leaderboard/definition/delete` | Delete leaderboard definition | developer |
-| `POST` | `/leaderboard/definition/get` | Get leaderboard definition | service |
-| `POST` | `/leaderboard/definition/list` | List leaderboard definitions | service |
+| `POST` | `/leaderboard/definition/get` | Get leaderboard definition | authenticated |
+| `POST` | `/leaderboard/definition/list` | List leaderboard definitions | authenticated |
 | `POST` | `/leaderboard/definition/update` | Update leaderboard definition | developer |
 
 ### Rankings
@@ -637,9 +638,9 @@ Spatial data management service for Arcadia game worlds.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mapping/authority-heartbeat` | Maintain authority over channel | game_server |
-| `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | game_server |
-| `POST` | `/mapping/release-authority` | Release authority over a channel | game_server |
+| `POST` | `/mapping/authority-heartbeat` | Maintain authority over channel | authenticated |
+| `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | authenticated |
+| `POST` | `/mapping/release-authority` | Release authority over a channel | authenticated |
 
 ### Definition
 
@@ -664,8 +665,8 @@ Spatial data management service for Arcadia game worlds.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mapping/publish` | Publish map data update (RPC path) | game_server |
-| `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | game_server |
+| `POST` | `/mapping/publish` | Publish map data update (RPC path) | authenticated |
+| `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | authenticated |
 | `POST` | `/mapping/request-snapshot` | Request full snapshot for cold start | user |
 
 ---
@@ -746,9 +747,9 @@ Central intelligence for Bannou environment management and service orchestration
 | `POST` | `/orchestrator/health/services` | Get health status of all services | admin |
 | `POST` | `/orchestrator/logs` | Get service/container logs | admin |
 | `POST` | `/orchestrator/presets/list` | List available deployment presets | admin |
-| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | service |
+| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | authenticated |
 | `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | admin |
-| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | service |
+| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | authenticated |
 | `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | admin |
 | `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | admin |
 | `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | admin |
@@ -837,14 +838,14 @@ Historical event participation and lore management for realms.
 | `POST` | `/realm-history/delete-participation` | Delete a participation record | admin |
 | `POST` | `/realm-history/get-event-participants` | Get all realms that participated in a historical event | user |
 | `POST` | `/realm-history/get-participation` | Get all historical events a realm participated in | user |
-| `POST` | `/realm-history/record-participation` | Record realm participation in a historical event | service |
+| `POST` | `/realm-history/record-participation` | Record realm participation in a historical event | authenticated |
 
 ### History Management
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/realm-history/delete-all` | Delete all history data for a realm | admin |
-| `POST` | `/realm-history/summarize` | Generate text summaries for realm archival | service |
+| `POST` | `/realm-history/summarize` | Generate text summaries for realm archival | authenticated |
 
 ### Lore
 
@@ -905,6 +906,58 @@ Relationship type management service for Arcadia game world.
 | `POST` | `/relationship-type/seed` | Seed relationship types from configuration | admin |
 | `POST` | `/relationship-type/undeprecate` | Restore a deprecated relationship type | admin |
 | `POST` | `/relationship-type/update` | Update relationship type | admin |
+
+---
+
+## Scene {#scene}
+
+**Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml`
+
+Hierarchical composition storage for game worlds.
+
+### Instance
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/destroy-instance` | Declare that a scene instance was removed | authenticated |
+| `POST` | `/scene/instantiate` | Declare that a scene was instantiated in the game world | authenticated |
+
+### Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/find-asset-usage` | Find scenes using a specific asset | user |
+| `POST` | `/scene/find-references` | Find scenes that reference a given scene | user |
+| `POST` | `/scene/search` | Full-text search across scenes | user |
+
+### Scene
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/create` | Create a new scene document | developer |
+| `POST` | `/scene/delete` | Delete a scene | developer |
+| `POST` | `/scene/duplicate` | Duplicate a scene with a new ID | developer |
+| `POST` | `/scene/get` | Retrieve a scene by ID | user |
+| `POST` | `/scene/list` | List scenes with filtering | user |
+| `POST` | `/scene/update` | Update a scene document | developer |
+| `POST` | `/scene/validate` | Validate a scene structure | user |
+
+### Validation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/get-validation-rules` | Get validation rules for a gameId+sceneType | user |
+| `POST` | `/scene/register-validation-rules` | Register validation rules for a gameId+sceneType | admin |
+
+### Versioning
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/checkout` | Lock a scene for editing | developer |
+| `POST` | `/scene/commit` | Save changes and release lock | developer |
+| `POST` | `/scene/discard` | Release lock without saving changes | developer |
+| `POST` | `/scene/heartbeat` | Extend checkout lock TTL | developer |
+| `POST` | `/scene/history` | Get version history for a scene | user |
 
 ---
 
@@ -973,7 +1026,7 @@ Tracks which accounts have access to which services (games/applications) with ti
 | `POST` | `/subscription/cancel` | Cancel a subscription | user |
 | `POST` | `/subscription/create` | Create a new subscription | admin |
 | `POST` | `/subscription/get` | Get a specific subscription by ID | user |
-| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | service |
+| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | authenticated |
 | `POST` | `/subscription/renew` | Renew or extend a subscription | admin |
 | `POST` | `/subscription/update` | Update a subscription | admin |
 
@@ -1061,8 +1114,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 30
-- **Total endpoints**: 327
+- **Total services**: 31
+- **Total endpoints**: 346
 
 ---
 
