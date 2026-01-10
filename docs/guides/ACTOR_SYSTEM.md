@@ -2,7 +2,7 @@
 
 > **Version**: 1.1
 > **Status**: Implemented (Phases 0-5), Character Data Layer Complete
-> **Location**: `lib-actor/`, `lib-behavior/`, `lib-character-personality/`, `lib-character-history/`
+> **Location**: `plugins/lib-actor/`, `plugins/lib-behavior/`, `plugins/lib-character-personality/`, `plugins/lib-character-history/`
 > **Related**: [ABML Guide](./ABML.md), [GOAP Guide](./GOAP.md), [Mapping System Guide](./MAPPING_SYSTEM.md)
 
 The Actor System provides the cognitive layer for Arcadia's living world. Actors are long-running processes that give characters personality, make regions feel alive, and orchestrate dramatic moments. They are the invisible directors that turn static game worlds into dynamic, responsive experiences.

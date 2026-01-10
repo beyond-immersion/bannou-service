@@ -53,7 +53,7 @@ properties:
 ### Generated vs Manual Files
 
 ```
-lib-{service}/
+plugins/lib-{service}/
 ├── Generated/                      # NEVER EDIT - auto-generated
 │   ├── I{Service}Service.cs        # Service interface
 │   ├── {Service}Models.cs          # Request/response models
@@ -82,7 +82,7 @@ The ABML Local Runtime uses a binary bytecode format for client-side behavior mo
 - The specification document serves as the "schema" defining format, opcodes, and semantics
 
 ```
-lib-behavior/Runtime/            # ABML bytecode interpreter (canonical location)
+plugins/lib-behavior/Runtime/    # ABML bytecode interpreter (canonical location)
 ├── BehaviorModel.cs             # Binary format (not OpenAPI)
 ├── BehaviorModelInterpreter.cs  # Stack-based VM (not generated)
 ├── BehaviorOpcode.cs            # Opcode definitions (not generated)
@@ -196,12 +196,12 @@ The ABML behavior model interpreter is handwritten code that **consumes** genera
 - **Interpreter (lib-behavior/Runtime)**: Handwritten VM that executes bytecode - NOT generated
 
 ```
-lib-behavior/Compiler/       # Compilation (schema-first via YAML)
-├── BehaviorCompiler.cs      # Orchestrates compilation pipeline
-├── Actions/                 # Action-specific compilers (generated patterns)
-└── Codegen/                 # Bytecode emission
+plugins/lib-behavior/Compiler/   # Compilation (schema-first via YAML)
+├── BehaviorCompiler.cs          # Orchestrates compilation pipeline
+├── Actions/                     # Action-specific compilers (generated patterns)
+└── Codegen/                     # Bytecode emission
 
-lib-behavior/Runtime/          # Execution (handwritten interpreter)
+plugins/lib-behavior/Runtime/    # Execution (handwritten interpreter)
 ├── BehaviorModelInterpreter.cs  # Stack-based VM (NOT generated)
 └── CinematicInterpreter.cs      # Streaming composition (NOT generated)
 ```
@@ -506,7 +506,7 @@ public class AuthService : IAuthService
 
 **File Structure**:
 ```
-lib-{service}/
+plugins/lib-{service}/
 ├── {Service}Service.cs          # Main implementation (partial class, REQUIRED)
 └── {Service}ServiceEvents.cs    # Event handlers (partial class, OPTIONAL - only if service subscribes to events)
 ```
@@ -578,7 +578,7 @@ public partial class ServiceNameService : IServiceNameService
 For complex services, decompose business logic into helper services in a `Services/` subdirectory:
 
 ```
-lib-{service}/
+plugins/lib-{service}/
 ├── Generated/                      # NEVER EDIT
 ├── {Service}Service.cs             # Main service implementation
 ├── {Service}ServiceEvents.cs       # Event handler implementations

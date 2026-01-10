@@ -245,7 +245,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 ### Service Architecture
 ```
-lib-{service}/                        # Single consolidated service plugin
+plugins/lib-{service}/                # Single consolidated service plugin
 ├── Generated/                        # NSwag auto-generated files
 │   ├── {Service}Controller.cs        # Abstract controller base
 │   ├── I{Service}Service.cs          # Service interface (generated from controller)
@@ -255,7 +255,7 @@ lib-{service}/                        # Single consolidated service plugin
 └── lib-{service}.csproj              # Generated project file
 ```
 
-**Key Points**: All generated files are in `lib-{service}/Generated/`. Only the service implementation (business logic) is manual.
+**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Only the service implementation (business logic) is manual.
 
 ## Development Workflow
 
