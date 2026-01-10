@@ -105,12 +105,8 @@ public partial class BehaviorService : IBehaviorService
         {
             if (string.IsNullOrWhiteSpace(body.AbmlContent))
             {
-                return (StatusCodes.BadRequest, new CompileBehaviorResponse
-                {
-                    Success = false,
-                    BehaviorId = string.Empty,
-                    Warnings = new List<string> { "ABML content is required" }
-                });
+                _logger.LogWarning("ABML compilation rejected: content is empty or whitespace");
+                return (StatusCodes.BadRequest, null);
             }
 
             _logger.LogDebug("Compiling ABML behavior ({ContentLength} bytes)", body.AbmlContent.Length);
@@ -123,9 +119,11 @@ public partial class BehaviorService : IBehaviorService
 
             if (!result.Success || result.Bytecode == null)
             {
-                _logger.LogWarning("ABML compilation failed with {ErrorCount} errors", result.Errors.Count);
+                _logger.LogWarning("ABML compilation failed with {ErrorCount} errors: {Errors}",
+                    result.Errors.Count,
+                    string.Join("; ", result.Errors.Select(e => e.Message)));
 
-                // Publish compilation failed event for monitoring
+                // Publish compilation failed event for monitoring (contains error details for debugging)
                 await _messageBus.TryPublishAsync(COMPILATION_FAILED_TOPIC, new BehaviorCompilationFailedEvent
                 {
                     EventId = Guid.NewGuid(),
@@ -135,13 +133,7 @@ public partial class BehaviorService : IBehaviorService
                     Errors = result.Errors.Select(e => e.Message).ToList()
                 }, cancellationToken: cancellationToken);
 
-                return (StatusCodes.BadRequest, new CompileBehaviorResponse
-                {
-                    Success = false,
-                    BehaviorId = string.Empty,
-                    CompilationTimeMs = (int)stopwatch.ElapsedMilliseconds,
-                    Warnings = result.Errors.Select(e => e.Message).ToList()
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Generate a deterministic behavior ID from content hash
@@ -499,19 +491,8 @@ public partial class BehaviorService : IBehaviorService
         {
             if (string.IsNullOrWhiteSpace(body.AbmlContent))
             {
-                return (StatusCodes.BadRequest, new ValidateAbmlResponse
-                {
-                    IsValid = false,
-                    ValidationErrors = new List<ValidationError>
-                    {
-                        new ValidationError
-                        {
-                            Type = ValidationErrorType.Schema,
-                            Message = "ABML content is required"
-                        }
-                    },
-                    SchemaVersion = "1.0"
-                });
+                _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
+                return (StatusCodes.BadRequest, null);
             }
 
             _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
@@ -804,25 +785,16 @@ public partial class BehaviorService : IBehaviorService
             // Validate behavior_id is required
             if (string.IsNullOrEmpty(body.BehaviorId))
             {
-                return (StatusCodes.BadRequest, new GoapPlanResponse
-                {
-                    Success = false,
-                    FailureReason = "behavior_id is required to retrieve GOAP actions"
-                });
+                _logger.LogWarning("GOAP planning rejected: behavior_id is required");
+                return (StatusCodes.BadRequest, null);
             }
 
             // Retrieve cached GOAP metadata from compiled behavior
             var cachedMetadata = await _bundleManager.GetGoapMetadataAsync(body.BehaviorId, cancellationToken);
             if (cachedMetadata == null)
             {
-                _logger.LogDebug(
-                    "No GOAP metadata found for behavior {BehaviorId}",
-                    body.BehaviorId);
-                return (StatusCodes.NotFound, new GoapPlanResponse
-                {
-                    Success = false,
-                    FailureReason = $"Behavior '{body.BehaviorId}' not found or has no GOAP content"
-                });
+                _logger.LogDebug("No GOAP metadata found for behavior {BehaviorId}", body.BehaviorId);
+                return (StatusCodes.NotFound, null);
             }
 
             // Convert API world state to internal WorldState

@@ -418,18 +418,7 @@ public class ConnectServiceTests
         Assert.Equal(originalJson, receivedJson);
     }
 
-    /// <summary>
-    /// Comprehensive cross-platform test runner that validates all protocol components.
-    /// </summary>
-    [Fact]
-    public void BinaryProtocol_ComprehensiveCompatibilityTest_ShouldPassAllChecks()
-    {
-        // Act - run the comprehensive test from BinaryProtocolTests
-        var result = BinaryProtocolTests.RunCrossPlatformCompatibilityTests();
-
-        // Assert - all tests should pass
-        Assert.True(result, "One or more cross-platform compatibility tests failed. Check console output for details.");
-    }
+    // Note: BinaryProtocol tests were moved to BinaryProtocolTests.cs as proper xUnit tests
 
     #endregion
 

@@ -30,21 +30,23 @@ public class SteamAchievementSync : IPlatformAchievementSync
     }
 
     /// <inheritdoc />
-    public Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
+    public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
         // TODO: Query account service for Steam link status
         // For now, return false - no accounts are linked
         _logger.LogDebug("Checking Steam link status for account {AccountId}", accountId);
-        return Task.FromResult(false);
+        await Task.CompletedTask;
+        return false;
     }
 
     /// <inheritdoc />
-    public Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
+    public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
         // TODO: Query account service for Steam ID
         // The Steam ID is a 64-bit integer (SteamID64)
         _logger.LogDebug("Getting Steam ID for account {AccountId}", accountId);
-        return Task.FromResult<string?>(null);
+        await Task.CompletedTask;
+        return null;
     }
 
     /// <inheritdoc />

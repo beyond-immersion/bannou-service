@@ -26,42 +26,46 @@ public class XboxAchievementSync : IPlatformAchievementSync
     }
 
     /// <inheritdoc />
-    public Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
+    public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
         _logger.LogDebug("Xbox sync not implemented - IsLinkedAsync returning false for {AccountId}", accountId);
-        return Task.FromResult(false);
+        await Task.CompletedTask;
+        return false;
     }
 
     /// <inheritdoc />
-    public Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
+    public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
         _logger.LogDebug("Xbox sync not implemented - GetExternalIdAsync returning null for {AccountId}", accountId);
-        return Task.FromResult<string?>(null);
+        await Task.CompletedTask;
+        return null;
     }
 
     /// <inheritdoc />
-    public Task<PlatformSyncResult> UnlockAsync(string externalUserId, string platformAchievementId, CancellationToken ct = default)
+    public async Task<PlatformSyncResult> UnlockAsync(string externalUserId, string platformAchievementId, CancellationToken ct = default)
     {
         _logger.LogWarning("Xbox achievement sync not implemented - {AchievementId} for {UserId}",
             platformAchievementId, externalUserId);
 
-        return Task.FromResult(new PlatformSyncResult
+        await Task.CompletedTask;
+        return new PlatformSyncResult
         {
             Success = false,
             ErrorMessage = "Xbox achievement sync not implemented"
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<PlatformSyncResult> SetProgressAsync(string externalUserId, string platformAchievementId, int current, int target, CancellationToken ct = default)
+    public async Task<PlatformSyncResult> SetProgressAsync(string externalUserId, string platformAchievementId, int current, int target, CancellationToken ct = default)
     {
         _logger.LogWarning("Xbox progress sync not implemented - {AchievementId} ({Current}/{Target}) for {UserId}",
             platformAchievementId, current, target, externalUserId);
 
-        return Task.FromResult(new PlatformSyncResult
+        await Task.CompletedTask;
+        return new PlatformSyncResult
         {
             Success = false,
             ErrorMessage = "Xbox progress sync not implemented"
-        });
+        };
     }
 }

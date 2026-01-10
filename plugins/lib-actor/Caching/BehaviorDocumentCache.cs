@@ -20,22 +20,24 @@ namespace BeyondImmersion.BannouService.Actor.Caching;
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<BehaviorDocumentCache> _logger;
     private readonly ConcurrentDictionary<string, AbmlDocument> _cache = new();
-    private readonly HttpClient _httpClient;
 
     /// <summary>
     /// Creates a new behavior document cache.
     /// </summary>
     /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
+    /// <param name="httpClientFactory">HTTP client factory for downloading assets.</param>
     /// <param name="logger">Logger instance.</param>
     public BehaviorDocumentCache(
         IServiceScopeFactory scopeFactory,
+        IHttpClientFactory httpClientFactory,
         ILogger<BehaviorDocumentCache> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _httpClient = new HttpClient();
     }
 
     /// <inheritdoc/>
@@ -133,7 +135,8 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
         string yaml;
         try
         {
-            yaml = await _httpClient.GetStringAsync(assetInfo.DownloadUrl.ToString(), ct);
+            using var httpClient = _httpClientFactory.CreateClient();
+            yaml = await httpClient.GetStringAsync(assetInfo.DownloadUrl.ToString(), ct);
         }
         catch (Exception ex)
         {
