@@ -36,6 +36,14 @@ jobs:
           echo "Installing Python dependencies for code generation..."
           pip install ruamel.yaml
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install eclint
+        run: npm install -g eclint
+
       - name: Regenerate All Services
         run: |
           echo "Regenerating all service controllers, models, and clients..."
@@ -45,6 +53,11 @@ jobs:
         run: |
           echo "Regenerating Client SDK behavior files..."
           scripts/generate-client-sdk.sh
+
+      - name: Format Generated Files
+        run: |
+          echo "Formatting regenerated files (line endings, whitespace, C# format)..."
+          make format
 
       - name: Check for Uncommitted Changes
         id: check-changes
@@ -62,8 +75,9 @@ jobs:
             echo "This usually means someone modified a schema but forgot to run:"
             echo "  scripts/generate-all-services.sh"
             echo "  scripts/generate-client-sdk.sh"
+            echo "  make format"
             echo ""
-            echo "Please regenerate locally and commit the updated Generated files."
+            echo "Please regenerate locally, format, and commit the updated Generated files."
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
