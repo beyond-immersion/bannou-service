@@ -123,179 +123,303 @@ All implementation must comply with these tenets:
 
 ---
 
-## Open Questions
+## Design Decisions (Resolved)
 
-### Q1: Query Language Syntax
+### D1: Query Language Syntax
+**Decision**: **Lucene-like syntax** with MIT-licensed parser library
 
-**Question**: What query syntax should we support for property matching?
+```
+properties.skill:warrior AND properties.rating:[800 TO 2400]
+properties.region:us OR properties.region:eu
++properties.mode:ranked -properties.map:tutorial
+```
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Lucene-like (Nakama)** | `properties.skill:warrior AND properties.rating:[800 TO 2400]` | Industry standard, powerful, Nakama-compatible | Complex parser, learning curve |
-| **B) JSON Filter** | `{"skill": "warrior", "rating": {"$gte": 800, "$lte": 2400}}` | Familiar to MongoDB users, easy to serialize | Verbose, no boolean operators |
-| **C) Simple Key-Value + Ranges** | Structured request object with equality/range fields | Type-safe, simple implementation | Less flexible, no complex queries |
-| **D) SQL-like WHERE** | `skill = 'warrior' AND rating BETWEEN 800 AND 2400` | Familiar to developers | Needs parser, SQL injection concerns |
-
-**Impact**: Query language affects API complexity, learning curve, and matching flexibility.
-
-**Recommendation**: Option C for MVP (simple, type-safe), with path to Option A for power users later.
+**Rationale**: Industry standard, Nakama-compatible, most expressive. One-time implementation cost for maximum future flexibility.
 
 ---
 
-### Q2: Skill Window Expansion
+### D2: Skill Window Expansion
+**Decision**: **Configurable per Queue** via `skill_expansion` array
 
-**Question**: How should skill matching expand over wait time?
+```yaml
+skill_expansion:
+  - intervals: 0, range: 50     # First interval: ±50 rating
+  - intervals: 2, range: 150    # After 2 intervals: ±150
+  - intervals: 4, range: 400    # After 4 intervals: ±400
+  - intervals: 6, range: null   # After 6 intervals: any skill
+```
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Linear Expansion** | Window grows by fixed amount per interval | Predictable, easy to tune | May be too slow or too fast |
-| **B) Exponential Expansion** | Window doubles each interval | Fast relaxation after initial wait | Can overshoot quickly |
-| **C) Stepped Thresholds** | Discrete steps (exact → ±100 → ±300 → any) | Clear tiers, easy to explain | Jumpy transitions |
-| **D) Configurable per Queue** | Each queue defines its own expansion curve | Maximum flexibility | Configuration complexity |
-
-**Impact**: Affects match quality vs wait time tradeoff.
-
-**Recommendation**: Option C with configurable steps per queue type.
+**Rationale**: Different queues need different expansion curves. Ranked needs slow expansion, casual can be loose. Configure once, never touch code.
 
 ---
 
-### Q3: Match Formation Trigger
+### D3: Match Formation Trigger
+**Decision**: **Immediate + Interval**
 
-**Question**: When should the system attempt to form matches?
+- On ticket creation: immediate "quick match" check for obvious matches
+- Background processor: runs every N seconds for complex combinatorial matching
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Interval-Based (Nakama)** | Process every N seconds (e.g., 15s) | Batches efficiently, predictable load | Minimum wait = interval |
-| **B) Immediate + Interval** | Try immediately on join, then interval | Faster for easy matches | More processing, race conditions |
-| **C) Threshold-Based** | Process when queue reaches N tickets | Scales with demand | Unpredictable timing |
-| **D) Event-Driven** | Process on every ticket add/remove | Lowest latency | High CPU for large pools |
-
-**Impact**: Affects latency, server load, and match quality.
-
-**Recommendation**: Option B - immediate check for quick matches, interval for complex matching.
+**Rationale**: Best of both worlds. Easy matches form instantly, complex matches get proper optimization.
 
 ---
 
-### Q4: Party Skill Aggregation
+### D4: Party Skill Aggregation
+**Decision**: **Configurable per Queue** with `party_skill_aggregation` setting
 
-**Question**: How should party skill ratings be calculated for matching?
+Options: `highest` (default, anti-smurf), `average`, `weighted`
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Average Rating** | Sum of ratings / party size | Simple, balanced | Can be gamed (smurf + pro) |
-| **B) Highest Rating** | Use party's best player | Prevents smurfing | Harsh for casual groups |
-| **C) Weighted Average** | Weight by role or contribution | Nuanced matching | Complex, game-specific |
-| **D) Custom Formula** | Configurable aggregation function | Maximum flexibility | Implementation complexity |
+```yaml
+party_skill_aggregation: "highest"
+# Or for weighted:
+party_skill_aggregation: "weighted"
+party_skill_weights: [0.7, 0.2, 0.1]
+```
 
-**Impact**: Critical for competitive integrity in party-based matchmaking.
-
-**Recommendation**: Option B as default (prevents boosting), configurable per queue.
-
----
-
-### Q5: Match Result Delivery
-
-**Question**: How should players receive match results?
-
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) WebSocket Push Only** | Push MatchFoundEvent to connected clients | Real-time, stateless | Missed if disconnected |
-| **B) Push + Polling Fallback** | Push if connected, poll endpoint otherwise | Reliable | More endpoints, complexity |
-| **C) Push + State Storage** | Store pending matches, push + allow fetch | Handles reconnection | State management overhead |
-
-**Impact**: Affects reliability and reconnection handling.
-
-**Recommendation**: Option C - essential for handling brief disconnections during matching.
+**Rationale**: Competitive queues need anti-smurf protection (highest), casual can use average. Per-queue config.
 
 ---
 
-### Q6: Queue Identification
+### D5: Match Result Delivery
+**Decision**: **Push + State Storage** with event-driven reconnection handling
 
-**Question**: How should queues be identified and managed?
+1. Match forms → store `pending_match:{session_id}` in Redis (short TTL)
+2. Push `MatchFoundEvent` via `IClientEventPublisher`
+3. Matchmaking subscribes to `session.reconnected` event
+4. On reconnect: check Redis for session_id, re-push if found
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Pre-Defined Queues** | Admin creates queues (ranked-1v1, casual-5v5) | Simple, controlled | Less flexible |
-| **B) Dynamic Queues** | Queues created on-demand by properties | Maximum flexibility | Fragmentation risk |
-| **C) Queue Templates** | Pre-defined templates, instantiated per game/mode | Balanced | More configuration |
-
-**Impact**: Affects how games configure matchmaking and queue fragmentation.
-
-**Recommendation**: Option A for MVP - explicit queue definitions with game_id + mode.
+**Rationale**: Handles WiFi blips gracefully. Connect service stays dumb about matchmaking. Event-driven, decoupled.
 
 ---
 
-### Q7: Cancel/Timeout Behavior
+### D6: Queue Identification
+**Decision**: **Pre-Defined Queues** with preset examples
 
-**Question**: What happens when matching times out or is cancelled?
+- Admin creates queues via API with full configuration
+- Common presets documented for: 1v1 ranked, team casual, battle royale, FFA, etc.
+- Queue config includes all behavior settings (skill expansion, party aggregation, etc.)
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Silent Removal** | Just remove from pool, no notification | Simple | Poor UX |
-| **B) Event + Reason** | Push timeout/cancel event with reason | Clear feedback | More event types |
-| **C) Auto-Requeue Option** | Option to automatically requeue on timeout | Persistent | May frustrate users |
-
-**Impact**: Affects user experience and debugging.
-
-**Recommendation**: Option B - always notify with clear reason codes.
+**Rationale**: Queues need extensive config. Dynamic queues risk fragmentation. Presets make setup easy.
 
 ---
 
-### Q8: Concurrent Queue Limit
+### D7: Cancel/Timeout Behavior
+**Decision**: **Event + Reason Code**
 
-**Question**: How many queues can a player be in simultaneously?
+`MatchmakingCancelledEvent` with reason codes:
+- `cancelled_by_user` - Player called `/matchmaking/leave`
+- `timeout` - Max intervals exceeded
+- `session_disconnected` - WebSocket dropped, didn't reconnect in time
+- `party_disbanded` - Party dissolved during matching
+- `match_declined` - Someone declined the formed match
+- `queue_disabled` - Admin disabled the queue
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Single Queue Only** | One queue per player | Simple, clear state | Limits flexibility |
-| **B) Multiple Queues** | Up to N concurrent tickets (like Nakama: 3) | Flexibility | Complex state management |
-| **C) Configurable per Game** | Each game decides limit | Maximum flexibility | Configuration overhead |
-
-**Impact**: Affects player flexibility and state complexity.
-
-**Recommendation**: Option B with default limit of 3, configurable via queue settings.
-
----
-
-### Q9: Integration with Game Sessions
-
-**Question**: What happens after a match is formed?
-
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Return Match Token** | Matchmaker returns token; players join session | Decoupled, flexible | Extra step for players |
-| **B) Auto-Create Session** | Matchmaker calls lib-game-session automatically | Seamless | Tighter coupling |
-| **C) Webhook/Event** | Publish event; external handler creates session | Extensible | Indirection, latency |
-
-**Impact**: Affects the player experience and service coupling.
-
-**Recommendation**: Option B for seamless experience - matchmaker creates session, returns session_id.
+**Rationale**: Clear feedback enables good client UX. Events make the world go 'round.
 
 ---
 
-### Q10: Historical Match Data
+### D8: Concurrent Queue Limit
+**Decision**: **Configurable per Queue** with exclusive groups
 
-**Question**: Should we track historical matchmaking data?
+```yaml
+# Can't double-queue arena, but mahjong is fine
+arena-1v1:
+  allow_concurrent: true
+  exclusive_group: "arena"
+arena-2v2:
+  allow_concurrent: true
+  exclusive_group: "arena"
+mahjong-casual:
+  allow_concurrent: true
+  exclusive_group: null
+tournament:
+  allow_concurrent: false  # This queue only
+```
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A) Minimal (Stats Only)** | Just aggregate stats (wait times, completion rates) | Low storage | No individual analysis |
-| **B) Recent History** | Keep last N matches per player | Balance | Rolling window maintenance |
-| **C) Full History** | Store all match formations | Complete audit | Storage growth |
+Plus global max tickets (default: 3) to prevent abuse.
 
-**Impact**: Affects debugging, analytics, and storage costs.
+**Rationale**: Can't be in two arena queues, but arena + mahjong is fine. Exclusive groups handle this cleanly.
 
-**Recommendation**: Option A for service, rely on lib-analytics for detailed player history.
+---
+
+### D9: Game Session Integration
+**Decision**: **Auto-Create via RPC** (mesh call to lib-game-session)
+
+1. Match formed with players
+2. Matchmaker calls `lib-game-session/sessions/create` via mesh
+3. `MatchFoundEvent` includes `session_id`
+4. Players ready to join
+
+**Rationale**: Dependency direction matters. `lib-matchmaking` → `lib-game-session` is correct. Event-based would invert this.
+
+---
+
+### D10: Historical Match Data
+**Decision**: **Minimal Stats Only**
+
+Matchmaking tracks operational metrics:
+- Queue depths, avg wait times, matches per interval, timeout rates
+- Published as `MatchmakingStatsEvent` for dashboards
+
+Player history owned by lib-analytics (already exists).
+
+**Rationale**: Don't duplicate lib-analytics' job. Matchmaking focuses on operational health.
+
+---
+
+## Queue Preset Examples
+
+Common configurations for different game types. Use as starting points when creating queues.
+
+### Preset: Ranked 1v1
+
+```yaml
+queue_id: "ranked-1v1"
+game_id: "arcadia"
+display_name: "Ranked Duel"
+min_count: 2
+max_count: 2
+count_multiple: 2
+interval_seconds: 15
+max_intervals: 6  # 90 seconds max wait
+
+skill_expansion:
+  - intervals: 0, range: 50
+  - intervals: 2, range: 100
+  - intervals: 4, range: 200
+  - intervals: 6, range: null
+
+party_skill_aggregation: "highest"
+allow_concurrent: true
+exclusive_group: "ranked"
+use_skill_rating: true
+rating_category: "arcadia-duel"  # lib-analytics rating category
+```
+
+### Preset: Team Competitive (5v5)
+
+```yaml
+queue_id: "competitive-5v5"
+game_id: "arcadia"
+display_name: "Competitive 5v5"
+min_count: 10
+max_count: 10
+count_multiple: 5  # Must form complete teams
+interval_seconds: 20
+max_intervals: 9  # 3 minutes max wait
+
+skill_expansion:
+  - intervals: 0, range: 100
+  - intervals: 3, range: 200
+  - intervals: 6, range: 400
+  - intervals: 9, range: null
+
+party_skill_aggregation: "highest"
+party_max_size: 5  # Full team allowed
+allow_concurrent: true
+exclusive_group: "competitive"
+use_skill_rating: true
+rating_category: "arcadia-team"
+```
+
+### Preset: Casual Quick Play
+
+```yaml
+queue_id: "casual-quickplay"
+game_id: "arcadia"
+display_name: "Quick Play"
+min_count: 4
+max_count: 8
+count_multiple: 1  # Flexible sizing
+interval_seconds: 10
+max_intervals: 3  # 30 seconds max wait
+
+skill_expansion:
+  - intervals: 0, range: null  # No skill filtering
+
+party_skill_aggregation: "average"
+party_max_size: 4
+allow_concurrent: true
+exclusive_group: null  # Can queue with anything
+use_skill_rating: false
+```
+
+### Preset: Battle Royale
+
+```yaml
+queue_id: "battle-royale-solo"
+game_id: "arcadia"
+display_name: "Battle Royale"
+min_count: 20
+max_count: 100
+count_multiple: 1
+interval_seconds: 30
+max_intervals: 4  # 2 minutes, then start with whoever we have
+
+skill_expansion:
+  - intervals: 0, range: 200
+  - intervals: 2, range: null
+
+party_skill_aggregation: "highest"
+party_max_size: 1  # Solo only
+allow_concurrent: false  # BR queue only
+exclusive_group: null
+use_skill_rating: true
+rating_category: "arcadia-br"
+start_when_minimum_reached: true  # Start at min_count after max_intervals
+```
+
+### Preset: Casual Mini-Game (Mahjong)
+
+```yaml
+queue_id: "mahjong-casual"
+game_id: "arcadia-minigames"
+display_name: "Mahjong"
+min_count: 4
+max_count: 4
+count_multiple: 4
+interval_seconds: 15
+max_intervals: 8  # 2 minutes
+
+skill_expansion:
+  - intervals: 0, range: null  # No skill for casual
+
+party_skill_aggregation: "average"
+party_max_size: 4
+allow_concurrent: true
+exclusive_group: "minigames"  # Can't queue multiple minigames
+use_skill_rating: false
+```
+
+### Preset: Tournament
+
+```yaml
+queue_id: "tournament-bracket"
+game_id: "arcadia"
+display_name: "Tournament Match"
+min_count: 2
+max_count: 2
+count_multiple: 2
+interval_seconds: 60
+max_intervals: 10  # 10 minutes for tournament
+
+skill_expansion:
+  - intervals: 0, range: null  # Tournaments use seeding, not live skill
+
+party_skill_aggregation: "highest"
+allow_concurrent: false  # Tournament queue only
+exclusive_group: null
+use_skill_rating: false
+requires_registration: true  # Must be registered for tournament
+tournament_id_required: true  # Links to tournament system
+```
 
 ---
 
 ## Next Steps
 
-After open questions are resolved:
-
-1. **Schema Design**: Define matchmaking-api.yaml, matchmaking-events.yaml, matchmaking-configuration.yaml
+1. **Schema Design**: Define `matchmaking-api.yaml`, `matchmaking-events.yaml`, `matchmaking-client-events.yaml`, `matchmaking-configuration.yaml`
 2. **Endpoint Specification**: Request/response models for each operation
-3. **Helper Services**: Design internal services (QueueManager, MatchProcessor, TicketStore)
+3. **Helper Services**: Design internal services (QueueManager, MatchProcessor, TicketStore, QueryParser)
 4. **Event Definitions**: Service events + client events for match lifecycle
 5. **Implementation Plan**: Ordered implementation steps
 

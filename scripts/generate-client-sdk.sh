@@ -22,7 +22,8 @@ copy_behavior_files() {
 
     echo "  Copying behavior files to $target_dir with namespace $target_namespace..."
 
-    # Create directory structure
+    # Create directory structure (clean first to remove stale files)
+    rm -rf "$target_dir/Runtime" "$target_dir/Intent"
     mkdir -p "$target_dir/Runtime"
     mkdir -p "$target_dir/Intent"
 
