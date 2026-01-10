@@ -26,32 +26,11 @@ runs:
     - name: Restore NuGet Packages
       shell: bash
       run: |
-        echo "📦 Restoring NuGet packages (including NSwag.MSBuild)..."
+        echo "📦 Restoring NuGet packages..."
         dotnet restore
 
-    - name: Install NSwag Global Tool
-      shell: bash
-      run: |
-        echo "🔧 Installing NSwag as global tool (fallback for CI environments)..."
-        dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag tool already installed or MSBuild package sufficient"
-
-    - name: Install Python Dependencies
-      shell: bash
-      run: |
-        echo "🐍 Installing Python dependencies for code generation..."
-        pip install ruamel.yaml
-
-    - name: Generate Services (Initial)
-      shell: bash
-      run: |
-        echo "🔧 Generating all service controllers, models, and clients..."
-        scripts/generate-all-services.sh
-
-    - name: Generate Client SDK (Initial)
-      shell: bash
-      run: |
-        echo "📦 Generating Client SDK from current services..."
-        scripts/generate-client-sdk.sh
+    # Note: Generated files are committed to git, validated by ci.generation-check.yml
+    # No regeneration needed here - just use committed files
 
     - name: Build All Projects
       shell: bash

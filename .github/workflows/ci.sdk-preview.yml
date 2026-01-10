@@ -55,25 +55,8 @@ jobs:
           echo "📦 Restoring NuGet packages..."
           dotnet restore
 
-      - name: Install NSwag Global Tool
-        run: |
-          echo "🔧 Installing NSwag as global tool..."
-          dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag already installed"
-
-      - name: Install Python Dependencies
-        run: |
-          echo "🐍 Installing Python dependencies for code generation..."
-          pip install ruamel.yaml
-
-      - name: Generate Services
-        run: |
-          echo "🔧 Generating all service controllers, models, and clients..."
-          scripts/generate-all-services.sh
-
-      - name: Generate SDK Behavior Files
-        run: |
-          echo "📦 Generating SDK behavior files..."
-          scripts/generate-client-sdk.sh
+      # Note: Generated files are committed to git, validated by ci.generation-check.yml
+      # No regeneration needed - just use committed files
 
       - name: Run Quick Validation
         run: |
