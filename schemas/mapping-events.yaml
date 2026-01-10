@@ -53,6 +53,17 @@ info:
       event: MapUnauthorizedPublishWarning
       description: Published when non-authority attempts to publish
 
+    # Authority lifecycle events
+    - topic: mapping.authority.granted
+      event: MappingAuthorityGrantedEvent
+      description: Published when authority is granted over a channel
+    - topic: mapping.authority.released
+      event: MappingAuthorityReleasedEvent
+      description: Published when authority is explicitly released
+    - topic: mapping.authority.expired
+      event: MappingAuthorityExpiredEvent
+      description: Published when authority expires (detected during validation)
+
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/mapping-lifecycle-events.yaml
 x-lifecycle:
@@ -495,3 +506,124 @@ components:
           $ref: '#/components/schemas/EventBounds'
           description: Optional bounds filter
           nullable: true
+
+    # ========== AUTHORITY LIFECYCLE EVENTS ==========
+    MappingAuthorityGrantedEvent:
+      type: object
+      description: |
+        Published when authority is granted over a mapping channel.
+        Topic: mapping.authority.granted
+      required:
+        - eventId
+        - timestamp
+        - channelId
+        - regionId
+        - kind
+        - authorityAppId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When authority was granted
+        channelId:
+          type: string
+          format: uuid
+          description: Channel authority was granted for
+        regionId:
+          type: string
+          format: uuid
+          description: Region of the channel
+        kind:
+          type: string
+          description: Map kind of the channel
+        authorityAppId:
+          type: string
+          description: App-id that was granted authority
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the authority expires
+        isNewChannel:
+          type: boolean
+          description: True if this is a new channel, false if takeover
+
+    MappingAuthorityReleasedEvent:
+      type: object
+      description: |
+        Published when authority is explicitly released over a mapping channel.
+        Topic: mapping.authority.released
+      required:
+        - eventId
+        - timestamp
+        - channelId
+        - authorityAppId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When authority was released
+        channelId:
+          type: string
+          format: uuid
+          description: Channel authority was released for
+        regionId:
+          type: string
+          format: uuid
+          description: Region of the channel
+          nullable: true
+        kind:
+          type: string
+          description: Map kind of the channel
+          nullable: true
+        authorityAppId:
+          type: string
+          description: App-id that released authority
+
+    MappingAuthorityExpiredEvent:
+      type: object
+      description: |
+        Published when authority expires (detected during validation).
+        Topic: mapping.authority.expired
+      required:
+        - eventId
+        - timestamp
+        - channelId
+        - expiredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When expiration was detected
+        channelId:
+          type: string
+          format: uuid
+          description: Channel whose authority expired
+        regionId:
+          type: string
+          format: uuid
+          description: Region of the channel
+          nullable: true
+        kind:
+          type: string
+          description: Map kind of the channel
+          nullable: true
+        expiredAuthorityAppId:
+          type: string
+          description: App-id whose authority expired
+          nullable: true
+        expiredAt:
+          type: string
+          format: date-time
+          description: When the authority actually expired

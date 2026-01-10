@@ -37,6 +37,11 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
+| `ActorEncounterEndedEvent` | Custom | `actor-encounter-ended` | Published when an Event Brain actor ends an encoun... |
+| `ActorEncounterPhaseChangedEvent` | Custom | `actor-encounter-phase-changed` | Published when an encounter transitions to a new p... |
+| `ActorEncounterStartedEvent` | Custom | `actor-encounter-started` | Published when an Event Brain actor starts managin... |
+| `ActorInstanceStartedEvent` | Custom | `actor-instance-started` | Published when an actor instance successfully star... |
+| `ActorStatePersistedEvent` | Custom | `actor-state-persisted` | Published when actor state is auto-saved to persis... |
 | `ActorStatusChangedEvent` | Custom | `actor-status-changed` | Published when an actor's status changes. |
 | `CharacterPerceptionEvent` | Custom | `character-perception` | Perception event published by game servers for cha... |
 | `PoolNodeDrainingEvent` | Custom | `pool-node-draining` | Published when a pool node begins graceful shutdow... |
@@ -96,7 +101,9 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `BehaviorCompilationFailedEvent` | Custom | `behavior-compilation-failed` | Event published when ABML compilation fails. Used ... |
 | `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
+| `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
 
 ### Character History
 
@@ -114,6 +121,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `CombatPreferencesCreatedEvent` | Lifecycle (Created) | `combat-preferences.created` | Published when a character's combat preferences ar... |
+| `CombatPreferencesDeletedEvent` | Lifecycle (Deleted) | `combat-preferences.deleted` | Published when a character's combat preferences ar... |
 | `CombatPreferencesEvolvedEvent` | Custom | `combat-preferences-evolved` | Published when a character's combat preferences ev... |
 | `CombatPreferencesUpdatedEvent` | Lifecycle (Updated) | `combat-preferences.updated` | Published when a character's combat preferences ar... |
 | `PersonalityCreatedEvent` | Lifecycle (Created) | `personality.created` | Published when a character's personality is first ... |
@@ -186,6 +194,9 @@ This document lists all events defined in Bannou's event schemas.
 | `MapSnapshotEvent` | Custom | `map-snapshot` | Published when a full snapshot is available. |
 | `MapSnapshotRequestedEvent` | Custom | `map-snapshot-requested` | Published when a consumer needs a full snapshot. |
 | `MapUpdatedEvent` | Lifecycle (Updated) | `map.updated` | Published when map layer data changes. |
+| `MappingAuthorityExpiredEvent` | Expiration | `mapping-authority.expired` | Published when authority expires (detected during ... |
+| `MappingAuthorityGrantedEvent` | Custom | `mapping-authority-granted` | Published when authority is granted over a mapping... |
+| `MappingAuthorityReleasedEvent` | Custom | `mapping-authority-released` | Published when authority is explicitly released ov... |
 | `ObjectChangeEvent` | Custom | `object-change` | A single object change in an event |
 
 ### Mesh

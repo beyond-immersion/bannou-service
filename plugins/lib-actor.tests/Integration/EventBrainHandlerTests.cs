@@ -493,6 +493,259 @@ public sealed class EventBrainHandlerTests
     }
 
     // =========================================================================
+    // SET_ENCOUNTER_PHASE HANDLER TESTS
+    // =========================================================================
+
+    [Fact]
+    public void SetEncounterPhaseHandler_CanHandle_ReturnsTrueForSetEncounterPhase()
+    {
+        // Arrange
+        var actorRegistry = new Mock<IActorRegistry>();
+        var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+
+        var action = new DomainAction("set_encounter_phase", new Dictionary<string, object?>
+        {
+            ["phase"] = "gathering_options"
+        });
+
+        // Act
+        var canHandle = handler.CanHandle(action);
+
+        // Assert
+        Assert.True(canHandle);
+    }
+
+    [Fact]
+    public void SetEncounterPhaseHandler_CanHandle_ReturnsFalseForOtherActions()
+    {
+        // Arrange
+        var actorRegistry = new Mock<IActorRegistry>();
+        var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+
+        var action = new DomainAction("other_action", new Dictionary<string, object?>());
+
+        // Act
+        var canHandle = handler.CanHandle(action);
+
+        // Assert
+        Assert.False(canHandle);
+    }
+
+    [Fact]
+    public async Task SetEncounterPhaseHandler_ExecuteAsync_SetsPhaseOnRunner()
+    {
+        // Arrange
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.SetEncounterPhase("executing")).Returns(true);
+
+        IActorRunner? outRunner = mockRunner.Object;
+        var actorRegistry = new Mock<IActorRegistry>();
+        actorRegistry.Setup(r => r.TryGet("test-actor", out outRunner))
+            .Returns(true);
+
+        var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("set_encounter_phase", new Dictionary<string, object?>
+        {
+            ["phase"] = "executing",
+            ["result_variable"] = "phase_set"
+        });
+
+        // Act
+        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ActionResult.Continue, result);
+        mockRunner.Verify(r => r.SetEncounterPhase("executing"), Times.Once);
+        Assert.True((bool)(scope.GetValue("phase_set") ?? false));
+    }
+
+    [Fact]
+    public async Task SetEncounterPhaseHandler_ExecuteAsync_ReturnsFalseWhenNoActiveEncounter()
+    {
+        // Arrange
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.SetEncounterPhase(It.IsAny<string>())).Returns(false);
+
+        IActorRunner? outRunner = mockRunner.Object;
+        var actorRegistry = new Mock<IActorRegistry>();
+        actorRegistry.Setup(r => r.TryGet("test-actor", out outRunner))
+            .Returns(true);
+
+        var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("set_encounter_phase", new Dictionary<string, object?>
+        {
+            ["phase"] = "executing",
+            ["result_variable"] = "phase_set"
+        });
+
+        // Act
+        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ActionResult.Continue, result);
+        Assert.False((bool)(scope.GetValue("phase_set") ?? true));
+    }
+
+    [Fact]
+    public async Task SetEncounterPhaseHandler_ExecuteAsync_ThrowsOnMissingPhase()
+    {
+        // Arrange
+        var actorRegistry = new Mock<IActorRegistry>();
+        var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("set_encounter_phase", new Dictionary<string, object?>());
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => handler.ExecuteAsync(action, context, CancellationToken.None).AsTask());
+    }
+
+    // =========================================================================
+    // END_ENCOUNTER HANDLER TESTS
+    // =========================================================================
+
+    [Fact]
+    public void EndEncounterHandler_CanHandle_ReturnsTrueForEndEncounter()
+    {
+        // Arrange
+        var actorRegistry = new Mock<IActorRegistry>();
+        var logger = new Mock<ILogger<EndEncounterHandler>>();
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+
+        var action = new DomainAction("end_encounter", new Dictionary<string, object?>());
+
+        // Act
+        var canHandle = handler.CanHandle(action);
+
+        // Assert
+        Assert.True(canHandle);
+    }
+
+    [Fact]
+    public void EndEncounterHandler_CanHandle_ReturnsFalseForOtherActions()
+    {
+        // Arrange
+        var actorRegistry = new Mock<IActorRegistry>();
+        var logger = new Mock<ILogger<EndEncounterHandler>>();
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+
+        var action = new DomainAction("other_action", new Dictionary<string, object?>());
+
+        // Act
+        var canHandle = handler.CanHandle(action);
+
+        // Assert
+        Assert.False(canHandle);
+    }
+
+    [Fact]
+    public async Task EndEncounterHandler_ExecuteAsync_EndsEncounterOnRunner()
+    {
+        // Arrange
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.EndEncounter()).Returns(true);
+
+        IActorRunner? outRunner = mockRunner.Object;
+        var actorRegistry = new Mock<IActorRegistry>();
+        actorRegistry.Setup(r => r.TryGet("test-actor", out outRunner))
+            .Returns(true);
+
+        var logger = new Mock<ILogger<EndEncounterHandler>>();
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("end_encounter", new Dictionary<string, object?>
+        {
+            ["result_variable"] = "encounter_ended"
+        });
+
+        // Act
+        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ActionResult.Continue, result);
+        mockRunner.Verify(r => r.EndEncounter(), Times.Once);
+        Assert.True((bool)(scope.GetValue("encounter_ended") ?? false));
+    }
+
+    [Fact]
+    public async Task EndEncounterHandler_ExecuteAsync_ReturnsFalseWhenNoActiveEncounter()
+    {
+        // Arrange
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.EndEncounter()).Returns(false);
+
+        IActorRunner? outRunner = mockRunner.Object;
+        var actorRegistry = new Mock<IActorRegistry>();
+        actorRegistry.Setup(r => r.TryGet("test-actor", out outRunner))
+            .Returns(true);
+
+        var logger = new Mock<ILogger<EndEncounterHandler>>();
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("end_encounter", new Dictionary<string, object?>
+        {
+            ["result_variable"] = "encounter_ended"
+        });
+
+        // Act
+        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ActionResult.Continue, result);
+        Assert.False((bool)(scope.GetValue("encounter_ended") ?? true));
+    }
+
+    [Fact]
+    public async Task EndEncounterHandler_ExecuteAsync_ContinuesWithoutResultVariable()
+    {
+        // Arrange
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.Setup(r => r.EndEncounter()).Returns(true);
+
+        IActorRunner? outRunner = mockRunner.Object;
+        var actorRegistry = new Mock<IActorRegistry>();
+        actorRegistry.Setup(r => r.TryGet("test-actor", out outRunner))
+            .Returns(true);
+
+        var logger = new Mock<ILogger<EndEncounterHandler>>();
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+
+        var (context, scope) = CreateExecutionContext();
+        scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
+
+        var action = new DomainAction("end_encounter", new Dictionary<string, object?>());
+
+        // Act
+        var result = await handler.ExecuteAsync(action, context, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ActionResult.Continue, result);
+        mockRunner.Verify(r => r.EndEncounter(), Times.Once);
+    }
+
+    // =========================================================================
     // HELPERS
     // =========================================================================
 

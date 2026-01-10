@@ -5286,6 +5286,147 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent">
+            <summary>
+            Published when authority is granted over a mapping channel.
+            <br/>Topic: mapping.authority.granted
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.Timestamp">
+            <summary>
+            When authority was granted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.ChannelId">
+            <summary>
+            Channel authority was granted for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.RegionId">
+            <summary>
+            Region of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.Kind">
+            <summary>
+            Map kind of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.AuthorityAppId">
+            <summary>
+            App-id that was granted authority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.ExpiresAt">
+            <summary>
+            When the authority expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.IsNewChannel">
+            <summary>
+            True if this is a new channel, false if takeover
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityGrantedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent">
+            <summary>
+            Published when authority is explicitly released over a mapping channel.
+            <br/>Topic: mapping.authority.released
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.Timestamp">
+            <summary>
+            When authority was released
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.ChannelId">
+            <summary>
+            Channel authority was released for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.RegionId">
+            <summary>
+            Region of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.Kind">
+            <summary>
+            Map kind of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.AuthorityAppId">
+            <summary>
+            App-id that released authority
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityReleasedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent">
+            <summary>
+            Published when authority expires (detected during validation).
+            <br/>Topic: mapping.authority.expired
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.Timestamp">
+            <summary>
+            When expiration was detected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.ChannelId">
+            <summary>
+            Channel whose authority expired
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.RegionId">
+            <summary>
+            Region of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.Kind">
+            <summary>
+            Map kind of the channel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.ExpiredAuthorityAppId">
+            <summary>
+            App-id whose authority expired
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.ExpiredAt">
+            <summary>
+            When the authority actually expired
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MappingAuthorityExpiredEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.MappingChannelCreatedEvent">
             <summary>
             Published to mapping-channel.created when a mappingchannel is created

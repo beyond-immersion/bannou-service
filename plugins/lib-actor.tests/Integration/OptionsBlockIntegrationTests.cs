@@ -44,19 +44,19 @@ metadata:
 options:
   combat:
     - actionId: basic_attack
-      preference: 0.7
-      risk: 0.2
-      available: true
-      requirements:
+    preference: 0.7
+    risk: 0.2
+    available: true
+    requirements:
         - weapon_equipped
-      tags:
+    tags:
         - melee
         - physical
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -100,15 +100,15 @@ metadata:
 options:
   combat:
     - actionId: aggressive_strike
-      preference: ""${combat.aggressiveness}""
-      available: ""${equipment.has_weapon}""
-      tags:
+    preference: ""${combat.aggressiveness}""
+    available: ""${equipment.has_weapon}""
+    tags:
         - offensive
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -149,24 +149,24 @@ metadata:
 options:
   combat:
     - actionId: attack
-      preference: 0.8
-      available: true
+    preference: 0.8
+    available: true
     - actionId: defend
-      preference: 0.5
-      available: true
+    preference: 0.5
+    available: true
   dialogue:
     - actionId: greet
-      preference: 0.9
-      available: true
+    preference: 0.9
+    available: true
   exploration:
     - actionId: investigate
-      preference: 0.6
-      available: true
+    preference: 0.6
+    available: true
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -201,15 +201,15 @@ metadata:
 options:
   combat:
     - actionId: sword_slash
-      preference: 0.8
-      available: ""${equipment.has_sword}""
-      requirements:
+    preference: 0.8
+    available: ""${equipment.has_sword}""
+    requirements:
         - has_sword
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -246,13 +246,13 @@ metadata:
 options:
   combat:
     - actionId: adaptive_attack
-      preference: ""${combat.style == 'aggressive' ? 0.9 : 0.5}""
-      available: true
+    preference: ""${combat.style == 'aggressive' ? 0.9 : 0.5}""
+    available: true
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -289,18 +289,18 @@ metadata:
 options:
   combat:
     - actionId: special_attack
-      preference: 0.7
-      available: true
-      cooldownMs: 5000
+    preference: 0.7
+    available: true
+    cooldownMs: 5000
     - actionId: ultimate
-      preference: 0.9
-      available: true
-      cooldownMs: ""${skills.ultimate_cooldown}""
+    preference: 0.9
+    available: true
+    cooldownMs: ""${skills.ultimate_cooldown}""
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -337,16 +337,16 @@ metadata:
 options:
   combat:
     - actionId: broken_option
-      preference: ""${throw_error}""
-      available: true
+    preference: ""${throw_error}""
+    available: true
     - actionId: valid_option
-      preference: 0.5
-      available: true
+    preference: 0.5
+    available: true
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);
@@ -389,13 +389,13 @@ metadata:
 options:
   combat:
     - actionId: attack
-      preference: 0.5
-      available: true
+    preference: 0.5
+    available: true
 
 flows:
   main:
     actions:
-      - log: ""tick""
+    - log: ""tick""
 ";
         var parseResult = _parser.Parse(yaml);
         Assert.True(parseResult.IsSuccess);

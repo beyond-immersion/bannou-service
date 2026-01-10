@@ -710,6 +710,74 @@ The caller specifies desired freshness level (fresh, cached, stale_ok):
 - Event Brain knows urgency better than the system
 - Enables optimization: stale_ok for batch queries, fresh for critical decisions
 
+### 6.8 Event Brain ABML Actions Reference
+
+Event Brains use specialized ABML actions for coordination. These are available in addition to standard ABML actions.
+
+#### Coordination Actions (lib-actor)
+
+| Action | Parameters | Description |
+|--------|------------|-------------|
+| `query_options` | `actor_id`, `query_type`, `freshness?`, `max_age_ms?`, `context?`, `result_variable?` | Query another actor's available options via RPC |
+| `query_actor_state` | `actor_id`, `paths?`, `result_variable?` | Query another actor's state from local registry |
+| `emit_perception` | `target_character`, `perception_type`, `urgency?`, `source_id?`, `data?` | Send choreography instruction to a character |
+| `schedule_event` | `delay_ms`, `event_type`, `target_character?`, `data?` | Schedule a delayed event |
+| `state_update` | `path`, `operation`, `value` | Update working memory (set/append/increment/decrement) |
+| `set_encounter_phase` | `phase`, `result_variable?` | Transition the encounter to a new phase |
+| `end_encounter` | `result_variable?` | End the current encounter |
+
+#### Cognition Actions (lib-behavior)
+
+These are primarily for Character Agents but can be used by Event Brains for advanced orchestration:
+
+| Action | Parameters | Description |
+|--------|------------|-------------|
+| `filter_attention` | `input`, `attention_budget?`, `priority_weights?` | Filter perceptions by attention budget |
+| `query_memory` | `perceptions`, `entity_id`, `limit?` | Query memory store for relevant memories |
+| `assess_significance` | `perception`, `memories?`, `personality?`, `weights?` | Score perception significance |
+| `store_memory` | `entity_id`, `perception`, `significance?` | Store significant perception as memory |
+| `evaluate_goal_impact` | `perceptions`, `current_goals`, `current_plan?` | Evaluate perception impact on goals |
+| `trigger_goap_replan` | `goals`, `urgency?`, `world_state?` | Trigger GOAP replanning |
+
+#### Example: Complete Event Brain Behavior
+
+```yaml
+# Arena Fight Coordinator - queries options, emits choreography, manages phases
+flows:
+  monitor_combat:
+    # Query both fighters' options
+    - query_options:
+        actor_id: "${fighter_a}"
+        query_type: "combat"
+        freshness: "cached"
+        max_age_ms: 2000
+        result_variable: "fighter_a_options"
+
+    # Detect dramatic opportunity
+    - if:
+        condition: "${detect_opportunity(fighter_a_options)}"
+        then:
+          # Send choreography instruction
+          - emit_perception:
+              target_character: "${fighter_a}"
+              perception_type: "choreography_instruction"
+              urgency: 0.95
+              data:
+                instruction_type: "execute_sequence"
+                sequence_id: "dramatic_clash"
+
+          # Transition phase
+          - set_encounter_phase:
+              phase: "cinematic"
+
+  cleanup:
+    - end_encounter: {}
+```
+
+See `examples/event-brains/` for complete examples:
+- `arena-fight-coordinator.abml.yml` - Direct Coordinator pattern
+- `god-of-monsters.abml.yml` - God/Regional Watcher pattern
+
 ---
 
 ## 7. Behavior Integration
@@ -1028,6 +1096,161 @@ character:
 3. Wire into entity creation pipeline
 
 **Priority**: LOW - The cognition infrastructure works today with programmatic overrides. YAML parsing becomes valuable when characters are defined in data files rather than code.
+
+### 7.10 Emotional State Model
+
+Actors maintain emotional state that influences behavior selection. The model uses 8 dimensions with decay and personality baselines:
+
+```yaml
+emotional_state:
+  # Primary dimensions (0.0 to 1.0)
+  dimensions:
+    stress: 0.35          # Current stress level
+    alertness: 0.5        # Vigilance level
+    fear: 0.0             # Fear response
+    anger: 0.0            # Anger/frustration
+    joy: 0.3              # Happiness
+    sadness: 0.0          # Grief/melancholy
+    comfort: 0.4          # Feeling of safety
+    curiosity: 0.2        # Interest in surroundings
+
+  # Derived values
+  dominant_emotion: "comfort"  # Highest dimension
+  mood: "content"              # Aggregated mood label
+
+  # Decay rates (per second) - emotions return toward baseline
+  decay:
+    stress: 0.01
+    fear: 0.02
+    anger: 0.015
+    alertness: 0.005
+
+  # Personality baseline (emotions return to these over time)
+  baseline:
+    stress: 0.2
+    alertness: 0.4
+    comfort: 0.5
+```
+
+**Design decisions**:
+- **8 dimensions** cover the emotional range needed for NPC behavior without overwhelming complexity
+- **Decay rates** prevent permanent emotional states (a guard doesn't stay angry forever)
+- **Personality baselines** make characters feel consistent (an anxious character has higher stress baseline)
+- **Dominant emotion** simplifies behavior selection (check one value, not eight)
+
+### 7.11 Memory Storage Structure
+
+Memory storage uses multiple indices for efficient queries:
+
+```yaml
+memory_store:
+  # Recent memories (circular buffer, oldest dropped when full)
+  recent:
+    capacity: 50
+    entries:
+      - id: "mem_001"
+        type: "sighting"
+        timestamp: "2024-01-08T14:30:00Z"
+        entity_id: "chr_suspicious_guy"
+        context: "spotted_known_threat"
+        location: { x: 100, y: 0, z: 45 }
+        emotional_weight: 0.6
+        emotional_snapshot: { stress: 0.4, alertness: 0.7 }
+
+  # Entity index: Quick lookup by entity ID
+  entity_memories:
+    "chr_suspicious_guy":
+      threat_flag: true
+      last_seen: "2024-01-08T14:30:00Z"
+      encounter_count: 3
+      memories: ["mem_001", "mem_023", "mem_045"]
+
+  # Type index: Query by memory category
+  type_index:
+    threat: ["mem_001", "mem_015"]
+    observation: ["mem_002", "mem_003"]
+    crime: ["mem_015"]
+
+  # Spatial index: Location-based queries (chunked by region)
+  spatial_index:
+    "stormwind_market": ["mem_001", "mem_002", "mem_003"]
+```
+
+**Index usage**:
+- **entity_memories**: "What do I know about this person?" - O(1) lookup
+- **type_index**: "What threats have I seen?" - O(1) by category
+- **spatial_index**: "What happened near here?" - O(1) by region
+- **recent**: Time-ordered fallback when indices don't match
+
+### 7.12 Goal Priority System
+
+Goals have base priorities from character templates, with temporary boosts from perceptions:
+
+```yaml
+goal_manager:
+  # Base priorities from character template
+  base_priorities:
+    maintain_order: 70
+    complete_patrol: 50
+    investigate_suspicious: 75
+    respond_to_crime: 90
+    protect_citizens: 95
+
+  # Active boosts (temporary priority increases)
+  boosts:
+    - goal: "investigate_suspicious"
+      amount: 20
+      expires: "2024-01-08T14:35:00Z"
+      reason: "suspicious_activity_detected"
+
+  # Calculated active priorities (base + boosts)
+  active:
+    - id: "protect_citizens"
+      priority: 95
+      conditions_met: true
+    - id: "investigate_suspicious"
+      priority: 95              # 75 + 20 boost
+      conditions_met: false
+    - id: "respond_to_crime"
+      priority: 90
+      conditions_met: false
+
+  # Highest actionable goal (highest priority with conditions_met)
+  current_goal:
+    id: "protect_citizens"
+    priority: 95
+```
+
+**Design decisions**:
+- **Boosts expire** - a perception that increased "investigate" priority fades over time
+- **Conditions tracked separately** - high priority doesn't mean actionable (respond_to_crime needs a crime)
+- **Current goal is derived** - highest priority goal where conditions_met is true
+
+### 7.13 Combat Preference Modifiers
+
+Combat preferences are modified by emotional state and memories:
+
+| Source | Effect | Example |
+|--------|--------|---------|
+| Stress | aggression × 0.9 | High stress slightly reduces aggression |
+| Fear | aggression × 0.7 | Fear significantly reduces aggression |
+| Anger | aggression × 1.3 | Anger increases aggression |
+| Threat memory | caution × 1.2 | Known threats increase caution |
+| Low health | caution × 1.4 | Self-preservation instinct |
+
+**Calculation flow**:
+```
+personality_base (aggression: 0.4, caution: 0.6)
+    ↓ apply emotional modifiers
+    ↓ apply memory modifiers
+    ↓ apply health modifiers
+calculated (style: "balanced", aggression: 0.4, preferred_range: "medium")
+```
+
+**Output determines**:
+- **style**: aggressive | defensive | balanced - which behavior flows are preferred
+- **preferred_range**: close | medium | long - positioning preferences
+- **tactics**: list of tactical hints for behavior selection
 
 ---
 

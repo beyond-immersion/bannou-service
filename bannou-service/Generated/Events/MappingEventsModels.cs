@@ -775,6 +775,229 @@ public partial class MapSnapshotRequestedEvent
 
 }
 
+/// <summary>
+/// Published when authority is granted over a mapping channel.
+/// <br/>Topic: mapping.authority.granted
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MappingAuthorityGrantedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When authority was granted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Channel authority was granted for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ChannelId { get; set; } = default!;
+
+    /// <summary>
+    /// Region of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RegionId { get; set; } = default!;
+
+    /// <summary>
+    /// Map kind of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("kind")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Kind { get; set; } = default!;
+
+    /// <summary>
+    /// App-id that was granted authority
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AuthorityAppId { get; set; } = default!;
+
+    /// <summary>
+    /// When the authority expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// True if this is a new channel, false if takeover
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isNewChannel")]
+    public bool IsNewChannel { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when authority is explicitly released over a mapping channel.
+/// <br/>Topic: mapping.authority.released
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MappingAuthorityReleasedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When authority was released
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Channel authority was released for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ChannelId { get; set; } = default!;
+
+    /// <summary>
+    /// Region of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
+    public System.Guid? RegionId { get; set; } = default!;
+
+    /// <summary>
+    /// Map kind of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("kind")]
+    public string? Kind { get; set; } = default!;
+
+    /// <summary>
+    /// App-id that released authority
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AuthorityAppId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when authority expires (detected during validation).
+/// <br/>Topic: mapping.authority.expired
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MappingAuthorityExpiredEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When expiration was detected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Channel whose authority expired
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ChannelId { get; set; } = default!;
+
+    /// <summary>
+    /// Region of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
+    public System.Guid? RegionId { get; set; } = default!;
+
+    /// <summary>
+    /// Map kind of the channel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("kind")]
+    public string? Kind { get; set; } = default!;
+
+    /// <summary>
+    /// App-id whose authority expired
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiredAuthorityAppId")]
+    public string? ExpiredAuthorityAppId { get; set; } = default!;
+
+    /// <summary>
+    /// When the authority actually expired
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiredAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum IngestPayloadAction

@@ -13,12 +13,12 @@ This document provides a compact reference of all Bannou services and their API 
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
-| [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
+| [Asset](#asset) | 1.0.0 | 9 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
 | [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
-| [Character Personality](#character-personality) | 1.0.0 | 8 | Machine-readable personality traits for NPC behavior decisio... |
+| [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
@@ -195,6 +195,7 @@ Asset management service for storage, versioning, and distribution of large bina
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/assets/delete` | Delete an asset | admin |
 | `POST` | `/assets/get` | Get asset metadata and download URL | user |
 | `POST` | `/assets/list-versions` | List all versions of an asset | user |
 | `POST` | `/assets/search` | Search assets by tags, type, or realm | user |
@@ -371,6 +372,7 @@ Machine-readable personality traits for NPC behavior decisions.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/character-personality/delete-combat` | Delete combat preferences for a character | admin |
 | `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | service |
 | `POST` | `/character-personality/get-combat` | Get combat preferences for a character | user |
 | `POST` | `/character-personality/set-combat` | Create or update combat preferences for a character | admin |
@@ -1060,7 +1062,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 30
-- **Total endpoints**: 325
+- **Total endpoints**: 327
 
 ---
 

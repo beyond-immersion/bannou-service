@@ -87,11 +87,11 @@ flows:
         collection: "${encounter.participants}"
         as: "participant_id"
         do:
-          - query_actor_options:
+          - query_options:
               actor_id: "npc-brain-${participant_id}"
               query_type: "combat"
               freshness: "fresh"
-              store_as: "combat_options_${participant_id}"
+              result_variable: "combat_options_${participant_id}"
 
     # Move to gathering phase
     - set_encounter_phase:
@@ -172,8 +172,7 @@ flows:
     - if:
         condition: "${all_actions_complete()}"
         then:
-          - set_encounter_phase:
-              phase: "complete"
+          - call: cleanup_encounter
 
   # ==========================================================================
   # Phase: Cleanup and end encounter
@@ -183,13 +182,17 @@ flows:
         level: info
         message: "Encounter ${encounter.id} complete, cleaning up"
 
-    # Record outcome in memory for learning
-    - store_memory:
-        key: "last_encounter_outcome"
+    # Record outcome in working memory for the next tick
+    - state_update:
+        path: "working_memory.last_encounter_outcome"
+        operation: "set"
         value:
           encounter_id: "${encounter.id}"
           participant_count: "${encounter.participants.length}"
           completed_at: "${now()}"
+
+    # End the encounter
+    - end_encounter: {}
 
 # =============================================================================
 # ABML FUNCTIONS (for expression evaluation)
