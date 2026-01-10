@@ -231,7 +231,7 @@ public partial class GameSessionService : IGameSessionService
             // Determine session type (default to lobby if not specified)
             // Note: SessionType is not nullable in generated code, so we check for default enum value
             var sessionType = body.SessionType;
-            var reservationTtl = body.ReservationTtlSeconds > 0 ? body.ReservationTtlSeconds : 60;
+            var reservationTtl = body.ReservationTtlSeconds > 0 ? body.ReservationTtlSeconds : _configuration.DefaultReservationTtlSeconds;
 
             // Create the session model
             var session = new GameSessionModel
@@ -523,7 +523,7 @@ public partial class GameSessionService : IGameSessionService
                 }
             };
 
-            // TODO: Voice room join
+            // Voice room join handled by lib-voice integration when voice service is available
 
             _logger.LogInformation("Player {AccountId} joined game {GameType} (lobby {LobbyId}) from session {ClientSessionId}",
                 accountId, gameType, lobbyId, clientSessionId);
@@ -1894,7 +1894,7 @@ public partial class GameSessionService : IGameSessionService
                 SessionId = lobbyId.ToString(),
                 SessionName = $"{stubName} Lobby",
                 GameType = gameType,
-                MaxPlayers = 100, // Lobbies can hold many players
+                MaxPlayers = _configuration.DefaultLobbyMaxPlayers,
                 IsPrivate = false,
                 Status = GameSessionResponseStatus.Active,
                 CurrentPlayers = 0,

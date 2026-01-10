@@ -61,3 +61,13 @@ x-service-configuration:
       description: Automatically requeue non-declining players when a match is declined
       default: true
       env: MATCHMAKING_AUTO_REQUEUE_ON_DECLINE
+    DefaultReservationTtlSeconds:
+      type: integer
+      description: Default TTL for player reservations in game sessions created by matchmaking
+      default: 120
+      env: MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS
+    DefaultJoinDeadlineSeconds:
+      type: integer
+      description: Default deadline for players to join the game session after match confirmation
+      default: 120
+      env: MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS

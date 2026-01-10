@@ -167,6 +167,13 @@ public partial class QueueResponse
     public string GameId { get; set; } = default!;
 
     /// <summary>
+    /// Game type for created sessions (maps to game-session service)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionGameType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionGameType SessionGameType { get; set; } = default!;
+
+    /// <summary>
     /// Human-readable queue name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
@@ -334,6 +341,13 @@ public partial class CreateQueueRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
+
+    /// <summary>
+    /// Game type for created sessions (maps to game-session service)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionGameType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionGameType SessionGameType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable queue name
@@ -619,6 +633,23 @@ public enum PartySkillAggregation
 
     [System.Runtime.Serialization.EnumMember(Value = @"weighted")]
     Weighted = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Game type for created sessions (maps to game-session service GameType)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionGameType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    Generic = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
+    Arcadia = 1,
 
 }
 #pragma warning restore CS1591

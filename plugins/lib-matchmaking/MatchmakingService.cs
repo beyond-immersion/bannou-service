@@ -209,6 +209,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 QueueId = body.QueueId,
                 GameId = body.GameId,
+                SessionGameType = body.SessionGameType,
                 DisplayName = body.DisplayName,
                 Description = body.Description,
                 Enabled = true,
@@ -464,14 +465,14 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Check if already in this queue
-            if (playerTickets.Any(t =>
+            foreach (var existingTicketId in playerTickets)
             {
-                var ticket = LoadTicketAsync(t, cancellationToken).Result;
-                return ticket?.QueueId == queueId;
-            }))
-            {
-                _logger.LogWarning("Player {AccountId} already in queue {QueueId}", accountId, queueId);
-                return (StatusCodes.Conflict, null);
+                var existingTicket = await LoadTicketAsync(existingTicketId, cancellationToken);
+                if (existingTicket?.QueueId == queueId)
+                {
+                    _logger.LogWarning("Player {AccountId} already in queue {QueueId}", accountId, queueId);
+                    return (StatusCodes.Conflict, null);
+                }
             }
 
             // Create ticket
@@ -501,13 +502,12 @@ public partial class MatchmakingService : IMatchmakingService
             // Calculate effective skill rating (for skill-based queues)
             if (queue.UseSkillRating)
             {
-                // TODO: Fetch from lib-analytics if not provided
-                // For now, use party skill aggregation if party
+                // Use party skill aggregation when party members are present
                 if (ticket.PartyMembers?.Count > 0)
                 {
                     var ratings = ticket.PartyMembers
                         .Where(m => m.SkillRating.HasValue)
-                        .Select(m => m.SkillRating.Value)
+                        .Select(m => m.SkillRating.GetValueOrDefault())
                         .ToList();
 
                     if (ratings.Count > 0)
@@ -756,6 +756,8 @@ public partial class MatchmakingService : IMatchmakingService
             // Check if all players accepted
             if (match.AcceptedPlayers.Count == match.MatchedTickets.Count)
             {
+                match.Status = MatchStatus.Accepted;
+                await SaveMatchAsync(match, cancellationToken);
                 await FinalizeMatchAsync(match, cancellationToken);
 
                 return (StatusCodes.OK, new AcceptMatchResponse
@@ -1087,7 +1089,7 @@ public partial class MatchmakingService : IMatchmakingService
         };
 
         // Calculate skill stats
-        var ratings = tickets.Where(t => t.SkillRating.HasValue).Select(t => t.SkillRating.Value).ToList();
+        var ratings = tickets.Where(t => t.SkillRating.HasValue).Select(t => t.SkillRating.GetValueOrDefault()).ToList();
         if (ratings.Count > 0)
         {
             match.AverageSkillRating = ratings.Average();
@@ -1179,15 +1181,22 @@ public partial class MatchmakingService : IMatchmakingService
 
         try
         {
+            // Map queue SessionGameType to game-session CreateGameSessionRequestGameType
+            var gameType = queue?.SessionGameType switch
+            {
+                SessionGameType.Arcadia => CreateGameSessionRequestGameType.Arcadia,
+                _ => CreateGameSessionRequestGameType.Generic
+            };
+
             var sessionResponse = await _gameSessionClient.CreateGameSessionAsync(new CreateGameSessionRequest
             {
-                GameType = CreateGameSessionRequestGameType.Generic, // TODO: Map from queue config
+                GameType = gameType,
                 SessionName = $"Match {match.MatchId.ToString().Substring(0, 8)}",
                 MaxPlayers = match.PlayerCount,
                 IsPrivate = true,
                 SessionType = SessionType.Matchmade,
                 ExpectedPlayers = expectedPlayers,
-                ReservationTtlSeconds = 120
+                ReservationTtlSeconds = _configuration.DefaultReservationTtlSeconds
             }, cancellationToken);
 
             if (sessionResponse == null)
@@ -1215,7 +1224,7 @@ public partial class MatchmakingService : IMatchmakingService
                     MatchId = match.MatchId,
                     GameSessionId = sessionResponse.SessionId,
                     ReservationToken = reservation?.Token ?? string.Empty,
-                    JoinDeadlineSeconds = 120
+                    JoinDeadlineSeconds = _configuration.DefaultJoinDeadlineSeconds
                 }, cancellationToken);
 
                 // Publish join shortcut via game-session service
@@ -1266,6 +1275,10 @@ public partial class MatchmakingService : IMatchmakingService
                 AverageWaitTimeSeconds = match.MatchedTickets.Average(t => t.WaitTimeSeconds)
             }, cancellationToken: cancellationToken);
 
+            // Update match status to completed
+            match.Status = MatchStatus.Completed;
+            await SaveMatchAsync(match, cancellationToken);
+
             _logger.LogInformation("Match {MatchId} finalized with game session {GameSessionId}",
                 match.MatchId, sessionResponse.SessionId);
         }
@@ -1283,6 +1296,10 @@ public partial class MatchmakingService : IMatchmakingService
     {
         _logger.LogInformation("Cancelling match {MatchId}, declined by {DeclinedBy}",
             match.MatchId, declinedBy);
+
+        // Update match status to cancelled
+        match.Status = MatchStatus.Cancelled;
+        await SaveMatchAsync(match, cancellationToken);
 
         var playersToRequeue = new List<MatchedTicketModel>();
 
@@ -1754,6 +1771,7 @@ public partial class MatchmakingService : IMatchmakingService
         {
             QueueId = queue.QueueId,
             GameId = queue.GameId,
+            SessionGameType = queue.SessionGameType,
             DisplayName = queue.DisplayName,
             Description = queue.Description,
             Enabled = queue.Enabled,
@@ -1822,6 +1840,7 @@ internal class QueueModel
 {
     public string QueueId { get; set; } = string.Empty;
     public string GameId { get; set; } = string.Empty;
+    public SessionGameType SessionGameType { get; set; } = SessionGameType.Generic;
     public string DisplayName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool Enabled { get; set; } = true;
@@ -1903,6 +1922,18 @@ internal class MatchModel
     public List<Guid> AcceptedPlayers { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public Guid? GameSessionId { get; set; }
+    public MatchStatus Status { get; set; } = MatchStatus.Pending;
+}
+
+/// <summary>
+/// Match lifecycle status.
+/// </summary>
+internal enum MatchStatus
+{
+    Pending,
+    Accepted,
+    Cancelled,
+    Completed
 }
 
 internal class MatchedTicketModel

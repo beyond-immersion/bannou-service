@@ -108,4 +108,16 @@ public class MatchmakingServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool AutoRequeueOnDecline { get; set; } = true;
 
+    /// <summary>
+    /// Default TTL for player reservations in game sessions created by matchmaking
+    /// Environment variable: MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS
+    /// </summary>
+    public int DefaultReservationTtlSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Default deadline for players to join the game session after match confirmation
+    /// Environment variable: MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS
+    /// </summary>
+    public int DefaultJoinDeadlineSeconds { get; set; } = 120;
+
 }

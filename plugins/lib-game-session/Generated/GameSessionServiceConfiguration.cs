@@ -72,4 +72,16 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultSessionTimeoutSeconds { get; set; } = 7200;
 
+    /// <summary>
+    /// Default TTL for player reservations when not specified in request
+    /// Environment variable: GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS
+    /// </summary>
+    public int DefaultReservationTtlSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Default maximum players for game lobbies
+    /// Environment variable: GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS
+    /// </summary>
+    public int DefaultLobbyMaxPlayers { get; set; } = 100;
+
 }

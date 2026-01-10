@@ -627,6 +627,10 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "description": "Game this queue is for"
                 },
+                "sessionGameType": {
+                    "$ref": "#/$defs/SessionGameType",
+                    "description": "Game type for created sessions (maps to game-session service)"
+                },
                 "displayName": {
                     "type": "string",
                     "description": "Human-readable queue name"
@@ -742,6 +746,15 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "When the queue was last updated"
                 }
             }
+        },
+        "SessionGameType": {
+            "type": "string",
+            "description": "Game type for created sessions (maps to game-session service GameType)",
+            "enum": [
+                "generic",
+                "arcadia"
+            ],
+            "default": "generic"
         },
         "SkillExpansionStep": {
             "type": "object",
@@ -861,6 +874,10 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "description": "Game this queue is for"
                 },
+                "sessionGameType": {
+                    "$ref": "#/$defs/SessionGameType",
+                    "description": "Game type for created sessions (maps to game-session service)"
+                },
                 "displayName": {
                     "type": "string",
                     "maxLength": 100,
@@ -975,6 +992,15 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 }
             }
         },
+        "SessionGameType": {
+            "type": "string",
+            "description": "Game type for created sessions (maps to game-session service GameType)",
+            "enum": [
+                "generic",
+                "arcadia"
+            ],
+            "default": "generic"
+        },
         "SkillExpansionStep": {
             "type": "object",
             "description": "A step in the skill window expansion curve",
@@ -1038,6 +1064,10 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 "gameId": {
                     "type": "string",
                     "description": "Game this queue is for"
+                },
+                "sessionGameType": {
+                    "$ref": "#/$defs/SessionGameType",
+                    "description": "Game type for created sessions (maps to game-session service)"
                 },
                 "displayName": {
                     "type": "string",
@@ -1154,6 +1184,15 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "When the queue was last updated"
                 }
             }
+        },
+        "SessionGameType": {
+            "type": "string",
+            "description": "Game type for created sessions (maps to game-session service GameType)",
+            "enum": [
+                "generic",
+                "arcadia"
+            ],
+            "default": "generic"
         },
         "SkillExpansionStep": {
             "type": "object",
@@ -1403,6 +1442,10 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "description": "Game this queue is for"
                 },
+                "sessionGameType": {
+                    "$ref": "#/$defs/SessionGameType",
+                    "description": "Game type for created sessions (maps to game-session service)"
+                },
                 "displayName": {
                     "type": "string",
                     "description": "Human-readable queue name"
@@ -1518,6 +1561,15 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                     "description": "When the queue was last updated"
                 }
             }
+        },
+        "SessionGameType": {
+            "type": "string",
+            "description": "Game type for created sessions (maps to game-session service GameType)",
+            "enum": [
+                "generic",
+                "arcadia"
+            ],
+            "default": "generic"
         },
         "SkillExpansionStep": {
             "type": "object",

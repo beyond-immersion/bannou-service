@@ -36772,6 +36772,11 @@
             Game this queue is for
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.DisplayName">
             <summary>
             Human-readable queue name
@@ -36895,6 +36900,11 @@
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.GameId">
             <summary>
             Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.DisplayName">
@@ -37090,6 +37100,11 @@
         <member name="T:BeyondImmersion.BannouService.Matchmaking.PartySkillAggregation">
             <summary>
             Method for aggregating party member skills
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service GameType)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest">

@@ -28,6 +28,9 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-matchmaking -->
     <ProjectReference Include="../lib-matchmaking/lib-matchmaking.csproj" />
+    <!-- Infrastructure libs needed for mocking -->
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
   </ItemGroup>
