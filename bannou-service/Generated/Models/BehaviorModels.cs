@@ -882,65 +882,6 @@ public partial class ValidationError
 
 }
 
-/// <summary>
-/// Error response for ABML operations with detailed error information and context
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AbmlErrorResponse
-{
-
-    /// <summary>
-    /// Error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Specific error code for programmatic handling
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
-    public string? ErrorCode { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed error information
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public System.Collections.Generic.ICollection<string>? Details { get; set; } = default!;
-
-    /// <summary>
-    /// Validation errors encountered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validationErrors")]
-    public System.Collections.Generic.ICollection<ValidationError>? ValidationErrors { get; set; } = default!;
-
-    /// <summary>
-    /// Line number in YAML where error occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("yamlLine")]
-    public int YamlLine { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context about the error
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("context")]
-    public object? Context { get; set; } = default!;
-
-    /// <summary>
-    /// When the error occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset? Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for the failed request
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requestId")]
-    public string? RequestId { get; set; } = default!;
-
-}
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CompileBehaviorRequestBehaviorCategory

@@ -185,10 +185,10 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Successful(
                     $"Correctly detected errors: {string.Join(", ", response.Warnings)}");
             }
-            catch (ApiException<AbmlErrorResponse> ex)
+            catch (ApiException ex) when (ex.StatusCode == 400)
             {
-                // 400 response with error details is also acceptable
-                return TestResult.Successful($"Correctly returned error: {ex.Result?.Error}");
+                // 400 response indicates invalid ABML was correctly rejected
+                return TestResult.Successful("Correctly returned 400 error for invalid ABML");
             }
         }, "Compile invalid ABML");
 

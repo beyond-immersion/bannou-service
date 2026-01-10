@@ -8436,51 +8436,6 @@
             YAML path to the problematic element
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse">
-            <summary>
-            Error response for ABML operations with detailed error information and context
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Error">
-            <summary>
-            Error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ErrorCode">
-            <summary>
-            Specific error code for programmatic handling
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Details">
-            <summary>
-            Detailed error information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.ValidationErrors">
-            <summary>
-            Validation errors encountered
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.YamlLine">
-            <summary>
-            Line number in YAML where error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Context">
-            <summary>
-            Additional context about the error
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.Timestamp">
-            <summary>
-            When the error occurred
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Behavior.AbmlErrorResponse.RequestId">
-            <summary>
-            Unique identifier for the failed request
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
             <summary>
             Base class for all server-to-client push events delivered via WebSocket.
@@ -27330,26 +27285,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectErrorResponse">
-            <summary>
-            Error response returned when WebSocket connection establishment fails
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Error">
-            <summary>
-            Error type identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Message">
-            <summary>
-            Human-readable error description
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.StatusCode">
-            <summary>
-            HTTP status code
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
             <summary>
             Response codes used in the binary protocol for success/error indication.
@@ -39082,26 +39017,6 @@
             Error message if failed
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.ErrorResponse">
-            <summary>
-            Standard error response with code, message, and optional additional details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Error">
-            <summary>
-            Error code
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Message">
-            <summary>
-            Human-readable error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.ErrorResponse.Details">
-            <summary>
-            Additional error context
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.DeploymentEvent">
             <summary>
             Published when deployment state changes.
@@ -39488,31 +39403,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.AcquireProcessorResponse.ExpiresAt">
             <summary>
             When the lease expires (must release before this)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse">
-            <summary>
-            Response when all processors in a pool are busy with queue position and wait estimate
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.PoolType">
-            <summary>
-            Pool type that is busy
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.QueuePosition">
-            <summary>
-            Position in the wait queue (0 = not queued)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.EstimatedWaitSeconds">
-            <summary>
-            Estimated wait time until a processor is available
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.PoolBusyResponse.Message">
-            <summary>
-            Human-readable status message
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ReleaseProcessorRequest">

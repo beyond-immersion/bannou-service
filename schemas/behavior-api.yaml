@@ -85,22 +85,10 @@ paths:
                 $ref: '#/components/schemas/CompileBehaviorResponse'
         '400':
           description: Invalid ABML definition or compilation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
         '403':
           description: Forbidden - insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompileBehaviorRequest\"\
         ,\n    \"$defs\": {\n        \"CompileBehaviorRequest\": {\n            \"description\": \"Request to compile an ABML
@@ -363,10 +351,6 @@ paths:
                 $ref: '#/components/schemas/CachedBehaviorResponse'
         '404':
           description: Behavior not found in cache
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCachedBehaviorRequest\"\
         ,\n    \"$defs\": {\n        \"GetCachedBehaviorRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -507,10 +491,6 @@ paths:
                 $ref: '#/components/schemas/GoapPlanResponse'
         '400':
           description: Invalid request or planning failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GoapPlanRequest\"\
         ,\n    \"$defs\": {\n        \"GoapPlanRequest\": {\n            \"description\": \"Request to generate a GOAP plan
@@ -615,10 +595,6 @@ paths:
                 $ref: '#/components/schemas/ValidateGoapPlanResponse'
         '400':
           description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AbmlErrorResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateGoapPlanRequest\"\
         ,\n    \"$defs\": {\n        \"ValidateGoapPlanRequest\": {\n            \"description\": \"Request to validate an
@@ -1362,59 +1338,6 @@ components:
           nullable: true
           description: YAML path to the problematic element
           example: "behaviors.morning_startup.actions[0]"
-
-    # Error Response Model
-    AbmlErrorResponse:
-      description: Error response for ABML operations with detailed error information and context
-      type: object
-      additionalProperties: false
-      required:
-      - error
-      properties:
-        error:
-          type: string
-          description: Error message
-          example: "ABML compilation failed"
-        errorCode:
-          type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: Specific error code for programmatic handling
-          example: "ABML_SYNTAX_ERROR"
-        details:
-          type: array
-          items:
-            type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
-          nullable: true
-          description: Detailed error information
-        validationErrors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          # NRT: Optional array MUST be nullable (Rule 2)
-          nullable: true
-          description: Validation errors encountered
-        yamlLine:
-          type: integer
-          description: Line number in YAML where error occurred
-        context:
-          type: object
-          additionalProperties: true
-          # NRT: Optional object MUST be nullable (Rule 2)
-          nullable: true
-          description: Additional context about the error
-        timestamp:
-          type: string
-          format: date-time
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: When the error occurred
-        requestId:
-          type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: Unique identifier for the failed request
 
 tags:
 - name: ABML

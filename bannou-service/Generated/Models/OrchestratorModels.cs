@@ -2054,37 +2054,6 @@ public partial class AppliedChange
 }
 
 /// <summary>
-/// Standard error response with code, message, and optional additional details
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ErrorResponse
-{
-
-    /// <summary>
-    /// Error code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Additional error context
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public object Details { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published when deployment state changes.
 /// <br/>Topic: bannou-deployment-events
 /// <br/>
@@ -2647,41 +2616,6 @@ public partial class AcquireProcessorResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Response when all processors in a pool are busy with queue position and wait estimate
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PoolBusyResponse
-{
-
-    /// <summary>
-    /// Pool type that is busy
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string PoolType { get; set; } = default!;
-
-    /// <summary>
-    /// Position in the wait queue (0 = not queued)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queuePosition")]
-    public int QueuePosition { get; set; } = default!;
-
-    /// <summary>
-    /// Estimated wait time until a processor is available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("estimatedWaitSeconds")]
-    public int EstimatedWaitSeconds { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable status message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
 
 }
 
