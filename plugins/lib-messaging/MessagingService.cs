@@ -325,7 +325,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, RemoveSubscriptionResponse?)> RemoveSubscriptionAsync(
+    public async Task<StatusCodes> RemoveSubscriptionAsync(
         RemoveSubscriptionRequest body,
         CancellationToken cancellationToken)
     {
@@ -336,7 +336,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             if (!_activeSubscriptions.TryRemove(body.SubscriptionId, out var entry))
             {
                 _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             // Dispose the subscription entry (handle + HttpClient)
@@ -353,7 +353,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             _logger.LogInformation("Removed subscription {SubscriptionId} from topic {Topic}",
                 body.SubscriptionId, entry.Topic);
 
-            return (StatusCodes.OK, new RemoveSubscriptionResponse());
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -368,7 +368,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 details: new { SubscriptionId = body.SubscriptionId },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 

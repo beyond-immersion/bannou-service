@@ -51,7 +51,7 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
 
     /// <returns>Subscription removed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveSubscriptionResponse>> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// List all known topics
@@ -143,11 +143,11 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     /// <returns>Subscription removed</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("messaging/unsubscribe")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveSubscriptionResponse>> RemoveSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RemoveSubscriptionAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.RemoveSubscriptionAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -519,18 +519,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
 """;
 
     private static readonly string _RemoveSubscription_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/RemoveSubscriptionResponse",
-    "$defs": {
-        "RemoveSubscriptionResponse": {
-            "description": "Response confirming subscription removal",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {}
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _RemoveSubscription_Info = """

@@ -197,7 +197,7 @@ public class MappingServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(18, endpoints.Count); // 18 endpoints defined in mapping-api.yaml
+        Assert.Equal(13, endpoints.Count); // 13 endpoints with x-permissions defined in mapping-api.yaml
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public class MappingServiceTests
         Assert.Equal("mapping", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(18, registrationEvent.Endpoints.Count);
+        Assert.Equal(13, registrationEvent.Endpoints.Count);
         Assert.NotEmpty(registrationEvent.Version);
     }
 
@@ -397,10 +397,9 @@ public class MappingServiceTests
         // Act
         var (status, response) = await service.ReleaseAuthorityAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - Unauthorized returns null response
         Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.NotNull(response);
-        Assert.False(response.Released);
+        Assert.Null(response);
     }
 
     #endregion
@@ -448,10 +447,9 @@ public class MappingServiceTests
         // Act
         var (status, response) = await service.PublishMapUpdateAsync(publishRequest, CancellationToken.None);
 
-        // Assert
+        // Assert - Unauthorized returns null response
         Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.NotNull(response);
-        Assert.False(response.Accepted);
+        Assert.Null(response);
     }
 
     #endregion
@@ -706,10 +704,9 @@ public class MappingServiceTests
         // Act
         var (status, response) = await service.CheckoutForAuthoringAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - Conflict returns null response
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.NotNull(response);
-        Assert.Equal("other-editor", response.LockedBy);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1125,10 +1122,9 @@ public class MappingServiceTests
         // Act
         var (status, response) = await service.DeleteDefinitionAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - NotFound returns null response
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Deleted);
+        Assert.Null(response);
     }
 
     #endregion

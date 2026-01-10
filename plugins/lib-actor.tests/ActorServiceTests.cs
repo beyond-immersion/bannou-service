@@ -951,12 +951,10 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var status = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-        Assert.Equal("encounter-001", response.EncounterId);
     }
 
     [Fact]
@@ -979,11 +977,10 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var status = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.Null(response);
     }
 
     [Fact]
@@ -1011,11 +1008,10 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var status = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.Null(response);
     }
 
     #endregion
@@ -1303,31 +1299,23 @@ public class ActorServiceTests
                 Status = "running"
             });
 
-        // Mock the remote invocation response
-        var expectedResponse = new StartEncounterResponse
-        {
-            ActorId = "remote-actor-1",
-            EncounterId = "encounter-001"
-        };
-
-        _mockMeshClient.Setup(m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+        // Mock the remote invocation (no response expected)
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync(
             remoteNodeId,
             "actor/encounter/start",
             It.IsAny<StartEncounterRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedResponse);
+            .Returns(Task.CompletedTask);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var status = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(response);
-        Assert.Equal("encounter-001", response.EncounterId);
 
         // Verify mesh client was called
         _mockMeshClient.Verify(
-            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+            m => m.InvokeMethodAsync(
                 remoteNodeId,
                 "actor/encounter/start",
                 It.Is<StartEncounterRequest>(r => r.ActorId == "remote-actor-1"),
@@ -1551,15 +1539,14 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
+        var status = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.Null(response);
 
         // Verify mesh client was NOT called (no remote node to forward to)
         _mockMeshClient.Verify(
-            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+            m => m.InvokeMethodAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<StartEncounterRequest>(),

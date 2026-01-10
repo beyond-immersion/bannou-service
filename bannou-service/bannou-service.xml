@@ -21292,21 +21292,6 @@
             Optional initial data for the encounter
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Actor.StartEncounterResponse">
-            <summary>
-            Response after starting an encounter
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.ActorId">
-            <summary>
-            ID of the actor managing the encounter
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Actor.StartEncounterResponse.EncounterId">
-            <summary>
-            ID of the started encounter
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Actor.UpdateEncounterPhaseRequest">
             <summary>
             Request to update the phase of an active encounter
@@ -36596,11 +36581,6 @@
         <member name="P:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionRequest.SubscriptionId">
             <summary>
             Unique identifier of the subscription to remove
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Messaging.RemoveSubscriptionResponse">
-            <summary>
-            Response confirming subscription removal
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Messaging.ListTopicsRequest">

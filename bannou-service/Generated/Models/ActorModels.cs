@@ -1604,31 +1604,6 @@ public partial class StartEncounterRequest
 }
 
 /// <summary>
-/// Response after starting an encounter
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StartEncounterResponse
-{
-
-    /// <summary>
-    /// ID of the actor managing the encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ActorId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the started encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterId { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Request to update the phase of an active encounter
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

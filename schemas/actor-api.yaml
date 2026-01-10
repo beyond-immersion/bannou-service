@@ -905,10 +905,6 @@ paths:
       responses:
         '200':
           description: Encounter started successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StartEncounterResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterRequest\"\
         ,\n    \"$defs\": {\n        \"StartEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -926,14 +922,7 @@ paths:
         \             \"initialData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Optional initial data for
         the encounter\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterResponse\"\
-        ,\n    \"$defs\": {\n        \"StartEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response after starting an encounter\",\n            \"required\": [\n  \
-        \              \"actorId\",\n                \"encounterId\"\n            ],\n            \"properties\": {\n    \
-        \            \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID
-        of the actor managing the encounter\"\n                },\n                \"encounterId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"ID of the started encounter\"\n                }\n\
-        \            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
         : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
         sending instructions to participant NPC Brain actors\\nvia their character perception channels.\\n\",\n    \"tags\"\
@@ -2129,21 +2118,6 @@ components:
           additionalProperties: true
           nullable: true
           description: Optional initial data for the encounter
-
-    StartEncounterResponse:
-      type: object
-      additionalProperties: false
-      description: Response after starting an encounter
-      required:
-      - actorId
-      - encounterId
-      properties:
-        actorId:
-          type: string
-          description: ID of the actor managing the encounter
-        encounterId:
-          type: string
-          description: ID of the started encounter
 
     UpdateEncounterPhaseRequest:
       type: object

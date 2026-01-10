@@ -158,7 +158,7 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Encounter started successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update the phase of an active encounter
@@ -423,11 +423,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Encounter started successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.StartEncounterAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        var statusCode = await _implementation.StartEncounterAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
     }
 
     /// <summary>
@@ -2812,31 +2812,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 """;
 
     private static readonly string _StartEncounter_ResponseSchema = """
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/StartEncounterResponse",
-    "$defs": {
-        "StartEncounterResponse": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "Response after starting an encounter",
-            "required": [
-                "actorId",
-                "encounterId"
-            ],
-            "properties": {
-                "actorId": {
-                    "type": "string",
-                    "description": "ID of the actor managing the encounter"
-                },
-                "encounterId": {
-                    "type": "string",
-                    "description": "ID of the started encounter"
-                }
-            }
-        }
-    }
-}
+{}
 """;
 
     private static readonly string _StartEncounter_Info = """

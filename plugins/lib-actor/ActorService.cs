@@ -1276,7 +1276,7 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Starts an encounter managed by an Event Brain actor.
     /// </summary>
-    public async Task<(StatusCodes, StartEncounterResponse?)> StartEncounterAsync(
+    public async Task<StatusCodes> StartEncounterAsync(
         StartEncounterRequest body,
         CancellationToken cancellationToken)
     {
@@ -1290,19 +1290,19 @@ public partial class ActorService : IActorService
             // If actor is on a remote node, forward the request
             if (remoteNodeId != null)
             {
-                var remoteResponse = await InvokeRemoteAsync<StartEncounterRequest, StartEncounterResponse>(
+                await InvokeRemoteNoResponseAsync(
                     remoteNodeId,
                     "actor/encounter/start",
                     body,
                     cancellationToken);
-                return (StatusCodes.OK, remoteResponse);
+                return StatusCodes.OK;
             }
 
             // Actor not found anywhere
             if (localRunner == null)
             {
                 _logger.LogDebug("Actor {ActorId} not found for encounter start", body.ActorId);
-                return (StatusCodes.NotFound, null);
+                return StatusCodes.NotFound;
             }
 
             var runner = localRunner;
@@ -1333,17 +1333,13 @@ public partial class ActorService : IActorService
             if (!success)
             {
                 _logger.LogDebug("Actor {ActorId} already has an active encounter", body.ActorId);
-                return (StatusCodes.Conflict, null);
+                return StatusCodes.Conflict;
             }
 
             _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
                 body.EncounterId, body.ActorId, body.Participants.Count);
 
-            return (StatusCodes.OK, new StartEncounterResponse
-            {
-                ActorId = body.ActorId,
-                EncounterId = body.EncounterId
-            });
+            return StatusCodes.OK;
         }
         catch (Exception ex)
         {
@@ -1356,7 +1352,7 @@ public partial class ActorService : IActorService
                 ex.Message,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return StatusCodes.InternalServerError;
         }
     }
 
@@ -1629,6 +1625,24 @@ public partial class ActorService : IActorService
     {
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
         return await _meshClient.InvokeMethodAsync<TRequest, TResponse>(
+            nodeId,
+            endpoint,
+            request,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes a method on a remote actor service node without expecting a response body.
+    /// </summary>
+    private async Task InvokeRemoteNoResponseAsync<TRequest>(
+        string nodeId,
+        string endpoint,
+        TRequest request,
+        CancellationToken cancellationToken)
+        where TRequest : class
+    {
+        _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId} (no response)", endpoint, nodeId);
+        await _meshClient.InvokeMethodAsync(
             nodeId,
             endpoint,
             request,

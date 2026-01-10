@@ -251,15 +251,6 @@ public partial class RemoveSubscriptionRequest
 }
 
 /// <summary>
-/// Response confirming subscription removal
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RemoveSubscriptionResponse
-{
-
-}
-
-/// <summary>
 /// Optional filters for topic listing (empty object returns all)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

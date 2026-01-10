@@ -417,11 +417,10 @@ public class MessagingServiceTests
         };
 
         // Act
-        var (statusCode, response) = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
+        var statusCode = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.NotNull(response);
 
         // Verify the handle was disposed
         mockHandle.Verify(x => x.DisposeAsync(), Times.Once);
@@ -437,11 +436,10 @@ public class MessagingServiceTests
         };
 
         // Act
-        var (statusCode, response) = await _service.RemoveSubscriptionAsync(request, CancellationToken.None);
+        var statusCode = await _service.RemoveSubscriptionAsync(request, CancellationToken.None);
 
-        // Assert - errors return null per IMPLEMENTATION TENETS
+        // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
-        Assert.Null(response);
     }
 
     [Fact]
@@ -477,11 +475,10 @@ public class MessagingServiceTests
         };
 
         // Act
-        var (statusCode, response) = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
+        var statusCode = await _service.RemoveSubscriptionAsync(removeRequest, CancellationToken.None);
 
-        // Assert - errors return null per IMPLEMENTATION TENETS
+        // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.Null(response);
 
         _mockMessageBus.Verify(
             m => m.TryPublishErrorAsync(

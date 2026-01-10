@@ -42,7 +42,7 @@ public partial interface IMessagingService : IBannouService
         /// <summary>
         /// RemoveSubscription operation
         /// </summary>
-        Task<(StatusCodes, RemoveSubscriptionResponse?)> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<StatusCodes> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// ListTopics operation
