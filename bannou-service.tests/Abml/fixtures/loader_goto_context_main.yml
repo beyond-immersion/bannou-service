@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: goto_context_main
+
+imports:
+  - file: "goto_context_a.yml"
+    as: "a"
+
+flows:
+  start:
+    actions:
+    - log: { message: "Starting in main" }
+    - call: { flow: "a.entry" }
+    - log: { message: "Back in main (only if call returns)" }

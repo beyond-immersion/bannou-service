@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: result_main
+
+imports:
+  - file: "result_lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+    - call: { flow: "lib.compute" }
+    - log: { message: "Result was: ${_result}" }

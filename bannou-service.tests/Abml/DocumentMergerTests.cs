@@ -29,19 +29,7 @@ public class DocumentMergerTests
     public void Merge_SimpleDocument_NoImports_ReturnsUnchanged()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: simple
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-  helper:
-    actions:
-    - log: { message: ""Helper"" }
-";
+        var yaml = TestFixtures.Load("merger_simple");
         var doc = _parser.Parse(yaml).Value!;
         var loaded = new LoadedDocument(doc);
 
@@ -59,34 +47,8 @@ flows:
     public async Task Merge_WithOneImport_FlattenFlowsWithPrefix()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Main start"" }
-    - call: { flow: ""lib.greet"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  greet:
-    actions:
-    - log: { message: ""Hello from lib"" }
-  farewell:
-    actions:
-    - log: { message: ""Goodbye from lib"" }
-";
+        var mainYaml = TestFixtures.Load("merger_import_main");
+        var libYaml = TestFixtures.Load("merger_import_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -117,44 +79,9 @@ flows:
     public async Task Merge_NestedImports_FlattensAllLevels()
     {
         // Arrange - A imports B, B imports C
-        var aYaml = @"
-version: ""2.0""
-metadata:
-  id: a
-
-imports:
-  - file: ""b.yml""
-    as: ""b""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""In A"" }
-";
-        var bYaml = @"
-version: ""2.0""
-metadata:
-  id: b
-
-imports:
-  - file: ""c.yml""
-    as: ""c""
-
-flows:
-  helper:
-    actions:
-    - log: { message: ""In B"" }
-";
-        var cYaml = @"
-version: ""2.0""
-metadata:
-  id: c
-
-flows:
-  deep:
-    actions:
-    - log: { message: ""In C"" }
-";
+        var aYaml = TestFixtures.Load("merger_nested_a");
+        var bYaml = TestFixtures.Load("merger_nested_b");
+        var cYaml = TestFixtures.Load("merger_nested_c");
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
         var cDoc = _parser.Parse(cYaml).Value!;
@@ -184,19 +111,7 @@ flows:
     public void Merge_CallToLocalFlow_PreservesReference()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-flows:
-  start:
-    actions:
-    - call: { flow: ""helper"" }
-  helper:
-    actions:
-    - log: { message: ""Helper"" }
-";
+        var mainYaml = TestFixtures.Load("merger_local_call_main");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var loaded = new LoadedDocument(mainDoc);
 
@@ -214,45 +129,9 @@ flows:
     public async Task Merge_CallFromImportedFlow_RewritesToFullyQualified()
     {
         // Arrange - B has a call to C, both imported by A
-        var aYaml = @"
-version: ""2.0""
-metadata:
-  id: a
-
-imports:
-  - file: ""b.yml""
-    as: ""b""
-
-flows:
-  start:
-    actions:
-    - call: { flow: ""b.entry"" }
-";
-        var bYaml = @"
-version: ""2.0""
-metadata:
-  id: b
-
-imports:
-  - file: ""c.yml""
-    as: ""c""
-
-flows:
-  entry:
-    actions:
-    - log: { message: ""In B"" }
-    - call: { flow: ""c.work"" }
-";
-        var cYaml = @"
-version: ""2.0""
-metadata:
-  id: c
-
-flows:
-  work:
-    actions:
-    - log: { message: ""In C"" }
-";
+        var aYaml = TestFixtures.Load("merger_rewrite_a");
+        var bYaml = TestFixtures.Load("merger_rewrite_b");
+        var cYaml = TestFixtures.Load("merger_rewrite_c");
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
         var cDoc = _parser.Parse(cYaml).Value!;
@@ -278,30 +157,8 @@ flows:
     public async Task Merge_GotoAction_RewritesToFullyQualified()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - goto: { flow: ""lib.target"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  target:
-    actions:
-    - log: { message: ""Arrived"" }
-";
+        var mainYaml = TestFixtures.Load("merger_goto_main");
+        var libYaml = TestFixtures.Load("merger_goto_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -325,34 +182,8 @@ flows:
     public async Task Merge_GotoWithArgs_PreservesArgs()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - goto:
-        flow: ""lib.target""
-        args:
-            x: ""${value}""
-            y: ""42""
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  target:
-    actions:
-    - log: { message: ""Got x=${x}, y=${y}"" }
-";
+        var mainYaml = TestFixtures.Load("merger_goto_args_main");
+        var libYaml = TestFixtures.Load("merger_goto_args_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -416,34 +247,8 @@ flows:
     public async Task Merge_CallInsideForEach_RewritesCorrectly()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - for_each:
-        variable: item
-        collection: ""${items}""
-        do:
-            - call: { flow: ""lib.process"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  process:
-    actions:
-    - log: { message: ""Processing"" }
-";
+        var mainYaml = TestFixtures.Load("merger_foreach_main");
+        var libYaml = TestFixtures.Load("merger_foreach_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -470,33 +275,8 @@ flows:
     public async Task Merge_CallInsideRepeat_RewritesCorrectly()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - repeat:
-        times: 3
-        do:
-            - call: { flow: ""lib.tick"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  tick:
-    actions:
-    - log: { message: ""Tick"" }
-";
+        var mainYaml = TestFixtures.Load("merger_repeat_main");
+        var libYaml = TestFixtures.Load("merger_repeat_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -558,32 +338,8 @@ flows:
     public async Task Merge_ExecuteMergedDocument_SameResultAsOriginal()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Start"" }
-    - call: { flow: ""lib.greet"" }
-    - log: { message: ""End"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  greet:
-    actions:
-    - log: { message: ""Hello from lib"" }
-";
+        var mainYaml = TestFixtures.Load("merger_exec_main");
+        var libYaml = TestFixtures.Load("merger_exec_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -614,48 +370,9 @@ flows:
     public async Task Merge_ExecuteNestedImports_SameResultAsOriginal()
     {
         // Arrange
-        var aYaml = @"
-version: ""2.0""
-metadata:
-  id: a
-
-imports:
-  - file: ""b.yml""
-    as: ""b""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""A start"" }
-    - call: { flow: ""b.entry"" }
-    - log: { message: ""A end"" }
-";
-        var bYaml = @"
-version: ""2.0""
-metadata:
-  id: b
-
-imports:
-  - file: ""c.yml""
-    as: ""c""
-
-flows:
-  entry:
-    actions:
-    - log: { message: ""B entry"" }
-    - call: { flow: ""c.work"" }
-    - log: { message: ""B exit"" }
-";
-        var cYaml = @"
-version: ""2.0""
-metadata:
-  id: c
-
-flows:
-  work:
-    actions:
-    - log: { message: ""C work"" }
-";
+        var aYaml = TestFixtures.Load("merger_exec_nested_a");
+        var bYaml = TestFixtures.Load("merger_exec_nested_b");
+        var cYaml = TestFixtures.Load("merger_exec_nested_c");
         var aDoc = _parser.Parse(aYaml).Value!;
         var bDoc = _parser.Parse(bYaml).Value!;
         var cDoc = _parser.Parse(cYaml).Value!;
@@ -692,30 +409,8 @@ flows:
     public async Task Merge_StartFromMergedImportedFlow_Succeeds()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Main"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  standalone:
-    actions:
-    - log: { message: ""Lib standalone"" }
-";
+        var mainYaml = TestFixtures.Load("merger_standalone_main");
+        var libYaml = TestFixtures.Load("merger_standalone_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -745,46 +440,8 @@ flows:
     public async Task Merge_GoapGoals_MergesWithPrefix()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""ai.yml""
-    as: ""ai""
-
-goals:
-  survive:
-    priority: 100
-    conditions:
-    health: ""> 0""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-";
-        var aiYaml = @"
-version: ""2.0""
-metadata:
-  id: ai
-
-goals:
-  eat:
-    priority: 50
-    conditions:
-    hunger: ""<= 0.3""
-  rest:
-    priority: 30
-    conditions:
-    energy: "">= 0.8""
-
-flows:
-  idle:
-    actions:
-    - log: { message: ""Idling"" }
-";
+        var mainYaml = TestFixtures.Load("merger_goals_main");
+        var aiYaml = TestFixtures.Load("merger_goals_ai");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var aiDoc = _parser.Parse(aiYaml).Value!;
 
@@ -816,32 +473,8 @@ flows:
     public async Task Merge_FlowOnError_RewritesCallsCorrectly()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: main
-
-imports:
-  - file: ""lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Working"" }
-    on_error:
-    - call: { flow: ""lib.handle_error"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: lib
-
-flows:
-  handle_error:
-    actions:
-    - log: { message: ""Handling error"" }
-";
+        var mainYaml = TestFixtures.Load("merger_onerror_main");
+        var libYaml = TestFixtures.Load("merger_onerror_lib");
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
 
@@ -870,19 +503,7 @@ flows:
     public void Merge_PreservesRootMetadata()
     {
         // Arrange
-        var yaml = @"
-version: ""2.0""
-metadata:
-  id: my-document
-  type: behavior
-  description: ""A test document""
-  tags: [""test"", ""example""]
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-";
+        var yaml = TestFixtures.Load("merger_metadata");
         var doc = _parser.Parse(yaml).Value!;
         var loaded = new LoadedDocument(doc);
 

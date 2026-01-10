@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: real_import
+
+flows:
+  greet:
+    actions:
+    - log: { message: "From real import" }

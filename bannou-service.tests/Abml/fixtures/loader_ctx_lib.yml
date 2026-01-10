@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: ctx_lib
+
+context:
+  variables:
+    lib_config:
+    type: string
+    default: "lib_default_value"
+
+flows:
+  show_config:
+    actions:
+    - log: { message: "Lib config: ${lib_config}" }

@@ -1,0 +1,18 @@
+version: "2.0"
+metadata:
+  id: ai
+
+goals:
+  eat:
+    priority: 50
+    conditions:
+      hunger: "<= 0.3"
+  rest:
+    priority: 30
+    conditions:
+      energy: ">= 0.8"
+
+flows:
+  idle:
+    actions:
+      - log: { message: "Idling" }

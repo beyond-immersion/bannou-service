@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: ctx_main
+
+imports:
+  - file: "ctx_lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+    - log: { message: "Trying to access lib context var: ${lib_config}" }

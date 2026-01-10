@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: lib
+
+flows:
+  handle_error:
+    actions:
+      - log: { message: "Handling error" }

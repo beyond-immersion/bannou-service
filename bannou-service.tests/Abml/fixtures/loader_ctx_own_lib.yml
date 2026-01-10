@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: ctx_own_lib
+
+context:
+  variables:
+    lib_setting:
+    type: string
+    default: "my_lib_setting_value"
+
+flows:
+  show_config:
+    actions:
+    - log: { message: "Lib setting: ${lib_setting}" }

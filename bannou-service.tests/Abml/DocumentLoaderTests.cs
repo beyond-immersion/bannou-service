@@ -323,30 +323,8 @@ public class DocumentLoaderTests
     public async Task Execute_NonExistentImportedFlow_Fails()
     {
         // Arrange
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: test
-
-imports:
-  - file: ""common.yml""
-    as: ""common""
-
-flows:
-  start:
-    actions:
-    - call: { flow: ""common.nonexistent"" }
-";
-        var commonYaml = @"
-version: ""2.0""
-metadata:
-  id: common
-
-flows:
-  greet:
-    actions:
-    - log: { message: ""Hello"" }
-";
+        var mainYaml = TestFixtures.Load("loader_nonexistent_main");
+        var commonYaml = TestFixtures.Load("loader_nonexistent_common");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var commonDoc = _parser.Parse(commonYaml).Value!;
@@ -422,48 +400,9 @@ flows:
     {
         // Arrange - Test that goto from imported document resolves relative to that document
         // Note: goto is a tail call, so control does NOT return to the caller
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: goto_context_main
-
-imports:
-  - file: ""goto_context_a.yml""
-    as: ""a""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Starting in main"" }
-    - call: { flow: ""a.entry"" }
-    - log: { message: ""Back in main (only if call returns)"" }
-";
-        var aYaml = @"
-version: ""2.0""
-metadata:
-  id: goto_context_a
-
-imports:
-  - file: ""goto_context_b.yml""
-    as: ""b""
-
-flows:
-  entry:
-    actions:
-    - log: { message: ""In A.entry"" }
-    - goto: { flow: ""b.target"" }
-    - log: { message: ""After goto (should NOT appear)"" }
-";
-        var bYaml = @"
-version: ""2.0""
-metadata:
-  id: goto_context_b
-
-flows:
-  target:
-    actions:
-    - log: { message: ""In B.target (reached via context-relative goto)"" }
-";
+        var mainYaml = TestFixtures.Load("loader_goto_context_main");
+        var aYaml = TestFixtures.Load("loader_goto_context_a");
+        var bYaml = TestFixtures.Load("loader_goto_context_b");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var aDoc = _parser.Parse(aYaml).Value!;
@@ -493,48 +432,9 @@ flows:
     {
         // Arrange - Test that call from imported document resolves relative to that document
         // and properly returns to caller
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: call_context_main
-
-imports:
-  - file: ""call_context_a.yml""
-    as: ""a""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Starting in main"" }
-    - call: { flow: ""a.entry"" }
-    - log: { message: ""Back in main"" }
-";
-        var aYaml = @"
-version: ""2.0""
-metadata:
-  id: call_context_a
-
-imports:
-  - file: ""call_context_b.yml""
-    as: ""b""
-
-flows:
-  entry:
-    actions:
-    - log: { message: ""In A.entry"" }
-    - call: { flow: ""b.helper"" }
-    - log: { message: ""Back in A.entry"" }
-";
-        var bYaml = @"
-version: ""2.0""
-metadata:
-  id: call_context_b
-
-flows:
-  helper:
-    actions:
-    - log: { message: ""In B.helper (reached via context-relative call)"" }
-";
+        var mainYaml = TestFixtures.Load("loader_call_context_main");
+        var aYaml = TestFixtures.Load("loader_call_context_a");
+        var bYaml = TestFixtures.Load("loader_call_context_b");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var aDoc = _parser.Parse(aYaml).Value!;
@@ -716,38 +616,8 @@ flows:
     {
         // Arrange - Test that when imported flow modifies an EXISTING variable,
         // the change propagates to the caller (this is by design - SetValue modifies parent if exists)
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_main
-
-imports:
-  - file: ""scope_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - set:
-        variable: my_var
-        value: ""original""
-    - log: { message: ""Before call: ${my_var}"" }
-    - call: { flow: ""lib.modify"" }
-    - log: { message: ""After call: ${my_var}"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_lib
-
-flows:
-  modify:
-    actions:
-    - set:
-        variable: my_var
-        value: ""modified_by_lib""
-    - log: { message: ""In lib: ${my_var}"" }
-";
+        var mainYaml = TestFixtures.Load("loader_scope_modify_main");
+        var libYaml = TestFixtures.Load("loader_scope_modify_lib");
 
         var mainResult = _parser.Parse(mainYaml);
         Assert.True(mainResult.IsSuccess, $"Main parse failed: {string.Join(", ", mainResult.Errors.Select(e => e.Message))}");
@@ -779,35 +649,8 @@ flows:
     public async Task Execute_ImportedFlowSetsNewVariable_IsolatedFromCaller()
     {
         // Arrange - Test that NEW variables created in imported flow don't leak to caller
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_isolated_main
-
-imports:
-  - file: ""scope_isolated_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Before call, lib_only_var = ${lib_only_var}"" }
-    - call: { flow: ""lib.create_var"" }
-    - log: { message: ""After call, lib_only_var = ${lib_only_var}"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_isolated_lib
-
-flows:
-  create_var:
-    actions:
-    - set:
-        variable: lib_only_var
-        value: ""created_in_lib""
-    - log: { message: ""In lib: ${lib_only_var}"" }
-";
+        var mainYaml = TestFixtures.Load("loader_scope_isolated_main");
+        var libYaml = TestFixtures.Load("loader_scope_isolated_lib");
 
         var mainResult = _parser.Parse(mainYaml);
         Assert.True(mainResult.IsSuccess, $"Main parse failed: {string.Join(", ", mainResult.Errors.Select(e => e.Message))}");
@@ -838,33 +681,8 @@ flows:
     public async Task Execute_ImportedFlowReadsParentVariable_CanAccess()
     {
         // Arrange - Test that imported flow CAN read variables from parent scope
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_read_main
-
-imports:
-  - file: ""scope_read_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - set:
-        variable: greeting
-        value: ""Hello from main""
-    - call: { flow: ""lib.print_greeting"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: scope_read_lib
-
-flows:
-  print_greeting:
-    actions:
-    - log: { message: ""Lib sees: ${greeting}"" }
-";
+        var mainYaml = TestFixtures.Load("loader_scope_read_main");
+        var libYaml = TestFixtures.Load("loader_scope_read_lib");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -888,32 +706,8 @@ flows:
     public async Task Execute_ResultFromImportedFlow_AccessibleViaMagicVar()
     {
         // Arrange - Test that return value from imported flow is accessible via _result
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: result_main
-
-imports:
-  - file: ""result_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - call: { flow: ""lib.compute"" }
-    - log: { message: ""Result was: ${_result}"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: result_lib
-
-flows:
-  compute:
-    actions:
-    - log: { message: ""Computing..."" }
-    - return: { value: 42 }
-";
+        var mainYaml = TestFixtures.Load("loader_result_main");
+        var libYaml = TestFixtures.Load("loader_result_lib");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -942,36 +736,8 @@ flows:
     public async Task Execute_ImportedDocumentContextVariables_NotAccessibleFromMain()
     {
         // Arrange - Test that imported document's context.variables are NOT accessible from main
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: ctx_main
-
-imports:
-  - file: ""ctx_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Trying to access lib context var: ${lib_config}"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: ctx_lib
-
-context:
-  variables:
-    lib_config:
-    type: string
-    default: ""lib_default_value""
-
-flows:
-  show_config:
-    actions:
-    - log: { message: ""Lib config: ${lib_config}"" }
-";
+        var mainYaml = TestFixtures.Load("loader_ctx_main");
+        var libYaml = TestFixtures.Load("loader_ctx_lib");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -996,37 +762,8 @@ flows:
     public async Task Execute_ImportedFlowUsesOwnContextVariables_Succeeds()
     {
         // Arrange - Test that imported flow CAN use its own document's context.variables
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: ctx_own_main
-
-imports:
-  - file: ""ctx_own_lib.yml""
-    as: ""lib""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Calling lib"" }
-    - call: { flow: ""lib.show_config"" }
-";
-        var libYaml = @"
-version: ""2.0""
-metadata:
-  id: ctx_own_lib
-
-context:
-  variables:
-    lib_setting:
-    type: string
-    default: ""my_lib_setting_value""
-
-flows:
-  show_config:
-    actions:
-    - log: { message: ""Lib setting: ${lib_setting}"" }
-";
+        var mainYaml = TestFixtures.Load("loader_ctx_own_main");
+        var libYaml = TestFixtures.Load("loader_ctx_own_lib");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var libDoc = _parser.Parse(libYaml).Value!;
@@ -1058,32 +795,8 @@ flows:
     public async Task LoadAsync_SchemaOnlyImport_SkippedCorrectly()
     {
         // Arrange - Test that schema-only imports (no file:) are skipped
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: schema_import_main
-
-imports:
-  - schema: ""types.json""
-    types: [""MyCustomType""]
-  - file: ""real_import.yml""
-    as: ""real""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-";
-        var realYaml = @"
-version: ""2.0""
-metadata:
-  id: real_import
-
-flows:
-  greet:
-    actions:
-    - log: { message: ""From real import"" }
-";
+        var mainYaml = TestFixtures.Load("loader_schema_import_main");
+        var realYaml = TestFixtures.Load("loader_schema_import_real");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var realDoc = _parser.Parse(realYaml).Value!;
@@ -1107,32 +820,8 @@ flows:
     public async Task LoadAsync_EmptyFileImport_SkippedCorrectly()
     {
         // Arrange - Test that imports with empty file: are skipped
-        var mainYaml = @"
-version: ""2.0""
-metadata:
-  id: empty_file_main
-
-imports:
-  - file: """"
-    as: ""empty""
-  - file: ""valid.yml""
-    as: ""valid""
-
-flows:
-  start:
-    actions:
-    - log: { message: ""Hello"" }
-";
-        var validYaml = @"
-version: ""2.0""
-metadata:
-  id: valid
-
-flows:
-  greet:
-    actions:
-    - log: { message: ""Valid"" }
-";
+        var mainYaml = TestFixtures.Load("loader_empty_file_main");
+        var validYaml = TestFixtures.Load("loader_empty_file_valid");
 
         var mainDoc = _parser.Parse(mainYaml).Value!;
         var validDoc = _parser.Parse(validYaml).Value!;

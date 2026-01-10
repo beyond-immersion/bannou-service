@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: main
+
+imports:
+  - file: "lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+      - goto: { flow: "lib.target" }

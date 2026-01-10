@@ -1,0 +1,12 @@
+version: "2.0"
+metadata:
+  id: test
+
+imports:
+  - file: "common.yml"
+    as: "common"
+
+flows:
+  start:
+    actions:
+    - call: { flow: "common.nonexistent" }

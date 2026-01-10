@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: scope_read_lib
+
+flows:
+  print_greeting:
+    actions:
+    - log: { message: "Lib sees: ${greeting}" }

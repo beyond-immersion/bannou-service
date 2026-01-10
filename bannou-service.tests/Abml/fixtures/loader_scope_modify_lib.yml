@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: scope_lib
+
+flows:
+  modify:
+    actions:
+    - set:
+        variable: my_var
+        value: "modified_by_lib"
+    - log: { message: "In lib: ${my_var}" }

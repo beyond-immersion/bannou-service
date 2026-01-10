@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: my-document
+  type: behavior
+  description: "A test document"
+  tags: ["test", "example"]
+
+flows:
+  start:
+    actions:
+      - log: { message: "Hello" }
