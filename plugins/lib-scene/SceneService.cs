@@ -51,6 +51,8 @@ public partial class SceneService : ISceneService
     private const string SCENE_CHECKOUT_EXT_PREFIX = "scene:checkout-ext:";
     private const string VALIDATION_RULES_PREFIX = "scene:validation:";
     private const string VERSION_RETENTION_PREFIX = "scene:version-retention:";
+    private const string SCENE_GLOBAL_INDEX_KEY = "scene:global-index";
+    private const string SCENE_VERSION_HISTORY_PREFIX = "scene:version-history:";
 
     // Event topics following QUALITY TENETS: {entity}.{action} pattern
     private const string SCENE_CREATED_TOPIC = "scene.created";
@@ -177,8 +179,14 @@ public partial class SceneService : ISceneService
 
             await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
 
+            // Add to global scene index
+            await AddToGlobalSceneIndexAsync(sceneIdStr, cancellationToken);
+
             // Update indexes
             await UpdateSceneIndexesAsync(scene, null, cancellationToken);
+
+            // Store initial version history entry
+            await AddVersionHistoryEntryAsync(sceneIdStr, scene.Version, null, cancellationToken);
 
             // Publish created event
             await PublishSceneCreatedEventAsync(scene, nodeCount, cancellationToken);
@@ -380,7 +388,8 @@ public partial class SceneService : ISceneService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Check checkout status
+            // Check checkout status and get editor ID if available
+            string? editorId = null;
             if (existingIndex.IsCheckedOut)
             {
                 // If we have a checkout token, validate it
@@ -397,6 +406,8 @@ public partial class SceneService : ISceneService
                     _logger.LogWarning("UpdateScene: Invalid checkout token for scene {SceneId}", scene.SceneId);
                     return (StatusCodes.Forbidden, null);
                 }
+                // Get editor ID from checkout state for version history
+                editorId = checkout.EditorId;
             }
 
             // Validate scene structure
@@ -433,6 +444,9 @@ public partial class SceneService : ISceneService
 
             // Update secondary indexes
             await UpdateSceneIndexesAsync(scene, existingScene, cancellationToken);
+
+            // Record version history entry
+            await AddVersionHistoryEntryAsync(sceneIdStr, scene.Version, editorId, cancellationToken);
 
             // Publish updated event
             await PublishSceneUpdatedEventAsync(scene, previousVersion, nodeCount, cancellationToken);
@@ -488,6 +502,12 @@ public partial class SceneService : ISceneService
             // Remove from indexes (soft delete - asset remains until TTL)
             await indexStore.DeleteAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             await RemoveFromIndexesAsync(existingIndex, cancellationToken);
+
+            // Remove from global scene index
+            await RemoveFromGlobalSceneIndexAsync(sceneIdStr, cancellationToken);
+
+            // Delete version history
+            await DeleteVersionHistoryAsync(sceneIdStr, cancellationToken);
 
             // Publish deleted event
             if (scene != null)
@@ -1371,17 +1391,74 @@ public partial class SceneService : ISceneService
     }
 
     /// <summary>
-    /// Gets version history for a scene asset.
+    /// Gets version history for a scene.
     /// </summary>
-    /// <remarks>
-    /// Current implementation returns empty list. Version history tracking
-    /// would require maintaining a separate version index per scene.
-    /// </remarks>
-    private Task<List<VersionInfo>> GetAssetVersionHistoryAsync(string assetId, int limit, CancellationToken cancellationToken)
+    /// <param name="sceneId">The scene ID to get history for.</param>
+    /// <param name="limit">Maximum number of versions to return.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of version info entries, newest first.</returns>
+    private async Task<List<VersionInfo>> GetAssetVersionHistoryAsync(string sceneId, int limit, CancellationToken cancellationToken)
     {
-        // Version history tracking would require additional state store entries
-        // For now, return empty list - can be enhanced later if needed
-        return Task.FromResult(new List<VersionInfo>());
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
+
+        var historyEntries = await historyStore.GetAsync(historyKey, cancellationToken);
+        if (historyEntries == null || historyEntries.Count == 0)
+        {
+            return new List<VersionInfo>();
+        }
+
+        // Return newest first, limited to requested count
+        return historyEntries
+            .OrderByDescending(h => h.CreatedAt)
+            .Take(limit)
+            .Select(h => new VersionInfo
+            {
+                Version = h.Version,
+                CreatedAt = h.CreatedAt,
+                CreatedBy = h.CreatedBy
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Adds a version history entry for a scene.
+    /// </summary>
+    private async Task AddVersionHistoryEntryAsync(string sceneId, string version, string? editorId, CancellationToken cancellationToken)
+    {
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
+
+        var historyEntries = await historyStore.GetAsync(historyKey, cancellationToken) ?? new List<VersionHistoryEntry>();
+
+        historyEntries.Add(new VersionHistoryEntry
+        {
+            Version = version,
+            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedBy = editorId
+        });
+
+        // Enforce retention limit
+        var maxVersions = _configuration.MaxVersionRetentionCount;
+        if (historyEntries.Count > maxVersions)
+        {
+            historyEntries = historyEntries
+                .OrderByDescending(h => h.CreatedAt)
+                .Take(maxVersions)
+                .ToList();
+        }
+
+        await historyStore.SaveAsync(historyKey, historyEntries, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes all version history for a scene.
+    /// </summary>
+    private async Task DeleteVersionHistoryAsync(string sceneId, CancellationToken cancellationToken)
+    {
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
+        await historyStore.DeleteAsync(historyKey, cancellationToken);
     }
 
     private ValidationResult ValidateSceneStructure(Scene scene)
@@ -1747,17 +1824,40 @@ public partial class SceneService : ISceneService
     }
 
     /// <summary>
-    /// Gets all scene IDs in the system.
+    /// Gets all scene IDs in the system from the global index.
     /// </summary>
-    /// <remarks>
-    /// Current implementation returns empty set. A full implementation would
-    /// require maintaining a global scene ID index or scanning all game indexes.
-    /// </remarks>
-    private Task<HashSet<string>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Set of all scene IDs.</returns>
+    private async Task<HashSet<string>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
     {
-        // This would be expensive in production - would need a dedicated global index
-        // For now, return empty set (can be enhanced later if needed)
-        return Task.FromResult(new HashSet<string>());
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
+        return globalIndex ?? new HashSet<string>();
+    }
+
+    /// <summary>
+    /// Adds a scene ID to the global index.
+    /// </summary>
+    private async Task AddToGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
+    {
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken) ?? new HashSet<string>();
+        globalIndex.Add(sceneId);
+        await globalIndexStore.SaveAsync(SCENE_GLOBAL_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Removes a scene ID from the global index.
+    /// </summary>
+    private async Task RemoveFromGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
+    {
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
+        if (globalIndex != null)
+        {
+            globalIndex.Remove(sceneId);
+            await globalIndexStore.SaveAsync(SCENE_GLOBAL_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
+        }
     }
 
     private async Task<(List<ResolvedReference>, List<UnresolvedReference>, List<string>)> ResolveReferencesAsync(
@@ -2191,6 +2291,16 @@ internal class SceneContentEntry
     public string Version { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public long UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Version history entry for tracking scene version changes.
+/// </summary>
+internal class VersionHistoryEntry
+{
+    public string Version { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
 }
 
 #endregion
