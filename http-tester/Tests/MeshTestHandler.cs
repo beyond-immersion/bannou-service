@@ -226,9 +226,15 @@ public class MeshTestHandler : BaseHttpTestHandler
 
             var registerResponse = await meshClient.RegisterEndpointAsync(registerRequest);
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (RegisterEndpointResponse has endpoint required)
             if (registerResponse == null)
-                return TestResult.Failed("RegisterEndpoint failed");
+                return TestResult.Failed("RegisterEndpoint returned null response");
+
+            if (registerResponse.Endpoint == null)
+                return TestResult.Failed("RegisterEndpoint did not return endpoint details");
+
+            if (registerResponse.Endpoint.InstanceId != instanceId)
+                return TestResult.Failed($"Instance ID mismatch: expected {instanceId}, got {registerResponse.Endpoint.InstanceId}");
 
             // Deregister endpoint (returns 204 NoContent on success)
             var deregisterRequest = new DeregisterEndpointRequest { InstanceId = instanceId };

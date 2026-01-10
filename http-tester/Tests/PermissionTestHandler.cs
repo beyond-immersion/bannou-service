@@ -549,8 +549,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionStateAsync(stateUpdate);
 
-            // Success is implied by getting a response without exception
-            return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}");
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (response.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
+
+            return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session state");
 
     /// <summary>
@@ -657,8 +660,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionRoleAsync(roleUpdate);
 
-            // Success is implied by getting a response without exception
-            return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}");
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (response.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
+
+            return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session role");
 
     /// <summary>
@@ -827,7 +833,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // States is null/empty - clears unconditionally
             });
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             // Verify state was cleared
             var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
@@ -875,7 +883,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "in_lobby" matches
             });
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (!clearResponse.PermissionsChanged)
             {
@@ -928,7 +938,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "active" doesn't match
             });
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (clearResponse.PermissionsChanged)
             {
@@ -979,7 +991,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 ServiceId = testServiceId
             });
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (clearResponse.PermissionsChanged)
             {
@@ -1069,7 +1083,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // ServiceId is null - should clear all states
             });
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (!clearResponse.PermissionsChanged)
             {

@@ -152,9 +152,13 @@ public class StateTestHandler : BaseHttpTestHandler
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SaveStateResponse has optional etag property)
             if (saveResponse == null)
-                return TestResult.Failed("SaveState failed");
+                return TestResult.Failed("SaveState returned null response");
+
+            // Verify etag is returned (indicates successful save)
+            if (string.IsNullOrEmpty(saveResponse.Etag))
+                return TestResult.Failed("SaveState did not return an etag");
 
             // Get state
             var getRequest = new GetStateRequest
@@ -199,9 +203,13 @@ public class StateTestHandler : BaseHttpTestHandler
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (SaveStateResponse has optional etag property)
             if (saveResponse == null)
-                return TestResult.Failed("SaveState with TTL failed");
+                return TestResult.Failed("SaveState with TTL returned null response");
+
+            // Verify etag is returned (indicates successful save)
+            if (string.IsNullOrEmpty(saveResponse.Etag))
+                return TestResult.Failed("SaveState with TTL did not return an etag");
 
             // Clean up
             var deleteRequest = new DeleteStateRequest
@@ -336,11 +344,15 @@ public class StateTestHandler : BaseHttpTestHandler
             };
 
             var saveResponse = await stateClient.SaveStateAsync(saveRequest);
-            // Success is implied by getting a response without exception
+            // Validate response structure (SaveStateResponse has optional etag property)
             if (saveResponse == null)
-                return TestResult.Failed("Initial save failed");
+                return TestResult.Failed("Initial save returned null response");
 
-            var etag = saveResponse.Etag ?? "";
+            // ETag is required for optimistic concurrency - fail if not returned
+            if (string.IsNullOrEmpty(saveResponse.Etag))
+                return TestResult.Failed("Initial save did not return an etag (required for concurrency test)");
+
+            var etag = saveResponse.Etag;
 
             // Try to update with correct ETag
             var updateRequest = new SaveStateRequest
@@ -352,12 +364,12 @@ public class StateTestHandler : BaseHttpTestHandler
             };
 
             var updateResponse = await stateClient.SaveStateAsync(updateRequest);
-            // Success is implied by getting a response without exception
-            if (updateResponse == null)
+            // Validate response structure (SaveStateResponse has optional etag property)
+            if (updateResponse == null || string.IsNullOrEmpty(updateResponse.Etag))
             {
                 // Clean up before failing
                 await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
-                return TestResult.Failed("Update with correct ETag failed");
+                return TestResult.Failed("Update with correct ETag failed - null response or missing etag");
             }
 
             // Try to update with stale ETag (should fail with 409 Conflict)

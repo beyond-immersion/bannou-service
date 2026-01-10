@@ -165,7 +165,13 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var response = await gameSessionClient.JoinGameSessionAsync(joinRequest);
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (JoinGameSessionResponse has sessionId and playerRole required)
+            if (response.SessionId != sessionIdGuid)
+                return TestResult.Failed($"Session ID mismatch: expected {sessionIdGuid}, got {response.SessionId}");
+
+            if (string.IsNullOrEmpty(response.PlayerRole.ToString()))
+                return TestResult.Failed("Player role was not assigned");
+
             return TestResult.Successful($"Successfully joined game session: SessionID={response.SessionId}, Role={response.PlayerRole}");
         }, "Join game session");
 
@@ -359,7 +365,10 @@ public class GameSessionTestHandler : BaseHttpTestHandler
 
             var response = await gameSessionClient.PerformGameActionAsync(actionRequest);
 
-            // Success is implied by getting a response without exception
+            // Validate response structure (GameActionResponse has actionId required)
+            if (response.ActionId == Guid.Empty)
+                return TestResult.Failed("Action ID was not returned");
+
             return TestResult.Successful($"Game action performed successfully: ActionID={response.ActionId}");
         }, "Perform game action");
 
