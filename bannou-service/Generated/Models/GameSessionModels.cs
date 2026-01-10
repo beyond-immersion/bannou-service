@@ -146,6 +146,26 @@ public partial class CreateGameSessionRequest
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object? GameSettings { get; set; } = default!;
 
+    /// <summary>
+    /// Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - list of account IDs expected to join. Reservations created for each.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedPlayers")]
+    public System.Collections.Generic.ICollection<System.Guid>? ExpectedPlayers { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - how long reservations last before expiring (seconds)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationTtlSeconds")]
+    [System.ComponentModel.DataAnnotations.Range(10, 300)]
+    public int ReservationTtlSeconds { get; set; } = 60;
+
 }
 
 /// <summary>
@@ -171,6 +191,15 @@ public partial class GameSessionResponse
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameSessionResponseGameType GameType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of session - lobby or matchmade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
 
     /// <summary>
     /// Display name for the session
@@ -230,6 +259,18 @@ public partial class GameSessionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object? GameSettings { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - reservation tokens for expected players
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservations")]
+    public System.Collections.Generic.ICollection<ReservationInfo>? Reservations { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
+    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
 
 }
 
@@ -647,6 +688,247 @@ public partial class VoiceConnectionInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
     public System.Collections.Generic.ICollection<string>? StunServers { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Type of game session - determines join behavior
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lobby")]
+    Lobby = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"matchmade")]
+    Matchmade = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// A slot reservation for an expected player in a matchmade session
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PlayerReservation
+{
+
+    /// <summary>
+    /// Account ID of the player this slot is reserved for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// One-time use token for claiming this reservation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("token")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Token { get; set; } = default!;
+
+    /// <summary>
+    /// When this reservation was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ReservedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this reservation has been claimed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("claimed")]
+    public bool Claimed { get; set; } = false;
+
+    /// <summary>
+    /// When this reservation was claimed (null if not yet claimed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("claimedAt")]
+    public System.DateTimeOffset? ClaimedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reservation token returned when creating a matchmade session
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReservationInfo
+{
+
+    /// <summary>
+    /// Account ID this reservation is for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Token to claim this reservation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("token")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Token { get; set; } = default!;
+
+    /// <summary>
+    /// When this reservation expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to join a specific game session by ID (for matchmade sessions)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class JoinGameSessionByIdRequest
+{
+
+    /// <summary>
+    /// WebSocket session ID of the client joining. Used for event delivery.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WebSocketSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the player joining.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game session to join.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Token proving reservation (required for matchmade sessions)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationToken")]
+    public string? ReservationToken { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific character data (null if no character data)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterData")]
+    public object? CharacterData { get; set; } = default!;
+
+    /// <summary>
+    /// Client's SIP endpoint for voice communication (null if not using voice)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("voiceEndpoint")]
+    public VoiceSipEndpoint? VoiceEndpoint { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to publish a join shortcut for a matchmade session to a player
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PublishJoinShortcutRequest
+{
+
+    /// <summary>
+    /// WebSocket session ID to receive the shortcut
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetWebSocketSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TargetWebSocketSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the player
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game session to join
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Token for this player's reservation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ReservationToken { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after publishing a join shortcut
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PublishJoinShortcutResponse
+{
+
+    /// <summary>
+    /// Whether the shortcut was published successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// The route GUID for the published shortcut (null if failed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("shortcutRouteGuid")]
+    public System.Guid? ShortcutRouteGuid { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to leave a specific game session by ID
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LeaveGameSessionByIdRequest
+{
+
+    /// <summary>
+    /// WebSocket session ID of the client leaving.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WebSocketSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the player leaving.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the game session to leave.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameSessionId { get; set; } = default!;
 
 }
 

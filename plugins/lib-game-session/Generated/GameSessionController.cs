@@ -115,6 +115,48 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameActionAsync(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Join a specific game session by ID
+    /// </summary>
+
+    /// <remarks>
+    /// Join a game session by its session ID. Used for matchmade games where the session
+    /// <br/>is pre-created by the matchmaking service and the player has a reservation.
+    /// <br/>For matchmade sessions, a valid reservation token is required.
+    /// <br/>For lobby sessions, this allows joining by ID without going through gameType lookup.
+    /// </remarks>
+
+    /// <returns>Successfully joined game session</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionByIdAsync(JoinGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Leave a specific game session by ID
+    /// </summary>
+
+    /// <remarks>
+    /// Leave a game session by its session ID. This is the session-specific alternative
+    /// <br/>to /sessions/leave which uses gameType. Useful for matchmade sessions.
+    /// </remarks>
+
+    /// <returns>Successfully left game session</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionByIdAsync(LeaveGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Publish join shortcut for matchmade session
+    /// </summary>
+
+    /// <remarks>
+    /// Internal endpoint for the matchmaking service to trigger shortcut publishing
+    /// <br/>to a specific player for a matchmade session. The shortcut allows the player
+    /// <br/>to join the session with their reservation token pre-bound.
+    /// </remarks>
+
+    /// <returns>Shortcut published successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishJoinShortcutResponse>> PublishJoinShortcutAsync(PublishJoinShortcutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -285,6 +327,60 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
         return ConvertToActionResult(statusCode, result);
     }
 
+    /// <summary>
+    /// Join a specific game session by ID
+    /// </summary>
+    /// <remarks>
+    /// Join a game session by its session ID. Used for matchmade games where the session
+    /// <br/>is pre-created by the matchmaking service and the player has a reservation.
+    /// <br/>For matchmade sessions, a valid reservation token is required.
+    /// <br/>For lobby sessions, this allows joining by ID without going through gameType lookup.
+    /// </remarks>
+    /// <returns>Successfully joined game session</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/join-session")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionById([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.JoinGameSessionByIdAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Leave a specific game session by ID
+    /// </summary>
+    /// <remarks>
+    /// Leave a game session by its session ID. This is the session-specific alternative
+    /// <br/>to /sessions/leave which uses gameType. Useful for matchmade sessions.
+    /// </remarks>
+    /// <returns>Successfully left game session</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/leave-session")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionById([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var statusCode = await _implementation.LeaveGameSessionByIdAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// Publish join shortcut for matchmade session
+    /// </summary>
+    /// <remarks>
+    /// Internal endpoint for the matchmaking service to trigger shortcut publishing
+    /// <br/>to a specific player for a matchmade session. The shortcut allows the player
+    /// <br/>to join the session with their reservation token pre-bound.
+    /// </remarks>
+    /// <returns>Shortcut published successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/publish-join-shortcut")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishJoinShortcutResponse>> PublishJoinShortcut([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PublishJoinShortcutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.PublishJoinShortcutAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
 
 
     #region Meta Endpoints for ListGameSessions
@@ -356,7 +452,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "sessionId",
                 "gameType",
                 "status",
-                "createdAt"
+                "createdAt",
+                "sessionType"
             ],
             "properties": {
                 "sessionId": {
@@ -371,6 +468,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                         "generic"
                     ],
                     "description": "Type of game for this session"
+                },
+                "sessionType": {
+                    "$ref": "#/$defs/SessionType",
+                    "description": "Type of session - lobby or matchmade"
                 },
                 "sessionName": {
                     "type": "string",
@@ -421,8 +522,30 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific configuration settings"
+                },
+                "reservations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ReservationInfo"
+                    },
+                    "nullable": true,
+                    "description": "For matchmade sessions - reservation tokens for expected players"
+                },
+                "reservationExpiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "For matchmade sessions - when reservations expire"
                 }
             }
+        },
+        "SessionType": {
+            "type": "string",
+            "description": "Type of game session - determines join behavior",
+            "enum": [
+                "lobby",
+                "matchmade"
+            ]
         },
         "GamePlayer": {
             "description": "Information about a player currently participating in a game session",
@@ -473,6 +596,32 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
+                }
+            }
+        },
+        "ReservationInfo": {
+            "type": "object",
+            "description": "Reservation token returned when creating a matchmade session",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "token",
+                "expiresAt"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID this reservation is for"
+                },
+                "token": {
+                    "type": "string",
+                    "description": "Token to claim this reservation"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this reservation expires"
                 }
             }
         }
@@ -585,8 +734,36 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific configuration settings (null to use defaults)"
+                },
+                "sessionType": {
+                    "$ref": "#/$defs/SessionType",
+                    "description": "Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby."
+                },
+                "expectedPlayers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "For matchmade sessions - list of account IDs expected to join. Reservations created for each."
+                },
+                "reservationTtlSeconds": {
+                    "type": "integer",
+                    "minimum": 10,
+                    "maximum": 300,
+                    "default": 60,
+                    "description": "For matchmade sessions - how long reservations last before expiring (seconds)"
                 }
             }
+        },
+        "SessionType": {
+            "type": "string",
+            "description": "Type of game session - determines join behavior",
+            "enum": [
+                "lobby",
+                "matchmade"
+            ]
         }
     }
 }
@@ -605,7 +782,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "sessionId",
                 "gameType",
                 "status",
-                "createdAt"
+                "createdAt",
+                "sessionType"
             ],
             "properties": {
                 "sessionId": {
@@ -620,6 +798,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                         "generic"
                     ],
                     "description": "Type of game for this session"
+                },
+                "sessionType": {
+                    "$ref": "#/$defs/SessionType",
+                    "description": "Type of session - lobby or matchmade"
                 },
                 "sessionName": {
                     "type": "string",
@@ -670,8 +852,30 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific configuration settings"
+                },
+                "reservations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ReservationInfo"
+                    },
+                    "nullable": true,
+                    "description": "For matchmade sessions - reservation tokens for expected players"
+                },
+                "reservationExpiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "For matchmade sessions - when reservations expire"
                 }
             }
+        },
+        "SessionType": {
+            "type": "string",
+            "description": "Type of game session - determines join behavior",
+            "enum": [
+                "lobby",
+                "matchmade"
+            ]
         },
         "GamePlayer": {
             "description": "Information about a player currently participating in a game session",
@@ -722,6 +926,32 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
+                }
+            }
+        },
+        "ReservationInfo": {
+            "type": "object",
+            "description": "Reservation token returned when creating a matchmade session",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "token",
+                "expiresAt"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID this reservation is for"
+                },
+                "token": {
+                    "type": "string",
+                    "description": "Token to claim this reservation"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this reservation expires"
                 }
             }
         }
@@ -822,7 +1052,8 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                 "sessionId",
                 "gameType",
                 "status",
-                "createdAt"
+                "createdAt",
+                "sessionType"
             ],
             "properties": {
                 "sessionId": {
@@ -837,6 +1068,10 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                         "generic"
                     ],
                     "description": "Type of game for this session"
+                },
+                "sessionType": {
+                    "$ref": "#/$defs/SessionType",
+                    "description": "Type of session - lobby or matchmade"
                 },
                 "sessionName": {
                     "type": "string",
@@ -887,8 +1122,30 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific configuration settings"
+                },
+                "reservations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ReservationInfo"
+                    },
+                    "nullable": true,
+                    "description": "For matchmade sessions - reservation tokens for expected players"
+                },
+                "reservationExpiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "For matchmade sessions - when reservations expire"
                 }
             }
+        },
+        "SessionType": {
+            "type": "string",
+            "description": "Type of game session - determines join behavior",
+            "enum": [
+                "lobby",
+                "matchmade"
+            ]
         },
         "GamePlayer": {
             "description": "Information about a player currently participating in a game session",
@@ -939,6 +1196,32 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
                     "type": "string",
                     "nullable": true,
                     "description": "Voice participant session ID (if player has joined voice)"
+                }
+            }
+        },
+        "ReservationInfo": {
+            "type": "object",
+            "description": "Reservation token returned when creating a matchmade session",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "token",
+                "expiresAt"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID this reservation is for"
+                },
+                "token": {
+                    "type": "string",
+                    "description": "Token to claim this reservation"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this reservation expires"
                 }
             }
         }
@@ -1682,6 +1965,454 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
             _PerformGameAction_Info,
             _PerformGameAction_RequestSchema,
             _PerformGameAction_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for JoinGameSessionById
+
+    private static readonly string _JoinGameSessionById_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/JoinGameSessionByIdRequest",
+    "$defs": {
+        "JoinGameSessionByIdRequest": {
+            "type": "object",
+            "description": "Request to join a specific game session by ID (for matchmade sessions)",
+            "additionalProperties": false,
+            "required": [
+                "webSocketSessionId",
+                "accountId",
+                "gameSessionId"
+            ],
+            "properties": {
+                "webSocketSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "WebSocket session ID of the client joining. Used for event delivery."
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID of the player joining."
+                },
+                "gameSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game session to join."
+                },
+                "reservationToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Token proving reservation (required for matchmade sessions)"
+                },
+                "characterData": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Game-specific character data (null if no character data)"
+                },
+                "voiceEndpoint": {
+                    "$ref": "#/$defs/VoiceSipEndpoint",
+                    "nullable": true,
+                    "description": "Client's SIP endpoint for voice communication (null if not using voice)"
+                }
+            }
+        },
+        "VoiceSipEndpoint": {
+            "type": "object",
+            "description": "Client's SIP/WebRTC endpoint for voice communication",
+            "additionalProperties": false,
+            "required": [
+                "sdpOffer"
+            ],
+            "properties": {
+                "sdpOffer": {
+                    "type": "string",
+                    "description": "SDP offer for WebRTC negotiation"
+                },
+                "iceCandidates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "ICE candidates for NAT traversal"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _JoinGameSessionById_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/JoinGameSessionResponse",
+    "$defs": {
+        "JoinGameSessionResponse": {
+            "description": "Response after successfully joining a game session with role and permissions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sessionId",
+                "playerRole"
+            ],
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the joined game session"
+                },
+                "playerRole": {
+                    "type": "string",
+                    "enum": [
+                        "player",
+                        "spectator",
+                        "moderator"
+                    ],
+                    "description": "Role assigned to the player in this session"
+                },
+                "gameData": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Initial game state data"
+                },
+                "newPermissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Additional permissions granted by joining"
+                },
+                "voice": {
+                    "$ref": "#/$defs/VoiceConnectionInfo",
+                    "description": "Voice connection info (if voice is enabled for this session)"
+                }
+            }
+        },
+        "VoiceConnectionInfo": {
+            "type": "object",
+            "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
+            "additionalProperties": false,
+            "required": [
+                "voiceEnabled"
+            ],
+            "properties": {
+                "voiceEnabled": {
+                    "type": "boolean",
+                    "description": "Whether voice is enabled for this game session"
+                },
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
+                },
+                "tier": {
+                    "type": "string",
+                    "enum": [
+                        "p2p",
+                        "scaled"
+                    ],
+                    "nullable": true,
+                    "description": "Expected voice tier (may change based on participant count)"
+                },
+                "codec": {
+                    "type": "string",
+                    "enum": [
+                        "opus",
+                        "g711",
+                        "g722"
+                    ],
+                    "nullable": true,
+                    "description": "Audio codec to use"
+                },
+                "stunServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "STUN server URIs for NAT traversal (clients should configure these early)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _JoinGameSessionById_Info = """
+{
+    "summary": "Join a specific game session by ID",
+    "description": "Join a game session by its session ID. Used for matchmade games where the session\nis pre-created by the matchmaking service and the player has a reservation.\nFor matchmade sessions, a valid reservation token is required.\nFor lobby sessions, this allows joining by ID without going through gameType lookup.\n",
+    "tags": [
+        "Game Sessions"
+    ],
+    "deprecated": false,
+    "operationId": "joinGameSessionById"
+}
+""";
+
+    /// <summary>Returns endpoint information for JoinGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join-session/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSessionById_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/join-session",
+            _JoinGameSessionById_Info));
+
+    /// <summary>Returns request schema for JoinGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join-session/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSessionById_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join-session",
+            "request-schema",
+            _JoinGameSessionById_RequestSchema));
+
+    /// <summary>Returns response schema for JoinGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join-session/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSessionById_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join-session",
+            "response-schema",
+            _JoinGameSessionById_ResponseSchema));
+
+    /// <summary>Returns full schema for JoinGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/join-session/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> JoinGameSessionById_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/join-session",
+            _JoinGameSessionById_Info,
+            _JoinGameSessionById_RequestSchema,
+            _JoinGameSessionById_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for LeaveGameSessionById
+
+    private static readonly string _LeaveGameSessionById_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LeaveGameSessionByIdRequest",
+    "$defs": {
+        "LeaveGameSessionByIdRequest": {
+            "type": "object",
+            "description": "Request to leave a specific game session by ID",
+            "additionalProperties": false,
+            "required": [
+                "webSocketSessionId",
+                "accountId",
+                "gameSessionId"
+            ],
+            "properties": {
+                "webSocketSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "WebSocket session ID of the client leaving."
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID of the player leaving."
+                },
+                "gameSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game session to leave."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _LeaveGameSessionById_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _LeaveGameSessionById_Info = """
+{
+    "summary": "Leave a specific game session by ID",
+    "description": "Leave a game session by its session ID. This is the session-specific alternative\nto /sessions/leave which uses gameType. Useful for matchmade sessions.\n",
+    "tags": [
+        "Game Sessions"
+    ],
+    "deprecated": false,
+    "operationId": "leaveGameSessionById"
+}
+""";
+
+    /// <summary>Returns endpoint information for LeaveGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave-session/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSessionById_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave-session",
+            _LeaveGameSessionById_Info));
+
+    /// <summary>Returns request schema for LeaveGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave-session/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSessionById_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave-session",
+            "request-schema",
+            _LeaveGameSessionById_RequestSchema));
+
+    /// <summary>Returns response schema for LeaveGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave-session/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSessionById_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave-session",
+            "response-schema",
+            _LeaveGameSessionById_ResponseSchema));
+
+    /// <summary>Returns full schema for LeaveGameSessionById</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/leave-session/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGameSessionById_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/leave-session",
+            _LeaveGameSessionById_Info,
+            _LeaveGameSessionById_RequestSchema,
+            _LeaveGameSessionById_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for PublishJoinShortcut
+
+    private static readonly string _PublishJoinShortcut_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PublishJoinShortcutRequest",
+    "$defs": {
+        "PublishJoinShortcutRequest": {
+            "type": "object",
+            "description": "Request to publish a join shortcut for a matchmade session to a player",
+            "additionalProperties": false,
+            "required": [
+                "targetWebSocketSessionId",
+                "accountId",
+                "gameSessionId",
+                "reservationToken"
+            ],
+            "properties": {
+                "targetWebSocketSessionId": {
+                    "type": "string",
+                    "description": "WebSocket session ID to receive the shortcut"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID of the player"
+                },
+                "gameSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the game session to join"
+                },
+                "reservationToken": {
+                    "type": "string",
+                    "description": "Token for this player's reservation"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _PublishJoinShortcut_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/PublishJoinShortcutResponse",
+    "$defs": {
+        "PublishJoinShortcutResponse": {
+            "type": "object",
+            "description": "Response after publishing a join shortcut",
+            "additionalProperties": false,
+            "required": [
+                "success"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether the shortcut was published successfully"
+                },
+                "shortcutRouteGuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "The route GUID for the published shortcut (null if failed)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _PublishJoinShortcut_Info = """
+{
+    "summary": "Publish join shortcut for matchmade session",
+    "description": "Internal endpoint for the matchmaking service to trigger shortcut publishing\nto a specific player for a matchmade session. The shortcut allows the player\nto join the session with their reservation token pre-bound.\n",
+    "tags": [
+        "Internal"
+    ],
+    "deprecated": false,
+    "operationId": "publishJoinShortcut"
+}
+""";
+
+    /// <summary>Returns endpoint information for PublishJoinShortcut</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/publish-join-shortcut/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PublishJoinShortcut_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "GameSession",
+            "Post",
+            "sessions/publish-join-shortcut",
+            _PublishJoinShortcut_Info));
+
+    /// <summary>Returns request schema for PublishJoinShortcut</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/publish-join-shortcut/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PublishJoinShortcut_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/publish-join-shortcut",
+            "request-schema",
+            _PublishJoinShortcut_RequestSchema));
+
+    /// <summary>Returns response schema for PublishJoinShortcut</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/publish-join-shortcut/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PublishJoinShortcut_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/publish-join-shortcut",
+            "response-schema",
+            _PublishJoinShortcut_ResponseSchema));
+
+    /// <summary>Returns full schema for PublishJoinShortcut</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/publish-join-shortcut/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> PublishJoinShortcut_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "GameSession",
+            "Post",
+            "sessions/publish-join-shortcut",
+            _PublishJoinShortcut_Info,
+            _PublishJoinShortcut_RequestSchema,
+            _PublishJoinShortcut_ResponseSchema));
 
     #endregion
 

@@ -140,6 +140,21 @@ public static class GameSessionPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/sessions/leave-session",
+            Method = ServiceEndpointMethod.POST,
+            Description = "leaveGameSessionById",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"game-session", "in_game"} }
+                },
+            }
+        });
+
         return endpoints;
     }
 

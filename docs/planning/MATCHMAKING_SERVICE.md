@@ -797,22 +797,13 @@ Need a background service to:
 - Add reservation data to `GameSessionModel`
 - Add reservation token index for fast lookup
 
-### Open Questions for Game Session Enhancements
+### Game Session Enhancement Decisions (RESOLVED)
 
-**Q-GS1**: Should we keep the lobby system at all, or migrate everything to session-specific?
-- **Keep lobbies**: Some games want persistent "hang out" spaces
-- **Remove lobbies**: Simpler, everything goes through matchmaking
-- **Recommendation**: Keep both, distinguish by `sessionType`
-
-**Q-GS2**: Where should reservation tokens be validated?
-- **In game-session**: Simple, contained
-- **In permission service**: Centralized auth
-- **Recommendation**: In game-session - reservations are game-session's concern
-
-**Q-GS3**: Should matchmaking create the session, or should game-session create it on request?
-- **Matchmaking creates**: Matchmaking calls `/sessions/create` with player list
-- **Game-session creates on event**: Matchmaking publishes event, game-session handles creation
-- **Recommendation**: Matchmaking creates via RPC - we decided this in Q9
+| Question | Decision | Notes |
+|----------|----------|-------|
+| **Q-GS1**: Keep lobbies? | **Yes, keep both** | `sessionType: lobby \| matchmade`. Can rewrite lobby code if cleaner. |
+| **Q-GS2**: Where validate tokens? | **In game-session** | Reservations are game-session's concern |
+| **Q-GS3**: Who creates session? | **Matchmaking via RPC** | Already decided in Q9 |
 
 ---
 

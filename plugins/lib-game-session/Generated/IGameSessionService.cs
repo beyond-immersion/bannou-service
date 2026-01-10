@@ -69,4 +69,19 @@ public partial interface IGameSessionService : IBannouService
         /// </summary>
         Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// JoinGameSessionById operation
+        /// </summary>
+        Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionByIdAsync(JoinGameSessionByIdRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// LeaveGameSessionById operation
+        /// </summary>
+        Task<StatusCodes> LeaveGameSessionByIdAsync(LeaveGameSessionByIdRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// PublishJoinShortcut operation
+        /// </summary>
+        Task<(StatusCodes, PublishJoinShortcutResponse?)> PublishJoinShortcutAsync(PublishJoinShortcutRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

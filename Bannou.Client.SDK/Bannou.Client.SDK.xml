@@ -23651,6 +23651,21 @@
             Game-specific configuration settings (null to use defaults)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.SessionType">
+            <summary>
+            Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.ExpectedPlayers">
+            <summary>
+            For matchmade sessions - list of account IDs expected to join. Reservations created for each.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.ReservationTtlSeconds">
+            <summary>
+            For matchmade sessions - how long reservations last before expiring (seconds)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionResponse">
             <summary>
             Complete details of a game session including players and settings
@@ -23664,6 +23679,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.GameType">
             <summary>
             Type of game for this session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.SessionType">
+            <summary>
+            Type of session - lobby or matchmade
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.SessionName">
@@ -23709,6 +23729,16 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.GameSettings">
             <summary>
             Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.Reservations">
+            <summary>
+            For matchmade sessions - reservation tokens for expected players
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.ReservationExpiresAt">
+            <summary>
+            For matchmade sessions - when reservations expire
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionListResponse">
@@ -23989,6 +24019,156 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.StunServers">
             <summary>
             STUN server URIs for NAT traversal (clients should configure these early)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.SessionType">
+            <summary>
+            Type of game session - determines join behavior
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
+            <summary>
+            A slot reservation for an expected player in a matchmade session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
+            <summary>
+            Account ID of the player this slot is reserved for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
+            <summary>
+            One-time use token for claiming this reservation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
+            <summary>
+            When this reservation was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
+            <summary>
+            Whether this reservation has been claimed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
+            <summary>
+            When this reservation was claimed (null if not yet claimed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
+            <summary>
+            Reservation token returned when creating a matchmade session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.AccountId">
+            <summary>
+            Account ID this reservation is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.Token">
+            <summary>
+            Token to claim this reservation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.ExpiresAt">
+            <summary>
+            When this reservation expires
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest">
+            <summary>
+            Request to join a specific game session by ID (for matchmade sessions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID of the client joining. Used for event delivery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.AccountId">
+            <summary>
+            Account ID of the player joining.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.GameSessionId">
+            <summary>
+            ID of the game session to join.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.ReservationToken">
+            <summary>
+            Token proving reservation (required for matchmade sessions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.CharacterData">
+            <summary>
+            Game-specific character data (null if no character data)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.VoiceEndpoint">
+            <summary>
+            Client's SIP endpoint for voice communication (null if not using voice)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest">
+            <summary>
+            Request to publish a join shortcut for a matchmade session to a player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.TargetWebSocketSessionId">
+            <summary>
+            WebSocket session ID to receive the shortcut
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.GameSessionId">
+            <summary>
+            ID of the game session to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.ReservationToken">
+            <summary>
+            Token for this player's reservation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse">
+            <summary>
+            Response after publishing a join shortcut
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse.Success">
+            <summary>
+            Whether the shortcut was published successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse.ShortcutRouteGuid">
+            <summary>
+            The route GUID for the published shortcut (null if failed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest">
+            <summary>
+            Request to leave a specific game session by ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID of the client leaving.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.AccountId">
+            <summary>
+            Account ID of the player leaving.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.GameSessionId">
+            <summary>
+            ID of the game session to leave.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.EntityType">

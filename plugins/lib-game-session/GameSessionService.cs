@@ -228,6 +228,11 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Creating game session {SessionId} - GameType: {GameType}, MaxPlayers: {MaxPlayers}",
                 sessionId, body.GameType, body.MaxPlayers);
 
+            // Determine session type (default to lobby if not specified)
+            // Note: SessionType is not nullable in generated code, so we check for default enum value
+            var sessionType = body.SessionType;
+            var reservationTtl = body.ReservationTtlSeconds > 0 ? body.ReservationTtlSeconds : 60;
+
             // Create the session model
             var session = new GameSessionModel
             {
@@ -242,8 +247,31 @@ public partial class GameSessionService : IGameSessionService
                 Players = new List<GamePlayer>(),
                 CreatedAt = DateTimeOffset.UtcNow,
                 GameSettings = body.GameSettings,
-                VoiceEnabled = _voiceClient != null // Voice enabled if voice service is available
+                VoiceEnabled = _voiceClient != null, // Voice enabled if voice service is available
+                SessionType = sessionType
             };
+
+            // For matchmade sessions, create reservations for expected players
+            if (sessionType == SessionType.Matchmade && body.ExpectedPlayers != null && body.ExpectedPlayers.Count > 0)
+            {
+                var reservationExpiry = DateTimeOffset.UtcNow.AddSeconds(reservationTtl);
+                session.ReservationExpiresAt = reservationExpiry;
+
+                foreach (var playerAccountId in body.ExpectedPlayers)
+                {
+                    var reservationToken = GenerateReservationToken();
+                    session.Reservations.Add(new ReservationModel
+                    {
+                        AccountId = playerAccountId,
+                        Token = reservationToken,
+                        ReservedAt = DateTimeOffset.UtcNow,
+                        Claimed = false
+                    });
+                }
+
+                _logger.LogInformation("Created {Count} reservations for matchmade session {SessionId}, expires at {ExpiresAt}",
+                    session.Reservations.Count, sessionId, reservationExpiry);
+            }
 
             // Create voice room if voice service is available
             if (_voiceClient != null)
@@ -779,6 +807,449 @@ public partial class GameSessionService : IGameSessionService
                 details: new { SessionId = body.SessionId },
                 stack: ex.StackTrace);
             return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <summary>
+    /// Joins a specific game session by ID.
+    /// Used for matchmade games where the session is pre-created by the matchmaking service.
+    /// For matchmade sessions, a valid reservation token is required.
+    /// </summary>
+    public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionByIdAsync(
+        JoinGameSessionByIdRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var clientSessionId = body.WebSocketSessionId.ToString();
+            var gameSessionId = body.GameSessionId.ToString();
+            var accountId = body.AccountId;
+
+            _logger.LogInformation("Player {AccountId} joining game session {GameSessionId} from WebSocket session {SessionId}",
+                accountId, gameSessionId, clientSessionId);
+
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Game session {GameSessionId} not found", gameSessionId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // For matchmade sessions, validate reservation token
+            if (model.SessionType == SessionType.Matchmade)
+            {
+                // Check if reservations have expired
+                if (model.ReservationExpiresAt.HasValue && DateTimeOffset.UtcNow > model.ReservationExpiresAt.Value)
+                {
+                    _logger.LogWarning("Reservations for session {GameSessionId} have expired", gameSessionId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Find the reservation for this player
+                var reservation = model.Reservations.FirstOrDefault(r => r.AccountId == accountId);
+                if (reservation == null)
+                {
+                    _logger.LogWarning("No reservation found for player {AccountId} in session {GameSessionId}",
+                        accountId, gameSessionId);
+                    return (StatusCodes.Forbidden, null);
+                }
+
+                // Validate reservation token
+                if (string.IsNullOrEmpty(body.ReservationToken) || reservation.Token != body.ReservationToken)
+                {
+                    _logger.LogWarning("Invalid reservation token for player {AccountId} in session {GameSessionId}",
+                        accountId, gameSessionId);
+                    return (StatusCodes.Forbidden, null);
+                }
+
+                // Check if reservation already claimed
+                if (reservation.Claimed)
+                {
+                    _logger.LogWarning("Reservation already claimed for player {AccountId} in session {GameSessionId}",
+                        accountId, gameSessionId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Mark reservation as claimed
+                reservation.Claimed = true;
+                reservation.ClaimedAt = DateTimeOffset.UtcNow;
+            }
+            else
+            {
+                // For lobbies, check if session is full
+                if (model.CurrentPlayers >= model.MaxPlayers)
+                {
+                    _logger.LogWarning("Game session {GameSessionId} is full ({Current}/{Max} players)",
+                        gameSessionId, model.CurrentPlayers, model.MaxPlayers);
+                    return (StatusCodes.Conflict, null);
+                }
+            }
+
+            // Check session status
+            if (model.Status == GameSessionResponseStatus.Finished)
+            {
+                _logger.LogWarning("Game session {GameSessionId} is finished", gameSessionId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check if player already in session
+            if (model.Players.Any(p => p.AccountId == accountId))
+            {
+                _logger.LogWarning("Player {AccountId} already in session {GameSessionId}", accountId, gameSessionId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Add player to session
+            var player = new GamePlayer
+            {
+                AccountId = accountId,
+                SessionId = clientSessionId,
+                DisplayName = "Player " + (model.CurrentPlayers + 1),
+                Role = GamePlayerRole.Player,
+                JoinedAt = DateTimeOffset.UtcNow,
+                CharacterData = body.CharacterData
+            };
+
+            model.Players.Add(player);
+            model.CurrentPlayers = model.Players.Count;
+
+            // Update status
+            if (model.CurrentPlayers >= model.MaxPlayers)
+            {
+                model.Status = GameSessionResponseStatus.Full;
+            }
+            else if (model.Status == GameSessionResponseStatus.Waiting && model.CurrentPlayers > 0)
+            {
+                model.Status = GameSessionResponseStatus.Active;
+            }
+
+            // Set game-session:in_game state via Permission service
+            try
+            {
+                await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
+                {
+                    SessionId = body.WebSocketSessionId,
+                    ServiceId = "game-session",
+                    NewState = "in_game"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update session state for {SessionId}", body.WebSocketSessionId);
+                model.Players.Remove(player);
+                // If matchmade, unmark reservation as claimed
+                if (model.SessionType == SessionType.Matchmade)
+                {
+                    var reservation = model.Reservations.FirstOrDefault(r => r.AccountId == accountId);
+                    if (reservation != null)
+                    {
+                        reservation.Claimed = false;
+                        reservation.ClaimedAt = null;
+                    }
+                }
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Save updated session
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, cancellationToken: cancellationToken);
+
+            // Publish event
+            await _messageBus.TryPublishAsync(
+                PLAYER_JOINED_TOPIC,
+                new GameSessionPlayerJoinedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = body.GameSessionId,
+                    AccountId = accountId
+                });
+
+            // Build response
+            var response = new JoinGameSessionResponse
+            {
+                SessionId = body.GameSessionId,
+                PlayerRole = JoinGameSessionResponsePlayerRole.Player,
+                GameData = model.GameSettings ?? new object(),
+                NewPermissions = new List<string>
+                {
+                    $"game-session:{gameSessionId}:action",
+                    $"game-session:{gameSessionId}:chat"
+                }
+            };
+
+            _logger.LogInformation("Player {AccountId} joined game session {GameSessionId} from WebSocket session {ClientSessionId}",
+                accountId, gameSessionId, clientSessionId);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to join game session {GameSessionId}", body.GameSessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "JoinGameSessionById",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/game-session/join-session",
+                details: new { SessionId = body.GameSessionId },
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Leaves a specific game session by ID.
+    /// Alternative to LeaveGameSessionAsync that takes session ID directly.
+    /// </summary>
+    public async Task<StatusCodes> LeaveGameSessionByIdAsync(
+        LeaveGameSessionByIdRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var clientSessionId = body.WebSocketSessionId.ToString();
+            var gameSessionId = body.GameSessionId.ToString();
+            var accountId = body.AccountId;
+
+            _logger.LogInformation("Player {AccountId} leaving game session {GameSessionId} from WebSocket session {SessionId}",
+                accountId, gameSessionId, clientSessionId);
+
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Game session {GameSessionId} not found", gameSessionId);
+                return StatusCodes.NotFound;
+            }
+
+            // Find the player in the session
+            var leavingPlayer = model.Players.FirstOrDefault(p => p.AccountId == accountId);
+            if (leavingPlayer == null)
+            {
+                _logger.LogWarning("Player {AccountId} not found in session {GameSessionId}", accountId, gameSessionId);
+                return StatusCodes.NotFound;
+            }
+
+            // Clear game-session:in_game state via Permission service
+            try
+            {
+                await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
+                {
+                    SessionId = body.WebSocketSessionId,
+                    ServiceId = "game-session"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.WebSocketSessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.WebSocketSessionId },
+                    stack: ex.StackTrace);
+            }
+
+            model.Players.Remove(leavingPlayer);
+            model.CurrentPlayers = model.Players.Count;
+
+            // Leave voice room if applicable
+            if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null
+                && !string.IsNullOrEmpty(leavingPlayer.VoiceSessionId))
+            {
+                try
+                {
+                    await _voiceClient.LeaveVoiceRoomAsync(new LeaveVoiceRoomRequest
+                    {
+                        RoomId = model.VoiceRoomId.Value,
+                        SessionId = leavingPlayer.VoiceSessionId
+                    }, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to leave voice room for player {AccountId}", leavingPlayer.AccountId);
+                }
+            }
+
+            // Update status
+            if (model.CurrentPlayers == 0)
+            {
+                model.Status = GameSessionResponseStatus.Finished;
+
+                // Delete voice room when session ends
+                if (model.VoiceEnabled && model.VoiceRoomId.HasValue && _voiceClient != null)
+                {
+                    try
+                    {
+                        await _voiceClient.DeleteVoiceRoomAsync(new DeleteVoiceRoomRequest
+                        {
+                            RoomId = model.VoiceRoomId.Value,
+                            Reason = "session_ended"
+                        }, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete voice room {VoiceRoomId} for session {SessionId}",
+                            model.VoiceRoomId, gameSessionId);
+                    }
+                }
+            }
+            else if (model.Status == GameSessionResponseStatus.Full)
+            {
+                model.Status = GameSessionResponseStatus.Active;
+            }
+
+            // Save updated session
+            await sessionStore.SaveAsync(SESSION_KEY_PREFIX + gameSessionId, model, cancellationToken: cancellationToken);
+
+            // Publish event
+            await _messageBus.TryPublishAsync(
+                PLAYER_LEFT_TOPIC,
+                new GameSessionPlayerLeftEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = body.GameSessionId,
+                    AccountId = leavingPlayer.AccountId,
+                    Kicked = false
+                });
+
+            _logger.LogInformation("Player {AccountId} left game session {GameSessionId}", accountId, gameSessionId);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to leave game session {GameSessionId}", body.GameSessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "LeaveGameSessionById",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "state",
+                endpoint: "post:/game-session/leave-session",
+                details: new { SessionId = body.GameSessionId },
+                stack: ex.StackTrace);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <summary>
+    /// Publishes a join shortcut for a matchmade session to a specific player.
+    /// Called by the matchmaking service after creating a session with reservations.
+    /// </summary>
+    public async Task<(StatusCodes, PublishJoinShortcutResponse?)> PublishJoinShortcutAsync(
+        PublishJoinShortcutRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var targetSessionId = body.TargetWebSocketSessionId;
+            var gameSessionId = body.GameSessionId.ToString();
+            var accountId = body.AccountId;
+            var reservationToken = body.ReservationToken;
+
+            _logger.LogInformation("Publishing join shortcut for game session {GameSessionId} to WebSocket session {TargetSessionId}",
+                gameSessionId, targetSessionId);
+
+            // Verify the game session exists
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogWarning("Game session {GameSessionId} not found for shortcut publishing", gameSessionId);
+                return (StatusCodes.NotFound, new PublishJoinShortcutResponse { Success = false });
+            }
+
+            // Verify the reservation token is valid
+            var reservation = model.Reservations.FirstOrDefault(r => r.AccountId == accountId && r.Token == reservationToken);
+            if (reservation == null)
+            {
+                _logger.LogWarning("Invalid reservation token for player {AccountId} in session {GameSessionId}",
+                    accountId, gameSessionId);
+                return (StatusCodes.BadRequest, new PublishJoinShortcutResponse { Success = false });
+            }
+
+            var shortcutName = $"join_match_{gameSessionId}";
+
+            // Generate shortcut GUID (v7 for shortcuts - session-unique)
+            var routeGuid = GuidGenerator.GenerateSessionShortcutGuid(
+                targetSessionId,
+                shortcutName,
+                "game-session",
+                _serverSalt);
+
+            // Generate target GUID (v5 for service capability) - points to join-session endpoint
+            var targetGuid = GuidGenerator.GenerateServiceGuid(
+                targetSessionId,
+                "game-session/sessions/join-session",
+                _serverSalt);
+
+            // Build the pre-bound request for the shortcut
+            var preboundRequest = new JoinGameSessionByIdRequest
+            {
+                WebSocketSessionId = Guid.Parse(targetSessionId),
+                AccountId = accountId,
+                GameSessionId = body.GameSessionId,
+                ReservationToken = reservationToken
+            };
+
+            // Publish the shortcut to the player's WebSocket session
+            var shortcutEvent = new ShortcutPublishedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SessionId = Guid.Parse(targetSessionId),
+                Shortcut = new SessionShortcut
+                {
+                    RouteGuid = routeGuid,
+                    TargetGuid = targetGuid,
+                    BoundPayload = BannouJson.Serialize(preboundRequest),
+                    Metadata = new SessionShortcutMetadata
+                    {
+                        Name = shortcutName,
+                        Description = $"Join matchmade game session {gameSessionId}",
+                        SourceService = "game-session",
+                        TargetService = "game-session",
+                        TargetMethod = "POST",
+                        TargetEndpoint = "/sessions/join-session",
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        ExpiresAt = model.ReservationExpiresAt
+                    }
+                },
+                ReplaceExisting = true
+            };
+
+            await _clientEventPublisher.PublishToSessionAsync(targetSessionId, shortcutEvent);
+
+            _logger.LogInformation("Published join shortcut for game session {GameSessionId} to WebSocket session {TargetSessionId} with route GUID {RouteGuid}",
+                gameSessionId, targetSessionId, routeGuid);
+
+            return (StatusCodes.OK, new PublishJoinShortcutResponse
+            {
+                Success = true,
+                ShortcutRouteGuid = routeGuid
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish join shortcut for game session {GameSessionId}", body.GameSessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "PublishJoinShortcut",
+                "unexpected_exception",
+                ex.Message,
+                dependency: "client-events",
+                endpoint: "post:/game-session/publish-join-shortcut",
+                details: new { SessionId = body.GameSessionId },
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, new PublishJoinShortcutResponse { Success = false });
         }
     }
 
@@ -1521,6 +1992,7 @@ public partial class GameSessionService : IGameSessionService
         {
             SessionId = Guid.Parse(model.SessionId),
             GameType = model.GameType,
+            SessionType = model.SessionType,
             SessionName = model.SessionName,
             Status = model.Status,
             MaxPlayers = model.MaxPlayers,
@@ -1529,7 +2001,16 @@ public partial class GameSessionService : IGameSessionService
             Owner = model.Owner,
             Players = model.Players,
             CreatedAt = model.CreatedAt,
-            GameSettings = model.GameSettings ?? new object()
+            GameSettings = model.GameSettings ?? new object(),
+            Reservations = model.Reservations.Count > 0
+                ? model.Reservations.Select(r => new ReservationInfo
+                {
+                    AccountId = r.AccountId,
+                    Token = r.Token,
+                    ExpiresAt = model.ReservationExpiresAt ?? DateTimeOffset.UtcNow
+                }).ToList()
+                : null,
+            ReservationExpiresAt = model.ReservationExpiresAt
         };
     }
 
@@ -1541,6 +2022,18 @@ public partial class GameSessionService : IGameSessionService
             CreateGameSessionRequestGameType.Generic => GameSessionResponseGameType.Generic,
             _ => GameSessionResponseGameType.Generic
         };
+    }
+
+    /// <summary>
+    /// Generates a secure random token for session reservations.
+    /// Uses cryptographically secure random bytes encoded as base64.
+    /// </summary>
+    private static string GenerateReservationToken()
+    {
+        var bytes = new byte[32];
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        return Convert.ToBase64String(bytes);
     }
 
     private static ChatMessageReceivedEventMessageType MapChatMessageType(ChatMessageRequestMessageType messageType)
@@ -1619,6 +2112,52 @@ internal class GameSessionModel
     /// The voice room ID if voice is enabled.
     /// </summary>
     public Guid? VoiceRoomId { get; set; }
+
+    /// <summary>
+    /// Type of session - lobby (persistent) or matchmade (time-limited with reservations).
+    /// </summary>
+    public SessionType SessionType { get; set; } = SessionType.Lobby;
+
+    /// <summary>
+    /// For matchmade sessions - list of player reservations.
+    /// </summary>
+    public List<ReservationModel> Reservations { get; set; } = new();
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire.
+    /// </summary>
+    public DateTimeOffset? ReservationExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Internal model for storing reservation data.
+/// </summary>
+internal class ReservationModel
+{
+    /// <summary>
+    /// Account ID this reservation is for.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// One-time use token for claiming this reservation.
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When this reservation was created.
+    /// </summary>
+    public DateTimeOffset ReservedAt { get; set; }
+
+    /// <summary>
+    /// Whether this reservation has been claimed.
+    /// </summary>
+    public bool Claimed { get; set; }
+
+    /// <summary>
+    /// When this reservation was claimed.
+    /// </summary>
+    public DateTimeOffset? ClaimedAt { get; set; }
 }
 
 /// <summary>
