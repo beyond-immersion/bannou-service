@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Scene Service Configuration
+  description: |
+    Configuration schema for Scene service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    The Scene service stores and retrieves hierarchical scene documents
+    with support for versioning, validation, and reference resolution.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Service Enable/Disable
+    Enabled:
+      type: boolean
+      description: Enable/disable Scene service
+      default: true
+      env: SCENE_ENABLED
+
+    # Storage Configuration
+    AssetBucket:
+      type: string
+      description: lib-asset bucket for storing scene documents
+      default: "scenes"
+      env: SCENE_ASSET_BUCKET
+    AssetContentType:
+      type: string
+      description: Content type for scene assets (YAML format)
+      default: "application/x-bannou-scene+yaml"
+      env: SCENE_ASSET_CONTENT_TYPE
+
+    # Checkout Configuration
+    DefaultCheckoutTtlMinutes:
+      type: integer
+      description: Default lock TTL for checkout operations in minutes
+      default: 60
+      env: SCENE_DEFAULT_CHECKOUT_TTL_MINUTES
+    CheckoutHeartbeatIntervalSeconds:
+      type: integer
+      description: Expected heartbeat interval for checkout locks
+      default: 30
+      env: SCENE_CHECKOUT_HEARTBEAT_INTERVAL_SECONDS
+    MaxCheckoutExtensions:
+      type: integer
+      description: Maximum number of times a checkout can be extended
+      default: 10
+      env: SCENE_MAX_CHECKOUT_EXTENSIONS
+
+    # Reference Resolution
+    DefaultMaxReferenceDepth:
+      type: integer
+      description: Default maximum depth for reference resolution (prevents infinite recursion)
+      default: 3
+      env: SCENE_DEFAULT_MAX_REFERENCE_DEPTH
+    MaxReferenceDepthLimit:
+      type: integer
+      description: Hard limit on reference depth that cannot be exceeded by requests
+      default: 10
+      env: SCENE_MAX_REFERENCE_DEPTH_LIMIT
+
+    # Version History
+    DefaultVersionRetentionCount:
+      type: integer
+      description: Default number of versions to retain per scene
+      default: 3
+      env: SCENE_DEFAULT_VERSION_RETENTION_COUNT
+    MaxVersionRetentionCount:
+      type: integer
+      description: Maximum versions that can be retained (configurable per game)
+      default: 100
+      env: SCENE_MAX_VERSION_RETENTION_COUNT
+
+    # Validation Limits
+    MaxNodeCount:
+      type: integer
+      description: Maximum nodes allowed in a single scene
+      default: 10000
+      env: SCENE_MAX_NODE_COUNT
+    MaxSceneSizeBytes:
+      type: integer
+      description: Maximum scene document size in bytes (default 10MB)
+      default: 10485760
+      env: SCENE_MAX_SCENE_SIZE_BYTES
+    MaxTagsPerScene:
+      type: integer
+      description: Maximum tags allowed per scene
+      default: 50
+      env: SCENE_MAX_TAGS_PER_SCENE
+    MaxTagsPerNode:
+      type: integer
+      description: Maximum tags allowed per node
+      default: 20
+      env: SCENE_MAX_TAGS_PER_NODE
+
+    # Query Limits
+    MaxListResults:
+      type: integer
+      description: Maximum results returned in a single list query
+      default: 200
+      env: SCENE_MAX_LIST_RESULTS
+    MaxSearchResults:
+      type: integer
+      description: Maximum results returned in a single search query
+      default: 100
+      env: SCENE_MAX_SEARCH_RESULTS
+
+    # Checkout Expiration Detection
+    CheckoutExpirationCheckIntervalSeconds:
+      type: integer
+      description: Interval for background checkout expiration detection
+      default: 60
+      env: SCENE_CHECKOUT_EXPIRATION_CHECK_INTERVAL_SECONDS

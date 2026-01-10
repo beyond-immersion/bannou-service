@@ -1,0 +1,2196 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+[assembly: InternalsVisibleTo("lib-scene.tests")]
+
+namespace BeyondImmersion.BannouService.Scene;
+
+/// <summary>
+/// Implementation of the Scene service.
+/// Provides hierarchical composition storage for game worlds.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// </para>
+/// </remarks>
+[BannouService("scene", typeof(ISceneService), lifetime: ServiceLifetime.Scoped)]
+public partial class SceneService : ISceneService
+{
+    private readonly IMessageBus _messageBus;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ILogger<SceneService> _logger;
+    private readonly SceneServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly IEventConsumer _eventConsumer;
+
+    private const string STATE_STORE = "scene-statestore";
+
+    // State store key prefixes
+    private const string SCENE_INDEX_PREFIX = "scene:index:";
+    private const string SCENE_CONTENT_PREFIX = "scene:content:";
+    private const string SCENE_BY_GAME_PREFIX = "scene:by-game:";
+    private const string SCENE_BY_TYPE_PREFIX = "scene:by-type:";
+    private const string SCENE_REFERENCES_PREFIX = "scene:references:";
+    private const string SCENE_ASSETS_PREFIX = "scene:assets:";
+    private const string SCENE_CHECKOUT_PREFIX = "scene:checkout:";
+    private const string SCENE_CHECKOUT_EXT_PREFIX = "scene:checkout-ext:";
+    private const string VALIDATION_RULES_PREFIX = "scene:validation:";
+    private const string VERSION_RETENTION_PREFIX = "scene:version-retention:";
+
+    // Event topics following QUALITY TENETS: {entity}.{action} pattern
+    private const string SCENE_CREATED_TOPIC = "scene.created";
+    private const string SCENE_UPDATED_TOPIC = "scene.updated";
+    private const string SCENE_DELETED_TOPIC = "scene.deleted";
+    private const string SCENE_INSTANTIATED_TOPIC = "scene.instantiated";
+    private const string SCENE_DESTROYED_TOPIC = "scene.destroyed";
+    private const string SCENE_CHECKED_OUT_TOPIC = "scene.checked_out";
+    private const string SCENE_COMMITTED_TOPIC = "scene.committed";
+    private const string SCENE_CHECKOUT_DISCARDED_TOPIC = "scene.checkout.discarded";
+    private const string SCENE_CHECKOUT_EXPIRED_TOPIC = "scene.checkout.expired";
+    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation_rules.updated";
+    private const string SCENE_REFERENCE_BROKEN_TOPIC = "scene.reference.broken";
+
+    // YAML serializer/deserializer
+    private static readonly ISerializer YamlSerializer = new SerializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .Build();
+
+    private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    // refId validation pattern
+    private static readonly Regex RefIdPattern = new("^[a-z][a-z0-9_]*$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Creates a new instance of the SceneService.
+    /// </summary>
+    public SceneService(
+        IMessageBus messageBus,
+        IStateStoreFactory stateStoreFactory,
+        ILogger<SceneService> logger,
+        SceneServiceConfiguration configuration,
+        IDistributedLockProvider lockProvider,
+        IEventConsumer eventConsumer)
+    {
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
+        _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
+
+        // Register event consumers via partial class
+        RegisterEventConsumers(_eventConsumer);
+    }
+
+    /// <summary>
+    /// Registers event consumers. Extended in partial class.
+    /// </summary>
+    partial void RegisterEventConsumers(IEventConsumer eventConsumer);
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permission service on startup.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Scene service permissions");
+        await ScenePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+    }
+
+    #region Scene CRUD Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SceneResponse?)> CreateSceneAsync(CreateSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("CreateScene: sceneId={SceneId}, name={Name}", body.Scene.SceneId, body.Scene.Name);
+
+        try
+        {
+            var scene = body.Scene;
+            var sceneIdStr = scene.SceneId.ToString();
+
+            // Validate scene structure
+            var validationResult = ValidateSceneStructure(scene);
+            if (!validationResult.Valid)
+            {
+                _logger.LogWarning("CreateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check if scene already exists
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (existingIndex != null)
+            {
+                _logger.LogWarning("CreateScene failed: Scene {SceneId} already exists", scene.SceneId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Set timestamps
+            var now = DateTimeOffset.UtcNow;
+            scene.CreatedAt = now;
+            scene.UpdatedAt = now;
+
+            // Ensure version is set
+            if (string.IsNullOrEmpty(scene.Version))
+            {
+                scene.Version = "1.0.0";
+            }
+
+            // Store scene as YAML in lib-asset
+            var assetId = await StoreSceneAssetAsync(scene, cancellationToken);
+
+            // Create index entry
+            var nodeCount = CountNodes(scene.Root);
+            var indexEntry = new SceneIndexEntry
+            {
+                SceneId = sceneIdStr,
+                AssetId = assetId,
+                GameId = scene.GameId,
+                SceneType = scene.SceneType.ToString(),
+                Name = scene.Name,
+                Description = scene.Description,
+                Version = scene.Version,
+                Tags = scene.Tags?.ToList() ?? new List<string>(),
+                NodeCount = nodeCount,
+                CreatedAt = scene.CreatedAt,
+                UpdatedAt = scene.UpdatedAt,
+                IsCheckedOut = false
+            };
+
+            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+
+            // Update indexes
+            await UpdateSceneIndexesAsync(scene, null, cancellationToken);
+
+            // Publish created event
+            await PublishSceneCreatedEventAsync(scene, nodeCount, cancellationToken);
+
+            _logger.LogInformation("CreateScene succeeded: sceneId={SceneId}", scene.SceneId);
+            return (StatusCodes.OK, new SceneResponse { Scene = scene });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CreateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CreateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/create", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetSceneResponse?)> GetSceneAsync(GetSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("GetScene: sceneId={SceneId}, resolveReferences={ResolveReferences}", body.SceneId, body.ResolveReferences);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+
+            // Get index entry to find asset
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (indexEntry == null)
+            {
+                _logger.LogDebug("GetScene: Scene {SceneId} not found", body.SceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Load scene from lib-asset
+            var scene = await LoadSceneAssetAsync(indexEntry.AssetId, body.Version, cancellationToken);
+            if (scene == null)
+            {
+                _logger.LogError("GetScene: Scene {SceneId} index exists but asset {AssetId} not found", body.SceneId, indexEntry.AssetId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var response = new GetSceneResponse { Scene = scene };
+
+            // Resolve references if requested
+            if (body.ResolveReferences)
+            {
+                var maxDepth = Math.Min(body.MaxReferenceDepth, _configuration.MaxReferenceDepthLimit);
+
+                var (resolved, unresolved, errors) = await ResolveReferencesAsync(scene, maxDepth, cancellationToken);
+                response.ResolvedReferences = resolved.Count > 0 ? resolved : null;
+                response.UnresolvedReferences = unresolved.Count > 0 ? unresolved : null;
+                response.ResolutionErrors = errors.Count > 0 ? errors : null;
+            }
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/get", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListScenesResponse?)> ListScenesAsync(ListScenesRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("ListScenes: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
+
+        try
+        {
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+            // Get candidate scene IDs based on filters
+            HashSet<string>? candidateIds = null;
+
+            if (!string.IsNullOrEmpty(body.GameId))
+            {
+                var gameIndex = await stringSetStore.GetAsync($"{SCENE_BY_GAME_PREFIX}{body.GameId}", cancellationToken);
+                candidateIds = gameIndex ?? new HashSet<string>();
+            }
+
+            if (body.SceneType != null)
+            {
+                var typeKey = $"{SCENE_BY_TYPE_PREFIX}{body.GameId ?? "all"}:{body.SceneType}";
+                var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+                if (candidateIds == null)
+                {
+                    candidateIds = typeIndex ?? new HashSet<string>();
+                }
+                else if (typeIndex != null)
+                {
+                    candidateIds.IntersectWith(typeIndex);
+                }
+            }
+
+            if (body.SceneTypes != null && body.SceneTypes.Count > 0)
+            {
+                var typeUnion = new HashSet<string>();
+                foreach (var sceneType in body.SceneTypes)
+                {
+                    var typeKey = $"{SCENE_BY_TYPE_PREFIX}{body.GameId ?? "all"}:{sceneType}";
+                    var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+                    if (typeIndex != null)
+                    {
+                        typeUnion.UnionWith(typeIndex);
+                    }
+                }
+                if (candidateIds == null)
+                {
+                    candidateIds = typeUnion;
+                }
+                else
+                {
+                    candidateIds.IntersectWith(typeUnion);
+                }
+            }
+
+            // If no filter, get all scenes (expensive - scan all indexes)
+            if (candidateIds == null)
+            {
+                candidateIds = await GetAllSceneIdsAsync(cancellationToken);
+            }
+
+            // Load and filter index entries
+            var matchingScenes = new List<SceneSummary>();
+            foreach (var sceneId in candidateIds)
+            {
+                var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
+                if (indexEntry == null) continue;
+
+                // Apply additional filters
+                if (!string.IsNullOrEmpty(body.NameContains) &&
+                    !indexEntry.Name.Contains(body.NameContains, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (body.Tags != null && body.Tags.Count > 0)
+                {
+                    var sceneTags = indexEntry.Tags ?? new List<string>();
+                    if (!body.Tags.All(t => sceneTags.Contains(t)))
+                    {
+                        continue;
+                    }
+                }
+
+                matchingScenes.Add(CreateSceneSummary(indexEntry));
+            }
+
+            // Sort by updatedAt descending
+            matchingScenes = matchingScenes.OrderByDescending(s => s.UpdatedAt).ToList();
+
+            // Apply pagination
+            var offset = body.Offset;
+            var limit = Math.Min(body.Limit, _configuration.MaxListResults);
+            var total = matchingScenes.Count;
+            var pagedResults = matchingScenes.Skip(offset).Take(limit).ToList();
+
+            return (StatusCodes.OK, new ListScenesResponse
+            {
+                Scenes = pagedResults,
+                Total = total,
+                Offset = offset,
+                Limit = limit
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ListScenes");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "ListScenes", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/list", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SceneResponse?)> UpdateSceneAsync(UpdateSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("UpdateScene: sceneId={SceneId}", body.Scene.SceneId);
+
+        try
+        {
+            var scene = body.Scene;
+            var sceneIdStr = scene.SceneId.ToString();
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Get existing index entry
+            var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (existingIndex == null)
+            {
+                _logger.LogWarning("UpdateScene: Scene {SceneId} not found", scene.SceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check checkout status
+            if (existingIndex.IsCheckedOut)
+            {
+                // If we have a checkout token, validate it
+                if (string.IsNullOrEmpty(body.CheckoutToken))
+                {
+                    _logger.LogWarning("UpdateScene: Scene {SceneId} is checked out", scene.SceneId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+                var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+                if (checkout == null || checkout.Token != body.CheckoutToken)
+                {
+                    _logger.LogWarning("UpdateScene: Invalid checkout token for scene {SceneId}", scene.SceneId);
+                    return (StatusCodes.Forbidden, null);
+                }
+            }
+
+            // Validate scene structure
+            var validationResult = ValidateSceneStructure(scene);
+            if (!validationResult.Valid)
+            {
+                _logger.LogWarning("UpdateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Load existing scene to get previous version and timestamps
+            var existingScene = await LoadSceneAssetAsync(existingIndex.AssetId, null, cancellationToken);
+            var previousVersion = existingScene?.Version ?? "1.0.0";
+
+            // Update timestamps and increment version
+            scene.CreatedAt = existingIndex.CreatedAt;
+            scene.UpdatedAt = DateTimeOffset.UtcNow;
+            scene.Version = IncrementPatchVersion(previousVersion);
+
+            // Store updated scene
+            var assetId = await StoreSceneAssetAsync(scene, cancellationToken, existingIndex.AssetId);
+
+            // Update index entry
+            var nodeCount = CountNodes(scene.Root);
+            existingIndex.AssetId = assetId;
+            existingIndex.Name = scene.Name;
+            existingIndex.Description = scene.Description;
+            existingIndex.Version = scene.Version;
+            existingIndex.Tags = scene.Tags?.ToList() ?? new List<string>();
+            existingIndex.NodeCount = nodeCount;
+            existingIndex.UpdatedAt = scene.UpdatedAt;
+
+            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", existingIndex, cancellationToken: cancellationToken);
+
+            // Update secondary indexes
+            await UpdateSceneIndexesAsync(scene, existingScene, cancellationToken);
+
+            // Publish updated event
+            await PublishSceneUpdatedEventAsync(scene, previousVersion, nodeCount, cancellationToken);
+
+            _logger.LogInformation("UpdateScene succeeded: sceneId={SceneId}, version={Version}", scene.SceneId, scene.Version);
+            return (StatusCodes.OK, new SceneResponse { Scene = scene });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in UpdateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "UpdateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/update", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DeleteSceneResponse?)> DeleteSceneAsync(DeleteSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("DeleteScene: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+            // Get existing index entry
+            var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (existingIndex == null)
+            {
+                _logger.LogWarning("DeleteScene: Scene {SceneId} not found", body.SceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if other scenes reference this one
+            var referencingScenes = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
+            if (referencingScenes != null && referencingScenes.Count > 0)
+            {
+                _logger.LogWarning("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes", body.SceneId, referencingScenes.Count);
+                return (StatusCodes.Conflict, new DeleteSceneResponse
+                {
+                    Deleted = false,
+                    SceneId = body.SceneId,
+                    ReferencingScenes = referencingScenes.Select(Guid.Parse).ToList()
+                });
+            }
+
+            // Load scene for event data
+            var scene = await LoadSceneAssetAsync(existingIndex.AssetId, null, cancellationToken);
+
+            // Remove from indexes (soft delete - asset remains until TTL)
+            await indexStore.DeleteAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            await RemoveFromIndexesAsync(existingIndex, cancellationToken);
+
+            // Publish deleted event
+            if (scene != null)
+            {
+                await PublishSceneDeletedEventAsync(scene, existingIndex.NodeCount, body.Reason, cancellationToken);
+            }
+
+            _logger.LogInformation("DeleteScene succeeded: sceneId={SceneId}", body.SceneId);
+            return (StatusCodes.OK, new DeleteSceneResponse
+            {
+                Deleted = true,
+                SceneId = body.SceneId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DeleteScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DeleteScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/delete", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ValidationResult?)> ValidateSceneAsync(ValidateSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("ValidateScene: sceneId={SceneId}", body.Scene.SceneId);
+
+        try
+        {
+            // Structural validation
+            var result = ValidateSceneStructure(body.Scene);
+
+            // Apply game-specific rules if requested
+            if (body.ApplyGameRules)
+            {
+                var gameRulesResult = await ApplyGameValidationRulesAsync(body.Scene, cancellationToken);
+                MergeValidationResults(result, gameRulesResult);
+            }
+
+            return (StatusCodes.OK, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ValidateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "ValidateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/validate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Instantiation Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, InstantiateSceneResponse?)> InstantiateSceneAsync(InstantiateSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("InstantiateScene: sceneAssetId={SceneAssetId}, instanceId={InstanceId}, regionId={RegionId}",
+            body.SceneAssetId, body.InstanceId, body.RegionId);
+
+        try
+        {
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var sceneAssetIdStr = body.SceneAssetId.ToString();
+
+            // Validate scene exists
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneAssetIdStr}", cancellationToken);
+            if (indexEntry == null)
+            {
+                _logger.LogWarning("InstantiateScene: Scene {SceneAssetId} not found", body.SceneAssetId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Publish instantiated event
+            var eventModel = new SceneInstantiatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = body.InstanceId,
+                SceneAssetId = body.SceneAssetId,
+                SceneVersion = body.Version ?? indexEntry.Version,
+                SceneName = indexEntry.Name,
+                GameId = indexEntry.GameId,
+                SceneType = indexEntry.SceneType,
+                RegionId = body.RegionId,
+                WorldTransform = new EventTransform
+                {
+                    Position = new EventVector3
+                    {
+                        X = body.WorldTransform.Position.X,
+                        Y = body.WorldTransform.Position.Y,
+                        Z = body.WorldTransform.Position.Z
+                    },
+                    Rotation = new EventQuaternion
+                    {
+                        X = body.WorldTransform.Rotation.X,
+                        Y = body.WorldTransform.Rotation.Y,
+                        Z = body.WorldTransform.Rotation.Z,
+                        W = body.WorldTransform.Rotation.W
+                    },
+                    Scale = new EventVector3
+                    {
+                        X = body.WorldTransform.Scale.X,
+                        Y = body.WorldTransform.Scale.Y,
+                        Z = body.WorldTransform.Scale.Z
+                    }
+                },
+                Metadata = body.Metadata
+            };
+
+            var published = await _messageBus.TryPublishAsync(SCENE_INSTANTIATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("InstantiateScene succeeded: instanceId={InstanceId}", body.InstanceId);
+            return (StatusCodes.OK, new InstantiateSceneResponse
+            {
+                InstanceId = body.InstanceId,
+                SceneVersion = indexEntry.Version,
+                EventPublished = published
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in InstantiateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "InstantiateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/instantiate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DestroyInstanceResponse?)> DestroyInstanceAsync(DestroyInstanceRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("DestroyInstance: instanceId={InstanceId}", body.InstanceId);
+
+        try
+        {
+            // Publish destroyed event
+            var eventModel = new SceneDestroyedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = body.InstanceId,
+                SceneAssetId = body.SceneAssetId ?? Guid.Empty,
+                RegionId = body.RegionId ?? Guid.Empty,
+                Metadata = body.Metadata
+            };
+
+            var published = await _messageBus.TryPublishAsync(SCENE_DESTROYED_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("DestroyInstance succeeded: instanceId={InstanceId}", body.InstanceId);
+            return (StatusCodes.OK, new DestroyInstanceResponse
+            {
+                Destroyed = true,
+                EventPublished = published
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DestroyInstance");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DestroyInstance", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/destroy-instance", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Checkout/Versioning Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, CheckoutResponse?)> CheckoutSceneAsync(CheckoutRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("CheckoutScene: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+
+            // Get scene index
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (indexEntry == null)
+            {
+                _logger.LogWarning("CheckoutScene: Scene {SceneId} not found", body.SceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if already checked out
+            if (indexEntry.IsCheckedOut)
+            {
+                var existingCheckout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+                if (existingCheckout != null && existingCheckout.ExpiresAt > DateTimeOffset.UtcNow)
+                {
+                    _logger.LogWarning("CheckoutScene: Scene {SceneId} already checked out by {Editor}", body.SceneId, existingCheckout.EditorId);
+                    return (StatusCodes.Conflict, null);
+                }
+                // Expired checkout - can take over
+            }
+
+            // Load the scene
+            var scene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
+            if (scene == null)
+            {
+                _logger.LogError("CheckoutScene: Scene asset not found for {SceneId}", body.SceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Create checkout state
+            var ttlMinutes = body.TtlMinutes ?? _configuration.DefaultCheckoutTtlMinutes;
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(ttlMinutes);
+            var checkoutToken = Guid.NewGuid().ToString("N");
+
+            var checkoutState = new CheckoutState
+            {
+                SceneId = sceneIdStr,
+                Token = checkoutToken,
+                EditorId = body.EditorId ?? "unknown",
+                ExpiresAt = expiresAt,
+                ExtensionCount = 0
+            };
+
+            var ttlSeconds = (int)TimeSpan.FromMinutes(ttlMinutes + 5).TotalSeconds;
+            await checkoutStore.SaveAsync(
+                $"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}",
+                checkoutState,
+                new StateOptions { Ttl = ttlSeconds },
+                cancellationToken);
+
+            // Update index
+            indexEntry.IsCheckedOut = true;
+            indexEntry.CheckedOutBy = checkoutState.EditorId;
+            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+
+            // Publish event
+            var eventModel = new SceneCheckedOutEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SceneId = body.SceneId,
+                SceneName = indexEntry.Name,
+                GameId = indexEntry.GameId,
+                CheckedOutBy = checkoutState.EditorId,
+                ExpiresAt = expiresAt
+            };
+            await _messageBus.TryPublishAsync(SCENE_CHECKED_OUT_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("CheckoutScene succeeded: sceneId={SceneId}, expiresAt={ExpiresAt}", body.SceneId, expiresAt);
+            return (StatusCodes.OK, new CheckoutResponse
+            {
+                CheckoutToken = checkoutToken,
+                Scene = scene,
+                ExpiresAt = expiresAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CheckoutScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CheckoutScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/checkout", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, CommitResponse?)> CommitSceneAsync(CommitRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("CommitScene: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Validate checkout token
+            var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+            if (checkout == null || checkout.Token != body.CheckoutToken)
+            {
+                _logger.LogWarning("CommitScene: Invalid checkout token for scene {SceneId}", body.SceneId);
+                return (StatusCodes.Forbidden, null);
+            }
+
+            if (checkout.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                _logger.LogWarning("CommitScene: Checkout expired for scene {SceneId}", body.SceneId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get index entry
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (indexEntry == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update scene with UpdateSceneAsync
+            var updateRequest = new UpdateSceneRequest
+            {
+                Scene = body.Scene,
+                CheckoutToken = body.CheckoutToken
+            };
+            var (status, updateResponse) = await UpdateSceneAsync(updateRequest, cancellationToken);
+            if (status != StatusCodes.OK || updateResponse == null)
+            {
+                return (status, null);
+            }
+
+            // Release checkout
+            await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+            indexEntry.IsCheckedOut = false;
+            indexEntry.CheckedOutBy = null;
+            await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+
+            // Publish committed event
+            var eventModel = new SceneCommittedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SceneId = body.SceneId,
+                SceneName = indexEntry.Name,
+                GameId = indexEntry.GameId,
+                Version = updateResponse.Scene.Version,
+                PreviousVersion = body.Scene.Version,
+                CommittedBy = checkout.EditorId,
+                ChangesSummary = body.ChangesSummary,
+                NodeCount = CountNodes(body.Scene.Root)
+            };
+            await _messageBus.TryPublishAsync(SCENE_COMMITTED_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("CommitScene succeeded: sceneId={SceneId}, newVersion={Version}", body.SceneId, updateResponse.Scene.Version);
+            return (StatusCodes.OK, new CommitResponse
+            {
+                Committed = true,
+                NewVersion = updateResponse.Scene.Version,
+                Scene = updateResponse.Scene
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CommitScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "CommitScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/commit", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DiscardResponse?)> DiscardCheckoutAsync(DiscardRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("DiscardCheckout: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Validate checkout token
+            var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+            if (checkout == null || checkout.Token != body.CheckoutToken)
+            {
+                _logger.LogWarning("DiscardCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
+                return (StatusCodes.Forbidden, null);
+            }
+
+            // Get index entry
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+
+            // Release checkout
+            await checkoutStore.DeleteAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+            if (indexEntry != null)
+            {
+                indexEntry.IsCheckedOut = false;
+                indexEntry.CheckedOutBy = null;
+                await indexStore.SaveAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", indexEntry, cancellationToken: cancellationToken);
+            }
+
+            // Publish event
+            var eventModel = new SceneCheckoutDiscardedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SceneId = body.SceneId,
+                SceneName = indexEntry?.Name,
+                GameId = indexEntry?.GameId,
+                DiscardedBy = checkout.EditorId
+            };
+            await _messageBus.TryPublishAsync(SCENE_CHECKOUT_DISCARDED_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("DiscardCheckout succeeded: sceneId={SceneId}", body.SceneId);
+            return (StatusCodes.OK, new DiscardResponse { Discarded = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DiscardCheckout");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DiscardCheckout", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/discard", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, HeartbeatResponse?)> HeartbeatCheckoutAsync(HeartbeatRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("HeartbeatCheckout: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+
+            // Validate checkout token
+            var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
+            if (checkout == null || checkout.Token != body.CheckoutToken)
+            {
+                _logger.LogWarning("HeartbeatCheckout: Invalid checkout token for scene {SceneId}", body.SceneId);
+                return (StatusCodes.Forbidden, null);
+            }
+
+            if (checkout.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                _logger.LogWarning("HeartbeatCheckout: Checkout expired for scene {SceneId}", body.SceneId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check extension limit
+            if (checkout.ExtensionCount >= _configuration.MaxCheckoutExtensions)
+            {
+                _logger.LogWarning("HeartbeatCheckout: Extension limit reached for scene {SceneId}", body.SceneId);
+                return (StatusCodes.OK, new HeartbeatResponse
+                {
+                    Extended = false,
+                    NewExpiresAt = checkout.ExpiresAt,
+                    ExtensionsRemaining = 0
+                });
+            }
+
+            // Extend checkout
+            var newExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.DefaultCheckoutTtlMinutes);
+            checkout.ExpiresAt = newExpiresAt;
+            checkout.ExtensionCount++;
+
+            var ttlSeconds = (int)TimeSpan.FromMinutes(_configuration.DefaultCheckoutTtlMinutes + 5).TotalSeconds;
+            await checkoutStore.SaveAsync(
+                $"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}",
+                checkout,
+                new StateOptions { Ttl = ttlSeconds },
+                cancellationToken);
+
+            return (StatusCodes.OK, new HeartbeatResponse
+            {
+                Extended = true,
+                NewExpiresAt = newExpiresAt,
+                ExtensionsRemaining = _configuration.MaxCheckoutExtensions - checkout.ExtensionCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in HeartbeatCheckout");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "HeartbeatCheckout", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/heartbeat", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, HistoryResponse?)> GetSceneHistoryAsync(HistoryRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("GetSceneHistory: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Get index entry
+            var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
+            if (indexEntry == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get version history from lib-asset
+            var versions = await GetAssetVersionHistoryAsync(indexEntry.AssetId, body.Limit, cancellationToken);
+
+            return (StatusCodes.OK, new HistoryResponse
+            {
+                SceneId = body.SceneId,
+                CurrentVersion = indexEntry.Version,
+                Versions = versions
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetSceneHistory");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetSceneHistory", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/history", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Validation Rules Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RegisterValidationRulesResponse?)> RegisterValidationRulesAsync(RegisterValidationRulesRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("RegisterValidationRules: gameId={GameId}, sceneType={SceneType}, ruleCount={RuleCount}",
+            body.GameId, body.SceneType, body.Rules.Count);
+
+        try
+        {
+            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+            var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
+
+            await rulesStore.SaveAsync(key, body.Rules.ToList(), cancellationToken: cancellationToken);
+
+            // Publish event
+            var eventModel = new SceneValidationRulesUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GameId = body.GameId,
+                SceneType = body.SceneType.ToString(),
+                RuleCount = body.Rules.Count
+            };
+            await _messageBus.TryPublishAsync(VALIDATION_RULES_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("RegisterValidationRules succeeded: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
+            return (StatusCodes.OK, new RegisterValidationRulesResponse
+            {
+                Registered = true,
+                RuleCount = body.Rules.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in RegisterValidationRules");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "RegisterValidationRules", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/register-validation-rules", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetValidationRulesResponse?)> GetValidationRulesAsync(GetValidationRulesRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("GetValidationRules: gameId={GameId}, sceneType={SceneType}", body.GameId, body.SceneType);
+
+        try
+        {
+            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+            var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
+
+            var rules = await rulesStore.GetAsync(key, cancellationToken);
+
+            return (StatusCodes.OK, new GetValidationRulesResponse
+            {
+                GameId = body.GameId,
+                SceneType = body.SceneType,
+                Rules = rules ?? new List<ValidationRule>()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in GetValidationRules");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "GetValidationRules", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/get-validation-rules", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Query Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SearchScenesResponse?)> SearchScenesAsync(SearchScenesRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("SearchScenes: query={Query}", body.Query);
+
+        try
+        {
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Get all scene IDs (with optional game/type filter)
+            var candidateIds = await GetAllSceneIdsAsync(cancellationToken);
+            var results = new List<SearchResult>();
+
+            foreach (var sceneId in candidateIds)
+            {
+                var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
+                if (indexEntry == null) continue;
+
+                // Apply filters
+                if (!string.IsNullOrEmpty(body.GameId) && indexEntry.GameId != body.GameId) continue;
+                if (body.SceneTypes != null && body.SceneTypes.Count > 0)
+                {
+                    if (!Enum.TryParse<SceneType>(indexEntry.SceneType, out var sceneType) ||
+                        !body.SceneTypes.Contains(sceneType))
+                    {
+                        continue;
+                    }
+                }
+
+                // Search in name, description, tags
+                SearchMatchType? matchType = null;
+                string? matchContext = null;
+
+                if (indexEntry.Name.Contains(body.Query, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchType = SearchMatchType.Name;
+                    matchContext = indexEntry.Name;
+                }
+                else if (!string.IsNullOrEmpty(indexEntry.Description) &&
+                         indexEntry.Description.Contains(body.Query, StringComparison.OrdinalIgnoreCase))
+                {
+                    matchType = SearchMatchType.Description;
+                    matchContext = indexEntry.Description;
+                }
+                else if (indexEntry.Tags != null && indexEntry.Tags.Any(t => t.Contains(body.Query, StringComparison.OrdinalIgnoreCase)))
+                {
+                    matchType = SearchMatchType.Tag;
+                    matchContext = string.Join(", ", indexEntry.Tags.Where(t => t.Contains(body.Query, StringComparison.OrdinalIgnoreCase)));
+                }
+
+                if (matchType != null)
+                {
+                    results.Add(new SearchResult
+                    {
+                        Scene = CreateSceneSummary(indexEntry),
+                        MatchType = matchType.Value,
+                        MatchContext = matchContext
+                    });
+                }
+            }
+
+            // Apply pagination
+            var offset = body.Offset;
+            var limit = Math.Min(body.Limit, _configuration.MaxSearchResults);
+            var pagedResults = results.Skip(offset).Take(limit).ToList();
+
+            return (StatusCodes.OK, new SearchScenesResponse
+            {
+                Results = pagedResults,
+                Total = results.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SearchScenes");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "SearchScenes", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/search", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, FindReferencesResponse?)> FindReferencesAsync(FindReferencesRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("FindReferences: sceneId={SceneId}", body.SceneId);
+
+        try
+        {
+            var sceneIdStr = body.SceneId.ToString();
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            var referencingSceneIds = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
+            var references = new List<ReferenceInfo>();
+
+            if (referencingSceneIds != null)
+            {
+                foreach (var refSceneId in referencingSceneIds)
+                {
+                    var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{refSceneId}", cancellationToken);
+                    if (indexEntry == null) continue;
+
+                    // Load scene to find the referencing node
+                    var scene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
+                    if (scene == null) continue;
+
+                    var refNodes = FindReferenceNodes(scene.Root, sceneIdStr);
+                    foreach (var node in refNodes)
+                    {
+                        references.Add(new ReferenceInfo
+                        {
+                            SceneId = Guid.Parse(refSceneId),
+                            SceneName = indexEntry.Name,
+                            NodeId = node.NodeId,
+                            NodeRefId = node.RefId,
+                            NodeName = node.Name
+                        });
+                    }
+                }
+            }
+
+            return (StatusCodes.OK, new FindReferencesResponse
+            {
+                ReferencingScenes = references
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in FindReferences");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "FindReferences", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/find-references", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, FindAssetUsageResponse?)> FindAssetUsageAsync(FindAssetUsageRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("FindAssetUsage: assetId={AssetId}", body.AssetId);
+
+        try
+        {
+            var assetIdStr = body.AssetId.ToString();
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            var usingSceneIds = await stringSetStore.GetAsync($"{SCENE_ASSETS_PREFIX}{assetIdStr}", cancellationToken);
+            var usages = new List<AssetUsageInfo>();
+
+            if (usingSceneIds != null)
+            {
+                foreach (var sceneId in usingSceneIds)
+                {
+                    var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneId}", cancellationToken);
+                    if (indexEntry == null) continue;
+
+                    // Apply game filter
+                    if (!string.IsNullOrEmpty(body.GameId) && indexEntry.GameId != body.GameId) continue;
+
+                    // Load scene to find the nodes using this asset
+                    var scene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
+                    if (scene == null) continue;
+
+                    var assetNodes = FindAssetNodes(scene.Root, body.AssetId);
+                    foreach (var node in assetNodes)
+                    {
+                        usages.Add(new AssetUsageInfo
+                        {
+                            SceneId = Guid.Parse(sceneId),
+                            SceneName = indexEntry.Name,
+                            NodeId = node.NodeId,
+                            NodeRefId = node.RefId,
+                            NodeName = node.Name,
+                            NodeType = node.NodeType
+                        });
+                    }
+                }
+            }
+
+            return (StatusCodes.OK, new FindAssetUsageResponse
+            {
+                Usages = usages
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in FindAssetUsage");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "FindAssetUsage", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/find-asset-usage", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SceneResponse?)> DuplicateSceneAsync(DuplicateSceneRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("DuplicateScene: sourceSceneId={SourceSceneId}, newName={NewName}", body.SourceSceneId, body.NewName);
+
+        try
+        {
+            var sourceSceneIdStr = body.SourceSceneId.ToString();
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+
+            // Get source scene
+            var sourceIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sourceSceneIdStr}", cancellationToken);
+            if (sourceIndex == null)
+            {
+                _logger.LogWarning("DuplicateScene: Source scene {SourceSceneId} not found", body.SourceSceneId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Load source scene
+            var sourceScene = await LoadSceneAssetAsync(sourceIndex.AssetId, null, cancellationToken);
+            if (sourceScene == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Create duplicate with new IDs
+            var newScene = DuplicateSceneWithNewIds(sourceScene, body.NewName, body.NewGameId, body.NewSceneType);
+
+            // Create via CreateSceneAsync
+            var createRequest = new CreateSceneRequest { Scene = newScene };
+            return await CreateSceneAsync(createRequest, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in DuplicateScene");
+            await _messageBus.TryPublishErrorAsync(
+                "scene", "DuplicateScene", "unexpected_exception", ex.Message,
+                endpoint: "post:/scene/duplicate", stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #endregion
+
+    #region Private Helper Methods
+
+    /// <summary>
+    /// Stores scene content as YAML in the state store.
+    /// </summary>
+    /// <param name="scene">The scene to store.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="existingAssetId">Existing asset ID for updates (not used in state store approach).</param>
+    /// <returns>The asset ID (scene ID) for the stored content.</returns>
+    private async Task<string> StoreSceneAssetAsync(Scene scene, CancellationToken cancellationToken, string? existingAssetId = null)
+    {
+        var yaml = YamlSerializer.Serialize(scene);
+        var sceneIdStr = scene.SceneId.ToString();
+        var contentKey = $"{SCENE_CONTENT_PREFIX}{sceneIdStr}";
+
+        // Store the YAML content directly in state store
+        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(STATE_STORE);
+        var contentEntry = new SceneContentEntry
+        {
+            SceneId = sceneIdStr,
+            Version = scene.Version,
+            Content = yaml,
+            UpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        await contentStore.SaveAsync(contentKey, contentEntry, null, cancellationToken);
+
+        return sceneIdStr;
+    }
+
+    /// <summary>
+    /// Loads scene content from the state store.
+    /// </summary>
+    /// <param name="assetId">The scene/asset ID to load.</param>
+    /// <param name="version">Optional version (not currently supported for state store).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The deserialized scene, or null if not found.</returns>
+    private async Task<Scene?> LoadSceneAssetAsync(string assetId, string? version, CancellationToken cancellationToken)
+    {
+        var contentKey = $"{SCENE_CONTENT_PREFIX}{assetId}";
+        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(STATE_STORE);
+
+        var contentEntry = await contentStore.GetAsync(contentKey, cancellationToken);
+        if (contentEntry == null || string.IsNullOrEmpty(contentEntry.Content))
+        {
+            return null;
+        }
+
+        // Deserialize YAML to Scene
+        return YamlDeserializer.Deserialize<Scene>(contentEntry.Content);
+    }
+
+    /// <summary>
+    /// Gets version history for a scene asset.
+    /// </summary>
+    /// <remarks>
+    /// Current implementation returns empty list. Version history tracking
+    /// would require maintaining a separate version index per scene.
+    /// </remarks>
+    private Task<List<VersionInfo>> GetAssetVersionHistoryAsync(string assetId, int limit, CancellationToken cancellationToken)
+    {
+        // Version history tracking would require additional state store entries
+        // For now, return empty list - can be enhanced later if needed
+        return Task.FromResult(new List<VersionInfo>());
+    }
+
+    private ValidationResult ValidateSceneStructure(Scene scene)
+    {
+        var errors = new List<ValidationError>();
+        var warnings = new List<ValidationError>();
+
+        // Validate sceneId is not empty Guid
+        if (scene.SceneId == Guid.Empty)
+        {
+            errors.Add(new ValidationError
+            {
+                RuleId = "valid-uuid",
+                Message = "sceneId must be a valid non-empty UUID",
+                Severity = ValidationSeverity.Error
+            });
+        }
+
+        // Validate version pattern
+        if (!string.IsNullOrEmpty(scene.Version) && !Regex.IsMatch(scene.Version, @"^\d+\.\d+\.\d+$"))
+        {
+            errors.Add(new ValidationError
+            {
+                RuleId = "valid-version",
+                Message = "version must match MAJOR.MINOR.PATCH pattern",
+                Severity = ValidationSeverity.Error
+            });
+        }
+
+        // Validate root node exists
+        if (scene.Root == null)
+        {
+            errors.Add(new ValidationError
+            {
+                RuleId = "single-root",
+                Message = "Scene must have a root node",
+                Severity = ValidationSeverity.Error
+            });
+        }
+        else
+        {
+            // Validate root has no parent
+            if (scene.Root.ParentNodeId != null)
+            {
+                errors.Add(new ValidationError
+                {
+                    RuleId = "root-no-parent",
+                    Message = "Root node must have null parentNodeId",
+                    Severity = ValidationSeverity.Error,
+                    NodeId = scene.Root.NodeId
+                });
+            }
+
+            // Validate all nodes
+            var allNodes = new List<SceneNode>();
+            CollectNodes(scene.Root, allNodes);
+
+            // Check node count limit
+            if (allNodes.Count > _configuration.MaxNodeCount)
+            {
+                errors.Add(new ValidationError
+                {
+                    RuleId = "node-count-limit",
+                    Message = $"Scene exceeds maximum node count of {_configuration.MaxNodeCount}",
+                    Severity = ValidationSeverity.Error
+                });
+            }
+
+            // Check refId uniqueness
+            var refIds = new HashSet<string>();
+            foreach (var node in allNodes)
+            {
+                if (string.IsNullOrEmpty(node.RefId))
+                {
+                    errors.Add(new ValidationError
+                    {
+                        RuleId = "unique-refid",
+                        Message = "Node must have a refId",
+                        Severity = ValidationSeverity.Error,
+                        NodeId = node.NodeId
+                    });
+                }
+                else if (!RefIdPattern.IsMatch(node.RefId))
+                {
+                    errors.Add(new ValidationError
+                    {
+                        RuleId = "refid-pattern",
+                        Message = $"refId '{node.RefId}' must match pattern ^[a-z][a-z0-9_]*$",
+                        Severity = ValidationSeverity.Error,
+                        NodeId = node.NodeId
+                    });
+                }
+                else if (!refIds.Add(node.RefId))
+                {
+                    errors.Add(new ValidationError
+                    {
+                        RuleId = "unique-refid",
+                        Message = $"Duplicate refId '{node.RefId}'",
+                        Severity = ValidationSeverity.Error,
+                        NodeId = node.NodeId
+                    });
+                }
+
+                // Validate nodeId is not empty
+                if (node.NodeId == Guid.Empty)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        RuleId = "valid-uuid",
+                        Message = "nodeId must be a valid non-empty UUID",
+                        Severity = ValidationSeverity.Error
+                    });
+                }
+
+                // Validate transform
+                if (node.LocalTransform == null)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        RuleId = "valid-transform",
+                        Message = "Node must have a localTransform",
+                        Severity = ValidationSeverity.Error,
+                        NodeId = node.NodeId
+                    });
+                }
+            }
+        }
+
+        return new ValidationResult
+        {
+            Valid = errors.Count == 0,
+            Errors = errors.Count > 0 ? errors : null,
+            Warnings = warnings.Count > 0 ? warnings : null
+        };
+    }
+
+    private async Task<ValidationResult> ApplyGameValidationRulesAsync(Scene scene, CancellationToken cancellationToken)
+    {
+        var errors = new List<ValidationError>();
+        var warnings = new List<ValidationError>();
+
+        // Get rules for this gameId+sceneType
+        var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+        var key = $"{VALIDATION_RULES_PREFIX}{scene.GameId}:{scene.SceneType}";
+        var rules = await rulesStore.GetAsync(key, cancellationToken);
+
+        if (rules == null || rules.Count == 0)
+        {
+            return new ValidationResult { Valid = true };
+        }
+
+        var allNodes = new List<SceneNode>();
+        CollectNodes(scene.Root, allNodes);
+
+        foreach (var rule in rules)
+        {
+            var ruleErrors = ApplyValidationRule(rule, scene, allNodes);
+            foreach (var error in ruleErrors)
+            {
+                if (rule.Severity == ValidationSeverity.Error)
+                {
+                    errors.Add(error);
+                }
+                else
+                {
+                    warnings.Add(error);
+                }
+            }
+        }
+
+        return new ValidationResult
+        {
+            Valid = errors.Count == 0,
+            Errors = errors.Count > 0 ? errors : null,
+            Warnings = warnings.Count > 0 ? warnings : null
+        };
+    }
+
+    private List<ValidationError> ApplyValidationRule(ValidationRule rule, Scene scene, List<SceneNode> allNodes)
+    {
+        var errors = new List<ValidationError>();
+        var config = rule.Config;
+
+        switch (rule.RuleType)
+        {
+            case ValidationRuleType.Require_tag:
+                if (!string.IsNullOrEmpty(config?.Tag))
+                {
+                    var matchingNodes = allNodes.Where(n =>
+                        (string.IsNullOrEmpty(config.NodeType) || n.NodeType.ToString() == config.NodeType) &&
+                        n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
+
+                    var minCount = config.MinCount ?? 1;
+                    if (matchingNodes.Count < minCount)
+                    {
+                        errors.Add(new ValidationError
+                        {
+                            RuleId = rule.RuleId,
+                            Message = $"Scene requires at least {minCount} nodes with tag '{config.Tag}'",
+                            Severity = rule.Severity
+                        });
+                    }
+
+                    if (config.MaxCount.HasValue && matchingNodes.Count > config.MaxCount.Value)
+                    {
+                        errors.Add(new ValidationError
+                        {
+                            RuleId = rule.RuleId,
+                            Message = $"Scene has too many nodes with tag '{config.Tag}' (max: {config.MaxCount.Value})",
+                            Severity = rule.Severity
+                        });
+                    }
+                }
+                break;
+
+            case ValidationRuleType.Forbid_tag:
+                if (!string.IsNullOrEmpty(config?.Tag))
+                {
+                    var forbiddenNodes = allNodes.Where(n => n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
+                    foreach (var node in forbiddenNodes)
+                    {
+                        errors.Add(new ValidationError
+                        {
+                            RuleId = rule.RuleId,
+                            Message = $"Tag '{config.Tag}' is forbidden",
+                            Severity = rule.Severity,
+                            NodeId = node.NodeId
+                        });
+                    }
+                }
+                break;
+
+            case ValidationRuleType.Require_node_type:
+                if (!string.IsNullOrEmpty(config?.NodeType))
+                {
+                    var matchingNodes = allNodes.Where(n => n.NodeType.ToString() == config.NodeType).ToList();
+                    var minCount = config.MinCount ?? 1;
+                    if (matchingNodes.Count < minCount)
+                    {
+                        errors.Add(new ValidationError
+                        {
+                            RuleId = rule.RuleId,
+                            Message = $"Scene requires at least {minCount} nodes of type '{config.NodeType}'",
+                            Severity = rule.Severity
+                        });
+                    }
+                }
+                break;
+        }
+
+        return errors;
+    }
+
+    private void MergeValidationResults(ValidationResult target, ValidationResult source)
+    {
+        if (source.Errors != null)
+        {
+            if (target.Errors == null)
+            {
+                target.Errors = new List<ValidationError>();
+            }
+            ((List<ValidationError>)target.Errors).AddRange(source.Errors);
+            target.Valid = false;
+        }
+
+        if (source.Warnings != null)
+        {
+            if (target.Warnings == null)
+            {
+                target.Warnings = new List<ValidationError>();
+            }
+            ((List<ValidationError>)target.Warnings).AddRange(source.Warnings);
+        }
+    }
+
+    private async Task UpdateSceneIndexesAsync(Scene newScene, Scene? oldScene, CancellationToken cancellationToken)
+    {
+        var sceneIdStr = newScene.SceneId.ToString();
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+        // Update game index
+        var gameKey = $"{SCENE_BY_GAME_PREFIX}{newScene.GameId}";
+        var gameIndex = await stringSetStore.GetAsync(gameKey, cancellationToken) ?? new HashSet<string>();
+        gameIndex.Add(sceneIdStr);
+        await stringSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
+
+        // Update type index
+        var typeKey = $"{SCENE_BY_TYPE_PREFIX}{newScene.GameId}:{newScene.SceneType}";
+        var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken) ?? new HashSet<string>();
+        typeIndex.Add(sceneIdStr);
+        await stringSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
+
+        // Update reference tracking
+        var newReferences = ExtractSceneReferences(newScene.Root);
+        var oldReferences = oldScene != null ? ExtractSceneReferences(oldScene.Root) : new HashSet<string>();
+
+        // Add new references
+        foreach (var refSceneId in newReferences.Except(oldReferences))
+        {
+            var refKey = $"{SCENE_REFERENCES_PREFIX}{refSceneId}";
+            var refSet = await stringSetStore.GetAsync(refKey, cancellationToken) ?? new HashSet<string>();
+            refSet.Add(sceneIdStr);
+            await stringSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
+        }
+
+        // Remove old references
+        foreach (var refSceneId in oldReferences.Except(newReferences))
+        {
+            var refKey = $"{SCENE_REFERENCES_PREFIX}{refSceneId}";
+            var refSet = await stringSetStore.GetAsync(refKey, cancellationToken);
+            if (refSet != null)
+            {
+                refSet.Remove(sceneIdStr);
+                await stringSetStore.SaveAsync(refKey, refSet, cancellationToken: cancellationToken);
+            }
+        }
+
+        // Update asset usage tracking
+        var newAssets = ExtractAssetReferences(newScene.Root);
+        var oldAssets = oldScene != null ? ExtractAssetReferences(oldScene.Root) : new HashSet<string>();
+
+        foreach (var assetId in newAssets.Except(oldAssets))
+        {
+            var assetKey = $"{SCENE_ASSETS_PREFIX}{assetId}";
+            var assetSet = await stringSetStore.GetAsync(assetKey, cancellationToken) ?? new HashSet<string>();
+            assetSet.Add(sceneIdStr);
+            await stringSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
+        }
+
+        foreach (var assetId in oldAssets.Except(newAssets))
+        {
+            var assetKey = $"{SCENE_ASSETS_PREFIX}{assetId}";
+            var assetSet = await stringSetStore.GetAsync(assetKey, cancellationToken);
+            if (assetSet != null)
+            {
+                assetSet.Remove(sceneIdStr);
+                await stringSetStore.SaveAsync(assetKey, assetSet, cancellationToken: cancellationToken);
+            }
+        }
+    }
+
+    private async Task RemoveFromIndexesAsync(SceneIndexEntry indexEntry, CancellationToken cancellationToken)
+    {
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+
+        // Remove from game index
+        var gameKey = $"{SCENE_BY_GAME_PREFIX}{indexEntry.GameId}";
+        var gameIndex = await stringSetStore.GetAsync(gameKey, cancellationToken);
+        if (gameIndex != null)
+        {
+            gameIndex.Remove(indexEntry.SceneId);
+            await stringSetStore.SaveAsync(gameKey, gameIndex, cancellationToken: cancellationToken);
+        }
+
+        // Remove from type index
+        var typeKey = $"{SCENE_BY_TYPE_PREFIX}{indexEntry.GameId}:{indexEntry.SceneType}";
+        var typeIndex = await stringSetStore.GetAsync(typeKey, cancellationToken);
+        if (typeIndex != null)
+        {
+            typeIndex.Remove(indexEntry.SceneId);
+            await stringSetStore.SaveAsync(typeKey, typeIndex, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Gets all scene IDs in the system.
+    /// </summary>
+    /// <remarks>
+    /// Current implementation returns empty set. A full implementation would
+    /// require maintaining a global scene ID index or scanning all game indexes.
+    /// </remarks>
+    private Task<HashSet<string>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
+    {
+        // This would be expensive in production - would need a dedicated global index
+        // For now, return empty set (can be enhanced later if needed)
+        return Task.FromResult(new HashSet<string>());
+    }
+
+    private async Task<(List<ResolvedReference>, List<UnresolvedReference>, List<string>)> ResolveReferencesAsync(
+        Scene scene, int maxDepth, CancellationToken cancellationToken)
+    {
+        var resolved = new List<ResolvedReference>();
+        var unresolved = new List<UnresolvedReference>();
+        var errors = new List<string>();
+        var visited = new HashSet<string> { scene.SceneId.ToString() };
+
+        await ResolveReferencesRecursiveAsync(scene.Root, 1, maxDepth, visited, resolved, unresolved, errors, cancellationToken);
+
+        return (resolved, unresolved, errors);
+    }
+
+    private async Task ResolveReferencesRecursiveAsync(
+        SceneNode node, int depth, int maxDepth, HashSet<string> visited,
+        List<ResolvedReference> resolved, List<UnresolvedReference> unresolved, List<string> errors,
+        CancellationToken cancellationToken)
+    {
+        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        {
+            // Annotations is object? - need to cast to dictionary
+            if (node.Annotations is IDictionary<string, object> annotationsDict &&
+                annotationsDict.TryGetValue("reference", out var refObj) &&
+                refObj is IDictionary<string, object> refDict &&
+                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            {
+                var referencedSceneId = sceneIdObj?.ToString();
+                if (!string.IsNullOrEmpty(referencedSceneId))
+                {
+                    if (depth > maxDepth)
+                    {
+                        unresolved.Add(new UnresolvedReference
+                        {
+                            NodeId = node.NodeId,
+                            RefId = node.RefId,
+                            ReferencedSceneId = Guid.Parse(referencedSceneId),
+                            Reason = UnresolvedReferenceReason.Depth_exceeded
+                        });
+                        errors.Add($"Reference at node '{node.RefId}' exceeds max depth {maxDepth}");
+                    }
+                    else if (visited.Contains(referencedSceneId))
+                    {
+                        unresolved.Add(new UnresolvedReference
+                        {
+                            NodeId = node.NodeId,
+                            RefId = node.RefId,
+                            ReferencedSceneId = Guid.Parse(referencedSceneId),
+                            Reason = UnresolvedReferenceReason.Circular_reference,
+                            CyclePath = visited.Select(Guid.Parse).ToList()
+                        });
+                        errors.Add($"Circular reference detected at node '{node.RefId}'");
+                    }
+                    else
+                    {
+                        var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+                        var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{referencedSceneId}", cancellationToken);
+
+                        if (indexEntry == null)
+                        {
+                            unresolved.Add(new UnresolvedReference
+                            {
+                                NodeId = node.NodeId,
+                                RefId = node.RefId,
+                                ReferencedSceneId = Guid.Parse(referencedSceneId),
+                                Reason = UnresolvedReferenceReason.Not_found
+                            });
+                            errors.Add($"Referenced scene '{referencedSceneId}' not found");
+                        }
+                        else
+                        {
+                            var referencedScene = await LoadSceneAssetAsync(indexEntry.AssetId, null, cancellationToken);
+                            if (referencedScene != null)
+                            {
+                                resolved.Add(new ResolvedReference
+                                {
+                                    NodeId = node.NodeId,
+                                    RefId = node.RefId,
+                                    ReferencedSceneId = Guid.Parse(referencedSceneId),
+                                    ReferencedVersion = referencedScene.Version,
+                                    Scene = referencedScene,
+                                    Depth = depth
+                                });
+
+                                // Recursively resolve references in the referenced scene
+                                visited.Add(referencedSceneId);
+                                await ResolveReferencesRecursiveAsync(referencedScene.Root, depth + 1, maxDepth, visited, resolved, unresolved, errors, cancellationToken);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Process children
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                await ResolveReferencesRecursiveAsync(child, depth, maxDepth, visited, resolved, unresolved, errors, cancellationToken);
+            }
+        }
+    }
+
+    private HashSet<string> ExtractSceneReferences(SceneNode root)
+    {
+        var references = new HashSet<string>();
+        ExtractSceneReferencesRecursive(root, references);
+        return references;
+    }
+
+    private void ExtractSceneReferencesRecursive(SceneNode node, HashSet<string> references)
+    {
+        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        {
+            if (node.Annotations is IDictionary<string, object> annotationsDict &&
+                annotationsDict.TryGetValue("reference", out var refObj) &&
+                refObj is IDictionary<string, object> refDict &&
+                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            {
+                var sceneId = sceneIdObj?.ToString();
+                if (!string.IsNullOrEmpty(sceneId))
+                {
+                    references.Add(sceneId);
+                }
+            }
+        }
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                ExtractSceneReferencesRecursive(child, references);
+            }
+        }
+    }
+
+    private HashSet<string> ExtractAssetReferences(SceneNode root)
+    {
+        var assets = new HashSet<string>();
+        ExtractAssetReferencesRecursive(root, assets);
+        return assets;
+    }
+
+    private void ExtractAssetReferencesRecursive(SceneNode node, HashSet<string> assets)
+    {
+        if (node.Asset != null && node.Asset.AssetId != Guid.Empty)
+        {
+            assets.Add(node.Asset.AssetId.ToString());
+        }
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                ExtractAssetReferencesRecursive(child, assets);
+            }
+        }
+    }
+
+    private List<SceneNode> FindReferenceNodes(SceneNode root, string targetSceneId)
+    {
+        var nodes = new List<SceneNode>();
+        FindReferenceNodesRecursive(root, targetSceneId, nodes);
+        return nodes;
+    }
+
+    private void FindReferenceNodesRecursive(SceneNode node, string targetSceneId, List<SceneNode> nodes)
+    {
+        if (node.NodeType == NodeType.Reference && node.Annotations != null)
+        {
+            if (node.Annotations is IDictionary<string, object> annotationsDict &&
+                annotationsDict.TryGetValue("reference", out var refObj) &&
+                refObj is IDictionary<string, object> refDict &&
+                refDict.TryGetValue("sceneAssetId", out var sceneIdObj))
+            {
+                var sceneId = sceneIdObj?.ToString();
+                if (sceneId == targetSceneId)
+                {
+                    nodes.Add(node);
+                }
+            }
+        }
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                FindReferenceNodesRecursive(child, targetSceneId, nodes);
+            }
+        }
+    }
+
+    private List<SceneNode> FindAssetNodes(SceneNode root, Guid targetAssetId)
+    {
+        var nodes = new List<SceneNode>();
+        FindAssetNodesRecursive(root, targetAssetId, nodes);
+        return nodes;
+    }
+
+    private void FindAssetNodesRecursive(SceneNode node, Guid targetAssetId, List<SceneNode> nodes)
+    {
+        if (node.Asset != null && node.Asset.AssetId == targetAssetId)
+        {
+            nodes.Add(node);
+        }
+
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                FindAssetNodesRecursive(child, targetAssetId, nodes);
+            }
+        }
+    }
+
+    private void CollectNodes(SceneNode node, List<SceneNode> nodes)
+    {
+        nodes.Add(node);
+        if (node.Children != null)
+        {
+            foreach (var child in node.Children)
+            {
+                CollectNodes(child, nodes);
+            }
+        }
+    }
+
+    private int CountNodes(SceneNode root)
+    {
+        var count = 1;
+        if (root.Children != null)
+        {
+            foreach (var child in root.Children)
+            {
+                count += CountNodes(child);
+            }
+        }
+        return count;
+    }
+
+    private string IncrementPatchVersion(string version)
+    {
+        if (string.IsNullOrEmpty(version))
+        {
+            return "1.0.1";
+        }
+
+        var parts = version.Split('.');
+        if (parts.Length == 3 && int.TryParse(parts[2], out var patch))
+        {
+            return $"{parts[0]}.{parts[1]}.{patch + 1}";
+        }
+
+        return "1.0.1";
+    }
+
+    private SceneSummary CreateSceneSummary(SceneIndexEntry indexEntry)
+    {
+        return new SceneSummary
+        {
+            SceneId = Guid.Parse(indexEntry.SceneId),
+            GameId = indexEntry.GameId,
+            SceneType = Enum.TryParse<SceneType>(indexEntry.SceneType, out var type) ? type : SceneType.Unknown,
+            Name = indexEntry.Name,
+            Description = indexEntry.Description,
+            Version = indexEntry.Version,
+            Tags = indexEntry.Tags,
+            NodeCount = indexEntry.NodeCount,
+            CreatedAt = indexEntry.CreatedAt,
+            UpdatedAt = indexEntry.UpdatedAt,
+            IsCheckedOut = indexEntry.IsCheckedOut
+        };
+    }
+
+    private Scene DuplicateSceneWithNewIds(Scene source, string newName, string? newGameId, SceneType? newSceneType)
+    {
+        var newSceneId = Guid.NewGuid();
+        var idMapping = new Dictionary<Guid, Guid>();
+
+        return new Scene
+        {
+            Schema = source.Schema,
+            SceneId = newSceneId,
+            GameId = newGameId ?? source.GameId,
+            SceneType = newSceneType ?? source.SceneType,
+            Name = newName,
+            Description = source.Description,
+            Version = "1.0.0",
+            Root = DuplicateNodeWithNewIds(source.Root, idMapping),
+            Tags = source.Tags?.ToList() ?? new List<string>(),
+            Metadata = source.Metadata
+        };
+    }
+
+    private SceneNode DuplicateNodeWithNewIds(SceneNode source, Dictionary<Guid, Guid> idMapping)
+    {
+        var newNodeId = Guid.NewGuid();
+        idMapping[source.NodeId] = newNodeId;
+
+        Guid? newParentId = null;
+        if (source.ParentNodeId != null && idMapping.TryGetValue(source.ParentNodeId.Value, out var mappedParentId))
+        {
+            newParentId = mappedParentId;
+        }
+
+        return new SceneNode
+        {
+            NodeId = newNodeId,
+            RefId = source.RefId,
+            ParentNodeId = newParentId,
+            Name = source.Name,
+            NodeType = source.NodeType,
+            LocalTransform = source.LocalTransform,
+            Asset = source.Asset,
+            Children = source.Children?.Select(c => DuplicateNodeWithNewIds(c, idMapping)).ToList() ?? new List<SceneNode>(),
+            Enabled = source.Enabled,
+            SortOrder = source.SortOrder,
+            Tags = source.Tags?.ToList() ?? new List<string>(),
+            Annotations = source.Annotations
+        };
+    }
+
+    private async Task PublishSceneCreatedEventAsync(Scene scene, int nodeCount, CancellationToken cancellationToken)
+    {
+        var eventModel = new SceneCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SceneId = scene.SceneId,
+            GameId = scene.GameId,
+            SceneType = scene.SceneType.ToString(),
+            Name = scene.Name,
+            Description = scene.Description,
+            Version = scene.Version,
+            Tags = scene.Tags?.ToList() ?? new List<string>(),
+            NodeCount = nodeCount,
+            CreatedAt = scene.CreatedAt,
+            UpdatedAt = scene.UpdatedAt
+        };
+
+        await _messageBus.TryPublishAsync(SCENE_CREATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishSceneUpdatedEventAsync(Scene scene, string previousVersion, int nodeCount, CancellationToken cancellationToken)
+    {
+        var eventModel = new SceneUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SceneId = scene.SceneId,
+            GameId = scene.GameId,
+            SceneType = scene.SceneType.ToString(),
+            Name = scene.Name,
+            Description = scene.Description,
+            Version = scene.Version,
+            Tags = scene.Tags?.ToList() ?? new List<string>(),
+            NodeCount = nodeCount,
+            CreatedAt = scene.CreatedAt,
+            UpdatedAt = scene.UpdatedAt
+        };
+
+        await _messageBus.TryPublishAsync(SCENE_UPDATED_TOPIC, eventModel, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishSceneDeletedEventAsync(Scene scene, int nodeCount, string? reason, CancellationToken cancellationToken)
+    {
+        var eventModel = new SceneDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SceneId = scene.SceneId,
+            GameId = scene.GameId,
+            SceneType = scene.SceneType.ToString(),
+            Name = scene.Name,
+            Description = scene.Description,
+            Version = scene.Version,
+            Tags = scene.Tags?.ToList() ?? new List<string>(),
+            NodeCount = nodeCount,
+            CreatedAt = scene.CreatedAt,
+            UpdatedAt = scene.UpdatedAt
+        };
+
+        await _messageBus.TryPublishAsync(SCENE_DELETED_TOPIC, eventModel, cancellationToken: cancellationToken);
+    }
+
+    #endregion
+}
+
+#region Internal Models
+
+/// <summary>
+/// Index entry for efficient scene queries.
+/// </summary>
+internal class SceneIndexEntry
+{
+    public string SceneId { get; set; } = string.Empty;
+    public string AssetId { get; set; } = string.Empty;
+    public string GameId { get; set; } = string.Empty;
+    public string SceneType { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string Version { get; set; } = string.Empty;
+    public List<string> Tags { get; set; } = new();
+    public int NodeCount { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public bool IsCheckedOut { get; set; }
+    public string? CheckedOutBy { get; set; }
+}
+
+/// <summary>
+/// Checkout state stored in lib-state.
+/// </summary>
+internal class CheckoutState
+{
+    public string SceneId { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    public string EditorId { get; set; } = string.Empty;
+    public DateTimeOffset ExpiresAt { get; set; }
+    public int ExtensionCount { get; set; }
+}
+
+/// <summary>
+/// Scene content entry stored in lib-state (YAML serialized scene).
+/// </summary>
+internal class SceneContentEntry
+{
+    public string SceneId { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public long UpdatedAt { get; set; }
+}
+
+#endregion
