@@ -25,7 +25,6 @@ Schema Support:
 import sys
 from pathlib import Path
 from collections import defaultdict
-from datetime import datetime
 
 # Use ruamel.yaml to parse YAML files (preserves comments)
 try:
@@ -235,7 +234,6 @@ def generate_env_example(config_by_service: dict) -> str:
         "#   - Property names: UPPER_SNAKE_CASE with underscores between words",
         "#   - Example: AUTH_JWT_SECRET -> JwtSecret property in AuthServiceConfiguration",
         "#",
-        f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         "",
     ]
 
