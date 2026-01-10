@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Game Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for game-service service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: game-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    GameServiceCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-service.created when a gameservice is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - stubName
+      - displayName
+      - isActive
+      properties:
+        eventName:
+          type: string
+          default: game-service.created
+          description: 'Event type identifier: game-service.created'
+        gameServiceId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for the game service
+        stubName: &id002
+          type: string
+          description: Short machine-readable name for the service
+        displayName: &id003
+          type: string
+          description: Human-readable display name for the service
+        description: &id004
+          type: string
+          nullable: true
+          description: Description of what the game service does
+        isActive: &id005
+          type: boolean
+          description: Whether the game service is currently active
+    GameServiceUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-service.updated when a gameservice is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - stubName
+      - displayName
+      - isActive
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: game-service.updated
+          description: 'Event type identifier: game-service.updated'
+        gameServiceId: *id001
+        stubName: *id002
+        displayName: *id003
+        description: *id004
+        isActive: *id005
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    GameServiceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to game-service.deleted when a gameservice is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - stubName
+      - displayName
+      - isActive
+      properties:
+        eventName:
+          type: string
+          default: game-service.deleted
+          description: 'Event type identifier: game-service.deleted'
+        gameServiceId: *id001
+        stubName: *id002
+        displayName: *id003
+        description: *id004
+        isActive: *id005
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

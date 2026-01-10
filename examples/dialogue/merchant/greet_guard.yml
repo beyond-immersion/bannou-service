@@ -1,0 +1,33 @@
+# =============================================================================
+# Merchant Greeting - City Guard
+# Special greeting for guards (good customer relationship)
+# =============================================================================
+
+localizations:
+  en: "Ah, one of the watch! What can I do for you today?"
+  es: "¡Ah, uno de la guardia! ¿Qué puedo hacer por ti hoy?"
+  de: "Ah, einer von der Wache! Was kann ich heute für Euch tun?"
+  ja: "おお、衛兵殿！今日は何をお探しで？"
+  fr: "Ah, un garde ! Que puis-je faire pour vous aujourd'hui ?"
+
+overrides:
+  # Guard is a regular customer
+  - condition: "${customer.purchase_history.length > 3}"
+    priority: 15
+    localizations:
+      en: "Back again? Always happy to serve the watch. What do you need?"
+      es: "¿De vuelta? Siempre encantado de servir a la guardia. ¿Qué necesitas?"
+
+  # Guard looking worn/tired
+  - condition: "${customer.appearance.worn || customer.stats.energy < 0.4}"
+    priority: 10
+    localizations:
+      en: "Rough patrol? Come, let me see what needs fixing."
+      es: "¿Patrulla dura? Ven, déjame ver qué necesita arreglo."
+
+  # Guard's equipment looks damaged
+  - condition: "${customer.equipment.condition < 0.5}"
+    priority: 20
+    localizations:
+      en: "That shield's seen better days! Good thing you came to the right place."
+      es: "¡Ese escudo ha visto días mejores! Menos mal que viniste al lugar correcto."

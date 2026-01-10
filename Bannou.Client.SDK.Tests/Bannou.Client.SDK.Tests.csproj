@@ -27,7 +27,7 @@
     <!-- Reference Client SDK for interpreter testing -->
     <ProjectReference Include="../Bannou.Client.SDK/Bannou.Client.SDK.csproj" />
     <!-- Reference lib-behavior for round-trip compiler testing -->
-    <ProjectReference Include="../lib-behavior/lib-behavior.csproj" />
+    <ProjectReference Include="../plugins/lib-behavior/lib-behavior.csproj" />
   </ItemGroup>
 
 </Project>

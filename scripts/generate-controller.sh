@@ -20,7 +20,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-OUTPUT_DIR="../lib-${SERVICE_NAME}/Generated"
+OUTPUT_DIR="../plugins/lib-${SERVICE_NAME}/Generated"
 OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}Controller.cs"
 
 echo -e "${YELLOW}🔧 Generating controller for service: $SERVICE_NAME${NC}"
@@ -118,7 +118,7 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
 
     # Create empty partial controller if it doesn't exist and we have controller-only methods
     if [ "$HAS_CONTROLLER_ONLY_METHODS" = true ]; then
-        PARTIAL_CONTROLLER="../lib-${SERVICE_NAME}/${SERVICE_PASCAL}Controller.cs"
+        PARTIAL_CONTROLLER="../plugins/lib-${SERVICE_NAME}/${SERVICE_PASCAL}Controller.cs"
         if [ ! -f "$PARTIAL_CONTROLLER" ]; then
             echo -e "${YELLOW}📝 Creating partial controller for x-controller-only methods: $PARTIAL_CONTROLLER${NC}"
 

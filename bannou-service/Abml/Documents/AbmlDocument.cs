@@ -40,6 +40,12 @@ public sealed class AbmlDocument
         new Dictionary<string, GoapGoalDefinition>();
 
     /// <summary>
+    /// Options block for actor self-description.
+    /// Enables Event Brain queries via /actor/query-options endpoint.
+    /// </summary>
+    public OptionsDefinition? Options { get; init; }
+
+    /// <summary>
     /// Named flows containing action sequences.
     /// </summary>
     public IReadOnlyDictionary<string, Flow> Flows { get; init; } = new Dictionary<string, Flow>();
@@ -251,6 +257,61 @@ public sealed class GoapGoalDefinition
     /// </summary>
     public IReadOnlyDictionary<string, string> Conditions { get; init; } =
         new Dictionary<string, string>();
+}
+
+/// <summary>
+/// Options definition for actor self-description.
+/// Maps option types (combat, dialogue, etc.) to their option definitions.
+/// </summary>
+public sealed class OptionsDefinition
+{
+    /// <summary>
+    /// Options grouped by type (combat, dialogue, social, exploration, or custom).
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<OptionDefinition>> OptionsByType { get; init; } =
+        new Dictionary<string, IReadOnlyList<OptionDefinition>>();
+}
+
+/// <summary>
+/// Definition of a single option within an options block.
+/// Expressions are evaluated at runtime to produce ActorOption values.
+/// </summary>
+public sealed class OptionDefinition
+{
+    /// <summary>
+    /// Unique identifier for this action within the option type.
+    /// </summary>
+    public required string ActionId { get; init; }
+
+    /// <summary>
+    /// Preference expression (0-1). Can be a literal float or an expression like "${combat.style == 'aggressive' ? 0.9 : 0.6}".
+    /// </summary>
+    public required string Preference { get; init; }
+
+    /// <summary>
+    /// Risk expression (0-1). Can be a literal float or an expression. Optional.
+    /// </summary>
+    public string? Risk { get; init; }
+
+    /// <summary>
+    /// Availability expression. Can be a literal bool or an expression like "${equipment.has_sword}".
+    /// </summary>
+    public required string Available { get; init; }
+
+    /// <summary>
+    /// Human-readable requirements for this option.
+    /// </summary>
+    public IReadOnlyList<string> Requirements { get; init; } = [];
+
+    /// <summary>
+    /// Cooldown in milliseconds. Can be a literal int or an expression. Optional.
+    /// </summary>
+    public string? CooldownMs { get; init; }
+
+    /// <summary>
+    /// Tags for categorization (e.g., "melee", "offensive", "loud").
+    /// </summary>
+    public IReadOnlyList<string> Tags { get; init; } = [];
 }
 
 /// <summary>

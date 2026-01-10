@@ -1,0 +1,26 @@
+version: "2.0"
+metadata:
+  id: multi_type_options_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: attack
+      preference: 0.8
+      available: true
+    - actionId: defend
+      preference: 0.5
+      available: true
+  dialogue:
+    - actionId: greet
+      preference: 0.9
+      available: true
+  exploration:
+    - actionId: investigate
+      preference: 0.6
+      available: true
+
+flows:
+  main:
+    actions:
+      - log: "tick"

@@ -1,0 +1,252 @@
+# =============================================================================
+# Entity Archetype Definitions
+# Data-driven Intent Channel configurations per entity type.
+#
+# This schema defines the logical channel structure for different entity types.
+# Logical channels are semantic (Combat, Expression) and map to physical
+# bytecode output slots (Action, Locomotion, etc.).
+#
+# FOUNDATION TENETS: Schema-first, data-driven archetype definitions.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Physical Channels (Bytecode Level)
+# These are the actual output slots in compiled behavior bytecode.
+# Defined in lib-behavior/Runtime/BehaviorOpcode.cs
+# -----------------------------------------------------------------------------
+# Action (0): Primary actions - attack, block, use, talk
+# Locomotion (1): Movement/navigation
+# Attention (2): Gaze/focus direction
+# Stance (3): Body posture
+# Vocalization (4): Speech/sounds
+# Expression (5): Facial expressions (NEW - requires bytecode extension)
+
+# -----------------------------------------------------------------------------
+# Merge Strategies
+# -----------------------------------------------------------------------------
+# priority: Highest urgency wins (exclusive)
+# blend: Weighted blend by urgency
+# additive: Sum contributions (clamped)
+
+# -----------------------------------------------------------------------------
+# Archetype Definitions
+# -----------------------------------------------------------------------------
+
+archetypes:
+  # ===========================================================================
+  # HUMANOID - Players, NPCs, humanoid creatures
+  # ===========================================================================
+  humanoid:
+    description: "Standard humanoid entity with full expression capability"
+    model_types:
+      - combat
+      - movement
+      - interaction
+      - idle
+
+    channels:
+      # Primary action channel - attacks, abilities, object interactions
+      - name: combat
+        physical_channel: action
+        default_urgency: 0.5
+        merge_strategy: priority
+        description: "Attack, defend, and ability actions"
+
+      # Navigation and steering
+      - name: movement
+        physical_channel: locomotion
+        default_urgency: 0.5
+        merge_strategy: blend
+        description: "Navigation, pathfinding, steering"
+
+      # Object and NPC interactions (separate from combat)
+      - name: interaction
+        physical_channel: action
+        default_urgency: 0.4
+        merge_strategy: priority
+        description: "Pick up, talk to, use objects"
+
+      # Facial expressions - emotional display
+      - name: expression
+        physical_channel: expression
+        default_urgency: 0.4
+        merge_strategy: blend
+        description: "Facial emotions - smile, frown, surprise"
+
+      # Gaze and head tracking
+      - name: attention
+        physical_channel: attention
+        default_urgency: 0.6
+        merge_strategy: blend
+        description: "Gaze direction, target tracking"
+
+      # Verbal communication
+      - name: speech
+        physical_channel: vocalization
+        default_urgency: 0.5
+        merge_strategy: priority
+        description: "Vocalization - talk, shout, whisper"
+
+      # Body posture and readiness
+      - name: stance
+        physical_channel: stance
+        default_urgency: 0.3
+        merge_strategy: blend
+        description: "Body posture - crouch, ready, relaxed"
+
+  # ===========================================================================
+  # VEHICLE - Mounts, cars, ships, mechs
+  # ===========================================================================
+  vehicle:
+    description: "Vehicles and mounts with movement controls"
+    model_types:
+      - movement
+      - interaction
+
+    channels:
+      # Speed control
+      - name: throttle
+        physical_channel: locomotion
+        default_urgency: 0.5
+        merge_strategy: blend
+        description: "Acceleration and braking"
+
+      # Direction control - shares locomotion for target position
+      - name: steering
+        physical_channel: locomotion
+        default_urgency: 0.5
+        merge_strategy: blend
+        description: "Turn direction and course"
+
+      # Communication signals
+      - name: signals
+        physical_channel: vocalization
+        default_urgency: 0.3
+        merge_strategy: priority
+        description: "Horn, lights, indicators"
+
+      # Vehicle subsystems
+      - name: systems
+        physical_channel: action
+        default_urgency: 0.4
+        merge_strategy: priority
+        description: "Weapons, shields, cargo, special systems"
+
+  # ===========================================================================
+  # CREATURE - Animals, monsters, familiars
+  # ===========================================================================
+  creature:
+    description: "Non-humanoid creatures with simplified behavior"
+    model_types:
+      - combat
+      - movement
+      - idle
+
+    channels:
+      # Movement style
+      - name: locomotion
+        physical_channel: locomotion
+        default_urgency: 0.5
+        merge_strategy: blend
+        description: "Walk, run, fly, swim, burrow"
+
+      # Primary behavior
+      - name: action
+        physical_channel: action
+        default_urgency: 0.5
+        merge_strategy: priority
+        description: "Hunt, flee, forage, attack, rest"
+
+      # Pack/herd coordination
+      - name: social
+        physical_channel: vocalization
+        default_urgency: 0.4
+        merge_strategy: priority
+        description: "Pack signals, danger calls"
+
+      # Awareness state
+      - name: alert
+        physical_channel: stance
+        default_urgency: 0.6
+        merge_strategy: priority
+        description: "Vigilant, relaxed, alarmed"
+
+  # ===========================================================================
+  # OBJECT - Doors, switches, traps, elevators, puzzles
+  # ===========================================================================
+  object:
+    description: "Interactive objects with state machines"
+    model_types:
+      - interaction
+
+    channels:
+      # Primary state
+      - name: state
+        physical_channel: action
+        default_urgency: 0.8
+        merge_strategy: priority
+        description: "Open, closed, locked, triggered"
+
+      # Timing control
+      - name: timing
+        physical_channel: stance
+        default_urgency: 0.5
+        merge_strategy: priority
+        description: "Delay, cycle, hold durations"
+
+      # User feedback
+      - name: feedback
+        physical_channel: vocalization
+        default_urgency: 0.3
+        merge_strategy: priority
+        description: "Visual/audio feedback - ready, warning, confirm"
+
+  # ===========================================================================
+  # ENVIRONMENTAL - Weather, lighting, ambience
+  # ===========================================================================
+  environmental:
+    description: "Environmental effects with mood control"
+    model_types:
+      - idle
+
+    channels:
+      # Effect strength
+      - name: intensity
+        physical_channel: action
+        default_urgency: 0.5
+        merge_strategy: blend
+        description: "Light, moderate, heavy, extreme"
+
+      # Effect variant
+      - name: type
+        physical_channel: stance
+        default_urgency: 0.5
+        merge_strategy: priority
+        description: "Rain, snow, fog, clear"
+
+      # Spatial orientation
+      - name: direction
+        physical_channel: locomotion
+        default_urgency: 0.3
+        merge_strategy: blend
+        description: "Wind direction, effect source"
+
+      # Dramatic tone
+      - name: mood
+        physical_channel: attention
+        default_urgency: 0.4
+        merge_strategy: blend
+        description: "Ominous, peaceful, tense, celebratory"
+
+# -----------------------------------------------------------------------------
+# Physical Channel Extension
+# The following new physical channel is required for full humanoid support:
+# - Expression (5): For facial emotions
+#
+# This requires updating:
+# - lib-behavior/Runtime/BehaviorOpcode.cs: Add Expression = 5 to IntentChannel
+# - lib-behavior/Intent/IntentSlotLayout.cs: Add Expression slots
+# - lib-behavior/Intent/BehaviorOutput.cs: Add Expression extraction
+# - lib-behavior/Intent/MergedIntent.cs: Add Expression field
+# - lib-behavior/Intent/IntentMerger.cs: Add Expression merge logic
+# -----------------------------------------------------------------------------

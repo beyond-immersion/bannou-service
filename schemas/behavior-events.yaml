@@ -25,6 +25,18 @@ info:
     - topic: behavior.deleted
       event: BehaviorDeletedEvent
       description: Published when a behavior is deleted/invalidated
+    # Cinematic streaming events
+    - topic: character.cinematic_extension
+      event: CinematicExtensionAvailableEvent
+      description: Published when a cinematic extension is available for injection at a continuation point
+    # Compilation failure events
+    - topic: behavior.compilation-failed
+      event: BehaviorCompilationFailedEvent
+      description: Published when ABML compilation fails (for monitoring/alerting)
+    # GOAP planning events
+    - topic: behavior.goap.plan-generated
+      event: GoapPlanGeneratedEvent
+      description: Published when GOAP planner generates a new plan
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/behavior-lifecycle-events.yaml
@@ -42,8 +54,137 @@ x-lifecycle:
       updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the behavior was last updated" }  # NRT: Optional property MUST be nullable
     sensitive: []  # No sensitive fields
 
+  BehaviorBundle:
+    model:
+      bundleId: { type: string, primary: true, required: true, description: "Unique identifier for the behavior bundle" }
+      name: { type: string, required: true, description: "Human-readable name of the bundle" }
+      behaviorCount: { type: integer, format: int32, required: true, description: "Number of behaviors in the bundle" }
+      totalBytecodeSize: { type: integer, format: int64, nullable: true, description: "Total size of all compiled bytecode in bytes" }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the bundle was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the bundle was last updated" }
+    events:
+      - created
+      - updated
+      - deleted
+    sensitive: []
+
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas section - lifecycle events are auto-generated.
-# BehaviorCreatedEvent, BehaviorUpdatedEvent, BehaviorDeletedEvent
-# are generated to schemas/Generated/behavior-lifecycle-events.yaml
+# NOTE: Lifecycle events (BehaviorCreatedEvent, BehaviorUpdatedEvent, BehaviorDeletedEvent)
+# are auto-generated to schemas/Generated/behavior-lifecycle-events.yaml
+# Custom events are defined below in components/schemas.
+
+components:
+  schemas:
+    CinematicExtensionAvailableEvent:
+      type: object
+      description: Event published when a cinematic extension is available for injection at a continuation point.
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - cinematicId
+        - continuationPointName
+        - extensionBytecode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was generated.
+        characterId:
+          type: string
+          format: uuid
+          description: The character whose cinematic is being extended.
+        cinematicId:
+          type: string
+          format: uuid
+          description: The cinematic behavior model being extended.
+        continuationPointName:
+          type: string
+          description: The name of the continuation point where the extension should be injected.
+        extensionBytecode:
+          type: string
+          format: byte
+          description: Base64-encoded compiled ABML bytecode for the extension.
+        sourceAppId:
+          type: string
+          nullable: true
+          description: App ID that generated this extension, for direct mesh routing. Null for pub/sub delivery.
+        expiresAtEpochMs:
+          type: integer
+          format: int64
+          nullable: true
+          description: Epoch milliseconds when this extension expires. Null if no expiration.
+
+    BehaviorCompilationFailedEvent:
+      type: object
+      description: Event published when ABML compilation fails. Used for monitoring and alerting.
+      required:
+        - eventId
+        - timestamp
+        - errorCount
+        - errors
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was generated.
+        behaviorName:
+          type: string
+          nullable: true
+          description: Name of the behavior being compiled (if provided).
+        errorCount:
+          type: integer
+          format: int32
+          description: Number of compilation errors.
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of compilation error messages.
+        contentHash:
+          type: string
+          nullable: true
+          description: Hash of the ABML content for deduplication.
+
+    GoapPlanGeneratedEvent:
+      type: object
+      description: Event published when the GOAP planner generates a new plan. Useful for debugging and analytics.
+      required:
+        - eventId
+        - timestamp
+        - goalId
+        - planStepCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was generated.
+        actorId:
+          type: string
+          nullable: true
+          description: Actor that requested the plan (if applicable).
+        goalId:
+          type: string
+          description: The goal that was planned for.
+        planStepCount:
+          type: integer
+          format: int32
+          description: Number of steps in the generated plan.
+        planningTimeMs:
+          type: integer
+          format: int32
+          nullable: true
+          description: Time taken to generate the plan in milliseconds.

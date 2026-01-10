@@ -115,21 +115,44 @@ public class CharacterWebSocketTestHandler : IServiceTestHandler
 
         try
         {
-            var result = Task.Run(async () => await PerformCharacterApiTest(
-                "POST",
-                "/character/list",
-                new { },
-                response =>
+            var result = Task.Run(async () =>
+            {
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    var hasCharactersArray = response?["characters"] != null &&
-                                            response["characters"] is JsonArray;
-                    var totalCount = response?["totalCount"]?.GetValue<int>() ?? 0;
+                    Console.WriteLine("❌ Admin client not connected");
+                    return false;
+                }
 
-                    Console.WriteLine($"   Characters array present: {hasCharactersArray}");
-                    Console.WriteLine($"   Total Count: {totalCount}");
+                var uniqueCode = $"{DateTime.Now.Ticks % 100000}";
 
-                    return hasCharactersArray;
-                })).Result;
+                // Create a test realm (realmId is required for listing)
+                var realmIdStr = await CreateTestRealmAsync(adminClient, uniqueCode);
+                if (realmIdStr == null)
+                {
+                    Console.WriteLine("❌ Failed to create test realm");
+                    return false;
+                }
+
+                Console.WriteLine($"   Created test realm: {realmIdStr}");
+
+                // Now list characters for this realm
+                var response = (await adminClient.InvokeAsync<object, JsonElement>(
+                    "POST",
+                    "/character/list",
+                    new { realmId = realmIdStr },
+                    timeout: TimeSpan.FromSeconds(5))).GetResultOrThrow();
+
+                var json = JsonNode.Parse(response.GetRawText())?.AsObject();
+                var hasCharactersArray = json?["characters"] != null &&
+                                        json["characters"] is JsonArray;
+                var totalCount = json?["totalCount"]?.GetValue<int>() ?? 0;
+
+                Console.WriteLine($"   Characters array present: {hasCharactersArray}");
+                Console.WriteLine($"   Total Count: {totalCount}");
+
+                return hasCharactersArray;
+            }).Result;
 
             if (result)
             {

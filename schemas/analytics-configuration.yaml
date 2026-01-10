@@ -1,0 +1,76 @@
+openapi: 3.0.3
+info:
+  title: Analytics Service Configuration
+  description: |
+    Configuration schema for Analytics service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Analytics service
+      default: true
+      env: ANALYTICS_ENABLED
+    # State Store Configuration
+    SummaryStoreName:
+      type: string
+      description: Name of the state store for entity summaries (Redis recommended)
+      default: "analytics-summary"
+      env: ANALYTICS_SUMMARY_STORE_NAME
+    RatingStoreName:
+      type: string
+      description: Name of the state store for skill ratings (Redis recommended)
+      default: "analytics-rating"
+      env: ANALYTICS_RATING_STORE_NAME
+    HistoryStoreName:
+      type: string
+      description: Name of the state store for event history (MySQL recommended)
+      default: "analytics-history"
+      env: ANALYTICS_HISTORY_STORE_NAME
+    # Event Buffer Configuration
+    EventBufferSize:
+      type: integer
+      description: Maximum events to buffer before flushing to storage
+      default: 1000
+      env: ANALYTICS_EVENT_BUFFER_SIZE
+    EventBufferFlushIntervalSeconds:
+      type: integer
+      description: Interval in seconds to flush event buffer
+      default: 5
+      env: ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS
+    # Glicko-2 Configuration
+    Glicko2DefaultRating:
+      type: number
+      format: double
+      description: Default Glicko-2 rating for new entities
+      default: 1500.0
+      env: ANALYTICS_GLICKO2_DEFAULT_RATING
+    Glicko2DefaultDeviation:
+      type: number
+      format: double
+      description: Default rating deviation for new entities (higher = less certain)
+      default: 350.0
+      env: ANALYTICS_GLICKO2_DEFAULT_DEVIATION
+    Glicko2DefaultVolatility:
+      type: number
+      format: double
+      description: Default volatility for new entities (0.06 is standard)
+      default: 0.06
+      env: ANALYTICS_GLICKO2_DEFAULT_VOLATILITY
+    Glicko2SystemConstant:
+      type: number
+      format: double
+      description: Glicko-2 system constant (tau) - controls volatility change speed
+      default: 0.5
+      env: ANALYTICS_GLICKO2_SYSTEM_CONSTANT
+    # Summary Cache Configuration
+    SummaryCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached entity summaries
+      default: 300
+      env: ANALYTICS_SUMMARY_CACHE_TTL_SECONDS

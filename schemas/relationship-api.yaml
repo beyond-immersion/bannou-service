@@ -77,11 +77,12 @@ paths:
         : \"Type-specific relationship data (JSON)\"\n                }\n            }\n        },\n        \"EntityType\"\
         : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"CHARACTER\",\n                \"\
         NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n                \"LOCATION\",\n                \"\
-        ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\",\n                \"OTHER\"\n           \
-        \ ],\n            \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\
-        n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\
-        n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social
-        factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
+        ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\",\n                \"SOUL\",\n           \
+        \     \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal soul entity for reincarnation chains\\n- OTHER: Catch-all
+        for future entity types\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipResponse\": {\n            \"description\": \"Complete details of a relationship
         between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
@@ -114,11 +115,11 @@ paths:
         \ }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
         \       \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n      \
         \          \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\"\
-        ,\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n-
-        CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\
-        n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies,
-        groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity
-        types\\n\"\n        }\n    }\n}"
+        ,\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
+        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
+        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
+        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal
+        soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new relationship between two entities\",\n    \"description\"\
         : \"Creates a relationship between two entities.\\nDuplicate relationships (same entities + same type) are prevented.\\
         nRelationships can be re-created after being ended.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\n\
@@ -187,11 +188,11 @@ paths:
         \ }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
         \       \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n      \
         \          \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\"\
-        ,\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n-
-        CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\
-        n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies,
-        groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity
-        types\\n\"\n        }\n    }\n}"
+        ,\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
+        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
+        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
+        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal
+        soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a relationship by ID\",\n    \"description\": \"\",\n    \"tags\":
         [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRelationship\"\
         \n}"
@@ -244,11 +245,11 @@ paths:
         \        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
         \   \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n          \
         \      \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\",\n\
-        \                \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n- CHARACTER:
-        Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical
-        objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n-
-        FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\\
-        n\"\n        }\n    }\n}"
+        \                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
+        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
+        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
+        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal
+        soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -295,11 +296,12 @@ paths:
         \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
         \        \"enum\": [\n                \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n   \
         \             \"ITEM\",\n                \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\"\
-        ,\n                \"REALM\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n        }\n    }\n}"
+        ,\n                \"REALM\",\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"\
+        description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
+        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
+        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
+        Game realms/worlds\\n- SOUL: Immortal soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity
+        types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all relationships for an entity\",\n    \"description\": \"Returns
         all relationships where the specified entity is either\\nentity1 or entity2. Supports filtering by relationship type,\\
         nother entity type, and whether to include ended relationships.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\
@@ -349,11 +351,12 @@ paths:
         Include relationships that have ended\"\n                }\n            }\n        },\n        \"EntityType\": {\n\
         \            \"type\": \"string\",\n            \"enum\": [\n                \"CHARACTER\",\n                \"NPC\"\
         ,\n                \"MONSTER\",\n                \"ITEM\",\n                \"LOCATION\",\n                \"ORGANIZATION\"\
-        ,\n                \"FACTION\",\n                \"REALM\",\n                \"OTHER\"\n            ],\n         \
-        \   \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
-        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
-        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
-        Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
+        ,\n                \"FACTION\",\n                \"REALM\",\n                \"SOUL\",\n                \"OTHER\"\n\
+        \            ],\n            \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
+        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
+        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
+        social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal soul entity for reincarnation chains\\n- OTHER: Catch-all
+        for future entity types\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -400,11 +403,12 @@ paths:
         \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
         \        \"enum\": [\n                \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n   \
         \             \"ITEM\",\n                \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\"\
-        ,\n                \"REALM\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n        }\n    }\n}"
+        ,\n                \"REALM\",\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"\
+        description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
+        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
+        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
+        Game realms/worlds\\n- SOUL: Immortal soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity
+        types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all relationships between two specific entities\",\n    \"description\"\
         : \"Returns all relationships that exist between two specific entities,\\nregardless of which is entity1 or entity2.\\\
         n\",\n    \"tags\": [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -455,11 +459,11 @@ paths:
         \        \"EntityType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"CHARACTER\"\
         ,\n                \"NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n                \"LOCATION\"\
         ,\n                \"ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\",\n                \"\
-        OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled
-        characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts,
-        etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or
-        social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n\
-        }"
+        SOUL\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\
+        n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\
+        n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies,
+        groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal soul entity for
+        reincarnation chains\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipListResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -506,11 +510,12 @@ paths:
         \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
         \        \"enum\": [\n                \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n   \
         \             \"ITEM\",\n                \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\"\
-        ,\n                \"REALM\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
-        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
-        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
-        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all
-        for future entity types\\n\"\n        }\n    }\n}"
+        ,\n                \"REALM\",\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"\
+        description\": \"Type of entity in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player
+        characters\\n- MONSTER: Hostile or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places,
+        regions, buildings\\n- ORGANIZATION: Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM:
+        Game realms/worlds\\n- SOUL: Immortal soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity
+        types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all relationships of a specific type\",\n    \"description\": \"Returns
         all relationships that use a specific relationship type.\\nUseful for finding all \\\"FRIEND\\\" relationships, for
         example.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -585,11 +590,11 @@ paths:
         \ }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
         \       \"CHARACTER\",\n                \"NPC\",\n                \"MONSTER\",\n                \"ITEM\",\n      \
         \          \"LOCATION\",\n                \"ORGANIZATION\",\n                \"FACTION\",\n                \"REALM\"\
-        ,\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity in a relationship.\\n-
-        CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile or neutral creatures\\
-        n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION: Guilds, companies,
-        groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- OTHER: Catch-all for future entity
-        types\\n\"\n        }\n    }\n}"
+        ,\n                \"SOUL\",\n                \"OTHER\"\n            ],\n            \"description\": \"Type of entity
+        in a relationship.\\n- CHARACTER: Player-controlled characters\\n- NPC: Non-player characters\\n- MONSTER: Hostile
+        or neutral creatures\\n- ITEM: Physical objects, artifacts, etc.\\n- LOCATION: Places, regions, buildings\\n- ORGANIZATION:
+        Guilds, companies, groups\\n- FACTION: Political or social factions\\n- REALM: Game realms/worlds\\n- SOUL: Immortal
+        soul entity for reincarnation chains\\n- OTHER: Catch-all for future entity types\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update relationship metadata\",\n    \"description\": \"Only metadata can
         be updated. Entity IDs and types cannot be changed.\",\n    \"tags\": [\n        \"Relationship Management\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"updateRelationship\"\n}"
@@ -650,6 +655,7 @@ components:
       - ORGANIZATION
       - FACTION
       - REALM
+      - SOUL
       - OTHER
       description: |
         Type of entity in a relationship.
@@ -661,6 +667,7 @@ components:
         - ORGANIZATION: Guilds, companies, groups
         - FACTION: Political or social factions
         - REALM: Game realms/worlds
+        - SOUL: Immortal soul entity for reincarnation chains
         - OTHER: Catch-all for future entity types
 
     # Request Models

@@ -38,6 +38,10 @@ public class AssetTestHandler : BaseHttpTestHandler
         // Audio processing test (small file - no processing triggered, validates API accepts audio types)
         new ServiceTest(TestAudioUpload, "AudioUpload", "Asset", "Test audio file upload and metadata creation"),
 
+        // Asset deletion tests
+        new ServiceTest(TestDeleteAsset, "DeleteAsset", "Asset", "Test deleting an asset"),
+        new ServiceTest(TestDeleteNonExistentAsset, "DeleteNonExistentAsset", "Asset", "Test 404 for deleting non-existent asset"),
+
         // Error handling tests
         new ServiceTest(TestGetNonExistentAsset, "GetNonExistentAsset", "Asset", "Test 404 for non-existent asset"),
         new ServiceTest(TestGetNonExistentBundle, "GetNonExistentBundle", "Asset", "Test 404 for non-existent bundle"),
@@ -481,6 +485,63 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Audio upload complete: ID={finalAsset.AssetId}, ContentType={contentType}, Size={finalAsset.Size}");
         }, "Audio upload");
+
+    private static async Task<TestResult> TestDeleteAsset(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var assetClient = GetServiceClient<IAssetClient>();
+
+            // First upload a test asset to delete
+            var uploadedMetadata = await UploadTestAsset(assetClient, "delete-test");
+            if (uploadedMetadata == null)
+                return TestResult.Failed("Failed to upload test asset for deletion");
+
+            // Verify the asset exists
+            var getRequest = new GetAssetRequest { AssetId = uploadedMetadata.AssetId };
+            var existingAsset = await assetClient.GetAssetAsync(getRequest);
+            if (existingAsset.AssetId != uploadedMetadata.AssetId)
+                return TestResult.Failed("Asset not found after upload");
+
+            // Delete the asset
+            var deleteRequest = new DeleteAssetRequest
+            {
+                AssetId = uploadedMetadata.AssetId
+            };
+            var response = await assetClient.DeleteAssetAsync(deleteRequest);
+
+            if (response.AssetId != uploadedMetadata.AssetId)
+                return TestResult.Failed($"Asset ID mismatch in response: expected '{uploadedMetadata.AssetId}', got '{response.AssetId}'");
+
+            if (response.VersionsDeleted < 1)
+                return TestResult.Failed($"Expected at least 1 version deleted, got {response.VersionsDeleted}");
+
+            // Verify the asset is gone
+            try
+            {
+                await assetClient.GetAssetAsync(getRequest);
+                return TestResult.Failed("Asset still exists after deletion");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Expected - asset should not be found
+            }
+
+            return TestResult.Successful($"Deleted asset {uploadedMetadata.AssetId} ({response.VersionsDeleted} version(s))");
+        }, "Delete asset");
+
+    private static async Task<TestResult> TestDeleteNonExistentAsset(ITestClient client, string[] args) =>
+        await
+        ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.DeleteAssetAsync(new DeleteAssetRequest
+                {
+                    AssetId = $"nonexistent-asset-{Guid.NewGuid()}"
+                });
+            },
+            404,
+            "Delete non-existent asset");
 
     private static async Task<TestResult> TestGetNonExistentAsset(ITestClient client, string[] args) =>
         await

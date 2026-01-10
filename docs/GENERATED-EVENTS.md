@@ -21,17 +21,41 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
 | `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
 
+### Achievement
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AchievementDefinitionCreatedEvent` | Lifecycle (Created) | `achievement-definition.created` | Published when a new achievement definition is cre... |
+| `AchievementDefinitionDeletedEvent` | Lifecycle (Deleted) | `achievement-definition.deleted` | Published when an achievement definition is delete... |
+| `AchievementDefinitionUpdatedEvent` | Lifecycle (Updated) | `achievement-definition.updated` | Published when an achievement definition is update... |
+| `AchievementPlatformSyncedEvent` | Custom | `achievement-platform-synced` | Published when an achievement is synced to an exte... |
+| `AchievementProgressUpdatedEvent` | Lifecycle (Updated) | `achievement-progress.updated` | Published when progress is made on a progressive a... |
+| `AchievementUnlockedEvent` | Custom | `achievement-unlocked` | Published when an entity unlocks an achievement |
+
 ### Actor
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
+| `ActorEncounterEndedEvent` | Custom | `actor-encounter-ended` | Published when an Event Brain actor ends an encoun... |
+| `ActorEncounterPhaseChangedEvent` | Custom | `actor-encounter-phase-changed` | Published when an encounter transitions to a new p... |
+| `ActorEncounterStartedEvent` | Custom | `actor-encounter-started` | Published when an Event Brain actor starts managin... |
+| `ActorInstanceStartedEvent` | Custom | `actor-instance-started` | Published when an actor instance successfully star... |
+| `ActorStatePersistedEvent` | Custom | `actor-state-persisted` | Published when actor state is auto-saved to persis... |
 | `ActorStatusChangedEvent` | Custom | `actor-status-changed` | Published when an actor's status changes. |
 | `CharacterPerceptionEvent` | Custom | `character-perception` | Perception event published by game servers for cha... |
 | `PoolNodeDrainingEvent` | Custom | `pool-node-draining` | Published when a pool node begins graceful shutdow... |
 | `PoolNodeHeartbeatEvent` | Health | `pool-node.heartbeat` | Periodic heartbeat from pool nodes to control plan... |
 | `PoolNodeRegisteredEvent` | Registration | `pool-node.registered` | Published when a pool node starts and registers wi... |
 | `PoolNodeUnhealthyEvent` | Custom | `pool-node-unhealthy` | Published by control plane when a pool node is det... |
+
+### Analytics
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AnalyticsMilestoneReachedEvent` | Custom | `analytics-milestone-reached` | Published when an entity reaches a statistical mil... |
+| `AnalyticsRatingUpdatedEvent` | Lifecycle (Updated) | `analytics-rating.updated` | Published when an entity's Glicko-2 skill rating c... |
+| `AnalyticsScoreUpdatedEvent` | Lifecycle (Updated) | `analytics-score.updated` | Published when an entity's score or statistic chan... |
 
 ### Asset
 
@@ -61,11 +85,49 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `AuthLoginFailedEvent` | Custom | `auth-login-failed` | Published when a login attempt fails (for brute fo... |
+| `AuthLoginSuccessfulEvent` | Custom | `auth-login-successful` | Published when a user successfully authenticates w... |
+| `AuthOAuthLoginSuccessfulEvent` | Custom | `auth-o-auth-login-successful` | Published when a user authenticates via OAuth prov... |
+| `AuthPasswordResetSuccessfulEvent` | Custom | `auth-password-reset-successful` | Published when a password reset is successfully co... |
+| `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
+| `AuthSteamLoginSuccessfulEvent` | Custom | `auth-steam-login-successful` | Published when a user authenticates via Steam |
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
 | `SessionUpdatedEventReason` | Lifecycle (Updated) | `session.updated-event-reason` | Reason for session update |
+
+### Behavior
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BehaviorCompilationFailedEvent` | Custom | `behavior-compilation-failed` | Event published when ABML compilation fails. Used ... |
+| `CinematicExtensionAvailableEvent` | Custom | `cinematic-extension-available` | Event published when a cinematic extension is avai... |
+| `GoapPlanGeneratedEvent` | Custom | `goap-plan-generated` | Event published when the GOAP planner generates a ... |
+
+### Character History
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CharacterBackstoryCreatedEvent` | Lifecycle (Created) | `character-backstory.created` | Published when a character's backstory is first cr... |
+| `CharacterBackstoryDeletedEvent` | Lifecycle (Deleted) | `character-backstory.deleted` | Published when a character's backstory is deleted |
+| `CharacterBackstoryUpdatedEvent` | Lifecycle (Updated) | `character-backstory.updated` | Published when a character's backstory is updated |
+| `CharacterHistoryDeletedEvent` | Lifecycle (Deleted) | `character-history.deleted` | Published when all history data for a character is... |
+| `CharacterParticipationDeletedEvent` | Lifecycle (Deleted) | `character-participation.deleted` | Published when a character's participation record ... |
+| `CharacterParticipationRecordedEvent` | Custom | `character-participation-recorded` | Published when a character's participation in a hi... |
+
+### Character Personality
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CombatPreferencesCreatedEvent` | Lifecycle (Created) | `combat-preferences.created` | Published when a character's combat preferences ar... |
+| `CombatPreferencesDeletedEvent` | Lifecycle (Deleted) | `combat-preferences.deleted` | Published when a character's combat preferences ar... |
+| `CombatPreferencesEvolvedEvent` | Custom | `combat-preferences-evolved` | Published when a character's combat preferences ev... |
+| `CombatPreferencesUpdatedEvent` | Lifecycle (Updated) | `combat-preferences.updated` | Published when a character's combat preferences ar... |
+| `PersonalityCreatedEvent` | Lifecycle (Created) | `personality.created` | Published when a character's personality is first ... |
+| `PersonalityDeletedEvent` | Lifecycle (Deleted) | `personality.deleted` | Published when a character's personality is delete... |
+| `PersonalityEvolvedEvent` | Custom | `personality-evolved` | Published when a character's personality evolves d... |
+| `PersonalityUpdatedEvent` | Lifecycle (Updated) | `personality.updated` | Published when a character's personality traits ar... |
 
 ### Common (client)
 
@@ -112,6 +174,31 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
 
+### Leaderboard
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `LeaderboardEntryAddedEvent` | Custom | `leaderboard-entry-added` | Published when a new entity joins a leaderboard |
+| `LeaderboardRankChangedEvent` | Custom | `leaderboard-rank-changed` | Published when an entity's rank changes on a leade... |
+| `LeaderboardSeasonStartedEvent` | Custom | `leaderboard-season-started` | Published when a new leaderboard season begins |
+
+### Mapping
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EventBounds` | Custom | `event-bounds` | An axis-aligned bounding box in 3D space (event ve... |
+| `EventMapObject` | Custom | `event-map-object` | A map object in an event |
+| `EventPosition3D` | Custom | `event-position3-d` | A point in 3D space (event version) |
+| `MapIngestEvent` | Custom | `map-ingest` | Event published by authority to ingest topic for h... |
+| `MapObjectsChangedEvent` | Custom | `map-objects-changed` | Published when metadata objects change in a map. |
+| `MapSnapshotEvent` | Custom | `map-snapshot` | Published when a full snapshot is available. |
+| `MapSnapshotRequestedEvent` | Custom | `map-snapshot-requested` | Published when a consumer needs a full snapshot. |
+| `MapUpdatedEvent` | Lifecycle (Updated) | `map.updated` | Published when map layer data changes. |
+| `MappingAuthorityExpiredEvent` | Expiration | `mapping-authority.expired` | Published when authority expires (detected during ... |
+| `MappingAuthorityGrantedEvent` | Custom | `mapping-authority-granted` | Published when authority is granted over a mapping... |
+| `MappingAuthorityReleasedEvent` | Custom | `mapping-authority-released` | Published when authority is explicitly released ov... |
+| `ObjectChangeEvent` | Custom | `object-change` | A single object change in an event |
+
 ### Mesh
 
 | Event | Type | Likely Topic | Description |
@@ -139,6 +226,41 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
+
+### Realm History
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `RealmHistoryDeletedEvent` | Lifecycle (Deleted) | `realm-history.deleted` | Published when all history data for a realm is del... |
+| `RealmLoreCreatedEvent` | Lifecycle (Created) | `realm-lore.created` | Published when a realm's lore is first created |
+| `RealmLoreDeletedEvent` | Lifecycle (Deleted) | `realm-lore.deleted` | Published when a realm's lore is deleted |
+| `RealmLoreUpdatedEvent` | Lifecycle (Updated) | `realm-lore.updated` | Published when a realm's lore is updated |
+| `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
+| `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
+
+### Scene
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` | Base type for all service events |
+| `EventQuaternion` | Custom | `event-quaternion` | Quaternion for events |
+| `EventTransform` | Custom | `event-transform` | Transform for event payloads |
+| `EventVector3` | Custom | `event-vector3` | 3D vector for events |
+| `SceneCheckedOutEvent` | Custom | `scene-checked-out` | Published when a scene is locked for editing |
+| `SceneCheckoutDiscardedEvent` | Custom | `scene-checkout-discarded` | Published when a checkout is discarded without sav... |
+| `SceneCheckoutExpiredEvent` | Expiration | `scene-checkout.expired` | Published when a checkout lock expires due to TTL |
+| `SceneCommittedEvent` | Custom | `scene-committed` | Published when checkout changes are committed |
+| `SceneDestroyedEvent` | Custom | `scene-destroyed` | Published when a scene instance is removed from th... |
+| `SceneInstantiatedEvent` | Custom | `scene-instantiated` | Published when a scene is instantiated in the game... |
+| `SceneReferenceBrokenEvent` | Custom | `scene-reference-broken` | Published when a referenced scene becomes unavaila... |
+| `SceneValidationRulesUpdatedEvent` | Lifecycle (Updated) | `scene-validation-rules.updated` | Published when validation rules are registered or ... |
+
+### Species
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `BaseServiceEvent` | Custom | `base-service` |  |
+| `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
 
 ### State
 

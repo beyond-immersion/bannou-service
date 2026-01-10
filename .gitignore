@@ -8,9 +8,8 @@ nupkg/
 # Allow CI-specific environment files (non-sensitive)
 !.env.ci.*
 
-# SDK behavior files (regenerated via namespace transformation)
-Bannou.Client.SDK/Generated/
-Bannou.SDK/Generated/
+# SDK Generated/Behavior directories are committed (behavior files with namespace transformation)
+# Regeneration only needed when lib-behavior changes - run scripts/generate-client-sdk.sh
 
 test-nuget/
 nuget-packages/
@@ -55,9 +54,9 @@ msbuild.wrn
 megalinter-reports/
 
 # Test output and log files
+test-logs/
 *.log
 edge_test_output*.log
 
 # Empty files
 bannou-service/{}
-plugins/

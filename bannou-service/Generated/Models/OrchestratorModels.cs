@@ -1341,7 +1341,7 @@ public partial class DeployResponse
 {
 
     /// <summary>
-    /// Deployment succeeded
+    /// Whether all nodes were deployed successfully (false indicates partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
@@ -1656,7 +1656,7 @@ public partial class TeardownResponse
 {
 
     /// <summary>
-    /// Whether teardown completed successfully
+    /// Whether all containers were torn down successfully (false indicates partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
@@ -1777,7 +1777,7 @@ public partial class CleanResponse
 {
 
     /// <summary>
-    /// Whether cleanup completed successfully
+    /// Whether all requested cleanup operations completed (false indicates partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
@@ -1979,7 +1979,7 @@ public partial class TopologyUpdateResponse
 {
 
     /// <summary>
-    /// Whether all topology changes were applied successfully
+    /// Whether all topology changes were applied successfully (false indicates partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
@@ -2050,37 +2050,6 @@ public partial class AppliedChange
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string Error { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Standard error response with code, message, and optional additional details
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ErrorResponse
-{
-
-    /// <summary>
-    /// Error code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Additional error context
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public object Details { get; set; } = default!;
 
 }
 
@@ -2502,12 +2471,6 @@ public partial class ConfigRollbackResponse
 {
 
     /// <summary>
-    /// Whether rollback completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Config version before rollback
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousVersion")]
@@ -2647,41 +2610,6 @@ public partial class AcquireProcessorResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Response when all processors in a pool are busy with queue position and wait estimate
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PoolBusyResponse
-{
-
-    /// <summary>
-    /// Pool type that is busy
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string PoolType { get; set; } = default!;
-
-    /// <summary>
-    /// Position in the wait queue (0 = not queued)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queuePosition")]
-    public int QueuePosition { get; set; } = default!;
-
-    /// <summary>
-    /// Estimated wait time until a processor is available
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("estimatedWaitSeconds")]
-    public int EstimatedWaitSeconds { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable status message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
 
 }
 

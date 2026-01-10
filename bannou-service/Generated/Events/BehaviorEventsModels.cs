@@ -22,6 +22,212 @@ namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
+/// <summary>
+/// Event published when a cinematic extension is available for injection at a continuation point.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CinematicExtensionAvailableEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event was generated.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// The character whose cinematic is being extended.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// The cinematic behavior model being extended.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cinematicId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CinematicId { get; set; } = default!;
+
+    /// <summary>
+    /// The name of the continuation point where the extension should be injected.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("continuationPointName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContinuationPointName { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded compiled ABML bytecode for the extension.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("extensionBytecode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public byte[] ExtensionBytecode { get; set; } = default!;
+
+    /// <summary>
+    /// App ID that generated this extension, for direct mesh routing. Null for pub/sub delivery.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceAppId")]
+    public string? SourceAppId { get; set; } = default!;
+
+    /// <summary>
+    /// Epoch milliseconds when this extension expires. Null if no expiration.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAtEpochMs")]
+    public long? ExpiresAtEpochMs { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Event published when ABML compilation fails. Used for monitoring and alerting.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorCompilationFailedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event was generated.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the behavior being compiled (if provided).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorName")]
+    public string? BehaviorName { get; set; } = default!;
+
+    /// <summary>
+    /// Number of compilation errors.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorCount")]
+    public int ErrorCount { get; set; } = default!;
+
+    /// <summary>
+    /// List of compilation error messages.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errors")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Errors { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Hash of the ABML content for deduplication.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string? ContentHash { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Event published when the GOAP planner generates a new plan. Useful for debugging and analytics.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapPlanGeneratedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event was generated.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Actor that requested the plan (if applicable).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public string? ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// The goal that was planned for.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("goalId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GoalId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of steps in the generated plan.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("planStepCount")]
+    public int PlanStepCount { get; set; } = default!;
+
+    /// <summary>
+    /// Time taken to generate the plan in milliseconds.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("planningTimeMs")]
+    public int? PlanningTimeMs { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
 
 
 

@@ -372,12 +372,6 @@ public partial class RegisterEndpointResponse
 {
 
     /// <summary>
-    /// Whether the registration was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// The registered endpoint details
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
@@ -458,12 +452,6 @@ public partial class HeartbeatRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class HeartbeatResponse
 {
-
-    /// <summary>
-    /// Whether the heartbeat was processed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Recommended seconds until next heartbeat

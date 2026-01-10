@@ -10,24 +10,32 @@ This document provides a compact reference of all Bannou services and their API 
 | Service | Version | Endpoints | Description |
 |---------|---------|-----------|-------------|
 | [Account](#account) | 2.0.0 | 13 | Internal account management service (CRUD operations only, n... |
-| [Actor](#actor) | 1.0.0 | 10 | Distributed actor management and execution for NPC brains, e... |
-| [Asset](#asset) | 1.0.0 | 8 | Asset management service for storage, versioning, and distri... |
+| [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
+| [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
+| [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Asset](#asset) | 1.0.0 | 9 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
-| [Behavior](#behavior) | 3.0.0 | 8 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Character](#character) | 1.0.0 | 6 | Character management service for Arcadia game world. |
+| [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
+| [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
+| [Character History](#character-history) | 1.0.0 | 10 | Historical event participation and backstory management for ... |
+| [Character Personality](#character-personality) | 1.0.0 | 9 | Machine-readable personality traits for NPC behavior decisio... |
 | [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
 | [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
+| [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
+| [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for Arcadia game worlds. |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
+| [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
+| [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
 | [Subscription](#subscription) | 1.0.0 | 7 | Manages user subscriptions to game services.
@@ -78,6 +86,40 @@ Internal account management service (CRUD operations only, never exposed to inte
 
 ---
 
+## Achievement {#achievement}
+
+**Version**: 1.0.0 | **Schema**: `schemas/achievement-api.yaml`
+
+Achievement and trophy system with progress tracking and platform synchronization.
+
+### Definitions
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/definition/create` | Create a new achievement definition | developer |
+| `POST` | `/achievement/definition/delete` | Delete achievement definition | developer |
+| `POST` | `/achievement/definition/get` | Get achievement definition | authenticated |
+| `POST` | `/achievement/definition/list` | List achievement definitions | user |
+| `POST` | `/achievement/definition/update` | Update achievement definition | developer |
+
+### Platform Sync
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/platform/status` | Get platform sync status | authenticated |
+| `POST` | `/achievement/platform/sync` | Manually trigger platform sync | admin |
+
+### Progress
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/achievement/list-unlocked` | List unlocked achievements | user |
+| `POST` | `/achievement/progress/get` | Get entity's achievement progress | user |
+| `POST` | `/achievement/progress/update` | Update achievement progress | authenticated |
+| `POST` | `/achievement/unlock` | Directly unlock an achievement | authenticated |
+
+---
+
 ## Actor {#actor}
 
 **Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml`
@@ -90,9 +132,14 @@ goals, memories) to characters - NOT ...
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/actor/encounter/end` | End an active encounter | developer |
+| `POST` | `/actor/encounter/get` | Get the current encounter state for an actor | user |
+| `POST` | `/actor/encounter/start` | Start an encounter managed by an Event Brain actor | developer |
+| `POST` | `/actor/encounter/update-phase` | Update the phase of an active encounter | developer |
 | `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | user |
 | `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
 | `POST` | `/actor/list` | List actors with optional filters | user |
+| `POST` | `/actor/query-options` | Query an actor for its available options | user |
 | `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
 | `POST` | `/actor/stop` | Stop a running actor | developer |
 | `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
@@ -100,6 +147,42 @@ goals, memories) to characters - NOT ...
 | `POST` | `/actor/template/get` | Get an actor template by ID or category | user |
 | `POST` | `/actor/template/list` | List all actor templates | user |
 | `POST` | `/actor/template/update` | Update an actor template | developer |
+
+---
+
+## Analytics {#analytics}
+
+**Version**: 1.0.0 | **Schema**: `schemas/analytics-api.yaml`
+
+Event ingestion, entity statistics, skill ratings (Glicko-2), and controller history tracking.
+
+### Controller History
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/controller-history/query` | Query controller history | authenticated |
+| `POST` | `/analytics/controller-history/record` | Record controller possession event | authenticated |
+
+### Event Ingestion
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/event/ingest` | Ingest a single analytics event | authenticated |
+| `POST` | `/analytics/event/ingest-batch` | Ingest multiple analytics events | authenticated |
+
+### Skill Ratings
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | authenticated |
+| `POST` | `/analytics/rating/update` | Update entity skill rating after match | authenticated |
+
+### Statistics
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/analytics/summary/get` | Get entity statistics summary | authenticated |
+| `POST` | `/analytics/summary/query` | Query entity summaries with filters | authenticated |
 
 ---
 
@@ -113,6 +196,7 @@ Asset management service for storage, versioning, and distribution of large bina
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/assets/delete` | Delete an asset | admin |
 | `POST` | `/assets/get` | Get asset metadata and download URL | user |
 | `POST` | `/assets/list-versions` | List all versions of an asset | user |
 | `POST` | `/assets/search` | Search assets by tags, type, or realm | user |
@@ -191,24 +275,12 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 |--------|------|---------|--------|
 | `POST` | `/compile` | Compile ABML behavior definition | developer |
 
-### BehaviorStacks
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/stack/compile` | Compile stackable behavior sets | developer |
-
 ### Cache
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/cache/get` | Get cached compiled behavior | developer |
 | `POST` | `/cache/invalidate` | Invalidate cached behavior | developer |
-
-### Context
-
-| Method | Path | Summary | Access |
-|--------|------|---------|--------|
-| `POST` | `/context/resolve` | Resolve context variables | developer |
 
 ### GOAP
 
@@ -231,11 +303,20 @@ Arcadia Behavior Markup Language (ABML) API for character behavior management.
 
 Character management service for Arcadia game world.
 
+### Character Compression
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character/check-references` | Check reference count for cleanup eligibility | admin |
+| `POST` | `/character/compress` | Compress a dead character to archive format | admin |
+| `POST` | `/character/get-archive` | Get compressed archive data for a character | user |
+
 ### Character Lookup
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/character/by-realm` | Get all characters in a realm (primary query pattern) | user |
+| `POST` | `/character/get-enriched` | Get character with optional related data (personality, backstory, family) | user |
 
 ### Character Management
 
@@ -246,6 +327,71 @@ Character management service for Arcadia game world.
 | `POST` | `/character/get` | Get character by ID | user |
 | `POST` | `/character/list` | List characters with filtering | user |
 | `POST` | `/character/update` | Update character | admin |
+
+---
+
+## Character History {#character-history}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml`
+
+Historical event participation and backstory management for characters.
+
+### Backstory
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/add-backstory-element` | Add a single backstory element | admin |
+| `POST` | `/character-history/delete-backstory` | Delete all backstory for a character | admin |
+| `POST` | `/character-history/get-backstory` | Get machine-readable backstory elements for behavior system | user |
+| `POST` | `/character-history/set-backstory` | Set backstory elements for a character | admin |
+
+### Historical Events
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/delete-participation` | Delete a participation record | admin |
+| `POST` | `/character-history/get-event-participants` | Get all characters who participated in a historical event | user |
+| `POST` | `/character-history/get-participation` | Get all historical events a character participated in | user |
+| `POST` | `/character-history/record-participation` | Record character participation in a historical event | authenticated |
+
+### History Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-history/delete-all` | Delete all history data for a character | admin |
+| `POST` | `/character-history/summarize` | Generate text summaries for character compression | authenticated |
+
+---
+
+## Character Personality {#character-personality}
+
+**Version**: 1.0.0 | **Schema**: `schemas/character-personality-api.yaml`
+
+Machine-readable personality traits for NPC behavior decisions.
+
+### Combat Preferences
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/delete-combat` | Delete combat preferences for a character | admin |
+| `POST` | `/character-personality/evolve-combat` | Record combat experience that may evolve preferences | authenticated |
+| `POST` | `/character-personality/get-combat` | Get combat preferences for a character | user |
+| `POST` | `/character-personality/set-combat` | Create or update combat preferences for a character | admin |
+
+### Personality Evolution
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/evolve` | Record an experience that may evolve personality | authenticated |
+
+### Personality Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/character-personality/batch-get` | Get personalities for multiple characters | authenticated |
+| `POST` | `/character-personality/delete` | Delete personality for a character | admin |
+| `POST` | `/character-personality/get` | Get personality for a character | user |
+| `POST` | `/character-personality/set` | Create or update personality for a character | admin |
 
 ---
 
@@ -399,6 +545,46 @@ Minimal game session management for Arcadia and other games.
 
 ---
 
+## Leaderboard {#leaderboard}
+
+**Version**: 1.0.0 | **Schema**: `schemas/leaderboard-api.yaml`
+
+Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
+
+### Definitions
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/definition/create` | Create a new leaderboard definition | developer |
+| `POST` | `/leaderboard/definition/delete` | Delete leaderboard definition | developer |
+| `POST` | `/leaderboard/definition/get` | Get leaderboard definition | authenticated |
+| `POST` | `/leaderboard/definition/list` | List leaderboard definitions | authenticated |
+| `POST` | `/leaderboard/definition/update` | Update leaderboard definition | developer |
+
+### Rankings
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/rank/around` | Get entries around entity | user |
+| `POST` | `/leaderboard/rank/get` | Get entity's rank | user |
+| `POST` | `/leaderboard/rank/top` | Get top entries | user |
+
+### Scores
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/score/submit` | Submit or update a score | authenticated |
+| `POST` | `/leaderboard/score/submit-batch` | Submit multiple scores | authenticated |
+
+### Seasons
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/leaderboard/season/create` | Start a new season | admin |
+| `POST` | `/leaderboard/season/get` | Get current season info | user |
+
+---
+
 ## Location {#location}
 
 **Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml`
@@ -431,6 +617,57 @@ Location management service for Arcadia game world.
 | `POST` | `/location/set-parent` | Set or change the parent of a location | admin |
 | `POST` | `/location/undeprecate` | Restore a deprecated location | admin |
 | `POST` | `/location/update` | Update location | admin |
+
+---
+
+## Mapping {#mapping}
+
+**Version**: 1.0.0 | **Schema**: `schemas/mapping-api.yaml`
+
+Spatial data management service for Arcadia game worlds.
+
+### Authoring
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/authoring/checkout` | Acquire exclusive edit lock for design-time editing | developer |
+| `POST` | `/mapping/authoring/commit` | Commit design-time changes | developer |
+| `POST` | `/mapping/authoring/release` | Release authoring checkout without committing | developer |
+
+### Authority
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/authority-heartbeat` | Maintain authority over channel | authenticated |
+| `POST` | `/mapping/create-channel` | Create a new map channel and become its authority | authenticated |
+| `POST` | `/mapping/release-authority` | Release authority over a channel | authenticated |
+
+### Definition
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/definition/create` | Create a map definition template | developer |
+| `POST` | `/mapping/definition/delete` | Delete a map definition | admin |
+| `POST` | `/mapping/definition/get` | Get a map definition by ID | user |
+| `POST` | `/mapping/definition/list` | List map definitions with optional filters | user |
+| `POST` | `/mapping/definition/update` | Update a map definition | developer |
+
+### Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/query/affordance` | Find locations that afford a specific action or scene type | user |
+| `POST` | `/mapping/query/bounds` | Query map data within bounds | user |
+| `POST` | `/mapping/query/objects-by-type` | Find all objects of a type in region | user |
+| `POST` | `/mapping/query/point` | Query map data at a specific point | user |
+
+### Runtime
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/mapping/publish` | Publish map data update (RPC path) | authenticated |
+| `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | authenticated |
+| `POST` | `/mapping/request-snapshot` | Request full snapshot for cold start | user |
 
 ---
 
@@ -510,9 +747,9 @@ Central intelligence for Bannou environment management and service orchestration
 | `POST` | `/orchestrator/health/services` | Get health status of all services | admin |
 | `POST` | `/orchestrator/logs` | Get service/container logs | admin |
 | `POST` | `/orchestrator/presets/list` | List available deployment presets | admin |
-| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | service |
+| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | authenticated |
 | `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | admin |
-| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | service |
+| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | authenticated |
 | `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | admin |
 | `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | admin |
 | `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | admin |
@@ -588,6 +825,39 @@ Realm management service for Arcadia game world.
 
 ---
 
+## Realm History {#realm-history}
+
+**Version**: 1.0.0 | **Schema**: `schemas/realm-history-api.yaml`
+
+Historical event participation and lore management for realms.
+
+### Historical Events
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/delete-participation` | Delete a participation record | admin |
+| `POST` | `/realm-history/get-event-participants` | Get all realms that participated in a historical event | user |
+| `POST` | `/realm-history/get-participation` | Get all historical events a realm participated in | user |
+| `POST` | `/realm-history/record-participation` | Record realm participation in a historical event | authenticated |
+
+### History Management
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/delete-all` | Delete all history data for a realm | admin |
+| `POST` | `/realm-history/summarize` | Generate text summaries for realm archival | authenticated |
+
+### Lore
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/realm-history/add-lore-element` | Add a single lore element | admin |
+| `POST` | `/realm-history/delete-lore` | Delete all lore for a realm | admin |
+| `POST` | `/realm-history/get-lore` | Get machine-readable lore elements for behavior system | user |
+| `POST` | `/realm-history/set-lore` | Set lore elements for a realm | admin |
+
+---
+
 ## Relationship {#relationship}
 
 **Version**: 1.0.0 | **Schema**: `schemas/relationship-api.yaml`
@@ -636,6 +906,58 @@ Relationship type management service for Arcadia game world.
 | `POST` | `/relationship-type/seed` | Seed relationship types from configuration | admin |
 | `POST` | `/relationship-type/undeprecate` | Restore a deprecated relationship type | admin |
 | `POST` | `/relationship-type/update` | Update relationship type | admin |
+
+---
+
+## Scene {#scene}
+
+**Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml`
+
+Hierarchical composition storage for game worlds.
+
+### Instance
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/destroy-instance` | Declare that a scene instance was removed | authenticated |
+| `POST` | `/scene/instantiate` | Declare that a scene was instantiated in the game world | authenticated |
+
+### Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/find-asset-usage` | Find scenes using a specific asset | user |
+| `POST` | `/scene/find-references` | Find scenes that reference a given scene | user |
+| `POST` | `/scene/search` | Full-text search across scenes | user |
+
+### Scene
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/create` | Create a new scene document | developer |
+| `POST` | `/scene/delete` | Delete a scene | developer |
+| `POST` | `/scene/duplicate` | Duplicate a scene with a new ID | developer |
+| `POST` | `/scene/get` | Retrieve a scene by ID | user |
+| `POST` | `/scene/list` | List scenes with filtering | user |
+| `POST` | `/scene/update` | Update a scene document | developer |
+| `POST` | `/scene/validate` | Validate a scene structure | user |
+
+### Validation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/get-validation-rules` | Get validation rules for a gameId+sceneType | user |
+| `POST` | `/scene/register-validation-rules` | Register validation rules for a gameId+sceneType | admin |
+
+### Versioning
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/scene/checkout` | Lock a scene for editing | developer |
+| `POST` | `/scene/commit` | Save changes and release lock | developer |
+| `POST` | `/scene/discard` | Release lock without saving changes | developer |
+| `POST` | `/scene/heartbeat` | Extend checkout lock TTL | developer |
+| `POST` | `/scene/history` | Get version history for a scene | user |
 
 ---
 
@@ -704,7 +1026,7 @@ Tracks which accounts have access to which services (games/applications) with ti
 | `POST` | `/subscription/cancel` | Cancel a subscription | user |
 | `POST` | `/subscription/create` | Create a new subscription | admin |
 | `POST` | `/subscription/get` | Get a specific subscription by ID | user |
-| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | service |
+| `POST` | `/subscription/query` | Query current (active, non-expired) subscriptions | authenticated |
 | `POST` | `/subscription/renew` | Renew or extend a subscription | admin |
 | `POST` | `/subscription/update` | Update a subscription | admin |
 
@@ -792,8 +1114,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 23
-- **Total endpoints**: 241
+- **Total services**: 31
+- **Total endpoints**: 346
 
 ---
 

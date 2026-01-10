@@ -1,0 +1,470 @@
+openapi: 3.0.3
+info:
+  title: Scene Service Events
+  description: |
+    Event models for Scene service RabbitMQ pub/sub via MassTransit.
+
+    The Scene service publishes lifecycle events for scene documents and
+    operational events for instantiation and checkout workflows.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+
+  x-event-subscriptions:
+    # Scene service does not currently subscribe to external events
+    []
+
+  x-event-publications:
+    # Lifecycle events (auto-generated from x-lifecycle)
+    - topic: scene.created
+      event: SceneCreatedEvent
+      description: Published when a new scene document is created
+    - topic: scene.updated
+      event: SceneUpdatedEvent
+      description: Published when a scene document is modified
+    - topic: scene.deleted
+      event: SceneDeletedEvent
+      description: Published when a scene document is deleted
+
+    # Instantiation events
+    - topic: scene.instantiated
+      event: SceneInstantiatedEvent
+      description: Published when a scene is instantiated in the game world
+    - topic: scene.destroyed
+      event: SceneDestroyedEvent
+      description: Published when a scene instance is removed from the game world
+
+    # Checkout workflow events
+    - topic: scene.checked_out
+      event: SceneCheckedOutEvent
+      description: Published when a scene is locked for editing
+    - topic: scene.committed
+      event: SceneCommittedEvent
+      description: Published when checkout changes are committed
+    - topic: scene.checkout.discarded
+      event: SceneCheckoutDiscardedEvent
+      description: Published when checkout is discarded without saving
+    - topic: scene.checkout.expired
+      event: SceneCheckoutExpiredEvent
+      description: Published when a checkout lock expires due to TTL
+
+    # Validation events
+    - topic: scene.validation_rules.updated
+      event: SceneValidationRulesUpdatedEvent
+      description: Published when validation rules are registered/updated
+
+    # Reference integrity events
+    - topic: scene.reference.broken
+      event: SceneReferenceBrokenEvent
+      description: Published when a referenced scene becomes unavailable
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/scene-lifecycle-events.yaml
+x-lifecycle:
+  Scene:
+    model:
+      sceneId: { type: string, format: uuid, primary: true, required: true, description: "Unique scene identifier" }
+      gameId: { type: string, required: true, description: "Game service identifier for partitioning" }
+      sceneType: { type: string, required: true, description: "Scene classification (region, building, etc.)" }
+      name: { type: string, required: true, description: "Human-readable scene name" }
+      description: { type: string, nullable: true, description: "Optional scene description" }
+      version: { type: string, required: true, description: "Semantic version (MAJOR.MINOR.PATCH)" }
+      tags: { type: array, items: { type: string }, description: "Searchable tags" }
+      nodeCount: { type: integer, required: true, description: "Total number of nodes in scene" }
+      createdAt: { type: string, format: date-time, required: true, description: "Creation timestamp" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Last update timestamp" }
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+    # ========== BASE EVENT ==========
+
+    BaseServiceEvent:
+      type: object
+      additionalProperties: false
+      description: Base type for all service events
+      required:
+        - eventId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was created (UTC)
+
+    # ========== INSTANTIATION EVENTS ==========
+
+    SceneInstantiatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a scene is instantiated in the game world.
+        Consumers (Mapping, Actor, etc.) react to spawn spatial objects and NPCs.
+      required:
+        - instanceId
+        - sceneAssetId
+        - sceneVersion
+        - sceneName
+        - gameId
+        - sceneType
+        - regionId
+        - worldTransform
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Unique instance identifier (caller-provided)
+        sceneAssetId:
+          type: string
+          format: uuid
+          description: Source scene asset ID
+        sceneVersion:
+          type: string
+          description: Version that was instantiated
+        sceneName:
+          type: string
+          description: Scene name (for logging and display)
+        gameId:
+          type: string
+          description: Game ID from the scene
+        sceneType:
+          type: string
+          description: Scene type from the scene
+        regionId:
+          type: string
+          format: uuid
+          description: Region where the scene was placed
+        worldTransform:
+          $ref: '#/components/schemas/EventTransform'
+          description: World-space transform for scene origin
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Caller-provided metadata passed through to consumers
+        instantiatedBy:
+          type: string
+          nullable: true
+          description: App-id of the instantiator
+
+    SceneDestroyedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a scene instance is removed from the game world
+      required:
+        - instanceId
+        - sceneAssetId
+        - regionId
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance that was destroyed
+        sceneAssetId:
+          type: string
+          format: uuid
+          description: Source scene asset ID
+        regionId:
+          type: string
+          format: uuid
+          description: Region where the instance was located
+        destroyedBy:
+          type: string
+          nullable: true
+          description: App-id of the destroyer
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Caller-provided metadata
+
+    # ========== CHECKOUT WORKFLOW EVENTS ==========
+
+    SceneCheckedOutEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a scene is locked for editing
+      required:
+        - sceneId
+        - checkedOutBy
+        - expiresAt
+      properties:
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the scene being edited
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        checkedOutBy:
+          type: string
+          description: Identifier of the editor (accountId or app-id)
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the checkout lock expires
+
+    SceneCommittedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when checkout changes are committed
+      required:
+        - sceneId
+        - version
+        - committedBy
+      properties:
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the committed scene
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        version:
+          type: string
+          description: New version after commit
+        previousVersion:
+          type: string
+          nullable: true
+          description: Version before commit
+        committedBy:
+          type: string
+          description: Identifier of the committer
+        changesSummary:
+          type: string
+          nullable: true
+          description: Optional summary of changes
+        nodeCount:
+          type: integer
+          nullable: true
+          description: Node count after commit
+
+    SceneCheckoutDiscardedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a checkout is discarded without saving
+      required:
+        - sceneId
+        - discardedBy
+      properties:
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the scene
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        discardedBy:
+          type: string
+          description: Identifier of who discarded
+
+    SceneCheckoutExpiredEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a checkout lock expires due to TTL
+      required:
+        - sceneId
+        - expiredAt
+      properties:
+        sceneId:
+          type: string
+          format: uuid
+          description: ID of the scene
+        sceneName:
+          type: string
+          nullable: true
+          description: Name of the scene
+        gameId:
+          type: string
+          nullable: true
+          description: Game ID of the scene
+        expiredAt:
+          type: string
+          format: date-time
+          description: When the lock actually expired
+        originalCheckoutBy:
+          type: string
+          nullable: true
+          description: Who originally checked out the scene
+
+    # ========== VALIDATION EVENTS ==========
+
+    SceneValidationRulesUpdatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when validation rules are registered or updated
+      required:
+        - gameId
+        - sceneType
+      properties:
+        gameId:
+          type: string
+          description: Game ID for the rules
+        sceneType:
+          type: string
+          description: Scene type for the rules
+        ruleCount:
+          type: integer
+          description: Number of active rules after update
+        updatedBy:
+          type: string
+          nullable: true
+          description: Who updated the rules
+
+    # ========== REFERENCE INTEGRITY EVENTS ==========
+
+    BrokenReferenceReason:
+      type: string
+      description: Reason why a scene reference became broken
+      enum:
+        - deleted
+        - access_revoked
+        - corrupted
+
+    SceneReferenceBrokenEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a referenced scene becomes unavailable.
+        This is an edge case event - normally deletion is blocked if references exist.
+      required:
+        - affectedSceneId
+        - brokenReferenceSceneId
+        - reason
+      properties:
+        affectedSceneId:
+          type: string
+          format: uuid
+          description: Scene containing the broken reference
+        affectedSceneName:
+          type: string
+          nullable: true
+          description: Name of the affected scene
+        affectedNodeId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Node with the broken reference
+        affectedNodeRefId:
+          type: string
+          nullable: true
+          description: refId of the affected node
+        brokenReferenceSceneId:
+          type: string
+          format: uuid
+          description: Scene that is no longer available
+        brokenReferenceSceneName:
+          type: string
+          nullable: true
+          description: Name of the scene that is no longer available
+        reason:
+          $ref: '#/components/schemas/BrokenReferenceReason'
+          description: Why the reference broke
+
+    # ========== SUPPORTING TYPES ==========
+
+    EventTransform:
+      type: object
+      additionalProperties: false
+      description: Transform for event payloads
+      required:
+        - position
+        - rotation
+        - scale
+      properties:
+        position:
+          $ref: '#/components/schemas/EventVector3'
+          description: World position
+        rotation:
+          $ref: '#/components/schemas/EventQuaternion'
+          description: World rotation
+        scale:
+          $ref: '#/components/schemas/EventVector3'
+          description: World scale
+
+    EventVector3:
+      type: object
+      additionalProperties: false
+      description: 3D vector for events
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: double
+          description: X component
+        y:
+          type: number
+          format: double
+          description: Y component
+        z:
+          type: number
+          format: double
+          description: Z component
+
+    EventQuaternion:
+      type: object
+      additionalProperties: false
+      description: Quaternion for events
+      required:
+        - x
+        - y
+        - z
+        - w
+      properties:
+        x:
+          type: number
+          format: double
+          description: X component
+        y:
+          type: number
+          format: double
+          description: Y component
+        z:
+          type: number
+          format: double
+          description: Z component
+        w:
+          type: number
+          format: double
+          description: W component

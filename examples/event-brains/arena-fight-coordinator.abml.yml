@@ -1,0 +1,275 @@
+# =============================================================================
+# Arena Fight Coordinator - Event Brain Example
+# =============================================================================
+#
+# This is a "Direct Coordinator" pattern Event Brain - it's spawned directly
+# with known participants and has a clear lifecycle (start -> coordinate -> end).
+#
+# Use case: Monster Arena demo - two fighters in a controlled arena environment.
+#
+# Spawning: The game server spawns this Event Brain when an arena match starts:
+#   POST /actor/start
+#   {
+#     "template_id": "arena-fight-coordinator",
+#     "actor_id": "arena-fight-001",
+#     "initial_context": {
+#       "fighter_a": "chr_00000000-0000-0000-0000-000000000001",
+#       "fighter_b": "chr_00000000-0000-0000-0000-000000000002",
+#       "arena_id": "arena-central"
+#     }
+#   }
+#
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: arena-fight-coordinator
+  type: event_brain
+  description: "Coordinates arena combat between two participants"
+  tags:
+    - event-brain
+    - arena
+    - combat
+
+# =============================================================================
+# CONTEXT - Variables from spawn context
+# =============================================================================
+
+context:
+  variables:
+    fighter_a:
+      source: "${spawn_context.fighter_a}"
+      description: "Character ID of first fighter"
+    fighter_b:
+      source: "${spawn_context.fighter_b}"
+      description: "Character ID of second fighter"
+    arena_id:
+      source: "${spawn_context.arena_id}"
+      description: "Arena location identifier"
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+config:
+  # Round timing
+  round_duration_ms: 30000
+  max_rounds: 5
+
+  # Choreography style
+  dramatic_intensity: 0.8
+  cinematic_cooldown_ms: 5000
+
+# =============================================================================
+# FLOWS
+# =============================================================================
+
+flow: main
+flows:
+  # Main loop - check encounter state and route accordingly
+  main:
+    - if:
+        condition: "${encounter == null}"
+        then:
+          # No encounter started yet - waiting for API call
+          - log:
+              level: debug
+              message: "Arena coordinator ${agent.id} awaiting encounter start"
+        else:
+          # Encounter is active - manage it
+          - call: manage_fight
+
+  # Core fight management - branch by phase
+  manage_fight:
+    - switch:
+        value: "${encounter.phase}"
+        cases:
+          initializing:
+            - call: initialize_fight
+          active:
+            - call: monitor_combat
+          opportunity_detected:
+            - call: execute_cinematic
+          concluding:
+            - call: conclude_fight
+        default:
+          - log:
+              level: warning
+              message: "Unknown encounter phase: ${encounter.phase}"
+
+  # ==========================================================================
+  # Phase: Initialize the fight
+  # ==========================================================================
+  initialize_fight:
+    - log:
+        level: info
+        message: "Initializing arena fight: ${fighter_a} vs ${fighter_b}"
+
+    # Query both fighters for their combat capabilities
+    - query_options:
+        actor_id: "${fighter_a}"
+        query_type: "combat"
+        context:
+          opponent_ids: ["${fighter_b}"]
+          environment_tags: ["arena", "${arena_id}"]
+        result_variable: "fighter_a_options"
+
+    - query_options:
+        actor_id: "${fighter_b}"
+        query_type: "combat"
+        context:
+          opponent_ids: ["${fighter_a}"]
+          environment_tags: ["arena", "${arena_id}"]
+        result_variable: "fighter_b_options"
+
+    # Store current round
+    - state_update:
+        path: "working_memory.current_round"
+        operation: "set"
+        value: 1
+
+    # Transition to active combat
+    - set_encounter_phase:
+        phase: "active"
+
+    - log:
+        level: info
+        message: "Fight initialized - Round 1 begins"
+
+  # ==========================================================================
+  # Phase: Monitor active combat for dramatic opportunities
+  # ==========================================================================
+  monitor_combat:
+    # Refresh combat options periodically
+    - query_options:
+        actor_id: "${fighter_a}"
+        query_type: "combat"
+        freshness: "cached"
+        max_age_ms: 2000
+        result_variable: "fighter_a_options"
+
+    - query_options:
+        actor_id: "${fighter_b}"
+        query_type: "combat"
+        freshness: "cached"
+        max_age_ms: 2000
+        result_variable: "fighter_b_options"
+
+    # Check for dramatic opportunity
+    - if:
+        condition: "${detect_opportunity(fighter_a_options, fighter_b_options)}"
+        then:
+          - set_encounter_phase:
+              phase: "opportunity_detected"
+          - log:
+              level: info
+              message: "Dramatic opportunity detected!"
+        else:
+          # Normal combat - let fighters handle it autonomously
+          - log:
+              level: debug
+              message: "Combat proceeding normally"
+
+  # ==========================================================================
+  # Phase: Execute cinematic sequence
+  # ==========================================================================
+  execute_cinematic:
+    - log:
+        level: info
+        message: "Executing choreographed sequence"
+
+    # Send choreography to fighter A
+    - emit_perception:
+        target_character: "${fighter_a}"
+        perception_type: "choreography_instruction"
+        urgency: 0.95
+        data:
+          instruction_type: "execute_sequence"
+          sequence_id: "dramatic_clash"
+          priority: "override"
+          timing: "immediate"
+
+    # Send choreography to fighter B
+    - emit_perception:
+        target_character: "${fighter_b}"
+        perception_type: "choreography_instruction"
+        urgency: 0.95
+        data:
+          instruction_type: "execute_sequence"
+          sequence_id: "dramatic_clash"
+          priority: "override"
+          timing: "immediate"
+
+    # Schedule return to normal combat after cooldown
+    - schedule_event:
+        delay_ms: "${config.cinematic_cooldown_ms}"
+        event_type: "cinematic_complete"
+        data:
+          sequence_id: "dramatic_clash"
+
+    # Return to active phase
+    - set_encounter_phase:
+        phase: "active"
+
+  # ==========================================================================
+  # Phase: Conclude the fight
+  # ==========================================================================
+  conclude_fight:
+    - log:
+        level: info
+        message: "Fight concluding"
+
+    # Notify both fighters that the encounter is ending
+    - emit_perception:
+        target_character: "${fighter_a}"
+        perception_type: "encounter_ending"
+        urgency: 0.7
+        data:
+          reason: "fight_concluded"
+
+    - emit_perception:
+        target_character: "${fighter_b}"
+        perception_type: "encounter_ending"
+        urgency: 0.7
+        data:
+          reason: "fight_concluded"
+
+    # Store outcome
+    - state_update:
+        path: "working_memory.outcome"
+        operation: "set"
+        value:
+          completed_at: "${now()}"
+          rounds: "${working_memory.current_round}"
+
+    # End the encounter
+    - end_encounter:
+        result_variable: "encounter_ended"
+
+    - log:
+        level: info
+        message: "Arena fight completed"
+
+# =============================================================================
+# FUNCTIONS
+# =============================================================================
+
+functions:
+  # Detects dramatic opportunities based on fighter states
+  detect_opportunity:
+    description: "Checks if current combat state presents a cinematic opportunity"
+    params:
+      - name: fighter_a_options
+        type: object
+      - name: fighter_b_options
+        type: object
+    returns: boolean
+    body: |
+      # Look for dramatic conditions:
+      # - Both fighters have high-preference aggressive options
+      # - One fighter is low health with a desperation move available
+      # - Signature moves are available for both
+      #
+      # For now, simple random chance (would be sophisticated in production)
+      return random() > 0.8

@@ -116,35 +116,6 @@ public partial class CompileBehaviorRequest
 }
 
 /// <summary>
-/// Request to compile multiple stackable behavior sets with priority-based merging
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorStackRequest
-{
-
-    /// <summary>
-    /// Array of behavior sets to compile together
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("behaviorSets")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<BehaviorSetDefinition> BehaviorSets { get; set; } = new System.Collections.ObjectModel.Collection<BehaviorSetDefinition>();
-
-    /// <summary>
-    /// Character context for context variable resolution during compilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
-    public CharacterContext? CharacterContext { get; set; } = default!;
-
-    /// <summary>
-    /// Options controlling the compilation process
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("compilationOptions")]
-    public CompilationOptions? CompilationOptions { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Request to validate ABML YAML content against schema and semantic rules
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -168,42 +139,11 @@ public partial class ValidateAbmlRequest
 }
 
 /// <summary>
-/// Request to resolve context variable expressions against character and world state
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResolveContextRequest
-{
-
-    /// <summary>
-    /// Context variable expression to resolve
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contextExpression")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ContextExpression { get; set; } = default!;
-
-    /// <summary>
-    /// Character context providing values for variable resolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterContext")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public CharacterContext CharacterContext { get; set; } = new CharacterContext();
-
-}
-
-/// <summary>
 /// Response containing the results of an ABML behavior compilation
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CompileBehaviorResponse
 {
-
-    /// <summary>
-    /// Whether compilation was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the compiled behavior (content-addressable hash)
@@ -324,81 +264,6 @@ public partial class CachedBehaviorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cacheHit")]
     public bool CacheHit { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Response containing the resolved value of a context variable expression
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResolveContextResponse
-{
-
-    /// <summary>
-    /// The resolved value of the context expression
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("resolvedValue")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public object ResolvedValue { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the resolved value
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("resolvedType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ResolveContextResponseResolvedType? ResolvedType { get; set; } = default!;
-
-    /// <summary>
-    /// List of context variables referenced in the expression
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contextVariablesUsed")]
-    public System.Collections.Generic.ICollection<string>? ContextVariablesUsed { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Definition of a behavior set with priority for stackable behavior merging
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorSetDefinition
-{
-
-    /// <summary>
-    /// Unique identifier for the behavior set
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("id")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Id { get; set; } = default!;
-
-    /// <summary>
-    /// Priority level for merging (higher priority overrides lower)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("priority")]
-    [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int Priority { get; set; } = default!;
-
-    /// <summary>
-    /// Category of the behavior set
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BehaviorSetDefinitionCategory? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Raw ABML YAML content for this behavior set
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("abmlContent")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AbmlContent { get; set; } = default!;
-
-    /// <summary>
-    /// Additional metadata for the behavior set
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -721,17 +586,11 @@ public partial class GoapPlanRequest
 }
 
 /// <summary>
-/// Response containing the generated GOAP plan or failure information
+/// Response containing the generated GOAP plan. If no plan could be found, plan is null and failureReason explains why.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GoapPlanResponse
 {
-
-    /// <summary>
-    /// Whether planning was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// The generated plan if successful
@@ -1011,65 +870,6 @@ public partial class ValidationError
 
 }
 
-/// <summary>
-/// Error response for ABML operations with detailed error information and context
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AbmlErrorResponse
-{
-
-    /// <summary>
-    /// Error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Specific error code for programmatic handling
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
-    public string? ErrorCode { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed error information
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public System.Collections.Generic.ICollection<string>? Details { get; set; } = default!;
-
-    /// <summary>
-    /// Validation errors encountered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validationErrors")]
-    public System.Collections.Generic.ICollection<ValidationError>? ValidationErrors { get; set; } = default!;
-
-    /// <summary>
-    /// Line number in YAML where error occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("yamlLine")]
-    public int YamlLine { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context about the error
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("context")]
-    public object? Context { get; set; } = default!;
-
-    /// <summary>
-    /// When the error occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    public System.DateTimeOffset? Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for the failed request
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requestId")]
-    public string? RequestId { get; set; } = default!;
-
-}
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CompileBehaviorRequestBehaviorCategory
@@ -1092,52 +892,6 @@ public enum CompileBehaviorRequestBehaviorCategory
 
     [System.Runtime.Serialization.EnumMember(Value = @"ambient")]
     Ambient = 5,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ResolveContextResponseResolvedType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"boolean")]
-    Boolean = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"string")]
-    String = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"number")]
-    Number = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"object")]
-    Object = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"array")]
-    Array = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BehaviorSetDefinitionCategory
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"base")]
-    Base = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
-    Cultural = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"professional")]
-    Professional = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"personal")]
-    Personal = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"situational")]
-    Situational = 4,
 
 }
 #pragma warning restore CS1591

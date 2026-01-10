@@ -25,6 +25,7 @@ paths:
       operationId: listGameSessions
       tags:
       - Game Sessions
+      x-permissions: []
       x-rate-limit:
         requestsPerMinute: 30
         requestsPerHour: 500
@@ -120,6 +121,7 @@ paths:
       operationId: createGameSession
       tags:
       - Game Sessions
+      x-permissions: []
       x-rate-limit:
         requestsPerMinute: 5
         requestsPerHour: 20
@@ -305,6 +307,7 @@ paths:
       operationId: joinGameSession
       tags:
       - Game Sessions
+      x-permissions: []
       x-rate-limit:
         requestsPerMinute: 10
         requestsPerHour: 50
@@ -355,21 +358,19 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"JoinGameSessionResponse\": {\n            \"description\": \"Response after successfully
         joining a game session with role and permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"sessionId\",\n            \
-        \    \"playerRole\"\n            ],\n            \"properties\": {\n                \"success\": {\n             \
-        \       \"type\": \"boolean\",\n                    \"description\": \"Whether the join operation was successful\"\
-        \n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"ID of the joined game session\"\n           \
-        \     },\n                \"playerRole\": {\n                    \"type\": \"string\",\n                    \"enum\"\
-        : [\n                        \"player\",\n                        \"spectator\",\n                        \"moderator\"\
-        \n                    ],\n                    \"description\": \"Role assigned to the player in this session\"\n \
-        \               },\n                \"gameData\": {\n                    \"type\": \"object\",\n                 \
-        \   \"additionalProperties\": true,\n                    \"description\": \"Initial game state data\"\n          \
-        \      },\n                \"newPermissions\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Additional permissions granted by joining\"\n                },\n                \"voice\": {\n              \
-        \      \"$ref\": \"#/$defs/VoiceConnectionInfo\",\n                    \"description\": \"Voice connection info (if
-        voice is enabled for this session)\"\n                }\n            }\n        },\n        \"VoiceConnectionInfo\"\
+        : false,\n            \"required\": [\n                \"sessionId\",\n                \"playerRole\"\n          \
+        \  ],\n            \"properties\": {\n                \"sessionId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the joined game session\"\
+        \n                },\n                \"playerRole\": {\n                    \"type\": \"string\",\n             \
+        \       \"enum\": [\n                        \"player\",\n                        \"spectator\",\n               \
+        \         \"moderator\"\n                    ],\n                    \"description\": \"Role assigned to the player
+        in this session\"\n                },\n                \"gameData\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Initial game state data\"\
+        \n                },\n                \"newPermissions\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
+        \  \"description\": \"Additional permissions granted by joining\"\n                },\n                \"voice\":
+        {\n                    \"$ref\": \"#/$defs/VoiceConnectionInfo\",\n                    \"description\": \"Voice connection
+        info (if voice is enabled for this session)\"\n                }\n            }\n        },\n        \"VoiceConnectionInfo\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Minimal voice metadata returned when joining
         a session.\\n\\n**Event-Only Pattern**: Peer connection details are NOT included here.\\nClients receive VoicePeerJoinedEvent
         when other peers join (with their SDP offers).\\nThis avoids race conditions between response processing and event
@@ -570,16 +571,14 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionResponse\"\
         ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Response indicating the result
         of a game action with any state changes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"actionId\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether the action was executed successfully\"\n                },\n          \
-        \      \"actionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"Unique identifier for this action instance\"\n                },\n          \
-        \      \"result\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Action result data\"\n          \
-        \      },\n                \"newGameState\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"Updated
-        game state (if applicable)\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"actionId\"\n            ],\n            \"properties\": {\n\
+        \                \"actionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier for this action instance\"\n                },\n     \
+        \           \"result\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Action result data\"\n  \
+        \              },\n                \"newGameState\": {\n                    \"type\": \"object\",\n              \
+        \      \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Updated game state (if applicable)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Perform game action (enhanced permissions after joining)\",\n    \"description\"\
         : \"\",\n    \"tags\": [\n        \"Game Actions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"performGameAction\"\
         \n}"
@@ -780,13 +779,9 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - sessionId
       - playerRole
       properties:
-        success:
-          type: boolean
-          description: Whether the join operation was successful
         sessionId:
           type: string
           format: uuid
@@ -954,12 +949,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - actionId
       properties:
-        success:
-          type: boolean
-          description: Whether the action was executed successfully
         actionId:
           type: string
           format: uuid

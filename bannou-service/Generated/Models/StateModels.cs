@@ -117,7 +117,7 @@ public partial class SaveStateRequest
 }
 
 /// <summary>
-/// Response from a save operation containing the new ETag and success status
+/// Response from a save operation containing the new ETag
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveStateResponse
@@ -128,12 +128,6 @@ public partial class SaveStateResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     public string Etag { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the save succeeded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 

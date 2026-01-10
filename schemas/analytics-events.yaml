@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Analytics Service Events
+  description: |
+    Event subscription and publication declarations for Analytics service.
+
+    **Data Flow**: Analytics is the central event aggregation point:
+    - Subscribes to game-session.action.performed for event ingestion
+    - Publishes analytics.score.updated for leaderboards/achievements to consume
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Game session events for action tracking
+    - topic: game-session.action.performed
+      event: GameSessionActionPerformedEvent
+      handler: HandleGameActionPerformed
+    # Game session lifecycle for session-level analytics
+    - topic: game-session.created
+      event: GameSessionCreatedEvent
+      handler: HandleGameSessionCreated
+    - topic: game-session.deleted
+      event: GameSessionDeletedEvent
+      handler: HandleGameSessionDeleted
+    # Character history events for historical analytics
+    - topic: character-history.participation.recorded
+      event: CharacterParticipationRecordedEvent
+      handler: HandleCharacterParticipationRecorded
+    - topic: character-history.backstory.created
+      event: CharacterBackstoryCreatedEvent
+      handler: HandleCharacterBackstoryCreated
+    - topic: character-history.backstory.updated
+      event: CharacterBackstoryUpdatedEvent
+      handler: HandleCharacterBackstoryUpdated
+    # Realm history events for historical analytics
+    - topic: realm-history.participation.recorded
+      event: RealmParticipationRecordedEvent
+      handler: HandleRealmParticipationRecorded
+    - topic: realm-history.lore.created
+      event: RealmLoreCreatedEvent
+      handler: HandleRealmLoreCreated
+    - topic: realm-history.lore.updated
+      event: RealmLoreUpdatedEvent
+      handler: HandleRealmLoreUpdated
+  x-event-publications:
+    # Published when a score/stat is updated (leaderboards and achievements subscribe)
+    - topic: analytics.score.updated
+      event: AnalyticsScoreUpdatedEvent
+      description: Published when an entity's score or statistic changes
+    # Published when a skill rating changes
+    - topic: analytics.rating.updated
+      event: AnalyticsRatingUpdatedEvent
+      description: Published when an entity's Glicko-2 skill rating changes
+    # Published for significant analytics milestones
+    - topic: analytics.milestone.reached
+      event: AnalyticsMilestoneReachedEvent
+      description: Published when an entity reaches a statistical milestone
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # ============================================
+    # Published Events
+    # ============================================
+    AnalyticsScoreUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity's score or statistic changes
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - entityId
+        - entityType
+        - scoreType
+        - newValue
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the score was updated
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity whose score changed
+        entityType:
+          type: string
+          enum:
+            - account
+            - character
+            - guild
+            - actor
+            - custom
+          description: Type of entity
+        scoreType:
+          type: string
+          description: Type of score that changed (e.g., kills, points, xp)
+        previousValue:
+          type: number
+          format: double
+          nullable: true
+          description: Previous score value (null if first score)
+        newValue:
+          type: number
+          format: double
+          description: New score value
+        delta:
+          type: number
+          format: double
+          description: Change in score (newValue - previousValue)
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game session ID where this occurred
+
+    AnalyticsRatingUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity's Glicko-2 skill rating changes
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - entityId
+        - entityType
+        - ratingType
+        - previousRating
+        - newRating
+        - ratingChange
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the rating was updated
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity whose rating changed
+        entityType:
+          type: string
+          enum:
+            - account
+            - character
+            - guild
+            - actor
+            - custom
+          description: Type of entity
+        ratingType:
+          type: string
+          description: Type of rating (e.g., overall, ranked, casual)
+        previousRating:
+          type: number
+          format: double
+          description: Previous Glicko-2 rating
+        newRating:
+          type: number
+          format: double
+          description: New Glicko-2 rating
+        ratingChange:
+          type: number
+          format: double
+          description: Change in rating
+        newRatingDeviation:
+          type: number
+          format: double
+          description: New rating deviation
+        matchId:
+          type: string
+          format: uuid
+          description: ID of the match that caused this update
+
+    AnalyticsMilestoneReachedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity reaches a statistical milestone
+      required:
+        - eventId
+        - timestamp
+        - gameServiceId
+        - entityId
+        - entityType
+        - milestoneType
+        - milestoneValue
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the milestone was reached
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that reached the milestone
+        entityType:
+          type: string
+          enum:
+            - account
+            - character
+            - guild
+            - actor
+            - custom
+          description: Type of entity
+        milestoneType:
+          type: string
+          description: Type of milestone (e.g., total_kills, games_played)
+        milestoneValue:
+          type: number
+          format: double
+          description: Value at which milestone was reached (e.g., 100, 1000)
+        milestoneName:
+          type: string
+          nullable: true
+          description: Human-readable milestone name (e.g., "Century Club")

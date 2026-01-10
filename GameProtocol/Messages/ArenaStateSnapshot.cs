@@ -16,6 +16,26 @@ public class ArenaStateSnapshot
     /// <summary>All entity states at this tick.</summary>
     [Key(1)]
     public List<EntityState> Entities { get; set; } = new();
+
+    /// <summary>Current combat phase (0=Waiting, 1=Countdown, 2=Fighting, 3=Opportunity, 4=Cinematic, 5=Finished).</summary>
+    [Key(2)]
+    public int Phase { get; set; }
+
+    /// <summary>Cinematic ID when in cinematic phase (null otherwise).</summary>
+    [Key(3)]
+    public string? CinematicId { get; set; }
+
+    /// <summary>Cinematic attacker entity slot (0=MonsterA, 1=MonsterB).</summary>
+    [Key(4)]
+    public int CinematicAttacker { get; set; }
+
+    /// <summary>Cinematic defender entity slot (0=MonsterA, 1=MonsterB).</summary>
+    [Key(5)]
+    public int CinematicDefender { get; set; }
+
+    /// <summary>Cinematic target object ID (e.g., boulder ID).</summary>
+    [Key(6)]
+    public string? CinematicTargetId { get; set; }
 }
 
 /// <summary>

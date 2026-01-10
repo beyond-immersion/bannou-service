@@ -22,6 +22,11 @@ public static class EventSubscriptionRegistration
     /// </summary>
     public static void RegisterAll()
     {
+        // From achievement-events.yaml
+        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
+        EventSubscriptionRegistry.Register<AnalyticsMilestoneReachedEvent>("analytics.milestone.reached");
+        EventSubscriptionRegistry.Register<LeaderboardRankChangedEvent>("leaderboard.rank.changed");
+
         // From actor-events.yaml
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
@@ -30,6 +35,17 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
         EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
+
+        // From analytics-events.yaml
+        EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
+        EventSubscriptionRegistry.Register<GameSessionCreatedEvent>("game-session.created");
+        EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+        EventSubscriptionRegistry.Register<CharacterParticipationRecordedEvent>("character-history.participation.recorded");
+        EventSubscriptionRegistry.Register<CharacterBackstoryCreatedEvent>("character-history.backstory.created");
+        EventSubscriptionRegistry.Register<CharacterBackstoryUpdatedEvent>("character-history.backstory.updated");
+        EventSubscriptionRegistry.Register<RealmParticipationRecordedEvent>("realm-history.participation.recorded");
+        EventSubscriptionRegistry.Register<RealmLoreCreatedEvent>("realm-history.lore.created");
+        EventSubscriptionRegistry.Register<RealmLoreUpdatedEvent>("realm-history.lore.updated");
 
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
@@ -45,6 +61,13 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
+
+        // From leaderboard-events.yaml
+        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
+        EventSubscriptionRegistry.Register<AnalyticsRatingUpdatedEvent>("analytics.rating.updated");
+
+        // From mapping-events.yaml
+        EventSubscriptionRegistry.Register<MapIngestEvent>("map.ingest.*");
 
         // From mesh-events.yaml
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou-service-heartbeats");

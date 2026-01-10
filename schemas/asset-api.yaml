@@ -319,6 +319,55 @@ paths:
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
         latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
         \n}"
+  /assets/delete:
+    post:
+      summary: Delete an asset
+      description: |
+        Delete an asset from storage. If versionId is specified, only that version is deleted.
+        If versionId is omitted, all versions are deleted.
+      operationId: deleteAsset
+      tags:
+      - Assets
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAssetRequest'
+      responses:
+        '200':
+          description: Asset deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAssetResponse'
+        '404':
+          description: Asset not found
+        '403':
+          description: Insufficient permissions
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAssetRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteAssetRequest\": {\n            \"description\": \"Request to delete an asset
+        from storage\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Asset identifier to delete\"\n\
+        \                },\n                \"versionId\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Specific version to delete. If omitted, all versions
+        are deleted.\\n\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAssetResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteAssetResponse\": {\n            \"description\": \"Response confirming asset
+        deletion\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"assetId\",\n                \"versionsDeleted\"\n            ],\n            \"properties\"\
+        : {\n                \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Deleted asset identifier\"\n                },\n                \"versionsDeleted\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of versions deleted\"\n                }\n   \
+        \         }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete an asset\",\n    \"description\": \"Delete an asset from storage.
+        If versionId is specified, only that version is deleted.\\nIf versionId is omitted, all versions are deleted.\\n\"\
+        ,\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteAsset\"\n\
+        }"
   /assets/list-versions:
     post:
       summary: List all versions of an asset
@@ -1052,6 +1101,41 @@ components:
         metadata:
           $ref: '#/components/schemas/AssetMetadata'
           description: Complete asset metadata
+
+    # ==========================================================================
+    # Asset Deletion
+    # ==========================================================================
+
+    DeleteAssetRequest:
+      description: Request to delete an asset from storage
+      type: object
+      additionalProperties: false
+      required:
+      - assetId
+      properties:
+        assetId:
+          type: string
+          description: Asset identifier to delete
+        versionId:
+          type: string
+          nullable: true
+          description: |
+            Specific version to delete. If omitted, all versions are deleted.
+
+    DeleteAssetResponse:
+      description: Response confirming asset deletion
+      type: object
+      additionalProperties: false
+      required:
+      - assetId
+      - versionsDeleted
+      properties:
+        assetId:
+          type: string
+          description: Deleted asset identifier
+        versionsDeleted:
+          type: integer
+          description: Number of versions deleted
 
     # ==========================================================================
     # Version Listing

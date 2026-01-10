@@ -275,3 +275,91 @@ types:
     parentTypeCode: ECONOMIC
     inverseTypeCode: CUSTOMER
     isBidirectional: false
+
+  # =============================================================================
+  # EXTENDED FAMILY RELATIONSHIPS
+  # =============================================================================
+  - code: GRANDPARENT
+    name: Grandparent
+    description: Parent of a parent (grandmother, grandfather)
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: GRANDCHILD
+    isBidirectional: false
+
+  - code: GRANDCHILD
+    name: Grandchild
+    description: Child of a child (grandson, granddaughter)
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: GRANDPARENT
+    isBidirectional: false
+
+  - code: AUNT_UNCLE
+    name: Aunt/Uncle
+    description: Sibling of a parent
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: NIECE_NEPHEW
+    isBidirectional: false
+
+  - code: NIECE_NEPHEW
+    name: Niece/Nephew
+    description: Child of a sibling
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: AUNT_UNCLE
+    isBidirectional: false
+
+  - code: COUSIN
+    name: Cousin
+    description: Child of aunt or uncle
+    category: FAMILY
+    parentTypeCode: FAMILY
+    isBidirectional: true
+
+  # =============================================================================
+  # METAPHYSICAL RELATIONSHIPS (Soul/Reincarnation)
+  # =============================================================================
+  - code: METAPHYSICAL
+    name: Metaphysical
+    description: Spiritual and soul-level connections beyond physical relationships
+    category: METAPHYSICAL
+    isBidirectional: false
+
+  - code: INCARNATION
+    name: Incarnation
+    description: |
+      Previous incarnation of the same soul. Used to track reincarnation chains.
+      Entity1 (SOUL) was previously incarnated as Entity2 (CHARACTER).
+    category: METAPHYSICAL
+    parentTypeCode: METAPHYSICAL
+    inverseTypeCode: REINCARNATION
+    isBidirectional: false
+    metadata:
+      description: "Previous incarnation of the same soul"
+      entity1TypeHint: "SOUL"
+      entity2TypeHint: "CHARACTER"
+
+  - code: REINCARNATION
+    name: Reincarnation
+    description: |
+      Next incarnation of the same soul. Inverse of INCARNATION.
+      Entity1 (CHARACTER) is a later incarnation of Entity2 (SOUL).
+    category: METAPHYSICAL
+    parentTypeCode: METAPHYSICAL
+    inverseTypeCode: INCARNATION
+    isBidirectional: false
+    metadata:
+      description: "Next incarnation of the same soul"
+      entity1TypeHint: "CHARACTER"
+      entity2TypeHint: "SOUL"
+
+  - code: SOUL_BOND
+    name: Soul Bond
+    description: Deep spiritual connection between two souls (not reincarnation)
+    category: METAPHYSICAL
+    parentTypeCode: METAPHYSICAL
+    isBidirectional: true
+    metadata:
+      description: "Spiritual connection between souls that persists across lives"

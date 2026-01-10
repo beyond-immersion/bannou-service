@@ -1,0 +1,639 @@
+# =============================================================================
+# Guard Patrol Behavior
+# Professional behavior layer for city guards on patrol duty.
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: guard-patrol
+  type: behavior
+  description: "City guard patrol routine with threat response"
+  tags:
+    - professional
+    - guard
+    - patrol
+
+# -----------------------------------------------------------------------------
+# Context - Variables and state this behavior reads/writes
+# -----------------------------------------------------------------------------
+context:
+  variables:
+    # Patrol configuration (set by character or instance)
+    patrol_route:
+      type: string
+      default: "default"
+    alert_level:
+      type: string
+      default: "normal"           # normal | heightened | lockdown
+
+    # Runtime state
+    current_waypoint:
+      type: int
+      default: 0
+    patrol_direction:
+      type: int
+      default: 1                  # 1 = forward, -1 = backward
+
+    # Perception state (updated by cognition pipeline)
+    threats:
+      source: "${agent.perception.threats}"
+      type: array
+    suspicious_entities:
+      source: "${agent.perception.suspicious}"
+      type: array
+    nearby_guards:
+      source: "${agent.perception.allies_nearby}"
+      type: array
+
+    # Agent state
+    energy:
+      source: "${agent.stats.energy}"
+      type: float
+    health:
+      source: "${agent.stats.health}"
+      type: float
+
+  requirements:
+    # Must have patrol waypoints defined
+    patrol_waypoints: "${world.patrol_routes[patrol_route].waypoints.length > 0}"
+
+# -----------------------------------------------------------------------------
+# GOAP Goals - What the guard wants to achieve
+# -----------------------------------------------------------------------------
+goals:
+  maintain_patrol:
+    description: "Complete patrol route"
+    priority: 60
+    conditions:
+      route_secure: true
+
+  respond_to_threats:
+    description: "Neutralize or report threats"
+    priority: 90
+    conditions:
+      area_safe: true
+
+  stay_alert:
+    description: "Maintain awareness of surroundings"
+    priority: 40
+    conditions:
+      awareness_maintained: true
+
+# -----------------------------------------------------------------------------
+# Event Handlers - React to perception events
+# -----------------------------------------------------------------------------
+events:
+  - pattern: "perception.threat_detected"
+    handler: assess_threat
+
+  - pattern: "perception.suspicious_activity"
+    handler: investigate_suspicious
+
+  - pattern: "perception.civilian_distress"
+    handler: respond_to_distress
+
+  - pattern: "combat.attacked"
+    handler: defend_self
+
+  - pattern: "command.halt"
+    handler: halt_patrol
+
+  - pattern: "command.resume"
+    handler: resume_patrol
+
+# -----------------------------------------------------------------------------
+# Flows - Action sequences
+# -----------------------------------------------------------------------------
+flows:
+  # ===========================================================================
+  # PATROL FLOWS
+  # ===========================================================================
+
+  patrol_loop:
+    description: "Main patrol routine"
+    triggers:
+      - condition: "${alert_level != 'lockdown' && threats.length == 0}"
+
+    goap:
+      preconditions:
+        energy: "> 0.2"
+        threats_active: false
+      effects:
+        route_secure: true
+        awareness_maintained: true
+      cost: 1
+
+    actions:
+      # Get current waypoint
+      - set:
+          variable: target_waypoint
+          value: "${world.patrol_routes[patrol_route].waypoints[current_waypoint]}"
+
+      # Move to waypoint with appropriate stance
+      - cond:
+          - when: "${alert_level == 'heightened'}"
+            then:
+              - emit_intent:
+                  channel: stance
+                  action: alert
+                  urgency: 0.6
+              - emit_intent:
+                  channel: movement
+                  action: walk_cautious
+                  target: "${target_waypoint.position}"
+                  urgency: 0.5
+
+          - else:
+              - emit_intent:
+                  channel: stance
+                  action: relaxed
+                  urgency: 0.3
+              - emit_intent:
+                  channel: movement
+                  action: walk
+                  target: "${target_waypoint.position}"
+                  urgency: 0.4
+
+      # Scan surroundings while walking
+      - emit_intent:
+          channel: attention
+          action: scan_area
+          pattern: patrol_sweep
+          urgency: 0.5
+
+      # Wait for arrival
+      - wait_for_arrival: {}
+
+      # Waypoint behavior (pause, look around)
+      - call: { flow: waypoint_inspection }
+
+      # Advance to next waypoint
+      - call: { flow: advance_waypoint }
+
+      # Continue patrol
+      - goto: { flow: patrol_loop }
+
+  waypoint_inspection:
+    description: "Inspect area at waypoint"
+    actions:
+      - set:
+          variable: inspection_duration
+          value: "${target_waypoint.inspection_time ?? 3.0}"
+
+      # Look around
+      - emit_intent:
+          channel: attention
+          action: look_around
+          duration: "${inspection_duration}"
+          urgency: 0.4
+
+      # Check waypoint-specific actions
+      - cond:
+          - when: "${target_waypoint.check_door}"
+            then:
+              - emit_intent:
+                  channel: interaction
+                  action: check_door
+                  target: "${target_waypoint.door_id}"
+                  urgency: 0.5
+
+          - when: "${target_waypoint.check_area}"
+            then:
+              - emit_intent:
+                  channel: attention
+                  action: scan_area
+                  thorough: true
+                  urgency: 0.6
+
+      # Brief idle at waypoint
+      - emit_intent:
+          channel: idle
+          action: stand_watch
+          duration: 2.0
+          urgency: 0.2
+
+      - return: {}
+
+  advance_waypoint:
+    description: "Move to next waypoint in route"
+    actions:
+      - set:
+          variable: route_length
+          value: "${world.patrol_routes[patrol_route].waypoints.length}"
+
+      - set:
+          variable: next_index
+          value: "${current_waypoint + patrol_direction}"
+
+      # Handle route end (ping-pong or loop)
+      - cond:
+          - when: "${next_index >= route_length}"
+            then:
+              - cond:
+                  - when: "${world.patrol_routes[patrol_route].loop}"
+                    then:
+                      - set: { variable: current_waypoint, value: 0 }
+                  - else:
+                      - set: { variable: patrol_direction, value: -1 }
+                      - set: { variable: current_waypoint, value: "${route_length - 2}" }
+
+          - when: "${next_index < 0}"
+            then:
+              - set: { variable: patrol_direction, value: 1 }
+              - set: { variable: current_waypoint, value: 1 }
+
+          - else:
+              - set: { variable: current_waypoint, value: "${next_index}" }
+
+      - return: {}
+
+  # ===========================================================================
+  # THREAT RESPONSE FLOWS
+  # ===========================================================================
+
+  assess_threat:
+    description: "Evaluate detected threat and decide response"
+    actions:
+      - set:
+          variable: threat
+          value: "${event.threat}"
+
+      # Stop current movement
+      - emit_intent:
+          channel: movement
+          action: stop
+          urgency: 0.8
+
+      # Face threat
+      - emit_intent:
+          channel: attention
+          action: focus
+          target: "${threat.entity_id}"
+          urgency: 0.9
+
+      # Assess threat level
+      - cond:
+          - when: "${threat.level >= 0.8}"
+            then:
+              # High threat - alert others and engage
+              - call: { flow: alert_nearby_guards }
+              - goto: { flow: engage_threat }
+
+          - when: "${threat.level >= 0.5}"
+            then:
+              # Medium threat - challenge first
+              - goto: { flow: challenge_threat }
+
+          - else:
+              # Low threat - observe
+              - goto: { flow: observe_threat }
+
+  challenge_threat:
+    description: "Verbally challenge potential threat"
+    actions:
+      - emit_intent:
+          channel: stance
+          action: ready
+          urgency: 0.7
+
+      # Draw weapon but don't attack
+      - emit_intent:
+          channel: combat
+          action: ready_weapon
+          urgency: 0.6
+
+      # Challenge
+      - emit_intent:
+          channel: speech
+          action: shout
+          dialogue_ref: "dialogue/guard/challenge"
+          urgency: 0.8
+
+      # Wait for response
+      - set:
+          variable: challenge_timeout
+          value: 5.0
+
+      - wait:
+          duration: "${challenge_timeout}"
+          until: "${threat.responded || threat.fled || threat.attacked}"
+
+      # Evaluate response
+      - cond:
+          - when: "${threat.attacked}"
+            then:
+              - goto: { flow: engage_threat }
+
+          - when: "${threat.fled}"
+            then:
+              - cond:
+                  - when: "${threat.level >= 0.6}"
+                    then:
+                      - goto: { flow: pursue_threat }
+                  - else:
+                      - call: { flow: report_incident }
+                      - goto: { flow: patrol_loop }
+
+          - when: "${threat.complied}"
+            then:
+              - goto: { flow: inspect_compliant }
+
+          - else:
+              # No response - escalate
+              - goto: { flow: approach_threat }
+
+  engage_threat:
+    description: "Active combat engagement"
+    goap:
+      preconditions:
+        health: "> 0.3"
+        has_weapon: true
+      effects:
+        threat_neutralized: true
+      cost: 10
+
+    actions:
+      # Combat stance
+      - emit_intent:
+          channel: stance
+          action: combat
+          urgency: 0.9
+
+      # Engage
+      - emit_intent:
+          channel: combat
+          action: engage
+          target: "${threat.entity_id}"
+          style: defensive        # Guards fight defensively
+          urgency: 0.95
+
+      # Call for backup if alone
+      - cond:
+          - when: "${nearby_guards.length == 0}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: whistle_alert
+                  urgency: 0.85
+
+      # Combat loop handled by combat-stance behavior layer
+      # This behavior just initiates and monitors
+
+      - wait:
+          until: "${!threat.active || health < 0.3}"
+
+      - cond:
+          - when: "${health < 0.3}"
+            then:
+              - goto: { flow: tactical_retreat }
+          - else:
+              - call: { flow: post_combat }
+              - goto: { flow: patrol_loop }
+
+  alert_nearby_guards:
+    description: "Signal nearby guards for assistance"
+    actions:
+      - cond:
+          - when: "${nearby_guards.length > 0}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: shout
+                  dialogue_ref: "dialogue/guard/alert_threat"
+                  urgency: 0.9
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: whistle_alert
+                  pattern: emergency
+                  urgency: 0.95
+
+      - return: {}
+
+  # ===========================================================================
+  # INVESTIGATION FLOWS
+  # ===========================================================================
+
+  investigate_suspicious:
+    description: "Investigate suspicious activity"
+    actions:
+      - set:
+          variable: subject
+          value: "${event.entity}"
+
+      # Heightened alertness
+      - emit_intent:
+          channel: stance
+          action: alert
+          urgency: 0.6
+
+      # Approach cautiously
+      - emit_intent:
+          channel: movement
+          action: walk_cautious
+          target: "${subject.position}"
+          urgency: 0.5
+
+      - emit_intent:
+          channel: attention
+          action: focus
+          target: "${subject.id}"
+          urgency: 0.7
+
+      # Wait for approach
+      - wait_for_arrival: {}
+
+      # Question
+      - emit_intent:
+          channel: speech
+          action: speak
+          dialogue_ref: "dialogue/guard/question_suspicious"
+          urgency: 0.6
+
+      # Observe response - cognition pipeline handles significance
+      - wait:
+          duration: 10.0
+          until: "${subject.threat_level > 0.5 || subject.cleared}"
+
+      - cond:
+          - when: "${subject.threat_level > 0.5}"
+            then:
+              - set: { variable: threat, value: "${subject}" }
+              - goto: { flow: challenge_threat }
+
+          - else:
+              # Cleared - return to patrol
+              - emit_intent:
+                  channel: expression
+                  action: nod
+                  urgency: 0.3
+              - goto: { flow: patrol_loop }
+
+  respond_to_distress:
+    description: "Respond to civilian in distress"
+    goap:
+      preconditions:
+        can_help: true
+      effects:
+        civilian_safe: true
+      cost: 5
+
+    actions:
+      - set:
+          variable: civilian
+          value: "${event.civilian}"
+
+      # Urgent movement
+      - emit_intent:
+          channel: movement
+          action: run
+          target: "${civilian.position}"
+          urgency: 0.85
+
+      - emit_intent:
+          channel: speech
+          action: shout
+          text: "Hold on! Help is coming!"
+          urgency: 0.8
+
+      - wait_for_arrival: {}
+
+      # Assess situation
+      - cond:
+          - when: "${civilian.attacker != null}"
+            then:
+              - set: { variable: threat, value: "${civilian.attacker}" }
+              - goto: { flow: engage_threat }
+
+          - when: "${civilian.needs_medical}"
+            then:
+              - call: { flow: administer_aid }
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: speak
+                  dialogue_ref: "dialogue/guard/offer_help"
+                  urgency: 0.6
+
+      - goto: { flow: patrol_loop }
+
+  # ===========================================================================
+  # COMMAND RESPONSES
+  # ===========================================================================
+
+  halt_patrol:
+    description: "Stop patrolling on command"
+    actions:
+      - emit_intent:
+          channel: movement
+          action: stop
+          urgency: 0.7
+
+      - emit_intent:
+          channel: stance
+          action: attention
+          urgency: 0.6
+
+      - emit_intent:
+          channel: speech
+          action: acknowledge
+          text: "Understood."
+          urgency: 0.5
+
+      # Wait for resume command
+      - wait:
+          until: "${received_command == 'resume'}"
+
+  resume_patrol:
+    description: "Resume patrol after halt"
+    actions:
+      - emit_intent:
+          channel: speech
+          action: acknowledge
+          text: "Resuming patrol."
+          urgency: 0.5
+
+      - goto: { flow: patrol_loop }
+
+  # ===========================================================================
+  # UTILITY FLOWS
+  # ===========================================================================
+
+  observe_threat:
+    description: "Observe low-level threat from distance"
+    actions:
+      - emit_intent:
+          channel: attention
+          action: watch
+          target: "${threat.entity_id}"
+          duration: 30.0
+          urgency: 0.5
+
+      - emit_intent:
+          channel: stance
+          action: alert
+          urgency: 0.4
+
+      # Continue patrol but keep watching
+      - goto: { flow: patrol_loop }
+
+  tactical_retreat:
+    description: "Retreat when outmatched"
+    actions:
+      - emit_intent:
+          channel: movement
+          action: retreat
+          target: "${nearest_safe_position}"
+          urgency: 0.9
+
+      - emit_intent:
+          channel: speech
+          action: shout
+          dialogue_ref: "dialogue/guard/call_reinforcements"
+          urgency: 0.95
+
+      - wait_for_arrival: {}
+
+      # Recover and reassess
+      - wait:
+          duration: 10.0
+
+      - goto: { flow: patrol_loop }
+
+  post_combat:
+    description: "Actions after combat ends"
+    actions:
+      - emit_intent:
+          channel: stance
+          action: alert
+          urgency: 0.6
+
+      # Secure area
+      - emit_intent:
+          channel: attention
+          action: scan_area
+          thorough: true
+          urgency: 0.7
+
+      # Report
+      - call: { flow: report_incident }
+
+      - return: {}
+
+  report_incident:
+    description: "File incident report"
+    actions:
+      - emit_intent:
+          channel: interaction
+          action: log_incident
+          data:
+            location: "${agent.position}"
+            time: "${world.time}"
+            type: "${incident_type}"
+            entities_involved: "${incident_entities}"
+          urgency: 0.4
+
+      - return: {}

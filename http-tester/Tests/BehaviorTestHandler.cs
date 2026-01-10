@@ -106,6 +106,11 @@ public class BehaviorTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGoapPlanGeneration, "GoapPlanGeneration", "Behavior", "Test GOAP plan generation from compiled behavior"),
         new ServiceTest(TestGoapPlanNonExistentBehavior, "GoapPlanNonExistentBehavior", "Behavior", "Test GOAP plan 404 for non-existent behavior"),
         new ServiceTest(TestGoapPlanValidation, "GoapPlanValidation", "Behavior", "Test GOAP plan validation against world state"),
+
+        // Cache invalidation tests
+        new ServiceTest(TestInvalidateCachedBehavior, "InvalidateCachedBehavior", "Behavior", "Test invalidating cached behavior"),
+        new ServiceTest(TestInvalidateNonExistentBehavior, "InvalidateNonExistent", "Behavior", "Test invalidating non-existent behavior"),
+
     ];
 
     private static async Task<TestResult> TestCompileValidAbml(ITestClient client, string[] args) =>
@@ -125,22 +130,18 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
-
+            // Success is implied by getting a response without exception
             if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
             if (response.CompilationTimeMs < 0)
                 return TestResult.Failed("Invalid compilation time");
 
+            var warningInfo = response.Warnings != null && response.Warnings.Any()
+                ? $", Warnings: {string.Join(", ", response.Warnings)}"
+                : "";
             return TestResult.Successful(
-                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms");
+                $"Compiled successfully: ID={response.BehaviorId}, Time={response.CompilationTimeMs}ms{warningInfo}");
         }, "Compile valid ABML");
 
     private static async Task<TestResult> TestCompileInvalidAbml(ITestClient client, string[] args) =>
@@ -162,20 +163,13 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-                // Should return success=false with warnings for semantic errors
-                if (response.Success)
-                    return TestResult.Failed("Expected compilation to fail for invalid ABML");
-
-                if (response.Warnings == null || !response.Warnings.Any())
-                    return TestResult.Failed("Expected warnings for invalid ABML");
-
-                return TestResult.Successful(
-                    $"Correctly detected errors: {string.Join(", ", response.Warnings)}");
+                // If we got a response, compilation unexpectedly succeeded
+                return TestResult.Failed($"Expected compilation to fail for invalid ABML, but got behaviorId: {response.BehaviorId}");
             }
-            catch (ApiException<AbmlErrorResponse> ex)
+            catch (ApiException ex) when (ex.StatusCode == 400)
             {
-                // 400 response with error details is also acceptable
-                return TestResult.Successful($"Correctly returned error: {ex.Result?.Error}");
+                // 400 response indicates invalid ABML was correctly rejected
+                return TestResult.Successful("Correctly returned 400 error for invalid ABML");
             }
         }, "Compile invalid ABML");
 
@@ -197,10 +191,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             {
                 var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-                if (response.Success)
-                    return TestResult.Failed("Expected compilation to fail for empty ABML");
-
-                return TestResult.Successful("Correctly rejected empty ABML");
+                // If we got a response, compilation unexpectedly succeeded
+                return TestResult.Failed($"Expected compilation to fail for empty ABML, but got behaviorId: {response.BehaviorId}");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
             {
@@ -275,14 +267,7 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
-
+            // Success is implied by getting a response without exception
             if (string.IsNullOrEmpty(response.BehaviorId))
                 return TestResult.Failed("Behavior ID is empty");
 
@@ -319,13 +304,9 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var response = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(request));
 
-            if (!response.Success)
-            {
-                var warnings = response.Warnings != null
-                    ? string.Join(", ", response.Warnings)
-                    : "no warnings";
-                return TestResult.Failed($"Compilation failed: {warnings}");
-            }
+            // Success is implied by getting a response without exception
+            if (string.IsNullOrEmpty(response.BehaviorId))
+                return TestResult.Failed("Behavior ID is empty");
 
             if (response.BehaviorName != "blacksmith-daily-routine")
                 return TestResult.Failed($"Expected behavior_name 'blacksmith-daily-routine', got '{response.BehaviorName}'");
@@ -373,14 +354,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
             };
 
             var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(BannouJson.Serialize(compileRequest));
-            if (!compileResponse.Success)
-            {
-                var warnings = compileResponse.Warnings != null
-                    ? string.Join(", ", compileResponse.Warnings)
-                    : "unknown error";
-                return TestResult.Failed($"Failed to compile GOAP behavior: {warnings}");
-            }
 
+            // Success is implied by getting a response without exception
             var behaviorId = compileResponse.BehaviorId;
             if (string.IsNullOrEmpty(behaviorId))
                 return TestResult.Failed("Behavior ID is empty after compilation");
@@ -411,7 +386,8 @@ public class BehaviorTestHandler : BaseHttpTestHandler
 
             var planResponse = await behaviorClient.GenerateGoapPlanAsync(planRequest);
 
-            if (!planResponse.Success)
+            // Success is indicated by plan != null; failure has failureReason
+            if (planResponse.Plan == null)
             {
                 // The plan might not be found if the goal isn't achievable - that's still valid
                 // We mainly want to verify the endpoint works
@@ -421,9 +397,6 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 return TestResult.Successful(
                     $"GOAP planning executed, result: {planResponse.FailureReason}, time={planResponse.PlanningTimeMs}ms");
             }
-
-            if (planResponse.Plan == null)
-                return TestResult.Failed("Plan response succeeded but plan is null");
 
             return TestResult.Successful(
                 $"GOAP plan generated: {planResponse.Plan.Actions?.Count ?? 0} actions, " +
@@ -455,13 +428,13 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 var response = await behaviorClient.GenerateGoapPlanAsync(request);
 
                 // If we get a response, it should indicate failure with "not found"
-                if (!response.Success && response.FailureReason != null &&
+                if (response.Plan == null && response.FailureReason != null &&
                     response.FailureReason.Contains("not found", StringComparison.OrdinalIgnoreCase))
                 {
                     return TestResult.Successful("Correctly indicated behavior not found in response");
                 }
 
-                return TestResult.Failed($"Expected not found indication, got: success={response.Success}");
+                return TestResult.Failed($"Expected not found indication, got: plan={response.Plan != null}, reason={response.FailureReason}");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
@@ -516,4 +489,69 @@ public class BehaviorTestHandler : BaseHttpTestHandler
                 $"suggested_action={response.SuggestedAction}, " +
                 $"reason={response.Reason}");
         }, "GOAP plan validation");
+
+    #region Cache Invalidation Tests
+
+    private static async Task<TestResult> TestInvalidateCachedBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            // First compile a behavior to cache it
+            var compileRequest = new CompileBehaviorRequest
+            {
+                AbmlContent = ValidAbmlYaml,
+                BehaviorName = "invalidation-test-behavior",
+                CompilationOptions = new CompilationOptions
+                {
+                    EnableOptimizations = true,
+                    CacheCompiledResult = true
+                }
+            };
+
+            var compileResponse = await behaviorClient.CompileAbmlBehaviorAsync(
+                BannouJson.Serialize(compileRequest));
+
+            // Success is implied by getting a response without exception
+            if (string.IsNullOrEmpty(compileResponse.BehaviorId))
+                return TestResult.Failed("Failed to compile behavior for invalidation test");
+
+            // Now invalidate it - void return means no exception = success
+            var invalidateRequest = new InvalidateCacheRequest
+            {
+                BehaviorId = compileResponse.BehaviorId
+            };
+
+            await behaviorClient.InvalidateCachedBehaviorAsync(invalidateRequest);
+
+            return TestResult.Successful(
+                $"Successfully invalidated cached behavior: {compileResponse.BehaviorId}");
+        }, "Invalidate cached behavior");
+
+    private static async Task<TestResult> TestInvalidateNonExistentBehavior(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var behaviorClient = GetServiceClient<IBehaviorClient>();
+
+            var request = new InvalidateCacheRequest
+            {
+                BehaviorId = "nonexistent-behavior-xyz-12345"
+            };
+
+            try
+            {
+                // Void return - no exception means operation completed
+                await behaviorClient.InvalidateCachedBehaviorAsync(request);
+
+                // Invalidating non-existent is typically a no-op, not an error
+                return TestResult.Successful("Invalidation request completed (no-op for non-existent)");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("Correctly returned 404 for non-existent behavior");
+            }
+        }, "Invalidate non-existent behavior");
+
+    #endregion
+
 }

@@ -22,7 +22,8 @@ copy_behavior_files() {
 
     echo "  Copying behavior files to $target_dir with namespace $target_namespace..."
 
-    # Create directory structure
+    # Create directory structure (clean first to remove stale files)
+    rm -rf "$target_dir/Runtime" "$target_dir/Intent"
     mkdir -p "$target_dir/Runtime"
     mkdir -p "$target_dir/Intent"
 
@@ -30,15 +31,24 @@ copy_behavior_files() {
     local src_ns="BeyondImmersion.BannouService.Behavior"
 
     # Copy and transform Runtime files
-    for file in ./lib-behavior/Runtime/*.cs; do
+    # EXCLUDE cloud-side files that depend on server infrastructure:
+    #   - CinematicRunner.cs: Depends on Control/* types (server-side orchestration)
+    local exclude_runtime="CinematicRunner.cs"
+
+    for file in ./plugins/lib-behavior/Runtime/*.cs; do
         if [ -f "$file" ]; then
             local basename=$(basename "$file")
+            # Skip excluded files
+            if [[ "$exclude_runtime" == *"$basename"* ]]; then
+                echo "    Skipping $basename (cloud-side only)"
+                continue
+            fi
             sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Runtime/$basename"
         fi
     done
 
     # Copy and transform Intent files
-    for file in ./lib-behavior/Intent/*.cs; do
+    for file in ./plugins/lib-behavior/Intent/*.cs; do
         if [ -f "$file" ]; then
             local basename=$(basename "$file")
             sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Intent/$basename"
@@ -47,8 +57,8 @@ copy_behavior_files() {
 
     # Copy and transform root behavior files (IBehaviorEvaluator, BehaviorEvaluatorBase, BehaviorModelCache)
     for file in IBehaviorEvaluator.cs BehaviorEvaluatorBase.cs BehaviorModelCache.cs; do
-        if [ -f "./lib-behavior/$file" ]; then
-            sed "s/$src_ns/$target_namespace/g" "./lib-behavior/$file" > "$target_dir/$file"
+        if [ -f "./plugins/lib-behavior/$file" ]; then
+            sed "s/$src_ns/$target_namespace/g" "./plugins/lib-behavior/$file" > "$target_dir/$file"
         fi
     done
 

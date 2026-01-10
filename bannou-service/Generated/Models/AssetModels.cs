@@ -575,6 +575,53 @@ public partial class AssetWithDownloadUrl
 }
 
 /// <summary>
+/// Request to delete an asset from storage
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteAssetRequest
+{
+
+    /// <summary>
+    /// Asset identifier to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific version to delete. If omitted, all versions are deleted.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versionId")]
+    public string? VersionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response confirming asset deletion
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteAssetResponse
+{
+
+    /// <summary>
+    /// Deleted asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of versions deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versionsDeleted")]
+    public int VersionsDeleted { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to list all versions of an asset with pagination
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

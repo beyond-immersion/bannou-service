@@ -51,7 +51,7 @@ build_all_services_efficiently() {
     # Publish each service project to ensure all dependencies are copied
     for service in "${services_to_build[@]}"; do
         echo "🔨 Publishing lib-$service..."
-        dotnet publish "lib-$service/lib-$service.csproj" --configuration Release -nologo --verbosity quiet -p:GenerateNewServices=false -p:GenerateUnitTests=false --no-restore
+        dotnet publish "plugins/lib-$service/lib-$service.csproj" --configuration Release -nologo --verbosity quiet -p:GenerateNewServices=false -p:GenerateUnitTests=false --no-restore
         if [ $? -ne 0 ]; then
             echo "❌ Failed to publish lib-$service"
             exit 1
@@ -64,11 +64,11 @@ build_all_services_efficiently() {
     # Verify all expected DLLs exist before trying to copy
     echo "🔍 Verifying DLLs were published..."
     for service in "${services_to_build[@]}"; do
-        service_dll="lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/lib-$service.dll"
+        service_dll="plugins/lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/lib-$service.dll"
         if [[ ! -f "$service_dll" ]]; then
             echo "❌ Expected DLL not found after publish: $service_dll"
             echo "📁 Contents of lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/:"
-            ls -la "lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/" 2>/dev/null || echo "Directory does not exist"
+            ls -la "plugins/lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/" 2>/dev/null || echo "Directory does not exist"
             exit 1
         fi
     done
@@ -93,7 +93,7 @@ copy_service_dll() {
     fi
 
     # Find the service project directory
-    local service_proj_dir="lib-$service_name"
+    local service_proj_dir="plugins/lib-$service_name"
     local service_publish_dir="$service_proj_dir/bin/Release/$TARGET_FRAMEWORK/publish"
     local service_dll="$service_publish_dir/lib-$service_name.dll"
 

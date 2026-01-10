@@ -1,9 +1,9 @@
 # ABML - Arcadia Behavior Markup Language
 
-> **Version**: 2.0
+> **Version**: 2.1
 > **Status**: Implemented (414 tests passing)
 > **Location**: `bannou-service/Abml/`
-> **Related**: [GOAP Guide](./GOAP.md)
+> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md)
 
 ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Arcadia.
 
@@ -87,6 +87,11 @@ context:
   requirements: { ... }   # Required world state to execute
   services: [ ... ]       # Service dependencies
 
+options:                  # Declarative actor options (for Event Brain queries)
+  combat: [ ... ]         # Combat options (attack, defend, etc.)
+  dialogue: [ ... ]       # Dialogue options (greet, threaten, etc.)
+  # ... other option types
+
 events:
   - pattern: string       # Event pattern to subscribe to
     handler: string       # Flow/channel to invoke
@@ -114,6 +119,101 @@ on_error: flow_name       # Document-level error handler
 | `timeline` | `channels` | Generic parallel sequences |
 
 The `type` field is a hint to runtimes and tooling. The actual structure (flows vs channels) determines execution model.
+
+### 2.3 Options Block (Actor Self-Description)
+
+The `options` block enables actors to declaratively define their available options for Event Brain queries. Options are evaluated at runtime against the current scope and stored in `state.memories.{type}_options`.
+
+```yaml
+options:
+  combat:
+    - actionId: "sword_slash"
+      preference: "${combat.style == 'aggressive' ? 0.9 : 0.6}"
+      risk: 0.3
+      available: "${equipment.has_sword}"
+      requirements: ["has_sword"]
+      tags: ["melee", "offensive"]
+
+    - actionId: "shield_bash"
+      preference: "${combat.style == 'defensive' ? 0.7 : 0.4}"
+      risk: 0.2
+      available: "${equipment.has_shield}"
+      requirements: ["has_shield"]
+      tags: ["melee", "defensive", "stun"]
+
+    - actionId: "retreat"
+      preference: "${1.0 - combat.riskTolerance}"
+      risk: 0.0
+      available: true
+      tags: ["movement", "defensive"]
+
+  dialogue:
+    - actionId: "greet_friendly"
+      preference: "${personality.extraversion * personality.agreeableness}"
+      available: true
+      tags: ["social", "friendly"]
+
+    - actionId: "intimidate"
+      preference: "${personality.aggression * (1.0 - personality.agreeableness)}"
+      available: true
+      tags: ["social", "hostile"]
+```
+
+**Option Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `actionId` | string | Yes | Unique identifier for this action |
+| `preference` | float or expression | Yes | How much the actor prefers this option (0-1) |
+| `risk` | float or expression | No | Estimated risk of this action (0-1) |
+| `available` | bool or expression | Yes | Whether this option is currently available |
+| `requirements` | string[] | No | Human-readable requirements |
+| `cooldownMs` | int or expression | No | Cooldown in milliseconds |
+| `tags` | string[] | No | Tags for categorization |
+
+**Expression Evaluation:**
+
+Properties that accept expressions (denoted with `${...}`) are evaluated each time options are computed:
+- `preference`, `risk`, `available`, `cooldownMs` can be expressions
+- Expressions have access to the full actor scope (personality, combat, backstory, state, etc.)
+- Static values (no `${}`) are used directly without evaluation
+
+**Option Types:**
+
+Well-known option types match the `OptionsQueryType` enum:
+- `combat` - Combat actions (attack, defend, retreat, etc.)
+- `dialogue` - Dialogue options (greet, threaten, negotiate, etc.)
+- `exploration` - Exploration options (investigate, climb, search, etc.)
+- `social` - Social interactions (trade, persuade, intimidate, etc.)
+- Custom types are also supported
+
+**Runtime Behavior:**
+
+1. **On Document Load**: Options expressions are parsed and validated
+2. **On Each Tick**: Options are re-evaluated and stored in `state.memories.{type}_options` with timestamp
+3. **On Query**: `/actor/query-options` returns the cached options (respecting freshness level)
+
+**Integration with Event Brain:**
+
+```yaml
+# Event Brain querying a character's combat options
+- query_options:
+    actor_id: "${participant.actorId}"
+    query_type: combat
+    freshness: cached
+    max_age_ms: 3000
+    result_variable: "participant_options"
+
+# Use options to compose choreography
+- for_each:
+    collection: "${participant_options.options}"
+    as: "option"
+    do:
+      - cond:
+          - when: "${option.available && option.preference > 0.5}"
+            then:
+              - log: "Considering option ${option.actionId}"
+```
 
 ---
 
@@ -371,6 +471,7 @@ Expressions are enclosed in `${}` and support:
 # Membership
 "${item in collection}"
 "${key in map}"
+"${state in ['idle', 'walking', 'running']}"  # Array literal (static sets)
 
 # Ternary
 "${condition ? value_if_true : value_if_false}"
@@ -419,6 +520,52 @@ Expressions are enclosed in `${}` and support:
 "${is_empty(collection)}"
 ```
 
+### 5.2.1 Collection Membership (`in` operator)
+
+The `in` operator tests membership in collections. Support varies by execution context:
+
+**Cloud-Side Execution** (tree-walking interpreter):
+```yaml
+# All forms supported - dynamic collections resolved at runtime
+- cond:
+    if: "${state in valid_states}"           # Variable reference to collection
+    then:
+      - log: "State is valid"
+
+- cond:
+    if: "${item in ['sword', 'shield']}"     # Array literal
+    then:
+      - log: "Combat equipment detected"
+```
+
+**Bytecode Execution** (behavior models, compiled behaviors):
+```yaml
+# Only array literals with static values are supported
+# Compiled to efficient OR-chain: state == 'idle' || state == 'walking' || ...
+- cond:
+    if: "${state in ['idle', 'walking', 'running']}"  # Works - static set expansion
+    then:
+      - goto: movement_flow
+
+# NOT supported in bytecode - requires runtime collection resolution
+# - cond:
+#     if: "${item in inventory}"  # Error: use input flags instead
+```
+
+**Bytecode Constraints**:
+- Array literals only (no variable references)
+- Maximum 16 elements per array
+- All elements must be literals (no expressions)
+
+**Workaround for Dynamic Collections**: Pre-compute membership as a boolean input:
+```yaml
+# Game server computes: is_valid_state = valid_states.contains(current_state)
+- cond:
+    if: "${is_valid_state}"  # Boolean input from game server
+    then:
+      - goto: valid_state_handling
+```
+
 ### 5.3 Template Syntax (Text Interpolation)
 
 For text output (dialogue, messages), use Liquid-style `{{}}` syntax:
@@ -437,7 +584,97 @@ narrate:
 
 Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `default`, `date`
 
-### 5.4 Expression vs Template
+### 5.4 Character Variable Providers
+
+When executing behaviors for characters, the ActorRunner automatically registers variable providers that expose character data:
+
+#### PersonalityProvider (`${personality.*}`)
+
+Exposes character personality traits (8 axes):
+
+```yaml
+# Direct trait access (normalized 0.0-1.0)
+"${personality.openness}"
+"${personality.aggression}"
+"${personality.loyalty}"
+
+# Trait enum access
+"${personality.traits.NEUROTICISM}"
+"${personality.traits.HONESTY}"
+
+# Metadata
+"${personality.version}"  # Version counter for change detection
+```
+
+#### CombatPreferencesProvider (`${combat.*}`)
+
+Exposes combat style preferences:
+
+```yaml
+# Style enum (aggressive/defensive/tactical/opportunistic)
+"${combat.style}"
+
+# Range preference (close/mid/long)
+"${combat.preferredRange}"
+
+# Group role (leader/support/striker/tank)
+"${combat.groupRole}"
+
+# Numeric preferences (0.0-1.0)
+"${combat.riskTolerance}"
+"${combat.retreatThreshold}"
+
+# Boolean preferences
+"${combat.protectAllies}"
+```
+
+#### BackstoryProvider (`${backstory.*}`)
+
+Exposes character backstory elements (9 types):
+
+```yaml
+# Direct type access (returns first element's value)
+"${backstory.origin}"
+"${backstory.fear}"
+"${backstory.trauma}"
+
+# Property access
+"${backstory.fear.key}"       # e.g., "FIRE", "BETRAYAL"
+"${backstory.fear.value}"     # Narrative description
+"${backstory.fear.strength}"  # 0.0-1.0
+
+# Collection access
+"${backstory.elements}"                # All backstory elements
+"${backstory.elements.TRAUMA}"         # All elements of type TRAUMA
+```
+
+**Example usage in behavior decisions:**
+
+```yaml
+flows:
+  evaluate_threat_response:
+    - cond:
+        # High aggression + low retreat threshold = stand and fight
+        if: "${personality.aggression > 0.7 && combat.retreatThreshold < 0.3}"
+        then:
+          - emit_intent:
+              channel: stance
+              stance: "aggressive"
+              urgency: 0.9
+
+        # Character fears fire - avoid fire-based tactics
+        if: "${backstory.fear.key == 'FIRE'}"
+        then:
+          - set: avoid_fire = true
+          - modify_emotion: { emotion: fear, delta: 0.2 }
+
+        # Protective personality - prioritize allies
+        if: "${combat.protectAllies && personality.loyalty > 0.6}"
+        then:
+          - call: protect_ally_behavior
+```
+
+### 5.5 Expression vs Template
 
 | Context | Syntax | Use |
 |---------|--------|-----|
@@ -523,6 +760,40 @@ Multiple `when` clauses are evaluated in order; first match executes.
 
 # Branch to channel (in channel-based documents)
 - branch: channel_name
+```
+
+**Execution Context Notes**:
+
+| Action | Cloud-Side (Tree-Walker) | Bytecode |
+|--------|--------------------------|----------|
+| `goto` | Flow transition | Flow transition (same) |
+| `call` | Subroutine with return | **Not supported** - use `goto` |
+| `return` | Return to caller | Halt execution (no caller) |
+
+The bytecode VM is intentionally a flat state machine without a call stack. This design choice enables:
+- Zero-allocation per-frame evaluation
+- Simple, predictable execution flow
+- Optimized for game engine integration
+
+**For subroutine semantics in bytecode behaviors**, refactor to use `goto`:
+```yaml
+# Instead of:
+# - call: { flow: validate }
+# - process_result: { ... }
+
+# Use explicit flow transitions:
+- goto: { flow: validate }
+
+# In validate flow, goto back to the next step:
+flows:
+  validate:
+    actions:
+      - cond:
+          if: "${is_valid}"
+          then:
+            - goto: { flow: process_result }
+          else:
+            - goto: { flow: handle_error }
 ```
 
 ---
@@ -1715,6 +1986,197 @@ This is approximately 10-15 lines of code with no architectural changes required
 3. **Use case unclear**: Most imported documents are utility libraries with pure functions that don't need their own default state
 
 **Implementation Status**: This can be added at any time if a legitimate use case emerges. The infrastructure supports it; it's simply a matter of policy.
+
+---
+
+## Appendix D: Dialogue Resolution System
+
+The dialogue system provides runtime text resolution with localization and conditional overrides.
+
+### D.1 Three-Step Resolution Pipeline
+
+```
+1. Check external file for matching condition override (priority-sorted)
+2. Check external file for localization (with fallback chain)
+3. Fall back to inline default text (always exists, required in ABML)
+```
+
+**Key design**: Inline text is REQUIRED in every `speak:` action. External files are optional and provide localization + conditional overrides.
+
+### D.2 External Dialogue File Format
+
+```yaml
+# dialogue/merchant/greet.yaml
+localizations:
+  en: "Welcome to my shop!"
+  es: "¡Bienvenido a mi tienda!"
+  ja: "いらっしゃいませ！"
+
+overrides:
+  - condition: "${player.reputation > 50}"
+    text: "Ah, my favorite customer!"
+    priority: 10
+  - condition: "${time.hour >= 20}"
+    text: "We're closing soon, but come in!"
+    priority: 5
+    locale: en  # Optional: locale-restricted override
+```
+
+### D.3 Code Locations
+
+| Component | Location |
+|-----------|----------|
+| `IDialogueResolver` | `bannou-service/Behavior/IDialogueResolver.cs` |
+| `ILocalizationProvider` | `bannou-service/Behavior/ILocalizationProvider.cs` |
+| `IExternalDialogueLoader` | `bannou-service/Behavior/IExternalDialogueLoader.cs` |
+| `DialogueResolver` | `lib-behavior/Dialogue/DialogueResolver.cs` |
+| `ExternalDialogueLoader` | `lib-behavior/Dialogue/ExternalDialogueLoader.cs` |
+| `FileLocalizationProvider` | `lib-behavior/Dialogue/FileLocalizationProvider.cs` |
+
+### D.4 Future Extension: Database-Backed Dialogue Sources
+
+The dialogue system supports two separate localization systems:
+
+1. **Per-dialogue companion documents** (`IExternalDialogueLoader`)
+   - Reference-based: `dialogue/merchant/greet` → YAML file
+   - Conditional logic supported (overrides with conditions)
+   - Currently file-only
+
+2. **Global string tables** (`ILocalizationProvider`)
+   - Key-based: `ui.menu.start` → localized string
+   - Plugin architecture with `ILocalizationSource`
+   - Ready for database source today
+
+**Intended priority chain for dialogue text**:
+1. Database (highest priority, almost never exists)
+2. Companion document (YAML file, may exist)
+3. Inline text (always exists, required in ABML)
+
+**To add database support for per-dialogue**:
+
+The `IExternalDialogueLoader` interface is abstract enough:
+```csharp
+Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct);
+```
+
+Create `DatabaseDialogueLoader : IExternalDialogueLoader`, then aggregate:
+
+```csharp
+// Future: AggregateDialogueLoader.cs
+public class AggregateDialogueLoader : IExternalDialogueLoader
+{
+    private readonly IReadOnlyList<IDialogueSource> _sources; // Priority-ordered
+
+    public async Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct)
+    {
+        foreach (var source in _sources)
+        {
+            var result = await source.LoadAsync(reference, ct);
+            if (result != null) return result;
+        }
+        return null;
+    }
+}
+```
+
+**What to add when needed**:
+- `IDialogueSource` interface (mirrors `ILocalizationSource`)
+- `AggregateDialogueLoader` implementation
+- `DatabaseDialogueSource` implementation
+- Priority property on sources
+
+This can be added without changing `DialogueResolver` - it only knows about `IExternalDialogueLoader`, not implementation details.
+
+---
+
+## Appendix E: Removed API Endpoints
+
+This section documents API endpoints that were designed but removed because the runtime BehaviorStack provides a superior approach.
+
+### E.1 CompileBehaviorStack (Removed)
+
+**Original Design**: `/stack/compile` endpoint that would compile multiple ABML files with priority-based merging at compile time, producing a single merged bytecode artifact.
+
+**Schema Definition**:
+```yaml
+# Removed from behavior-api.yaml
+/stack/compile:
+  post:
+    operationId: CompileBehaviorStack
+    requestBody:
+      $ref: '#/components/schemas/BehaviorStackRequest'
+```
+
+**Why It Was Removed**:
+
+The runtime `BehaviorStack` (located in `lib-behavior/Stack/`) provides **superior dynamic layer evaluation** compared to compile-time merging:
+
+| Aspect | Compile-Time Merging | Runtime BehaviorStack |
+|--------|---------------------|----------------------|
+| Layer addition | Requires recompilation | Add layer instantly |
+| Layer removal | Requires recompilation | Remove layer instantly |
+| Priority changes | Requires recompilation | Adjust at runtime |
+| Debugging | Merged bytecode is opaque | Inspect each layer contribution |
+| Flexibility | Static archetypes only | Dynamic situational layers |
+
+**Alternative Approach**: Compile each ABML file separately with `/compile`, then load them as layers in a `BehaviorStack` at runtime. The `IntentStackMerger` handles priority-based merging dynamically.
+
+**Git History**: The original implementation returned `501 Not Implemented`. Schema and implementation removed in commit related to this document update.
+
+### E.2 ResolveContextVariables (Removed)
+
+**Original Design**: `/context/resolve` endpoint that would evaluate context variable expressions against character and world state.
+
+**Schema Definition**:
+```yaml
+# Removed from behavior-api.yaml
+/context/resolve:
+  post:
+    operationId: ResolveContextVariables
+    requestBody:
+      $ref: '#/components/schemas/ResolveContextRequest'
+```
+
+**Why It Was Removed**:
+
+Context variable resolution happens **dynamically within BehaviorStack layer evaluation**:
+
+1. When `BehaviorStack.EvaluateAsync()` is called, it receives a `BehaviorEvaluationContext` with the current entity state in `context.Data`
+2. Each layer's ABML expressions are evaluated with this context
+3. The `IntentStackMerger` combines contributions from all layers
+
+**The standalone endpoint was redundant because**:
+- Context resolution is inherently tied to specific layer evaluation
+- Resolving context outside of layer evaluation produces incomplete results
+- Debugging tools can inspect `BehaviorEvaluationContext` directly
+
+**Alternative Approaches**:
+- For testing expressions: Use the ABML compiler's validation mode
+- For debugging: Inspect `BehaviorEvaluationContext.Data` at runtime
+- For tooling: Use the expression VM directly with a test context
+
+### E.3 Related Removed Schemas
+
+The following schema definitions were removed along with the endpoints:
+
+| Schema | Purpose |
+|--------|---------|
+| `BehaviorStackRequest` | Request body for compile-time stack merging |
+| `BehaviorSetDefinition` | Definition of a behavior set with priority |
+| `ResolveContextRequest` | Request body for context resolution |
+| `ResolveContextResponse` | Response with resolved value |
+
+**Note**: `CharacterContext` schema was **retained** as it's used by `CompileBehaviorRequest` for single-file compilation with context.
+
+### E.4 Restoration Guide
+
+If these endpoints need to be restored in the future:
+
+1. **Schema**: Check git history for the removed YAML definitions in `schemas/behavior-api.yaml`
+2. **Implementation**: Create implementations in `lib-behavior/BehaviorService.cs`
+3. **Tests**: Add proper behavioral tests (not just "doesn't throw")
+
+**Caution**: Before restoring, consider whether the runtime BehaviorStack approach already solves the use case better.
 
 ---
 

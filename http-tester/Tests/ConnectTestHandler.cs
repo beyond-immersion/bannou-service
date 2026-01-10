@@ -161,7 +161,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 if (response == null)
                     return TestResult.Failed("Internal proxy response is null");
 
-                return TestResult.Successful($"Internal proxy completed - Success: {response.Success}, Status: {response.StatusCode}");
+                return TestResult.Successful($"Internal proxy completed - Status: {response.StatusCode}");
             }
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
@@ -193,12 +193,13 @@ public class ConnectTestHandler : BaseHttpTestHandler
             {
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
-                if (response?.Success == false)
+                // Success indicated by 2xx status code
+                if (response?.StatusCode >= 400 || !string.IsNullOrEmpty(response?.Error))
                 {
-                    return TestResult.Successful($"Proxy correctly failed for invalid service: {response.Error}");
+                    return TestResult.Successful($"Proxy correctly failed for invalid service: {response?.Error ?? $"status {response?.StatusCode}"}");
                 }
 
-                return TestResult.Failed("Proxy to invalid service should return success=false");
+                return TestResult.Failed("Proxy to invalid service should return an error status");
             }
             catch (ApiException ex) when (ex.StatusCode == 403 || ex.StatusCode == 404 || ex.StatusCode == 502 || ex.StatusCode == 503)
             {
@@ -228,7 +229,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             {
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
-                if (response?.Success == false)
+                // Success indicated by 2xx status code
+                if (response?.StatusCode >= 400 || !string.IsNullOrEmpty(response?.Error))
                 {
                     return TestResult.Successful("Proxy correctly failed for empty session ID");
                 }
@@ -334,7 +336,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
                 // The request was processed - check for valid response
-                return TestResult.Successful($"Proxy processed request with body - Status: {response?.StatusCode}, Success: {response?.Success}");
+                return TestResult.Successful($"Proxy processed request with body - Status: {response?.StatusCode}");
             }
             catch (ApiException ex) when (ex.StatusCode == 403)
             {
@@ -400,7 +402,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
             {
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
-                if (response?.Success == false)
+                // Success indicated by 2xx status code
+                if (response?.StatusCode >= 400 || !string.IsNullOrEmpty(response?.Error))
                 {
                     return TestResult.Successful("Proxy correctly handled empty endpoint");
                 }
@@ -444,13 +447,13 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 if (response == null)
                     return TestResult.Failed("Proxy response is null");
 
-                // Check if we got a valid response from account service
-                if (response.Success && response.StatusCode == 200)
+                // Check if we got a valid response from account service (success = 2xx status)
+                if (response.StatusCode >= 200 && response.StatusCode < 300)
                 {
                     return TestResult.Successful($"Proxy successfully routed to account service - got {response.Response?.Length ?? 0} chars response");
                 }
 
-                return TestResult.Successful($"Proxy to account service completed - Success: {response.Success}, Status: {response.StatusCode}");
+                return TestResult.Successful($"Proxy to account service completed - Status: {response.StatusCode}");
             }
             catch (ApiException ex) when (ex.StatusCode == 403)
             {

@@ -1,0 +1,131 @@
+# =============================================================================
+# Guard Character Definition
+# A typical city guard with heightened alertness and patrol duties.
+# =============================================================================
+
+character:
+  id: city_guard
+  name: "City Guard"
+  archetype: humanoid
+
+  # ---------------------------------------------------------------------------
+  # Personality traits affect willingness and behavior priorities
+  # ---------------------------------------------------------------------------
+  personality:
+    discipline: 0.8        # High discipline - follows orders well
+    courage: 0.6           # Moderate courage - will fight but not recklessly
+    suspicion: 0.7         # Suspicious of strangers
+    loyalty: 0.75          # Loyal to employer/city
+
+  # ---------------------------------------------------------------------------
+  # Willingness thresholds (Monster Rancher feel)
+  # Pre-computed decisions about when to obey/disobey commands
+  # ---------------------------------------------------------------------------
+  willingness:
+    obey_threshold: 0.4    # Commands above this urgency: usually obey
+    refuse_threshold: 0.2  # Commands below this: might refuse
+
+    # Pre-committed behaviors that override normal commands
+    pre_commits:
+      - action: protect_civilians
+        override_all: true
+        reason: "sworn_duty"
+      - action: flee_from_monster
+        override_all: false
+        min_threat: 0.9     # Only flee from extreme threats
+        reason: "self_preservation"
+
+  # ---------------------------------------------------------------------------
+  # Cognition configuration
+  # Guards are more alert and notice threats faster
+  # ---------------------------------------------------------------------------
+  cognition:
+    base: humanoid-cognition-base
+    overrides:
+      # Stage 1: Filter - Guards have wider perception range
+      - stage: filter
+        handler_id: attention_filter
+        parameters:
+          max_perception_distance: 40.0  # See further than average (default: 30)
+          attention_budget: 15           # Track more things (default: 10)
+          priority_weights:
+            threat: 12.0                 # Very sensitive to threats (default: 8)
+            movement: 6.0                # Notice movement more (default: 4)
+            sound: 8.0                   # Alert to sounds (default: 5)
+          threat_fast_track: true        # Threats bypass normal queue
+
+      # Stage 3: Significance - Guards weight duty-related events higher
+      - stage: significance
+        handler_id: assess_significance
+        parameters:
+          base_significance:
+            stranger_in_area: 0.4        # Strangers are notable
+            weapon_drawn: 0.8            # Weapons are very significant
+            running_person: 0.5          # Running draws attention
+            loud_noise: 0.6              # Investigate loud noises
+          context_multipliers:
+            night_time: 1.5              # More suspicious at night
+            restricted_area: 2.0         # High alert in restricted zones
+
+      # Stage 5: Intention - Guards have specific response patterns
+      - stage: intention
+        handler_id: generate_intention
+        parameters:
+          response_priorities:
+            threat_detected: investigate_first  # Don't attack immediately
+            civilian_distress: respond_immediately
+            suspicious_activity: observe_then_approach
+
+  # ---------------------------------------------------------------------------
+  # Behavior stack configuration
+  # Layers are evaluated in priority order; outputs merged per channel
+  # ---------------------------------------------------------------------------
+  behaviors:
+    # Base layer - fundamental humanoid behaviors (breathing, blinking, etc.)
+    - id: humanoid-base
+      category: base
+      priority: 0
+      source: behaviors/shared/humanoid-base
+
+    # Professional layer - guard-specific patrol and response behaviors
+    - id: guard-patrol
+      category: professional
+      priority: 50
+      source: behaviors/guard-patrol
+      config:
+        patrol_route: default           # Can be overridden per instance
+        alert_level: normal             # normal | heightened | lockdown
+
+    # Situational layer - activates during combat
+    - id: combat-stance
+      category: situational
+      priority: 80
+      source: behaviors/shared/combat-stance
+      triggers:
+        - event: threat_confirmed
+        - condition: "${threats.active.length > 0}"
+      deactivates:
+        - event: threat_cleared
+        - condition: "${threats.active.length == 0 && time_since_combat > 30s}"
+
+  # ---------------------------------------------------------------------------
+  # Equipment affects available actions and combat effectiveness
+  # ---------------------------------------------------------------------------
+  equipment:
+    primary_weapon: sword
+    secondary_weapon: null
+    armor: light_armor
+    shield: basic_shield
+    items:
+      - torch
+      - whistle           # For alerting other guards
+
+  # ---------------------------------------------------------------------------
+  # Faction and relationship defaults
+  # ---------------------------------------------------------------------------
+  faction: city_watch
+  relationships:
+    city_watch: ally      # Fellow guards
+    civilians: protect    # Duty to protect
+    known_criminals: hostile
+    strangers: neutral_suspicious

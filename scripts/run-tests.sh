@@ -10,7 +10,7 @@ PLUGIN="$1"
 if [ -n "$PLUGIN" ]; then
     echo "🧪 Running unit tests for plugin: $PLUGIN..."
 
-    test_project="./lib-$PLUGIN.tests/lib-$PLUGIN.tests.csproj"
+    test_project="./plugins/lib-$PLUGIN.tests/lib-$PLUGIN.tests.csproj"
 
     if [ -f "$test_project" ]; then
         echo "🧪 Running tests in: $test_project"

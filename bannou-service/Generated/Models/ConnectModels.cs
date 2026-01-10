@@ -368,12 +368,6 @@ public partial class InternalProxyResponse
 {
 
     /// <summary>
-    /// Whether the proxy request was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// HTTP status code from the target service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
@@ -424,38 +418,6 @@ public partial class ConnectRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConnectionData
 {
-
-}
-
-/// <summary>
-/// Error response returned when WebSocket connection establishment fails
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectErrorResponse
-{
-
-    /// <summary>
-    /// Error type identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ConnectErrorResponseError Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// HTTP status code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
-    public ConnectErrorResponseStatusCode StatusCode { get; set; } = default!;
 
 }
 
@@ -1133,37 +1095,6 @@ public enum InternalProxyRequestMethod
 
     [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
     PATCH = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ConnectErrorResponseError
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"BadRequest")]
-    BadRequest = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Forbidden")]
-    Forbidden = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"InternalServerError")]
-    InternalServerError = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ConnectErrorResponseStatusCode
-{
-
-    _400 = 400,
-
-    _403 = 403,
-
-    _500 = 500,
 
 }
 #pragma warning restore CS1591

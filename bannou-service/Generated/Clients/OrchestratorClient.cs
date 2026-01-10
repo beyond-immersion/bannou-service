@@ -1183,32 +1183,20 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ErrorResponse>("Invalid deployment configuration", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid deployment configuration", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ErrorResponse>("Backend not available (when explicitly requested)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Backend not available (when explicitly requested)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ErrorResponse>("Deployment failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Deployment failed", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1482,12 +1470,8 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ErrorResponse>("Teardown failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Teardown failed", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1585,12 +1569,8 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ErrorResponse>("Cleanup failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Cleanup failed", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2266,12 +2246,8 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
                     else
                     if (status_ == 429)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<PoolBusyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<PoolBusyResponse>("No processors available (all busy or pool at capacity)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("No processors available (all busy or pool at capacity)", status_, responseText_, headers_, null);
                     }
                     else
                     {

@@ -1,0 +1,1497 @@
+openapi: 3.0.0
+info:
+  title: Bannou Leaderboard Service API
+  description: |
+    Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **Polymorphic Entity Model**: Leaderboards track entities by `entityId + entityType`,
+    allowing rankings for accounts, characters, guilds, actors, or custom types.
+
+    **Scale**: Designed for 100k+ entities per leaderboard using Redis Sorted Sets.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /leaderboard/definition/create:
+    post:
+      summary: Create a new leaderboard definition
+      description: |
+        Create a new leaderboard with specified properties.
+        Developer-only endpoint for setting up game leaderboards.
+      operationId: createLeaderboardDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeaderboardDefinitionRequest'
+      responses:
+        '200':
+          description: Leaderboard created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDefinitionResponse'
+        '409':
+          description: Leaderboard with this ID already exists
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateLeaderboardDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateLeaderboardDefinitionRequest\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Request to create a new leaderboard\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n            \
+        \    \"displayName\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service owning this leaderboard\"\n                },\n                \"leaderboardId\": {\n \
+        \                   \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"pattern\"\
+        : \"^[a-z0-9_-]+$\",\n                    \"description\": \"Unique identifier for this leaderboard (lowercase, no
+        spaces)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n   \
+        \                 \"maxLength\": 100,\n                    \"description\": \"Human-readable name for the leaderboard\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"maxLength\": 500,\n                    \"nullable\": true,\n                    \"description\": \"Description
+        of what this leaderboard tracks\"\n                },\n                \"entityTypes\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n \
+        \                   },\n                    \"description\": \"Which entity types can appear on this leaderboard\"\
+        \n                },\n                \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n   \
+        \                 \"default\": \"descending\",\n                    \"description\": \"Sort order (descending for
+        high scores, ascending for times)\"\n                },\n                \"updateMode\": {\n                    \"\
+        $ref\": \"#/$defs/UpdateMode\",\n                    \"default\": \"replace\",\n                    \"description\"\
+        : \"How to handle score updates\"\n                },\n                \"isSeasonal\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this leaderboard
+        resets each season\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": true,\n                    \"description\": \"Whether the leaderboard is publicly
+        visible\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional leaderboard-specific metadata\"\n                }\n            }\n        },\n        \"EntityType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\",\n    \
+        \        \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n \
+        \               \"actor\",\n                \"custom\"\n            ]\n        },\n        \"SortOrder\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n            \"enum\": [\n\
+        \                \"descending\",\n                \"ascending\"\n            ]\n        },\n        \"UpdateMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\",\n          \
+        \  \"enum\": [\n                \"replace\",\n                \"increment\",\n                \"max\",\n         \
+        \       \"min\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
+        ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
+        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
+        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
+        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
+        \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
+        character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
+        \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
+        are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n         \
+        \   ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n\
+        \                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a new leaderboard definition\",\n    \"description\": \"Create a
+        new leaderboard with specified properties.\\nDeveloper-only endpoint for setting up game leaderboards.\\n\",\n   \
+        \ \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createLeaderboardDefinition\"\
+        \n}"
+  /leaderboard/definition/get:
+    post:
+      summary: Get leaderboard definition
+      description: Retrieve details about a specific leaderboard.
+      operationId: getLeaderboardDefinition
+      tags:
+      - Definitions
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLeaderboardDefinitionRequest'
+      responses:
+        '200':
+          description: Leaderboard definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDefinitionResponse'
+        '404':
+          description: Leaderboard not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLeaderboardDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"GetLeaderboardDefinitionRequest\": {\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Request to get a leaderboard definition\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n\
+        \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n    \
+        \            },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"ID of the leaderboard\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
+        ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
+        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
+        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
+        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
+        \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
+        character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
+        \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
+        are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n         \
+        \   ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n\
+        \                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get leaderboard definition\",\n    \"description\": \"Retrieve details
+        about a specific leaderboard.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n \
+        \   \"operationId\": \"getLeaderboardDefinition\"\n}"
+  /leaderboard/definition/list:
+    post:
+      summary: List leaderboard definitions
+      description: List all leaderboards for a game service.
+      operationId: listLeaderboardDefinitions
+      tags:
+      - Definitions
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLeaderboardDefinitionsRequest'
+      responses:
+        '200':
+          description: Leaderboard definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLeaderboardDefinitionsResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListLeaderboardDefinitionsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListLeaderboardDefinitionsRequest\": {\n            \"type\": \"object\",\n       \
+        \     \"description\": \"Request to list leaderboard definitions\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n \
+        \               \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n                \"includeArchived\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Include archived/deleted leaderboards\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListLeaderboardDefinitionsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListLeaderboardDefinitionsResponse\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Response containing leaderboard definitions\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"leaderboards\"\n            ],\n            \"properties\": {\n  \
+        \              \"leaderboards\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\n                    },\n            \
+        \        \"description\": \"List of leaderboard definitions\"\n                }\n            }\n        },\n    \
+        \    \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Leaderboard
+        definition details\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
+        \ \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\",\n                \"sortOrder\"\
+        ,\n                \"updateMode\",\n                \"isSeasonal\",\n                \"isPublic\",\n             \
+        \   \"createdAt\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the owning game service\"\n                },\n                \"leaderboardId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"description\": \"Unique identifier for this leaderboard\"\n      \
+        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Human-readable name\"\n                },\n                \"description\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description
+        of the leaderboard\"\n                },\n                \"entityTypes\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\n                  \
+        \  },\n                    \"description\": \"Allowed entity types\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\": \"Ordering used when
+        ranking scores (descending for high scores, ascending for low)\"\n                },\n                \"updateMode\"\
+        : {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\": \"Rule applied when
+        new scores are submitted (replace/increment/max/min)\"\n                },\n                \"isSeasonal\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the leaderboard is seasonal\"\
+        \n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n                \"currentSeason\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current season number (if seasonal)\"\n                },\n                \"entryCount\": {\n               \
+        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
+        Number of entries on the leaderboard\"\n                },\n                \"createdAt\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When
+        the leaderboard was created\"\n                },\n                \"metadata\": {\n                    \"type\":
+        \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        },\n        \"SortOrder\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n            \"enum\":
+        [\n                \"descending\",\n                \"ascending\"\n            ]\n        },\n        \"UpdateMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\",\n          \
+        \  \"enum\": [\n                \"replace\",\n                \"increment\",\n                \"max\",\n         \
+        \       \"min\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List leaderboard definitions\",\n    \"description\": \"List all leaderboards
+        for a game service.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"listLeaderboardDefinitions\"\n}"
+  /leaderboard/definition/update:
+    post:
+      summary: Update leaderboard definition
+      description: |
+        Update properties of an existing leaderboard.
+        Developer-only endpoint.
+      operationId: updateLeaderboardDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLeaderboardDefinitionRequest'
+      responses:
+        '200':
+          description: Leaderboard updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardDefinitionResponse'
+        '404':
+          description: Leaderboard not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateLeaderboardDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateLeaderboardDefinitionRequest\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Request to update a leaderboard definition\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n\
+        \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n    \
+        \            },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"ID of the leaderboard to update\"\n                },\n                \"displayName\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New display name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New description\"\n                },\n                \"isPublic\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New visibility setting\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"displayName\"\
+        ,\n                \"sortOrder\",\n                \"updateMode\",\n                \"isSeasonal\",\n            \
+        \    \"isPublic\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n               \
+        \ \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the owning game service\"\n                },\n                \"leaderboardId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier for this
+        leaderboard\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Human-readable name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description of the leaderboard\"\n                },\n                \"entityTypes\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityType\"\
+        \n                    },\n                    \"description\": \"Allowed entity types\"\n                },\n    \
+        \            \"sortOrder\": {\n                    \"$ref\": \"#/$defs/SortOrder\",\n                    \"description\"\
+        : \"Ordering used when ranking scores (descending for high scores, ascending for low)\"\n                },\n    \
+        \            \"updateMode\": {\n                    \"$ref\": \"#/$defs/UpdateMode\",\n                    \"description\"\
+        : \"Rule applied when new scores are submitted (replace/increment/max/min)\"\n                },\n               \
+        \ \"isSeasonal\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        leaderboard is seasonal\"\n                },\n                \"isPublic\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n                },\n    \
+        \            \"currentSeason\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Current season number (if seasonal)\"\n                },\n              \
+        \  \"entryCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
+        \                 \"description\": \"Number of entries on the leaderboard\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
+        \          }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"\
+        character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n\
+        \        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores
+        are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n         \
+        \   ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n\
+        \                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update leaderboard definition\",\n    \"description\": \"Update properties
+        of an existing leaderboard.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n \
+        \   \"deprecated\": false,\n    \"operationId\": \"updateLeaderboardDefinition\"\n}"
+  /leaderboard/definition/delete:
+    post:
+      summary: Delete leaderboard definition
+      description: |
+        Delete a leaderboard and all its scores.
+        Developer-only endpoint. This action is irreversible.
+      operationId: deleteLeaderboardDefinition
+      tags:
+      - Definitions
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteLeaderboardDefinitionRequest'
+      responses:
+        '200':
+          description: Leaderboard deleted successfully
+        '404':
+          description: Leaderboard not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteLeaderboardDefinitionRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteLeaderboardDefinitionRequest\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Request to delete a leaderboard\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n \
+        \           \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n     \
+        \           },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"ID of the leaderboard to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete leaderboard definition\",\n    \"description\": \"Delete a leaderboard
+        and all its scores.\\nDeveloper-only endpoint. This action is irreversible.\\n\",\n    \"tags\": [\n        \"Definitions\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteLeaderboardDefinition\"\n}"
+  /leaderboard/score/submit:
+    post:
+      summary: Submit or update a score
+      description: |
+        Submit a score for an entity. Behavior depends on leaderboard's updateMode:
+        - replace: Always use the new score
+        - increment: Add to existing score
+        - max: Keep the higher score
+        - min: Keep the lower score
+        Service-only endpoint.
+      operationId: submitScore
+      tags:
+      - Scores
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScoreRequest'
+      responses:
+        '200':
+          description: Score submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitScoreResponse'
+        '404':
+          description: Leaderboard not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreRequest\"\
+        ,\n    \"$defs\": {\n        \"SubmitScoreRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to submit a score\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"gameServiceId\",\n                \"leaderboardId\",\n                \"entityId\",\n             \
+        \   \"entityType\",\n                \"score\"\n            ],\n            \"properties\": {\n                \"\
+        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"ID of the game service\"\n                },\n                \"leaderboardId\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the leaderboard\"\n   \
+        \             },\n                \"entityId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n         \
+        \       \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\"\
+        : \"Entity type submitting the score\"\n                },\n                \"score\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Score value to
+        submit\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
+        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional metadata about this score (e.g., how it was achieved)\"\n                }\n            }\n        },\n\
+        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreResponse\"\
+        ,\n    \"$defs\": {\n        \"SubmitScoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after score submission\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"accepted\",\n                \"currentScore\",\n                \"currentRank\"\n            ],\n\
+        \            \"properties\": {\n                \"accepted\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether the score was accepted\"\n                },\n                \"previousScore\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Previous score (null if first entry)\"\n               \
+        \ },\n                \"currentScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Current score after update\"\n                },\n         \
+        \       \"previousRank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Previous rank (null if first entry)\"\
+        \n                },\n                \"currentRank\": {\n                    \"type\": \"integer\",\n           \
+        \         \"format\": \"int64\",\n                    \"description\": \"Current rank after update (1-based)\"\n \
+        \               },\n                \"rankChange\": {\n                    \"type\": \"integer\",\n              \
+        \      \"format\": \"int64\",\n                    \"description\": \"Change in rank (positive = improved)\"\n   \
+        \             }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Submit or update a score\",\n    \"description\": \"Submit a score for
+        an entity. Behavior depends on leaderboard's updateMode:\\n- replace: Always use the new score\\n- increment: Add
+        to existing score\\n- max: Keep the higher score\\n- min: Keep the lower score\\nService-only endpoint.\\n\",\n  \
+        \  \"tags\": [\n        \"Scores\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"submitScore\"\n}"
+  /leaderboard/score/submit-batch:
+    post:
+      summary: Submit multiple scores
+      description: |
+        Batch score submission for high-volume scenarios.
+        Service-only endpoint.
+      operationId: submitScoreBatch
+      tags:
+      - Scores
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitScoreBatchRequest'
+      responses:
+        '200':
+          description: Scores submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitScoreBatchResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreBatchRequest\"\
+        ,\n    \"$defs\": {\n        \"SubmitScoreBatchRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to submit multiple scores\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"scores\"\n          \
+        \  ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n  \
+        \              },\n                \"leaderboardId\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"ID of the leaderboard\"\n                },\n                \"scores\": {\n          \
+        \          \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BatchScoreEntry\"\
+        \n                    },\n                    \"maxItems\": 1000,\n                    \"description\": \"List of
+        scores to submit (max 1000)\"\n                }\n            }\n        },\n        \"BatchScoreEntry\": {\n    \
+        \        \"type\": \"object\",\n            \"description\": \"A single score in a batch submission\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n               \
+        \ \"entityType\",\n                \"score\"\n            ],\n            \"properties\": {\n                \"entityId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this score entry\"\n     \
+        \           },\n                \"score\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Score value\"\n                }\n            }\n        },\n\
+        \        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreBatchResponse\"\
+        ,\n    \"$defs\": {\n        \"SubmitScoreBatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after batch score submission\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accepted\",\n                \"rejected\"\n            ],\n            \"properties\": {\n\
+        \                \"accepted\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of scores accepted\"\n                },\n                \"rejected\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of scores rejected\"\n                }\n          \
+        \  }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Submit multiple scores\",\n    \"description\": \"Batch score submission
+        for high-volume scenarios.\\nService-only endpoint.\\n\",\n    \"tags\": [\n        \"Scores\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"submitScoreBatch\"\n}"
+  /leaderboard/rank/get:
+    post:
+      summary: Get entity's rank
+      description: Get the current rank and score for a specific entity.
+      operationId: getEntityRank
+      tags:
+      - Rankings
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntityRankRequest'
+      responses:
+        '200':
+          description: Rank retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRankResponse'
+        '404':
+          description: Entity not found on leaderboard
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEntityRankRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEntityRankRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get an entity's rank\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"gameServiceId\",\n                \"leaderboardId\",\n                \"entityId\",\n         \
+        \       \"entityType\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service\"\n                },\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n     \
+        \               \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type whose rank is
+        requested\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"\
+        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
+        \   \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntityRankResponse\"\
+        ,\n    \"$defs\": {\n        \"EntityRankResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Entity's rank on a leaderboard\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"entityId\",\n                \"entityType\",\n                \"score\",\n                \"rank\"\
+        ,\n                \"totalEntries\"\n            ],\n            \"properties\": {\n                \"entityId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
+        ,\n                    \"description\": \"Entity type for the ranked entity\"\n                },\n              \
+        \  \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n        \
+        \            \"description\": \"Entity's current score\"\n                },\n                \"rank\": {\n      \
+        \              \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Entity's current rank (1-based)\"\n                },\n                \"totalEntries\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total
+        entries on the leaderboard\"\n                },\n                \"percentile\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Percentile ranking
+        (0-100)\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity on the leaderboard\",\n            \"enum\": [\n                \"\
+        account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n             \
+        \   \"custom\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get entity's rank\",\n    \"description\": \"Get the current rank and score
+        for a specific entity.\",\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getEntityRank\"\n}"
+  /leaderboard/rank/top:
+    post:
+      summary: Get top entries
+      description: Get the top N entries on a leaderboard.
+      operationId: getTopRanks
+      tags:
+      - Rankings
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTopRanksRequest'
+      responses:
+        '200':
+          description: Top ranks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardEntriesResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTopRanksRequest\"\
+        ,\n    \"$defs\": {\n        \"GetTopRanksRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get top leaderboard entries\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n            \"properties\"\
+        : {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n               \
+        \ \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
+        leaderboard\"\n                },\n                \"count\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 100,\n                    \"maximum\": 1000,\n                    \"description\": \"\
+        Number of entries to return\"\n                },\n                \"offset\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 0,\n                    \"description\": \"Number of entries to skip\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardEntriesResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaderboardEntriesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response containing leaderboard entries\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"leaderboardId\",\n                \"entries\",\n                \"totalEntries\"\
+        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"entries\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/LeaderboardEntry\"\n                    },\n                    \"description\": \"List
+        of leaderboard entries\"\n                },\n                \"totalEntries\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total entries on the
+        leaderboard\"\n                }\n            }\n        },\n        \"LeaderboardEntry\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"A single entry on a leaderboard\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"entityId\",\n                \"entityType\",\n          \
+        \      \"score\",\n                \"rank\"\n            ],\n            \"properties\": {\n                \"entityId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this leaderboard entry\"\n\
+        \                },\n                \"score\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n                },\n         \
+        \       \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
+        \                \"description\": \"Entity's rank (1-based)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cached display name for the entity\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Entry metadata\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get top entries\",\n    \"description\": \"Get the top N entries on a leaderboard.\"\
+        ,\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getTopRanks\"\
+        \n}"
+  /leaderboard/rank/around:
+    post:
+      summary: Get entries around entity
+      description: |
+        Get leaderboard entries surrounding a specific entity.
+        Useful for showing a player's position with nearby competitors.
+      operationId: getRanksAround
+      tags:
+      - Rankings
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRanksAroundRequest'
+      responses:
+        '200':
+          description: Ranks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardEntriesResponse'
+        '404':
+          description: Entity not found on leaderboard
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRanksAroundRequest\"\
+        ,\n    \"$defs\": {\n        \"GetRanksAroundRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get entries around an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"gameServiceId\",\n                \"leaderboardId\",\n                \"entityId\",\n     \
+        \           \"entityType\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service\"\n                },\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"ID of the entity to center on\"\n                },\n                \"entityType\"\
+        : {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type of
+        the anchor entry\"\n                },\n                \"countBefore\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 5,\n                    \"maximum\": 50,\n                    \"description\"\
+        : \"Entries to show before the entity\"\n                },\n                \"countAfter\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"default\": 5,\n                    \"maximum\": 50,\n          \
+        \          \"description\": \"Entries to show after the entity\"\n                }\n            }\n        },\n \
+        \       \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the
+        leaderboard\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n          \
+        \      \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardEntriesResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaderboardEntriesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response containing leaderboard entries\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"leaderboardId\",\n                \"entries\",\n                \"totalEntries\"\
+        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"entries\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                  \
+        \      \"$ref\": \"#/$defs/LeaderboardEntry\"\n                    },\n                    \"description\": \"List
+        of leaderboard entries\"\n                },\n                \"totalEntries\": {\n                    \"type\": \"\
+        integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total entries on the
+        leaderboard\"\n                }\n            }\n        },\n        \"LeaderboardEntry\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"A single entry on a leaderboard\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"entityId\",\n                \"entityType\",\n          \
+        \      \"score\",\n                \"rank\"\n            ],\n            \"properties\": {\n                \"entityId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"\
+        $ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this leaderboard entry\"\n\
+        \                },\n                \"score\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"double\",\n                    \"description\": \"Entity's score\"\n                },\n         \
+        \       \"rank\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
+        \                \"description\": \"Entity's rank (1-based)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cached display name for the entity\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Entry metadata\"\n                }\n            }\n        },\n        \"\
+        EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity on the leaderboard\"\
+        ,\n            \"enum\": [\n                \"account\",\n                \"character\",\n                \"guild\"\
+        ,\n                \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get entries around entity\",\n    \"description\": \"Get leaderboard entries
+        surrounding a specific entity.\\nUseful for showing a player's position with nearby competitors.\\n\",\n    \"tags\"\
+        : [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRanksAround\"\n}"
+  /leaderboard/season/create:
+    post:
+      summary: Start a new season
+      description: |
+        Archive the current leaderboard and start a new season.
+        Admin-only endpoint. Previous scores are preserved in history.
+      operationId: createSeason
+      tags:
+      - Seasons
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeasonRequest'
+      responses:
+        '200':
+          description: Season created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonResponse'
+        '404':
+          description: Leaderboard not found
+        '400':
+          description: Leaderboard is not seasonal
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSeasonRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateSeasonRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create a new season\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n            \"properties\"\
+        : {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n               \
+        \ \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
+        leaderboard\"\n                },\n                \"seasonName\": {\n                    \"type\": \"string\",\n\
+        \                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional name for the new season\"\n                },\n                \"archivePrevious\": {\n             \
+        \       \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        to archive the previous season's data\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeasonResponse\"\
+        ,\n    \"$defs\": {\n        \"SeasonResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Season information\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
+        \     \"leaderboardId\",\n                \"seasonNumber\",\n                \"startedAt\",\n                \"isActive\"\
+        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"seasonNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Season
+        number\"\n                },\n                \"seasonName\": {\n                    \"type\": \"string\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Name of the season\"\n               \
+        \ },\n                \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this season started\"\n                },\n        \
+        \        \"endedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this season ended (null if
+        active)\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether this is the current season\"\n                },\n                \"entryCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Number of entries in this season\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Start a new season\",\n    \"description\": \"Archive the current leaderboard
+        and start a new season.\\nAdmin-only endpoint. Previous scores are preserved in history.\\n\",\n    \"tags\": [\n\
+        \        \"Seasons\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createSeason\"\n}"
+  /leaderboard/season/get:
+    post:
+      summary: Get current season info
+      description: Get information about the current or a specific past season.
+      operationId: getSeason
+      tags:
+      - Seasons
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeasonRequest'
+      responses:
+        '200':
+          description: Season info retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonResponse'
+        '404':
+          description: Season not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSeasonRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSeasonRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get season information\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"gameServiceId\",\n                \"leaderboardId\"\n            ],\n            \"properties\"\
+        : {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the game service\"\n                },\n               \
+        \ \"leaderboardId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
+        leaderboard\"\n                },\n                \"seasonNumber\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Specific season number (null for
+        current)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeasonResponse\"\
+        ,\n    \"$defs\": {\n        \"SeasonResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Season information\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
+        \     \"leaderboardId\",\n                \"seasonNumber\",\n                \"startedAt\",\n                \"isActive\"\
+        \n            ],\n            \"properties\": {\n                \"leaderboardId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"ID of the leaderboard\"\n                },\n              \
+        \  \"seasonNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Season
+        number\"\n                },\n                \"seasonName\": {\n                    \"type\": \"string\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Name of the season\"\n               \
+        \ },\n                \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this season started\"\n                },\n        \
+        \        \"endedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this season ended (null if
+        active)\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether this is the current season\"\n                },\n                \"entryCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Number of entries in this season\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current season info\",\n    \"description\": \"Get information about
+        the current or a specific past season.\",\n    \"tags\": [\n        \"Seasons\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getSeason\"\n}"
+components:
+  schemas:
+    # ============================================
+    # Shared Enums
+    # ============================================
+    EntityType:
+      type: string
+      description: Type of entity on the leaderboard
+      enum:
+      - account
+      - character
+      - guild
+      - actor
+      - custom
+
+    SortOrder:
+      type: string
+      description: How scores are sorted
+      enum:
+      - descending
+      - ascending
+
+    UpdateMode:
+      type: string
+      description: How to handle score updates
+      enum:
+      - replace
+      - increment
+      - max
+      - min
+
+    # ============================================
+    # Leaderboard Definitions
+    # ============================================
+    CreateLeaderboardDefinitionRequest:
+      type: object
+      description: Request to create a new leaderboard
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service owning this leaderboard
+        leaderboardId:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z0-9_-]+$"
+          description: Unique identifier for this leaderboard (lowercase, no spaces)
+        displayName:
+          type: string
+          maxLength: 100
+          description: Human-readable name for the leaderboard
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Description of what this leaderboard tracks
+        entityTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityType'
+          description: Which entity types can appear on this leaderboard
+        sortOrder:
+          $ref: '#/components/schemas/SortOrder'
+          default: descending
+          description: Sort order (descending for high scores, ascending for times)
+        updateMode:
+          $ref: '#/components/schemas/UpdateMode'
+          default: replace
+          description: How to handle score updates
+        isSeasonal:
+          type: boolean
+          default: false
+          description: Whether this leaderboard resets each season
+        isPublic:
+          type: boolean
+          default: true
+          description: Whether the leaderboard is publicly visible
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional leaderboard-specific metadata
+
+    GetLeaderboardDefinitionRequest:
+      type: object
+      description: Request to get a leaderboard definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+
+    ListLeaderboardDefinitionsRequest:
+      type: object
+      description: Request to list leaderboard definitions
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        includeArchived:
+          type: boolean
+          default: false
+          description: Include archived/deleted leaderboards
+
+    ListLeaderboardDefinitionsResponse:
+      type: object
+      description: Response containing leaderboard definitions
+      additionalProperties: false
+      required:
+      - leaderboards
+      properties:
+        leaderboards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardDefinitionResponse'
+          description: List of leaderboard definitions
+
+    UpdateLeaderboardDefinitionRequest:
+      type: object
+      description: Request to update a leaderboard definition
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard to update
+        displayName:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: New display name
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: New description
+        isPublic:
+          type: boolean
+          nullable: true
+          description: New visibility setting
+
+    DeleteLeaderboardDefinitionRequest:
+      type: object
+      description: Request to delete a leaderboard
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard to delete
+
+    LeaderboardDefinitionResponse:
+      type: object
+      description: Leaderboard definition details
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      - sortOrder
+      - updateMode
+      - isSeasonal
+      - isPublic
+      - createdAt
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the owning game service
+        leaderboardId:
+          type: string
+          description: Unique identifier for this leaderboard
+        displayName:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          description: Description of the leaderboard
+        entityTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityType'
+          description: Allowed entity types
+        sortOrder:
+          $ref: '#/components/schemas/SortOrder'
+          description: Ordering used when ranking scores (descending for high scores, ascending for low)
+        updateMode:
+          $ref: '#/components/schemas/UpdateMode'
+          description: Rule applied when new scores are submitted (replace/increment/max/min)
+        isSeasonal:
+          type: boolean
+          description: Whether the leaderboard is seasonal
+        isPublic:
+          type: boolean
+          description: Whether the leaderboard is publicly visible
+        currentSeason:
+          type: integer
+          nullable: true
+          description: Current season number (if seasonal)
+        entryCount:
+          type: integer
+          format: int64
+          description: Number of entries on the leaderboard
+        createdAt:
+          type: string
+          format: date-time
+          description: When the leaderboard was created
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional metadata
+
+    # ============================================
+    # Score Submission
+    # ============================================
+    SubmitScoreRequest:
+      type: object
+      description: Request to submit a score
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type submitting the score
+        score:
+          type: number
+          format: double
+          description: Score value to submit
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Optional metadata about this score (e.g., how it was achieved)
+
+    SubmitScoreResponse:
+      type: object
+      description: Response after score submission
+      additionalProperties: false
+      required:
+      - accepted
+      - currentScore
+      - currentRank
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the score was accepted
+        previousScore:
+          type: number
+          format: double
+          nullable: true
+          description: Previous score (null if first entry)
+        currentScore:
+          type: number
+          format: double
+          description: Current score after update
+        previousRank:
+          type: integer
+          format: int64
+          nullable: true
+          description: Previous rank (null if first entry)
+        currentRank:
+          type: integer
+          format: int64
+          description: Current rank after update (1-based)
+        rankChange:
+          type: integer
+          format: int64
+          description: Change in rank (positive = improved)
+
+    SubmitScoreBatchRequest:
+      type: object
+      description: Request to submit multiple scores
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - scores
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchScoreEntry'
+          maxItems: 1000
+          description: List of scores to submit (max 1000)
+
+    BatchScoreEntry:
+      type: object
+      description: A single score in a batch submission
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - score
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this score entry
+        score:
+          type: number
+          format: double
+          description: Score value
+
+    SubmitScoreBatchResponse:
+      type: object
+      description: Response after batch score submission
+      additionalProperties: false
+      required:
+      - accepted
+      - rejected
+      properties:
+        accepted:
+          type: integer
+          description: Number of scores accepted
+        rejected:
+          type: integer
+          description: Number of scores rejected
+
+    # ============================================
+    # Rankings
+    # ============================================
+    GetEntityRankRequest:
+      type: object
+      description: Request to get an entity's rank
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type whose rank is requested
+
+    EntityRankResponse:
+      type: object
+      description: Entity's rank on a leaderboard
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - score
+      - rank
+      - totalEntries
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for the ranked entity
+        score:
+          type: number
+          format: double
+          description: Entity's current score
+        rank:
+          type: integer
+          format: int64
+          description: Entity's current rank (1-based)
+        totalEntries:
+          type: integer
+          format: int64
+          description: Total entries on the leaderboard
+        percentile:
+          type: number
+          format: double
+          description: Percentile ranking (0-100)
+
+    GetTopRanksRequest:
+      type: object
+      description: Request to get top leaderboard entries
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        count:
+          type: integer
+          default: 100
+          maximum: 1000
+          description: Number of entries to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of entries to skip
+
+    GetRanksAroundRequest:
+      type: object
+      description: Request to get entries around an entity
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to center on
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type of the anchor entry
+        countBefore:
+          type: integer
+          default: 5
+          maximum: 50
+          description: Entries to show before the entity
+        countAfter:
+          type: integer
+          default: 5
+          maximum: 50
+          description: Entries to show after the entity
+
+    LeaderboardEntriesResponse:
+      type: object
+      description: Response containing leaderboard entries
+      additionalProperties: false
+      required:
+      - leaderboardId
+      - entries
+      - totalEntries
+      properties:
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: List of leaderboard entries
+        totalEntries:
+          type: integer
+          format: int64
+          description: Total entries on the leaderboard
+
+    LeaderboardEntry:
+      type: object
+      description: A single entry on a leaderboard
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - score
+      - rank
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this leaderboard entry
+        score:
+          type: number
+          format: double
+          description: Entity's score
+        rank:
+          type: integer
+          format: int64
+          description: Entity's rank (1-based)
+        displayName:
+          type: string
+          nullable: true
+          description: Cached display name for the entity
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Entry metadata
+
+    # ============================================
+    # Seasons
+    # ============================================
+    CreateSeasonRequest:
+      type: object
+      description: Request to create a new season
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        seasonName:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Optional name for the new season
+        archivePrevious:
+          type: boolean
+          default: true
+          description: Whether to archive the previous season's data
+
+    GetSeasonRequest:
+      type: object
+      description: Request to get season information
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - leaderboardId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        seasonNumber:
+          type: integer
+          nullable: true
+          description: Specific season number (null for current)
+
+    SeasonResponse:
+      type: object
+      description: Season information
+      additionalProperties: false
+      required:
+      - leaderboardId
+      - seasonNumber
+      - startedAt
+      - isActive
+      properties:
+        leaderboardId:
+          type: string
+          description: ID of the leaderboard
+        seasonNumber:
+          type: integer
+          description: Season number
+        seasonName:
+          type: string
+          nullable: true
+          description: Name of the season
+        startedAt:
+          type: string
+          format: date-time
+          description: When this season started
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this season ended (null if active)
+        isActive:
+          type: boolean
+          description: Whether this is the current season
+        entryCount:
+          type: integer
+          format: int64
+          description: Number of entries in this season
+
+# Service Registration Information
+x-service-registration:
+  serviceId: "leaderboard"
+  serviceName: "Leaderboard Service"
+  version: "1.0.0"
+  categories:
+  - gaming
+  - rankings

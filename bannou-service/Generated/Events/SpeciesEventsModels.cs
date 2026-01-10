@@ -22,6 +22,48 @@ namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
+/// <summary>
+/// Published when two species are merged, with the source species being deprecated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SpeciesMergedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the species being merged (deprecated after merge)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceSpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the source species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesCode")]
+    public string? SourceSpeciesCode { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the species receiving the merge
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the target species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesCode")]
+    public string? TargetSpeciesCode { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters that were migrated to the target species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mergedCharacterCount")]
+    public int MergedCharacterCount { get; set; } = default!;
+
+}
 
 
 

@@ -284,7 +284,9 @@ paths:
         : false,\n            \"description\": \"Request to delete a game service\",\n            \"required\": [\n      \
         \          \"serviceId\"\n            ],\n            \"properties\": {\n                \"serviceId\": {\n      \
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the service to delete\"\n                }\n            }\n        }\n    }\n}"
+        : \"ID of the service to delete\"\n                },\n                \"reason\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for
+        deletion (included in the lifecycle event)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a game service entry\",\n    \"description\": \"Admin-only endpoint
         to remove a game service from the registry.\",\n    \"tags\": [\n        \"Game Service Registry\"\n    ],\n    \"\
@@ -383,6 +385,10 @@ components:
           type: string
           format: uuid
           description: ID of the service to delete
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (included in the lifecycle event)
 
     # Response Models
     ServiceInfo:

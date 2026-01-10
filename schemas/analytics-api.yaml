@@ -1,0 +1,1136 @@
+openapi: 3.0.0
+info:
+  title: Bannou Analytics Service API
+  description: |
+    Event ingestion, entity statistics, skill ratings (Glicko-2), and controller history tracking.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **Polymorphic Entity Model**: Analytics tracks entities by `entityId + entityType`,
+    allowing statistics for accounts, characters, guilds, actors, or custom types.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /analytics/event/ingest:
+    post:
+      summary: Ingest a single analytics event
+      description: |
+        High-throughput event ingestion endpoint for recording game events.
+        Events are buffered in memory and periodically flushed to persistent storage.
+        Service-only endpoint - not exposed to clients.
+      operationId: ingestEvent
+      tags:
+      - Event Ingestion
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestEventRequest'
+      responses:
+        '200':
+          description: Event ingested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestEventResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventRequest\"\
+        ,\n    \"$defs\": {\n        \"IngestEventRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to ingest a single analytics event\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"gameServiceId\",\n                \"eventType\",\n                \"entityId\",\n         \
+        \       \"entityType\",\n                \"timestamp\"\n            ],\n            \"properties\": {\n          \
+        \      \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the game service that generated this event\"\n                },\n \
+        \               \"eventType\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Type of event (e.g., kill, death, score, action)\"\n                },\n                \"entityId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the entity this event relates to\"\n                },\n                \"entityType\": {\n            \
+        \        \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type the event is attributed
+        to\"\n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"date-time\",\n                    \"description\": \"When the event occurred\"\n        \
+        \        },\n                \"value\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Numeric value associated with the event (e.g., score amount)\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional event-specific data\"\n                }\n            }\n        },\n        \"EntityType\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
+        : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
+        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventResponse\"\
+        ,\n    \"$defs\": {\n        \"IngestEventResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after ingesting an event\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"eventId\",\n                \"accepted\"\n            ],\n            \"properties\": {\n   \
+        \             \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier assigned to this event\"\n                },\n       \
+        \         \"accepted\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the event was accepted for processing\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Ingest a single analytics event\",\n    \"description\": \"High-throughput
+        event ingestion endpoint for recording game events.\\nEvents are buffered in memory and periodically flushed to persistent
+        storage.\\nService-only endpoint - not exposed to clients.\\n\",\n    \"tags\": [\n        \"Event Ingestion\"\n \
+        \   ],\n    \"deprecated\": false,\n    \"operationId\": \"ingestEvent\"\n}"
+  /analytics/event/ingest-batch:
+    post:
+      summary: Ingest multiple analytics events
+      description: |
+        Batch event ingestion for high-volume scenarios. Accepts up to 1000 events per request.
+        Service-only endpoint - not exposed to clients.
+      operationId: ingestEventBatch
+      tags:
+      - Event Ingestion
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestEventBatchRequest'
+      responses:
+        '200':
+          description: Events ingested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestEventBatchResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventBatchRequest\"\
+        ,\n    \"$defs\": {\n        \"IngestEventBatchRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to ingest multiple analytics events\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"events\"\n            ],\n            \"properties\": {\n                \"events\": {\n  \
+        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/IngestEventRequest\"\
+        \n                    },\n                    \"maxItems\": 1000,\n                    \"description\": \"List of
+        events to ingest (max 1000)\"\n                }\n            }\n        },\n        \"IngestEventRequest\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"Request to ingest a single analytics event\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"gameServiceId\",\n \
+        \               \"eventType\",\n                \"entityId\",\n                \"entityType\",\n                \"\
+        timestamp\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID
+        of the game service that generated this event\"\n                },\n                \"eventType\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Type of event (e.g., kill, death, score,
+        action)\"\n                },\n                \"entityId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"ID of the entity this event relates to\"\
+        \n                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n \
+        \                   \"description\": \"Entity type the event is attributed to\"\n                },\n            \
+        \    \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the event occurred\"\n                },\n                \"value\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Numeric value associated with the event (e.g., score amount)\"\n                },\n            \
+        \    \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Additional event-specific data\"\n\
+        \                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\"\
+        ,\n                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
+        \n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/IngestEventBatchResponse\"\
+        ,\n    \"$defs\": {\n        \"IngestEventBatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after batch event ingestion\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accepted\",\n                \"rejected\"\n            ],\n            \"properties\": {\n\
+        \                \"accepted\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of events accepted\"\n                },\n                \"rejected\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of events rejected\"\n                },\n         \
+        \       \"errors\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
+        \          \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Error messages for rejected events\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Ingest multiple analytics events\",\n    \"description\": \"Batch event
+        ingestion for high-volume scenarios. Accepts up to 1000 events per request.\\nService-only endpoint - not exposed
+        to clients.\\n\",\n    \"tags\": [\n        \"Event Ingestion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"ingestEventBatch\"\n}"
+  /analytics/summary/get:
+    post:
+      summary: Get entity statistics summary
+      description: |
+        Retrieve aggregated statistics for an entity. Summaries include total counts,
+        averages, and derived metrics computed from ingested events.
+      operationId: getEntitySummary
+      tags:
+      - Statistics
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntitySummaryRequest'
+      responses:
+        '200':
+          description: Entity summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitySummaryResponse'
+        '404':
+          description: Entity not found
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEntitySummaryRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEntitySummaryRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get statistics for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"gameServiceId\",\n                \"entityId\",\n                \"entityType\"\n         \
+        \   ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service\"\n  \
+        \              },\n                \"entityId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n        \
+        \        \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\"\
+        : \"Entity type to summarize\"\n                }\n            }\n        },\n        \"EntityType\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\":
+        [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\"\
+        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntitySummaryResponse\"\
+        ,\n    \"$defs\": {\n        \"EntitySummaryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Aggregated statistics for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"entityId\",\n                \"entityType\",\n                \"totalEvents\",\n          \
+        \      \"firstEventAt\",\n                \"lastEventAt\"\n            ],\n            \"properties\": {\n       \
+        \         \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the entity\"\n                },\n                \"entityType\": {\n\
+        \                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this
+        summary\"\n                },\n                \"totalEvents\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"format\": \"int64\",\n                    \"description\": \"Total number of events recorded\"\
+        \n                },\n                \"firstEventAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"description\": \"Timestamp of first recorded event\"\n\
+        \                },\n                \"lastEventAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"description\": \"Timestamp of most recent event\"\n    \
+        \            },\n                \"eventCounts\": {\n                    \"type\": \"object\",\n                 \
+        \   \"additionalProperties\": {\n                        \"type\": \"integer\",\n                        \"format\"\
+        : \"int64\"\n                    },\n                    \"description\": \"Count of events by type\"\n          \
+        \      },\n                \"aggregates\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"number\",\n                        \"format\": \"double\"\n             \
+        \       },\n                    \"description\": \"Aggregated numeric values (sums, averages)\"\n                }\n\
+        \            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
+        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get entity statistics summary\",\n    \"description\": \"Retrieve aggregated
+        statistics for an entity. Summaries include total counts,\\naverages, and derived metrics computed from ingested events.\\\
+        n\",\n    \"tags\": [\n        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEntitySummary\"\
+        \n}"
+  /analytics/summary/query:
+    post:
+      summary: Query entity summaries with filters
+      description: |
+        Query multiple entity summaries with filtering and sorting options.
+        Useful for dashboards and reporting.
+      operationId: queryEntitySummaries
+      tags:
+      - Statistics
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryEntitySummariesRequest'
+      responses:
+        '200':
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryEntitySummariesResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryEntitySummariesRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryEntitySummariesRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to query multiple entity summaries\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n    \
+        \            \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the game service\"\n                },\n                \"entityType\"\
+        : {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Optional filter by entity type\"\n                },\n                \"eventType\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by event type\"\n                },\n                \"minEvents\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Minimum number of events\"\n                },\n              \
+        \  \"sortBy\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Field to sort by\"\n                },\n                \"sortDescending\": {\n     \
+        \               \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Sort in descending order\"\n                },\n                \"limit\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 100,\n                    \"maximum\": 1000,\n                    \"\
+        description\": \"Maximum results to return\"\n                },\n                \"offset\": {\n                \
+        \    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Number of
+        results to skip\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\":
+        \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n           \
+        \     \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n     \
+        \           \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryEntitySummariesResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryEntitySummariesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response containing queried entity summaries\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"summaries\",\n                \"total\"\n            ],\n         \
+        \   \"properties\": {\n                \"summaries\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/EntitySummaryResponse\"\n                    },\n\
+        \                    \"description\": \"List of matching entity summaries\"\n                },\n                \"\
+        total\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n             \
+        \       \"description\": \"Total number of matching entities\"\n                }\n            }\n        },\n   \
+        \     \"EntitySummaryResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Aggregated statistics
+        for an entity\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\"\
+        ,\n                \"entityType\",\n                \"totalEvents\",\n                \"firstEventAt\",\n        \
+        \        \"lastEventAt\"\n            ],\n            \"properties\": {\n                \"entityId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the entity\"\n                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
+        ,\n                    \"description\": \"Entity type for this summary\"\n                },\n                \"totalEvents\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Total number of events recorded\"\n                },\n                \"firstEventAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp of first recorded event\"\n                },\n                \"lastEventAt\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Timestamp of most recent event\"\n                },\n                \"eventCounts\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"integer\",\n \
+        \                       \"format\": \"int64\"\n                    },\n                    \"description\": \"Count
+        of events by type\"\n                },\n                \"aggregates\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n              \
+        \          \"format\": \"double\"\n                    },\n                    \"description\": \"Aggregated numeric
+        values (sums, averages)\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n   \
+        \             \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\"\
+        ,\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query entity summaries with filters\",\n    \"description\": \"Query multiple
+        entity summaries with filtering and sorting options.\\nUseful for dashboards and reporting.\\n\",\n    \"tags\": [\n\
+        \        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryEntitySummaries\"\n}"
+  /analytics/rating/get:
+    post:
+      summary: Get entity Glicko-2 skill rating
+      description: |
+        Retrieve the current Glicko-2 skill rating for an entity.
+        Returns rating, rating deviation (RD), and volatility.
+      operationId: getSkillRating
+      tags:
+      - Skill Ratings
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSkillRatingRequest'
+      responses:
+        '200':
+          description: Skill rating retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillRatingResponse'
+        '404':
+          description: Entity has no skill rating
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSkillRatingRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSkillRatingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get skill rating for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"gameServiceId\",\n                \"entityId\",\n                \"entityType\",\n        \
+        \        \"ratingType\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service\"\n                },\n                \"entityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type whose rating is requested\"\n                },\n              \
+        \  \"ratingType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of rating
+        (e.g., overall, ranked, casual)\"\n                }\n            }\n        },\n        \"EntityType\": {\n     \
+        \       \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
+        : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
+        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SkillRatingResponse\"\
+        ,\n    \"$defs\": {\n        \"SkillRatingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Glicko-2 skill rating for an entity\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"entityId\",\n                \"entityType\",\n                \"ratingType\",\n           \
+        \     \"rating\",\n                \"ratingDeviation\",\n                \"volatility\",\n                \"matchesPlayed\"\
+        \n            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type for this rating record\"\n                },\n                \"\
+        ratingType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of rating\"\
+        \n                },\n                \"rating\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"double\",\n                    \"description\": \"Current Glicko-2 rating (typically 1500 start)\"\
+        \n                },\n                \"ratingDeviation\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"double\",\n                    \"description\": \"Rating deviation (uncertainty) - lower
+        is more confident\"\n                },\n                \"volatility\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"description\": \"Rating volatility (consistency
+        of performance)\"\n                },\n                \"matchesPlayed\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of rated matches played\"\n                },\n                \"\
+        lastMatchAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Timestamp of last rated match\"\n   \
+        \             }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n       \
+        \     \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n\
+        \                \"character\",\n                \"guild\",\n                \"actor\",\n                \"custom\"\
+        \n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get entity Glicko-2 skill rating\",\n    \"description\": \"Retrieve the
+        current Glicko-2 skill rating for an entity.\\nReturns rating, rating deviation (RD), and volatility.\\n\",\n    \"\
+        tags\": [\n        \"Skill Ratings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSkillRating\"\n\
+        }"
+  /analytics/rating/update:
+    post:
+      summary: Update entity skill rating after match
+      description: |
+        Update skill ratings for entities after a match result.
+        Uses Glicko-2 algorithm to compute new ratings based on outcomes.
+        Service-only endpoint - typically called by game-session service.
+      operationId: updateSkillRating
+      tags:
+      - Skill Ratings
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSkillRatingRequest'
+      responses:
+        '200':
+          description: Skill ratings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSkillRatingResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateSkillRatingRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateSkillRatingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update skill ratings after a match\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"gameServiceId\",\n                \"ratingType\",\n                \"matchId\",\n\
+        \                \"results\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service\"\n                },\n                \"ratingType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Type of rating to update\"\n                },\n           \
+        \     \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Unique identifier for this match\"\n                },\n                \"results\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MatchResult\"\n                    },\n                    \"minItems\": 2,\n                    \"description\"\
+        : \"Results for all participants (min 2)\"\n                }\n            }\n        },\n        \"MatchResult\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Individual result in a match\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n               \
+        \ \"entityType\",\n                \"outcome\"\n            ],\n            \"properties\": {\n                \"\
+        entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
+        \        \"description\": \"ID of the participating entity\"\n                },\n                \"entityType\":
+        {\n                    \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type for this
+        match participant\"\n                },\n                \"outcome\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"Match outcome (1.0 = win, 0.5 = draw, 0.0 = loss)\"\n               \
+        \ },\n                \"score\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"nullable\": true,\n                    \"description\": \"Optional numeric score
+        for the match\"\n                }\n            }\n        },\n        \"EntityType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\": [\n             \
+        \   \"account\",\n                \"character\",\n                \"guild\",\n                \"actor\",\n       \
+        \         \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateSkillRatingResponse\"\
+        ,\n    \"$defs\": {\n        \"UpdateSkillRatingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after updating skill ratings\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"matchId\",\n                \"updatedRatings\"\n            ],\n            \"properties\"\
+        : {\n                \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the processed match\"\n                },\n                \"\
+        updatedRatings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"$ref\": \"#/$defs/SkillRatingChange\"\n                    },\n                    \"description\": \"\
+        Updated ratings for all participants\"\n                }\n            }\n        },\n        \"SkillRatingChange\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Rating change for a single entity\",\n    \
+        \        \"additionalProperties\": false,\n            \"required\": [\n                \"entityId\",\n          \
+        \      \"entityType\",\n                \"previousRating\",\n                \"newRating\",\n                \"ratingChange\"\
+        \n            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n\
+        \                },\n                \"entityType\": {\n                    \"$ref\": \"#/$defs/EntityType\",\n  \
+        \                  \"description\": \"Entity type for this rating change\"\n                },\n                \"\
+        previousRating\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n    \
+        \                \"description\": \"Rating before this match\"\n                },\n                \"newRating\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Rating after this match\"\n                },\n                \"ratingChange\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\":
+        \"Change in rating (can be negative)\"\n                }\n            }\n        },\n        \"EntityType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"\
+        enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n            \
+        \    \"actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update entity skill rating after match\",\n    \"description\": \"Update
+        skill ratings for entities after a match result.\\nUses Glicko-2 algorithm to compute new ratings based on outcomes.\\
+        nService-only endpoint - typically called by game-session service.\\n\",\n    \"tags\": [\n        \"Skill Ratings\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateSkillRating\"\n}"
+  /analytics/controller-history/record:
+    post:
+      summary: Record controller possession event
+      description: |
+        Record when an account takes or releases control of an entity.
+        Used for tracking which player controlled which character/actor at what time.
+        Service-only endpoint.
+      operationId: recordControllerEvent
+      tags:
+      - Controller History
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordControllerEventRequest'
+      responses:
+        '200':
+          description: Controller event recorded successfully
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RecordControllerEventRequest\"\
+        ,\n    \"$defs\": {\n        \"RecordControllerEventRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to record a controller possession/release event\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"gameServiceId\",\n                \"accountId\",\n      \
+        \          \"targetEntityId\",\n                \"targetEntityType\",\n                \"action\",\n             \
+        \   \"timestamp\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the game service\"\n                },\n                \"accountId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account taking/releasing
+        control\"\n                },\n                \"targetEntityId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity being controlled\"\
+        \n                },\n                \"targetEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
+        ,\n                    \"description\": \"Entity type being controlled\"\n                },\n                \"action\"\
+        : {\n                    \"$ref\": \"#/$defs/ControllerAction\",\n                    \"description\": \"Whether control
+        was possessed or released\"\n                },\n                \"timestamp\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the control
+        event occurred\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game session ID (if applicable)\"\n                }\n            }\n        },\n        \"EntityType\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"\
+        enum\": [\n                \"account\",\n                \"character\",\n                \"guild\",\n            \
+        \    \"actor\",\n                \"custom\"\n            ]\n        },\n        \"ControllerAction\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"Type of controller action\",\n            \"enum\": [\n\
+        \                \"possess\",\n                \"release\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Record controller possession event\",\n    \"description\": \"Record when
+        an account takes or releases control of an entity.\\nUsed for tracking which player controlled which character/actor
+        at what time.\\nService-only endpoint.\\n\",\n    \"tags\": [\n        \"Controller History\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"recordControllerEvent\"\n}"
+  /analytics/controller-history/query:
+    post:
+      summary: Query controller history
+      description: |
+        Query who controlled what entity during a time range.
+        Useful for audit trails and replays.
+      operationId: queryControllerHistory
+      tags:
+      - Controller History
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryControllerHistoryRequest'
+      responses:
+        '200':
+          description: Controller history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryControllerHistoryResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryControllerHistoryRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryControllerHistoryRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Request to query controller history\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n       \
+        \         \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the game service\"\n                },\n                \"accountId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Filter by controlling account\"\n                },\n  \
+        \              \"targetEntityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by controlled entity\"\
+        \n                },\n                \"targetEntityType\": {\n                    \"$ref\": \"#/$defs/EntityType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by entity type\"\n     \
+        \           },\n                \"startTime\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Start of
+        time range\"\n                },\n                \"endTime\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"End of time range\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 100,\n                    \"maximum\": 1000,\n                    \"description\"\
+        : \"Maximum results to return\"\n                }\n            }\n        },\n        \"EntityType\": {\n       \
+        \     \"type\": \"string\",\n            \"description\": \"Type of entity being tracked\",\n            \"enum\"\
+        : [\n                \"account\",\n                \"character\",\n                \"guild\",\n                \"\
+        actor\",\n                \"custom\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryControllerHistoryResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryControllerHistoryResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"Response containing controller history\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"events\"\n            ],\n            \"properties\": {\n          \
+        \      \"events\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"$ref\": \"#/$defs/ControllerHistoryEvent\"\n                    },\n                    \"description\"\
+        : \"Controller events matching the query\"\n                }\n            }\n        },\n        \"ControllerHistoryEvent\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A single controller possession/release event\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"eventId\",\n     \
+        \           \"accountId\",\n                \"targetEntityId\",\n                \"targetEntityType\",\n         \
+        \       \"action\",\n                \"timestamp\"\n            ],\n            \"properties\": {\n              \
+        \  \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"description\": \"Unique identifier for this event\"\n                },\n                \"accountId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the controlling account\"\n                },\n                \"targetEntityId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the controlled entity\"\n                },\n                \"targetEntityType\": {\n                 \
+        \   \"$ref\": \"#/$defs/EntityType\",\n                    \"description\": \"Entity type that was controlled\"\n\
+        \                },\n                \"action\": {\n                    \"$ref\": \"#/$defs/ControllerAction\",\n\
+        \                    \"description\": \"Control action that occurred (possess/release)\"\n                },\n   \
+        \             \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the event occurred\"\n                },\n                \"sessionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Associated game session ID\"\n                }\n      \
+        \      }\n        },\n        \"EntityType\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Type of entity being tracked\",\n            \"enum\": [\n                \"account\",\n                \"character\"\
+        ,\n                \"guild\",\n                \"actor\",\n                \"custom\"\n            ]\n        },\n\
+        \        \"ControllerAction\": {\n            \"type\": \"string\",\n            \"description\": \"Type of controller
+        action\",\n            \"enum\": [\n                \"possess\",\n                \"release\"\n            ]\n   \
+        \     }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query controller history\",\n    \"description\": \"Query who controlled
+        what entity during a time range.\\nUseful for audit trails and replays.\\n\",\n    \"tags\": [\n        \"Controller
+        History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryControllerHistory\"\n}"
+components:
+  schemas:
+    # ============================================
+    # Shared Enums
+    # ============================================
+    EntityType:
+      type: string
+      description: Type of entity being tracked
+      enum:
+      - account
+      - character
+      - guild
+      - actor
+      - custom
+
+    ControllerAction:
+      type: string
+      description: Type of controller action
+      enum:
+      - possess
+      - release
+
+    # ============================================
+    # Event Ingestion
+    # ============================================
+    IngestEventRequest:
+      type: object
+      description: Request to ingest a single analytics event
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - eventType
+      - entityId
+      - entityType
+      - timestamp
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service that generated this event
+        eventType:
+          type: string
+          description: Type of event (e.g., kill, death, score, action)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity this event relates to
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type the event is attributed to
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        value:
+          type: number
+          format: double
+          description: Numeric value associated with the event (e.g., score amount)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional event-specific data
+
+    IngestEventResponse:
+      type: object
+      description: Response after ingesting an event
+      additionalProperties: false
+      required:
+      - eventId
+      - accepted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier assigned to this event
+        accepted:
+          type: boolean
+          description: Whether the event was accepted for processing
+
+    IngestEventBatchRequest:
+      type: object
+      description: Request to ingest multiple analytics events
+      additionalProperties: false
+      required:
+      - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestEventRequest'
+          maxItems: 1000
+          description: List of events to ingest (max 1000)
+
+    IngestEventBatchResponse:
+      type: object
+      description: Response after batch event ingestion
+      additionalProperties: false
+      required:
+      - accepted
+      - rejected
+      properties:
+        accepted:
+          type: integer
+          description: Number of events accepted
+        rejected:
+          type: integer
+          description: Number of events rejected
+        errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Error messages for rejected events
+
+    # ============================================
+    # Entity Statistics
+    # ============================================
+    GetEntitySummaryRequest:
+      type: object
+      description: Request to get statistics for an entity
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type to summarize
+
+    EntitySummaryResponse:
+      type: object
+      description: Aggregated statistics for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - totalEvents
+      - firstEventAt
+      - lastEventAt
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this summary
+        totalEvents:
+          type: integer
+          format: int64
+          description: Total number of events recorded
+        firstEventAt:
+          type: string
+          format: date-time
+          description: Timestamp of first recorded event
+        lastEventAt:
+          type: string
+          format: date-time
+          description: Timestamp of most recent event
+        eventCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+          description: Count of events by type
+        aggregates:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          description: Aggregated numeric values (sums, averages)
+
+    QueryEntitySummariesRequest:
+      type: object
+      description: Request to query multiple entity summaries
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Optional filter by entity type
+        eventType:
+          type: string
+          nullable: true
+          description: Filter by event type
+        minEvents:
+          type: integer
+          description: Minimum number of events
+        sortBy:
+          type: string
+          nullable: true
+          description: Field to sort by
+        sortDescending:
+          type: boolean
+          default: true
+          description: Sort in descending order
+        limit:
+          type: integer
+          default: 100
+          maximum: 1000
+          description: Maximum results to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of results to skip
+
+    QueryEntitySummariesResponse:
+      type: object
+      description: Response containing queried entity summaries
+      additionalProperties: false
+      required:
+      - summaries
+      - total
+      properties:
+        summaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitySummaryResponse'
+          description: List of matching entity summaries
+        total:
+          type: integer
+          format: int64
+          description: Total number of matching entities
+
+    # ============================================
+    # Skill Ratings (Glicko-2)
+    # ============================================
+    GetSkillRatingRequest:
+      type: object
+      description: Request to get skill rating for an entity
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - entityId
+      - entityType
+      - ratingType
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type whose rating is requested
+        ratingType:
+          type: string
+          description: Type of rating (e.g., overall, ranked, casual)
+
+    SkillRatingResponse:
+      type: object
+      description: Glicko-2 skill rating for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - ratingType
+      - rating
+      - ratingDeviation
+      - volatility
+      - matchesPlayed
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this rating record
+        ratingType:
+          type: string
+          description: Type of rating
+        rating:
+          type: number
+          format: double
+          description: Current Glicko-2 rating (typically 1500 start)
+        ratingDeviation:
+          type: number
+          format: double
+          description: Rating deviation (uncertainty) - lower is more confident
+        volatility:
+          type: number
+          format: double
+          description: Rating volatility (consistency of performance)
+        matchesPlayed:
+          type: integer
+          description: Number of rated matches played
+        lastMatchAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of last rated match
+
+    UpdateSkillRatingRequest:
+      type: object
+      description: Request to update skill ratings after a match
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - ratingType
+      - matchId
+      - results
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        ratingType:
+          type: string
+          description: Type of rating to update
+        matchId:
+          type: string
+          format: uuid
+          description: Unique identifier for this match
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+          minItems: 2
+          description: Results for all participants (min 2)
+
+    MatchResult:
+      type: object
+      description: Individual result in a match
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - outcome
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the participating entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this match participant
+        outcome:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Match outcome (1.0 = win, 0.5 = draw, 0.0 = loss)
+        score:
+          type: number
+          format: double
+          nullable: true
+          description: Optional numeric score for the match
+
+    UpdateSkillRatingResponse:
+      type: object
+      description: Response after updating skill ratings
+      additionalProperties: false
+      required:
+      - matchId
+      - updatedRatings
+      properties:
+        matchId:
+          type: string
+          format: uuid
+          description: ID of the processed match
+        updatedRatings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillRatingChange'
+          description: Updated ratings for all participants
+
+    SkillRatingChange:
+      type: object
+      description: Rating change for a single entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - previousRating
+      - newRating
+      - ratingChange
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type for this rating change
+        previousRating:
+          type: number
+          format: double
+          description: Rating before this match
+        newRating:
+          type: number
+          format: double
+          description: Rating after this match
+        ratingChange:
+          type: number
+          format: double
+          description: Change in rating (can be negative)
+
+    # ============================================
+    # Controller History
+    # ============================================
+    RecordControllerEventRequest:
+      type: object
+      description: Request to record a controller possession/release event
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - accountId
+      - targetEntityId
+      - targetEntityType
+      - action
+      - timestamp
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account taking/releasing control
+        targetEntityId:
+          type: string
+          format: uuid
+          description: ID of the entity being controlled
+        targetEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type being controlled
+        action:
+          $ref: '#/components/schemas/ControllerAction'
+          description: Whether control was possessed or released
+        timestamp:
+          type: string
+          format: date-time
+          description: When the control event occurred
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game session ID (if applicable)
+
+    QueryControllerHistoryRequest:
+      type: object
+      description: Request to query controller history
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: ID of the game service
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by controlling account
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by controlled entity
+        targetEntityType:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Filter by entity type
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Start of time range
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: End of time range
+        limit:
+          type: integer
+          default: 100
+          maximum: 1000
+          description: Maximum results to return
+
+    QueryControllerHistoryResponse:
+      type: object
+      description: Response containing controller history
+      additionalProperties: false
+      required:
+      - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControllerHistoryEvent'
+          description: Controller events matching the query
+
+    ControllerHistoryEvent:
+      type: object
+      description: A single controller possession/release event
+      additionalProperties: false
+      required:
+      - eventId
+      - accountId
+      - targetEntityId
+      - targetEntityType
+      - action
+      - timestamp
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the controlling account
+        targetEntityId:
+          type: string
+          format: uuid
+          description: ID of the controlled entity
+        targetEntityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type that was controlled
+        action:
+          $ref: '#/components/schemas/ControllerAction'
+          description: Control action that occurred (possess/release)
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated game session ID
+
+# Service Registration Information
+x-service-registration:
+  serviceId: "analytics"
+  serviceName: "Analytics Service"
+  version: "1.0.0"
+  categories:
+  - analytics
+  - telemetry

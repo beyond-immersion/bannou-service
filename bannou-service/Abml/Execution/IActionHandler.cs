@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
 
@@ -82,17 +83,30 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
     /// <summary>
     /// Creates a registry with all built-in handlers registered.
     /// </summary>
-    public static ActionHandlerRegistry CreateWithBuiltins()
+    /// <param name="emitters">Optional intent emitter registry for domain action integration.</param>
+    /// <param name="archetypes">Optional archetype registry for entity type resolution.</param>
+    /// <param name="controlGates">Optional control gate registry for emission filtering.</param>
+    /// <returns>A registry with all built-in handlers.</returns>
+    public static ActionHandlerRegistry CreateWithBuiltins(
+        IIntentEmitterRegistry? emitters = null,
+        IArchetypeRegistry? archetypes = null,
+        IControlGateRegistry? controlGates = null)
     {
         var registry = new ActionHandlerRegistry();
-        registry.RegisterBuiltinHandlers();
+        registry.RegisterBuiltinHandlers(emitters, archetypes, controlGates);
         return registry;
     }
 
     /// <summary>
     /// Registers all built-in control flow and variable handlers.
     /// </summary>
-    public void RegisterBuiltinHandlers()
+    /// <param name="emitters">Optional intent emitter registry for domain action integration.</param>
+    /// <param name="archetypes">Optional archetype registry for entity type resolution.</param>
+    /// <param name="controlGates">Optional control gate registry for emission filtering.</param>
+    public void RegisterBuiltinHandlers(
+        IIntentEmitterRegistry? emitters = null,
+        IArchetypeRegistry? archetypes = null,
+        IControlGateRegistry? controlGates = null)
     {
         Register(new Handlers.CondHandler());
         Register(new Handlers.ForEachHandler());
@@ -106,6 +120,15 @@ public sealed class ActionHandlerRegistry : IActionHandlerRegistry
         Register(new Handlers.NumericOperationHandler());
         Register(new Handlers.ClearHandler());
         Register(new Handlers.LogHandler());
-        Register(new Handlers.DomainActionHandler());
+
+        // Register domain action handler with or without intent emission support
+        if (emitters != null && archetypes != null && controlGates != null)
+        {
+            Register(new Handlers.DomainActionHandler((IIntentEmitterRegistry)emitters, (IArchetypeRegistry)archetypes, (IControlGateRegistry)controlGates));
+        }
+        else
+        {
+            Register(new Handlers.DomainActionHandler());
+        }
     }
 }

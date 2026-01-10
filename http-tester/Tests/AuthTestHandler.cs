@@ -159,11 +159,28 @@ public class AuthTestHandler : BaseHttpTestHandler
             try
             {
                 var oauthResponse = await authClient.CompleteOAuthAsync(Provider.Discord, oauthRequest);
-                return TestResult.Successful($"OAuth flow completed successfully for Discord with AccountId: {oauthResponse.AccountId}");
+
+                // OAuth succeeded (mock mode enabled) - verify the token works
+                if (string.IsNullOrWhiteSpace(oauthResponse.AccessToken))
+                    return TestResult.Failed("OAuth succeeded but no access token returned");
+
+                // Validate the token to verify session was created
+                var validationResponse = await ((IServiceClient<AuthClient>)authClient)
+                    .WithAuthorization(oauthResponse.AccessToken)
+                    .ValidateTokenAsync();
+
+                if (!validationResponse.Valid)
+                    return TestResult.Failed("OAuth token validation returned Valid=false - session may not have been created");
+
+                if (validationResponse.SessionId == Guid.Empty)
+                    return TestResult.Failed("OAuth token validation succeeded but no SessionId returned");
+
+                return TestResult.Successful($"OAuth flow completed successfully for Discord: AccountId={oauthResponse.AccountId}, SessionId={validationResponse.SessionId}, RemainingTime={validationResponse.RemainingTime}s");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
             {
-                return TestResult.Successful("OAuth flow correctly handled invalid mock data");
+                // Mock mode disabled - OAuth flow correctly rejected invalid mock data
+                return TestResult.Successful("OAuth flow correctly handled invalid mock data (MockProviders=false)");
             }
         }, "OAuth flow");
 
@@ -172,6 +189,8 @@ public class AuthTestHandler : BaseHttpTestHandler
         {
             var authClient = GetServiceClient<IAuthClient>();
 
+            // Steam Session Ticket format: hex-encoded binary data
+            // In mock mode, any ticket will work; in production, ticket must be validated via Steam Web API
             var steamRequest = new SteamVerifyRequest
             {
                 Ticket = "140000006A7B3C8E0123456789ABCDEF",
@@ -185,13 +204,28 @@ public class AuthTestHandler : BaseHttpTestHandler
             try
             {
                 var steamResponse = await authClient.VerifySteamAuthAsync(steamRequest);
-                if (string.IsNullOrEmpty(steamResponse.AccessToken))
+
+                // Steam auth succeeded (mock mode enabled) - verify the token works
+                if (string.IsNullOrWhiteSpace(steamResponse.AccessToken))
                     return TestResult.Failed("Steam auth succeeded but no access token returned");
-                return TestResult.Successful($"Steam auth flow completed successfully with AccountId: {steamResponse.AccountId}");
+
+                // Validate the token to verify session was created
+                var validationResponse = await ((IServiceClient<AuthClient>)authClient)
+                    .WithAuthorization(steamResponse.AccessToken)
+                    .ValidateTokenAsync();
+
+                if (!validationResponse.Valid)
+                    return TestResult.Failed("Steam token validation returned Valid=false - session may not have been created");
+
+                if (validationResponse.SessionId == Guid.Empty)
+                    return TestResult.Failed("Steam token validation succeeded but no SessionId returned");
+
+                return TestResult.Successful($"Steam auth flow completed successfully: AccountId={steamResponse.AccountId}, SessionId={validationResponse.SessionId}, RemainingTime={validationResponse.RemainingTime}s");
             }
             catch (ApiException ex) when (ex.StatusCode == 401)
             {
-                return TestResult.Successful("Steam auth correctly rejected invalid ticket");
+                // Mock mode disabled - Steam auth correctly rejected invalid ticket
+                return TestResult.Successful("Steam auth correctly rejected invalid ticket (MockProviders=false)");
             }
         }, "Steam auth");
 

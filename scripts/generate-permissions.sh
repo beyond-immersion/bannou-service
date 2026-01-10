@@ -18,7 +18,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="$2"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-PROJECT_DIR="../lib-${SERVICE_NAME}"
+PROJECT_DIR="../plugins/lib-${SERVICE_NAME}"
 OUTPUT_DIR="${PROJECT_DIR}/Generated"
 OUTPUT_FILE="${OUTPUT_DIR}/${SERVICE_PASCAL}PermissionRegistration.cs"
 

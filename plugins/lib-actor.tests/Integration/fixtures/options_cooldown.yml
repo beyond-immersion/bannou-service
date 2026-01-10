@@ -1,0 +1,20 @@
+version: "2.0"
+metadata:
+  id: cooldown_options_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: special_attack
+      preference: 0.7
+      available: true
+      cooldownMs: 5000
+    - actionId: ultimate
+      preference: 0.9
+      available: true
+      cooldownMs: "${skills.ultimate_cooldown}"
+
+flows:
+  main:
+    actions:
+      - log: "tick"

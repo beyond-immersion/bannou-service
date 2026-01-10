@@ -311,6 +311,169 @@ components:
           nullable: true
           description: Associated character ID (for NPC brains)
 
+    # === Instance Runtime Events (from ActorRunner to control plane) ===
+    ActorInstanceStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor instance successfully starts and begins running.
+        Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+      required:
+        - actorId
+        - nodeId
+        - templateId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.started"
+          description: Event type identifier for actor instance started
+        actorId:
+          type: string
+          description: Unique identifier of the actor that started
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        templateId:
+          type: string
+          format: uuid
+          description: Template this actor was spawned from
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+        category:
+          type: string
+          nullable: true
+          description: Actor category (npc-brain, event-brain, etc.)
+
+    ActorStatePersistedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when actor state is auto-saved to persistent storage.
+        Useful for monitoring and debugging state persistence.
+      required:
+        - actorId
+        - nodeId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.state-persisted"
+          description: Event type identifier for actor state persistence
+        actorId:
+          type: string
+          description: Unique identifier of the actor whose state was persisted
+        nodeId:
+          type: string
+          description: Pool node where the actor is running
+        loopIterations:
+          type: integer
+          format: int64
+          description: Loop iterations at time of persistence
+
+    # === Encounter Events (from Event Brain actors) ===
+    ActorEncounterStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor starts managing a new encounter.
+        Other systems can subscribe to track active encounters.
+      required:
+        - actorId
+        - encounterId
+        - encounterType
+        - participants
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.started"
+          description: Event type identifier for encounter started
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        encounterType:
+          type: string
+          description: Type of encounter (combat, conversation, etc.)
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs participating in the encounter
+
+    ActorEncounterEndedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an Event Brain actor ends an encounter.
+        Includes duration and final phase for analytics.
+      required:
+        - actorId
+        - encounterId
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.ended"
+          description: Event type identifier for encounter ended
+        actorId:
+          type: string
+          description: Actor that was managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        durationSeconds:
+          type: number
+          format: float
+          nullable: true
+          description: Duration of the encounter in seconds
+        finalPhase:
+          type: string
+          nullable: true
+          description: Phase the encounter was in when it ended
+
+    ActorEncounterPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an encounter transitions to a new phase.
+        Useful for game servers to react to encounter state changes.
+      required:
+        - actorId
+        - encounterId
+        - previousPhase
+        - newPhase
+      properties:
+        eventName:
+          type: string
+          default: "actor.encounter.phase-changed"
+          description: Event type identifier for encounter phase change
+        actorId:
+          type: string
+          description: Actor managing this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for the encounter
+        previousPhase:
+          type: string
+          description: Phase before the change
+        newPhase:
+          type: string
+          description: Phase after the change
+
     # === Internal Commands (control plane to pool nodes) ===
     SpawnActorCommand:
       type: object
@@ -447,6 +610,174 @@ components:
           type: string
           description: App-id of game server (for routing state updates back)
         perception:
-          allOf:
-            - $ref: 'actor-api.yaml#/components/schemas/PerceptionData'
+          $ref: '#/components/schemas/PerceptionData'
           description: The perception data to deliver to the actor
+
+    # === Inlined Types for PerceptionData (avoid cross-file $ref issues) ===
+    PerceptionData:
+      type: object
+      additionalProperties: false
+      description: |
+        Data representing a perception event for an actor.
+
+        Spatial context can be provided in two ways (hybrid approach):
+        1. Typed: Use the optional spatialContext field for structured spatial data
+        2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+
+        The typed approach is recommended when game server has structured spatial data.
+        The schema-less approach allows flexibility for game-specific spatial formats.
+      required:
+      - perceptionType
+      - sourceId
+      properties:
+        perceptionType:
+          type: string
+          description: |
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+        sourceId:
+          type: string
+          description: ID of the entity causing this perception
+        sourceType:
+          type: string
+          nullable: true
+          description: Type of source (character, npc, object, environment)
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Perception-specific data. For perceptionType="spatial", this can contain
+            game-specific spatial context in any format the game server defines.
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: How urgent this perception is (0-1)
+        spatialContext:
+          allOf:
+            - $ref: '#/components/schemas/SpatialContext'
+          nullable: true
+          description: |
+            Optional typed spatial context from game server's local spatial state.
+            Provides structured information about terrain, nearby objects, hazards, etc.
+            Alternative to using perceptionType="spatial" with schema-less data.
+
+    SpatialContext:
+      type: object
+      additionalProperties: true
+      description: |
+        Spatial context derived from game server's authoritative spatial state.
+        Included in perception events to give NPC actors awareness of their environment
+        without requiring direct map subscriptions.
+
+        Note: additionalProperties=true allows game-specific extensions.
+      properties:
+        terrainType:
+          type: string
+          nullable: true
+          description: Terrain type at character position (grass, stone, water, etc.)
+        elevation:
+          type: number
+          format: float
+          nullable: true
+          description: Elevation at character position
+        nearbyObjects:
+          type: array
+          nullable: true
+          description: Objects within perception radius
+          items:
+            $ref: '#/components/schemas/NearbyObject'
+        hazardsInRange:
+          type: array
+          nullable: true
+          description: Active hazards within detection range
+          items:
+            $ref: '#/components/schemas/HazardInfo'
+        pathableDirections:
+          type: array
+          nullable: true
+          description: Directions the character can move (for navigation awareness)
+          items:
+            type: string
+            description: Cardinal or relative direction (north, south, east, west, forward, etc.)
+        coverNearby:
+          type: boolean
+          nullable: true
+          description: Whether cover is available within close range
+        indoors:
+          type: boolean
+          nullable: true
+          description: Whether character is currently indoors/under roof
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: Information about a nearby object perceived by the character
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          allOf:
+            - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: Information about a hazard in range
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: 3D position in world coordinates
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (typically vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate

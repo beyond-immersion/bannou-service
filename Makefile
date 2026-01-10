@@ -173,17 +173,17 @@ clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (impro
 clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
-		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
-			rm -rf "./lib-$(PLUGIN)/Generated"; \
-			echo "  Removed lib-$(PLUGIN)/Generated"; \
+		if [ -d "./plugins/lib-$(PLUGIN)/Generated" ]; then \
+			rm -rf "./plugins/lib-$(PLUGIN)/Generated"; \
+			echo "  Removed plugins/lib-$(PLUGIN)/Generated"; \
 		else \
-			echo "  No Generated directory found for lib-$(PLUGIN)"; \
+			echo "  No Generated directory found for plugins/lib-$(PLUGIN)"; \
 		fi; \
 		echo "✅ Clean completed for plugin: $(PLUGIN)"; \
 	else \
 		$(MAKE) clean-build-artifacts; \
 		echo "🧹 Cleaning all generated files..."; \
-		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		find . -path "./plugins/lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
 		rm -rf bannou-service/Generated 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \
@@ -503,14 +503,20 @@ test-http-dev: test-logs-dir prepare-fixtures ## HTTP tests: keep containers run
 
 # Collect HTTP tester logs to file and display
 test-http-logs: test-logs-dir ## Collect HTTP test logs to ./test-logs/http-tester.log
-	@echo "📋 Collecting HTTP tester logs..."
-	@docker logs bannou-test-http-bannou-http-tester-1 2>&1 | tee $(TEST_LOG_DIR)/http-tester.log
-	@echo "📋 Collecting bannou service logs..."
-	@docker logs bannou-test-http-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/http-bannou.log
+	@if docker container inspect bannou-test-http-bannou-http-tester-1 >/dev/null 2>&1; then \
+		echo "📋 Collecting HTTP tester logs..."; \
+		docker logs bannou-test-http-bannou-http-tester-1 2>&1 | tee $(TEST_LOG_DIR)/http-tester.log; \
+	else \
+		echo "⚠️  HTTP tester container not found - skipping (existing logs preserved)"; \
+	fi
+	@if docker container inspect bannou-test-http-bannou-1 >/dev/null 2>&1; then \
+		echo "📋 Collecting bannou service logs..."; \
+		docker logs bannou-test-http-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/http-bannou.log; \
+	else \
+		echo "⚠️  Bannou service container not found - skipping (existing logs preserved)"; \
+	fi
 	@echo ""
-	@echo "✅ Logs saved to:"
-	@echo "   $(TEST_LOG_DIR)/http-tester.log"
-	@echo "   $(TEST_LOG_DIR)/http-bannou.log"
+	@echo "✅ Logs collected (existing files preserved if containers not found)"
 
 # Follow HTTP tester logs live
 test-http-follow: ## Follow HTTP test logs in real-time
@@ -554,17 +560,26 @@ test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs t
 
 # Collect Edge tester logs
 test-edge-logs: test-logs-dir ## Collect Edge test logs to ./test-logs/edge-tester.log
-	@echo "📋 Collecting Edge tester logs..."
-	@docker logs bannou-test-edge-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/edge-tester.log
-	@echo "📋 Collecting bannou service logs..."
-	@docker logs bannou-test-edge-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/edge-bannou.log
-	@echo "📋 Collecting OpenResty logs..."
-	@docker logs bannou-test-edge-openresty-1 2>&1 | tee $(TEST_LOG_DIR)/edge-openresty.log || echo "⚠️  OpenResty container not found"
+	@if docker container inspect bannou-test-edge-bannou-edge-tester-1 >/dev/null 2>&1; then \
+		echo "📋 Collecting Edge tester logs..."; \
+		docker logs bannou-test-edge-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/edge-tester.log; \
+	else \
+		echo "⚠️  Edge tester container not found - skipping (existing logs preserved)"; \
+	fi
+	@if docker container inspect bannou-test-edge-bannou-1 >/dev/null 2>&1; then \
+		echo "📋 Collecting bannou service logs..."; \
+		docker logs bannou-test-edge-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/edge-bannou.log; \
+	else \
+		echo "⚠️  Bannou service container not found - skipping (existing logs preserved)"; \
+	fi
+	@if docker container inspect bannou-test-edge-openresty-1 >/dev/null 2>&1; then \
+		echo "📋 Collecting OpenResty logs..."; \
+		docker logs bannou-test-edge-openresty-1 2>&1 | tee $(TEST_LOG_DIR)/edge-openresty.log; \
+	else \
+		echo "⚠️  OpenResty container not found - skipping (existing logs preserved)"; \
+	fi
 	@echo ""
-	@echo "✅ Logs saved to:"
-	@echo "   $(TEST_LOG_DIR)/edge-tester.log"
-	@echo "   $(TEST_LOG_DIR)/edge-bannou.log"
-	@echo "   $(TEST_LOG_DIR)/edge-openresty.log"
+	@echo "✅ Logs collected (existing files preserved if containers not found)"
 
 # Follow Edge tester logs live
 test-edge-follow: ## Follow Edge test logs in real-time

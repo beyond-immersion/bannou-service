@@ -1,0 +1,383 @@
+# =============================================================================
+# Humanoid Base Behavior
+# Foundational behaviors all humanoid characters share.
+# This layer provides idle animations, basic reactions, and ambient behaviors.
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: humanoid-base
+  type: behavior
+  description: "Base behavior layer for humanoid characters"
+  tags:
+    - base
+    - humanoid
+    - foundation
+
+context:
+  variables:
+    # Core stats
+    energy:
+      source: "${agent.stats.energy}"
+      type: float
+    health:
+      source: "${agent.stats.health}"
+      type: float
+    mood:
+      source: "${agent.emotional_state.mood}"
+      type: string
+
+    # Environment
+    is_indoors:
+      source: "${agent.environment.indoors}"
+      type: bool
+    temperature:
+      source: "${world.weather.temperature}"
+      type: float
+    time_of_day:
+      source: "${world.time.period}"
+      type: string          # dawn | morning | afternoon | evening | night
+
+    # Social
+    nearby_characters:
+      source: "${agent.perception.characters_nearby}"
+      type: array
+
+# -----------------------------------------------------------------------------
+# Flows - Ambient and reactive behaviors
+# -----------------------------------------------------------------------------
+flows:
+  # ===========================================================================
+  # IDLE BEHAVIORS
+  # ===========================================================================
+
+  ambient_idle:
+    description: "Default idle state with ambient animations"
+    triggers:
+      - condition: "${!has_active_task}"
+
+    actions:
+      # Select idle animation based on context
+      - cond:
+          - when: "${energy < 0.3}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: idle_tired
+                  urgency: 0.2
+
+          - when: "${mood == 'bored'}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: idle_bored
+                  urgency: 0.15
+
+          - when: "${mood == 'happy'}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: idle_content
+                  urgency: 0.15
+
+          - else:
+              - emit_intent:
+                  channel: idle
+                  action: idle_neutral
+                  urgency: 0.1
+
+      # Ambient attention (looking around occasionally)
+      - emit_intent:
+          channel: attention
+          action: ambient_glance
+          frequency: low
+          urgency: 0.1
+
+  # ===========================================================================
+  # ENVIRONMENTAL REACTIONS
+  # ===========================================================================
+
+  react_to_weather:
+    description: "React to weather conditions"
+    triggers:
+      - event: "environment.weather_changed"
+
+    actions:
+      - cond:
+          - when: "${world.weather.raining && !is_indoors}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: squint
+                  urgency: 0.3
+              - emit_intent:
+                  channel: movement
+                  action: adjust_posture
+                  style: hunched
+                  urgency: 0.25
+
+          - when: "${temperature < 10 && !is_indoors}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: shiver
+                  urgency: 0.35
+              - emit_intent:
+                  channel: idle
+                  action: rub_arms
+                  urgency: 0.3
+
+          - when: "${temperature > 35}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: wipe_brow
+                  urgency: 0.25
+
+  react_to_loud_noise:
+    description: "Startle response to sudden loud noise"
+    triggers:
+      - event: "perception.loud_noise"
+
+    actions:
+      - emit_intent:
+          channel: expression
+          action: startle
+          intensity: "${event.volume / 100}"
+          urgency: 0.7
+
+      - emit_intent:
+          channel: attention
+          action: snap_look
+          direction: "${event.direction}"
+          urgency: 0.8
+
+      # Brief heightened alertness
+      - wait: { duration: 2.0 }
+
+      - emit_intent:
+          channel: stance
+          action: alert
+          duration: 5.0
+          urgency: 0.4
+
+  # ===========================================================================
+  # SOCIAL BEHAVIORS
+  # ===========================================================================
+
+  acknowledge_greeting:
+    description: "Respond to being greeted"
+    triggers:
+      - event: "social.greeted"
+
+    actions:
+      - cond:
+          - when: "${event.source.relationship == 'friend'}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: smile
+                  urgency: 0.5
+              - emit_intent:
+                  channel: idle
+                  action: wave
+                  style: friendly
+                  urgency: 0.5
+
+          - when: "${event.source.relationship == 'acquaintance'}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: nod
+                  urgency: 0.4
+
+          - when: "${event.source.relationship == 'stranger'}"
+            then:
+              - emit_intent:
+                  channel: attention
+                  action: glance
+                  target: "${event.source.id}"
+                  urgency: 0.3
+              - emit_intent:
+                  channel: expression
+                  action: nod
+                  style: polite
+                  urgency: 0.35
+
+          - else:
+              # Unknown or hostile
+              - emit_intent:
+                  channel: attention
+                  action: look_at
+                  target: "${event.source.id}"
+                  urgency: 0.5
+
+  make_way:
+    description: "Step aside for passing character"
+    triggers:
+      - event: "social.path_blocked"
+      - condition: "${event.blocker.id == agent.id}"
+
+    actions:
+      - emit_intent:
+          channel: movement
+          action: sidestep
+          direction: "${event.clear_direction}"
+          urgency: 0.6
+
+      - cond:
+          - when: "${event.requester.relationship != 'hostile'}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: nod
+                  style: apologetic
+                  urgency: 0.3
+
+  # ===========================================================================
+  # PHYSIOLOGICAL BEHAVIORS
+  # ===========================================================================
+
+  breathing:
+    description: "Ambient breathing animation"
+    triggers:
+      - condition: "true"   # Always active
+
+    actions:
+      - cond:
+          - when: "${agent.exertion > 0.7}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: breathe
+                  style: heavy
+                  urgency: 0.15
+
+          - when: "${agent.exertion > 0.4}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: breathe
+                  style: elevated
+                  urgency: 0.1
+
+          - else:
+              - emit_intent:
+                  channel: idle
+                  action: breathe
+                  style: normal
+                  urgency: 0.05
+
+  blinking:
+    description: "Natural blinking"
+    triggers:
+      - condition: "true"
+
+    actions:
+      - emit_intent:
+          channel: expression
+          action: blink
+          frequency: natural        # ~15-20 per minute
+          urgency: 0.02             # Very low - easily overridden
+
+  # ===========================================================================
+  # DAMAGE REACTIONS
+  # ===========================================================================
+
+  react_to_damage:
+    description: "Flinch and react to taking damage"
+    triggers:
+      - event: "combat.damaged"
+
+    actions:
+      - emit_intent:
+          channel: expression
+          action: pain
+          intensity: "${event.damage / agent.max_health}"
+          urgency: 0.85
+
+      - cond:
+          - when: "${event.damage_type == 'blunt'}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: stagger
+                  direction: "${event.direction}"
+                  urgency: 0.8
+
+          - when: "${event.damage_type == 'slash'}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: flinch
+                  urgency: 0.8
+
+          - when: "${event.damage_type == 'fire'}"
+            then:
+              - emit_intent:
+                  channel: idle
+                  action: recoil
+                  urgency: 0.85
+
+      # Vocalization
+      - cond:
+          - when: "${event.damage > agent.max_health * 0.3}"
+            then:
+              - emit_intent:
+                  channel: speech
+                  action: vocalize
+                  type: pain_cry
+                  urgency: 0.7
+
+          - else:
+              - emit_intent:
+                  channel: speech
+                  action: vocalize
+                  type: grunt
+                  urgency: 0.5
+
+  # ===========================================================================
+  # FATIGUE BEHAVIORS
+  # ===========================================================================
+
+  fatigue_effects:
+    description: "Show fatigue when energy is low"
+    triggers:
+      - condition: "${energy < 0.4}"
+
+    actions:
+      - cond:
+          - when: "${energy < 0.15}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: exhausted
+                  urgency: 0.4
+              - emit_intent:
+                  channel: idle
+                  action: slouch
+                  urgency: 0.35
+              - emit_intent:
+                  channel: movement
+                  action: slow_movement
+                  factor: 0.7
+                  urgency: 0.5
+
+          - when: "${energy < 0.3}"
+            then:
+              - emit_intent:
+                  channel: expression
+                  action: tired
+                  urgency: 0.3
+              - emit_intent:
+                  channel: idle
+                  action: yawn
+                  frequency: occasional
+                  urgency: 0.25
+
+          - else:
+              - emit_intent:
+                  channel: expression
+                  action: slightly_tired
+                  urgency: 0.2

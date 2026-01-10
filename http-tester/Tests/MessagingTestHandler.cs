@@ -175,13 +175,8 @@ public class MessagingTestHandler : BaseHttpTestHandler
                 SubscriptionId = subscriptionId
             };
 
-            var removeResponse = await messagingClient.RemoveSubscriptionAsync(removeRequest);
-
-            if (removeResponse == null)
-                return TestResult.Failed("RemoveSubscription returned null");
-
-            if (!removeResponse.Success)
-                return TestResult.Failed("RemoveSubscription returned success=false");
+            // RemoveSubscriptionAsync returns void - success = no exception
+            await messagingClient.RemoveSubscriptionAsync(removeRequest);
 
             return TestResult.Successful($"Subscription lifecycle complete: created and removed subscription {subscriptionId}");
         }, "Subscription lifecycle");
@@ -198,10 +193,10 @@ public class MessagingTestHandler : BaseHttpTestHandler
 
             try
             {
-                var response = await messagingClient.RemoveSubscriptionAsync(request);
-                // The service returns 404 for non-existent subscriptions
-                // NSwag client throws ApiException for non-200 responses
-                return TestResult.Successful($"RemoveSubscription handled non-existent ID gracefully: success={response?.Success}");
+                // RemoveSubscriptionAsync returns void
+                await messagingClient.RemoveSubscriptionAsync(request);
+                // The service may accept or reject non-existent subscription removal
+                return TestResult.Successful("RemoveSubscription handled non-existent ID gracefully");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {

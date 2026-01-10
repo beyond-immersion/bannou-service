@@ -1,0 +1,47 @@
+# =============================================================================
+# Guard Question - Suspicious Person
+# Used when approaching someone acting suspiciously
+# =============================================================================
+
+localizations:
+  en: "You there. What are you doing?"
+  es: "Oye tú. ¿Qué estás haciendo?"
+  de: "Ihr da. Was treibt Ihr hier?"
+  ja: "そこの者。何をしている？"
+  fr: "Vous là-bas. Qu'est-ce que vous faites ?"
+
+overrides:
+  # Loitering near restricted area
+  - condition: "${subject.near_restricted_area}"
+    priority: 10
+    localizations:
+      en: "This area is restricted. State your purpose here."
+      es: "Esta área es restringida. Explica qué haces aquí."
+
+  # Carrying suspicious items
+  - condition: "${subject.has_suspicious_items}"
+    priority: 15
+    localizations:
+      en: "What's that you're carrying? Let me see it."
+      es: "¿Qué llevas ahí? Déjame verlo."
+
+  # Acting nervous
+  - condition: "${subject.behavior_flags.nervous}"
+    priority: 5
+    localizations:
+      en: "You seem nervous. Is something wrong?"
+      es: "Pareces nervioso. ¿Pasa algo?"
+
+  # Known troublemaker
+  - condition: "${subject.reputation < -20}"
+    priority: 20
+    localizations:
+      en: "I've got my eye on you. What trouble are you causing now?"
+      es: "Te tengo vigilado. ¿Qué problemas estás causando ahora?"
+
+  # Night time
+  - condition: "${world.time.hour >= 23 || world.time.hour < 5}"
+    priority: 8
+    localizations:
+      en: "Bit late to be wandering around. Where are you headed?"
+      es: "Es un poco tarde para andar por ahí. ¿A dónde vas?"

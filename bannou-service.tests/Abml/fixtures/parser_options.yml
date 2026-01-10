@@ -1,0 +1,55 @@
+version: "2.0"
+metadata:
+  id: options_test
+  type: behavior
+
+options:
+  combat:
+    - actionId: sword_slash
+      preference: "${combat.style == 'aggressive' ? 0.9 : 0.6}"
+      risk: 0.3
+      available: "${equipment.has_sword}"
+      requirements:
+        - has_sword
+      tags:
+        - melee
+        - offensive
+
+    - actionId: shield_bash
+      preference: 0.7
+      risk: 0.2
+      available: true
+      requirements:
+        - has_shield
+      cooldownMs: 3000
+      tags:
+        - melee
+        - defensive
+        - stun
+
+    - actionId: retreat
+      preference: "${1.0 - combat.riskTolerance}"
+      available: true
+      tags:
+        - movement
+        - defensive
+
+  dialogue:
+    - actionId: greet_friendly
+      preference: "${personality.extraversion * personality.agreeableness}"
+      available: true
+      tags:
+        - social
+        - friendly
+
+    - actionId: intimidate
+      preference: 0.5
+      available: "${personality.aggression > 0.5}"
+      tags:
+        - social
+        - hostile
+
+flows:
+  main:
+    actions:
+      - log: "Actor behavior tick"

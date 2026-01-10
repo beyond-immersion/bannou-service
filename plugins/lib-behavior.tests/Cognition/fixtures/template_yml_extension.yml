@@ -1,0 +1,4 @@
+id: yml-template
+stages:
+  filter:
+    handlers: []

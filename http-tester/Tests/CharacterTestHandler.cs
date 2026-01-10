@@ -30,6 +30,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
 
         // Error handling tests
         new ServiceTest(TestGetNonExistentCharacter, "GetNonExistentCharacter", "Character", "Test 404 for non-existent character"),
+        new ServiceTest(TestListCharactersRequiresRealmId, "ListRequiresRealmId", "Character", "Test ListCharacters requires realmId"),
 
         // Complete lifecycle test
         new ServiceTest(TestCompleteCharacterLifecycle, "CompleteCharacterLifecycle", "Character", "Test complete character lifecycle: create → update → delete"),
@@ -298,6 +299,50 @@ public class CharacterTestHandler : BaseHttpTestHandler
             },
             404,
             "Get non-existent character");
+
+    private static async Task<TestResult> TestListCharactersRequiresRealmId(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a realm with some characters first
+            var realm = await CreateTestRealmAsync("REALMID_REQ");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "REALMID_REQ");
+
+            // Create a test character
+            await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"RealmIdTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
+                Status = CharacterStatus.Alive
+            });
+
+            // Test with valid realmId - should return characters
+            var validResponse = await characterClient.ListCharactersAsync(new ListCharactersRequest
+            {
+                RealmId = realm.RealmId,
+                Page = 1,
+                PageSize = 10
+            });
+
+            if (validResponse.Characters.Count == 0)
+                return TestResult.Failed("Expected to find characters when realmId is provided");
+
+            // Test with a non-existent realmId - should return empty
+            var emptyResponse = await characterClient.ListCharactersAsync(new ListCharactersRequest
+            {
+                RealmId = Guid.NewGuid(), // Non-existent realm
+                Page = 1,
+                PageSize = 10
+            });
+
+            if (emptyResponse.Characters.Count != 0)
+                return TestResult.Failed($"Expected empty list for non-existent realm, got {emptyResponse.Characters.Count} characters");
+
+            return TestResult.Successful($"ListCharacters correctly requires realmId: found {validResponse.Characters.Count} characters in test realm, 0 in non-existent realm");
+        }, "List characters requires realmId");
 
     private static async Task<TestResult> TestCompleteCharacterLifecycle(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

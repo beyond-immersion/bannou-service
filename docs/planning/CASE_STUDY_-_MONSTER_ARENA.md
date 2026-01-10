@@ -1,11 +1,12 @@
 # Case Study: Monster Rancher Combat Arena Demo
 
-> **Status**: DESIGN IN PROGRESS
+> **Status**: DESIGN IN PROGRESS (Streaming Composition Infrastructure COMPLETE)
 > **Created**: 2025-12-30
+> **Updated**: 2026-01-07
 > **Purpose**: ABML/AST demonstration through simplified arena combat
 > **Engine**: Stride
 > **Assets**: Synty (all visual assets)
-> **Related**: [ABML Guide](../guides/ABML.md), [BEHAVIOR_PLUGIN_V2.md](./UPCOMING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
+> **Related**: [ABML Guide](../guides/ABML.md), [BEHAVIOR_PLUGIN_V2.md](./ONGOING_-_BEHAVIOR_PLUGIN_V2.md), [ACTORS_PLUGIN_V3.md](./UPCOMING_-_ACTORS_PLUGIN_V3.md)
 
 ---
 
@@ -18,7 +19,7 @@ This demo serves as a **practical case study** for ABML and the behavior/actor s
 1. **ABML Behavior Trees** - Two combatants with AST-defined decision-making
 2. **Local Runtime Execution** - Frame-by-frame combat decisions via compiled bytecode
 3. **Fight Coordinator Actor** - Cloud-side agent creating "opportunity" events
-4. **Streaming Composition** - Enrichment cinematics injected into ongoing combat
+4. **Streaming Composition** - ✅ Infrastructure COMPLETE: `CinematicInterpreter` with pause/resume at continuation points, `CinematicExtensionAvailableEvent` schema (see [THE_DREAM_GAP_ANALYSIS.md](./THE_DREAM_GAP_ANALYSIS.md))
 5. **Bannou Integration** - Full service stack (behavior, actors, events)
 
 ### 1.2 Why Monster Rancher?
@@ -971,6 +972,13 @@ flows:
 
 ### 4.5 Cinematic Injection (Streaming Composition)
 
+> **Infrastructure Status**: ✅ COMPLETE
+> - `CinematicInterpreter` with `EvaluateWithPause()`, `ResumeWithDefaultFlow()`, `ResumeWithExtension()`
+> - `continuation_point` action with name, timeout, and default_flow
+> - `CinematicExtensionAvailableEvent` schema in behavior-events.yaml
+> - 13 tests covering extension injection, timeout, force resume
+> - See [THE_DREAM_GAP_ANALYSIS.md Phase 2](./THE_DREAM_GAP_ANALYSIS.md) for details
+
 When an opportunity is taken, the Fight Coordinator uses **streaming composition** to inject a cinematic:
 
 ```yaml
@@ -1464,8 +1472,12 @@ Environment Requirements:
 
 ### Phase 4: Cinematic Integration
 
+> **Server-side Infrastructure**: ✅ COMPLETE (CinematicInterpreter, continuation points, extension events)
+
 - [ ] Design cinematic ABML documents
-- [ ] Implement streaming composition in client
+- [x] Streaming composition infrastructure (`CinematicInterpreter` with pause/resume)
+- [x] Extension delivery event schema (`CinematicExtensionAvailableEvent`)
+- [ ] Integrate streaming composition in Stride client
 - [ ] Cinematic camera system
 - [ ] Control handoff (pause/resume behaviors)
 
@@ -1738,5 +1750,5 @@ These systems are designed to be **additive** - they layer on top of the base co
 ---
 
 *Document created: 2025-12-30*
-*Last updated: 2025-12-30*
+*Last updated: 2026-01-07 (Streaming composition infrastructure complete)*
 *This is a case study design document for demonstrating ABML/behavior systems.*

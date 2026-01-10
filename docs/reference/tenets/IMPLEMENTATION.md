@@ -169,12 +169,36 @@ return (StatusCodes.Conflict, null);            // State conflict
 return (StatusCodes.InternalServerError, null); // Unexpected failure
 ```
 
-### Empty Payload for Error Responses
+### Empty Payload for Error Responses (ABSOLUTE)
 
-Error responses return `null` as the second tuple element for security reasons:
-- Prevents leaking internal error details to clients
-- Connect service discards null payloads entirely
-- Clients receive only the status code
+Error responses MUST return `null` as the second tuple element. **No exceptions for "structured error responses" or "API contracts".**
+
+**Why null is required**:
+- **Status codes are sufficient**: The status code already communicates what failed (400=validation, 404=not found, 409=conflict, etc.)
+- **Error messages aren't actionable**: Clients cannot programmatically act on error strings without brittle magic string matching
+- **Consistency**: All errors follow the same pattern - check status code, handle accordingly
+- **Security**: Prevents accidental leakage of internal details
+
+**Incorrect patterns** (even if they seem "helpful"):
+```csharp
+// WRONG: Structured error response - status code already says "bad request"
+return (StatusCodes.BadRequest, new CompileResponse { Success = false, Errors = errors });
+
+// WRONG: User-friendly message - status code already says "not found"
+return (StatusCodes.NotFound, new Response { Error = "Entity not found" });
+
+// WRONG: Boolean result with error status - redundant and inconsistent
+return (StatusCodes.Conflict, new Response { Released = false });
+```
+
+**Correct pattern**:
+```csharp
+return (StatusCodes.BadRequest, null);   // Client checks status, knows validation failed
+return (StatusCodes.NotFound, null);     // Client checks status, knows resource missing
+return (StatusCodes.Conflict, null);     // Client checks status, knows conflict occurred
+```
+
+**For detailed errors** (like compilation failures), log server-side for debugging. Clients should retry with corrected input based on status code semantics, not parse error strings.
 
 ### Rationale
 

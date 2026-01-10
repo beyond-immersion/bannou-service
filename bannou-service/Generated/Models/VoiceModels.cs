@@ -363,12 +363,6 @@ public partial class JoinVoiceRoomResponse
 {
 
     /// <summary>
-    /// Whether join was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Voice room ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]

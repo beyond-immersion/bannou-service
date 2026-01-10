@@ -575,12 +575,6 @@ public partial class RoutingPreferenceResponse
 {
 
     /// <summary>
-    /// Whether the routing preference was updated successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// The preferred Connect service instance ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preferredInstance")]

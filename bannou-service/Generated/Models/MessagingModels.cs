@@ -123,12 +123,6 @@ public partial class PublishEventResponse
 {
 
     /// <summary>
-    /// Indicates whether the event was published successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Unique identifier assigned to the published message
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageId")]
@@ -253,21 +247,6 @@ public partial class RemoveSubscriptionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SubscriptionId { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Response confirming subscription removal status
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RemoveSubscriptionResponse
-{
-
-    /// <summary>
-    /// Indicates whether the subscription was removed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 

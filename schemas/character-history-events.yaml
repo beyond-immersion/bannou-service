@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: Character History Service Events
+  description: |
+    Event models for Character History service RabbitMQ pub/sub via MassTransit.
+    These events are published when historical participation or backstory data changes.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions: []  # Character History doesn't subscribe to external events
+  x-event-publications:
+    - topic: character-history.participation.recorded
+      event: CharacterParticipationRecordedEvent
+      description: Published when a character's participation in a historical event is recorded
+    - topic: character-history.participation.deleted
+      event: CharacterParticipationDeletedEvent
+      description: Published when a character's participation record is deleted
+    - topic: character-history.backstory.created
+      event: CharacterBackstoryCreatedEvent
+      description: Published when a character's backstory is first created
+    - topic: character-history.backstory.updated
+      event: CharacterBackstoryUpdatedEvent
+      description: Published when a character's backstory is updated
+    - topic: character-history.backstory.deleted
+      event: CharacterBackstoryDeletedEvent
+      description: Published when a character's backstory is deleted
+    - topic: character-history.deleted
+      event: CharacterHistoryDeletedEvent
+      description: Published when all history data for a character is deleted
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    CharacterParticipationRecordedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's participation in a historical event is recorded
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - historicalEventId
+        - participationId
+        - role
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that participated
+        historicalEventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the participation record
+        role:
+          type: string
+          description: Role the character played in the event
+
+    CharacterParticipationDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's participation record is deleted
+      required:
+        - eventId
+        - timestamp
+        - participationId
+        - characterId
+        - historicalEventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the deleted participation record
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        historicalEventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+
+    CharacterBackstoryCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is first created
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - elementCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was created
+        elementCount:
+          type: integer
+          description: Number of backstory elements created
+
+    CharacterBackstoryUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is updated
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - elementCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was updated
+        elementCount:
+          type: integer
+          description: Current number of backstory elements
+        replaceExisting:
+          type: boolean
+          nullable: true
+          description: Whether existing elements were replaced
+
+    CharacterBackstoryDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's backstory is deleted
+      required:
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose backstory was deleted
+
+    CharacterHistoryDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when all history data for a character is deleted
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - participationsDeleted
+        - backstoryDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose history was deleted
+        participationsDeleted:
+          type: integer
+          description: Number of participation records deleted
+        backstoryDeleted:
+          type: boolean
+          description: Whether backstory was deleted

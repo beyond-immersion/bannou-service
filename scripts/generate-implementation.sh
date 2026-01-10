@@ -20,7 +20,7 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-SERVICE_DIR="../lib-${SERVICE_NAME}"
+SERVICE_DIR="../plugins/lib-${SERVICE_NAME}"
 IMPLEMENTATION_FILE="$SERVICE_DIR/${SERVICE_PASCAL}Service.cs"
 
 echo -e "${YELLOW}🔧 Generating service implementation for: $SERVICE_NAME${NC}"
@@ -47,10 +47,14 @@ echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
 # Create service implementation template
 cat > "$IMPLEMENTATION_FILE" << EOF
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
 

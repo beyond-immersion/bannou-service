@@ -655,19 +655,81 @@ paths:
         \                    \"description\": \"Perception data to inject\",\n                    \"$ref\": \"#/$defs/PerceptionData\"\
         \n                }\n            }\n        },\n        \"PerceptionData\": {\n            \"type\": \"object\",\n\
         \            \"additionalProperties\": false,\n            \"description\": \"Data representing a perception event
-        for an actor\",\n            \"required\": [\n                \"perceptionType\",\n                \"sourceId\"\n\
-        \            ],\n            \"properties\": {\n                \"perceptionType\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Perception type (visual, auditory, tactile, etc.)\"\n      \
-        \          },\n                \"sourceId\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"ID of the entity causing this perception\"\n                },\n                \"sourceType\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of source (character, npc, object, environment)\"\n                },\n                \"data\": {\n    \
-        \                \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
-        nullable\": true,\n                    \"description\": \"Perception-specific data\"\n                },\n       \
-        \         \"urgency\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"default\": 0.5,\n\
-        \                    \"description\": \"How urgent this perception is (0-1)\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        for an actor.\\n\\nSpatial context can be provided in two ways (hybrid approach):\\n1. Typed: Use the optional spatialContext
+        field for structured spatial data\\n2. Schema-less: Use perceptionType=\\\"spatial\\\" with data containing spatial
+        info\\n\\nThe typed approach is recommended when game server has structured spatial data.\\nThe schema-less approach
+        allows flexibility for game-specific spatial formats.\\n\",\n            \"required\": [\n                \"perceptionType\"\
+        ,\n                \"sourceId\"\n            ],\n            \"properties\": {\n                \"perceptionType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Perception type. Common values:
+        visual, auditory, tactile, olfactory,\\nproprioceptive, spatial. Use \\\"spatial\\\" for schema-less spatial data
+        in 'data' field.\\n\"\n                },\n                \"sourceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"ID of the entity causing this perception\"\n                },\n       \
+        \         \"sourceType\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of source (character, npc, object, environment)\"\n                },\n\
+        \                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Perception-specific data.
+        For perceptionType=\\\"spatial\\\", this can contain\\ngame-specific spatial context in any format the game server
+        defines.\\n\"\n                },\n                \"urgency\": {\n                    \"type\": \"number\",\n   \
+        \                 \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n\
+        \                    \"default\": 0.5,\n                    \"description\": \"How urgent this perception is (0-1)\"\
+        \n                },\n                \"spatialContext\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/SpatialContext\"\n                        }\n          \
+        \          ],\n                    \"nullable\": true,\n                    \"description\": \"Optional typed spatial
+        context from game server's local spatial state.\\nProvides structured information about terrain, nearby objects, hazards,
+        etc.\\nAlternative to using perceptionType=\\\"spatial\\\" with schema-less data.\\n\"\n                }\n      \
+        \      }\n        },\n        \"SpatialContext\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : true,\n            \"description\": \"Spatial context derived from game server's authoritative spatial state.\\\
+        nIncluded in perception events to give NPC actors awareness of their environment\\nwithout requiring direct map subscriptions.\\
+        n\\nNote: additionalProperties=true allows game-specific extensions.\\n\",\n            \"properties\": {\n      \
+        \          \"terrainType\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Terrain type at character position (grass, stone, water, etc.)\"\n       \
+        \         },\n                \"elevation\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"Elevation at
+        character position\"\n                },\n                \"nearbyObjects\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Objects within perception radius\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NearbyObject\"\n                \
+        \    }\n                },\n                \"hazardsInRange\": {\n                    \"type\": \"array\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Active hazards within detection range\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/HazardInfo\"\n                  \
+        \  }\n                },\n                \"pathableDirections\": {\n                    \"type\": \"array\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Directions the character can move (for
+        navigation awareness)\",\n                    \"items\": {\n                        \"type\": \"string\",\n      \
+        \                  \"description\": \"Cardinal or relative direction (north, south, east, west, forward, etc.)\"\n\
+        \                    }\n                },\n                \"coverNearby\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether cover is available within
+        close range\"\n                },\n                \"indoors\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Whether character is currently indoors/under
+        roof\"\n                }\n            }\n        },\n        \"NearbyObject\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": true,\n            \"description\": \"Information about a nearby object perceived
+        by the character\",\n            \"properties\": {\n                \"objectId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
+        of the object\"\n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Type of object (boulder_cluster, tree, building, etc.)\"\n               \
+        \ },\n                \"distance\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"description\": \"Distance from character in game units\"\n                },\n \
+        \               \"direction\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Relative direction (north, south, east, west, above, below, etc.)\"\n                },\n                \"position\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/Position3D\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Optional absolute position\"\n                }\n            }\n        },\n        \"Position3D\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"3D position in world coordinates\",\n            \"required\": [\n                \"x\",\n                \"y\"\
+        ,\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n              \
+        \      \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
+        X coordinate\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"float\",\n                    \"description\": \"Y coordinate (typically vertical)\"\n\
+        \                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Z coordinate\"\n                }\n            }\n        },\n\
+        \        \"HazardInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n     \
+        \       \"description\": \"Information about a hazard in range\",\n            \"properties\": {\n               \
+        \ \"hazardType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of hazard
+        (fire, poison, radiation, deep_water, etc.)\"\n                },\n                \"distance\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
+        Distance to hazard edge\"\n                },\n                \"severity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"Hazard severity (0-1)\"\n                },\n                \"direction\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Direction to hazard center\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InjectPerceptionResponse\"\
         ,\n    \"$defs\": {\n        \"InjectPerceptionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response confirming perception injection\",\n            \"required\": [\n\
@@ -680,6 +742,336 @@ paths:
         : \"Injects a perception event directly into the actor's perception queue\\nfor testing purposes. Useful for testing
         actor behavior without a\\nfull game server setup.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"InjectPerception\"\n}"
+
+  # === Query Options ===
+  /actor/query-options:
+    post:
+      operationId: QueryOptions
+      summary: Query an actor for its available options
+      description: |
+        Query an actor for its available options (combat, dialogue, exploration, etc.).
+        Options are maintained by the actor in its state and returned based on requested
+        freshness level. This enables Event Brain actors to ask participants "what can
+        you do?" for choreography and coordination.
+
+        Freshness levels:
+        - fresh: Inject context and wait for actor to recompute options
+        - cached: Return cached options if within maxAgeMs, else recompute
+        - stale_ok: Return cached options regardless of age
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryOptionsRequest'
+      responses:
+        '200':
+          description: Options retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryOptionsResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryOptionsRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryOptionsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Query an actor for its available options. Options are maintained by the actor\\
+        nin its state.memories.{queryType}_options and returned based on requested freshness.\\n\",\n            \"required\"\
+        : [\n                \"actorId\",\n                \"queryType\"\n            ],\n            \"properties\": {\n\
+        \                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        ID of the actor to query\"\n                },\n                \"queryType\": {\n                    \"$ref\": \"\
+        #/$defs/OptionsQueryType\",\n                    \"description\": \"Type of options to query\"\n                },\n\
+        \                \"freshness\": {\n                    \"$ref\": \"#/$defs/OptionsFreshness\",\n                 \
+        \   \"description\": \"Requested freshness level. Defaults to 'cached'.\\n- fresh: Inject context and wait for actor
+        to recompute\\n- cached: Return cached options if within maxAgeMs\\n- stale_ok: Return whatever is cached, even if
+        expired\\n\"\n                },\n                \"maxAgeMs\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"maximum\": 60000,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Maximum age of cached options in milliseconds (for 'cached' freshness).\\\
+        nDefaults to 5000ms. If cached options are older, behavior depends on\\nfreshness level.\\n\"\n                },\n\
+        \                \"context\": {\n                    \"$ref\": \"#/$defs/OptionsQueryContext\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Optional context for the query. When provided with
+        freshness='fresh',\\nthis context is injected as a perception to the actor, triggering\\ncontext-sensitive option
+        recomputation.\\n\"\n                }\n            }\n        },\n        \"OptionsQueryType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Type of options to query. Actors maintain options in state.memories.{type}_options.\\
+        nWell-known types are defined; actors can also expose custom types.\\n\",\n            \"enum\": [\n             \
+        \   \"combat\",\n                \"dialogue\",\n                \"exploration\",\n                \"social\",\n  \
+        \              \"custom\"\n            ]\n        },\n        \"OptionsFreshness\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls caching behavior for options queries\",\n            \"enum\": [\n    \
+        \            \"fresh\",\n                \"cached\",\n                \"stale_ok\"\n            ],\n            \"\
+        default\": \"cached\"\n        },\n        \"OptionsQueryContext\": {\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": true,\n            \"description\": \"Context provided with a fresh query. Injected
+        as a perception to the actor\\nto trigger context-sensitive option recomputation.\\n\",\n            \"properties\"\
+        : {\n                \"combatState\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Current combat state (approaching, engaged, retreating, etc.)\"\n\
+        \                },\n                \"opponentIds\": {\n                    \"type\": \"array\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"IDs of opponents in the current encounter\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
+        \       },\n                \"allyIds\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"IDs of allies in the current encounter\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
+        \    \"environmentTags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Environment tags (indoor, elevated, destructibles, narrow, etc.)\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    }\n              \
+        \  },\n                \"urgency\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How urgent is this query (affects option prioritization)\"\n     \
+        \           },\n                \"customContext\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Actor-specific context data\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryOptionsResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryOptionsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing the actor's available options\",\n            \"required\"\
+        : [\n                \"actorId\",\n                \"queryType\",\n                \"options\",\n                \"\
+        computedAt\",\n                \"ageMs\"\n            ],\n            \"properties\": {\n                \"actorId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the queried actor\"\n\
+        \                },\n                \"queryType\": {\n                    \"$ref\": \"#/$defs/OptionsQueryType\"\
+        ,\n                    \"description\": \"Type of options returned\"\n                },\n                \"options\"\
+        : {\n                    \"type\": \"array\",\n                    \"description\": \"Available options for the queried
+        type\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActorOption\"\n           \
+        \         }\n                },\n                \"computedAt\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"date-time\",\n                    \"description\": \"When these options were last
+        computed by the actor\"\n                },\n                \"ageMs\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Age of options in milliseconds (now - computedAt)\"\n                },\n\
+        \                \"characterContext\": {\n                    \"$ref\": \"#/$defs/CharacterOptionContext\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Character-specific context that influenced
+        these options.\\nOnly present for character-based actors.\\n\"\n                }\n            }\n        },\n   \
+        \     \"OptionsQueryType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of options to
+        query. Actors maintain options in state.memories.{type}_options.\\nWell-known types are defined; actors can also expose
+        custom types.\\n\",\n            \"enum\": [\n                \"combat\",\n                \"dialogue\",\n       \
+        \         \"exploration\",\n                \"social\",\n                \"custom\"\n            ]\n        },\n \
+        \       \"ActorOption\": {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n     \
+        \       \"description\": \"A single option available to the actor. The standardized fields enable\\nEvent Brain to
+        reason about options; additional fields allow actor-specific data.\\n\",\n            \"required\": [\n          \
+        \      \"actionId\",\n                \"preference\",\n                \"available\"\n            ],\n           \
+        \ \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Unique identifier for this action within the option type.\\nExamples: \\\"sword_slash\\\"\
+        , \\\"greet_friendly\\\", \\\"climb_wall\\\"\\n\"\n                },\n                \"preference\": {\n       \
+        \             \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\":
+        0,\n                    \"maximum\": 1,\n                    \"description\": \"How much the actor prefers this option
+        (0-1), based on personality,\\ncombat preferences, current state, etc. Higher = more preferred.\\n\"\n           \
+        \     },\n                \"risk\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Estimated risk of this action (0=safe, 1=very risky)\"\n         \
+        \       },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this option is currently available (requirements met)\"\n                },\n                \"requirements\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Requirements that must be met for this option\",\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    }\n                },\n                \"cooldownMs\": {\n               \
+        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Milliseconds
+        until this option becomes available again (if on cooldown)\"\n                },\n                \"tags\": {\n  \
+        \                  \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Tags for categorization (e.g., [\\\"melee\\\", \\\"aggressive\\\", \\\"loud\\\"])\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    }\n                }\n            }\n     \
+        \   },\n        \"CharacterOptionContext\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Character-specific context that influenced option computation\",\n      \
+        \      \"properties\": {\n                \"combatStyle\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Character's combat style (aggressive, defensive,
+        balanced, etc.)\"\n                },\n                \"riskTolerance\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"nullable\": true,\n                    \"description\": \"Character's risk tolerance (0=cautious,
+        1=reckless)\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether character prioritizes ally
+        protection\"\n                },\n                \"currentGoal\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Character's current primary goal\"\
+        \n                },\n                \"emotionalState\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Character's current dominant emotion\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query an actor for its available options\",\n    \"description\": \"Query
+        an actor for its available options (combat, dialogue, exploration, etc.).\\nOptions are maintained by the actor in
+        its state and returned based on requested\\nfreshness level. This enables Event Brain actors to ask participants \\\
+        \"what can\\nyou do?\\\" for choreography and coordination.\\n\\nFreshness levels:\\n- fresh: Inject context and wait
+        for actor to recompute options\\n- cached: Return cached options if within maxAgeMs, else recompute\\n- stale_ok:
+        Return cached options regardless of age\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"QueryOptions\"\n}"
+
+  # === Encounter Management (Event Brain) ===
+  /actor/encounter/start:
+    post:
+      operationId: StartEncounter
+      summary: Start an encounter managed by an Event Brain actor
+      description: |
+        Initializes an encounter with the specified participants. The Event Brain actor
+        will coordinate the encounter, sending instructions to participant NPC Brain actors
+        via their character perception channels.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartEncounterRequest'
+      responses:
+        '200':
+          description: Encounter started successfully
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"StartEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to start an encounter managed by an Event Brain actor\",\n      \
+        \      \"required\": [\n                \"actorId\",\n                \"encounterId\",\n                \"encounterType\"\
+        ,\n                \"participants\"\n            ],\n            \"properties\": {\n                \"actorId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor that
+        will manage this encounter\"\n                },\n                \"encounterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n                },\n\
+        \                \"encounterType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of encounter (e.g., \\\"combat\\\", \\\"conversation\\\", \\\"choreography\\\")\"\n                },\n \
+        \               \"participants\": {\n                    \"type\": \"array\",\n                    \"description\"\
+        : \"Character IDs of participants in the encounter\",\n                    \"items\": {\n                        \"\
+        type\": \"string\",\n                        \"format\": \"uuid\"\n                    }\n                },\n   \
+        \             \"initialData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Optional initial data for
+        the encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
+        : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
+        sending instructions to participant NPC Brain actors\\nvia their character perception channels.\\n\",\n    \"tags\"\
+        : [],\n    \"deprecated\": false,\n    \"operationId\": \"StartEncounter\"\n}"
+  /actor/encounter/update-phase:
+    post:
+      operationId: UpdateEncounterPhase
+      summary: Update the phase of an active encounter
+      description: |
+        Updates the phase of an encounter being managed by an Event Brain actor.
+        Phase changes are logged and can trigger behavior changes in participant actors.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEncounterPhaseRequest'
+      responses:
+        '200':
+          description: Encounter phase updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateEncounterPhaseResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterPhaseRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateEncounterPhaseRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to update the phase of an active encounter\"\
+        ,\n            \"required\": [\n                \"actorId\",\n                \"phase\"\n            ],\n        \
+        \    \"properties\": {\n                \"actorId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"ID of the Event Brain actor managing the encounter\"\n                },\n             \
+        \   \"phase\": {\n                    \"type\": \"string\",\n                    \"description\": \"New phase name
+        for the encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterPhaseResponse\"\
+        ,\n    \"$defs\": {\n        \"UpdateEncounterPhaseResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Response after updating encounter phase\",\n      \
+        \      \"required\": [\n                \"actorId\",\n                \"currentPhase\"\n            ],\n         \
+        \   \"properties\": {\n                \"actorId\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"ID of the actor managing the encounter\"\n                },\n                \"previousPhase\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Previous phase name\"\n                },\n                \"currentPhase\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Current phase name after update\"\n                }\n       \
+        \     }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update the phase of an active encounter\",\n    \"description\": \"Updates
+        the phase of an encounter being managed by an Event Brain actor.\\nPhase changes are logged and can trigger behavior
+        changes in participant actors.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateEncounterPhase\"\
+        \n}"
+  /actor/encounter/end:
+    post:
+      operationId: EndEncounter
+      summary: End an active encounter
+      description: |
+        Ends an encounter being managed by an Event Brain actor. This clears the
+        encounter state and allows the actor to manage a new encounter.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndEncounterRequest'
+      responses:
+        '200':
+          description: Encounter ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndEncounterResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"EndEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to end an active encounter\",\n            \"required\": [\n    \
+        \            \"actorId\"\n            ],\n            \"properties\": {\n                \"actorId\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor managing the
+        encounter\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"EndEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after ending an encounter\",\n            \"required\": [\n    \
+        \            \"actorId\",\n                \"encounterId\"\n            ],\n            \"properties\": {\n      \
+        \          \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of
+        the actor\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\",\n \
+        \                   \"description\": \"ID of the ended encounter\"\n                },\n                \"durationMs\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Duration of the encounter in milliseconds\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"End an active encounter\",\n    \"description\": \"Ends an encounter being
+        managed by an Event Brain actor. This clears the\\nencounter state and allows the actor to manage a new encounter.\\\
+        n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"EndEncounter\"\n}"
+  /actor/encounter/get:
+    post:
+      operationId: GetEncounter
+      summary: Get the current encounter state for an actor
+      description: |
+        Retrieves the current encounter state for an Event Brain actor. Returns
+        null encounter data if the actor is not managing an encounter.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEncounterRequest'
+      responses:
+        '200':
+          description: Encounter state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEncounterResponse'
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEncounterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the current encounter state for an actor\",\n            \"\
+        required\": [\n                \"actorId\"\n            ],\n            \"properties\": {\n                \"actorId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the Event Brain actor
+        to query\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"GetEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing the current encounter state\",\n            \"required\"\
+        : [\n                \"actorId\",\n                \"hasActiveEncounter\"\n            ],\n            \"properties\"\
+        : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"ID of the queried actor\"\n                },\n                \"hasActiveEncounter\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"description\": \"Whether the actor is currently managing an encounter\"\
+        \n                },\n                \"encounter\": {\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Current encounter state (null if no active encounter)\",\n                    \"$ref\": \"\
+        #/$defs/EncounterState\"\n                }\n            }\n        },\n        \"EncounterState\": {\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"State of an
+        active encounter being managed by an Event Brain actor\",\n            \"required\": [\n                \"encounterId\"\
+        ,\n                \"encounterType\",\n                \"participants\",\n                \"phase\",\n           \
+        \     \"startedAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Unique identifier for this encounter\"\n\
+        \                },\n                \"encounterType\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Type of encounter\"\n                },\n                \"participants\": {\n      \
+        \              \"type\": \"array\",\n                    \"description\": \"Character IDs participating in the encounter\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    }\n                },\n                \"phase\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Current phase of the encounter\"\n                },\n     \
+        \           \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the encounter started\"\n                },\n                \"data\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Custom encounter-specific data\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get the current encounter state for an actor\",\n    \"description\": \"\
+        Retrieves the current encounter state for an Event Brain actor. Returns\\nnull encounter data if the actor is not
+        managing an encounter.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetEncounter\"\
+        \n}"
 components:
   schemas:
     # === Actor Templates ===
@@ -1117,14 +1509,24 @@ components:
     PerceptionData:
       type: object
       additionalProperties: false
-      description: Data representing a perception event for an actor
+      description: |
+        Data representing a perception event for an actor.
+
+        Spatial context can be provided in two ways (hybrid approach):
+        1. Typed: Use the optional spatialContext field for structured spatial data
+        2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+
+        The typed approach is recommended when game server has structured spatial data.
+        The schema-less approach allows flexibility for game-specific spatial formats.
       required:
       - perceptionType
       - sourceId
       properties:
         perceptionType:
           type: string
-          description: Perception type (visual, auditory, tactile, etc.)
+          description: |
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
         sourceId:
           type: string
           description: ID of the entity causing this perception
@@ -1136,7 +1538,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Perception-specific data
+          description: |
+            Perception-specific data. For perceptionType="spatial", this can contain
+            game-specific spatial context in any format the game server defines.
         urgency:
           type: number
           format: float
@@ -1144,6 +1548,131 @@ components:
           maximum: 1
           default: 0.5
           description: How urgent this perception is (0-1)
+        spatialContext:
+          allOf:
+          - $ref: '#/components/schemas/SpatialContext'
+          nullable: true
+          description: |
+            Optional typed spatial context from game server's local spatial state.
+            Provides structured information about terrain, nearby objects, hazards, etc.
+            Alternative to using perceptionType="spatial" with schema-less data.
+
+    SpatialContext:
+      type: object
+      additionalProperties: true
+      description: |
+        Spatial context derived from game server's authoritative spatial state.
+        Included in perception events to give NPC actors awareness of their environment
+        without requiring direct map subscriptions.
+
+        Note: additionalProperties=true allows game-specific extensions.
+      properties:
+        terrainType:
+          type: string
+          nullable: true
+          description: Terrain type at character position (grass, stone, water, etc.)
+        elevation:
+          type: number
+          format: float
+          nullable: true
+          description: Elevation at character position
+        nearbyObjects:
+          type: array
+          nullable: true
+          description: Objects within perception radius
+          items:
+            $ref: '#/components/schemas/NearbyObject'
+        hazardsInRange:
+          type: array
+          nullable: true
+          description: Active hazards within detection range
+          items:
+            $ref: '#/components/schemas/HazardInfo'
+        pathableDirections:
+          type: array
+          nullable: true
+          description: Directions the character can move (for navigation awareness)
+          items:
+            type: string
+            description: Cardinal or relative direction (north, south, east, west, forward, etc.)
+        coverNearby:
+          type: boolean
+          nullable: true
+          description: Whether cover is available within close range
+        indoors:
+          type: boolean
+          nullable: true
+          description: Whether character is currently indoors/under roof
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: Information about a nearby object perceived by the character
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: Information about a hazard in range
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: 3D position in world coordinates
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (typically vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate
 
     InjectPerceptionResponse:
       type: object
@@ -1160,3 +1689,562 @@ components:
         queueDepth:
           type: integer
           description: Current depth of the perception queue
+
+    # === Query Options ===
+    QueryOptionsRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Query an actor for its available options. Options are maintained by the actor
+        in its state.memories.{queryType}_options and returned based on requested freshness.
+      required:
+      - actorId
+      - queryType
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor to query
+        queryType:
+          $ref: '#/components/schemas/OptionsQueryType'
+          description: Type of options to query
+        freshness:
+          $ref: '#/components/schemas/OptionsFreshness'
+          description: |
+            Requested freshness level. Defaults to 'cached'.
+            - fresh: Inject context and wait for actor to recompute
+            - cached: Return cached options if within maxAgeMs
+            - stale_ok: Return whatever is cached, even if expired
+        maxAgeMs:
+          type: integer
+          minimum: 0
+          maximum: 60000
+          nullable: true
+          description: |
+            Maximum age of cached options in milliseconds (for 'cached' freshness).
+            Defaults to 5000ms. If cached options are older, behavior depends on
+            freshness level.
+        context:
+          $ref: '#/components/schemas/OptionsQueryContext'
+          nullable: true
+          description: |
+            Optional context for the query. When provided with freshness='fresh',
+            this context is injected as a perception to the actor, triggering
+            context-sensitive option recomputation.
+
+    QueryOptionsResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing the actor's available options
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorId
+      - queryType
+      - options
+      - computedAt
+      - ageMs
+      properties:
+        actorId:
+          type: string
+          description: ID of the queried actor
+        queryType:
+          $ref: '#/components/schemas/OptionsQueryType'
+          description: Type of options returned
+        options:
+          type: array
+          description: Available options for the queried type
+          items:
+            $ref: '#/components/schemas/ActorOption'
+        computedAt:
+          type: string
+          format: date-time
+          description: When these options were last computed by the actor
+        ageMs:
+          type: integer
+          description: Age of options in milliseconds (now - computedAt)
+        characterContext:
+          $ref: '#/components/schemas/CharacterOptionContext'
+          nullable: true
+          description: |
+            Character-specific context that influenced these options.
+            Only present for character-based actors.
+
+    OptionsQueryType:
+      type: string
+      description: |
+        Type of options to query. Actors maintain options in state.memories.{type}_options.
+        Well-known types are defined; actors can also expose custom types.
+      enum:
+      - combat
+      - dialogue
+      - exploration
+      - social
+      - custom
+
+    OptionsFreshness:
+      type: string
+      description: Controls caching behavior for options queries
+      enum:
+      - fresh
+      - cached
+      - stale_ok
+      default: cached
+
+    ActorOption:
+      type: object
+      additionalProperties: true
+      description: |
+        A single option available to the actor. The standardized fields enable
+        Event Brain to reason about options; additional fields allow actor-specific data.
+      required:
+      - actionId
+      - preference
+      - available
+      properties:
+        actionId:
+          type: string
+          description: |
+            Unique identifier for this action within the option type.
+            Examples: "sword_slash", "greet_friendly", "climb_wall"
+        preference:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: |
+            How much the actor prefers this option (0-1), based on personality,
+            combat preferences, current state, etc. Higher = more preferred.
+        risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Estimated risk of this action (0=safe, 1=very risky)
+        available:
+          type: boolean
+          description: Whether this option is currently available (requirements met)
+        requirements:
+          type: array
+          nullable: true
+          description: Requirements that must be met for this option
+          items:
+            type: string
+        cooldownMs:
+          type: integer
+          nullable: true
+          description: Milliseconds until this option becomes available again (if on cooldown)
+        tags:
+          type: array
+          nullable: true
+          description: Tags for categorization (e.g., ["melee", "aggressive", "loud"])
+          items:
+            type: string
+
+    OptionsQueryContext:
+      type: object
+      additionalProperties: true
+      description: |
+        Context provided with a fresh query. Injected as a perception to the actor
+        to trigger context-sensitive option recomputation.
+      properties:
+        combatState:
+          type: string
+          nullable: true
+          description: Current combat state (approaching, engaged, retreating, etc.)
+        opponentIds:
+          type: array
+          nullable: true
+          description: IDs of opponents in the current encounter
+          items:
+            type: string
+        allyIds:
+          type: array
+          nullable: true
+          description: IDs of allies in the current encounter
+          items:
+            type: string
+        environmentTags:
+          type: array
+          nullable: true
+          description: Environment tags (indoor, elevated, destructibles, narrow, etc.)
+          items:
+            type: string
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: How urgent is this query (affects option prioritization)
+        customContext:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Actor-specific context data
+
+    CharacterOptionContext:
+      type: object
+      additionalProperties: false
+      description: Character-specific context that influenced option computation
+      properties:
+        combatStyle:
+          type: string
+          nullable: true
+          description: Character's combat style (aggressive, defensive, balanced, etc.)
+        riskTolerance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Character's risk tolerance (0=cautious, 1=reckless)
+        protectAllies:
+          type: boolean
+          nullable: true
+          description: Whether character prioritizes ally protection
+        currentGoal:
+          type: string
+          nullable: true
+          description: Character's current primary goal
+        emotionalState:
+          type: string
+          nullable: true
+          description: Character's current dominant emotion
+
+    # === Choreography (Event Brain coordination) ===
+    ChoreographyInstruction:
+      type: object
+      additionalProperties: false
+      description: |
+        Instruction sent to a participant actor by Event Brain to execute a choreographed sequence.
+        Delivered via emit_perception with perception_type "choreography_instruction".
+      required:
+      - encounterId
+      - sequenceId
+      - actions
+      - timing
+      - priority
+      properties:
+        encounterId:
+          type: string
+          description: ID of the coordinated encounter this instruction belongs to
+        sequenceId:
+          type: string
+          description: |
+            Unique ID for this sequence within the choreography.
+            Used for acknowledgment and sync point coordination.
+        actions:
+          type: array
+          description: |
+            Ordered list of actions for the participant to execute.
+            Multiple actions allow for combos or reaction sequences.
+          items:
+            $ref: '#/components/schemas/ChoreographyAction'
+        timing:
+          $ref: '#/components/schemas/ChoreographyTiming'
+          description: When and how to start executing this sequence
+        priority:
+          $ref: '#/components/schemas/ChoreographyPriority'
+          description: |
+            How strongly to prefer this choreography over actor's own choices.
+            Higher priority may interrupt current actions.
+        canInterrupt:
+          type: boolean
+          nullable: true
+          description: |
+            Whether participant can interrupt the sequence if a better opportunity arises.
+            If false, participant should complete the sequence unless impossible.
+        expectedOutcome:
+          type: string
+          nullable: true
+          description: |
+            Expected outcome of this sequence (e.g., "hit", "miss", "block").
+            Used for coordinating reactions with other participants.
+        onComplete:
+          type: string
+          nullable: true
+          description: |
+            Event to emit when sequence completes (e.g., "sync_point.attack_landed").
+            Other participants may be waiting on this.
+
+    ChoreographyAction:
+      type: object
+      additionalProperties: true
+      description: |
+        A single action within a choreographed sequence.
+        ActionId should match one from the participant's options.
+      required:
+      - actionId
+      properties:
+        actionId:
+          type: string
+          description: |
+            Action identifier matching one from the actor's options.
+            Examples: "sword_slash", "dodge_roll", "taunt"
+        targetId:
+          type: string
+          nullable: true
+          description: |
+            Target actor ID for the action, if applicable.
+            Null for untargeted actions like movement or taunts.
+        position:
+          $ref: '#/components/schemas/ChoreographyPosition'
+          nullable: true
+          description: Target position for movement or placement actions
+        durationMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Expected duration in milliseconds.
+            Used for timing subsequent actions and sync points.
+        style:
+          type: string
+          nullable: true
+          description: |
+            Stylistic modifier for the action (e.g., "dramatic", "desperate", "confident").
+            Actors may adjust animation/presentation based on style.
+        delayMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Delay before starting this action (relative to previous action completion).
+            Allows precise timing within sequences.
+
+    ChoreographyTiming:
+      type: object
+      additionalProperties: false
+      description: Controls when a choreographed sequence should begin execution
+      required:
+      - startAt
+      properties:
+        startAt:
+          $ref: '#/components/schemas/ChoreographyStartCondition'
+          description: |
+            When to start executing the sequence.
+            - immediate: Start as soon as instruction received
+            - after_previous: Start after current action completes
+            - sync_point: Wait for specified sync point event
+        syncPointId:
+          type: string
+          nullable: true
+          description: |
+            Sync point to wait for (required when startAt=sync_point).
+            Examples: "attack_landed", "guard_raised", "combo_ready"
+        maxWaitMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Maximum time to wait for sync point in milliseconds.
+            If exceeded, sequence may start anyway or be cancelled.
+        windowMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Time window during which the action can start.
+            Allows for natural timing variation.
+
+    ChoreographyPriority:
+      type: string
+      description: |
+        How strongly the actor should prefer the choreographed action over their own choices.
+        - low: Suggestion; actor may ignore if they prefer something else
+        - normal: Standard choreography; follow unless clearly suboptimal
+        - high: Important sequence; should follow even if not preferred
+        - override: Critical moment; must follow unless physically impossible
+      enum:
+      - low
+      - normal
+      - high
+      - override
+
+    ChoreographyStartCondition:
+      type: string
+      description: When to begin executing a choreographed sequence
+      enum:
+      - immediate
+      - after_previous
+      - sync_point
+
+    ChoreographyPosition:
+      type: object
+      additionalProperties: false
+      description: 3D position for choreography movement and placement actions
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate (vertical)
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
+    # === Encounter Management ===
+    StartEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start an encounter managed by an Event Brain actor
+      required:
+      - actorId
+      - encounterId
+      - encounterType
+      - participants
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor that will manage this encounter
+        encounterId:
+          type: string
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          description: Type of encounter (e.g., "combat", "conversation", "choreography")
+        participants:
+          type: array
+          description: Character IDs of participants in the encounter
+          items:
+            type: string
+            format: uuid
+        initialData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Optional initial data for the encounter
+
+    UpdateEncounterPhaseRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update the phase of an active encounter
+      required:
+      - actorId
+      - phase
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor managing the encounter
+        phase:
+          type: string
+          description: New phase name for the encounter
+
+    UpdateEncounterPhaseResponse:
+      type: object
+      additionalProperties: false
+      description: Response after updating encounter phase
+      required:
+      - actorId
+      - currentPhase
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor managing the encounter
+        previousPhase:
+          type: string
+          nullable: true
+          description: Previous phase name
+        currentPhase:
+          type: string
+          description: Current phase name after update
+
+    EndEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to end an active encounter
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor managing the encounter
+
+    EndEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response after ending an encounter
+      required:
+      - actorId
+      - encounterId
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor
+        encounterId:
+          type: string
+          description: ID of the ended encounter
+        durationMs:
+          type: integer
+          nullable: true
+          description: Duration of the encounter in milliseconds
+
+    GetEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the current encounter state for an actor
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor to query
+
+    GetEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing the current encounter state
+      required:
+      - actorId
+      - hasActiveEncounter
+      properties:
+        actorId:
+          type: string
+          description: ID of the queried actor
+        hasActiveEncounter:
+          type: boolean
+          description: Whether the actor is currently managing an encounter
+        encounter:
+          nullable: true
+          description: Current encounter state (null if no active encounter)
+          $ref: '#/components/schemas/EncounterState'
+
+    EncounterState:
+      type: object
+      additionalProperties: false
+      description: State of an active encounter being managed by an Event Brain actor
+      required:
+      - encounterId
+      - encounterType
+      - participants
+      - phase
+      - startedAt
+      properties:
+        encounterId:
+          type: string
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          description: Type of encounter
+        participants:
+          type: array
+          description: Character IDs participating in the encounter
+          items:
+            type: string
+            format: uuid
+        phase:
+          type: string
+          description: Current phase of the encounter
+        startedAt:
+          type: string
+          format: date-time
+          description: When the encounter started
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Custom encounter-specific data

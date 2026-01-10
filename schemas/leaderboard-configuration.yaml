@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Leaderboard Service Configuration
+  description: |
+    Configuration schema for Leaderboard service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    Enabled:
+      type: boolean
+      description: Enable/disable Leaderboard service
+      default: true
+      env: LEADERBOARD_ENABLED
+    # State Store Configuration
+    DefinitionStoreName:
+      type: string
+      description: Name of the state store for leaderboard definitions (MySQL recommended)
+      default: "leaderboard-definition"
+      env: LEADERBOARD_DEFINITION_STORE_NAME
+    RankingStoreName:
+      type: string
+      description: Name of the state store for rankings (Redis required for sorted sets)
+      default: "leaderboard-ranking"
+      env: LEADERBOARD_RANKING_STORE_NAME
+    SeasonStoreName:
+      type: string
+      description: Name of the state store for season data (MySQL recommended)
+      default: "leaderboard-season"
+      env: LEADERBOARD_SEASON_STORE_NAME
+    # Performance Configuration
+    MaxEntriesPerQuery:
+      type: integer
+      description: Maximum entries returned per rank query
+      default: 1000
+      env: LEADERBOARD_MAX_ENTRIES_PER_QUERY
+    RankCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached rank queries
+      default: 60
+      env: LEADERBOARD_RANK_CACHE_TTL_SECONDS
+    # Score Update Configuration
+    ScoreUpdateBatchSize:
+      type: integer
+      description: Maximum scores to process in a single batch
+      default: 1000
+      env: LEADERBOARD_SCORE_UPDATE_BATCH_SIZE
+    # Season Configuration
+    AutoArchiveOnSeasonEnd:
+      type: boolean
+      description: Automatically archive leaderboard data when season ends
+      default: true
+      env: LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END

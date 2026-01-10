@@ -218,12 +218,6 @@ public partial class RegistrationResponse
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Whether registration was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// Success or error message
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("message")]
@@ -371,12 +365,6 @@ public partial class SessionUpdateResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether update was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Success or error message

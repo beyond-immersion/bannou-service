@@ -47,6 +47,7 @@ paths:
         Stateless HTTP proxy for internal requests that don't require persistent sessions.
         Applies permission validation and rate limiting based on agent role and context.
         Perfect for AI agents making one-off API calls or bulk operations.
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -99,21 +100,19 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n    \"$defs\": {\n        \"InternalProxyResponse\": {\n            \"description\": \"Response from a proxied
         API call containing the target service's response data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"statusCode\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether the proxy request was successful\"\n                },\n              \
-        \  \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"description\": \"HTTP status
-        code from the target service\"\n                },\n                \"response\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"JSON response from
-        the target service (as string)\"\n                },\n                \"headers\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"array\",\n   \
-        \                     \"items\": {\n                            \"type\": \"string\"\n                        }\n\
-        \                    },\n                    \"nullable\": true,\n                    \"description\": \"Response
-        headers from the target service\"\n                },\n                \"error\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error message if the
-        request failed\"\n                },\n                \"executionTime\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Request execution time in milliseconds\"\n                }\n          \
-        \  }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"statusCode\"\n            ],\n            \"properties\"\
+        : {\n                \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"HTTP status code from the target service\"\n                },\n                \"response\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"JSON
+        response from the target service (as string)\"\n                },\n                \"headers\": {\n             \
+        \       \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\":
+        \"array\",\n                        \"items\": {\n                            \"type\": \"string\"\n             \
+        \           }\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Response headers from the target service\"\n                },\n                \"error\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Error
+        message if the request failed\"\n                },\n                \"executionTime\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Request execution time in milliseconds\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Internal API proxy for stateless requests\",\n    \"description\": \"Stateless
         HTTP proxy for internal requests that don't require persistent sessions.\\nApplies permission validation and rate
         limiting based on agent role and context.\\nPerfect for AI agents making one-off API calls or bulk operations.\\n\"\
@@ -261,6 +260,7 @@ paths:
       operationId: ConnectWebSocket
       tags:
       - WebSocket Connection
+      x-permissions: []
       x-controller-only: true
       parameters:
       - name: Connection
@@ -308,55 +308,10 @@ paths:
               description: Confirms connection upgrade
         '400':
           description: Bad request - missing required headers or invalid request format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
-              examples:
-                missing-authorization:
-                  summary: Missing authorization header
-                  value:
-                    error: "BadRequest"
-                    message: "Authorization header is required for WebSocket connections"
-                    statusCode: 400
-                not-websocket:
-                  summary: Not a WebSocket request
-                  value:
-                    error: "BadRequest"
-                    message: "Request must be a WebSocket upgrade request"
-                    statusCode: 400
         '403':
           description: Forbidden - invalid JWT token or reconnection token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
-              examples:
-                invalid-jwt:
-                  summary: Invalid or expired JWT token
-                  value:
-                    error: "Forbidden"
-                    message: "Invalid or expired authentication token"
-                    statusCode: 403
-                reconnect-failed:
-                  summary: Reconnection token not found or expired
-                  value:
-                    error: "Forbidden"
-                    message: "Reconnection token is invalid or expired"
-                    statusCode: 403
         '500':
           description: Internal server error during connection setup
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
-              examples:
-                server-error:
-                  summary: Internal server error
-                  value:
-                    error: "InternalServerError"
-                    message: "An error occurred establishing the WebSocket connection"
-                    statusCode: 500
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Establish WebSocket connection\",\n    \"description\": \"Initiates a WebSocket
@@ -376,6 +331,7 @@ paths:
       operationId: ConnectWebSocketPost
       tags:
       - WebSocket Connection
+      x-permissions: []
       x-controller-only: true
       parameters:
       - name: Connection
@@ -411,22 +367,10 @@ paths:
           description: WebSocket connection established successfully
         '400':
           description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
         '403':
           description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectErrorResponse'
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConnectRequest\"\
         ,\n    \"$defs\": {\n        \"ConnectRequest\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -745,12 +689,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - success
       - statusCode
       properties:
-        success:
-          type: boolean
-          description: Whether the proxy request was successful
         statusCode:
           type: integer
           description: HTTP status code from the target service
@@ -793,30 +733,6 @@ components:
         Currently a placeholder for future connection metadata.
       properties: {}
       additionalProperties: false
-
-    ConnectErrorResponse:
-      description: Error response returned when WebSocket connection establishment fails
-      type: object
-      additionalProperties: false
-      required:
-      - error
-      - message
-      - statusCode
-      properties:
-        error:
-          type: string
-          description: Error type identifier
-          enum:
-          - "BadRequest"
-          - "Forbidden"
-          - "InternalServerError"
-        message:
-          type: string
-          description: Human-readable error description
-        statusCode:
-          type: integer
-          description: HTTP status code
-          enum: [400, 403, 500]
 
     # NOTE: ServiceMappingsResponse moved to Orchestrator API as ServiceRoutingResponse
 

@@ -315,12 +315,6 @@ public partial class JoinGameSessionResponse
 {
 
     /// <summary>
-    /// Whether the join operation was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
     /// ID of the joined game session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
@@ -564,12 +558,6 @@ public partial class GameActionRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GameActionResponse
 {
-
-    /// <summary>
-    /// Whether the action was executed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for this action instance

@@ -226,8 +226,15 @@ public class MeshTestHandler : BaseHttpTestHandler
 
             var registerResponse = await meshClient.RegisterEndpointAsync(registerRequest);
 
-            if (registerResponse == null || !registerResponse.Success)
-                return TestResult.Failed("RegisterEndpoint failed");
+            // Validate response structure (RegisterEndpointResponse has endpoint required)
+            if (registerResponse == null)
+                return TestResult.Failed("RegisterEndpoint returned null response");
+
+            if (registerResponse.Endpoint == null)
+                return TestResult.Failed("RegisterEndpoint did not return endpoint details");
+
+            if (registerResponse.Endpoint.InstanceId != instanceId)
+                return TestResult.Failed($"Instance ID mismatch: expected {instanceId}, got {registerResponse.Endpoint.InstanceId}");
 
             // Deregister endpoint (returns 204 NoContent on success)
             var deregisterRequest = new DeregisterEndpointRequest { InstanceId = instanceId };
@@ -253,7 +260,8 @@ public class MeshTestHandler : BaseHttpTestHandler
             };
 
             var registerResponse = await meshClient.RegisterEndpointAsync(registerRequest);
-            if (registerResponse == null || !registerResponse.Success)
+            // Success is implied by getting a response without exception
+            if (registerResponse == null)
                 return TestResult.Failed("Failed to register endpoint for heartbeat test");
 
             // Send heartbeat
@@ -267,7 +275,8 @@ public class MeshTestHandler : BaseHttpTestHandler
 
             var heartbeatResponse = await meshClient.HeartbeatAsync(heartbeatRequest);
 
-            if (heartbeatResponse == null || !heartbeatResponse.Success)
+            // Success is implied by getting a response without exception
+            if (heartbeatResponse == null)
             {
                 // Clean up
                 await meshClient.DeregisterEndpointAsync(new DeregisterEndpointRequest { InstanceId = instanceId });
@@ -337,7 +346,8 @@ public class MeshTestHandler : BaseHttpTestHandler
                 Services = ["testing"]
             });
 
-            if (registerResponse == null || !registerResponse.Success)
+            // Success is implied by getting a response without exception
+            if (registerResponse == null)
                 return TestResult.Failed("Failed to register test endpoint");
 
             try

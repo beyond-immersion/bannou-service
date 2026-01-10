@@ -1,0 +1,544 @@
+# =============================================================================
+# Cutscene: Guard Buys Shield
+# A city guard visits the armorer to replace a damaged shield.
+# Demonstrates NPC-to-NPC interaction, commerce, and dialogue.
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: guard_buys_shield
+  type: cutscene
+  description: "Guard purchases a new shield from the merchant"
+  tags:
+    - commerce
+    - npc_interaction
+    - slice_of_life
+
+  # Cutscene configuration
+  drama:
+    opportunities: false      # No dynamic drama injection
+    qte_enabled: false        # No player QTE (NPCs only)
+    extensions: false         # No cloud streaming
+
+  skippable: easily
+  skip_destinations:
+    default:
+      guard: { position: shop_exit, state: has_new_shield }
+      merchant: { position: counter, state: made_sale }
+
+  # Expected duration
+  estimated_duration: 45s
+
+# -----------------------------------------------------------------------------
+# Bindings - Map semantic names to entities
+# Populated by the Event Agent or caller when invoking cutscene
+# -----------------------------------------------------------------------------
+bindings:
+  participants:
+    guard: "${scene.participants[0]}"       # The guard character
+    merchant: "${scene.participants[1]}"    # The merchant character
+
+  props:
+    old_shield: "${guard.equipment.shield}"
+    new_shield: "${scene.props[0]}"         # The shield being purchased
+    coin_pouch: "${guard.inventory.coin_pouch}"
+
+  locations:
+    shop_entrance: "${scene.locations.entrance}"
+    display_rack: "${scene.locations.shield_display}"
+    counter: "${scene.locations.counter}"
+
+# -----------------------------------------------------------------------------
+# Context - Cutscene-specific variables
+# -----------------------------------------------------------------------------
+context:
+  variables:
+    shield_price:
+      type: int
+      default: 85
+    guard_budget:
+      source: "${guard.gold}"
+      type: int
+
+# -----------------------------------------------------------------------------
+# Channels - Parallel execution tracks
+# -----------------------------------------------------------------------------
+channels:
+  # ===========================================================================
+  # GUARD CHANNEL
+  # ===========================================================================
+  guard:
+    # Enter the shop
+    - enter_through_door:
+        door: shop_entrance
+        style: purposeful
+
+    - emit: guard_entered
+
+    # Acknowledge merchant's greeting
+    - wait_for: @merchant.greeted
+
+    - emote: { type: nod, style: respectful }
+
+    - speak:
+        line: "Garrett. I need a new shield - this one's about done."
+        emotion: matter_of_fact
+
+    # Show damaged shield
+    - gesture:
+        type: present_item
+        item: old_shield
+
+    - emit: explained_need
+
+    # Follow merchant to display
+    - wait_for: @merchant.at_display
+
+    - walk_to:
+        target: display_rack
+        style: following
+        follow_target: merchant
+
+    - emit: guard_at_display
+
+    # Look at the shield being shown
+    - wait_for: @merchant.presenting_shield
+
+    - look_at:
+        target: new_shield
+        duration: 2s
+
+    # Pick up and examine
+    - take_item:
+        item: new_shield
+        style: evaluating
+
+    - examine:
+        item: new_shield
+        duration: 3s
+        style: professional
+
+    # Test the weight/balance
+    - gesture:
+        type: test_shield
+        style: practiced
+
+    - emote: { type: approving_nod }
+
+    - emit: examined_shield
+
+    # React to price
+    - wait_for: @merchant.stated_price
+
+    - emote: { type: consider, duration: 1.5s }
+
+    # Negotiate slightly
+    - speak:
+        line: "Eighty? Come on Garrett, I'm in here every month."
+        emotion: friendly_negotiation
+
+    - emit: haggled
+
+    # Accept the deal
+    - wait_for: @merchant.final_price
+
+    - emote: { type: agree }
+
+    - speak:
+        line: "Fair enough. You've got a deal."
+        emotion: satisfied
+
+    # Pay
+    - walk_to:
+        target: counter
+        style: casual
+
+    - gesture:
+        type: retrieve_coins
+        from: coin_pouch
+
+    - hand_item:
+        item: payment
+        to: merchant
+        style: casual
+
+    - emit: paid
+
+    # Equip new shield
+    - wait_for: @merchant.handed_shield
+
+    - equip:
+        item: new_shield
+        slot: shield
+        style: practiced
+
+    # Test fit
+    - gesture:
+        type: adjust_shield_straps
+
+    - emote: { type: satisfied }
+
+    # Leave old shield
+    - place_item:
+        item: old_shield
+        location: counter
+        style: casual
+
+    - speak:
+        line: "See what you can do with the old one. Might be worth something for scrap."
+        emotion: casual
+
+    - emit: leaving_old_shield
+
+    # Farewell
+    - wait_for: @merchant.farewell
+
+    - emote: { type: nod, style: friendly }
+
+    - speak:
+        line: "Thanks, Garrett. Stay out of trouble."
+        emotion: friendly
+
+    - walk_to:
+        target: shop_entrance
+        style: casual
+
+    - exit_through_door:
+        door: shop_entrance
+
+    - emit: guard_exited
+
+  # ===========================================================================
+  # MERCHANT CHANNEL
+  # ===========================================================================
+  merchant:
+    # Initial position
+    - idle:
+        animation: tend_counter
+        until: "@guard.guard_entered"
+
+    # Notice guard enter
+    - look_at:
+        target: guard
+        style: welcoming
+
+    - emote: { type: smile, style: professional }
+
+    # Greet the guard
+    - speak:
+        dialogue_ref: "dialogue/merchant/greet_guard"
+        target: guard
+        emotion: friendly
+
+    - emit: greeted
+
+    # Listen to guard's need
+    - wait_for: @guard.explained_need
+
+    - look_at:
+        target: old_shield
+        duration: 1.5s
+
+    - emote: { type: assess, style: professional }
+
+    - speak:
+        line: "Aye, I can see that. Took a beating, did it? Let me show you what I've got."
+        emotion: understanding
+
+    # Walk to shield display
+    - walk_to:
+        target: display_rack
+        style: businesslike
+
+    - emit: at_display
+
+    # Select a good shield for the guard
+    - gesture:
+        type: select_from_display
+        item: new_shield
+
+    - take_item:
+        item: new_shield
+        style: presenting
+
+    - emit: presenting_shield
+
+    # Present and describe
+    - wait_for: @guard.guard_at_display
+
+    - gesture:
+        type: present_item
+        item: new_shield
+        style: salesmanship
+
+    - speak:
+        dialogue_ref: "dialogue/merchant/describe_shield"
+        item: new_shield
+        emotion: proud
+
+    # Wait for guard to examine
+    - wait_for: @guard.examined_shield
+
+    - emote: { type: knowing_smile }
+
+    # State price
+    - speak:
+        dialogue_ref: "dialogue/merchant/state_price"
+        price: "${shield_price}"
+        emotion: businesslike
+
+    - emit: stated_price
+
+    # Hear haggle attempt
+    - wait_for: @guard.haggled
+
+    - emote: { type: amused, duration: 1s }
+
+    - speak:
+        line: "Alright, alright. Seventy-five, but only because you keep the riffraff away from my shop."
+        emotion: good_natured
+
+    - emit: final_price
+
+    # Move to counter for payment
+    - walk_to:
+        target: counter
+        style: casual
+
+    # Wait for payment
+    - wait_for: @guard.paid
+
+    - gesture:
+        type: receive_payment
+        style: practiced
+
+    - gesture:
+        type: count_coins
+        duration: 1.5s
+
+    - emote: { type: satisfied }
+
+    # Hand over shield
+    - hand_item:
+        item: new_shield
+        to: guard
+        style: ceremonial
+
+    - emit: handed_shield
+
+    # React to old shield offer
+    - wait_for: @guard.leaving_old_shield
+
+    - look_at:
+        target: old_shield
+        duration: 1s
+
+    - gesture:
+        type: pick_up_item
+        item: old_shield
+
+    - examine:
+        item: old_shield
+        duration: 1s
+        style: appraising
+
+    - speak:
+        line: "I'll patch it up, sell it to some merchant's guard. Won't go to waste."
+        emotion: pragmatic
+
+    # Farewell
+    - speak:
+        dialogue_ref: "dialogue/merchant/thank_purchase"
+        item: new_shield
+        emotion: genuine
+
+    - emit: farewell
+
+    # Wave goodbye
+    - wait_for: @guard.guard_exited
+
+    - gesture:
+        type: wave
+        style: casual
+
+    - emote: { type: content }
+
+    # Return to routine
+    - walk_to:
+        target: counter
+
+    - idle:
+        animation: examine_old_shield
+
+  # ===========================================================================
+  # CAMERA CHANNEL
+  # ===========================================================================
+  camera:
+    # Establish shop interior
+    - fade_in:
+        duration: 1s
+        from: black
+
+    - establishing_shot:
+        target: shop_interior
+        duration: 2s
+
+    - emit: shop_established
+
+    # Follow guard entering
+    - wait_for: @guard.guard_entered
+
+    - track:
+        subject: guard
+        style: following
+        duration: 3s
+
+    # Two-shot for conversation
+    - wait_for: @merchant.greeted
+
+    - two_shot:
+        subjects: [guard, merchant]
+        framing: medium
+        duration: 4s
+
+    # Follow to display
+    - wait_for: @merchant.at_display
+
+    - dolly:
+        to: display_area
+        duration: 2s
+
+    - medium_shot:
+        subject: new_shield
+        with: [merchant, guard]
+        duration: 3s
+
+    # Close-up on shield examination
+    - wait_for: @merchant.presenting_shield
+
+    - close_up:
+        subject: new_shield
+        duration: 2s
+
+    # Guard's reaction
+    - wait_for: @guard.examined_shield
+
+    - close_up:
+        subject: guard
+        focus: expression
+        duration: 2s
+
+    # Two-shot for negotiation
+    - wait_for: @merchant.stated_price
+
+    - two_shot:
+        subjects: [guard, merchant]
+        framing: medium_close
+        duration: 6s
+
+    # Transaction at counter
+    - wait_for: @guard.paid
+
+    - medium_shot:
+        subject: counter
+        with: [guard, merchant]
+        duration: 4s
+
+    # Guard equipping shield
+    - wait_for: @merchant.handed_shield
+
+    - medium_shot:
+        subject: guard
+        focus: new_shield
+        duration: 3s
+
+    # Farewell
+    - wait_for: @merchant.farewell
+
+    - two_shot:
+        subjects: [guard, merchant]
+        framing: wide
+        duration: 3s
+
+    # Guard exit
+    - wait_for: @guard.guard_exited
+
+    - track:
+        subject: guard
+        style: following
+        until_exit: true
+
+    - fade_out:
+        duration: 1.5s
+        to: black
+
+  # ===========================================================================
+  # AUDIO CHANNEL
+  # ===========================================================================
+  audio:
+    # Ambient shop sounds
+    - ambience:
+        track: shop_interior
+        volume: 0.4
+        fade_in: 1s
+
+    - wait_for: @camera.shop_established
+
+    # Door sound
+    - wait_for: @guard.guard_entered
+
+    - sfx:
+        sound: door_open_shop
+        volume: 0.6
+
+    # Footsteps while walking
+    - sfx:
+        sound: footsteps_wood
+        volume: 0.3
+        loop: true
+        until: "@guard.guard_at_display"
+
+    # Shield handling sounds
+    - wait_for: @merchant.presenting_shield
+
+    - sfx:
+        sound: metal_handle
+        volume: 0.5
+
+    - wait_for: @guard.examined_shield
+
+    - sfx:
+        sound: shield_test
+        volume: 0.4
+
+    # Coins
+    - wait_for: @guard.paid
+
+    - sfx:
+        sound: coins_exchange
+        volume: 0.6
+
+    # Shield equip
+    - wait_for: @merchant.handed_shield
+
+    - sfx:
+        sound: shield_equip
+        volume: 0.5
+
+    - sfx:
+        sound: strap_adjust
+        volume: 0.3
+        delay: 1s
+
+    # Exit
+    - wait_for: @guard.guard_exited
+
+    - sfx:
+        sound: door_close_shop
+        volume: 0.5
+
+    - ambience:
+        track: shop_interior
+        volume: 0.4
+        fade_out: 1.5s

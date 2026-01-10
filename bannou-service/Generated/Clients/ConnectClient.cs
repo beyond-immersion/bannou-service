@@ -559,32 +559,20 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Bad request - missing required headers or invalid request format", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Bad request - missing required headers or invalid request format", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 403)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Forbidden - invalid JWT token or reconnection token", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Forbidden - invalid JWT token or reconnection token", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Internal server error during connection setup", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Internal server error during connection setup", status_, responseText_, headers_, null);
                     }
                     else
 
@@ -683,32 +671,20 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                     else
                     if (status_ == 400)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Bad request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Bad request", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 403)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Forbidden", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 500)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ConnectErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<ConnectErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Internal server error", status_, responseText_, headers_, null);
                     }
                     else
 

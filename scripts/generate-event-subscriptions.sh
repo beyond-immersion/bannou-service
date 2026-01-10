@@ -47,7 +47,7 @@ topic_to_method() {
 }
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-PROJECT_DIR="../lib-${SERVICE_NAME}"
+PROJECT_DIR="../plugins/lib-${SERVICE_NAME}"
 GENERATED_DIR="${PROJECT_DIR}/Generated"
 SERVICE_EVENTS_FILE="${PROJECT_DIR}/${SERVICE_PASCAL}ServiceEvents.cs"
 

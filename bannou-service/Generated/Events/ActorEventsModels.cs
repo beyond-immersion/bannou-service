@@ -324,6 +324,241 @@ public partial class ActorCompletedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when an actor instance successfully starts and begins running.
+/// <br/>Distinct from ActorInstanceCreatedEvent (which is control plane creating the record).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorInstanceStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for actor instance started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.instance.started";
+
+    /// <summary>
+    /// Unique identifier of the actor that started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Pool node where the actor is running
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Template this actor was spawned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Associated character ID (for NPC brains)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    public System.Guid? CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Actor category (npc-brain, event-brain, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when actor state is auto-saved to persistent storage.
+/// <br/>Useful for monitoring and debugging state persistence.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorStatePersistedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for actor state persistence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.instance.state-persisted";
+
+    /// <summary>
+    /// Unique identifier of the actor whose state was persisted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Pool node where the actor is running
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NodeId { get; set; } = default!;
+
+    /// <summary>
+    /// Loop iterations at time of persistence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("loopIterations")]
+    public long LoopIterations { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an Event Brain actor starts managing a new encounter.
+/// <br/>Other systems can subscribe to track active encounters.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterStartedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.started";
+
+    /// <summary>
+    /// Actor managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of encounter (combat, conversation, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterType { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs participating in the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participants")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> Participants { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Published when an Event Brain actor ends an encounter.
+/// <br/>Includes duration and final phase for analytics.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterEndedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.ended";
+
+    /// <summary>
+    /// Actor that was managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Duration of the encounter in seconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationSeconds")]
+    public float? DurationSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// Phase the encounter was in when it ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("finalPhase")]
+    public string? FinalPhase { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when an encounter transitions to a new phase.
+/// <br/>Useful for game servers to react to encounter state changes.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for encounter phase change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.encounter.phase-changed";
+
+    /// <summary>
+    /// Actor managing this encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the encounter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EncounterId { get; set; } = default!;
+
+    /// <summary>
+    /// Phase before the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PreviousPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Phase after the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newPhase")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string NewPhase { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Command sent from control plane to pool node to spawn an actor.
 /// <br/>Published to topic: actor.node.{poolAppId}.spawn
 /// <br/>
@@ -525,14 +760,24 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Data representing a perception event for an actor
+/// Data representing a perception event for an actor.
+/// <br/>
+/// <br/>Spatial context can be provided in two ways (hybrid approach):
+/// <br/>1. Typed: Use the optional spatialContext field for structured spatial data
+/// <br/>2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+/// <br/>
+/// <br/>The typed approach is recommended when game server has structured spatial data.
+/// <br/>The schema-less approach allows flexibility for game-specific spatial formats.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PerceptionData
 {
 
     /// <summary>
-    /// Perception type (visual, auditory, tactile, etc.)
+    /// Perception type. Common values: visual, auditory, tactile, olfactory,
+    /// <br/>proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perceptionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -554,7 +799,9 @@ public partial class PerceptionData
     public string? SourceType { get; set; } = default!;
 
     /// <summary>
-    /// Perception-specific data
+    /// Perception-specific data. For perceptionType="spatial", this can contain
+    /// <br/>game-specific spatial context in any format the game server defines.
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
@@ -565,6 +812,207 @@ public partial class PerceptionData
     [System.Text.Json.Serialization.JsonPropertyName("urgency")]
     [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
     public float Urgency { get; set; } = 0.5F;
+
+    /// <summary>
+    /// Optional typed spatial context from game server's local spatial state.
+    /// <br/>Provides structured information about terrain, nearby objects, hazards, etc.
+    /// <br/>Alternative to using perceptionType="spatial" with schema-less data.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("spatialContext")]
+    public SpatialContext? SpatialContext { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Spatial context derived from game server's authoritative spatial state.
+/// <br/>Included in perception events to give NPC actors awareness of their environment
+/// <br/>without requiring direct map subscriptions.
+/// <br/>
+/// <br/>Note: additionalProperties=true allows game-specific extensions.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SpatialContext
+{
+
+    /// <summary>
+    /// Terrain type at character position (grass, stone, water, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("terrainType")]
+    public string? TerrainType { get; set; } = default!;
+
+    /// <summary>
+    /// Elevation at character position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("elevation")]
+    public float? Elevation { get; set; } = default!;
+
+    /// <summary>
+    /// Objects within perception radius
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nearbyObjects")]
+    public System.Collections.Generic.ICollection<NearbyObject>? NearbyObjects { get; set; } = default!;
+
+    /// <summary>
+    /// Active hazards within detection range
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hazardsInRange")]
+    public System.Collections.Generic.ICollection<HazardInfo>? HazardsInRange { get; set; } = default!;
+
+    /// <summary>
+    /// Directions the character can move (for navigation awareness)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pathableDirections")]
+    public System.Collections.Generic.ICollection<string>? PathableDirections { get; set; } = default!;
+
+    /// <summary>
+    /// Whether cover is available within close range
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coverNearby")]
+    public bool? CoverNearby { get; set; } = default!;
+
+    /// <summary>
+    /// Whether character is currently indoors/under roof
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("indoors")]
+    public bool? Indoors { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Information about a nearby object perceived by the character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NearbyObject
+{
+
+    /// <summary>
+    /// Unique identifier of the object
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("objectId")]
+    public System.Guid ObjectId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of object (boulder_cluster, tree, building, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("objectType")]
+    public string ObjectType { get; set; } = default!;
+
+    /// <summary>
+    /// Distance from character in game units
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("distance")]
+    public float Distance { get; set; } = default!;
+
+    /// <summary>
+    /// Relative direction (north, south, east, west, above, below, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("direction")]
+    public string Direction { get; set; } = default!;
+
+    /// <summary>
+    /// Optional absolute position
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("position")]
+    public Position3D? Position { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Information about a hazard in range
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class HazardInfo
+{
+
+    /// <summary>
+    /// Type of hazard (fire, poison, radiation, deep_water, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hazardType")]
+    public string HazardType { get; set; } = default!;
+
+    /// <summary>
+    /// Distance to hazard edge
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("distance")]
+    public float Distance { get; set; } = default!;
+
+    /// <summary>
+    /// Hazard severity (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("severity")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 1F)]
+    public float Severity { get; set; } = default!;
+
+    /// <summary>
+    /// Direction to hazard center
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("direction")]
+    public string? Direction { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// 3D position in world coordinates
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Position3D
+{
+
+    /// <summary>
+    /// X coordinate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public float X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate (typically vertical)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public float Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public float Z { get; set; } = default!;
 
 }
 

@@ -306,12 +306,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     }
 
                     var joinJson = System.Text.Json.Nodes.JsonNode.Parse(joinResponse.Result.GetRawText())?.AsObject();
-                    var success = joinJson?["success"]?.GetValue<bool>() ?? false;
                     var sessionId = joinJson?["sessionId"]?.GetValue<string>();
 
-                    Console.WriteLine($"   Join result: success={success}, sessionId={sessionId}");
+                    Console.WriteLine($"   Join result: sessionId={sessionId}");
 
-                    return success && !string.IsNullOrEmpty(sessionId);
+                    return !string.IsNullOrEmpty(sessionId);
                 }
                 catch (Exception ex)
                 {

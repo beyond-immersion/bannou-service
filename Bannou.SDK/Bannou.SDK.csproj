@@ -40,6 +40,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="LiteNetLib" Version="1.2.0" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
   </ItemGroup>
 
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
@@ -51,7 +52,7 @@
       <Compile Include="../bannou-service/Generated/Models/*.cs" />
       <Compile Include="../bannou-service/Generated/Events/*.cs" />
       <Compile Include="../bannou-service/Generated/CommonEventsModels.cs" />
-      <Compile Include="../lib-*/Generated/*ClientEventsModels.cs" />
+      <Compile Include="../plugins/lib-*/Generated/*ClientEventsModels.cs" />
     </ItemGroup>
   </Target>
 
@@ -74,11 +75,11 @@
 
   <!-- WebSocket Binary Protocol -->
   <ItemGroup>
-    <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
-    <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
-    <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
-    <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
-    <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../plugins/lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../plugins/lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../plugins/lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../plugins/lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../plugins/lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../plugins/lib-connect/Protocol/ConnectionState.cs')" />
   </ItemGroup>
 
   <!-- Game transport protocol primitives -->
@@ -88,10 +89,23 @@
     <Compile Include="../GameTransport/*.cs" />
   </ItemGroup>
 
+  <!-- Asset Bundle Infrastructure -->
+  <ItemGroup>
+    <Compile Include="../plugins/lib-asset/Bundles/BannouBundleWriter.cs" Condition="Exists('../plugins/lib-asset/Bundles/BannouBundleWriter.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleManifest.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleIndex.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleValidator.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/BundleConverter.cs" Condition="Exists('../plugins/lib-asset/Bundles/BundleConverter.cs')" />
+    <Compile Include="../plugins/lib-asset/Bundles/IBundleConverter.cs" Condition="Exists('../plugins/lib-asset/Bundles/IBundleConverter.cs')" />
+  </ItemGroup>
+
   <!-- SDK Source Files (shared with Client SDK) -->
   <!-- These files live in Bannou.Client.SDK and are referenced here -->
   <ItemGroup>
     <Compile Include="../Bannou.Client.SDK/BannouClient.cs" />
+    <Compile Include="../Bannou.Client.SDK/BannouConnectionManager.cs" />
+    <Compile Include="../Bannou.Client.SDK/RemoteAssetCache.cs" />
     <Compile Include="../Bannou.Client.SDK/MetaTypes.cs" />
     <Compile Include="../Bannou.Client.SDK/ResponseCodes.cs" />
   </ItemGroup>

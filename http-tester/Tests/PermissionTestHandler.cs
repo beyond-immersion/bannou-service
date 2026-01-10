@@ -93,7 +93,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Success)
+            if (response.Registered)
             {
                 return TestResult.Successful($"Service permissions registered: {testServiceId}, affected {response.AffectedSessions} sessions");
             }
@@ -128,7 +128,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             };
 
             var response1 = await permissionsClient.RegisterServicePermissionsAsync(matrix1);
-            if (!response1.Success)
+            if (!response1.Registered)
                 return TestResult.Failed("Failed to register first service");
 
             // Register second service
@@ -147,7 +147,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
             };
 
             var response2 = await permissionsClient.RegisterServicePermissionsAsync(matrix2);
-            if (!response2.Success)
+            if (!response2.Registered)
                 return TestResult.Failed("Failed to register second service");
 
             return TestResult.Successful($"Successfully registered multiple services: {service1Id}, {service2Id}");
@@ -185,7 +185,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Success)
+            if (response.Registered)
             {
                 return TestResult.Successful($"Service with multiple states registered: {testServiceId}, 3 states defined");
             }
@@ -218,7 +218,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Success)
+            if (response.Registered)
             {
                 return TestResult.Successful($"Service with multiple roles registered: {testServiceId}, 3 roles defined");
             }
@@ -549,11 +549,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionStateAsync(stateUpdate);
 
-            if (response.Success)
-            {
-                return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}");
-            }
-            return TestResult.Failed($"Session state update failed: {response.Message}");
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (response.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
+
+            return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session state");
 
     /// <summary>
@@ -660,11 +660,11 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionRoleAsync(roleUpdate);
 
-            if (response.Success)
-            {
-                return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}");
-            }
-            return TestResult.Failed($"Session role update failed: {response.Message}");
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (response.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
+
+            return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session role");
 
     /// <summary>
@@ -833,10 +833,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // States is null/empty - clears unconditionally
             });
 
-            if (!clearResponse.Success)
-            {
-                return TestResult.Failed($"Clear state failed: {clearResponse.Message}");
-            }
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             // Verify state was cleared
             var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
@@ -884,10 +883,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "in_lobby" matches
             });
 
-            if (!clearResponse.Success)
-            {
-                return TestResult.Failed($"Clear state failed: {clearResponse.Message}");
-            }
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (!clearResponse.PermissionsChanged)
             {
@@ -940,10 +938,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "active" doesn't match
             });
 
-            if (!clearResponse.Success)
-            {
-                return TestResult.Failed($"Clear state call failed: {clearResponse.Message}");
-            }
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (clearResponse.PermissionsChanged)
             {
@@ -994,10 +991,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 ServiceId = testServiceId
             });
 
-            if (!clearResponse.Success)
-            {
-                return TestResult.Failed($"Clear state call should succeed even with no state: {clearResponse.Message}");
-            }
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (clearResponse.PermissionsChanged)
             {
@@ -1087,10 +1083,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // ServiceId is null - should clear all states
             });
 
-            if (!clearResponse.Success)
-            {
-                return TestResult.Failed($"Clear all states failed: {clearResponse.Message}");
-            }
+            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
+            if (clearResponse.SessionId != testSessionId)
+                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
 
             if (!clearResponse.PermissionsChanged)
             {

@@ -92,7 +92,7 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
     service_name="${filename%-client-events.yaml}"
 
     # Convert to lib directory format (e.g., "game-session" -> "lib-game-session")
-    lib_dir="../lib-${service_name}"
+    lib_dir="../plugins/lib-${service_name}"
 
     # Check if the lib directory exists
     if [ ! -d "$lib_dir" ]; then

@@ -1,0 +1,49 @@
+# =============================================================================
+# Guard Challenge Dialogue
+# Spoken when guard challenges a potential threat
+# =============================================================================
+
+# Inline default is in the behavior file; this provides localization & overrides
+
+localizations:
+  en: "Halt! State your business!"
+  es: "¡Alto! ¡Declara tus intenciones!"
+  de: "Halt! Was führt Euch her?"
+  ja: "止まれ！用件を述べよ！"
+  fr: "Halte ! Déclinez votre identité !"
+
+overrides:
+  # Night time - more aggressive
+  - condition: "${world.time.hour >= 22 || world.time.hour < 5}"
+    priority: 10
+    localizations:
+      en: "Stop right there! No one's supposed to be here at this hour!"
+      es: "¡Detente ahí! ¡Nadie debería estar aquí a estas horas!"
+
+  # Heightened alert level
+  - condition: "${agent.config.alert_level == 'heightened'}"
+    priority: 20
+    localizations:
+      en: "You there! Don't move! Hands where I can see them!"
+      es: "¡Tú! ¡No te muevas! ¡Las manos donde pueda verlas!"
+
+  # Known criminal
+  - condition: "${target.faction == 'known_criminals'}"
+    priority: 30
+    localizations:
+      en: "I know you! Don't try anything stupid!"
+      es: "¡Te conozco! ¡No hagas ninguna tontería!"
+
+  # Armed target
+  - condition: "${target.has_weapon_drawn}"
+    priority: 25
+    localizations:
+      en: "Drop your weapon! Now!"
+      es: "¡Suelta el arma! ¡Ahora!"
+
+  # Multiple targets
+  - condition: "${threats.length > 1}"
+    priority: 15
+    localizations:
+      en: "All of you! Stop where you are!"
+      es: "¡Todos ustedes! ¡Quédense donde están!"

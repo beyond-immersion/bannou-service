@@ -219,33 +219,14 @@ public class Program
                 return new MeshInvocationClient(redisManager, logger);
             });
 
-            // Add Bannou service client infrastructure
+            // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)
             serviceCollection.AddBannouServiceClients();
 
-            // Register generated service clients using simple scoped registration (NSwag parameterless constructor architecture)
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Auth.IAuthClient, BeyondImmersion.BannouService.Auth.AuthClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Account.IAccountClient, BeyondImmersion.BannouService.Account.AccountClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Behavior.IBehaviorClient, BeyondImmersion.BannouService.Behavior.BehaviorClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Character.ICharacterClient, BeyondImmersion.BannouService.Character.CharacterClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Documentation.IDocumentationClient, BeyondImmersion.BannouService.Documentation.DocumentationClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Location.ILocationClient, BeyondImmersion.BannouService.Location.LocationClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permission.IPermissionClient, BeyondImmersion.BannouService.Permission.PermissionClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Realm.IRealmClient, BeyondImmersion.BannouService.Realm.RealmClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Relationship.IRelationshipClient, BeyondImmersion.BannouService.Relationship.RelationshipClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient, BeyondImmersion.BannouService.RelationshipType.RelationshipTypeClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.GameService.IGameServiceClient, BeyondImmersion.BannouService.GameService.GameServiceClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Species.ISpeciesClient, BeyondImmersion.BannouService.Species.SpeciesClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscription.ISubscriptionClient, BeyondImmersion.BannouService.Subscription.SubscriptionClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Messaging.IMessagingClient, BeyondImmersion.BannouService.Messaging.MessagingClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.State.IStateClient, BeyondImmersion.BannouService.State.StateClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Mesh.IMeshClient, BeyondImmersion.BannouService.Mesh.MeshClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Asset.IAssetClient, BeyondImmersion.BannouService.Asset.AssetClient>();
-            serviceCollection.AddScoped<BeyondImmersion.BannouService.Actor.IActorClient, BeyondImmersion.BannouService.Actor.ActorClient>();
+            // Auto-register all clients from bannou-service assembly
+            // All generated clients are in bannou-service/Generated/Clients/
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
+            var bannouServiceAssembly = typeof(BeyondImmersion.BannouService.Auth.AuthClient).Assembly;
+            serviceCollection.AddAllBannouServiceClients(new[] { bannouServiceAssembly });
 
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -663,7 +644,9 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
+            new AchievementTestHandler(),
             new ActorTestHandler(),
+            new AnalyticsTestHandler(),
             new AssetTestHandler(),
             new AuthTestHandler(),
             new CharacterTestHandler(),
@@ -671,6 +654,7 @@ public class Program
             new PeerRoutingTestHandler(),
             new DocumentationTestHandler(),
             new GameSessionTestHandler(),
+            new LeaderboardTestHandler(),
             new LocationTestHandler(),
             new MeshTestHandler(),
             new MessagingTestHandler(),
@@ -716,7 +700,12 @@ public class Program
         foreach (var handler in testHandlers)
         {
             foreach (ServiceTest serviceTest in handler.GetServiceTests())
-                sTestRegistry.Add(serviceTest.Name, serviceTest);
+            {
+                // Use Type.Name as key to avoid collisions between handlers
+                // e.g., "Leaderboard.CreateDefinition" vs "Achievement.CreateDefinition"
+                var registryKey = $"{serviceTest.Type}.{serviceTest.Name}";
+                sTestRegistry.Add(registryKey, serviceTest);
+            }
         }
     }
 

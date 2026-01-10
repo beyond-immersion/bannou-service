@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Scene Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for scene service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: scene-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    SceneCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scene.created when a scene is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - gameId
+      - sceneType
+      - name
+      - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scene.created
+          description: 'Event type identifier: scene.created'
+        sceneId: &id001
+          type: string
+          format: uuid
+          description: "Unique scene identifier"
+        gameId: &id002
+          type: string
+          description: "Game service identifier for partitioning"
+        sceneType: &id003
+          type: string
+          description: "Scene classification (region, building, etc.)"
+        name: &id004
+          type: string
+          description: "Human-readable scene name"
+        description: &id005
+          type: string
+          nullable: true
+          description: "Optional scene description"
+        version: &id006
+          type: string
+          description: "Semantic version (MAJOR.MINOR.PATCH)"
+        tags: &id007
+          type: array
+          items: {type: string}
+          description: "Searchable tags"
+        nodeCount: &id008
+          type: integer
+          description: "Total number of nodes in scene"
+        createdAt: &id009
+          type: string
+          format: date-time
+          description: "Creation timestamp"
+        updatedAt: &id010
+          type: string
+          format: date-time
+          description: "Last update timestamp"
+    SceneUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scene.updated when a scene is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - gameId
+      - sceneType
+      - name
+      - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: scene.updated
+          description: 'Event type identifier: scene.updated'
+        sceneId: *id001
+        gameId: *id002
+        sceneType: *id003
+        name: *id004
+        description: *id005
+        version: *id006
+        tags: *id007
+        nodeCount: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    SceneDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scene.deleted when a scene is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - gameId
+      - sceneType
+      - name
+      - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scene.deleted
+          description: 'Event type identifier: scene.deleted'
+        sceneId: *id001
+        gameId: *id002
+        sceneType: *id003
+        name: *id004
+        description: *id005
+        version: *id006
+        tags: *id007
+        nodeCount: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

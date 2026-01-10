@@ -1,0 +1,245 @@
+# =============================================================================
+# God of Monsters - Regional Watcher Example
+# =============================================================================
+#
+# This is a "God Pattern" Event Brain - a long-running domain-specific watcher
+# that monitors event streams and manages their domain of responsibility.
+#
+# The God of Monsters:
+# - Monitors region populations and player activity
+# - Spawns monsters when populations drop
+# - Creates special monster events when conditions warrant
+# - Evolves monster variants based on player behavior
+#
+# Lifecycle: Started when a realm activates, runs until realm deactivates.
+#
+# =============================================================================
+
+version: "2.0"
+
+metadata:
+  id: god-of-monsters
+  type: event_brain
+  description: "Divine entity overseeing monster spawning and population"
+  tags:
+    - event-brain
+    - god
+    - regional-watcher
+    - monsters
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+config:
+  # Domain subscriptions - what this god cares about
+  domain: "monsters"
+  subscriptions:
+    - "region.*.population_low"
+    - "player.*.entered_zone"
+    - "monster.*.killed"
+    - "ecology.*.imbalanced"
+
+  # Spawning parameters
+  min_population_ratio: 0.3
+  spawn_batch_size: 5
+  respawn_delay_ms: 30000
+
+  # Special event parameters
+  boss_spawn_threshold: 0.1
+  elite_spawn_chance: 0.15
+
+# =============================================================================
+# FLOWS
+# =============================================================================
+
+flow: main
+flows:
+  # Main loop - process domain events
+  main:
+    # Check for pending events in our domain
+    - if:
+        condition: "${perceptions.length > 0}"
+        then:
+          - foreach:
+              collection: "${perceptions}"
+              as: "event"
+              do:
+                - call: process_domain_event
+        else:
+          # No events - periodic maintenance check
+          - call: maintenance_tick
+
+  # Route domain events to appropriate handlers
+  process_domain_event:
+    - switch:
+        value: "${event.type}"
+        cases:
+          "region.population_low":
+            - call: handle_population_low
+          "monster.killed":
+            - call: handle_monster_killed
+          "player.entered_zone":
+            - call: handle_player_entered
+          "ecology.imbalanced":
+            - call: handle_ecology_imbalance
+        default:
+          - log:
+              level: debug
+              message: "Unhandled event type: ${event.type}"
+
+  # ==========================================================================
+  # Handler: Region population dropped below threshold
+  # ==========================================================================
+  handle_population_low:
+    - log:
+        level: info
+        message: "Population low in region ${event.region_id}: ${event.current}/${event.expected}"
+
+    # Calculate spawn needs
+    - set:
+        variable: spawn_count
+        value: "${min(config.spawn_batch_size, event.expected - event.current)}"
+
+    # Store spawn request for next tick
+    - state_update:
+        path: "working_memory.pending_spawns"
+        operation: "append"
+        value:
+          region_id: "${event.region_id}"
+          count: "${spawn_count}"
+          tier: "${event.region_tier}"
+          reason: "population_maintenance"
+
+    - log:
+        level: info
+        message: "Queued ${spawn_count} monster spawns for ${event.region_id}"
+
+  # ==========================================================================
+  # Handler: Monster killed
+  # ==========================================================================
+  handle_monster_killed:
+    - log:
+        level: debug
+        message: "Monster killed: ${event.monster_id} in ${event.region_id}"
+
+    # Track kill for statistics
+    - state_update:
+        path: "working_memory.kills_this_tick"
+        operation: "increment"
+        value: 1
+
+    # Check if this was a boss/elite
+    - if:
+        condition: "${event.monster_tier == 'boss' || event.monster_tier == 'elite'}"
+        then:
+          - log:
+              level: info
+              message: "High-value monster killed - ${event.monster_tier}"
+          # Could trigger special events, achievements, etc.
+
+  # ==========================================================================
+  # Handler: Player entered zone
+  # ==========================================================================
+  handle_player_entered:
+    - log:
+        level: debug
+        message: "Player ${event.player_id} entered ${event.zone_id}"
+
+    # Players make things more interesting - potentially spawn elite
+    - if:
+        condition: "${random() < config.elite_spawn_chance}"
+        then:
+          - state_update:
+              path: "working_memory.pending_spawns"
+              operation: "append"
+              value:
+                region_id: "${event.zone_id}"
+                count: 1
+                tier: "elite"
+                reason: "player_presence"
+
+          - log:
+              level: info
+              message: "Elite spawn triggered by player presence in ${event.zone_id}"
+
+  # ==========================================================================
+  # Handler: Ecosystem imbalance detected
+  # ==========================================================================
+  handle_ecology_imbalance:
+    - log:
+        level: warning
+        message: "Ecology imbalance in ${event.region_id}: ${event.imbalance_type}"
+
+    # Large-scale correction needed
+    - switch:
+        value: "${event.imbalance_type}"
+        cases:
+          "overpopulation":
+            # Too many monsters - signal migration or culling
+            - log:
+                level: info
+                message: "Triggering monster migration from ${event.region_id}"
+          "underpopulation":
+            # Not enough monsters - emergency spawn
+            - state_update:
+                path: "working_memory.pending_spawns"
+                operation: "append"
+                value:
+                  region_id: "${event.region_id}"
+                  count: "${config.spawn_batch_size * 2}"
+                  tier: "mixed"
+                  reason: "ecology_correction"
+          "type_imbalance":
+            # Wrong mix of monster types
+            - log:
+                level: info
+                message: "Type imbalance detected - adjusting spawn weights"
+
+  # ==========================================================================
+  # Periodic maintenance
+  # ==========================================================================
+  maintenance_tick:
+    - log:
+        level: debug
+        message: "Maintenance tick - checking realm state"
+
+    # Process any pending spawns
+    - if:
+        condition: "${working_memory.pending_spawns != null && working_memory.pending_spawns.length > 0}"
+        then:
+          - foreach:
+              collection: "${working_memory.pending_spawns}"
+              as: "spawn_request"
+              do:
+                - call: execute_spawn_request
+
+          # Clear pending spawns
+          - state_update:
+              path: "working_memory.pending_spawns"
+              operation: "set"
+              value: []
+
+    # Reset tick counters
+    - state_update:
+        path: "working_memory.kills_this_tick"
+        operation: "set"
+        value: 0
+
+  # ==========================================================================
+  # Execute a spawn request (would call game server API)
+  # ==========================================================================
+  execute_spawn_request:
+    - log:
+        level: info
+        message: "Executing spawn: ${spawn_request.count} monsters (${spawn_request.tier}) in ${spawn_request.region_id}"
+
+    # In production, this would call the game server API:
+    # POST /game-server/monsters/spawn-batch
+    # { region_id, count, tier, ... }
+    #
+    # For now, just log the intent
+    - state_update:
+        path: "working_memory.spawns_executed"
+        operation: "increment"
+        value: "${spawn_request.count}"

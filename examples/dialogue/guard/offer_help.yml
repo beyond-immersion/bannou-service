@@ -1,0 +1,40 @@
+# =============================================================================
+# Guard Offer Help
+# Spoken when responding to civilian distress
+# =============================================================================
+
+localizations:
+  en: "Are you alright? What happened here?"
+  es: "¿Estás bien? ¿Qué ha pasado aquí?"
+  de: "Seid Ihr in Ordnung? Was ist hier geschehen?"
+  ja: "大丈夫か？何があった？"
+  fr: "Vous allez bien ? Que s'est-il passé ?"
+
+overrides:
+  # Civilian is injured
+  - condition: "${civilian.health < 0.5}"
+    priority: 20
+    localizations:
+      en: "You're hurt! Stay still, I'll get help."
+      es: "¡Estás herido! No te muevas, traeré ayuda."
+
+  # Civilian is frightened
+  - condition: "${civilian.emotional_state.fear > 0.7}"
+    priority: 15
+    localizations:
+      en: "You're safe now. Can you tell me what happened?"
+      es: "Ya estás a salvo. ¿Puedes decirme qué pasó?"
+
+  # Crime scene
+  - condition: "${civilian.witnessed_crime}"
+    priority: 10
+    localizations:
+      en: "I'm here to help. Did you see who did this?"
+      es: "Estoy aquí para ayudar. ¿Viste quién hizo esto?"
+
+  # Lost child
+  - condition: "${civilian.age < 12 && civilian.is_lost}"
+    priority: 25
+    localizations:
+      en: "Hey there, little one. Are you lost? Let's find your parents."
+      es: "Hola, pequeño. ¿Estás perdido? Vamos a buscar a tus padres."
