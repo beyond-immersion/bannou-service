@@ -354,7 +354,6 @@ public class ScaledTierCoordinatorTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.True(result.Success);
         Assert.Equal(roomId, result.RoomId);
         Assert.Equal(VoiceTier.Scaled, result.Tier);
         Assert.Equal(VoiceCodec.Opus, result.Codec);

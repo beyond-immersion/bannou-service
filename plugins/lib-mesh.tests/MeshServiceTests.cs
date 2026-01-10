@@ -247,7 +247,6 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.NotNull(response.Endpoint);
         Assert.Equal("bannou", response.Endpoint.AppId);
         Assert.Equal("localhost", response.Endpoint.Host);
@@ -417,7 +416,6 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(30, response.NextHeartbeatSeconds); // 90 / 3 = 30
     }
 

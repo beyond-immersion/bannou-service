@@ -169,7 +169,6 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(expectedEtag, response.Etag);
     }
 
@@ -218,8 +217,7 @@ public class StateServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -246,7 +244,6 @@ public class StateServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
     }
 
     [Fact]

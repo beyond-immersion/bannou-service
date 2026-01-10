@@ -508,8 +508,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -547,8 +546,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -584,7 +582,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Mock UpdateSessionStateAsync to succeed
         _mockPermissionClient
             .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse { Success = true });
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
@@ -592,7 +590,6 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
 
         // Verify event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -636,14 +633,14 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Mock UpdateSessionStateAsync to succeed
         _mockPermissionClient
             .Setup(p => p.UpdateSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse { Success = true });
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
         var (status, response) = await service.JoinGameSessionAsync(request);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify game-session:in_game state was set via Permission client with the WebSocket session ID
         _mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
@@ -692,7 +689,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         // Mock ClearSessionStateAsync to succeed
         _mockPermissionClient
             .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse { Success = true });
+            .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());
 
         // Act
         var status = await service.LeaveGameSessionAsync(request);
@@ -807,8 +804,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     #endregion

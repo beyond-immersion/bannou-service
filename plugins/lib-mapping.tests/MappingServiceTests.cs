@@ -673,7 +673,6 @@ public class MappingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.NotEmpty(response.AuthorityToken ?? "");
         Assert.True(response.ExpiresAt > DateTimeOffset.UtcNow);
     }
@@ -710,7 +709,6 @@ public class MappingServiceTests
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
         Assert.Equal("other-editor", response.LockedBy);
     }
 
@@ -730,7 +728,6 @@ public class MappingServiceTests
         };
         var (_, checkoutResponse) = await service.CheckoutForAuthoringAsync(checkoutRequest, CancellationToken.None);
         Assert.NotNull(checkoutResponse);
-        Assert.True(checkoutResponse.Success);
 
         // Setup checkout record for commit
         _mockCheckoutStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -757,7 +754,6 @@ public class MappingServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.True(response.Version > 0);
     }
 

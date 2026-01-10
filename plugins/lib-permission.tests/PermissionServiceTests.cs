@@ -192,7 +192,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
         Assert.NotNull(response);
-        Assert.False(response.Success);
         Assert.Contains("lock", response.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -261,7 +260,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);
 
         // Verify registered services list was updated exactly once with orchestrator
@@ -315,7 +313,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(sessionId, response.SessionId);
         Assert.Contains("admin", response.Message);
 
@@ -387,7 +384,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
         Assert.NotNull(savedPermissions);
         Assert.True(savedPermissions!.TryGetValue("svc", out var endpointsObj));
         var endpoints = endpointsObj as IEnumerable<string>;
@@ -786,7 +783,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
 
         // Verify compiled permissions were saved
         _mockDictObjectStore.Verify(s => s.SaveAsync(
@@ -1109,7 +1105,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal(sessionId, response.SessionId);
         Assert.Contains("registered", response.Message);
 
@@ -1172,7 +1167,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify both sessions are in activeConnections
         Assert.NotNull(savedConnections);
@@ -1221,7 +1216,7 @@ public class PermissionServiceTests
 
         // Assert - should succeed but not duplicate
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify SaveStateAsync was NOT called for activeConnections (no change needed)
         _mockHashSetStore.Verify(s => s.SaveAsync(
@@ -1271,7 +1266,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify SessionCapabilitiesEvent was published exactly once via client event publisher
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1393,7 +1388,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
 
         // Verify role was stored in session states
         // Admin should take priority over user (highest priority role wins)
@@ -1677,8 +1671,8 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
-        Assert.Contains("reconnectable", response?.Message ?? "");
+        Assert.NotNull(response);
+        Assert.Contains("reconnectable", response.Message);
 
         // Verify session was removed from activeConnections
         Assert.NotNull(savedConnections);
@@ -1750,8 +1744,8 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
-        Assert.Contains("cleared", response?.Message ?? "");
+        Assert.NotNull(response);
+        Assert.Contains("cleared", response.Message);
 
         // Verify session was removed from activeSessions
         Assert.NotNull(savedSessions);
@@ -1776,7 +1770,7 @@ public class PermissionServiceTests
 
         // Assert - should still succeed (idempotent)
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify SaveStateAsync was NOT called (no change needed)
         _mockHashSetStore.Verify(s => s.SaveAsync(
@@ -1803,7 +1797,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -1882,7 +1876,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify capability refresh was published exactly once to connected session (session1)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1956,7 +1950,7 @@ public class PermissionServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
-        Assert.True(response?.Success);
+        Assert.NotNull(response);
 
         // Verify no capability events were published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(

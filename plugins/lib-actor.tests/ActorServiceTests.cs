@@ -956,9 +956,7 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("encounter-001", response.EncounterId);
-        Assert.Null(response.Error);
     }
 
     [Fact]
@@ -985,8 +983,7 @@ public class ActorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1018,9 +1015,7 @@ public class ActorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("already has an active encounter", response.Error);
+        Assert.Null(response);
     }
 
     #endregion
@@ -1066,7 +1061,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("initializing", response.PreviousPhase);
         Assert.Equal("executing", response.CurrentPhase);
     }
@@ -1093,8 +1087,7 @@ public class ActorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     #endregion
@@ -1140,7 +1133,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("encounter-001", response.EncounterId);
         Assert.True(response.DurationMs > 0);
     }
@@ -1166,8 +1158,7 @@ public class ActorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     #endregion
@@ -1316,10 +1307,8 @@ public class ActorServiceTests
         // Mock the remote invocation response
         var expectedResponse = new StartEncounterResponse
         {
-            Success = true,
             ActorId = "remote-actor-1",
-            EncounterId = "encounter-001",
-            Error = null
+            EncounterId = "encounter-001"
         };
 
         _mockMeshClient.Setup(m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
@@ -1335,7 +1324,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("encounter-001", response.EncounterId);
 
         // Verify mesh client was called
@@ -1379,7 +1367,6 @@ public class ActorServiceTests
         // Mock the remote invocation response
         var expectedResponse = new UpdateEncounterPhaseResponse
         {
-            Success = true,
             ActorId = "remote-actor-2",
             PreviousPhase = "initializing",
             CurrentPhase = "executing"
@@ -1398,7 +1385,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("executing", response.CurrentPhase);
 
         // Verify mesh client was called
@@ -1441,7 +1427,6 @@ public class ActorServiceTests
         // Mock the remote invocation response
         var expectedResponse = new EndEncounterResponse
         {
-            Success = true,
             ActorId = "remote-actor-3",
             EncounterId = "encounter-003",
             DurationMs = 5000
@@ -1460,7 +1445,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.Equal("encounter-003", response.EncounterId);
         Assert.Equal(5000, response.DurationMs);
 
@@ -1572,9 +1556,7 @@ public class ActorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("not found", response.Error);
+        Assert.Null(response);
 
         // Verify mesh client was NOT called (no remote node to forward to)
         _mockMeshClient.Verify(

@@ -2378,11 +2378,16 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
+                "success",
                 "deploymentId",
                 "backend",
                 "duration"
             ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether all nodes were deployed successfully (false indicates partial failure)"
+                },
                 "deploymentId": {
                     "type": "string",
                     "description": "Unique deployment identifier for tracking"
@@ -3417,9 +3422,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
+                "success",
                 "duration"
             ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether all containers were torn down successfully (false indicates partial failure)"
+                },
                 "duration": {
                     "type": "string",
                     "description": "Time taken to complete teardown"
@@ -3587,7 +3597,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "description": "Result of a cleanup operation including reclaimed space and removed resource counts",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "success"
+            ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether all requested cleanup operations completed (false indicates partial failure)"
+                },
                 "reclaimedSpaceMb": {
                     "type": "integer",
                     "description": "Disk space reclaimed (MB)"
@@ -4017,9 +4034,14 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
             "type": "object",
             "additionalProperties": false,
             "required": [
+                "success",
                 "appliedChanges"
             ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether all topology changes were applied successfully (false indicates partial failure)"
+                },
                 "appliedChanges": {
                     "type": "array",
                     "items": {

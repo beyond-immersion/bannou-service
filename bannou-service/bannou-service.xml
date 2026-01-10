@@ -38437,6 +38437,11 @@
             Result of a deployment operation including status and deployed service information
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.Success">
+            <summary>
+            Whether all nodes were deployed successfully (false indicates partial failure)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.DeployResponse.DeploymentId">
             <summary>
             Unique deployment identifier for tracking
@@ -38657,6 +38662,11 @@
             Result of an environment teardown including removed resources and any errors
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Success">
+            <summary>
+            Whether all containers were torn down successfully (false indicates partial failure)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Duration">
             <summary>
             Time taken to complete teardown
@@ -38725,6 +38735,11 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.CleanResponse">
             <summary>
             Result of a cleanup operation including reclaimed space and removed resource counts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.Success">
+            <summary>
+            Whether all requested cleanup operations completed (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.CleanResponse.ReclaimedSpaceMb">
@@ -38865,6 +38880,11 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse">
             <summary>
             Result of a topology update including applied changes and the new topology state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.Success">
+            <summary>
+            Whether all topology changes were applied successfully (false indicates partial failure)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TopologyUpdateResponse.AppliedChanges">

@@ -89,9 +89,7 @@ public class BehaviorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("behavior_id", response.FailureReason);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -121,9 +119,7 @@ public class BehaviorServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
-        Assert.Contains("not found", response.FailureReason);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -158,10 +154,10 @@ public class BehaviorServiceTests
         // Act
         var (status, response) = await service.GenerateGoapPlanAsync(request);
 
-        // Assert
+        // Assert - OK with no plan because no actions available
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response.Plan);
         Assert.Contains("No GOAP actions", response.FailureReason);
     }
 
@@ -216,10 +212,10 @@ public class BehaviorServiceTests
         // Act
         var (status, response) = await service.GenerateGoapPlanAsync(request);
 
-        // Assert
+        // Assert - OK with no plan because goal unreachable
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response.Plan);
         Assert.Contains("No valid plan found", response.FailureReason);
     }
 
@@ -288,7 +284,6 @@ public class BehaviorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Success);
         Assert.NotNull(response.Plan);
         Assert.Single(response.Plan.Actions);
         Assert.Equal("action1", response.Plan.Actions.First().ActionId);

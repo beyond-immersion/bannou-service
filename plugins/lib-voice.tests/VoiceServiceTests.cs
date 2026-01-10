@@ -443,7 +443,6 @@ public class VoiceServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.True(result.Success);
         Assert.Equal(roomId, result.RoomId);
         Assert.Single(result.Peers);
         Assert.Equal("existing-session-123", result.Peers.First().SessionId);
