@@ -384,12 +384,7 @@ public partial class GameSessionService : IGameSessionService
             {
                 _logger.LogWarning("Session {SessionId} for account {AccountId} is not a valid subscriber session",
                     clientSessionId, accountId);
-                return (StatusCodes.Unauthorized, new JoinGameSessionResponse
-                {
-                    Success = false,
-                    SessionId = body.SessionId,
-                    PlayerRole = JoinGameSessionResponsePlayerRole.Player
-                });
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Get the lobby for this game type (don't auto-create for join)
@@ -412,37 +407,23 @@ public partial class GameSessionService : IGameSessionService
             // Check if session is full
             if (model.CurrentPlayers >= model.MaxPlayers)
             {
-                _logger.LogWarning("Game lobby {LobbyId} is full", lobbyId);
-                return (StatusCodes.Conflict, new JoinGameSessionResponse
-                {
-                    Success = false,
-                    SessionId = body.SessionId,
-                    PlayerRole = JoinGameSessionResponsePlayerRole.Player
-                });
+                _logger.LogWarning("Game lobby {LobbyId} is full ({Current}/{Max} players)",
+                    lobbyId, model.CurrentPlayers, model.MaxPlayers);
+                return (StatusCodes.Conflict, null);
             }
 
             // Check session status
             if (model.Status == GameSessionResponseStatus.Finished)
             {
                 _logger.LogWarning("Game lobby {LobbyId} is finished", lobbyId);
-                return (StatusCodes.Conflict, new JoinGameSessionResponse
-                {
-                    Success = false,
-                    SessionId = body.SessionId,
-                    PlayerRole = JoinGameSessionResponsePlayerRole.Player
-                });
+                return (StatusCodes.Conflict, null);
             }
 
             // Check if player already in session
             if (model.Players.Any(p => p.AccountId == accountId))
             {
                 _logger.LogWarning("Player {AccountId} already in lobby {LobbyId}", accountId, lobbyId);
-                return (StatusCodes.Conflict, new JoinGameSessionResponse
-                {
-                    Success = false,
-                    SessionId = body.SessionId,
-                    PlayerRole = JoinGameSessionResponsePlayerRole.Player
-                });
+                return (StatusCodes.Conflict, null);
             }
 
             // Add player to session with their WebSocket session ID for event delivery
@@ -576,12 +557,7 @@ public partial class GameSessionService : IGameSessionService
             if (model.Status == GameSessionResponseStatus.Finished)
             {
                 _logger.LogWarning("Cannot perform action on finished lobby {LobbyId}", lobbyId);
-                return (StatusCodes.BadRequest, new GameActionResponse
-                {
-                    Success = false,
-                    ActionId = Guid.NewGuid(),
-                    Result = new Dictionary<string, object?> { ["error"] = "Cannot perform action on finished session" }
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Validate action data is present for mutation actions

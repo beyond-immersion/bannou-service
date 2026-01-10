@@ -106,7 +106,7 @@ public partial class StateService : IStateService
                 if (!success)
                 {
                     _logger.LogDebug("ETag mismatch for key {Key} in store {StoreName}", body.Key, body.StoreName);
-                    return (StatusCodes.Conflict, new SaveStateResponse { Success = false });
+                    return (StatusCodes.Conflict, null);
                 }
 
                 return (StatusCodes.OK, new SaveStateResponse { Success = true });

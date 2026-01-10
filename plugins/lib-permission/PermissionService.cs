@@ -414,12 +414,7 @@ public partial class PermissionService : IPermissionService
                             "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
                             body.ServiceId, maxRetries, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
                         await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.ServiceId, LockStore = LOCK_STORE, LockResource = LOCK_RESOURCE });
-                        return (StatusCodes.InternalServerError, new RegistrationResponse
-                        {
-                            ServiceId = body.ServiceId,
-                            Success = false,
-                            Message = $"Exception while acquiring lock after {maxRetries} attempts: {ex.Message}"
-                        });
+                        return (StatusCodes.InternalServerError, null);
                     }
                     // Brief delay before retry on exception
                     await Task.Delay(baseDelayMs, cancellationToken);
@@ -432,12 +427,7 @@ public partial class PermissionService : IPermissionService
             {
                 _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
                 await PublishErrorEventAsync("RegisterServicePermissions", "lock_null", "Lock acquisition returned null response", dependency: "state", details: new { body.ServiceId });
-                return (StatusCodes.InternalServerError, new RegistrationResponse
-                {
-                    ServiceId = body.ServiceId,
-                    Success = false,
-                    Message = "Lock acquisition returned null response"
-                });
+                return (StatusCodes.InternalServerError, null);
             }
 
             await using (serviceLock)
@@ -448,12 +438,7 @@ public partial class PermissionService : IPermissionService
                         "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
                         body.ServiceId, maxRetries);
                     await PublishErrorEventAsync("RegisterServicePermissions", "lock_failed", $"Failed to acquire distributed lock after {maxRetries} attempts", dependency: "state", details: new { body.ServiceId, MaxRetries = maxRetries });
-                    return (StatusCodes.InternalServerError, new RegistrationResponse
-                    {
-                        ServiceId = body.ServiceId,
-                        Success = false,
-                        Message = $"Failed to acquire distributed lock after {maxRetries} attempts - persistent lock contention"
-                    });
+                    return (StatusCodes.InternalServerError, null);
                 }
 
                 _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
@@ -1333,12 +1318,7 @@ public partial class PermissionService : IPermissionService
         {
             _logger.LogError(ex, "Failed to handle session connected for {SessionId}", sessionId);
             await PublishErrorEventAsync("HandleSessionConnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
-            return (StatusCodes.InternalServerError, new SessionUpdateResponse
-            {
-                Success = false,
-                SessionId = Guid.Parse(sessionId),
-                Message = $"Error: {ex.Message}"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1403,12 +1383,7 @@ public partial class PermissionService : IPermissionService
         {
             _logger.LogError(ex, "Failed to handle session disconnected for {SessionId}", sessionId);
             await PublishErrorEventAsync("HandleSessionDisconnected", ex.GetType().Name, ex.Message, dependency: "state", details: new { SessionId = sessionId });
-            return (StatusCodes.InternalServerError, new SessionUpdateResponse
-            {
-                Success = false,
-                SessionId = Guid.Parse(sessionId),
-                Message = $"Error: {ex.Message}"
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

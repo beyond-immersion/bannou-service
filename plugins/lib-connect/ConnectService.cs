@@ -170,13 +170,7 @@ public partial class ConnectService : IConnectService
             {
                 _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method} - not in capability manifest",
                     body.SessionId, body.TargetService, body.Method);
-
-                return (StatusCodes.Forbidden, new InternalProxyResponse
-                {
-                    Success = false,
-                    StatusCode = 403,
-                    Error = "Access denied - endpoint not in capability manifest"
-                });
+                return (StatusCodes.Forbidden, null);
             }
 
             // Build the full URL path with path parameters

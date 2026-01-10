@@ -498,19 +498,11 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 // Backend exists in detection but is not available - fail the deployment
                 var errorMsg = requestedBackend.Error ?? "Backend not available";
+                var availableBackends = string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>());
                 _logger.LogWarning(
-                    "Requested backend {Backend} is not available: {Error}",
-                    effectiveBackend, errorMsg);
-
-                return (StatusCodes.BadRequest, new DeployResponse
-                {
-                    Success = false,
-                    DeploymentId = deploymentId,
-                    Backend = effectiveBackend,
-                    Duration = "0s",
-                    Message = $"Requested backend '{effectiveBackend}' is not available: {errorMsg}. " +
-                            $"Available backends: {string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>())}"
-                });
+                    "Requested backend {Backend} is not available: {Error}. Available backends: {AvailableBackends}",
+                    effectiveBackend, errorMsg, availableBackends);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Use the effective backend if available, otherwise use recommended
@@ -627,14 +619,8 @@ public partial class OrchestratorService : IOrchestratorService
                 var preset = await _presetLoader.LoadPresetAsync(body.Preset, cancellationToken);
                 if (preset == null)
                 {
-                    return (StatusCodes.NotFound, new DeployResponse
-                    {
-                        Success = false,
-                        DeploymentId = deploymentId,
-                        Backend = orchestrator.BackendType,
-                        Duration = "0s",
-                        Message = $"Preset '{body.Preset}' not found"
-                    });
+                    _logger.LogWarning("Preset '{Preset}' not found", body.Preset);
+                    return (StatusCodes.NotFound, null);
                 }
 
                 var topology = _presetLoader.ConvertToTopology(preset);
@@ -660,14 +646,8 @@ public partial class OrchestratorService : IOrchestratorService
             }
             else
             {
-                return (StatusCodes.BadRequest, new DeployResponse
-                {
-                    Success = false,
-                    DeploymentId = deploymentId,
-                    Backend = orchestrator.BackendType,
-                    Duration = "0s",
-                    Message = "No topology nodes specified for deployment. Provide a preset name or topology."
-                });
+                _logger.LogWarning("No topology nodes specified for deployment. Provide a preset name or topology");
+                return (StatusCodes.BadRequest, null);
             }
 
             var deployedServices = new List<DeployedService>();
@@ -1756,12 +1736,8 @@ public partial class OrchestratorService : IOrchestratorService
 
             if (changes.Count == 0)
             {
-                return (StatusCodes.BadRequest, new TopologyUpdateResponse
-                {
-                    Success = false,
-                    AppliedChanges = new List<AppliedChange>(),
-                    Message = "No topology changes specified"
-                });
+                _logger.LogWarning("No topology changes specified");
+                return (StatusCodes.BadRequest, null);
             }
 
             var appliedChanges = new List<AppliedChange>();
@@ -2147,14 +2123,9 @@ public partial class OrchestratorService : IOrchestratorService
 
             if (currentVersion <= 1)
             {
-                _logger.LogWarning("Cannot rollback - no previous configuration version available");
-                return (StatusCodes.BadRequest, new ConfigRollbackResponse
-                {
-                    Success = false,
-                    PreviousVersion = currentVersion,
-                    CurrentVersion = currentVersion,
-                    Message = "No previous configuration version available for rollback"
-                });
+                _logger.LogWarning("Cannot rollback - no previous configuration version available (current version: {Version})",
+                    currentVersion);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Get the previous version (currentVersion - 1)
@@ -2163,14 +2134,8 @@ public partial class OrchestratorService : IOrchestratorService
 
             if (previousConfig == null)
             {
-                _logger.LogWarning("Previous configuration version {Version} not found in history", targetVersion);
-                return (StatusCodes.NotFound, new ConfigRollbackResponse
-                {
-                    Success = false,
-                    PreviousVersion = currentVersion,
-                    CurrentVersion = currentVersion,
-                    Message = $"Configuration version {targetVersion} not found in history (may have expired)"
-                });
+                _logger.LogWarning("Previous configuration version {Version} not found in history (may have expired)", targetVersion);
+                return (StatusCodes.NotFound, null);
             }
 
             // Perform the rollback
@@ -2180,13 +2145,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 _logger.LogError("Failed to restore configuration version {Version}", targetVersion);
                 await PublishErrorEventAsync("RollbackConfiguration", "restore_failed", $"Failed to restore configuration version {targetVersion}", dependency: "redis");
-                return (StatusCodes.InternalServerError, new ConfigRollbackResponse
-                {
-                    Success = false,
-                    PreviousVersion = currentVersion,
-                    CurrentVersion = currentVersion,
-                    Message = "Failed to restore configuration version"
-                });
+                return (StatusCodes.InternalServerError, null);
             }
 
             // Get the new version (which is currentVersion + 1 after rollback)
@@ -2747,14 +2706,7 @@ public partial class OrchestratorService : IOrchestratorService
             if (poolConfig == null)
             {
                 _logger.LogWarning("ScalePool: No configuration found for pool {PoolType}", body.PoolType);
-                return (StatusCodes.NotFound, new ScalePoolResponse
-                {
-                    PoolType = body.PoolType,
-                    PreviousInstances = 0,
-                    CurrentInstances = 0,
-                    ScaledUp = 0,
-                    ScaledDown = 0
-                });
+                return (StatusCodes.NotFound, null);
             }
 
             // Get container orchestrator backend

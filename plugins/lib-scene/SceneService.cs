@@ -487,13 +487,9 @@ public partial class SceneService : ISceneService
             var referencingScenes = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
             if (referencingScenes != null && referencingScenes.Count > 0)
             {
-                _logger.LogWarning("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes", body.SceneId, referencingScenes.Count);
-                return (StatusCodes.Conflict, new DeleteSceneResponse
-                {
-                    Deleted = false,
-                    SceneId = body.SceneId,
-                    ReferencingScenes = referencingScenes.Select(Guid.Parse).ToList()
-                });
+                _logger.LogWarning("DeleteScene: Scene {SceneId} is referenced by {Count} other scenes: {ReferencingScenes}",
+                    body.SceneId, referencingScenes.Count, string.Join(", ", referencingScenes));
+                return (StatusCodes.Conflict, null);
             }
 
             // Load scene for event data

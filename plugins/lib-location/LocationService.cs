@@ -1181,19 +1181,13 @@ public partial class LocationService : ILocationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error seeding locations");
+            _logger.LogError(ex, "Error seeding locations (created={Created}, updated={Updated}, skipped={Skipped})",
+                created, updated, skipped);
             await _messageBus.TryPublishErrorAsync(
                 "location", "SeedLocations", "unexpected_exception", ex.Message,
                 dependency: "state", endpoint: "post:/location/seed",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            errors.Add($"Unexpected error: {ex.Message}");
-            return (StatusCodes.InternalServerError, new SeedLocationsResponse
-            {
-                Created = created,
-                Updated = updated,
-                Skipped = skipped,
-                Errors = errors
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

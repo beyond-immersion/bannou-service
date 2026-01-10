@@ -848,14 +848,8 @@ public partial class AchievementService : IAchievementService
             var syncProvider = _platformSyncs.FirstOrDefault(s => s.Platform == body.Platform);
             if (syncProvider == null)
             {
-                return (StatusCodes.BadRequest, new SyncPlatformAchievementsResponse
-                {
-                    Platform = body.Platform,
-                    Synced = 0,
-                    Failed = 0,
-                    NotLinked = false,
-                    Errors = new List<string> { $"Platform {body.Platform} not supported" }
-                });
+                _logger.LogDebug("Platform {Platform} not supported for achievement sync", body.Platform);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Check if linked

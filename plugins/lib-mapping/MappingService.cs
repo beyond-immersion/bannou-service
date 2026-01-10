@@ -389,7 +389,7 @@ public partial class MappingService : IMappingService
             if (!valid || tokenChannelId != body.ChannelId)
             {
                 _logger.LogWarning("Invalid authority token for channel {ChannelId}", body.ChannelId);
-                return (StatusCodes.Unauthorized, new ReleaseAuthorityResponse { Released = false });
+                return (StatusCodes.Unauthorized, null);
             }
 
             var authorityKey = BuildAuthorityKey(body.ChannelId);
@@ -399,7 +399,7 @@ public partial class MappingService : IMappingService
             if (authority == null || authority.AuthorityToken != body.AuthorityToken)
             {
                 _logger.LogWarning("Authority token mismatch for channel {ChannelId}", body.ChannelId);
-                return (StatusCodes.Unauthorized, new ReleaseAuthorityResponse { Released = false });
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Delete authority record
@@ -450,12 +450,8 @@ public partial class MappingService : IMappingService
             var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
             if (!valid || tokenChannelId != body.ChannelId)
             {
-                return (StatusCodes.Unauthorized, new AuthorityHeartbeatResponse
-                {
-                    Valid = false,
-                    ExpiresAt = default,
-                    Warning = "Invalid authority token"
-                });
+                _logger.LogWarning("Invalid authority token for heartbeat on channel {ChannelId}", body.ChannelId);
+                return (StatusCodes.Unauthorized, null);
             }
 
             var authorityKey = BuildAuthorityKey(body.ChannelId);
@@ -464,23 +460,15 @@ public partial class MappingService : IMappingService
 
             if (authority == null || authority.AuthorityToken != body.AuthorityToken)
             {
-                return (StatusCodes.Unauthorized, new AuthorityHeartbeatResponse
-                {
-                    Valid = false,
-                    ExpiresAt = default,
-                    Warning = "Authority not found or token mismatch"
-                });
+                _logger.LogWarning("Authority not found or token mismatch for channel {ChannelId}", body.ChannelId);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Check if authority has expired
             if (authority.ExpiresAt < DateTimeOffset.UtcNow)
             {
-                return (StatusCodes.Unauthorized, new AuthorityHeartbeatResponse
-                {
-                    Valid = false,
-                    ExpiresAt = authority.ExpiresAt,
-                    Warning = "Authority has expired"
-                });
+                _logger.LogWarning("Authority has expired for channel {ChannelId}", body.ChannelId);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Extend authority
@@ -532,12 +520,7 @@ public partial class MappingService : IMappingService
             {
                 _logger.LogWarning("Payload size {Size} exceeds limit {Limit} for channel {ChannelId}",
                     payloadSize, _configuration.InlinePayloadMaxBytes, body.ChannelId);
-                return (StatusCodes.BadRequest, new PublishMapUpdateResponse
-                {
-                    Accepted = false,
-                    Version = 0,
-                    Warning = $"Payload size ({payloadSize} bytes) exceeds limit ({_configuration.InlinePayloadMaxBytes} bytes). Use smaller payloads or chunking."
-                });
+                return (StatusCodes.BadRequest, null);
             }
 
             // Validate authority
@@ -551,12 +534,8 @@ public partial class MappingService : IMappingService
 
             if (!isValid || channel == null)
             {
-                return (StatusCodes.Unauthorized, new PublishMapUpdateResponse
-                {
-                    Accepted = false,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogWarning("Authority validation failed for channel {ChannelId}: {Warning}", body.ChannelId, warning);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Process the payload
@@ -602,14 +581,8 @@ public partial class MappingService : IMappingService
 
             if (channel == null)
             {
-                // Channel doesn't exist at all
-                return (StatusCodes.NotFound, new PublishObjectChangesResponse
-                {
-                    Accepted = false,
-                    AcceptedCount = 0,
-                    RejectedCount = body.Changes.Count,
-                    Version = 0
-                });
+                _logger.LogDebug("Channel {ChannelId} not found for object changes", body.ChannelId);
+                return (StatusCodes.NotFound, null);
             }
 
             // Authority is valid - process changes normally
@@ -693,25 +666,13 @@ public partial class MappingService : IMappingService
         switch (mode)
         {
             case NonAuthorityHandlingMode.Reject_silent:
-                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
-                {
-                    Accepted = false,
-                    AcceptedCount = 0,
-                    RejectedCount = changes.Count,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogDebug("Non-authority object changes rejected silently for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
 
             case NonAuthorityHandlingMode.Reject_and_alert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: false, cancellationToken);
-                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
-                {
-                    Accepted = false,
-                    AcceptedCount = 0,
-                    RejectedCount = changes.Count,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogWarning("Non-authority object changes rejected with alert for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
 
             case NonAuthorityHandlingMode.Accept_and_alert:
                 await PublishUnauthorizedObjectChangesWarningAsync(channel, changes, accepted: true, cancellationToken);
@@ -724,14 +685,8 @@ public partial class MappingService : IMappingService
                 return (status, response);
 
             default:
-                return (StatusCodes.Unauthorized, new PublishObjectChangesResponse
-                {
-                    Accepted = false,
-                    AcceptedCount = 0,
-                    RejectedCount = changes.Count,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogDebug("Non-authority object changes rejected (default mode) for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
         }
     }
 
@@ -1195,14 +1150,9 @@ public partial class MappingService : IMappingService
                 // Check if lock has expired
                 if (existingCheckout.ExpiresAt > DateTimeOffset.UtcNow)
                 {
-                    return (StatusCodes.Conflict, new AuthoringCheckoutResponse
-                    {
-                        Success = false,
-                        AuthorityToken = null,
-                        ExpiresAt = null,
-                        LockedBy = existingCheckout.EditorId,
-                        LockedAt = existingCheckout.CreatedAt
-                    });
+                    _logger.LogDebug("Region {RegionId} kind {Kind} already locked by {EditorId}",
+                        body.RegionId, body.Kind, existingCheckout.EditorId);
+                    return (StatusCodes.Conflict, null);
                 }
                 // Lock expired, we can take it
             }
@@ -1261,11 +1211,8 @@ public partial class MappingService : IMappingService
 
             if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
             {
-                return (StatusCodes.Unauthorized, new AuthoringCommitResponse
-                {
-                    Success = false,
-                    Version = null
-                });
+                _logger.LogWarning("Invalid authority token for authoring commit on region {RegionId}", body.RegionId);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Increment version and release lock
@@ -1309,7 +1256,8 @@ public partial class MappingService : IMappingService
 
             if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
             {
-                return (StatusCodes.Unauthorized, new AuthoringReleaseResponse { Released = false });
+                _logger.LogWarning("Invalid authority token for authoring release on region {RegionId}", body.RegionId);
+                return (StatusCodes.Unauthorized, null);
             }
 
             await _stateStoreFactory.GetStore<CheckoutRecord>(STATE_STORE)
@@ -1562,7 +1510,8 @@ public partial class MappingService : IMappingService
 
             if (record == null)
             {
-                return (StatusCodes.NotFound, new DeleteDefinitionResponse { Deleted = false });
+                _logger.LogDebug("Map definition {DefinitionId} not found for deletion", body.DefinitionId);
+                return (StatusCodes.NotFound, null);
             }
 
             // Delete the definition
@@ -1684,41 +1633,30 @@ public partial class MappingService : IMappingService
         switch (mode)
         {
             case NonAuthorityHandlingMode.Reject_silent:
-                return (StatusCodes.Unauthorized, new PublishMapUpdateResponse
-                {
-                    Accepted = false,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogDebug("Non-authority publish rejected silently for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
 
             case NonAuthorityHandlingMode.Reject_and_alert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, false, cancellationToken);
-                return (StatusCodes.Unauthorized, new PublishMapUpdateResponse
-                {
-                    Accepted = false,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogDebug("Non-authority publish rejected with alert for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
 
             case NonAuthorityHandlingMode.Accept_and_alert:
                 await PublishUnauthorizedWarningAsync(channel, payload, attemptedPublisher, true, cancellationToken);
                 // Process the payload anyway
                 var payloads = new List<MapPayload> { payload };
                 var version = await ProcessPayloadsAsync(channel.ChannelId, channel.RegionId, channel.Kind, payloads, cancellationToken);
+                _logger.LogInformation("Published despite lacking authority (accept_and_alert mode) for channel {ChannelId}", channel.ChannelId);
                 return (StatusCodes.OK, new PublishMapUpdateResponse
                 {
                     Accepted = true,
                     Version = version,
-                    Warning = "Published despite lacking authority (accept_and_alert mode)"
+                    Warning = null
                 });
 
             default:
-                return (StatusCodes.Unauthorized, new PublishMapUpdateResponse
-                {
-                    Accepted = false,
-                    Version = 0,
-                    Warning = warning
-                });
+                _logger.LogDebug("Non-authority publish rejected (unknown mode) for channel {ChannelId}", channel.ChannelId);
+                return (StatusCodes.Unauthorized, null);
         }
     }
 

@@ -178,7 +178,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 details: new { Topic = body.Topic },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, new PublishEventResponse { Success = false });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -337,7 +337,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             if (!_activeSubscriptions.TryRemove(body.SubscriptionId, out var entry))
             {
                 _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
-                return (StatusCodes.NotFound, new RemoveSubscriptionResponse { Success = false });
+                return (StatusCodes.NotFound, null);
             }
 
             // Dispose the subscription entry (handle + HttpClient)
@@ -369,7 +369,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 details: new { SubscriptionId = body.SubscriptionId },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, new RemoveSubscriptionResponse { Success = false });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -411,7 +411,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 details: new { ExchangeFilter = body?.ExchangeFilter },
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, new ListTopicsResponse { Topics = new List<TopicInfo>() });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

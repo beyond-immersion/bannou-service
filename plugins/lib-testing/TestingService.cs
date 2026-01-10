@@ -250,12 +250,8 @@ public partial class TestingService : ITestingService
     {
         if (string.IsNullOrEmpty(sessionId))
         {
-            return (StatusCodes.BadRequest, new PublishTestEventResponse
-            {
-                Success = false,
-                Message = "Session ID is required",
-                Timestamp = DateTime.UtcNow
-            });
+            _logger.LogDebug("Session ID is required for publishing test event");
+            return (StatusCodes.BadRequest, null);
         }
 
         try
@@ -288,25 +284,13 @@ public partial class TestingService : ITestingService
             else
             {
                 _logger.LogWarning("Failed to publish test event to session {SessionId}", sessionId);
-                return (StatusCodes.InternalServerError, new PublishTestEventResponse
-                {
-                    Success = false,
-                    Message = "Failed to publish test event",
-                    SessionId = sessionId,
-                    Timestamp = DateTime.UtcNow
-                });
+                return (StatusCodes.InternalServerError, null);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing test event to session {SessionId}", sessionId);
-            return (StatusCodes.InternalServerError, new PublishTestEventResponse
-            {
-                Success = false,
-                Message = $"Error: {ex.Message}",
-                SessionId = sessionId,
-                Timestamp = DateTime.UtcNow
-            });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

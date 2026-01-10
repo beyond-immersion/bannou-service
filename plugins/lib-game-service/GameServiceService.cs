@@ -90,7 +90,7 @@ public partial class GameServiceService : IGameServiceService
         {
             _logger.LogError(ex, "Error listing services");
             await PublishErrorEventAsync("ListServices", ex.GetType().Name, ex.Message, dependency: "state");
-            return (StatusCodes.InternalServerError, new ListServicesResponse { Services = new List<ServiceInfo>(), TotalCount = 0 });
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

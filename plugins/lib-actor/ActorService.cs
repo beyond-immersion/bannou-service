@@ -1301,13 +1301,8 @@ public partial class ActorService : IActorService
             // Actor not found anywhere
             if (localRunner == null)
             {
-                return (StatusCodes.NotFound, new StartEncounterResponse
-                {
-                    Success = false,
-                    ActorId = body.ActorId,
-                    EncounterId = null,
-                    Error = $"Actor {body.ActorId} not found"
-                });
+                _logger.LogDebug("Actor {ActorId} not found for encounter start", body.ActorId);
+                return (StatusCodes.NotFound, null);
             }
 
             var runner = localRunner;
@@ -1337,13 +1332,8 @@ public partial class ActorService : IActorService
 
             if (!success)
             {
-                return (StatusCodes.Conflict, new StartEncounterResponse
-                {
-                    Success = false,
-                    ActorId = body.ActorId,
-                    EncounterId = null,
-                    Error = $"Actor {body.ActorId} already has an active encounter"
-                });
+                _logger.LogDebug("Actor {ActorId} already has an active encounter", body.ActorId);
+                return (StatusCodes.Conflict, null);
             }
 
             _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
@@ -1400,13 +1390,8 @@ public partial class ActorService : IActorService
             // Actor not found anywhere
             if (localRunner == null)
             {
-                return (StatusCodes.NotFound, new UpdateEncounterPhaseResponse
-                {
-                    Success = false,
-                    ActorId = body.ActorId,
-                    PreviousPhase = null,
-                    CurrentPhase = null
-                });
+                _logger.LogDebug("Actor {ActorId} not found for encounter phase update", body.ActorId);
+                return (StatusCodes.NotFound, null);
             }
 
             var runner = localRunner;
@@ -1468,13 +1453,8 @@ public partial class ActorService : IActorService
             // Actor not found anywhere
             if (localRunner == null)
             {
-                return (StatusCodes.NotFound, new EndEncounterResponse
-                {
-                    Success = false,
-                    ActorId = body.ActorId,
-                    EncounterId = null,
-                    DurationMs = null
-                });
+                _logger.LogDebug("Actor {ActorId} not found for encounter end", body.ActorId);
+                return (StatusCodes.NotFound, null);
             }
 
             var runner = localRunner;
@@ -1545,12 +1525,8 @@ public partial class ActorService : IActorService
             // Actor not found anywhere
             if (localRunner == null)
             {
-                return (StatusCodes.NotFound, new GetEncounterResponse
-                {
-                    ActorId = body.ActorId,
-                    HasActiveEncounter = false,
-                    Encounter = null
-                });
+                _logger.LogDebug("Actor {ActorId} not found for encounter get", body.ActorId);
+                return (StatusCodes.NotFound, null);
             }
 
             var runner = localRunner;
