@@ -264,12 +264,12 @@ public class PermissionServiceTests
         Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);
 
-        // Verify registered services list was updated at least once with orchestrator
+        // Verify registered services list was updated exactly once with orchestrator
         _mockHashSetStore.Verify(s => s.SaveAsync(
             REGISTERED_SERVICES_KEY,
             It.Is<HashSet<string>>(set => set.Contains("orchestrator")),
             It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+            It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [Fact]
@@ -319,12 +319,12 @@ public class PermissionServiceTests
         Assert.Equal(sessionId, response.SessionId);
         Assert.Contains("admin", response.Message);
 
-        // Verify session states were saved
+        // Verify session states were saved exactly once
         _mockDictStringStore.Verify(s => s.SaveAsync(
             statesKey,
             It.IsAny<Dictionary<string, string>>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1273,11 +1273,11 @@ public class PermissionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.True(response?.Success);
 
-        // Verify SessionCapabilitiesEvent was published via client event publisher
+        // Verify SessionCapabilitiesEvent was published exactly once via client event publisher
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
             sessionId,
             It.Is<BaseClientEvent>(e => e is SessionCapabilitiesEvent),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1884,11 +1884,11 @@ public class PermissionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.True(response?.Success);
 
-        // Verify capability refresh was published to connected session (session1)
+        // Verify capability refresh was published exactly once to connected session (session1)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
             session1,
             It.Is<BaseClientEvent>(e => e is SessionCapabilitiesEvent),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            It.IsAny<CancellationToken>()), Times.Once);
 
         // CRITICAL: Capability refresh should NOT be published to non-connected sessions
         // Publishing to sessions without WebSocket connections causes RabbitMQ exchange not_found errors

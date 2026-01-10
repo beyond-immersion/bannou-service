@@ -840,8 +840,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing password reset confirmation with token: {TokenPrefix}...",
-                body.Token?.Length > 10 ? body.Token.Substring(0, 10) : body.Token);
+            _logger.LogInformation("Processing password reset confirmation");
 
             if (string.IsNullOrWhiteSpace(body.Token) || string.IsNullOrWhiteSpace(body.NewPassword))
             {

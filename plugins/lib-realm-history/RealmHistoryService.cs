@@ -126,7 +126,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             eventIndex.ParticipationIds.Add(participationId.ToString());
             await indexStore.SaveAsync(eventIndexKey, eventIndex, cancellationToken: cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new RealmParticipationRecordedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -369,7 +369,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 await indexStore.SaveAsync(eventIndexKey, eventIndex, cancellationToken: cancellationToken);
             }
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new RealmParticipationDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -528,7 +528,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             await loreStore.SaveAsync(loreKey, loreData, cancellationToken: cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             var now = DateTimeOffset.UtcNow;
             if (isNew)
             {
@@ -635,7 +635,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             await loreStore.SaveAsync(loreKey, loreData, cancellationToken: cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             var now = DateTimeOffset.UtcNow;
             if (isNew)
             {
@@ -708,7 +708,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
             await loreStore.DeleteAsync(loreKey, cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(LORE_DELETED_TOPIC, new RealmLoreDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -798,7 +798,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 loreDeleted = true;
             }
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new RealmHistoryDeletedEvent
             {
                 EventId = Guid.NewGuid(),

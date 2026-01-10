@@ -865,12 +865,12 @@ public class MappingServiceTests
         // Act - call internal handler directly
         await service.HandleIngestEventAsync(createResponse.ChannelId, ingestEvent, CancellationToken.None);
 
-        // Assert - verify object was saved
+        // Assert - verify exactly one object was saved (one payload = one save)
         _mockObjectStore.Verify(s => s.SaveAsync(
             It.IsAny<string>(),
             It.IsAny<MapObject>(),
             It.IsAny<StateOptions?>(),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

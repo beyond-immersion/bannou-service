@@ -142,7 +142,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 body.EventId.ToString(),
                 cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -329,7 +329,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 data.EventId,
                 cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -447,7 +447,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
             };
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             var now = DateTimeOffset.UtcNow;
             if (result.IsNew)
             {
@@ -518,7 +518,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
             };
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             var now = DateTimeOffset.UtcNow;
             if (result.IsNew)
             {
@@ -580,7 +580,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 return StatusCodes.NotFound;
             }
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(BACKSTORY_DELETED_TOPIC, new CharacterBackstoryDeletedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -631,7 +631,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             // Use helper to delete backstory
             var backstoryDeleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
-            // Publish typed event (T5 compliant)
+            // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new CharacterHistoryDeletedEvent
             {
                 EventId = Guid.NewGuid(),

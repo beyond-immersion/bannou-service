@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Actor.Caching;
 
 /// <summary>
 /// Caches parsed ABML documents loaded from lib-asset.
-/// Thread-safe via ConcurrentDictionary (T9 compliant).
+/// Thread-safe via ConcurrentDictionary per IMPLEMENTATION TENETS.
 /// Uses IServiceScopeFactory to resolve scoped IAssetClient on demand.
 /// </summary>
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
