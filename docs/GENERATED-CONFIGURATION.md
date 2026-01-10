@@ -279,12 +279,16 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `GAME_SESSION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval between reservation cleanup cycles |
+| `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | int | `10` | Delay before cleanup service starts (allows other services t... |
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
 | `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
+| `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
 
 ### Leaderboard
 
@@ -340,6 +344,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MATCHMAKING_AUTO_REQUEUE_ON_DECLINE` | bool | `true` | Automatically requeue non-declining players when a match is ... |
+| `MATCHMAKING_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | int | `5` | Delay before background service starts processing (allows ot... |
 | `MATCHMAKING_DEFAULT_JOIN_DEADLINE_SECONDS` | int | `120` | Default deadline for players to join the game session after ... |
 | `MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS` | int | `30` | Default time for players to accept a formed match |
 | `MATCHMAKING_DEFAULT_MAX_INTERVALS` | int | `6` | Default maximum intervals before timeout/relaxation |
@@ -535,9 +540,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 381
+- **Total properties**: 386
 - **Required (no default)**: 47
-- **Optional (has default)**: 334
+- **Optional (has default)**: 339
 
 ## Environment Variable Naming Convention
 

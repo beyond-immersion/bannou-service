@@ -116,6 +116,9 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             // Redis store with full-text search enabled (auto-creates index on startup)
             ["test-search-statestore"] = (StateBackend.Redis, "test-search", true),
 
+            // Matchmaking stores (transient queue/ticket data)
+            ["matchmaking-statestore"] = (StateBackend.Redis, "mm", false),
+
             // MySQL stores (durable data)
             ["account-statestore"] = (StateBackend.MySql, null, false),
             ["character-statestore"] = (StateBackend.MySql, null, false),
