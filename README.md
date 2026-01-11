@@ -84,6 +84,18 @@ bannou-service/
 └── scripts/              # Code generation and build scripts
 ```
 
+## Community
+
+- **Discord**: [Beyond Immersion](https://discord.gg/3eAGYwF3rE) - Discussion, questions, and collaboration
+- **GitHub Issues**: Bug reports and feature requests
+- **GitHub Discussions**: Questions and broader conversations
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Please note that this project follows a [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
-This project is licensed under the [MIT License](docs/LICENSE).
+This project is licensed under the [MIT License](LICENSE).
