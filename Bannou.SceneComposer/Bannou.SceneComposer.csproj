@@ -27,6 +27,11 @@
     <AssemblyName>BeyondImmersion.Bannou.SceneComposer</AssemblyName>
   </PropertyGroup>
 
+  <!-- Make internals visible to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SceneComposer.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Reactive extensions for IObservable support -->
     <PackageReference Include="System.Reactive" Version="6.0.0" />

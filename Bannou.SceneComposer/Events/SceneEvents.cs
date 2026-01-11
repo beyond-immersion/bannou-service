@@ -48,7 +48,7 @@ public class SceneModifiedEventArgs : SceneComposerEvent
     {
         ModificationType = modificationType;
         AffectedNodes = affectedNodes.ToList();
-        Description = description ?? string.Empty;
+        Description = description;
         IsUndoable = isUndoable;
     }
 

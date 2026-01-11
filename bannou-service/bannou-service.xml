@@ -45857,6 +45857,126 @@
             Shape of a volume node for spatial bounds
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.AffordanceType">
+            <summary>
+            Types of affordances describing what an object can do or how it can be interacted with.
+            <br/>Used by AI navigation, character controllers, and procedural content systems.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.MarkerType">
+            <summary>
+            Types of marker nodes for spawn points, waypoints, and other positional markers.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.AttachmentPoint">
+            <summary>
+            A predefined location where child objects can be attached.
+            <br/>Used for decorating furniture, walls, and other objects with accessories.
+            <br/>Example: A wall may have attachment points for paintings, shelves, or light fixtures.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.Name">
+            <summary>
+            Unique name for this attachment point within the node.
+            <br/>Examples: wall_hook_left, shelf_1, lamp_socket
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.LocalTransform">
+            <summary>
+            Position and orientation relative to the owning node
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.AcceptsTags">
+            <summary>
+            Tags of assets that can attach here.
+            <br/>Examples: wall_decoration, picture_frame, plant
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.DefaultAsset">
+            <summary>
+            Default asset to display if no specific attachment is specified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.AttachedNodeId">
+            <summary>
+            ID of the node currently attached at this point (runtime state)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AttachmentPoint.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.Affordance">
+            <summary>
+            Describes a capability or interaction mode for a node.
+            <br/>Used by AI systems to understand what actions are possible and by
+            <br/>character controllers for contextual animations.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Affordance.Type">
+            <summary>
+            The type of affordance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Affordance.Parameters">
+            <summary>
+            Type-specific parameters. Examples:
+            <br/>- sittable: { height: 0.5, facing: [0,0,1] }
+            <br/>- door: { openAngle: 90, locked: false }
+            <br/>- container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.Affordance.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Scene.AssetSlot">
+            <summary>
+            Defines acceptable asset types for procedural swapping at this node.
+            <br/>Used by procedural generation systems to substitute assets while
+            <br/>maintaining scene coherence.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetSlot.SlotType">
+            <summary>
+            Category of acceptable assets.
+            <br/>Examples: chair, table, wall_art, floor_lamp
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetSlot.AcceptsTags">
+            <summary>
+            Tags that acceptable assets must have.
+            <br/>Used for filtering when selecting random variations.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetSlot.DefaultAsset">
+            <summary>
+            Default asset if no specific asset is bound
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetSlot.Variations">
+            <summary>
+            Pre-approved asset variations for random selection.
+            <br/>Procedural systems pick from this list rather than searching all assets.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.AssetSlot.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Scene.UnresolvedReferenceReason">
             <summary>
             Reason why a scene reference could not be resolved
@@ -46050,6 +46170,55 @@
             <summary>
             Consumer-specific data stored without interpretation.
             <br/>Use namespaced keys (e.g., render.castShadows, arcadia.interactionType).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.AttachmentPoints">
+            <summary>
+            Predefined locations for attaching child objects.
+            <br/>Used by Scene Composer for furniture decoration, wall accessories, etc.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.Affordances">
+            <summary>
+            Interaction capabilities of this node.
+            <br/>Used by AI navigation and character controllers.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.AssetSlot">
+            <summary>
+            Procedural asset swapping configuration.
+            <br/>Defines which assets can substitute for this node's asset.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.MarkerType">
+            <summary>
+            Type of marker for marker nodes.
+            <br/>Only relevant when nodeType is 'marker'.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.VolumeShape">
+            <summary>
+            Shape of volume for volume nodes.
+            <br/>Only relevant when nodeType is 'volume'.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.VolumeSize">
+            <summary>
+            Size/extents of the volume (interpretation depends on volumeShape).
+            <br/>For box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Scene.SceneNode.ReferenceSceneId">
+            <summary>
+            Scene ID to embed for reference nodes.
+            <br/>Only relevant when nodeType is 'reference'.
             <br/>
             </summary>
         </member>

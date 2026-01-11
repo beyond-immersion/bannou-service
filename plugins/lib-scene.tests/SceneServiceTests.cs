@@ -461,6 +461,195 @@ public class SceneServiceTests
 
     #endregion
 
+    #region Scene Composer Extensions (AttachmentPoint, Affordance, AssetSlot)
+
+    [Fact]
+    public void AttachmentPoint_CanBeInstantiated()
+    {
+        var attachmentPoint = new AttachmentPoint();
+        Assert.NotNull(attachmentPoint);
+    }
+
+    [Fact]
+    public void AttachmentPoint_LocalTransform_DefaultsToNewTransform()
+    {
+        var attachmentPoint = new AttachmentPoint();
+        Assert.NotNull(attachmentPoint.LocalTransform);
+    }
+
+    [Fact]
+    public void AttachmentPoint_CanSetProperties()
+    {
+        var attachmentPoint = new AttachmentPoint
+        {
+            Name = "wall_hook_left",
+            AcceptsTags = new List<string> { "wall_decoration", "picture_frame" }
+        };
+
+        Assert.Equal("wall_hook_left", attachmentPoint.Name);
+        Assert.Contains("wall_decoration", attachmentPoint.AcceptsTags);
+        Assert.Contains("picture_frame", attachmentPoint.AcceptsTags);
+    }
+
+    [Fact]
+    public void Affordance_CanBeInstantiated()
+    {
+        var affordance = new Affordance();
+        Assert.NotNull(affordance);
+    }
+
+    [Fact]
+    public void Affordance_CanSetType()
+    {
+        var affordance = new Affordance { Type = AffordanceType.Sittable };
+        Assert.Equal(AffordanceType.Sittable, affordance.Type);
+    }
+
+    [Fact]
+    public void Affordance_CanSetParameters()
+    {
+        var affordance = new Affordance
+        {
+            Type = AffordanceType.Door,
+            Parameters = new { openAngle = 90, locked = false }
+        };
+
+        Assert.Equal(AffordanceType.Door, affordance.Type);
+        Assert.NotNull(affordance.Parameters);
+    }
+
+    [Fact]
+    public void AssetSlot_CanBeInstantiated()
+    {
+        var assetSlot = new AssetSlot();
+        Assert.NotNull(assetSlot);
+    }
+
+    [Fact]
+    public void AssetSlot_CanSetProperties()
+    {
+        var assetSlot = new AssetSlot
+        {
+            SlotType = "chair",
+            AcceptsTags = new List<string> { "furniture", "seating" }
+        };
+
+        Assert.Equal("chair", assetSlot.SlotType);
+        Assert.Contains("furniture", assetSlot.AcceptsTags);
+    }
+
+    [Fact]
+    public void AssetSlot_CanSetVariations()
+    {
+        var bundleId = Guid.NewGuid();
+        var assetSlot = new AssetSlot
+        {
+            SlotType = "table",
+            Variations = new List<AssetReference>
+            {
+                new AssetReference { BundleId = bundleId, AssetId = Guid.NewGuid() },
+                new AssetReference { BundleId = bundleId, AssetId = Guid.NewGuid() }
+            }
+        };
+
+        Assert.Equal(2, assetSlot.Variations.Count);
+    }
+
+    #endregion
+
+    #region AffordanceType Enum Tests
+
+    [Fact]
+    public void AffordanceType_ContainsExpectedValues()
+    {
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Walkable));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Climbable));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Sittable));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Interactive));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Collectible));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Destructible));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Container));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Door));
+        Assert.True(Enum.IsDefined(typeof(AffordanceType), AffordanceType.Teleport));
+    }
+
+    #endregion
+
+    #region MarkerType Enum Tests
+
+    [Fact]
+    public void MarkerType_ContainsExpectedValues()
+    {
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Generic));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Spawn_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Npc_spawn));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Waypoint));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Camera_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Light_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Audio_point));
+        Assert.True(Enum.IsDefined(typeof(MarkerType), MarkerType.Trigger_point));
+    }
+
+    #endregion
+
+    #region SceneNode Extensions Tests
+
+    [Fact]
+    public void SceneNode_CanHaveAttachmentPoints()
+    {
+        var node = new SceneNode
+        {
+            AttachmentPoints = new List<AttachmentPoint>
+            {
+                new AttachmentPoint { Name = "hook1" },
+                new AttachmentPoint { Name = "hook2" }
+            }
+        };
+
+        Assert.Equal(2, node.AttachmentPoints.Count);
+    }
+
+    [Fact]
+    public void SceneNode_CanHaveAffordances()
+    {
+        var node = new SceneNode
+        {
+            Affordances = new List<Affordance>
+            {
+                new Affordance { Type = AffordanceType.Walkable },
+                new Affordance { Type = AffordanceType.Sittable }
+            }
+        };
+
+        Assert.Equal(2, node.Affordances.Count);
+    }
+
+    [Fact]
+    public void SceneNode_CanHaveAssetSlot()
+    {
+        var node = new SceneNode
+        {
+            AssetSlot = new AssetSlot { SlotType = "furniture" }
+        };
+
+        Assert.NotNull(node.AssetSlot);
+        Assert.Equal("furniture", node.AssetSlot.SlotType);
+    }
+
+    [Fact]
+    public void SceneNode_CanHaveMarkerType()
+    {
+        var node = new SceneNode
+        {
+            NodeType = NodeType.Marker,
+            MarkerType = MarkerType.Spawn_point
+        };
+
+        Assert.Equal(MarkerType.Spawn_point, node.MarkerType);
+    }
+
+    #endregion
+
     #region Event Model Tests
 
     [Fact]

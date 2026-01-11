@@ -851,6 +851,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -972,6 +1012,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -1161,6 +1327,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -1282,6 +1488,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -1591,6 +1923,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -1712,6 +2084,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         },
         "ResolvedReference": {
             "type": "object",
@@ -2305,6 +2803,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -2426,6 +2964,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -2615,6 +3279,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -2736,6 +3440,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -3106,6 +3936,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -3227,6 +4097,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -3945,6 +4941,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -4066,6 +5102,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -4327,6 +5489,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\ nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -4448,6 +5650,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -4647,6 +5975,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\ nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -4768,6 +6136,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }
@@ -6476,6 +7970,46 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, arcadia.interactionType).\n"
+                },
+                "attachmentPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AttachmentPoint"
+                    },
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                },
+                "affordances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Affordance"
+                    },
+                    "description": "Interaction capabilities of this node.\nUsed by AI navigation and character controllers.\n"
+                },
+                "assetSlot": {
+                    "$ref": "#/$defs/AssetSlot",
+                    "nullable": true,
+                    "description": "Procedural asset swapping configuration.\nDefines which assets can substitute for this node's asset.\n"
+                },
+                "markerType": {
+                    "$ref": "#/$defs/MarkerType",
+                    "nullable": true,
+                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                },
+                "volumeShape": {
+                    "$ref": "#/$defs/VolumeShape",
+                    "nullable": true,
+                    "description": "Shape of volume for volume nodes.\nOnly relevant when nodeType is 'volume'.\n"
+                },
+                "volumeSize": {
+                    "$ref": "#/$defs/Vector3",
+                    "nullable": true,
+                    "description": "Size/extents of the volume (interpretation depends on volumeShape).\nFor box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.\n"
+                },
+                "referenceSceneId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene ID to embed for reference nodes.\nOnly relevant when nodeType is 'reference'.\n"
                 }
             }
         },
@@ -6597,6 +8131,132 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Variant identifier (consumer interprets meaning)"
                 }
             }
+        },
+        "AttachmentPoint": {
+            "type": "object",
+            "description": "A predefined location where child objects can be attached.\nUsed for decorating furniture, walls, and other objects with accessories.\nExample: A wall may have attachment points for paintings, shelves, or light fixtures.\n",
+            "required": [
+                "name",
+                "localTransform"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for this attachment point within the node.\nExamples: wall_hook_left, shelf_1, lamp_socket\n"
+                },
+                "localTransform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Position and orientation relative to the owning node"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags of assets that can attach here.\nExamples: wall_decoration, picture_frame, plant\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset to display if no specific attachment is specified"
+                },
+                "attachedNodeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the node currently attached at this point (runtime state)"
+                }
+            }
+        },
+        "Affordance": {
+            "type": "object",
+            "description": "Describes a capability or interaction mode for a node.\nUsed by AI systems to understand what actions are possible and by\ncharacter controllers for contextual animations.\n",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/AffordanceType",
+                    "description": "The type of affordance"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                }
+            }
+        },
+        "AffordanceType": {
+            "type": "string",
+            "description": "Types of affordances describing what an object can do or how it can be interacted with.\nUsed by AI navigation, character controllers, and procedural content systems.\n",
+            "enum": [
+                "walkable",
+                "climbable",
+                "sittable",
+                "interactive",
+                "collectible",
+                "destructible",
+                "container",
+                "door",
+                "teleport"
+            ]
+        },
+        "AssetSlot": {
+            "type": "object",
+            "description": "Defines acceptable asset types for procedural swapping at this node.\nUsed by procedural generation systems to substitute assets while\nmaintaining scene coherence.\n",
+            "required": [
+                "slotType"
+            ],
+            "properties": {
+                "slotType": {
+                    "type": "string",
+                    "description": "Category of acceptable assets.\nExamples: chair, table, wall_art, floor_lamp\n"
+                },
+                "acceptsTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tags that acceptable assets must have.\nUsed for filtering when selecting random variations.\n"
+                },
+                "defaultAsset": {
+                    "$ref": "#/$defs/AssetReference",
+                    "nullable": true,
+                    "description": "Default asset if no specific asset is bound"
+                },
+                "variations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetReference"
+                    },
+                    "description": "Pre-approved asset variations for random selection.\nProcedural systems pick from this list rather than searching all assets.\n"
+                }
+            }
+        },
+        "MarkerType": {
+            "type": "string",
+            "description": "Types of marker nodes for spawn points, waypoints, and other positional markers.",
+            "enum": [
+                "generic",
+                "spawn_point",
+                "npc_spawn",
+                "waypoint",
+                "camera_point",
+                "light_point",
+                "audio_point",
+                "trigger_point"
+            ]
+        },
+        "VolumeShape": {
+            "type": "string",
+            "description": "Shape of a volume node for spatial bounds",
+            "enum": [
+                "box",
+                "sphere",
+                "capsule",
+                "cylinder"
+            ]
         }
     }
 }

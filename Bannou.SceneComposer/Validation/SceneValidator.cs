@@ -374,7 +374,7 @@ public class InvalidTransformRule : IValidationRule
     private static bool ContainsInvalid(Math.Vector3 v)
     {
         return double.IsNaN(v.X) || double.IsNaN(v.Y) || double.IsNaN(v.Z) ||
-               double.IsInfinity(v.X) || double.IsInfinity(v.Y) || double.IsInfinity(v.Z);
+                double.IsInfinity(v.X) || double.IsInfinity(v.Y) || double.IsInfinity(v.Z);
     }
 }
 
