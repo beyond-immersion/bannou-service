@@ -7,30 +7,53 @@ Bannou is a schema-driven monoservice platform for multiplayer games. It provide
 ## Quick Start
 
 ```bash
-# Clone and start
+# 1. Clone
 git clone https://github.com/beyond-immersion/bannou-service.git
 cd bannou-service
+
+# 2. Install dev tools (.NET 10, NSwag, Python, Node.js)
+./scripts/install-dev-tools.sh
+source ~/.bashrc
+
+# 3. Build and verify
+make quick
+
+# 4. Start the stack
 make up-compose
 
-# Run tests
-make test                  # Unit tests (3,300+ total)
-make test-http             # HTTP integration tests
-make test-edge             # WebSocket protocol tests
+# 5. Verify it's running
+curl http://localhost:8080/health
 ```
 
+**Next steps:** See the [Quickstart Guide](docs/guides/QUICKSTART.md) for client/service integration, or the [Getting Started Guide](docs/guides/GETTING_STARTED.md) for a comprehensive walkthrough.
+
 ## Documentation
+
+### Getting Started
+
+| I want to... | Time | Guide |
+|--------------|------|-------|
+| **Get running quickly** | 5 min | [Quickstart](docs/guides/QUICKSTART.md) |
+| **Full setup walkthrough** | 30 min | [Getting Started](docs/guides/GETTING_STARTED.md) |
+| **Connect a game client** | 15 min | [Client Integration](docs/guides/CLIENT_INTEGRATION.md) |
+| **Make service-to-service calls** | 10 min | [SDKs Overview](docs/guides/SDKs.md) |
+
+### Development
 
 | I want to... | Read... |
 |--------------|---------|
 | Understand the architecture | [Bannou Design](docs/BANNOU_DESIGN.md) |
 | Add or extend a plugin | [Plugin Development Guide](docs/guides/PLUGIN_DEVELOPMENT.md) |
-| Deploy to production | [Deployment Guide](docs/guides/DEPLOYMENT.md) |
-| Integrate a game client | [Client Integration](docs/guides/CLIENT_INTEGRATION.md) |
 | Run and write tests | [Testing Guide](docs/guides/TESTING.md) |
+| Contribute code | [Development Rules](docs/reference/TENETS.md) |
+
+### Operations
+
+| I want to... | Read... |
+|--------------|---------|
+| Deploy to production | [Deployment Guide](docs/guides/DEPLOYMENT.md) |
 | Understand CI/CD pipelines | [GitHub Actions](docs/operations/GITHUB_ACTIONS.md) |
 | Set up NuGet publishing | [NuGet Setup](docs/operations/NUGET_SETUP.md) |
-| Use the SDKs | [SDKs Overview](docs/guides/SDKs.md) |
-| Contribute code | [Development Rules](docs/reference/TENETS.md) |
 
 ## Key Features
 

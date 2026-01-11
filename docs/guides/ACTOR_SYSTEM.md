@@ -673,8 +673,6 @@ handlers:
 
 **Priority**: MEDIUM - Implement after encounter system is functional with hardcoded handling. Extract patterns to ABML when we understand which instruction types are common.
 
-See also: `docs/planning/ACTOR_BEHAVIORS_GAP_ANALYSIS.md` §6.9 for detailed analysis.
-
 ### 6.7 Event Brain Design Decisions
 
 These architectural decisions guide Event Brain implementation:

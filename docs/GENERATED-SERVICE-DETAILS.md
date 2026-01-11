@@ -36,6 +36,8 @@ Des... |
 | [Realm History](#realm-history) | 1.0.0 | 10 | Historical event participation and lore management for realm... |
 | [Relationship](#relationship) | 1.0.0 | 7 | Generic relationship management service for entity-to-entity... |
 | [Relationship Type](#relationship-type) | 2.0.0 | 13 | Relationship type management service for Arcadia game world. |
+| [Save Load](#save-load) | 1.0.0 | 26 | Generic save/load system for game state persistence.
+Support... |
 | [Scene](#scene) | 1.0.0 | 19 | Hierarchical composition storage for game worlds. |
 | [Species](#species) | 2.0.0 | 13 | Species management service for Arcadia game world. |
 | [State](#state) | 1.0.0 | 6 | Repository pattern state management with Redis and MySQL bac... |
@@ -957,6 +959,81 @@ Relationship type management service for Arcadia game world.
 
 ---
 
+## Save Load {#save-load}
+
+**Version**: 1.0.0 | **Schema**: `schemas/save-load-api.yaml`
+
+Generic save/load system for game state persistence.
+Supports polymorphic ownership, versioned saves, and schema migration.
+
+### Admin
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/admin/cleanup` | Run cleanup for expired/orphaned saves | admin |
+| `POST` | `/save-load/admin/stats` | Get storage statistics | admin |
+
+### Migration
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/migrate` | Migrate save to new schema version | developer |
+| `POST` | `/save-load/schema/list` | List registered schemas | user |
+| `POST` | `/save-load/schema/register` | Register a save data schema | developer |
+
+### Query
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/query` | Query saves with filters | user |
+
+### Saves
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/collapse-deltas` | Collapse delta chain into full snapshot | user |
+| `POST` | `/save-load/load` | Load data from slot | user |
+| `POST` | `/save-load/load-with-deltas` | Load save reconstructing from delta chain | user |
+| `POST` | `/save-load/save` | Save data to slot | user |
+| `POST` | `/save-load/save-delta` | Save incremental changes from base version | user |
+
+### Slots
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/slot/bulk-delete` | Delete multiple slots at once | admin |
+| `POST` | `/save-load/slot/create` | Create or configure a save slot | user |
+| `POST` | `/save-load/slot/delete` | Delete slot and all versions | user |
+| `POST` | `/save-load/slot/get` | Get slot metadata | user |
+| `POST` | `/save-load/slot/list` | List slots for owner | user |
+| `POST` | `/save-load/slot/rename` | Rename a save slot | user |
+
+### Transfer
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/copy` | Copy save to different slot or owner | user |
+| `POST` | `/save-load/export` | Export saves for backup/portability | user |
+| `POST` | `/save-load/import` | Import saves from backup | admin |
+
+### Validation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/verify` | Verify save data integrity | user |
+
+### Versions
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/save-load/version/delete` | Delete specific version | user |
+| `POST` | `/save-load/version/list` | List versions in slot | user |
+| `POST` | `/save-load/version/pin` | Pin a version as checkpoint | user |
+| `POST` | `/save-load/version/promote` | Promote old version to latest | user |
+| `POST` | `/save-load/version/unpin` | Unpin a version | user |
+
+---
+
 ## Scene {#scene}
 
 **Version**: 1.0.0 | **Schema**: `schemas/scene-api.yaml`
@@ -1162,8 +1239,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 32
-- **Total endpoints**: 360
+- **Total services**: 33
+- **Total endpoints**: 386
 
 ---
 

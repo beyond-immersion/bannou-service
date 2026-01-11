@@ -229,6 +229,12 @@ jobs:
           dotnet build Bannou.Stride.SceneComposer --configuration Release --no-restore
           dotnet pack Bannou.Stride.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
+          # Build and pack Godot SceneComposer SDK (Bannou.Godot.SceneComposer)
+          echo "📦 Building Godot SceneComposer SDK (Bannou.Godot.SceneComposer)..."
+          dotnet restore Bannou.Godot.SceneComposer
+          dotnet build Bannou.Godot.SceneComposer --configuration Release --no-restore
+          dotnet pack Bannou.Godot.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
           echo "✅ Packages built: ./nuget-packages/"
           ls -la ./nuget-packages/
 
@@ -307,6 +313,11 @@ jobs:
           **For Stride Engine** (scene editing with Stride):
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer --version ${VERSION}
+          \`\`\`
+
+          **For Godot Engine** (scene editing with Godot 4.x):
+          \`\`\`bash
+          dotnet add package BeyondImmersion.Bannou.Godot.SceneComposer --version ${VERSION}
           \`\`\`
 
           ### What's Changed

@@ -145,6 +145,13 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             ["achievement-definition"] = (StateBackend.Redis, "ach:def", false),
             ["achievement-progress"] = (StateBackend.Redis, "ach:prog", false),
             ["achievement-unlock"] = (StateBackend.Redis, "ach:unlock", false),
+
+            // Save-Load service stores
+            ["save-load-slots"] = (StateBackend.MySql, null, false),
+            ["save-load-versions"] = (StateBackend.MySql, null, false),
+            ["save-load-schemas"] = (StateBackend.MySql, null, false),
+            ["save-load-cache"] = (StateBackend.Redis, "saveload:cache", false),
+            ["save-load-pending"] = (StateBackend.Redis, "saveload:pending", false),
         };
 
         foreach (var (storeName, (backend, prefix, enableSearch)) in defaultStores)

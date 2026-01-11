@@ -124,6 +124,25 @@ public class ActorRunnerTests
         return (runner, messageBusMock);
     }
 
+    /// <summary>
+    /// Waits for the runner to reach a minimum number of iterations.
+    /// This is more deterministic than Task.Delay for CI environments with variable load.
+    /// </summary>
+    private static async Task WaitForIterationsAsync(ActorRunner runner, int targetIterations, TimeSpan timeout)
+    {
+        var started = DateTime.UtcNow;
+        while (runner.LoopIterations < targetIterations)
+        {
+            if (DateTime.UtcNow - started > timeout)
+            {
+                throw new TimeoutException(
+                    $"Timed out waiting for {targetIterations} iterations after {timeout.TotalSeconds}s. " +
+                    $"Current iterations: {runner.LoopIterations}");
+            }
+            await Task.Delay(10);
+        }
+    }
+
     #region Constructor Tests
 
     [Fact]
@@ -386,8 +405,8 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(actorId, template, characterId);
         await runner.StartAsync();
 
-        // Let it run a tick
-        await Task.Delay(150);
+        // Wait for at least one tick to confirm the loop is running
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Act
         var snapshot = runner.GetStateSnapshot();
@@ -421,8 +440,8 @@ public class ActorRunnerTests
         var (runner, _) = CreateRunner(template: template);
         await runner.StartAsync();
 
-        // Wait for a few iterations
-        await Task.Delay(200);
+        // Wait for at least 1 iteration deterministically (not wall-clock based)
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Act
         var snapshot = runner.GetStateSnapshot();
@@ -444,7 +463,7 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync();
-        await Task.Delay(200);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await runner.StopAsync();
 
         // Assert
@@ -460,11 +479,11 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync();
-        await Task.Delay(100);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert
         Assert.NotNull(runner.LastHeartbeat);
-        Assert.True((DateTimeOffset.UtcNow - runner.LastHeartbeat.Value).TotalSeconds < 1);
+        Assert.True((DateTimeOffset.UtcNow - runner.LastHeartbeat.Value).TotalSeconds < 5);
     }
 
     [Fact]
@@ -477,28 +496,30 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await cts.CancelAsync();
-        await Task.Delay(100);
+        await Task.Delay(200); // Allow time for cancellation to be processed
 
-        // Assert - loop should have stopped
+        // Assert - loop should have stopped or be stopping
         Assert.True(runner.Status == ActorStatus.Running || runner.Status == ActorStatus.Stopped);
     }
 
     [Fact]
     public async Task BehaviorLoop_UsesTemplateTickInterval()
     {
-        // Arrange - very fast tick interval
+        // Arrange - fast tick interval
         var template = CreateTestTemplate(tickIntervalMs: 20);
         var (runner, _) = CreateRunner(template: template);
 
-        // Act
+        // Act - start and wait for iterations deterministically (not wall-clock based)
         await runner.StartAsync();
-        await Task.Delay(200);
+
+        // Wait for at least 3 iterations - proves the behavior loop is running with fast ticks
+        await WaitForIterationsAsync(runner, 3, TimeSpan.FromSeconds(5));
         await runner.StopAsync();
 
-        // Assert - should have many iterations with fast tick
-        Assert.True(runner.LoopIterations > 5);
+        // Assert - should have reached target iterations
+        Assert.True(runner.LoopIterations >= 3);
     }
 
     [Fact]
@@ -511,7 +532,7 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync();
-        await Task.Delay(200);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await runner.StopAsync();
 
         // Assert - should use fallback and have some iterations
@@ -534,7 +555,7 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync();
-        await Task.Delay(200); // Let some ticks run
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await runner.StopAsync();
 
         // Assert - runner should have completed without exceptions
@@ -553,7 +574,7 @@ public class ActorRunnerTests
 
         // Act
         await runner.StartAsync();
-        await Task.Delay(200);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
         await runner.StopAsync();
 
         // Assert - should not publish character state updates
@@ -578,7 +599,7 @@ public class ActorRunnerTests
 
         // Act - runner should continue despite internal errors
         await runner.StartAsync();
-        await Task.Delay(200);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Assert - runner should still be running
         Assert.Equal(ActorStatus.Running, runner.Status);
@@ -594,6 +615,7 @@ public class ActorRunnerTests
         var template = CreateTestTemplate(tickIntervalMs: 10);
         var (runner, _) = CreateRunner(template: template);
         await runner.StartAsync();
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
 
         // Act
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));

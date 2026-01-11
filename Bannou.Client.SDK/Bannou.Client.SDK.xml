@@ -1654,6 +1654,81 @@
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds to avoid allocation in release.
+            </summary>
+            <remarks>
+            <para>
+            This trace helps understand why a particular action was chosen.
+            For example, if Combat model's "attack" was chosen over Interaction
+            model's "talk", the trace shows both contributions and their urgencies.
+            </para>
+            <para>
+            Usage in game debugger:
+            <code>
+            var merged = evaluator.EvaluateCharacter(characterId, inputs);
+            if (merged.Trace != null)
+            {
+                foreach (var resolution in merged.Trace.Channels)
+                {
+                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
+                    foreach (var contrib in resolution.AllContributions)
+                    {
+                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
+                    }
+                }
+            }
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Timestamp">
+            <summary>
+            Timestamp when this trace was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.Channels">
+            <summary>
+            All channel resolutions in this trace.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ChannelContribution[])">
+            <summary>
+            Adds a channel resolution to the trace.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <param name="winner">The winning model type (null for blended).</param>
+            <param name="winningUrgency">The winning/combined urgency.</param>
+            <param name="contributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.Client.SDK.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the resolution for a specific channel.
+            </summary>
+            <param name="channel">The intent channel to look up.</param>
+            <returns>The resolution for that channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets whether a specific model contributed to any channel.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>True if the model contributed to at least one channel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets all channels where the specified model won.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>Channels won by this model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.ContributionTrace.ToString">
+            <summary>
+            Formats the trace as a human-readable string.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -1834,6 +1909,21 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
+            <summary>
+            Collects contributions for debugging from all outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects locomotion contributions for debugging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects attention contributions for debugging.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -1974,6 +2064,12 @@
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Trace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.SDK.Behavior.Intent.MergedIntent.Empty">
@@ -12526,6 +12622,585 @@
         <member name="P:BeyondImmersion.BannouService.Events.RelationshipTypeDeletedEvent.DeletedReason">
             <summary>
             Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveCreatedEvent">
+            <summary>
+            Published when a new save version is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.VersionNumber">
+            <summary>
+            New version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.Category">
+            <summary>
+            Save category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.SizeBytes">
+            <summary>
+            Save size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.SchemaVersion">
+            <summary>
+            Schema version if specified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.Pinned">
+            <summary>
+            Whether version is pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.CheckpointName">
+            <summary>
+            Checkpoint name if pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveCreatedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveLoadedEvent">
+            <summary>
+            Published when a save is loaded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.VersionNumber">
+            <summary>
+            Loaded version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveLoadedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveMigratedEvent">
+            <summary>
+            Published when a save is migrated to a new schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.OriginalVersionNumber">
+            <summary>
+            Original version that was migrated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.NewVersionNumber">
+            <summary>
+            New version with migrated data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.FromSchemaVersion">
+            <summary>
+            Original schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.ToSchemaVersion">
+            <summary>
+            Target schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveMigratedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VersionPinnedEvent">
+            <summary>
+            Published when a version is pinned as checkpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.VersionNumber">
+            <summary>
+            Pinned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.CheckpointName">
+            <summary>
+            Checkpoint name if assigned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionPinnedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent">
+            <summary>
+            Published when a version is unpinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.VersionNumber">
+            <summary>
+            Unpinned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.PreviousCheckpointName">
+            <summary>
+            Previous checkpoint name before unpinning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VersionDeletedEvent">
+            <summary>
+            Published when a version is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.VersionNumber">
+            <summary>
+            Deleted version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CleanupCompletedEvent">
+            <summary>
+            Published when automatic cleanup completes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.VersionsDeleted">
+            <summary>
+            Number of versions cleaned up
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.SlotsDeleted">
+            <summary>
+            Number of empty slots removed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.DurationMs">
+            <summary>
+            Cleanup duration in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CleanupCompletedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveQueuedEvent">
+            <summary>
+            Published when a save is queued for async upload.
+            <br/>The save data is in Redis and immediately loadable, but not yet in MinIO.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.VersionNumber">
+            <summary>
+            Version number that was queued
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SizeBytes">
+            <summary>
+            Size of the queued save data in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.QueueDepth">
+            <summary>
+            Current number of pending uploads in queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent">
+            <summary>
+            Published when async upload to MinIO completes successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.VersionNumber">
+            <summary>
+            Version number that was uploaded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.AssetId">
+            <summary>
+            Asset ID in MinIO
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.UploadDurationMs">
+            <summary>
+            Time from queue to upload completion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.QueueWaitMs">
+            <summary>
+            Time spent waiting in queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent">
+            <summary>
+            Published when async upload fails after all retry attempts.
+            <br/>The save data may still be in Redis hot cache but will expire.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.VersionNumber">
+            <summary>
+            Version number that failed to upload
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.ErrorMessage">
+            <summary>
+            Last error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.RetryCount">
+            <summary>
+            Number of retry attempts made
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.WillRetry">
+            <summary>
+            Whether more retries will be attempted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent">
+            <summary>
+            Published when storage circuit breaker changes state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.PreviousState">
+            <summary>
+            Previous circuit breaker state before the transition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.NewState">
+            <summary>
+            New circuit breaker state after the transition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.FailureCount">
+            <summary>
+            Consecutive failures (when opening)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.SuccessCount">
+            <summary>
+            Successful probes (when closing from half-open)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.PendingUploads">
+            <summary>
+            Current queue depth when state changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.SceneInstantiatedEvent">
@@ -32744,6 +33419,1872 @@
         <member name="P:BeyondImmersion.BannouService.RelationshipType.MigrationError.Error">
             <summary>
             Error message explaining why the migration failed
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SaveCategory">
+            <summary>
+            Category of save with predefined behaviors.
+            <br/>QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
+            <br/>AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
+            <br/>MANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).
+            <br/>CHECKPOINT: Progress markers (max 20 versions, rolling).
+            <br/>STATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CompressionType">
+            <summary>
+            Compression algorithm used for save data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ConflictResolution">
+            <summary>
+            Strategy for handling conflicts during import
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation">
+            <summary>
+            JSON Patch operation per RFC 6902.
+            <br/>Uses JsonPatch.Net library (MIT licensed).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation.Op">
+            <summary>
+            Operation type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation.Path">
+            <summary>
+            JSON Pointer to target location
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation.From">
+            <summary>
+            Source path (for move/copy operations)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation.Value">
+            <summary>
+            Value to use (for add/replace/test operations)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.JsonPatchOperation.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.SlotName">
+            <summary>
+            Slot name (lowercase alphanumeric with hyphens, single char like "q" allowed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.Category">
+            <summary>
+            Save category determining retention and cleanup behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.MaxVersions">
+            <summary>
+            Override default max versions for this category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.RetentionDays">
+            <summary>
+            Days to retain versions (null = indefinite)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.CompressionType">
+            <summary>
+            Compression algorithm to use for save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.Tags">
+            <summary>
+            Searchable tags for slot categorization (e.g., "boss-fight", "chapter-3")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.Metadata">
+            <summary>
+            Custom key-value metadata for the slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest">
+            <summary>
+            Request to retrieve metadata for a specific save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest">
+            <summary>
+            Request to list all save slots belonging to a specific owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.OwnerType">
+            <summary>
+            Type of entity that owns the save slots to list
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.Category">
+            <summary>
+            Optional filter by save category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.IncludeVersionCount">
+            <summary>
+            Include version count in response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest">
+            <summary>
+            Request to permanently delete a save slot and all its versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SlotResponse">
+            <summary>
+            Complete metadata for a save slot including version statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.SlotId">
+            <summary>
+            Unique slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.Category">
+            <summary>
+            Save category determining retention and cleanup behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.MaxVersions">
+            <summary>
+            Maximum versions to retain
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.RetentionDays">
+            <summary>
+            Days to retain versions (null = indefinite)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.CompressionType">
+            <summary>
+            Compression algorithm used for save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.VersionCount">
+            <summary>
+            Current number of versions in slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.LatestVersion">
+            <summary>
+            Latest version number (null if empty)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.TotalSizeBytes">
+            <summary>
+            Total storage used by all versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.CreatedAt">
+            <summary>
+            Slot creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.UpdatedAt">
+            <summary>
+            Last modification timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.Metadata">
+            <summary>
+            Custom key-value metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SlotResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListSlotsResponse">
+            <summary>
+            Response containing a list of save slots for an owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsResponse.Slots">
+            <summary>
+            List of slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsResponse.TotalCount">
+            <summary>
+            Total number of slots for owner
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.DeleteSlotResponse">
+            <summary>
+            Result of a slot deletion operation with cleanup statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotResponse.Deleted">
+            <summary>
+            Whether slot was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotResponse.VersionsDeleted">
+            <summary>
+            Number of versions deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotResponse.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SaveRequest">
+            <summary>
+            Request to save game state data to a slot with optional compression and metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.SlotName">
+            <summary>
+            Slot name (auto-created if doesn't exist)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.Category">
+            <summary>
+            Category for auto-created slots (defaults to MANUAL_SAVE)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.Data">
+            <summary>
+            Base64-encoded save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.SchemaVersion">
+            <summary>
+            Schema version identifier for migration tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.DisplayName">
+            <summary>
+            Human-readable name for this save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.Thumbnail">
+            <summary>
+            Optional preview image (JPEG/WebP). Max size configurable
+            <br/>(default 256KB). Used for save slot previews in game UI.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.DeviceId">
+            <summary>
+            Optional device identifier for cloud save conflict detection.
+            <br/>When provided, saves are prefixed/tagged with device info,
+            <br/>enabling opt-in cross-device sync with collision awareness.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.Metadata">
+            <summary>
+            Custom metadata (e.g., level, playtime, location)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.PinAsCheckpoint">
+            <summary>
+            If provided, pin this version with checkpoint name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SaveResponse">
+            <summary>
+            Result of a save operation including version info and conflict detection
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.VersionNumber">
+            <summary>
+            Assigned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.ContentHash">
+            <summary>
+            SHA-256 hash of save data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.SizeBytes">
+            <summary>
+            Size of save data in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.CompressedSizeBytes">
+            <summary>
+            Compressed size (if compression applied)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.CompressionRatio">
+            <summary>
+            Compression ratio (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.Pinned">
+            <summary>
+            Whether version was pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.CheckpointName">
+            <summary>
+            Checkpoint name if pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.ThumbnailUrl">
+            <summary>
+            Pre-signed URL to retrieve thumbnail (if provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.ConflictDetected">
+            <summary>
+            True if this save overwrote a version from a different device.
+            <br/>Only relevant when deviceId is used for cloud sync.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.ConflictingDeviceId">
+            <summary>
+            Device ID of the overwritten version (if conflict)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.ConflictingVersion">
+            <summary>
+            Version number that was overwritten (if conflict)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.CreatedAt">
+            <summary>
+            Save timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.VersionsCleanedUp">
+            <summary>
+            Number of old versions cleaned up by rolling policy
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.UploadPending">
+            <summary>
+            True if async upload is enabled and data is queued for MinIO upload.
+            <br/>Save is immediately loadable from Redis cache, but not yet durable.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.LoadRequest">
+            <summary>
+            Request to load save data from a specific slot and version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.VersionNumber">
+            <summary>
+            Specific version to load (defaults to latest)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.CheckpointName">
+            <summary>
+            Load by checkpoint name instead of version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.IncludeMetadata">
+            <summary>
+            Include version metadata in response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.LoadResponse">
+            <summary>
+            Response containing loaded save data with integrity verification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.VersionNumber">
+            <summary>
+            Version number loaded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.Data">
+            <summary>
+            Base64-encoded save data (decompressed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.ContentHash">
+            <summary>
+            SHA-256 hash for integrity verification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.SchemaVersion">
+            <summary>
+            Schema version of this save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.DisplayName">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.Pinned">
+            <summary>
+            Whether this version is pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.CheckpointName">
+            <summary>
+            Checkpoint name if pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.CreatedAt">
+            <summary>
+            Save timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.Metadata">
+            <summary>
+            Custom metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest">
+            <summary>
+            Request to list all versions within a save slot with pagination
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.PinnedOnly">
+            <summary>
+            Only return pinned versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListVersionsResponse">
+            <summary>
+            Paginated list of save versions within a slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsResponse.Versions">
+            <summary>
+            List of versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsResponse.TotalCount">
+            <summary>
+            Total version count in slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListVersionsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.VersionResponse">
+            <summary>
+            Metadata for a single save version including size and checkpoint info
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.VersionNumber">
+            <summary>
+            Version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.AssetId">
+            <summary>
+            Reference to asset in lib-asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.ContentHash">
+            <summary>
+            SHA-256 hash
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.SizeBytes">
+            <summary>
+            Size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.CompressedSizeBytes">
+            <summary>
+            Compressed size if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.SchemaVersion">
+            <summary>
+            Schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.DisplayName">
+            <summary>
+            Human-readable name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.Pinned">
+            <summary>
+            Whether version is pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.CheckpointName">
+            <summary>
+            Checkpoint name if pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.Metadata">
+            <summary>
+            Custom metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VersionResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest">
+            <summary>
+            Request to pin a save version as a checkpoint to prevent cleanup
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.VersionNumber">
+            <summary>
+            Version to pin
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.CheckpointName">
+            <summary>
+            Optional checkpoint name for easy retrieval
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PinVersionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest">
+            <summary>
+            Request to unpin a previously pinned save version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest.VersionNumber">
+            <summary>
+            Version to unpin
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.UnpinVersionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest">
+            <summary>
+            Request to permanently delete a specific save version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest.VersionNumber">
+            <summary>
+            Version to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.DeleteVersionResponse">
+            <summary>
+            Result of a version deletion operation with storage freed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionResponse.Deleted">
+            <summary>
+            Whether version was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionResponse.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteVersionResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest">
+            <summary>
+            Advanced query for saves across multiple owners with filtering and sorting
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.OwnerId">
+            <summary>
+            Filter by owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.OwnerType">
+            <summary>
+            Filter by owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.Category">
+            <summary>
+            Filter by save category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.CreatedAfter">
+            <summary>
+            Filter by creation date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.CreatedBefore">
+            <summary>
+            Filter by creation date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.PinnedOnly">
+            <summary>
+            Only return pinned versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.SchemaVersion">
+            <summary>
+            Filter by schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.MetadataFilter">
+            <summary>
+            Filter by metadata key-value pairs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.Limit">
+            <summary>
+            Maximum results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.SortBy">
+            <summary>
+            Sort field
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.SortOrder">
+            <summary>
+            Sort order
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.QuerySavesResponse">
+            <summary>
+            Paginated results from a save query operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesResponse.Results">
+            <summary>
+            Query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesResponse.TotalCount">
+            <summary>
+            Total matching results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QuerySavesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.QueryResultItem">
+            <summary>
+            Single result item from a save query with slot and version metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.OwnerId">
+            <summary>
+            Owner ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.Category">
+            <summary>
+            Save category of the slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.VersionNumber">
+            <summary>
+            Version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.SizeBytes">
+            <summary>
+            Size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.SchemaVersion">
+            <summary>
+            Schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.DisplayName">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.Pinned">
+            <summary>
+            Whether pinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.CheckpointName">
+            <summary>
+            Checkpoint name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.CreatedAt">
+            <summary>
+            Creation timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.Metadata">
+            <summary>
+            Custom metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.QueryResultItem.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest">
+            <summary>
+            Request to migrate a save to a newer schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.VersionNumber">
+            <summary>
+            Specific version to migrate (defaults to latest)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.TargetSchemaVersion">
+            <summary>
+            Target schema version to migrate to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.DryRun">
+            <summary>
+            Validate migration without saving
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse">
+            <summary>
+            Result of a schema migration operation with version path details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.Success">
+            <summary>
+            Whether migration succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.FromSchemaVersion">
+            <summary>
+            Original schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.ToSchemaVersion">
+            <summary>
+            Target schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.NewVersionNumber">
+            <summary>
+            New version number (null if dry run)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.MigrationPath">
+            <summary>
+            Migration path applied (list of versions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.Warnings">
+            <summary>
+            Non-fatal migration warnings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.MigrateSaveResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest">
+            <summary>
+            Request to register a new save data schema with optional migration rules
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.Namespace">
+            <summary>
+            Schema namespace (e.g., game identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.SchemaVersion">
+            <summary>
+            Schema version identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.Schema">
+            <summary>
+            JSON Schema definition for validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.PreviousVersion">
+            <summary>
+            Previous version this migrates from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.MigrationPatch">
+            <summary>
+            JSON Patch (RFC 6902) operations to migrate from previousVersion.
+            <br/>Uses JsonPatch.Net library (MIT licensed).
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RegisterSchemaRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SchemaResponse">
+            <summary>
+            Registered schema definition with version lineage information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.Namespace">
+            <summary>
+            Schema namespace
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.SchemaVersion">
+            <summary>
+            Schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.Schema">
+            <summary>
+            JSON Schema definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.PreviousVersion">
+            <summary>
+            Previous version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.HasMigration">
+            <summary>
+            Whether migration script is registered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.CreatedAt">
+            <summary>
+            Registration timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SchemaResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListSchemasRequest">
+            <summary>
+            Request to list all registered schemas for a namespace
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSchemasRequest.Namespace">
+            <summary>
+            Schema namespace to list
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSchemasRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ListSchemasResponse">
+            <summary>
+            List of registered schemas with latest version indicator
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSchemasResponse.Schemas">
+            <summary>
+            Registered schemas
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSchemasResponse.LatestVersion">
+            <summary>
+            Latest schema version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSchemasResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest">
+            <summary>
+            Request for admin-triggered cleanup of expired or orphaned saves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest.DryRun">
+            <summary>
+            Preview cleanup without executing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest.OlderThanDays">
+            <summary>
+            Only cleanup versions older than N days
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest.OwnerType">
+            <summary>
+            Filter cleanup to specific owner type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest.Category">
+            <summary>
+            Filter cleanup to specific save category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse">
+            <summary>
+            Result of admin cleanup operation with storage reclamation details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse.VersionsDeleted">
+            <summary>
+            Number of versions deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse.SlotsDeleted">
+            <summary>
+            Number of empty slots deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse.DryRun">
+            <summary>
+            Whether this was a preview
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminCleanupResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.AdminStatsRequest">
+            <summary>
+            Request for aggregate storage statistics with optional grouping
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsRequest.GroupBy">
+            <summary>
+            Group statistics by field
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse">
+            <summary>
+            Aggregate storage statistics with optional breakdown by category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.TotalSlots">
+            <summary>
+            Total slot count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.TotalVersions">
+            <summary>
+            Total version count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.TotalSizeBytes">
+            <summary>
+            Total storage used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.PinnedVersions">
+            <summary>
+            Number of pinned versions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.Breakdown">
+            <summary>
+            Breakdown by groupBy field
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.AdminStatsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown">
+            <summary>
+            Storage statistics for a single category in the breakdown
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown.Key">
+            <summary>
+            Group key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown.Slots">
+            <summary>
+            Slot count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown.Versions">
+            <summary>
+            Version count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown.SizeBytes">
+            <summary>
+            Storage used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.StatsBreakdown.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest">
+            <summary>
+            Request to rename an existing save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.GameId">
+            <summary>
+            Game identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.OwnerId">
+            <summary>
+            Entity ID that owns the slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.SlotName">
+            <summary>
+            Current slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.NewSlotName">
+            <summary>
+            New slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsRequest">
+            <summary>
+            Request to delete multiple save slots in a single operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsRequest.GameId">
+            <summary>
+            Game identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsRequest.SlotIds">
+            <summary>
+            Slot IDs to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsResponse">
+            <summary>
+            Result of bulk slot deletion with total cleanup statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsResponse.DeletedCount">
+            <summary>
+            Number of slots deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsResponse.BytesFreed">
+            <summary>
+            Total storage freed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceGameId">
+            <summary>
+            Game identifier of the source save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceOwnerId">
+            <summary>
+            Entity ID that owns the source save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceOwnerType">
+            <summary>
+            Type of entity that owns the source save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceSlotName">
+            <summary>
+            Name of the source slot to copy from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceVersion">
+            <summary>
+            Version to copy (latest if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetGameId">
+            <summary>
+            Game identifier for the target save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetOwnerId">
+            <summary>
+            Entity ID that will own the copied save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetOwnerType">
+            <summary>
+            Type of entity that will own the copied save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetSlotName">
+            <summary>
+            Name of the target slot to copy to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetCategory">
+            <summary>
+            Category for new slot if auto-created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest">
+            <summary>
+            Request to export all saves for an owner to a downloadable archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.OwnerId">
+            <summary>
+            Entity ID that owns the saves to export
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.OwnerType">
+            <summary>
+            Type of entity that owns the saves to export
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.SlotNames">
+            <summary>
+            Specific slots to export (all if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ExportSavesResponse">
+            <summary>
+            Response with pre-signed URL for downloading exported save archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesResponse.DownloadUrl">
+            <summary>
+            Pre-signed URL to download export archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesResponse.ExpiresAt">
+            <summary>
+            When the download URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesResponse.SizeBytes">
+            <summary>
+            Archive size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest">
+            <summary>
+            Request to import saves from an uploaded archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.ArchiveAssetId">
+            <summary>
+            Asset ID of uploaded export archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.TargetGameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.TargetOwnerId">
+            <summary>
+            Entity ID that will own the imported saves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.TargetOwnerType">
+            <summary>
+            Type of entity that will own the imported saves
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.ConflictResolution">
+            <summary>
+            How to handle existing slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse">
+            <summary>
+            Result of save archive import with success and conflict counts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse.ImportedSlots">
+            <summary>
+            Number of slots successfully imported
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse.ImportedVersions">
+            <summary>
+            Total number of versions imported across all slots
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse.SkippedSlots">
+            <summary>
+            Slots skipped due to conflicts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse.Conflicts">
+            <summary>
+            Names of slots that had conflicts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest">
+            <summary>
+            Request to verify data integrity of a save version via hash comparison
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.SlotName">
+            <summary>
+            Name of the slot to verify
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.VersionNumber">
+            <summary>
+            Version to verify (latest if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse">
+            <summary>
+            Result of integrity verification with hash comparison details
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.Valid">
+            <summary>
+            Whether integrity check passed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.VersionNumber">
+            <summary>
+            Version that was verified
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.ExpectedHash">
+            <summary>
+            Expected SHA-256 hash
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.ActualHash">
+            <summary>
+            Actual hash (null if data unavailable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.ErrorMessage">
+            <summary>
+            Error details if verification failed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.VerifyIntegrityResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest">
+            <summary>
+            Request to promote an older save version to be the latest
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.SlotName">
+            <summary>
+            Name of the slot containing the version to promote
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.VersionNumber">
+            <summary>
+            Old version to promote to latest
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.DisplayName">
+            <summary>
+            Display name for promoted version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.PromoteVersionRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.DeltaAlgorithm">
+            <summary>
+            Algorithm used for delta computation.
+            <br/>JSON_PATCH: RFC 6902, best for structured JSON data
+            <br/>BSDIFF: Binary diff, good for general binary data
+            <br/>XDELTA: RFC 3284 VCDIFF, efficient for large binary files
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest">
+            <summary>
+            Request to save incremental changes as a delta from a base version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.OwnerId">
+            <summary>
+            ID of the owning entity
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.SlotName">
+            <summary>
+            Name of the slot to save the delta to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.BaseVersion">
+            <summary>
+            Version number this delta is based on
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.Delta">
+            <summary>
+            Base64-encoded delta/patch data.
+            <br/>For JSON_PATCH: Array of RFC 6902 operations
+            <br/>For BSDIFF/XDELTA: Binary patch data
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.Algorithm">
+            <summary>
+            Delta computation algorithm to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.SchemaVersion">
+            <summary>
+            Schema version of this save for migration tracking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.DisplayName">
+            <summary>
+            Human-readable name for this delta save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.DeviceId">
+            <summary>
+            Device identifier for cross-device sync conflict detection
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.Metadata">
+            <summary>
+            Custom key-value metadata for this delta version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse">
+            <summary>
+            Result of delta save operation with size and chain information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.SlotId">
+            <summary>
+            Unique identifier of the save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.VersionNumber">
+            <summary>
+            New version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.BaseVersion">
+            <summary>
+            Base version this delta is relative to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.DeltaSizeBytes">
+            <summary>
+            Size of stored delta
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.EstimatedFullSizeBytes">
+            <summary>
+            Estimated size when reconstructed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.ChainLength">
+            <summary>
+            Number of deltas in chain to base snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.CompressionSavings">
+            <summary>
+            Storage savings vs full snapshot (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.CreatedAt">
+            <summary>
+            When the delta version was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaResponse.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest">
+            <summary>
+            Request to collapse a delta chain into a full snapshot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.OwnerId">
+            <summary>
+            Entity ID that owns the save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.SlotName">
+            <summary>
+            Name of the slot containing deltas to collapse
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.VersionNumber">
+            <summary>
+            Version to collapse to (latest if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.DeleteIntermediates">
+            <summary>
+            Delete intermediate delta versions after collapse
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Scene.SceneType">

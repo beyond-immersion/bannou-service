@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BeyondImmersion.BannouService.SaveLoad</RootNamespace>
+    <ServiceLib>save-load</ServiceLib>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-asset/lib-asset.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="JsonPatch.Net" Version="3.1.0" />
+  </ItemGroup>
+
+  <Import Project="../../ServiceLib.targets" />
+
+</Project>
