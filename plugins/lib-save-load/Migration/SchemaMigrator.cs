@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Migration;
 public sealed class SchemaMigrator
 {
     private readonly ILogger _logger;
-    private readonly IStateStore<SaveSchemaDefinition> _schemaStore;
+    private readonly IQueryableStateStore<SaveSchemaDefinition> _schemaStore;
     private readonly int _maxMigrationSteps;
 
     /// <summary>
@@ -23,7 +23,7 @@ public sealed class SchemaMigrator
     /// </summary>
     public SchemaMigrator(
         ILogger logger,
-        IStateStore<SaveSchemaDefinition> schemaStore,
+        IQueryableStateStore<SaveSchemaDefinition> schemaStore,
         int maxMigrationSteps = 10)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -234,9 +234,9 @@ public sealed class SchemaMigrator
     {
         var result = new Dictionary<string, SaveSchemaDefinition>();
 
-        // Query all schemas with the namespace prefix
+        // Query all schemas with the namespace
         var schemas = await _schemaStore.QueryAsync(
-            $"$.Namespace == \"{@namespace}\"",
+            s => s.Namespace == @namespace,
             cancellationToken);
 
         foreach (var schema in schemas)

@@ -2875,43 +2875,102 @@ public partial class SaveLoadService : ISaveLoadService
 
     /// <summary>
     /// Implementation of AdminCleanup operation.
-    /// TODO: Implement business logic for this method.
+    /// Cleans up old save versions based on age and category filters.
     /// </summary>
     public async Task<(StatusCodes, AdminCleanupResponse?)> AdminCleanupAsync(AdminCleanupRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing AdminCleanup operation");
+        _logger.LogInformation(
+            "Executing AdminCleanup: dryRun={DryRun}, olderThanDays={Days}, category={Category}",
+            body.DryRun, body.OlderThanDays, body.Category);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdminCleanup not yet implemented");
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            var ownerType = body.OwnerType.ToString();
+            var category = body.Category.ToString();
+            var cutoffDate = DateTimeOffset.UtcNow.AddDays(-body.OlderThanDays);
+
+            // Query slots matching filters
+            var slots = await slotStore.QueryAsync(
+                s => s.OwnerType == ownerType && s.Category == category,
+                cancellationToken);
+
+            var versionsDeleted = 0;
+            var slotsDeleted = 0;
+            long bytesFreed = 0;
+
+            foreach (var slot in slots)
+            {
+                // Query versions for this slot
+                var versions = await versionStore.QueryAsync(
+                    v => v.SlotId == slot.SlotId,
+                    cancellationToken);
+
+                var versionsToDelete = versions
+                    .Where(v => !v.IsPinned && v.CreatedAt < cutoffDate)
+                    .ToList();
+
+                foreach (var version in versionsToDelete)
+                {
+                    bytesFreed += version.SizeBytes;
+                    versionsDeleted++;
+
+                    if (!body.DryRun)
+                    {
+                        var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, version.VersionNumber);
+                        await versionStore.DeleteAsync(versionKey, cancellationToken);
+
+                        // Delete asset if exists
+                        if (!string.IsNullOrEmpty(version.AssetId))
+                        {
+                            try
+                            {
+                                await _assetClient.DeleteAsync(
+                                    new DeleteRequest { AssetId = version.AssetId },
+                                    cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to delete asset {AssetId}", version.AssetId);
+                            }
+                        }
+                    }
+                }
+
+                // Check if slot is now empty
+                var remainingVersions = versions.Count - versionsToDelete.Count;
+                if (remainingVersions == 0)
+                {
+                    slotsDeleted++;
+                    if (!body.DryRun)
+                    {
+                        await slotStore.DeleteAsync(slot.GetStateKey(), cancellationToken);
+                    }
+                }
+                else if (!body.DryRun && versionsToDelete.Count > 0)
+                {
+                    // Update slot metadata
+                    slot.VersionCount = remainingVersions;
+                    slot.TotalSizeBytes -= bytesFreed;
+                    slot.UpdatedAt = DateTimeOffset.UtcNow;
+                    await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
+                }
+            }
+
+            _logger.LogInformation(
+                "AdminCleanup {Mode}: deleted {Versions} versions, {Slots} slots, freed {Bytes} bytes",
+                body.DryRun ? "preview" : "executed",
+                versionsDeleted, slotsDeleted, bytesFreed);
+
+            return (StatusCodes.OK, new AdminCleanupResponse
+            {
+                VersionsDeleted = versionsDeleted,
+                SlotsDeleted = slotsDeleted,
+                BytesFreed = bytesFreed,
+                DryRun = body.DryRun
+            });
         }
         catch (Exception ex)
         {
@@ -2932,43 +2991,92 @@ public partial class SaveLoadService : ISaveLoadService
 
     /// <summary>
     /// Implementation of AdminStats operation.
-    /// TODO: Implement business logic for this method.
+    /// Returns aggregated statistics about save data storage.
     /// </summary>
     public async Task<(StatusCodes, AdminStatsResponse?)> AdminStatsAsync(AdminStatsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing AdminStats operation");
+        _logger.LogInformation("Executing AdminStats with groupBy={GroupBy}", body.GroupBy);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdminStats not yet implemented");
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Get all slots
+            var slots = await slotStore.QueryAsync(_ => true, cancellationToken);
+            var slotList = slots.ToList();
+
+            // Get all versions
+            var versions = await versionStore.QueryAsync(_ => true, cancellationToken);
+            var versionList = versions.ToList();
+
+            // Calculate totals
+            var totalSlots = slotList.Count;
+            var totalVersions = versionList.Count;
+            var totalSizeBytes = versionList.Sum(v => v.SizeBytes);
+            var pinnedVersions = versionList.Count(v => v.IsPinned);
+
+            // Create breakdown based on groupBy
+            var breakdown = new List<StatsBreakdown>();
+
+            switch (body.GroupBy)
+            {
+                case AdminStatsRequestGroupBy.Owner_type:
+                    var ownerTypeGroups = slotList.GroupBy(s => s.OwnerType);
+                    foreach (var group in ownerTypeGroups)
+                    {
+                        var slotIds = group.Select(s => s.SlotId).ToHashSet();
+                        var groupVersions = versionList.Where(v => slotIds.Contains(v.SlotId)).ToList();
+                        breakdown.Add(new StatsBreakdown
+                        {
+                            Key = group.Key,
+                            Slots = group.Count(),
+                            Versions = groupVersions.Count,
+                            SizeBytes = groupVersions.Sum(v => v.SizeBytes)
+                        });
+                    }
+                    break;
+
+                case AdminStatsRequestGroupBy.Category:
+                    var categoryGroups = slotList.GroupBy(s => s.Category);
+                    foreach (var group in categoryGroups)
+                    {
+                        var slotIds = group.Select(s => s.SlotId).ToHashSet();
+                        var groupVersions = versionList.Where(v => slotIds.Contains(v.SlotId)).ToList();
+                        breakdown.Add(new StatsBreakdown
+                        {
+                            Key = group.Key,
+                            Slots = group.Count(),
+                            Versions = groupVersions.Count,
+                            SizeBytes = groupVersions.Sum(v => v.SizeBytes)
+                        });
+                    }
+                    break;
+
+                case AdminStatsRequestGroupBy.Schema_version:
+                    var schemaGroups = versionList.GroupBy(v => v.SchemaVersion ?? "unversioned");
+                    foreach (var group in schemaGroups)
+                    {
+                        var slotIds = group.Select(v => v.SlotId).Distinct().ToHashSet();
+                        breakdown.Add(new StatsBreakdown
+                        {
+                            Key = group.Key,
+                            Slots = slotIds.Count,
+                            Versions = group.Count(),
+                            SizeBytes = group.Sum(v => v.SizeBytes)
+                        });
+                    }
+                    break;
+            }
+
+            return (StatusCodes.OK, new AdminStatsResponse
+            {
+                TotalSlots = totalSlots,
+                TotalVersions = totalVersions,
+                TotalSizeBytes = totalSizeBytes,
+                PinnedVersions = pinnedVersions,
+                Breakdown = breakdown
+            });
         }
         catch (Exception ex)
         {
@@ -3351,7 +3459,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
 
             // Check if schema already exists
             var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
@@ -3396,7 +3504,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
-            await schemaStore.SaveAsync(schemaKey, schema, cancellationToken);
+            await schemaStore.SaveAsync(schemaKey, schema, cancellationToken: cancellationToken);
 
             _logger.LogInformation(
                 "Registered schema {Namespace}:{Version}",
@@ -3439,11 +3547,11 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
 
             // Query all schemas in the namespace
             var schemas = await schemaStore.QueryAsync(
-                $"$.Namespace == \"{body.Namespace}\"",
+                s => s.Namespace == body.Namespace,
                 cancellationToken);
 
             var schemaList = schemas.ToList();
@@ -3519,21 +3627,27 @@ public partial class SaveLoadService : ISaveLoadService
 
         try
         {
-            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+            var schemaStore = _stateStoreFactory.GetQueryableStore<SaveSchemaDefinition>(_configuration.SchemaStoreName);
 
-            // Find source slot
+            // Find source slot by querying by owner and slot name
             var ownerType = body.OwnerType.ToString();
             var ownerId = body.OwnerId.ToString();
-            var slotKey = SaveSlotMetadata.GetStateKey(_configuration.DefaultGameId, ownerType, ownerId, body.SlotName);
-            var slot = await slotStore.GetAsync(slotKey, cancellationToken);
+
+            // Query slots for this owner and slot name
+            var slots = await slotStore.QueryAsync(
+                s => s.OwnerId == ownerId && s.OwnerType == ownerType && s.SlotName == body.SlotName,
+                cancellationToken);
+            var slot = slots.FirstOrDefault();
 
             if (slot == null)
             {
-                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                _logger.LogWarning("Slot not found for owner {OwnerId}, slot {SlotName}", ownerId, body.SlotName);
                 return (StatusCodes.NotFound, null);
             }
+
+            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, ownerType, ownerId, body.SlotName);
 
             // Get source version
             var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
@@ -3571,8 +3685,8 @@ public partial class SaveLoadService : ISaveLoadService
                 });
             }
 
-            // Create migrator and find migration path
-            var migrator = new SchemaMigrator(_logger, schemaStore, _configuration.MaxMigrationSteps);
+            // Create migrator and find migration path (default max 10 steps)
+            var migrator = new SchemaMigrator(_logger, schemaStore, maxMigrationSteps: 10);
             var migrationPath = await migrator.FindMigrationPathAsync(
                 slot.GameId,
                 currentSchemaVersion,
@@ -3684,27 +3798,27 @@ public partial class SaveLoadService : ISaveLoadService
             };
 
             var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, newVersionNumber);
-            await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken);
+            await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken: cancellationToken);
 
             // Update slot's latest version
             slot.LatestVersion = newVersionNumber;
             slot.UpdatedAt = DateTimeOffset.UtcNow;
-            await slotStore.SaveAsync(slotKey, slot, cancellationToken);
+            await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
             // Publish event
-            await _messageBus.PublishAsync("save.migrated", new SaveMigratedEvent
+            await _messageBus.TryPublishAsync("save.migrated", new SaveMigratedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SlotId = Guid.Parse(slot.SlotId),
                 SlotName = slot.SlotName,
-                VersionNumber = newVersionNumber,
+                OriginalVersionNumber = versionNumber,
+                NewVersionNumber = newVersionNumber,
                 OwnerId = Guid.Parse(slot.OwnerId),
                 OwnerType = slot.OwnerType,
                 FromSchemaVersion = currentSchemaVersion,
-                ToSchemaVersion = body.TargetSchemaVersion,
-                MigrationSteps = migrationPath.Count - 1
-            });
+                ToSchemaVersion = body.TargetSchemaVersion
+            }, cancellationToken: cancellationToken);
 
             _logger.LogInformation(
                 "Migrated save {SlotName} from {From} to {To}, new version {Version}",
