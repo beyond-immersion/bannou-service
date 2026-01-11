@@ -1,0 +1,5 @@
+name: preset-one
+description: First preset
+category: development
+requiredBackends:
+  - docker-compose

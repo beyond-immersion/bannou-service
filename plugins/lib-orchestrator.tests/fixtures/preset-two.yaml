@@ -1,0 +1,6 @@
+name: preset-two
+description: Second preset
+category: production
+requiredBackends:
+  - kubernetes
+  - docker-swarm

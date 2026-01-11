@@ -2168,23 +2168,9 @@ public class PresetLoaderTests
     [Fact]
     public async Task ListPresetsAsync_ShouldReturnPresetMetadata()
     {
-        // Arrange
-        const string preset1 = @"name: preset-one
-description: First preset
-category: development
-requiredBackends:
-  - docker-compose
-";
-        const string preset2 = @"name: preset-two
-description: Second preset
-category: production
-requiredBackends:
-  - kubernetes
-  - docker-swarm
-";
-
-        await CreatePresetFileAsync("preset-one", preset1);
-        await CreatePresetFileAsync("preset-two", preset2);
+        // Arrange - uses fixture files to preserve YAML indentation
+        await CopyFixtureAsync("preset-one");
+        await CopyFixtureAsync("preset-two");
         var loader = CreateLoader();
 
         // Act

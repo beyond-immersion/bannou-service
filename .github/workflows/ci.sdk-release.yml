@@ -216,6 +216,19 @@ jobs:
           dotnet build Bannou.Client.SDK --configuration Release --no-restore
           dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
+          # Build and pack SceneComposer SDK (Bannou.SceneComposer)
+          echo "📦 Building SceneComposer SDK (Bannou.SceneComposer)..."
+          dotnet restore Bannou.SceneComposer
+          dotnet build Bannou.SceneComposer --configuration Release --no-restore
+          dotnet pack Bannou.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
+          # Build and pack Stride SceneComposer SDK (Bannou.Stride.SceneComposer)
+          # Note: Uses net10.0 on Linux (full Stride functionality requires Windows)
+          echo "📦 Building Stride SceneComposer SDK (Bannou.Stride.SceneComposer)..."
+          dotnet restore Bannou.Stride.SceneComposer
+          dotnet build Bannou.Stride.SceneComposer --configuration Release --no-restore
+          dotnet pack Bannou.Stride.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
           echo "✅ Packages built: ./nuget-packages/"
           ls -la ./nuget-packages/
 
@@ -284,6 +297,16 @@ jobs:
           **For Game Clients** (WebSocket only):
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.Client.SDK --version ${VERSION}
+          \`\`\`
+
+          **For Scene Editing** (engine-agnostic):
+          \`\`\`bash
+          dotnet add package BeyondImmersion.Bannou.SceneComposer --version ${VERSION}
+          \`\`\`
+
+          **For Stride Engine** (scene editing with Stride):
+          \`\`\`bash
+          dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer --version ${VERSION}
           \`\`\`
 
           ### What's Changed

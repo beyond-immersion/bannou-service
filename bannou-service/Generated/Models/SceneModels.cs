@@ -136,6 +136,242 @@ public enum VolumeShape
 #pragma warning restore CS1591
 
 /// <summary>
+/// Types of affordances describing what an object can do or how it can be interacted with.
+/// <br/>Used by AI navigation, character controllers, and procedural content systems.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AffordanceType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"walkable")]
+    Walkable = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"climbable")]
+    Climbable = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"sittable")]
+    Sittable = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"interactive")]
+    Interactive = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"collectible")]
+    Collectible = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"destructible")]
+    Destructible = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"container")]
+    Container = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"door")]
+    Door = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"teleport")]
+    Teleport = 8,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Types of marker nodes for spawn points, waypoints, and other positional markers.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MarkerType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    Generic = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"spawn_point")]
+    Spawn_point = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"npc_spawn")]
+    Npc_spawn = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"waypoint")]
+    Waypoint = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"camera_point")]
+    Camera_point = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"light_point")]
+    Light_point = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"audio_point")]
+    Audio_point = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"trigger_point")]
+    Trigger_point = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// A predefined location where child objects can be attached.
+/// <br/>Used for decorating furniture, walls, and other objects with accessories.
+/// <br/>Example: A wall may have attachment points for paintings, shelves, or light fixtures.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AttachmentPoint
+{
+
+    /// <summary>
+    /// Unique name for this attachment point within the node.
+    /// <br/>Examples: wall_hook_left, shelf_1, lamp_socket
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Position and orientation relative to the owning node
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localTransform")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public Transform LocalTransform { get; set; } = new Transform();
+
+    /// <summary>
+    /// Tags of assets that can attach here.
+    /// <br/>Examples: wall_decoration, picture_frame, plant
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("acceptsTags")]
+    public System.Collections.Generic.ICollection<string> AcceptsTags { get; set; } = default!;
+
+    /// <summary>
+    /// Default asset to display if no specific attachment is specified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAsset")]
+    public AssetReference? DefaultAsset { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the node currently attached at this point (runtime state)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("attachedNodeId")]
+    public System.Guid? AttachedNodeId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Describes a capability or interaction mode for a node.
+/// <br/>Used by AI systems to understand what actions are possible and by
+/// <br/>character controllers for contextual animations.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Affordance
+{
+
+    /// <summary>
+    /// The type of affordance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AffordanceType Type { get; set; } = default!;
+
+    /// <summary>
+    /// Type-specific parameters. Examples:
+    /// <br/>- sittable: { height: 0.5, facing: [0,0,1] }
+    /// <br/>- door: { openAngle: 90, locked: false }
+    /// <br/>- container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parameters")]
+    public object? Parameters { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Defines acceptable asset types for procedural swapping at this node.
+/// <br/>Used by procedural generation systems to substitute assets while
+/// <br/>maintaining scene coherence.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AssetSlot
+{
+
+    /// <summary>
+    /// Category of acceptable assets.
+    /// <br/>Examples: chair, table, wall_art, floor_lamp
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SlotType { get; set; } = default!;
+
+    /// <summary>
+    /// Tags that acceptable assets must have.
+    /// <br/>Used for filtering when selecting random variations.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("acceptsTags")]
+    public System.Collections.Generic.ICollection<string> AcceptsTags { get; set; } = default!;
+
+    /// <summary>
+    /// Default asset if no specific asset is bound
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAsset")]
+    public AssetReference? DefaultAsset { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-approved asset variations for random selection.
+    /// <br/>Procedural systems pick from this list rather than searching all assets.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("variations")]
+    public System.Collections.Generic.ICollection<AssetReference> Variations { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
 /// Reason why a scene reference could not be resolved
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -490,6 +726,64 @@ public partial class SceneNode
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("annotations")]
     public object? Annotations { get; set; } = default!;
+
+    /// <summary>
+    /// Predefined locations for attaching child objects.
+    /// <br/>Used by Scene Composer for furniture decoration, wall accessories, etc.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("attachmentPoints")]
+    public System.Collections.Generic.ICollection<AttachmentPoint> AttachmentPoints { get; set; } = default!;
+
+    /// <summary>
+    /// Interaction capabilities of this node.
+    /// <br/>Used by AI navigation and character controllers.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("affordances")]
+    public System.Collections.Generic.ICollection<Affordance> Affordances { get; set; } = default!;
+
+    /// <summary>
+    /// Procedural asset swapping configuration.
+    /// <br/>Defines which assets can substitute for this node's asset.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetSlot")]
+    public AssetSlot? AssetSlot { get; set; } = default!;
+
+    /// <summary>
+    /// Type of marker for marker nodes.
+    /// <br/>Only relevant when nodeType is 'marker'.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("markerType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MarkerType? MarkerType { get; set; } = default!;
+
+    /// <summary>
+    /// Shape of volume for volume nodes.
+    /// <br/>Only relevant when nodeType is 'volume'.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("volumeShape")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VolumeShape? VolumeShape { get; set; } = default!;
+
+    /// <summary>
+    /// Size/extents of the volume (interpretation depends on volumeShape).
+    /// <br/>For box: full dimensions. For sphere: x=radius. For capsule: x=radius, y=height.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("volumeSize")]
+    public Vector3? VolumeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Scene ID to embed for reference nodes.
+    /// <br/>Only relevant when nodeType is 'reference'.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceSceneId")]
+    public System.Guid? ReferenceSceneId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

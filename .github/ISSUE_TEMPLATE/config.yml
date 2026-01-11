@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Help
+    url: https://discord.gg/3eAGYwF3rE
+    about: For questions and help, join our Discord server
+  - name: GitHub Discussions
+    url: https://github.com/beyond-immersion/bannou-service/discussions
+    about: For broader discussions and ideas
+  - name: Security Vulnerability
+    url: https://github.com/beyond-immersion/bannou-service/security/advisories/new
+    about: Report security issues privately (do not open public issues for security vulnerabilities)

@@ -38,8 +38,11 @@ public class LiteNetLibTransportTests
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
 
-        // wait for connect
-        await Task.Delay(50, cts.Token);
+        // Wait for client to connect (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientConnected && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(clientConnected);
 
         var msg = new PlayerInputMessage
@@ -198,6 +201,8 @@ public class LiteNetLibTransportTests
 
         bool serverGot = false;
 
+        bool clientConnected = false;
+
         server.OnClientMessage += (id, version, type, payload) =>
         {
             if (type != GameMessageType.OpportunityResponse) return;
@@ -207,9 +212,16 @@ public class LiteNetLibTransportTests
             serverGot = true;
         };
 
+        client.OnConnected += () => clientConnected = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
-        await Task.Delay(50, cts.Token);
+
+        // Wait for client to connect (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientConnected && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var resp = new OpportunityResponseMessage
         {

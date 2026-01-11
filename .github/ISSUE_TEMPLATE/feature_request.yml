@@ -1,0 +1,69 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Help us understand the use case so we can evaluate and prioritize.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point this addresses
+      placeholder: I'm trying to do X, but currently I have to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you envision this working?
+      placeholder: It would be great if Bannou could...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered other approaches? What are the tradeoffs?
+      placeholder: I also thought about X, but that wouldn't work because...
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Bannou does this relate to?
+      options:
+        - Core Services (Auth, Account, Connect)
+        - Game Features (Sessions, Matchmaking, Voice)
+        - NPC/Behavior Systems (ABML, GOAP, Actors)
+        - SDKs (Client, Server, Engine Integration)
+        - Documentation
+        - DevOps / Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Would you be willing to contribute this?
+      options:
+        - "Yes, I'd like to implement this"
+        - "I could help with guidance"
+        - "No, just suggesting"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and discussions to ensure this hasn't been requested
+          required: true
