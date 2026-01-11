@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -41,18 +40,6 @@ public partial class SaveLoadService : ISaveLoadService
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
 
-    // State stores for different data types
-    private readonly IStateStore<SaveSlotMetadata> _slotStore;
-    private readonly IStateStore<SaveVersionManifest> _versionStore;
-    private readonly IStateStore<HotSaveEntry> _hotCacheStore;
-    private readonly IStateStore<PendingUploadEntry> _pendingUploadStore;
-
-    // State store names from configuration
-    private const string SLOT_STORE_NAME = "save-load-slots";
-    private const string VERSION_STORE_NAME = "save-load-versions";
-    private const string HOT_CACHE_STORE_NAME = "save-load-hot";
-    private const string PENDING_UPLOAD_STORE_NAME = "save-load-pending";
-
     public SaveLoadService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -65,57 +52,66 @@ public partial class SaveLoadService : ISaveLoadService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-
-        // Initialize state stores
-        _slotStore = _stateStoreFactory.Create<SaveSlotMetadata>(
-            configuration.SlotMetadataStoreName ?? SLOT_STORE_NAME);
-        _versionStore = _stateStoreFactory.Create<SaveVersionManifest>(
-            configuration.VersionManifestStoreName ?? VERSION_STORE_NAME);
-        _hotCacheStore = _stateStoreFactory.Create<HotSaveEntry>(
-            configuration.HotCacheStoreName ?? HOT_CACHE_STORE_NAME);
-        _pendingUploadStore = _stateStoreFactory.Create<PendingUploadEntry>(
-            configuration.PendingUploadStoreName ?? PENDING_UPLOAD_STORE_NAME);
     }
 
     /// <summary>
-    /// Implementation of CreateSlot operation.
-    /// TODO: Implement business logic for this method.
+    /// Creates a new save slot for the specified owner.
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> CreateSlotAsync(CreateSlotRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CreateSlot operation");
+        _logger.LogInformation(
+            "Creating save slot for game {GameId}, owner {OwnerType}:{OwnerId}, slot {SlotName}",
+            body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateSlot not yet implemented");
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var ownerType = body.OwnerType.ToString();
+            var ownerId = body.OwnerId.ToString();
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Check if slot already exists
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            var existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
+            if (existingSlot != null)
+            {
+                _logger.LogWarning("Slot already exists: {SlotKey}", slotKey);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get category defaults
+            var category = body.Category ?? SaveCategory.MANUAL_SAVE;
+            var maxVersions = body.MaxVersions ?? GetDefaultMaxVersions(category);
+            var compressionType = body.CompressionType ?? GetDefaultCompressionType(category);
+
+            // Create the slot
+            var now = DateTimeOffset.UtcNow;
+            var slotId = Guid.NewGuid();
+            var slot = new SaveSlotMetadata
+            {
+                SlotId = slotId.ToString(),
+                GameId = body.GameId,
+                OwnerId = ownerId,
+                OwnerType = ownerType,
+                SlotName = body.SlotName,
+                Category = category.ToString(),
+                MaxVersions = maxVersions,
+                RetentionDays = body.RetentionDays,
+                CompressionType = compressionType.ToString(),
+                VersionCount = 0,
+                LatestVersion = null,
+                TotalSizeBytes = 0,
+                Tags = body.Tags?.ToList() ?? new List<string>(),
+                Metadata = body.Metadata?.ToDictionary(kv => kv.Key, kv => kv.Value) ?? new Dictionary<string, string>(),
+                CreatedAt = now,
+                UpdatedAt = now,
+                ETag = Guid.NewGuid().ToString()
+            };
+
+            await slotStore.SaveAsync(slotKey, slot, cancellationToken);
+
+            _logger.LogInformation("Created slot {SlotId} for {OwnerType}:{OwnerId}", slotId, ownerType, ownerId);
+
+            return (StatusCodes.Created, ToSlotResponse(slot));
         }
         catch (Exception ex)
         {
@@ -130,49 +126,50 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Implementation of GetSlot operation.
-    /// TODO: Implement business logic for this method.
+    /// Gets a save slot by its identifiers.
     /// </summary>
     public async Task<(StatusCodes, SlotResponse?)> GetSlotAsync(GetSlotRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetSlot operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetSlot not yet implemented");
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Get by slotId if provided, otherwise by composite key
+            SaveSlotMetadata? slot = null;
+            if (body.SlotId.HasValue)
+            {
+                // Query by slotId - need to scan (slotId is stored as property, not key)
+                var queryResult = await _stateStoreFactory.QueryAsync<SaveSlotMetadata>(
+                    _configuration.SlotMetadataStoreName,
+                    filter: $"$.SlotId == '{body.SlotId}'",
+                    cancellationToken: cancellationToken);
+                slot = queryResult.FirstOrDefault();
+            }
+            else if (!string.IsNullOrEmpty(body.GameId) && body.OwnerId.HasValue &&
+                     body.OwnerType.HasValue && !string.IsNullOrEmpty(body.SlotName))
+            {
+                var slotKey = SaveSlotMetadata.GetStateKey(
+                    body.GameId, body.OwnerType.Value.ToString(),
+                    body.OwnerId.Value.ToString(), body.SlotName);
+                slot = await slotStore.GetAsync(slotKey, cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("GetSlot requires either slotId or (gameId, ownerId, ownerType, slotName)");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (slot == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, ToSlotResponse(slot));
         }
         catch (Exception ex)
         {
@@ -187,49 +184,53 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Implementation of ListSlots operation.
-    /// TODO: Implement business logic for this method.
+    /// Lists save slots for an owner with optional filtering.
     /// </summary>
     public async Task<(StatusCodes, ListSlotsResponse?)> ListSlotsAsync(ListSlotsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ListSlots operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListSlots not yet implemented");
+            // Build filter for query
+            var filters = new List<string>();
+            if (!string.IsNullOrEmpty(body.GameId))
+                filters.Add($"$.GameId == '{body.GameId}'");
+            if (body.OwnerId.HasValue)
+                filters.Add($"$.OwnerId == '{body.OwnerId}'");
+            if (body.OwnerType.HasValue)
+                filters.Add($"$.OwnerType == '{body.OwnerType}'");
+            if (body.Category.HasValue)
+                filters.Add($"$.Category == '{body.Category}'");
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            var filter = filters.Count > 0 ? string.Join(" && ", filters) : null;
+
+            var queryResult = await _stateStoreFactory.QueryAsync<SaveSlotMetadata>(
+                _configuration.SlotMetadataStoreName,
+                filter: filter,
+                cancellationToken: cancellationToken);
+
+            var slots = queryResult.ToList();
+
+            // Apply tag filter in memory if specified
+            if (body.Tags != null && body.Tags.Any())
+            {
+                slots = slots.Where(s => body.Tags.All(tag => s.Tags.Contains(tag))).ToList();
+            }
+
+            // Sort by UpdatedAt descending (most recent first)
+            slots = slots.OrderByDescending(s => s.UpdatedAt).ToList();
+
+            var response = new ListSlotsResponse
+            {
+                Slots = slots.Select(ToSlotResponse).ToList(),
+                TotalCount = slots.Count
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -244,49 +245,76 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Implementation of DeleteSlot operation.
-    /// TODO: Implement business logic for this method.
+    /// Deletes a save slot and all its versions.
     /// </summary>
     public async Task<(StatusCodes, DeleteSlotResponse?)> DeleteSlotAsync(DeleteSlotRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DeleteSlot operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteSlot not yet implemented");
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Find the slot
+            SaveSlotMetadata? slot = null;
+            string? slotKey = null;
+
+            if (body.SlotId.HasValue)
+            {
+                var queryResult = await _stateStoreFactory.QueryAsync<SaveSlotMetadata>(
+                    _configuration.SlotMetadataStoreName,
+                    filter: $"$.SlotId == '{body.SlotId}'",
+                    cancellationToken: cancellationToken);
+                slot = queryResult.FirstOrDefault();
+                if (slot != null)
+                    slotKey = slot.GetStateKey();
+            }
+            else if (!string.IsNullOrEmpty(body.GameId) && body.OwnerId.HasValue &&
+                     body.OwnerType.HasValue && !string.IsNullOrEmpty(body.SlotName))
+            {
+                slotKey = SaveSlotMetadata.GetStateKey(
+                    body.GameId, body.OwnerType.Value.ToString(),
+                    body.OwnerId.Value.ToString(), body.SlotName);
+                slot = await slotStore.GetAsync(slotKey, cancellationToken);
+            }
+            else
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (slot == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Delete all versions for this slot
+            var deletedVersions = 0;
+            for (var v = 1; v <= (slot.LatestVersion ?? 0); v++)
+            {
+                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
+                await versionStore.DeleteAsync(versionKey, cancellationToken);
+                deletedVersions++;
+            }
+
+            // Delete the slot
+            if (slotKey != null)
+            {
+                await slotStore.DeleteAsync(slotKey, cancellationToken);
+            }
+
+            _logger.LogInformation("Deleted slot {SlotId} with {VersionCount} versions", slot.SlotId, deletedVersions);
+
+            var response = new DeleteSlotResponse
+            {
+                SlotId = Guid.Parse(slot.SlotId),
+                DeletedVersions = deletedVersions
+            };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
@@ -301,7 +329,7 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

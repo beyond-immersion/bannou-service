@@ -529,8 +529,8 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public void SelectAll()
     {
-        EnsureSceneLoaded();
-        _selectionManager.Select(_currentScene!.GetAllNodes(), SelectionMode.Replace);
+        var scene = EnsureSceneLoaded();
+        _selectionManager.Select(scene.GetAllNodes(), SelectionMode.Replace);
     }
 
     #endregion
@@ -641,7 +641,7 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public async Task<bool> CheckoutAsync(CancellationToken ct = default)
     {
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         if (_serviceClient == null)
             throw new InvalidOperationException("Cannot checkout: no service client configured");
@@ -649,7 +649,7 @@ public class SceneComposer : ISceneComposer
         if (IsCheckedOut)
             return true;
 
-        var result = await _serviceClient.CheckoutAsync(_currentScene!.SceneId, ct);
+        var result = await _serviceClient.CheckoutAsync(scene.SceneId, ct);
 
         if (result.Success)
         {
@@ -664,12 +664,12 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public async Task<bool> ExtendCheckoutAsync(CancellationToken ct = default)
     {
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         if (_serviceClient == null || _checkoutSessionId == null)
             return false;
 
-        var success = await _serviceClient.HeartbeatAsync(_currentScene!.SceneId, _checkoutSessionId, ct);
+        var success = await _serviceClient.HeartbeatAsync(scene.SceneId, _checkoutSessionId, ct);
 
         if (success)
         {
@@ -682,7 +682,7 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public async Task<bool> CommitAsync(string? comment = null, CancellationToken ct = default)
     {
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         if (_serviceClient == null)
             throw new InvalidOperationException("Cannot commit: no service client configured");
@@ -694,17 +694,19 @@ public class SceneComposer : ISceneComposer
                 return false;
         }
 
-        var sceneData = ConvertToSceneData(_currentScene!);
+        var sceneData = ConvertToSceneData(scene);
+        var sessionId = _checkoutSessionId
+            ?? throw new InvalidOperationException("Checkout session ID is null after successful checkout");
         var result = await _serviceClient.CommitAsync(
-            _currentScene!.SceneId,
-            _checkoutSessionId!,
+            scene.SceneId,
+            sessionId,
             sceneData,
             comment,
             ct);
 
         if (result.Success)
         {
-            _currentScene.Version = result.NewVersion ?? _currentScene.Version;
+            scene.Version = result.NewVersion ?? scene.Version;
             _isDirty = false;
             _checkoutSessionId = null;
             _checkoutExpiresAt = null;
@@ -720,18 +722,18 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public async Task DiscardAsync(CancellationToken ct = default)
     {
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         if (_serviceClient != null && _checkoutSessionId != null)
         {
-            await _serviceClient.DiscardAsync(_currentScene!.SceneId, _checkoutSessionId, ct);
+            await _serviceClient.DiscardAsync(scene.SceneId, _checkoutSessionId, ct);
         }
 
         _checkoutSessionId = null;
         _checkoutExpiresAt = null;
 
         // Reload scene to discard changes
-        var sceneId = _currentScene!.SceneId;
+        var sceneId = scene.SceneId;
         CloseScene();
         await LoadSceneAsync(sceneId, ct: ct);
 
@@ -746,16 +748,16 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public ValidationResult ValidateScene()
     {
-        EnsureSceneLoaded();
-        return _validator.Validate(_currentScene!);
+        var scene = EnsureSceneLoaded();
+        return _validator.Validate(scene);
     }
 
     /// <inheritdoc />
     public ValidationResult ValidateNode(ComposerSceneNode node)
     {
         if (node == null) throw new ArgumentNullException(nameof(node));
-        EnsureSceneLoaded();
-        return _validator.ValidateNode(node, _currentScene!);
+        var scene = EnsureSceneLoaded();
+        return _validator.ValidateNode(node, scene);
     }
 
     #endregion
