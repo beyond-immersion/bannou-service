@@ -286,24 +286,32 @@ components:
         eventId:
           type: string
           format: uuid
+          description: Unique event identifier
         timestamp:
           type: string
           format: date-time
+          description: Event timestamp
         slotId:
           type: string
           format: uuid
+          description: Save slot identifier
         slotName:
           type: string
+          description: Human-readable slot name
         versionNumber:
           type: integer
+          description: Version number that was queued
         ownerId:
           type: string
           format: uuid
+          description: Owner entity ID
         ownerType:
           type: string
+          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
         sizeBytes:
           type: integer
           format: int64
+          description: Size of the queued save data in bytes
         queueDepth:
           type: integer
           description: Current number of pending uploads in queue
@@ -316,16 +324,21 @@ components:
         eventId:
           type: string
           format: uuid
+          description: Unique event identifier
         timestamp:
           type: string
           format: date-time
+          description: Event timestamp
         slotId:
           type: string
           format: uuid
+          description: Save slot identifier
         slotName:
           type: string
+          description: Human-readable slot name
         versionNumber:
           type: integer
+          description: Version number that was uploaded
         assetId:
           type: string
           format: uuid
@@ -347,21 +360,28 @@ components:
         eventId:
           type: string
           format: uuid
+          description: Unique event identifier
         timestamp:
           type: string
           format: date-time
+          description: Event timestamp
         slotId:
           type: string
           format: uuid
+          description: Save slot identifier
         slotName:
           type: string
+          description: Human-readable slot name
         versionNumber:
           type: integer
+          description: Version number that failed to upload
         ownerId:
           type: string
           format: uuid
+          description: Owner entity ID
         ownerType:
           type: string
+          description: Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
         errorMessage:
           type: string
           description: Last error message
@@ -380,15 +400,19 @@ components:
         eventId:
           type: string
           format: uuid
+          description: Unique event identifier
         timestamp:
           type: string
           format: date-time
+          description: Event timestamp
         previousState:
           type: string
           enum: [CLOSED, OPEN, HALF_OPEN]
+          description: Previous circuit breaker state before the transition
         newState:
           type: string
           enum: [CLOSED, OPEN, HALF_OPEN]
+          description: New circuit breaker state after the transition
         failureCount:
           type: integer
           description: Consecutive failures (when opening)

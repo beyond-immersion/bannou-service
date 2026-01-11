@@ -901,7 +901,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -911,7 +912,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Slot name (lowercase alphanumeric with hyphens, single char like \"q\" allowed)"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category determining retention and cleanup behavior"
                 },
                 "maxVersions": {
                     "type": "integer",
@@ -925,7 +927,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType"
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm to use for save data"
                 },
                 "tags": {
                     "type": "array",
@@ -986,6 +989,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
                 "ownerId",
@@ -1006,14 +1010,16 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
                     "description": "Slot name"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category determining retention and cleanup behavior"
                 },
                 "maxVersions": {
                     "type": "integer",
@@ -1025,7 +1031,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType"
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm used for save data"
                 },
                 "versionCount": {
                     "type": "integer",
@@ -1079,7 +1086,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1157,6 +1164,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "GetSlotRequest": {
             "type": "object",
+            "description": "Request to retrieve metadata for a specific save slot",
             "required": [
                 "gameId",
                 "ownerId",
@@ -1177,7 +1185,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -1206,6 +1215,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
                 "ownerId",
@@ -1226,14 +1236,16 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
                     "description": "Slot name"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category determining retention and cleanup behavior"
                 },
                 "maxVersions": {
                     "type": "integer",
@@ -1245,7 +1257,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType"
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm used for save data"
                 },
                 "versionCount": {
                     "type": "integer",
@@ -1299,7 +1312,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1377,6 +1390,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListSlotsRequest": {
             "type": "object",
+            "description": "Request to list all save slots belonging to a specific owner",
             "required": [
                 "gameId",
                 "ownerId",
@@ -1396,10 +1410,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns the save slots to list"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Optional filter by save category"
                 },
                 "includeVersionCount": {
                     "type": "boolean",
@@ -1427,7 +1443,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -1440,6 +1456,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListSlotsResponse": {
             "type": "object",
+            "description": "Response containing a list of save slots for an owner",
             "required": [
                 "slots"
             ],
@@ -1459,6 +1476,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "SlotResponse": {
             "type": "object",
+            "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
                 "ownerId",
@@ -1479,14 +1497,16 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
                     "description": "Slot name"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category determining retention and cleanup behavior"
                 },
                 "maxVersions": {
                     "type": "integer",
@@ -1498,7 +1518,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType"
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm used for save data"
                 },
                 "versionCount": {
                     "type": "integer",
@@ -1630,6 +1651,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "DeleteSlotRequest": {
             "type": "object",
+            "description": "Request to permanently delete a save slot and all its versions",
             "required": [
                 "gameId",
                 "ownerId",
@@ -1650,7 +1672,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -1679,6 +1702,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "DeleteSlotResponse": {
             "type": "object",
+            "description": "Result of a slot deletion operation with cleanup statistics",
             "required": [
                 "deleted",
                 "versionsDeleted",
@@ -1767,6 +1791,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "RenameSlotRequest": {
             "type": "object",
+            "description": "Request to rename an existing save slot",
             "required": [
                 "gameId",
                 "ownerId",
@@ -1785,7 +1810,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Entity ID that owns the slot"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -1821,6 +1847,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SlotResponse": {
             "type": "object",
+            "description": "Complete metadata for a save slot including version statistics",
             "required": [
                 "slotId",
                 "ownerId",
@@ -1841,14 +1868,16 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
                     "description": "Slot name"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category determining retention and cleanup behavior"
                 },
                 "maxVersions": {
                     "type": "integer",
@@ -1860,7 +1889,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType"
+                    "$ref": "#/$defs/CompressionType",
+                    "description": "Compression algorithm used for save data"
                 },
                 "versionCount": {
                     "type": "integer",
@@ -1914,7 +1944,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1992,6 +2022,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "BulkDeleteSlotsRequest": {
             "type": "object",
+            "description": "Request to delete multiple save slots in a single operation",
             "required": [
                 "gameId",
                 "slotIds"
@@ -2022,6 +2053,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "BulkDeleteSlotsResponse": {
             "type": "object",
+            "description": "Result of bulk slot deletion with total cleanup statistics",
             "required": [
                 "deletedCount",
                 "bytesFreed"
@@ -2105,6 +2137,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveRequest": {
             "type": "object",
+            "description": "Request to save game state data to a slot with optional compression and metadata",
             "required": [
                 "gameId",
                 "ownerId",
@@ -2123,7 +2156,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -2151,7 +2185,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "type": "string",
                     "format": "byte",
                     "nullable": true,
-                    "description": "Optional preview image (JPEG/WebP). Max size configurable\ n(default 256KB). Used for save slot previews in game UI.\n"
+                    "description": "Optional preview image (JPEG/WebP). Max size configurable\n(default 256KB). Used for save slot previews in game UI.\n"
                 },
                 "deviceId": {
                     "type": "string",
@@ -2192,7 +2226,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -2205,6 +2239,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -2352,6 +2387,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "LoadRequest": {
             "type": "object",
+            "description": "Request to load save data from a specific slot and version",
             "required": [
                 "gameId",
                 "ownerId",
@@ -2372,7 +2408,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -2414,6 +2451,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "LoadResponse": {
             "type": "object",
+            "description": "Response containing loaded save data with integrity verification",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -2539,6 +2577,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveDeltaRequest": {
             "type": "object",
+            "description": "Request to save incremental changes as a delta from a base version",
             "required": [
                 "gameId",
                 "ownerId",
@@ -2550,17 +2589,20 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "gameId": {
                     "type": "string",
-                    "description": "Game identifier"
+                    "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the slot to save the delta to"
                 },
                 "baseVersion": {
                     "type": "integer",
@@ -2572,25 +2614,30 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Base64-encoded delta/patch data.\nFor JSON_PATCH: Array of RFC 6902 operations\ nFor BSDIFF/XDELTA: Binary patch data\n"
                 },
                 "algorithm": {
-                    "$ref": "#/$defs/DeltaAlgorithm"
+                    "$ref": "#/$defs/DeltaAlgorithm",
+                    "description": "Delta computation algorithm to use"
                 },
                 "schemaVersion": {
                     "type": "string",
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Schema version of this save for migration tracking"
                 },
                 "displayName": {
                     "type": "string",
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Human-readable name for this delta save"
                 },
                 "deviceId": {
                     "type": "string",
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Device identifier for cross-device sync conflict detection"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
-                    }
+                    },
+                    "description": "Custom key-value metadata for this delta version"
                 }
             }
         },
@@ -2625,6 +2672,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveDeltaResponse": {
             "type": "object",
+            "description": "Result of delta save operation with size and chain information",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -2636,7 +2684,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             "properties": {
                 "slotId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Unique identifier of the save slot"
                 },
                 "versionNumber": {
                     "type": "integer",
@@ -2667,7 +2716,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "createdAt": {
                     "type": "string",
-                    "format": "date-time"
+                    "format": "date-time",
+                    "description": "When the delta version was created"
                 }
             }
         }
@@ -2738,6 +2788,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "LoadRequest": {
             "type": "object",
+            "description": "Request to load save data from a specific slot and version",
             "required": [
                 "gameId",
                 "ownerId",
@@ -2758,7 +2809,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -2800,6 +2852,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "LoadResponse": {
             "type": "object",
+            "description": "Response containing loaded save data with integrity verification",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -2925,6 +2978,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "CollapseDeltasRequest": {
             "type": "object",
+            "description": "Request to collapse a delta chain into a full snapshot",
             "required": [
                 "gameId",
                 "ownerId",
@@ -2933,17 +2987,21 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "gameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that owns the save slot"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the slot containing deltas to collapse"
                 },
                 "versionNumber": {
                     "type": "integer",
@@ -2978,6 +3036,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -3125,6 +3184,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListVersionsRequest": {
             "type": "object",
+            "description": "Request to list all versions within a save slot with pagination",
             "required": [
                 "ownerId",
                 "ownerType",
@@ -3137,7 +3197,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -3182,6 +3243,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListVersionsResponse": {
             "type": "object",
+            "description": "Paginated list of save versions within a slot",
             "required": [
                 "versions",
                 "totalCount"
@@ -3202,6 +3264,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "VersionResponse": {
             "type": "object",
+            "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
@@ -3332,6 +3395,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "PinVersionRequest": {
             "type": "object",
+            "description": "Request to pin a save version as a checkpoint to prevent cleanup",
             "required": [
                 "ownerId",
                 "ownerType",
@@ -3345,7 +3409,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -3383,6 +3448,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "VersionResponse": {
             "type": "object",
+            "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
@@ -3513,6 +3579,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "UnpinVersionRequest": {
             "type": "object",
+            "description": "Request to unpin a previously pinned save version",
             "required": [
                 "ownerId",
                 "ownerType",
@@ -3526,7 +3593,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -3559,6 +3627,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "VersionResponse": {
             "type": "object",
+            "description": "Metadata for a single save version including size and checkpoint info",
             "required": [
                 "versionNumber",
                 "contentHash",
@@ -3689,6 +3758,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "DeleteVersionRequest": {
             "type": "object",
+            "description": "Request to permanently delete a specific save version",
             "required": [
                 "ownerId",
                 "ownerType",
@@ -3702,7 +3772,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -3735,6 +3806,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "DeleteVersionResponse": {
             "type": "object",
+            "description": "Result of a version deletion operation with storage freed",
             "required": [
                 "deleted",
                 "bytesFreed"
@@ -3818,6 +3890,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "QuerySavesRequest": {
             "type": "object",
+            "description": "Advanced query for saves across multiple owners with filtering and sorting",
             "properties": {
                 "ownerId": {
                     "type": "string",
@@ -3825,10 +3898,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Filter by owner ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Filter by owner type"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Filter by save category"
                 },
                 "createdAfter": {
                     "type": "string",
@@ -3919,6 +3994,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "QuerySavesResponse": {
             "type": "object",
+            "description": "Paginated results from a save query operation",
             "required": [
                 "results",
                 "totalCount"
@@ -3939,6 +4015,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "QueryResultItem": {
             "type": "object",
+            "description": "Single result item from a save query with slot and version metadata",
             "required": [
                 "slotId",
                 "slotName",
@@ -3964,10 +4041,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Owner ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Save category of the slot"
                 },
                 "versionNumber": {
                     "type": "integer",
@@ -4120,7 +4199,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Entity ID that owns the source save"
                 },
                 "sourceOwnerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns the source save"
                 },
                 "sourceSlotName": {
                     "type": "string",
@@ -4141,7 +4221,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Entity ID that will own the copied save"
                 },
                 "targetOwnerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that will own the copied save"
                 },
                 "targetSlotName": {
                     "type": "string",
@@ -4172,7 +4253,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -4185,6 +4266,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -4332,6 +4414,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ExportSavesRequest": {
             "type": "object",
+            "description": "Request to export all saves for an owner to a downloadable archive",
             "required": [
                 "gameId",
                 "ownerId",
@@ -4348,7 +4431,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Entity ID that owns the saves to export"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns the saves to export"
                 },
                 "slotNames": {
                     "type": "array",
@@ -4380,6 +4464,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ExportSavesResponse": {
             "type": "object",
+            "description": "Response with pre-signed URL for downloading exported save archive",
             "required": [
                 "downloadUrl",
                 "expiresAt",
@@ -4470,6 +4555,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ImportSavesRequest": {
             "type": "object",
+            "description": "Request to import saves from an uploaded archive",
             "required": [
                 "archiveAssetId",
                 "targetGameId",
@@ -4492,7 +4578,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Entity ID that will own the imported saves"
                 },
                 "targetOwnerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that will own the imported saves"
                 },
                 "conflictResolution": {
                     "$ref": "#/$defs/ConflictResolution",
@@ -4531,6 +4618,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ImportSavesResponse": {
             "type": "object",
+            "description": "Result of save archive import with success and conflict counts",
             "required": [
                 "importedSlots",
                 "importedVersions",
@@ -4538,10 +4626,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "importedSlots": {
-                    "type": "integer"
+                    "type": "integer",
+                    "description": "Number of slots successfully imported"
                 },
                 "importedVersions": {
-                    "type": "integer"
+                    "type": "integer",
+                    "description": "Total number of versions imported across all slots"
                 },
                 "skippedSlots": {
                     "type": "integer",
@@ -4623,6 +4713,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "VerifyIntegrityRequest": {
             "type": "object",
+            "description": "Request to verify data integrity of a save version via hash comparison",
             "required": [
                 "gameId",
                 "ownerId",
@@ -4631,17 +4722,21 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "gameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the slot to verify"
                 },
                 "versionNumber": {
                     "type": "integer",
@@ -4671,6 +4766,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "VerifyIntegrityResponse": {
             "type": "object",
+            "description": "Result of integrity verification with hash comparison details",
             "required": [
                 "valid",
                 "versionNumber"
@@ -4767,6 +4863,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "PromoteVersionRequest": {
             "type": "object",
+            "description": "Request to promote an older save version to be the latest",
             "required": [
                 "gameId",
                 "ownerId",
@@ -4776,17 +4873,21 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "gameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the slot containing the version to promote"
                 },
                 "versionNumber": {
                     "type": "integer",
@@ -4820,6 +4921,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SaveResponse": {
             "type": "object",
+            "description": "Result of a save operation including version info and conflict detection",
             "required": [
                 "slotId",
                 "versionNumber",
@@ -4967,6 +5069,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "MigrateSaveRequest": {
             "type": "object",
+            "description": "Request to migrate a save to a newer schema version",
             "required": [
                 "ownerId",
                 "ownerType",
@@ -4980,7 +5083,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
                     "type": "string",
@@ -5022,6 +5126,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "MigrateSaveResponse": {
             "type": "object",
+            "description": "Result of a schema migration operation with version path details",
             "required": [
                 "success",
                 "fromSchemaVersion",
@@ -5128,6 +5233,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "RegisterSchemaRequest": {
             "type": "object",
+            "description": "Request to register a new save data schema with optional migration rules",
             "required": [
                 "namespace",
                 "schemaVersion",
@@ -5157,7 +5263,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "items": {
                         "$ref": "#/$defs/JsonPatchOperation"
                     },
-                    "description": "JSON Patch (RFC 6902) operations to migrate from previousVersion.\ nUses JsonPatch.Net library (MIT licensed).\n"
+                    "description": "JSON Patch (RFC 6902) operations to migrate from previousVersion.\nUses JsonPatch.Net library (MIT licensed).\n"
                 }
             }
         },
@@ -5206,6 +5312,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "SchemaResponse": {
             "type": "object",
+            "description": "Registered schema definition with version lineage information",
             "required": [
                 "namespace",
                 "schemaVersion",
@@ -5307,6 +5414,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListSchemasRequest": {
             "type": "object",
+            "description": "Request to list all registered schemas for a namespace",
             "required": [
                 "namespace"
             ],
@@ -5328,6 +5436,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "ListSchemasResponse": {
             "type": "object",
+            "description": "List of registered schemas with latest version indicator",
             "required": [
                 "schemas"
             ],
@@ -5348,6 +5457,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "SchemaResponse": {
             "type": "object",
+            "description": "Registered schema definition with version lineage information",
             "required": [
                 "namespace",
                 "schemaVersion",
@@ -5449,6 +5559,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "AdminCleanupRequest": {
             "type": "object",
+            "description": "Request for admin-triggered cleanup of expired or orphaned saves",
             "properties": {
                 "dryRun": {
                     "type": "boolean",
@@ -5460,10 +5571,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Only cleanup versions older than N days"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType"
+                    "$ref": "#/$defs/OwnerType",
+                    "description": "Filter cleanup to specific owner type"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory"
+                    "$ref": "#/$defs/SaveCategory",
+                    "description": "Filter cleanup to specific save category"
                 }
             }
         },
@@ -5486,7 +5599,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -5499,6 +5612,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "AdminCleanupResponse": {
             "type": "object",
+            "description": "Result of admin cleanup operation with storage reclamation details",
             "required": [
                 "versionsDeleted",
                 "bytesFreed",
@@ -5591,6 +5705,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "AdminStatsRequest": {
             "type": "object",
+            "description": "Request for aggregate storage statistics with optional grouping",
             "properties": {
                 "groupBy": {
                     "type": "string",
@@ -5614,6 +5729,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$defs": {
         "AdminStatsResponse": {
             "type": "object",
+            "description": "Aggregate storage statistics with optional breakdown by category",
             "required": [
                 "totalSlots",
                 "totalVersions",
@@ -5648,6 +5764,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         },
         "StatsBreakdown": {
             "type": "object",
+            "description": "Storage statistics for a single category in the breakdown",
             "required": [
                 "key",
                 "slots",

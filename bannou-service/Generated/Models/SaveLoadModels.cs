@@ -197,6 +197,9 @@ public partial class CreateSlotRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -213,6 +216,9 @@ public partial class CreateSlotRequest
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")]
     public string SlotName { get; set; } = default!;
 
+    /// <summary>
+    /// Save category determining retention and cleanup behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -233,6 +239,9 @@ public partial class CreateSlotRequest
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int RetentionDays { get; set; } = default!;
 
+    /// <summary>
+    /// Compression algorithm to use for save data
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CompressionType CompressionType { get; set; } = default!;
@@ -264,6 +273,9 @@ public partial class CreateSlotRequest
 
 }
 
+/// <summary>
+/// Request to retrieve metadata for a specific save slot
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetSlotRequest
 {
@@ -286,6 +298,9 @@ public partial class GetSlotRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -314,6 +329,9 @@ public partial class GetSlotRequest
 
 }
 
+/// <summary>
+/// Request to list all save slots belonging to a specific owner
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSlotsRequest
 {
@@ -336,12 +354,18 @@ public partial class ListSlotsRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns the save slots to list
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Optional filter by save category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SaveCategory Category { get; set; } = default!;
@@ -366,6 +390,9 @@ public partial class ListSlotsRequest
 
 }
 
+/// <summary>
+/// Request to permanently delete a save slot and all its versions
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteSlotRequest
 {
@@ -388,6 +415,9 @@ public partial class DeleteSlotRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -416,6 +446,9 @@ public partial class DeleteSlotRequest
 
 }
 
+/// <summary>
+/// Complete metadata for a save slot including version statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SlotResponse
 {
@@ -436,6 +469,9 @@ public partial class SlotResponse
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -450,6 +486,9 @@ public partial class SlotResponse
     [System.Text.Json.Serialization.JsonRequired]
     public string SlotName { get; set; } = default!;
 
+    /// <summary>
+    /// Save category determining retention and cleanup behavior
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -468,6 +507,9 @@ public partial class SlotResponse
     [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
     public int? RetentionDays { get; set; } = default!;
 
+    /// <summary>
+    /// Compression algorithm used for save data
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CompressionType CompressionType { get; set; } = default!;
@@ -524,6 +566,9 @@ public partial class SlotResponse
 
 }
 
+/// <summary>
+/// Response containing a list of save slots for an owner
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSlotsResponse
 {
@@ -556,6 +601,9 @@ public partial class ListSlotsResponse
 
 }
 
+/// <summary>
+/// Result of a slot deletion operation with cleanup statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteSlotResponse
 {
@@ -592,6 +640,9 @@ public partial class DeleteSlotResponse
 
 }
 
+/// <summary>
+/// Request to save game state data to a slot with optional compression and metadata
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveRequest
 {
@@ -612,6 +663,9 @@ public partial class SaveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -699,6 +753,9 @@ public partial class SaveRequest
 
 }
 
+/// <summary>
+/// Result of a save operation including version info and conflict detection
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveResponse
 {
@@ -817,6 +874,9 @@ public partial class SaveResponse
 
 }
 
+/// <summary>
+/// Request to load save data from a specific slot and version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoadRequest
 {
@@ -839,6 +899,9 @@ public partial class LoadRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -885,6 +948,9 @@ public partial class LoadRequest
 
 }
 
+/// <summary>
+/// Response containing loaded save data with integrity verification
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoadResponse
 {
@@ -969,6 +1035,9 @@ public partial class LoadResponse
 
 }
 
+/// <summary>
+/// Request to list all versions within a save slot with pagination
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListVersionsRequest
 {
@@ -981,6 +1050,9 @@ public partial class ListVersionsRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1028,6 +1100,9 @@ public partial class ListVersionsRequest
 
 }
 
+/// <summary>
+/// Paginated list of save versions within a slot
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListVersionsResponse
 {
@@ -1060,6 +1135,9 @@ public partial class ListVersionsResponse
 
 }
 
+/// <summary>
+/// Metadata for a single save version including size and checkpoint info
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VersionResponse
 {
@@ -1148,6 +1226,9 @@ public partial class VersionResponse
 
 }
 
+/// <summary>
+/// Request to pin a save version as a checkpoint to prevent cleanup
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PinVersionRequest
 {
@@ -1160,6 +1241,9 @@ public partial class PinVersionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1201,6 +1285,9 @@ public partial class PinVersionRequest
 
 }
 
+/// <summary>
+/// Request to unpin a previously pinned save version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UnpinVersionRequest
 {
@@ -1213,6 +1300,9 @@ public partial class UnpinVersionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1247,6 +1337,9 @@ public partial class UnpinVersionRequest
 
 }
 
+/// <summary>
+/// Request to permanently delete a specific save version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteVersionRequest
 {
@@ -1259,6 +1352,9 @@ public partial class DeleteVersionRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1293,6 +1389,9 @@ public partial class DeleteVersionRequest
 
 }
 
+/// <summary>
+/// Result of a version deletion operation with storage freed
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteVersionResponse
 {
@@ -1323,6 +1422,9 @@ public partial class DeleteVersionResponse
 
 }
 
+/// <summary>
+/// Advanced query for saves across multiple owners with filtering and sorting
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QuerySavesRequest
 {
@@ -1333,10 +1435,16 @@ public partial class QuerySavesRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by owner type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Filter by save category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SaveCategory Category { get; set; } = default!;
@@ -1412,6 +1520,9 @@ public partial class QuerySavesRequest
 
 }
 
+/// <summary>
+/// Paginated results from a save query operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QuerySavesResponse
 {
@@ -1444,6 +1555,9 @@ public partial class QuerySavesResponse
 
 }
 
+/// <summary>
+/// Single result item from a save query with slot and version metadata
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryResultItem
 {
@@ -1472,12 +1586,18 @@ public partial class QueryResultItem
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Save category of the slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1548,6 +1668,9 @@ public partial class QueryResultItem
 
 }
 
+/// <summary>
+/// Request to migrate a save to a newer schema version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MigrateSaveRequest
 {
@@ -1560,6 +1683,9 @@ public partial class MigrateSaveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -1608,6 +1734,9 @@ public partial class MigrateSaveRequest
 
 }
 
+/// <summary>
+/// Result of a schema migration operation with version path details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MigrateSaveResponse
 {
@@ -1666,6 +1795,9 @@ public partial class MigrateSaveResponse
 
 }
 
+/// <summary>
+/// Request to register a new save data schema with optional migration rules
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegisterSchemaRequest
 {
@@ -1722,6 +1854,9 @@ public partial class RegisterSchemaRequest
 
 }
 
+/// <summary>
+/// Registered schema definition with version lineage information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SchemaResponse
 {
@@ -1782,6 +1917,9 @@ public partial class SchemaResponse
 
 }
 
+/// <summary>
+/// Request to list all registered schemas for a namespace
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSchemasRequest
 {
@@ -1808,6 +1946,9 @@ public partial class ListSchemasRequest
 
 }
 
+/// <summary>
+/// List of registered schemas with latest version indicator
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSchemasResponse
 {
@@ -1840,6 +1981,9 @@ public partial class ListSchemasResponse
 
 }
 
+/// <summary>
+/// Request for admin-triggered cleanup of expired or orphaned saves
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminCleanupRequest
 {
@@ -1856,10 +2000,16 @@ public partial class AdminCleanupRequest
     [System.Text.Json.Serialization.JsonPropertyName("olderThanDays")]
     public int OlderThanDays { get; set; } = default!;
 
+    /// <summary>
+    /// Filter cleanup to specific owner type
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Filter cleanup to specific save category
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SaveCategory Category { get; set; } = default!;
@@ -1878,6 +2028,9 @@ public partial class AdminCleanupRequest
 
 }
 
+/// <summary>
+/// Result of admin cleanup operation with storage reclamation details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminCleanupResponse
 {
@@ -1920,6 +2073,9 @@ public partial class AdminCleanupResponse
 
 }
 
+/// <summary>
+/// Request for aggregate storage statistics with optional grouping
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminStatsRequest
 {
@@ -1945,6 +2101,9 @@ public partial class AdminStatsRequest
 
 }
 
+/// <summary>
+/// Aggregate storage statistics with optional breakdown by category
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdminStatsResponse
 {
@@ -1993,6 +2152,9 @@ public partial class AdminStatsResponse
 
 }
 
+/// <summary>
+/// Storage statistics for a single category in the breakdown
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StatsBreakdown
 {
@@ -2037,6 +2199,9 @@ public partial class StatsBreakdown
 
 }
 
+/// <summary>
+/// Request to rename an existing save slot
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RenameSlotRequest
 {
@@ -2057,6 +2222,9 @@ public partial class RenameSlotRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2095,6 +2263,9 @@ public partial class RenameSlotRequest
 
 }
 
+/// <summary>
+/// Request to delete multiple save slots in a single operation
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkDeleteSlotsRequest
 {
@@ -2129,6 +2300,9 @@ public partial class BulkDeleteSlotsRequest
 
 }
 
+/// <summary>
+/// Result of bulk slot deletion with total cleanup statistics
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BulkDeleteSlotsResponse
 {
@@ -2179,6 +2353,9 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid SourceOwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns the source save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2215,6 +2392,9 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetOwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that will own the copied save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2250,6 +2430,9 @@ public partial class CopySaveRequest
 
 }
 
+/// <summary>
+/// Request to export all saves for an owner to a downloadable archive
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ExportSavesRequest
 {
@@ -2270,6 +2453,9 @@ public partial class ExportSavesRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns the saves to export
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2296,6 +2482,9 @@ public partial class ExportSavesRequest
 
 }
 
+/// <summary>
+/// Response with pre-signed URL for downloading exported save archive
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ExportSavesResponse
 {
@@ -2336,6 +2525,9 @@ public partial class ExportSavesResponse
 
 }
 
+/// <summary>
+/// Request to import saves from an uploaded archive
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportSavesRequest
 {
@@ -2364,6 +2556,9 @@ public partial class ImportSavesRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid TargetOwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that will own the imported saves
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2391,13 +2586,22 @@ public partial class ImportSavesRequest
 
 }
 
+/// <summary>
+/// Result of save archive import with success and conflict counts
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ImportSavesResponse
 {
 
+    /// <summary>
+    /// Number of slots successfully imported
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("importedSlots")]
     public int ImportedSlots { get; set; } = default!;
 
+    /// <summary>
+    /// Total number of versions imported across all slots
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("importedVersions")]
     public int ImportedVersions { get; set; } = default!;
 
@@ -2427,26 +2631,41 @@ public partial class ImportSavesResponse
 
 }
 
+/// <summary>
+/// Request to verify data integrity of a save version via hash comparison
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VerifyIntegrityRequest
 {
 
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the owning entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the slot to verify
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2472,6 +2691,9 @@ public partial class VerifyIntegrityRequest
 
 }
 
+/// <summary>
+/// Result of integrity verification with hash comparison details
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class VerifyIntegrityResponse
 {
@@ -2520,26 +2742,41 @@ public partial class VerifyIntegrityResponse
 
 }
 
+/// <summary>
+/// Request to promote an older save version to be the latest
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PromoteVersionRequest
 {
 
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the owning entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the slot containing the version to promote
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2595,29 +2832,41 @@ public enum DeltaAlgorithm
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Request to save incremental changes as a delta from a base version
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveDeltaRequest
 {
 
     /// <summary>
-    /// Game identifier
+    /// Game identifier for namespace isolation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the owning entity
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the slot to save the delta to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2640,19 +2889,34 @@ public partial class SaveDeltaRequest
     [System.Text.Json.Serialization.JsonRequired]
     public byte[] Delta { get; set; } = default!;
 
+    /// <summary>
+    /// Delta computation algorithm to use
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public DeltaAlgorithm Algorithm { get; set; } = default!;
 
+    /// <summary>
+    /// Schema version of this save for migration tracking
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
     public string? SchemaVersion { get; set; } = default!;
 
+    /// <summary>
+    /// Human-readable name for this delta save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Device identifier for cross-device sync conflict detection
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceId")]
     public string? DeviceId { get; set; } = default!;
 
+    /// <summary>
+    /// Custom key-value metadata for this delta version
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
 
@@ -2670,10 +2934,16 @@ public partial class SaveDeltaRequest
 
 }
 
+/// <summary>
+/// Result of delta save operation with size and chain information
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SaveDeltaResponse
 {
 
+    /// <summary>
+    /// Unique identifier of the save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2715,6 +2985,9 @@ public partial class SaveDeltaResponse
     [System.Text.Json.Serialization.JsonPropertyName("compressionSavings")]
     public double CompressionSavings { get; set; } = default!;
 
+    /// <summary>
+    /// When the delta version was created
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2734,26 +3007,41 @@ public partial class SaveDeltaResponse
 
 }
 
+/// <summary>
+/// Request to collapse a delta chain into a full snapshot
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollapseDeltasRequest
 {
 
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that owns the save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid OwnerId { get; set; } = default!;
 
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the slot containing deltas to collapse
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
