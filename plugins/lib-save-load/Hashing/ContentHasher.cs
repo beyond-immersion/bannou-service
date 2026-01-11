@@ -14,12 +14,9 @@ public static class ContentHasher
     /// <returns>The hash as a lowercase hex string.</returns>
     public static string ComputeHash(byte[] data)
     {
-        if (data == null || data.Length == 0)
-        {
-            return ComputeHash(Array.Empty<byte>());
-        }
-
-        var hashBytes = SHA256.HashData(data);
+        // Handle null by treating it as empty array
+        var dataToHash = data ?? Array.Empty<byte>();
+        var hashBytes = SHA256.HashData(dataToHash);
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 

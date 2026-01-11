@@ -2,6 +2,7 @@ using Godot;
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using BeyondImmersion.Bannou.SceneComposer.Math;
+using BeyondImmersion.Bannou.Godot.SceneComposer.Math;
 using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
@@ -397,7 +398,7 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
 
             var worldAabb = TransformAABB(aabb.Value, entity.GlobalTransform);
 
-            if (RayIntersectsAabb(origin, direction, worldAabb, out var hitDistance))
+            if (RayMath.RayIntersectsAabb(origin, direction, worldAabb, out var hitDistance))
             {
                 var hitPoint = origin + direction * hitDistance;
                 results.Add(new PickResult(
@@ -816,7 +817,7 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
 
             var worldAabb = TransformAABB(aabb.Value, entity.GlobalTransform);
 
-            if (RayIntersectsAabb(origin, direction, worldAabb, out var hitDistance))
+            if (RayMath.RayIntersectsAabb(origin, direction, worldAabb, out var hitDistance))
             {
                 if (hitDistance < closestDistance)
                 {
@@ -827,72 +828,6 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
         }
 
         return closestEntity;
-    }
-
-    /// <summary>
-    /// Test if a ray intersects an AABB using slab method.
-    /// </summary>
-    /// <param name="origin">Ray origin.</param>
-    /// <param name="direction">Ray direction (normalized).</param>
-    /// <param name="aabb">Axis-aligned bounding box.</param>
-    /// <param name="distance">Distance to hit point if intersection occurs.</param>
-    /// <returns>True if ray intersects AABB.</returns>
-    private static bool RayIntersectsAabb(GodotVec3 origin, GodotVec3 direction, Aabb aabb, out float distance)
-    {
-        distance = 0;
-
-        var min = aabb.Position;
-        var max = aabb.End;
-
-        float tMin = float.NegativeInfinity;
-        float tMax = float.PositiveInfinity;
-
-        // X slab
-        if (Mathf.Abs(direction.X) > float.Epsilon)
-        {
-            var tx1 = (min.X - origin.X) / direction.X;
-            var tx2 = (max.X - origin.X) / direction.X;
-            tMin = Mathf.Max(tMin, Mathf.Min(tx1, tx2));
-            tMax = Mathf.Min(tMax, Mathf.Max(tx1, tx2));
-        }
-        else if (origin.X < min.X || origin.X > max.X)
-        {
-            return false;
-        }
-
-        // Y slab
-        if (Mathf.Abs(direction.Y) > float.Epsilon)
-        {
-            var ty1 = (min.Y - origin.Y) / direction.Y;
-            var ty2 = (max.Y - origin.Y) / direction.Y;
-            tMin = Mathf.Max(tMin, Mathf.Min(ty1, ty2));
-            tMax = Mathf.Min(tMax, Mathf.Max(ty1, ty2));
-        }
-        else if (origin.Y < min.Y || origin.Y > max.Y)
-        {
-            return false;
-        }
-
-        // Z slab
-        if (Mathf.Abs(direction.Z) > float.Epsilon)
-        {
-            var tz1 = (min.Z - origin.Z) / direction.Z;
-            var tz2 = (max.Z - origin.Z) / direction.Z;
-            tMin = Mathf.Max(tMin, Mathf.Min(tz1, tz2));
-            tMax = Mathf.Min(tMax, Mathf.Max(tz1, tz2));
-        }
-        else if (origin.Z < min.Z || origin.Z > max.Z)
-        {
-            return false;
-        }
-
-        if (tMax < tMin || tMax < 0)
-        {
-            return false;
-        }
-
-        distance = tMin >= 0 ? tMin : tMax;
-        return true;
     }
 
     /// <summary>
