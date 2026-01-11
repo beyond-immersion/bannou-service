@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
+using BeyondImmersion.BannouService.SaveLoad.Migration;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -1948,12 +1949,12 @@ public partial class SaveLoadService : ISaveLoadService
                 QuerySavesRequestSortBy.Created_at => body.SortOrder == QuerySavesRequestSortOrder.Asc
                     ? results.OrderBy(r => r.CreatedAt).ToList()
                     : results.OrderByDescending(r => r.CreatedAt).ToList(),
-                QuerySavesRequestSortBy.Size_bytes => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                QuerySavesRequestSortBy.Size => body.SortOrder == QuerySavesRequestSortOrder.Asc
                     ? results.OrderBy(r => r.SizeBytes).ToList()
                     : results.OrderByDescending(r => r.SizeBytes).ToList(),
-                QuerySavesRequestSortBy.Slot_name => body.SortOrder == QuerySavesRequestSortOrder.Asc
-                    ? results.OrderBy(r => r.SlotName).ToList()
-                    : results.OrderByDescending(r => r.SlotName).ToList(),
+                QuerySavesRequestSortBy.Version_number => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                    ? results.OrderBy(r => r.VersionNumber).ToList()
+                    : results.OrderByDescending(r => r.VersionNumber).ToList(),
                 _ => results.OrderByDescending(r => r.CreatedAt).ToList()
             };
 
@@ -2285,8 +2286,8 @@ public partial class SaveLoadService : ISaveLoadService
                 Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
             };
 
-            var (uploadStatus, uploadResponse) = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
-            if (uploadStatus != StatusCodes.OK || uploadResponse?.UploadUrl == null)
+            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+            if (uploadResponse?.UploadUrl == null)
             {
                 _logger.LogError("Failed to request upload URL for export archive");
                 return (StatusCodes.InternalServerError, null);
@@ -2309,9 +2310,9 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 UploadId = uploadResponse.UploadId
             };
-            var (completeStatus, assetMetadata) = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
 
-            if (completeStatus != StatusCodes.OK || assetMetadata == null)
+            if (assetMetadata == null)
             {
                 _logger.LogError("Failed to complete export archive upload");
                 return (StatusCodes.InternalServerError, null);
@@ -2873,177 +2874,6 @@ public partial class SaveLoadService : ISaveLoadService
     }
 
     /// <summary>
-    /// Implementation of MigrateSave operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, MigrateSaveResponse?)> MigrateSaveAsync(MigrateSaveRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing MigrateSave operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method MigrateSave not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing MigrateSave operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "MigrateSave",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/migrate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of RegisterSchema operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, SchemaResponse?)> RegisterSchemaAsync(RegisterSchemaRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing RegisterSchema operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method RegisterSchema not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing RegisterSchema operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "RegisterSchema",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/schema/register",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListSchemas operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListSchemasResponse?)> ListSchemasAsync(ListSchemasRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListSchemas operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListSchemas not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListSchemas operation");
-            await _messageBus.TryPublishErrorAsync(
-                "save-load",
-                "ListSchemas",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/save-load/schema/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
     /// Implementation of AdminCleanup operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
@@ -3503,6 +3333,408 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         return result;
+    }
+
+    #endregion
+
+    #region Schema Migration Operations
+
+    /// <summary>
+    /// Implementation of RegisterSchema operation.
+    /// Registers a schema version with optional migration patch.
+    /// </summary>
+    public async Task<(StatusCodes, SchemaResponse?)> RegisterSchemaAsync(RegisterSchemaRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug(
+            "Registering schema {Namespace}:{Version}",
+            body.Namespace, body.SchemaVersion);
+
+        try
+        {
+            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+
+            // Check if schema already exists
+            var schemaKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.SchemaVersion);
+            var existingSchema = await schemaStore.GetAsync(schemaKey, cancellationToken);
+            if (existingSchema != null)
+            {
+                _logger.LogWarning(
+                    "Schema {Namespace}:{Version} already exists",
+                    body.Namespace, body.SchemaVersion);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Validate previous version exists if specified
+            if (!string.IsNullOrEmpty(body.PreviousVersion))
+            {
+                var previousKey = SaveSchemaDefinition.GetStateKey(body.Namespace, body.PreviousVersion);
+                var previousSchema = await schemaStore.GetAsync(previousKey, cancellationToken);
+                if (previousSchema == null)
+                {
+                    _logger.LogWarning(
+                        "Previous schema version {Version} not found",
+                        body.PreviousVersion);
+                    return (StatusCodes.BadRequest, null);
+                }
+            }
+
+            // Serialize migration patch if provided
+            string? migrationPatchJson = null;
+            if (body.MigrationPatch != null && body.MigrationPatch.Count > 0)
+            {
+                migrationPatchJson = System.Text.Json.JsonSerializer.Serialize(body.MigrationPatch);
+            }
+
+            // Create schema definition
+            var schema = new SaveSchemaDefinition
+            {
+                Namespace = body.Namespace,
+                SchemaVersion = body.SchemaVersion,
+                SchemaJson = System.Text.Json.JsonSerializer.Serialize(body.Schema),
+                PreviousVersion = body.PreviousVersion,
+                MigrationPatchJson = migrationPatchJson,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            await schemaStore.SaveAsync(schemaKey, schema, cancellationToken);
+
+            _logger.LogInformation(
+                "Registered schema {Namespace}:{Version}",
+                body.Namespace, body.SchemaVersion);
+
+            return (StatusCodes.OK, new SchemaResponse
+            {
+                Namespace = schema.Namespace,
+                SchemaVersion = schema.SchemaVersion,
+                Schema = body.Schema,
+                PreviousVersion = schema.PreviousVersion,
+                HasMigration = schema.HasMigration,
+                CreatedAt = schema.CreatedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing RegisterSchema operation");
+            await _messageBus.TryPublishErrorAsync(
+                "save-load",
+                "RegisterSchema",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/save-load/schema/register",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of ListSchemas operation.
+    /// Lists all schemas registered for a namespace.
+    /// </summary>
+    public async Task<(StatusCodes, ListSchemasResponse?)> ListSchemasAsync(ListSchemasRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Listing schemas for namespace {Namespace}", body.Namespace);
+
+        try
+        {
+            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+
+            // Query all schemas in the namespace
+            var schemas = await schemaStore.QueryAsync(
+                $"$.Namespace == \"{body.Namespace}\"",
+                cancellationToken);
+
+            var schemaList = schemas.ToList();
+
+            // Find latest version (the one with no successor)
+            string? latestVersion = null;
+            var versionSet = new HashSet<string>(schemaList.Select(s => s.SchemaVersion));
+            var predecessorSet = new HashSet<string>(schemaList.Where(s => !string.IsNullOrEmpty(s.PreviousVersion)).Select(s => s.PreviousVersion!));
+
+            foreach (var version in versionSet)
+            {
+                if (!predecessorSet.Contains(version))
+                {
+                    latestVersion = version;
+                    break;
+                }
+            }
+
+            // If no clear successor chain, fall back to most recently created
+            if (latestVersion == null && schemaList.Count > 0)
+            {
+                latestVersion = schemaList.OrderByDescending(s => s.CreatedAt).First().SchemaVersion;
+            }
+
+            var response = new ListSchemasResponse
+            {
+                Schemas = schemaList.Select(s => new SchemaResponse
+                {
+                    Namespace = s.Namespace,
+                    SchemaVersion = s.SchemaVersion,
+                    Schema = !string.IsNullOrEmpty(s.SchemaJson)
+                        ? System.Text.Json.JsonSerializer.Deserialize<object>(s.SchemaJson)
+                        : new object(),
+                    PreviousVersion = s.PreviousVersion,
+                    HasMigration = s.HasMigration,
+                    CreatedAt = s.CreatedAt
+                }).ToList(),
+                LatestVersion = latestVersion
+            };
+
+            _logger.LogInformation(
+                "Listed {Count} schemas for namespace {Namespace}",
+                schemaList.Count, body.Namespace);
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing ListSchemas operation");
+            await _messageBus.TryPublishErrorAsync(
+                "save-load",
+                "ListSchemas",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/save-load/schemas",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of MigrateSave operation.
+    /// Migrates a save from its current schema version to a target version.
+    /// </summary>
+    public async Task<(StatusCodes, MigrateSaveResponse?)> MigrateSaveAsync(MigrateSaveRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug(
+            "Migrating save {SlotName} to schema version {TargetVersion}",
+            body.SlotName, body.TargetSchemaVersion);
+
+        try
+        {
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var schemaStore = _stateStoreFactory.GetStore<SaveSchemaDefinition>(_configuration.SchemaStoreStoreName);
+
+            // Find source slot
+            var ownerType = body.OwnerType.ToString();
+            var ownerId = body.OwnerId.ToString();
+            var slotKey = SaveSlotMetadata.GetStateKey(_configuration.DefaultGameId, ownerType, ownerId, body.SlotName);
+            var slot = await slotStore.GetAsync(slotKey, cancellationToken);
+
+            if (slot == null)
+            {
+                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get source version
+            var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
+            if (versionNumber == 0)
+            {
+                _logger.LogWarning("No versions found for slot {SlotId}", slot.SlotId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
+            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+
+            if (version == null)
+            {
+                _logger.LogWarning("Version {Version} not found for slot {SlotId}", versionNumber, slot.SlotId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if migration is needed
+            var currentSchemaVersion = version.SchemaVersion ?? "1.0.0";
+            if (currentSchemaVersion == body.TargetSchemaVersion)
+            {
+                _logger.LogInformation(
+                    "Save is already at target schema version {Version}",
+                    body.TargetSchemaVersion);
+
+                return (StatusCodes.OK, new MigrateSaveResponse
+                {
+                    Success = true,
+                    FromSchemaVersion = currentSchemaVersion,
+                    ToSchemaVersion = body.TargetSchemaVersion,
+                    NewVersionNumber = null,
+                    MigrationPath = new List<string> { currentSchemaVersion },
+                    Warnings = new List<string>()
+                });
+            }
+
+            // Create migrator and find migration path
+            var migrator = new SchemaMigrator(_logger, schemaStore, _configuration.MaxMigrationSteps);
+            var migrationPath = await migrator.FindMigrationPathAsync(
+                slot.GameId,
+                currentSchemaVersion,
+                body.TargetSchemaVersion,
+                cancellationToken);
+
+            if (migrationPath == null)
+            {
+                _logger.LogWarning(
+                    "No migration path found from {From} to {To}",
+                    currentSchemaVersion, body.TargetSchemaVersion);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Load the save data
+            var saveData = await LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+            if (saveData == null)
+            {
+                _logger.LogError("Failed to load save data for migration");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Apply migration
+            var migrationResult = await migrator.ApplyMigrationPathAsync(
+                slot.GameId,
+                saveData,
+                migrationPath,
+                cancellationToken);
+
+            if (migrationResult == null)
+            {
+                _logger.LogError("Migration failed");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // If dry run, return without saving
+            if (body.DryRun)
+            {
+                return (StatusCodes.OK, new MigrateSaveResponse
+                {
+                    Success = true,
+                    FromSchemaVersion = currentSchemaVersion,
+                    ToSchemaVersion = body.TargetSchemaVersion,
+                    NewVersionNumber = null,
+                    MigrationPath = migrationPath,
+                    Warnings = migrationResult.Warnings
+                });
+            }
+
+            // Save the migrated data as a new version
+            var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
+
+            // Compress data
+            var compressionType = Enum.TryParse<CompressionType>(slot.CompressionType, out var ct) ? ct : CompressionType.GZIP;
+            var compressedData = Compression.CompressionHelper.Compress(migrationResult.Data, compressionType);
+
+            // Upload to storage
+            var uploadRequest = new UploadRequest
+            {
+                Owner = "save-load",
+                Filename = $"{slot.SlotId}_{newVersionNumber}.save",
+                ContentType = "application/octet-stream",
+                Size = compressedData.Length,
+                Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
+            };
+
+            var uploadResponse = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+            if (uploadResponse?.UploadUrl == null)
+            {
+                _logger.LogError("Failed to request upload URL for migrated save");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            using var httpClient = new HttpClient();
+            var uploadContent = new ByteArrayContent(compressedData);
+            uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
+
+            if (!uploadResult.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to upload migrated save: {Status}", uploadResult.StatusCode);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            var completeRequest = new CompleteUploadRequest { UploadId = uploadResponse.UploadId };
+            var assetMetadata = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+
+            if (assetMetadata == null)
+            {
+                _logger.LogError("Failed to complete upload for migrated save");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Create new version manifest
+            var contentHash = Hashing.ContentHasher.ComputeHash(migrationResult.Data);
+            var newVersion = new SaveVersionManifest
+            {
+                SlotId = slot.SlotId,
+                VersionNumber = newVersionNumber,
+                ContentHash = contentHash,
+                SizeBytes = migrationResult.Data.Length,
+                CompressedSizeBytes = compressedData.Length,
+                CompressionType = compressionType.ToString(),
+                SchemaVersion = body.TargetSchemaVersion,
+                CheckpointName = $"Migrated from {currentSchemaVersion}",
+                AssetId = assetMetadata.AssetId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : null
+            };
+
+            var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, newVersionNumber);
+            await versionStore.SaveAsync(newVersionKey, newVersion, cancellationToken);
+
+            // Update slot's latest version
+            slot.LatestVersion = newVersionNumber;
+            slot.UpdatedAt = DateTimeOffset.UtcNow;
+            await slotStore.SaveAsync(slotKey, slot, cancellationToken);
+
+            // Publish event
+            await _messageBus.PublishAsync("save.migrated", new SaveMigratedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SlotId = Guid.Parse(slot.SlotId),
+                SlotName = slot.SlotName,
+                VersionNumber = newVersionNumber,
+                OwnerId = Guid.Parse(slot.OwnerId),
+                OwnerType = slot.OwnerType,
+                FromSchemaVersion = currentSchemaVersion,
+                ToSchemaVersion = body.TargetSchemaVersion,
+                MigrationSteps = migrationPath.Count - 1
+            });
+
+            _logger.LogInformation(
+                "Migrated save {SlotName} from {From} to {To}, new version {Version}",
+                body.SlotName, currentSchemaVersion, body.TargetSchemaVersion, newVersionNumber);
+
+            return (StatusCodes.OK, new MigrateSaveResponse
+            {
+                Success = true,
+                FromSchemaVersion = currentSchemaVersion,
+                ToSchemaVersion = body.TargetSchemaVersion,
+                NewVersionNumber = newVersionNumber,
+                MigrationPath = migrationPath,
+                Warnings = migrationResult.Warnings
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing MigrateSave operation");
+            await _messageBus.TryPublishErrorAsync(
+                "save-load",
+                "MigrateSave",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/save-load/migrate",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
     #endregion
