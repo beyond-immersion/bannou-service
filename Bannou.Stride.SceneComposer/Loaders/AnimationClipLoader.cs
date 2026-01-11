@@ -132,7 +132,7 @@ public sealed class AnimationClipLoader : IStrideAssetLoader<AnimationClip>
 
         // CHNK magic: 0x43484E4B ("CHNK" in big-endian, reads as "KNHC" in memory)
         bool isChunkFormat = firstBytes[0] == 0x4B && firstBytes[1] == 0x4E &&
-                             firstBytes[2] == 0x48 && firstBytes[3] == 0x43;
+                            firstBytes[2] == 0x48 && firstBytes[3] == 0x43;
 
         if (!isChunkFormat)
         {

@@ -187,9 +187,9 @@ public partial class SaveLoadService : ISaveLoadService
             // Query with LINQ expression
             var slots = await queryableStore.QueryAsync(
                 s => s.GameId == gameId &&
-                     s.OwnerId == ownerId &&
-                     s.OwnerType == ownerType &&
-                     (string.IsNullOrEmpty(category) || s.Category == category),
+                    s.OwnerId == ownerId &&
+                    s.OwnerType == ownerType &&
+                    (string.IsNullOrEmpty(category) || s.Category == category),
                 cancellationToken);
 
             // Sort by UpdatedAt descending (most recent first)
@@ -1514,8 +1514,8 @@ public partial class SaveLoadService : ISaveLoadService
             var ownerTypeStr = body.OwnerType.ToString();
             var matchingSlots = await slotQueryStore.QueryAsync(
                 s => s.OwnerId == ownerIdStr &&
-                     s.OwnerType == ownerTypeStr &&
-                     s.SlotName == body.SlotName,
+                    s.OwnerType == ownerTypeStr &&
+                    s.SlotName == body.SlotName,
                 cancellationToken);
 
             var slot = matchingSlots.FirstOrDefault();
@@ -2927,8 +2927,8 @@ public partial class SaveLoadService : ISaveLoadService
                         {
                             try
                             {
-                                await _assetClient.DeleteAsync(
-                                    new DeleteRequest { AssetId = version.AssetId },
+                                await _assetClient.DeleteAssetAsync(
+                                    new DeleteAssetRequest { AssetId = version.AssetId },
                                     cancellationToken);
                             }
                             catch (Exception ex)
@@ -3211,8 +3211,8 @@ public partial class SaveLoadService : ISaveLoadService
         var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
         var matchingSlots = await slotQueryStore.QueryAsync(
             s => s.OwnerId == ownerId &&
-                 s.OwnerType == ownerType &&
-                 s.SlotName == slotName,
+                s.OwnerType == ownerType &&
+                s.SlotName == slotName,
             cancellationToken);
 
         return matchingSlots.FirstOrDefault();

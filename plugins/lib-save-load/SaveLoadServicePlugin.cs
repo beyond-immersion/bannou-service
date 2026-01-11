@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.SaveLoad.Processing;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +32,10 @@ public class SaveLoadServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register SaveLoadServiceConfiguration here
 
-        // Add any service-specific dependencies
+        // Register background workers
+        services.AddHostedService<SaveUploadWorker>();
+        services.AddHostedService<CleanupService>();
+
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
         Logger?.LogDebug("Service dependencies configured");

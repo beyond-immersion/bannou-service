@@ -12849,6 +12849,106 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent">
+            <summary>
+            Published when a version is unpinned
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.VersionNumber">
+            <summary>
+            Unpinned version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.PreviousCheckpointName">
+            <summary>
+            Previous checkpoint name before unpinning
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionUnpinnedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.VersionDeletedEvent">
+            <summary>
+            Published when a version is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.SlotId">
+            <summary>
+            Slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.SlotName">
+            <summary>
+            Slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.VersionNumber">
+            <summary>
+            Deleted version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.BytesFreed">
+            <summary>
+            Storage freed in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.OwnerType">
+            <summary>
+            Owner entity type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.VersionDeletedEvent.AdditionalProperties">
+            <summary>
+            Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.CleanupCompletedEvent">
             <summary>
             Published when automatic cleanup completes
@@ -33299,6 +33399,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.OwnerId">
             <summary>
             ID of the owning entity
@@ -33314,6 +33419,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.OwnerId">
             <summary>
             ID of the owning entity
@@ -33327,6 +33437,11 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.OwnerId">
@@ -33586,6 +33701,11 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.OwnerId">
