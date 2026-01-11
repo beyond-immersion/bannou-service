@@ -1061,16 +1061,20 @@ public partial class SaveLoadService : ISaveLoadService
                     chainLength, _configuration.MaxDeltaChainLength);
             }
 
-            // Check delta size threshold
+            // Check delta size threshold (only for base saves large enough for threshold to be meaningful)
             var deltaSize = body.Delta.Length;
             var estimatedFullSize = baseVersion.SizeBytes;
-            var deltaPercent = (double)deltaSize / estimatedFullSize * 100;
-            if (deltaPercent > _configuration.DeltaSizeThresholdPercent)
+            const int MinBaseSizeForThreshold = 1024; // 1KB minimum before applying threshold
+            if (estimatedFullSize >= MinBaseSizeForThreshold)
             {
-                _logger.LogWarning(
-                    "Delta size ({DeltaSize}) is {Percent:F1}% of full save, exceeds threshold of {Threshold}%",
-                    deltaSize, deltaPercent, _configuration.DeltaSizeThresholdPercent);
-                return (StatusCodes.BadRequest, null);
+                var deltaPercent = (double)deltaSize / estimatedFullSize * 100;
+                if (deltaPercent > _configuration.DeltaSizeThresholdPercent)
+                {
+                    _logger.LogWarning(
+                        "Delta size ({DeltaSize}) is {Percent:F1}% of full save, exceeds threshold of {Threshold}%",
+                        deltaSize, deltaPercent, _configuration.DeltaSizeThresholdPercent);
+                    return (StatusCodes.BadRequest, null);
+                }
             }
 
             // Create new version number
