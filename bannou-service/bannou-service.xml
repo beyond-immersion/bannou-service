@@ -46776,6 +46776,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.LoadRequest.OwnerId">
             <summary>
             ID of the owning entity
