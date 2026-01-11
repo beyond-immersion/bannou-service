@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
 using BeyondImmersion.BannouService.SaveLoad.Models;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -1000,7 +1001,7 @@ public partial class SaveLoadService : ISaveLoadService
             if (baseVersion == null)
             {
                 _logger.LogWarning("Base version {Version} not found", body.BaseVersion);
-                return (StatusCodes.Gone, null);
+                return (StatusCodes.NotFound, null);
             }
 
             // Validate the delta
@@ -1046,24 +1047,24 @@ public partial class SaveLoadService : ISaveLoadService
                 _logger.LogWarning(
                     "Delta size ({DeltaSize}) is {Percent:F1}% of full save, exceeds threshold of {Threshold}%",
                     deltaSize, deltaPercent, _configuration.DeltaSizeThresholdPercent);
-                return (StatusCodes.RequestEntityTooLarge, null);
+                return (StatusCodes.BadRequest, null);
             }
 
             // Create new version number
-            var newVersionNumber = slot.LatestVersion + 1;
+            var newVersionNumber = (slot.LatestVersion ?? 0) + 1;
             slot.LatestVersion = newVersionNumber;
+
+            // Compute content hash
+            var contentHash = Hashing.ContentHasher.ComputeHash(body.Delta);
 
             // Compress the delta if needed
             var compressedDelta = body.Delta;
-            var compressionType = "NONE";
+            var compressionTypeEnum = CompressionType.NONE;
             if (deltaSize > _configuration.AutoCompressThresholdBytes)
             {
-                compressedDelta = Compression.CompressionHelper.Compress(
-                    body.Delta,
-                    _configuration.DefaultCompressionType,
-                    _configuration.GzipCompressionLevel,
-                    _configuration.BrotliCompressionLevel);
-                compressionType = _configuration.DefaultCompressionType;
+                compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct)
+                    ? ct : CompressionType.GZIP;
+                compressedDelta = Compression.CompressionHelper.Compress(body.Delta, compressionTypeEnum);
             }
 
             // Store in hot cache
@@ -1073,17 +1074,21 @@ public partial class SaveLoadService : ISaveLoadService
                 SlotId = slot.SlotId,
                 VersionNumber = newVersionNumber,
                 Data = Convert.ToBase64String(compressedDelta),
-                CompressionType = compressionType,
-                CachedAt = DateTimeOffset.UtcNow
+                ContentHash = contentHash,
+                IsCompressed = compressionTypeEnum != CompressionType.NONE,
+                CompressionType = compressionTypeEnum.ToString(),
+                SizeBytes = deltaSize,
+                CachedAt = DateTimeOffset.UtcNow,
+                IsDelta = true
             };
+            var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
             await hotCacheStore.SaveAsync(
                 hotEntry.GetStateKey(),
                 hotEntry,
-                ttl: TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes),
-                cancellationToken: cancellationToken);
+                new StateOptions { Ttl = hotCacheTtlSeconds },
+                cancellationToken);
 
             // Create version manifest
-            var contentHash = Hashing.ContentHasher.ComputeHash(body.Delta);
             var manifest = new SaveVersionManifest
             {
                 SlotId = slot.SlotId,
@@ -1091,7 +1096,7 @@ public partial class SaveLoadService : ISaveLoadService
                 ContentHash = contentHash,
                 SizeBytes = deltaSize,
                 CompressedSizeBytes = compressedDelta.Length,
-                CompressionType = compressionType,
+                CompressionType = compressionTypeEnum.ToString(),
                 IsDelta = true,
                 BaseVersionNumber = body.BaseVersion,
                 DeltaAlgorithm = algorithm,
@@ -1119,15 +1124,22 @@ public partial class SaveLoadService : ISaveLoadService
                     OwnerId = ownerId,
                     OwnerType = ownerType,
                     Data = Convert.ToBase64String(compressedDelta),
+                    ContentHash = contentHash,
+                    CompressionType = compressionTypeEnum.ToString(),
+                    SizeBytes = deltaSize,
                     CompressedSizeBytes = compressedDelta.Length,
+                    IsDelta = true,
+                    BaseVersionNumber = body.BaseVersion,
+                    DeltaAlgorithm = algorithm,
                     Priority = 1,
                     QueuedAt = DateTimeOffset.UtcNow
                 };
+                var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
                 await pendingStore.SaveAsync(
                     pendingEntry.GetStateKey(),
                     pendingEntry,
-                    ttl: TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes),
-                    cancellationToken: cancellationToken);
+                    new StateOptions { Ttl = pendingTtlSeconds },
+                    cancellationToken);
             }
 
             // Publish event
@@ -1150,7 +1162,7 @@ public partial class SaveLoadService : ISaveLoadService
             // Calculate compression savings
             var compressionSavings = estimatedFullSize > 0 ? 1.0 - ((double)deltaSize / estimatedFullSize) : 0;
 
-            return (StatusCodes.Created, new SaveDeltaResponse
+            return (StatusCodes.OK, new SaveDeltaResponse
             {
                 SlotId = Guid.Parse(slot.SlotId),
                 VersionNumber = newVersionNumber,
@@ -1180,44 +1192,94 @@ public partial class SaveLoadService : ISaveLoadService
     }
 
     /// <summary>
-    /// Implementation of LoadWithDeltas operation.
-    /// TODO: Implement business logic for this method.
+    /// Loads save data, automatically reconstructing from delta chain if needed.
+    /// Returns the full reconstructed data, not the raw delta.
     /// </summary>
     public async Task<(StatusCodes, LoadResponse?)> LoadWithDeltasAsync(LoadRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing LoadWithDeltas operation");
+        // VersionNumber 0 means "load latest"
+        var requestedVersion = body.VersionNumber == 0 ? -1 : body.VersionNumber;
+        _logger.LogDebug(
+            "Loading with delta reconstruction for slot {SlotName} version {Version}",
+            body.SlotName, requestedVersion);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method LoadWithDeltas not yet implemented");
+            // Find the slot
+            var slot = await FindSlotByOwnerAndNameAsync(
+                body.OwnerId.ToString(),
+                body.OwnerType.ToString(),
+                body.SlotName,
+                cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (slot == null)
+            {
+                _logger.LogWarning("Slot not found: {SlotName}", body.SlotName);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get the target version (0 means latest)
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionNumber = body.VersionNumber == 0 ? (slot.LatestVersion ?? 0) : body.VersionNumber;
+            if (versionNumber == 0)
+            {
+                _logger.LogWarning("Slot {SlotName} has no versions", body.SlotName);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
+            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+
+            if (version == null)
+            {
+                _logger.LogWarning("Version {Version} not found", versionNumber);
+                return (StatusCodes.NotFound, null);
+            }
+
+            byte[]? data;
+
+            if (!version.IsDelta)
+            {
+                // Not a delta, load directly
+                data = await LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+            }
+            else
+            {
+                // Delta version - need to reconstruct
+                data = await ReconstructFromDeltaChainAsync(slot.SlotId, version, versionStore, cancellationToken);
+            }
+
+            if (data == null)
+            {
+                _logger.LogError("Failed to load data for version {Version}", versionNumber);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Publish load event
+            var loadEvent = new SaveLoadedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                SlotId = Guid.Parse(slot.SlotId),
+                SlotName = slot.SlotName,
+                VersionNumber = versionNumber,
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType.ToString()
+            };
+            await _messageBus.TryPublishAsync("save-load.save.loaded", loadEvent, cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, new LoadResponse
+            {
+                SlotId = Guid.Parse(slot.SlotId),
+                VersionNumber = versionNumber,
+                Data = data,
+                ContentHash = version.ContentHash,
+                SchemaVersion = version.SchemaVersion,
+                CreatedAt = version.CreatedAt,
+                Metadata = version.Metadata?.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value?.ToString() ?? string.Empty) ?? new Dictionary<string, string>()
+            });
         }
         catch (Exception ex)
         {
@@ -1232,49 +1294,189 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
-    /// Implementation of CollapseDeltas operation.
-    /// TODO: Implement business logic for this method.
+    /// Collapses a chain of delta versions into a single full snapshot.
+    /// Useful for reducing load latency or before deleting base versions.
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CollapseDeltasAsync(CollapseDeltasRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CollapseDeltas operation");
+        _logger.LogDebug(
+            "Collapsing deltas for slot {SlotName} to version {Version}",
+            body.SlotName, body.VersionNumber ?? -1);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CollapseDeltas not yet implemented");
+            // Find the slot
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var ownerType = body.OwnerType.ToString();
+            var ownerId = body.OwnerId.ToString();
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
+            var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (slot == null)
+            {
+                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get the target version
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionToFetch = body.VersionNumber ?? slot.LatestVersion;
+            if (!versionToFetch.HasValue)
+            {
+                _logger.LogWarning("No version specified and slot has no latest version");
+                return (StatusCodes.NotFound, null);
+            }
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionToFetch.Value);
+            var targetVersion = await versionStore.GetAsync(versionKey, cancellationToken);
+
+            if (targetVersion == null)
+            {
+                _logger.LogWarning("Target version {Version} not found", versionToFetch.Value);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // If it's not a delta, nothing to collapse
+            if (!targetVersion.IsDelta)
+            {
+                _logger.LogInformation("Version {Version} is already a full snapshot", targetVersion.VersionNumber);
+                return (StatusCodes.OK, new SaveResponse
+                {
+                    SlotId = Guid.Parse(slot.SlotId),
+                    VersionNumber = targetVersion.VersionNumber,
+                    SizeBytes = targetVersion.SizeBytes,
+                    CreatedAt = targetVersion.CreatedAt,
+                    UploadPending = targetVersion.UploadStatus == "PENDING"
+                });
+            }
+
+            // Reconstruct full data from delta chain
+            var reconstructedData = await ReconstructFromDeltaChainAsync(
+                slot.SlotId, targetVersion, versionStore, cancellationToken);
+
+            if (reconstructedData == null)
+            {
+                _logger.LogError("Failed to reconstruct data from delta chain");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Collect intermediate delta versions for potential deletion
+            var intermediateVersions = new List<SaveVersionManifest>();
+            var currentVersion = targetVersion;
+            while (currentVersion.IsDelta && currentVersion.BaseVersionNumber.HasValue)
+            {
+                intermediateVersions.Add(currentVersion);
+                var prevKey = SaveVersionManifest.GetStateKey(slot.SlotId, currentVersion.BaseVersionNumber.Value);
+                currentVersion = await versionStore.GetAsync(prevKey, cancellationToken);
+                if (currentVersion == null)
+                {
+                    break;
+                }
+            }
+
+            // Compress the reconstructed data
+            var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+            var compressedData = Compression.CompressionHelper.Compress(reconstructedData, compressionTypeEnum);
+
+            // Update the target version to be a full snapshot
+            var contentHash = Hashing.ContentHasher.ComputeHash(reconstructedData);
+            targetVersion.IsDelta = false;
+            targetVersion.BaseVersionNumber = null;
+            targetVersion.DeltaAlgorithm = null;
+            targetVersion.SizeBytes = reconstructedData.Length;
+            targetVersion.CompressedSizeBytes = compressedData.Length;
+            targetVersion.CompressionType = compressionTypeEnum.ToString();
+            targetVersion.ContentHash = contentHash;
+            targetVersion.UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE";
+
+            // Save updated manifest
+            await versionStore.SaveAsync(targetVersion.GetStateKey(), targetVersion, cancellationToken: cancellationToken);
+
+            // Store in hot cache
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var resolvedVersionNumber = targetVersion.VersionNumber;
+            var hotEntry = new HotSaveEntry
+            {
+                SlotId = slot.SlotId,
+                VersionNumber = resolvedVersionNumber,
+                Data = Convert.ToBase64String(compressedData),
+                ContentHash = contentHash,
+                IsCompressed = compressionTypeEnum != CompressionType.NONE,
+                CompressionType = compressionTypeEnum.ToString(),
+                SizeBytes = reconstructedData.Length,
+                CachedAt = DateTimeOffset.UtcNow
+            };
+            var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
+            await hotCacheStore.SaveAsync(
+                hotEntry.GetStateKey(),
+                hotEntry,
+                new StateOptions { Ttl = hotCacheTtlSeconds },
+                cancellationToken);
+
+            // Queue for upload if enabled
+            if (_configuration.AsyncUploadEnabled)
+            {
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingEntry = new PendingUploadEntry
+                {
+                    UploadId = Guid.NewGuid().ToString(),
+                    SlotId = slot.SlotId,
+                    VersionNumber = resolvedVersionNumber,
+                    GameId = slot.GameId,
+                    OwnerId = ownerId,
+                    OwnerType = ownerType,
+                    Data = Convert.ToBase64String(compressedData),
+                    ContentHash = contentHash,
+                    CompressedSizeBytes = compressedData.Length,
+                    Priority = 1,
+                    QueuedAt = DateTimeOffset.UtcNow
+                };
+                var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
+                await pendingStore.SaveAsync(
+                    pendingEntry.GetStateKey(),
+                    pendingEntry,
+                    new StateOptions { Ttl = pendingTtlSeconds },
+                    cancellationToken);
+            }
+
+            // Delete intermediate versions if requested
+            if (body.DeleteIntermediates)
+            {
+                foreach (var intermediate in intermediateVersions)
+                {
+                    // Don't delete pinned versions
+                    if (intermediate.IsPinned)
+                    {
+                        continue;
+                    }
+
+                    // Don't delete the target version itself
+                    if (intermediate.VersionNumber == resolvedVersionNumber)
+                    {
+                        continue;
+                    }
+
+                    await versionStore.DeleteAsync(intermediate.GetStateKey(), cancellationToken);
+                    _logger.LogDebug("Deleted intermediate delta version {Version}", intermediate.VersionNumber);
+                }
+            }
+
+            _logger.LogInformation(
+                "Collapsed delta chain for version {Version}, new size {Size} bytes",
+                resolvedVersionNumber, reconstructedData.Length);
+
+            return (StatusCodes.OK, new SaveResponse
+            {
+                SlotId = Guid.Parse(slot.SlotId),
+                VersionNumber = resolvedVersionNumber,
+                SizeBytes = reconstructedData.Length,
+                CreatedAt = targetVersion.CreatedAt,
+                UploadPending = targetVersion.UploadStatus == "PENDING"
+            });
         }
         catch (Exception ex)
         {
@@ -1289,7 +1491,7 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -1656,7 +1858,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -1713,7 +1915,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -1770,7 +1972,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -1827,7 +2029,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -1884,7 +2086,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2119,7 +2321,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2176,7 +2378,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2233,7 +2435,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2290,7 +2492,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2347,7 +2549,7 @@ public partial class SaveLoadService : ISaveLoadService
             // For data creation (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
             // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
+            // return (StatusCodes.OK, newData);
             //
             // For data updates (lib-state):
             // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
@@ -2597,6 +2799,136 @@ public partial class SaveLoadService : ISaveLoadService
             "save-load.cleanup.completed",
             cleanupEvent,
             cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Loads raw data for a specific version from hot cache or asset service.
+    /// </summary>
+    private async Task<byte[]?> LoadVersionDataAsync(
+        string slotId,
+        SaveVersionManifest version,
+        CancellationToken cancellationToken)
+    {
+        // Try hot cache first
+        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+        var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
+        var hotEntry = await hotCacheStore.GetAsync(hotKey, cancellationToken);
+
+        if (hotEntry != null)
+        {
+            var compressedData = Convert.FromBase64String(hotEntry.Data);
+            var hotCompressionType = Enum.TryParse<CompressionType>(hotEntry.CompressionType, out var hct) ? hct : CompressionType.NONE;
+            return Compression.CompressionHelper.Decompress(compressedData, hotCompressionType);
+        }
+
+        // Load from asset service
+        if (string.IsNullOrEmpty(version.AssetId))
+        {
+            _logger.LogWarning(
+                "No asset ID for version {Version} and no hot cache entry",
+                version.VersionNumber);
+            return null;
+        }
+
+        if (!Guid.TryParse(version.AssetId, out var assetGuid))
+        {
+            _logger.LogError("Invalid asset ID format: {AssetId}", version.AssetId);
+            return null;
+        }
+
+        try
+        {
+            var assetResponse = await _assetClient.GetAssetAsync(
+                new GetAssetRequest { AssetId = assetGuid.ToString() },
+                cancellationToken);
+
+            if (assetResponse?.DownloadUrl == null)
+            {
+                _logger.LogError("Failed to get download URL for asset {AssetId}", version.AssetId);
+                return null;
+            }
+
+            using var httpClient = new HttpClient();
+            var compressedData = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
+            var versionCompressionType = Enum.TryParse<CompressionType>(version.CompressionType, out var vct) ? vct : CompressionType.NONE;
+            return Compression.CompressionHelper.Decompress(compressedData, versionCompressionType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load data from asset {AssetId}", version.AssetId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reconstructs full data from a delta chain by walking back to base snapshot
+    /// and applying deltas in order.
+    /// </summary>
+    private async Task<byte[]?> ReconstructFromDeltaChainAsync(
+        string slotId,
+        SaveVersionManifest targetVersion,
+        IStateStore<SaveVersionManifest> versionStore,
+        CancellationToken cancellationToken)
+    {
+        // Build the chain from target back to base snapshot
+        var chain = new List<SaveVersionManifest>();
+        var current = targetVersion;
+
+        while (current.IsDelta && current.BaseVersionNumber.HasValue)
+        {
+            chain.Add(current);
+            var baseKey = SaveVersionManifest.GetStateKey(slotId, current.BaseVersionNumber.Value);
+            current = await versionStore.GetAsync(baseKey, cancellationToken);
+
+            if (current == null)
+            {
+                _logger.LogError(
+                    "Delta chain broken: base version {Version} not found",
+                    chain.Last().BaseVersionNumber);
+                return null;
+            }
+        }
+
+        // current is now the base snapshot
+        var baseData = await LoadVersionDataAsync(slotId, current, cancellationToken);
+        if (baseData == null)
+        {
+            _logger.LogError("Failed to load base snapshot version {Version}", current.VersionNumber);
+            return null;
+        }
+
+        // Apply deltas in order (reverse the chain since we built it backwards)
+        chain.Reverse();
+
+        var deltaProcessor = new DeltaProcessor(
+            _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
+            _configuration.MigrationMaxPatchOperations);
+
+        var result = baseData;
+        foreach (var deltaVersion in chain)
+        {
+            var deltaData = await LoadVersionDataAsync(slotId, deltaVersion, cancellationToken);
+            if (deltaData == null)
+            {
+                _logger.LogError(
+                    "Failed to load delta data for version {Version}",
+                    deltaVersion.VersionNumber);
+                return null;
+            }
+
+            var algorithm = deltaVersion.DeltaAlgorithm ?? _configuration.DefaultDeltaAlgorithm;
+            result = deltaProcessor.ApplyDelta(result, deltaData, algorithm);
+
+            if (result == null)
+            {
+                _logger.LogError(
+                    "Failed to apply delta for version {Version}",
+                    deltaVersion.VersionNumber);
+                return null;
+            }
+        }
+
+        return result;
     }
 
     #endregion
