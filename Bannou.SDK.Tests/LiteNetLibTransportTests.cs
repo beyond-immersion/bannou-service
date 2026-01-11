@@ -54,7 +54,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions);
         await client.SendAsync(GameMessageType.PlayerInput, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!serverGotMsg && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(serverGotMsg);
     }
 
@@ -99,7 +103,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(snapshot, GameProtocolEnvelope.DefaultOptions);
         await server.BroadcastAsync(GameMessageType.ArenaStateSnapshot, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientGotMsg && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(clientGotMsg);
     }
 
@@ -186,7 +194,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(opp, GameProtocolEnvelope.DefaultOptions);
         await server.BroadcastAsync(GameMessageType.OpportunityData, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientGotMsg && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(clientGotMsg);
     }
 
@@ -232,7 +244,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(resp, GameProtocolEnvelope.DefaultOptions);
         await client.SendAsync(GameMessageType.OpportunityResponse, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!serverGot && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(serverGot);
     }
 
@@ -278,7 +294,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(ce, GameProtocolEnvelope.DefaultOptions);
         await server.BroadcastAsync(GameMessageType.CombatEvent, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientGot && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(clientGot);
     }
 
@@ -330,7 +350,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(deltaMsg, GameProtocolEnvelope.DefaultOptions);
         await server.BroadcastAsync(GameMessageType.ArenaStateDelta, payload, reliable: false, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!clientGot && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(clientGot);
     }
 
@@ -375,7 +399,11 @@ public class LiteNetLibTransportTests
         var payload = MessagePackSerializer.Serialize(extMsg, GameProtocolEnvelope.DefaultOptions);
         await server.BroadcastAsync(GameMessageType.CinematicExtension, payload, reliable: true, cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
+        while (!got && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
         Assert.True(got);
     }
 }
