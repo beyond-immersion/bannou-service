@@ -1,7 +1,7 @@
 # Save-Load Plugin Design Document
 
-> **Status**: Planning (Complete)
-> **Version**: 1.2
+> **Status**: Implementation In Progress
+> **Version**: 2.0
 > **Created**: 2025-01-11
 > **Last Updated**: 2026-01-11
 > **Author**: Claude Code
@@ -1827,7 +1827,7 @@ components:
           description: Storage used
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # NEW ENDPOINT MODELS (v1.1)
+    # ADDITIONAL ENDPOINT MODELS
     # ═══════════════════════════════════════════════════════════════════════════
 
     RenameSlotRequest:
@@ -3483,87 +3483,29 @@ var save = await client.LoadAsync(new LoadRequest
 
 ---
 
-## Open Questions for Implementation
+## Implementation Notes
 
-### Resolved in v1.1 Review
+### Design Decisions Summary
 
-1. **Session Ownership Lifecycle**: ✅ RESOLVED
-   - SESSION-owned saves are transient only
-   - Configurable grace period (default 5 min) before cleanup after session ends
-   - Allows other services to copy/promote saves during grace period
+The following design decisions were made during planning:
 
-2. **Migration Script Approach**: ✅ RESOLVED
-   - Use JSON Patch (RFC 6902) via JsonPatch.Net library (MIT licensed)
-   - Simpler than JavaScript sandboxing, declarative transformations
-   - Migrations can be disabled entirely via `MigrationsEnabled` config
+1. **Session Ownership**: SESSION-owned saves are transient with configurable grace period (default 5 min)
+2. **Migration Approach**: JSON Patch (RFC 6902) via JsonPatch.Net (MIT); migrations can be disabled
+3. **Asset Ownership**: Save-Load service owns all assets and manages their lifecycle
+4. **Multi-Instance Cleanup**: ETag-based idempotency; scheduled tasks run on control plane only
+5. **Quota Enforcement**: Configurable per-owner limits for slots, saves/minute, and total size
+6. **Namespace Isolation**: `gameId` required to prevent cross-game slot collisions
+7. **Delta Saves**: JSON Patch default, swappable to BSDIFF/XDELTA for binary data
+8. **Thumbnails**: Optional with configurable max size (256KB default)
+9. **Conflict Detection**: Opt-in via deviceId for cloud sync scenarios
+10. **Tags**: First-class queryable field distinct from checkpoint names
+11. **Storage Protection**: Async upload queue with circuit breaker for MinIO protection
 
-3. **Asset Ownership**: ✅ RESOLVED
-   - Save-Load service owns all assets, not the original caller
-   - Manages full asset lifecycle (create, cleanup, orphan detection)
+### Future Considerations
 
-4. **Multi-Instance Cleanup**: ✅ RESOLVED
-   - ETag-based idempotency for cleanup operations
-   - Scheduled tasks run on control plane only (`EffectiveAppID == DefaultAppId`)
-   - Prevents duplicate cleanup work across instances
-
-5. **Quota Enforcement**: ✅ RESOLVED
-   - Added configurable rate limits and quotas:
-     - `MaxSlotsPerOwner`: 100 (default)
-     - `MaxSavesPerMinute`: 10 (default)
-     - `MaxTotalSizeBytesPerOwner`: 1GB (default)
-
-6. **GameId/Namespace Isolation**: ✅ RESOLVED
-   - `gameId` is required on slot creation
-   - Prevents cross-game slot name collisions
-
-### Resolved in v1.2 Enhancements
-
-7. **Delta Saves**: ✅ RESOLVED
-   - Full delta/incremental save support added
-   - Uses JSON Patch (RFC 6902) by default
-   - Swappable to BSDIFF/XDELTA for binary data
-   - Auto-collapse of delta chains during cleanup
-   - Configurable chain length limits
-
-8. **Thumbnail/Preview Support**: ✅ RESOLVED
-   - Optional thumbnail field on SaveRequest
-   - Configurable max size (default 256KB)
-   - Supports JPEG/WebP/PNG formats
-   - Pre-signed URLs for retrieval
-
-9. **Device-Based Conflict Detection**: ✅ RESOLVED
-   - Optional deviceId on saves for opt-in cloud sync
-   - Conflict detection when saves from different devices
-   - Configurable detection window
-   - SaveResponse includes conflict info
-
-10. **Tags for Query/Filtering**: ✅ RESOLVED
-    - Tags on slots for search/filter across multiple results
-    - Distinct from checkpoint names (for direct load by name)
-    - Documented in SDK "Tags vs Labels" section
-
-11. **Enhanced SDK Helpers**: ✅ RESOLVED
-    - AutoSaveWithDebounce for rate-limited auto-saves
-    - LoadWithFallback for corrupted save recovery
-    - CreateCheckpoint for named checkpoints
-    - SaveWithThumbnail for screenshot-based previews
-    - SaveDeltaAuto for automatic diff computation
-
-### Remaining Open Questions
-
-12. **Large Save Streaming**: For saves >100MB, should we:
-    - (a) Rely on lib-asset's multipart upload (existing pattern)
-    - (b) Add chunked save/load endpoints
-    - (c) Reject with size limit error
-
-    **Current approach**: Rely on lib-asset multipart (option a)
-
-13. **Cross-Region Replication**: Asset service handles storage replication.
-    May need region metadata for latency-aware routing in future.
-
-14. **Encryption at Rest**: Currently relies on MinIO/infrastructure encryption.
-    Application-level encryption could be added for sensitive saves. Consider
-    integration with lib-auth for key management.
+- **Large Save Streaming**: Relies on lib-asset's multipart upload for saves >50MB
+- **Cross-Region Replication**: Asset service handles; may add region metadata for routing
+- **Encryption at Rest**: Currently infrastructure-level; app-level encryption for sensitive saves TBD
 
 ---
 
@@ -3614,7 +3556,5 @@ var save = await client.LoadAsync(new LoadRequest
 ---
 
 *Document created: 2025-01-11*
-*v1.1 Review completed: 2026-01-11*
-*v1.2 Enhancements added: 2026-01-11*
-*v1.2.1 Storage protection patterns: 2026-01-11*
-*Ready for implementation*
+*Planning completed: 2026-01-11*
+*Implementation: In Progress*
