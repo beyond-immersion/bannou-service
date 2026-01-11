@@ -14,9 +14,9 @@ Your sponsorship helps fund:
 
 ---
 
-## Platinum Sponsors
+## Platinum Sponsors ($499/month)
 
-*Platinum sponsors receive featured placement, direct support channel, and quarterly roadmap input.*
+*Platinum sponsors receive logo on website, private support channel, quarterly roadmap input, and feature request prioritization.*
 
 <!-- Platinum sponsors will be listed here -->
 
@@ -24,9 +24,9 @@ Your sponsorship helps fund:
 
 ---
 
-## Gold Sponsors
+## Gold Sponsors ($99/month)
 
-*Gold sponsors receive logo placement in README and priority support.*
+*Gold sponsors receive logo in README, priority issue responses, and Studio Discord role.*
 
 <!-- Gold sponsors will be listed here -->
 
@@ -34,9 +34,9 @@ Your sponsorship helps fund:
 
 ---
 
-## Silver Sponsors
+## Silver Sponsors ($29/month)
 
-*Silver sponsors receive logo placement here and priority issue responses.*
+*Silver sponsors receive monthly architecture office hours, feature priority voting, and Developer Discord role.*
 
 <!-- Silver sponsors will be listed here -->
 
@@ -44,31 +44,54 @@ Your sponsorship helps fund:
 
 ---
 
-## Backers
+## Bronze Sponsors ($14/month)
 
-*Backers receive access to the sponsor-only Discord channel and our eternal gratitude.*
+*Bronze sponsors receive sponsor-only Discord channel access, live Q&A sessions, and monthly dev updates.*
 
-<!-- Backers will be listed here -->
+<!-- Bronze sponsors will be listed here -->
 
-*[Become a backer](https://github.com/sponsors/DonLoquacious)*
+*[Become a Bronze sponsor](https://github.com/sponsors/DonLoquacious)*
 
 ---
 
-## Supporters
+## Supporters ($5/month)
 
-*Supporters are recognized here for their contribution to open source gaming infrastructure.*
+*Supporters are recognized here with Supporter Discord role.*
 
 <!-- Supporters will be listed here -->
 
-*[Become a supporter](https://github.com/sponsors/DonLoquacious)*
+*[Become a Supporter](https://github.com/sponsors/DonLoquacious)*
+
+---
+
+## Coffee Supporters ($3/month)
+
+*For those who want to say thanks. Eternal gratitude!*
+
+<!-- Coffee supporters will be listed here -->
+
+*[Buy us a coffee](https://github.com/sponsors/DonLoquacious)*
 
 ---
 
 ## Past Sponsors
 
-We also thank our past sponsors who have supported Bannou's development.
+We thank our past sponsors who have supported Bannou's development.
 
 <!-- Past sponsors will be listed here -->
+
+---
+
+## Sponsorship Tiers at a Glance
+
+| Tier | Price | Key Benefits |
+|------|-------|--------------|
+| Coffee | $3/mo | Eternal gratitude |
+| Supporter | $5/mo | Name here, Supporter Discord role |
+| Bronze | $14/mo | Sponsor Discord channel, live Q&A, monthly updates |
+| Silver | $29/mo | Architecture office hours, feature voting, Developer role |
+| Gold | $99/mo | Logo in README, priority issues, Studio role |
+| Platinum | $499/mo | Website logo, private support, roadmap input |
 
 ---
 
@@ -85,4 +108,4 @@ Not in a position to sponsor financially? You can still help!
 
 ---
 
-*This file is automatically updated. Sponsor information is synced from GitHub Sponsors.*
+*Sponsor information is synced from GitHub Sponsors.*
