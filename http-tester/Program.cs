@@ -666,6 +666,7 @@ public class Program
             new ArchiveTestHandler(),
             new RelationshipTypeTestHandler(),
             new GameServiceTestHandler(),
+            new SaveLoadTestHandler(),
             new SpeciesTestHandler(),
             new StateTestHandler(),
             new SubscriptionTestHandler(),

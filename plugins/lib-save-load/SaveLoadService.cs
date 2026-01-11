@@ -804,6 +804,11 @@ public partial class SaveLoadService : ISaveLoadService
                     {
                         _logger.LogError("Failed to load asset {AssetId} for slot {SlotId} version {Version}",
                             manifest.AssetId, slot.SlotId, targetVersion);
+                        await _messageBus.TryPublishErrorAsync(
+                            "save-load",
+                            "Load",
+                            "AssetLoadFailure",
+                            $"Failed to load asset {manifest.AssetId} for slot {slot.SlotId} version {targetVersion}");
                         return (StatusCodes.InternalServerError, null);
                     }
 
@@ -830,6 +835,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (!Hashing.ContentHasher.VerifyHash(decompressedData, contentHash))
             {
                 _logger.LogError("Hash mismatch for slot {SlotId} version {Version}", slot.SlotId, targetVersion);
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "Load",
+                    "DataCorruption",
+                    $"Hash mismatch for slot {slot.SlotId} version {targetVersion} - data may be corrupted");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -1032,6 +1042,11 @@ public partial class SaveLoadService : ISaveLoadService
                 if (currentVersion == null)
                 {
                     _logger.LogError("Delta chain broken at version {Version}", currentVersion?.BaseVersionNumber);
+                    await _messageBus.TryPublishErrorAsync(
+                        "save-load",
+                        "SaveDelta",
+                        "DeltaChainBroken",
+                        "Delta chain broken - base version not found");
                     return (StatusCodes.InternalServerError, null);
                 }
             }
@@ -1258,6 +1273,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (data == null)
             {
                 _logger.LogError("Failed to load data for version {Version}", versionNumber);
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "LoadWithDeltas",
+                    "DataLoadFailure",
+                    $"Failed to load data for version {versionNumber}");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -1367,6 +1387,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (reconstructedData == null)
             {
                 _logger.LogError("Failed to reconstruct data from delta chain");
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "CollapseDeltas",
+                    "DeltaReconstructionFailure",
+                    "Failed to reconstruct data from delta chain");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2040,7 +2065,13 @@ public partial class SaveLoadService : ISaveLoadService
             var sourceData = await LoadVersionDataAsync(sourceSlot.SlotId, sourceVersion, cancellationToken);
             if (sourceData == null)
             {
-                _logger.LogError("Failed to load source version data");
+                _logger.LogError("Failed to load source version data for slot {SlotId} version {Version}",
+                    sourceSlot.SlotId, sourceVersionNumber);
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "Copy",
+                    "DataLoadFailure",
+                    $"Failed to load source version data for slot {sourceSlot.SlotId} version {sourceVersionNumber}");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2294,6 +2325,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (uploadResponse?.UploadUrl == null)
             {
                 _logger.LogError("Failed to request upload URL for export archive");
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "ExportSaves",
+                    "AssetServiceFailure",
+                    "Failed to request upload URL for export archive");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2306,6 +2342,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (!uploadResult.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to upload export archive: {Status}", uploadResult.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "ExportSaves",
+                    "UploadFailure",
+                    $"Failed to upload export archive: {uploadResult.StatusCode}");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2319,6 +2360,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (assetMetadata == null)
             {
                 _logger.LogError("Failed to complete export archive upload");
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "ExportSaves",
+                    "AssetServiceFailure",
+                    "Failed to complete export archive upload");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2330,6 +2376,11 @@ public partial class SaveLoadService : ISaveLoadService
             if (getAssetResponse?.DownloadUrl == null)
             {
                 _logger.LogError("Failed to get download URL for export");
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "ExportSaves",
+                    "AssetServiceFailure",
+                    "Failed to get download URL for export");
                 return (StatusCodes.InternalServerError, null);
             }
 
@@ -2747,6 +2798,11 @@ public partial class SaveLoadService : ISaveLoadService
                 if (assetResponse?.DownloadUrl == null)
                 {
                     _logger.LogError("Failed to get download URL for asset {AssetId}", sourceVersion.AssetId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "save-load",
+                        "PromoteVersion",
+                        "AssetServiceFailure",
+                        $"Failed to get download URL for asset {sourceVersion.AssetId}");
                     return (StatusCodes.InternalServerError, null);
                 }
 
@@ -2755,7 +2811,13 @@ public partial class SaveLoadService : ISaveLoadService
             }
             else
             {
-                _logger.LogError("No data available for version {Version}", body.VersionNumber);
+                _logger.LogError("No data available for version {Version} in slot {SlotId} - neither hot cache nor asset storage",
+                    body.VersionNumber, slot.SlotId);
+                await _messageBus.TryPublishErrorAsync(
+                    "save-load",
+                    "PromoteVersion",
+                    "DataUnavailable",
+                    $"No data available for version {body.VersionNumber} in slot {slot.SlotId} - neither hot cache nor asset storage");
                 return (StatusCodes.InternalServerError, null);
             }
 
