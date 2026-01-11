@@ -1914,7 +1914,7 @@ public partial class SaveLoadService : ISaveLoadService
                         bool metadataMatch = true;
                         foreach (var kvp in body.MetadataFilter)
                         {
-                            if (!version.Metadata.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                            if (!version.Metadata.TryGetValue(kvp.Key, out var value) || !string.Equals(value?.ToString(), kvp.Value, StringComparison.Ordinal))
                             {
                                 metadataMatch = false;
                                 break;
@@ -1942,7 +1942,7 @@ public partial class SaveLoadService : ISaveLoadService
                         CreatedAt = version.CreatedAt,
                         Metadata = version.Metadata?.ToDictionary(
                             kvp => kvp.Key,
-                            kvp => kvp.Value?.ToString() ?? string.Empty)
+                            kvp => kvp.Value?.ToString() ?? string.Empty) ?? new Dictionary<string, string>()
                     });
                 }
             }
@@ -2086,7 +2086,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CompressionType = compressionTypeEnum.ToString(),
                 SchemaVersion = sourceVersion.SchemaVersion,
                 CheckpointName = sourceVersion.CheckpointName,
-                Metadata = sourceVersion.Metadata != null ? new Dictionary<string, object>(sourceVersion.Metadata) : null,
+                Metadata = sourceVersion.Metadata != null ? new Dictionary<string, object>(sourceVersion.Metadata) : new Dictionary<string, object>(),
                 IsPinned = false,
                 IsDelta = false,
                 UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE",
@@ -3587,7 +3587,7 @@ public partial class SaveLoadService : ISaveLoadService
                     Namespace = s.Namespace,
                     SchemaVersion = s.SchemaVersion,
                     Schema = !string.IsNullOrEmpty(s.SchemaJson)
-                        ? BannouJson.Deserialize<object>(s.SchemaJson)
+                        ? BannouJson.Deserialize<object>(s.SchemaJson) ?? new object()
                         : new object(),
                     PreviousVersion = s.PreviousVersion,
                     HasMigration = s.HasMigration,
@@ -3798,7 +3798,7 @@ public partial class SaveLoadService : ISaveLoadService
                 CheckpointName = $"Migrated from {currentSchemaVersion}",
                 AssetId = assetMetadata.AssetId,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : null
+                Metadata = version.Metadata != null ? new Dictionary<string, object>(version.Metadata) : new Dictionary<string, object>()
             };
 
             var newVersionKey = SaveVersionManifest.GetStateKey(slot.SlotId, newVersionNumber);

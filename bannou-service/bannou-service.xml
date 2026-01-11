@@ -46652,6 +46652,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest">
+            <summary>
+            Request to create a new save slot for an entity.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.GameId">
             <summary>
             Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
@@ -48006,6 +48011,11 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.BulkDeleteSlotsResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest">
+            <summary>
+            Request to copy save data from one slot to another, optionally across different entities or games.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceGameId">

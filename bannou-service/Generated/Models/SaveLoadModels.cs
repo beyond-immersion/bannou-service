@@ -175,6 +175,9 @@ public partial class JsonPatchOperation
 
 }
 
+/// <summary>
+/// Request to create a new save slot for an entity.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateSlotRequest
 {
@@ -2333,6 +2336,9 @@ public partial class BulkDeleteSlotsResponse
 
 }
 
+/// <summary>
+/// Request to copy save data from one slot to another, optionally across different entities or games.
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CopySaveRequest
 {

@@ -879,6 +879,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$ref": "#/$defs/CreateSlotRequest",
     "$defs": {
         "CreateSlotRequest": {
+            "description": "Request to create a new save slot for an entity.",
             "type": "object",
             "required": [
                 "gameId",
@@ -4177,6 +4178,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     "$ref": "#/$defs/CopySaveRequest",
     "$defs": {
         "CopySaveRequest": {
+            "description": "Request to copy save data from one slot to another, optionally across different entities or games.",
             "type": "object",
             "required": [
                 "sourceGameId",
