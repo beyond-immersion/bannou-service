@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- Package metadata -->
+    <PackageId>BeyondImmersion.Bannou.SceneComposer</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Beyond Immersion</Authors>
+    <Company>Beyond Immersion</Company>
+    <Description>Engine-agnostic scene composition SDK for Bannou. Provides hierarchical scene editing, undo/redo, multi-selection, and gizmo logic without engine dependencies.</Description>
+    <PackageTags>bannou;scene;editor;composition;gamedev</PackageTags>
+    <RepositoryUrl>https://github.com/beyondimmersion/bannou</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Allow missing XML docs during initial development -->
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SceneComposer</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reactive extensions for IObservable support -->
+    <PackageReference Include="System.Reactive" Version="6.0.0" />
+
+    <!-- JSON serialization for scene data -->
+    <PackageReference Include="System.Text.Json" Version="9.0.2" />
+
+    <!-- YAML support for scene files -->
+    <PackageReference Include="YamlDotNet" Version="15.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference Bannou SDK for shared types (Scene, SceneNode, etc.) -->
+    <ProjectReference Include="..\Bannou.Client.SDK\Bannou.Client.SDK.csproj" />
+  </ItemGroup>
+
+</Project>

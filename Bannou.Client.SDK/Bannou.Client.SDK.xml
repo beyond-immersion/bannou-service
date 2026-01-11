@@ -19980,6 +19980,11 @@
             Response from successful user registration
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.AccountId">
+            <summary>
+            Unique identifier for the newly created account
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.AccessToken">
             <summary>
             JWT access token for immediate authentication
