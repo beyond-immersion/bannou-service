@@ -1,8 +1,8 @@
 # These are supported funding model platforms
 
-# GitHub Sponsors - uncomment the one you use once approved
-github: [beyond-immersion]  # Organization
-# github: [DonLoquacious]   # Personal account (alternative)
+# GitHub Sponsors - using personal account (simpler tax/banking setup)
+# Organization sponsorship can be added later if you form an LLC
+github: [DonLoquacious]
 
 # Other platforms (uncomment if you use them)
 # patreon: beyond-immersion
