@@ -280,8 +280,8 @@ public class GodotTypeConverterTests
 
         // Should be normalized
         var length = System.Math.Sqrt(godotDirection.X * godotDirection.X +
-                                       godotDirection.Y * godotDirection.Y +
-                                       godotDirection.Z * godotDirection.Z);
+                                        godotDirection.Y * godotDirection.Y +
+                                        godotDirection.Z * godotDirection.Z);
         Assert.Equal(1.0, length, 1e-3);
     }
 

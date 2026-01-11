@@ -106,6 +106,12 @@ jobs:
           dotnet build Bannou.Stride.SceneComposer --configuration Release --no-restore
           dotnet pack Bannou.Stride.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
+          # Build and pack Godot SceneComposer SDK (Bannou.Godot.SceneComposer)
+          echo "📦 Building Godot SceneComposer SDK (Bannou.Godot.SceneComposer)..."
+          dotnet restore Bannou.Godot.SceneComposer
+          dotnet build Bannou.Godot.SceneComposer --configuration Release --no-restore
+          dotnet pack Bannou.Godot.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
           echo "✅ Packages built:"
           ls -la ./nuget-packages/
 

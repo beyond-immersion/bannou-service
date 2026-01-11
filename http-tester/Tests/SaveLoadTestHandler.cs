@@ -12,7 +12,6 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
 {
     // Constants for test data
     private const string TEST_GAME_ID = "arcadia";
-    private const string TEST_OWNER_TYPE = "ACCOUNT";
 
     public override ServiceTest[] GetServiceTests() =>
     [
@@ -57,7 +56,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("test-slot");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             var request = new CreateSlotRequest
             {
@@ -65,7 +64,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
+                Category = SaveCategory.MANUAL_SAVE,
                 MaxVersions = 5
             };
 
@@ -74,7 +73,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (response == null)
                 return TestResult.Failed("CreateSlot returned null");
 
-            if (string.IsNullOrEmpty(response.SlotId))
+            if (response.SlotId == Guid.Empty)
                 return TestResult.Failed("CreateSlot did not return a slot ID");
 
             // Clean up
@@ -94,7 +93,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("get-slot");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Create slot first
             await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
@@ -103,7 +102,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL
+                Category = SaveCategory.MANUAL_SAVE
             });
 
             // Get the slot
@@ -143,7 +142,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             await saveLoadClient.GetSlotAsync(new GetSlotRequest
             {
                 GameId = TEST_GAME_ID,
-                OwnerId = Guid.NewGuid().ToString(),
+                OwnerId = Guid.NewGuid(),
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = $"nonexistent-{Guid.NewGuid()}"
             });
@@ -153,7 +152,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Create a few slots
             for (var i = 0; i < 3; i++)
@@ -164,7 +163,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                     OwnerId = ownerId,
                     OwnerType = OwnerType.ACCOUNT,
                     SlotName = $"list-test-{i}",
-                    Category = SaveCategory.MANUAL
+                    Category = SaveCategory.MANUAL_SAVE
                 });
             }
 
@@ -201,7 +200,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var oldName = GenerateTestSlug("old-name");
             var newName = GenerateTestSlug("new-name");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Create slot
             await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
@@ -210,7 +209,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = oldName,
-                Category = SaveCategory.MANUAL
+                Category = SaveCategory.MANUAL_SAVE
             });
 
             // Rename it
@@ -219,7 +218,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
-                OldSlotName = oldName,
+                SlotName = oldName,
                 NewSlotName = newName
             });
 
@@ -246,7 +245,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("delete-slot");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Create slot
             await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
@@ -255,7 +254,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL
+                Category = SaveCategory.MANUAL_SAVE
             });
 
             // Delete it
@@ -285,8 +284,9 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("save-load");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
             var testData = """{"player":{"name":"TestHero","level":42},"inventory":[1,2,3]}""";
+            var testDataBytes = Encoding.UTF8.GetBytes(testData);
 
             // Save data
             var saveResponse = await saveLoadClient.SaveAsync(new SaveRequest
@@ -295,8 +295,8 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = testData
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = testDataBytes
             });
 
             if (saveResponse == null)
@@ -323,7 +323,8 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (loadResponse == null)
                 return TestResult.Failed("Load returned null");
 
-            if (loadResponse.Data != testData)
+            var loadedData = Encoding.UTF8.GetString(loadResponse.Data);
+            if (loadedData != testData)
                 return TestResult.Failed("Load returned different data than saved");
 
             return TestResult.Successful($"Save and Load successful, version {saveResponse.VersionNumber}");
@@ -334,20 +335,20 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("compress");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
             // Large repetitive data compresses well
             var testData = string.Concat(Enumerable.Repeat("""{"x":1234567890}""", 100));
+            var testDataBytes = Encoding.UTF8.GetBytes(testData);
 
-            // Save with GZIP
+            // Save data (compression is handled server-side based on slot config)
             var saveResponse = await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.AUTO,
-                Data = testData,
-                CompressionType = CompressionType.GZIP
+                Category = SaveCategory.AUTO_SAVE,
+                Data = testDataBytes
             });
 
             if (saveResponse == null)
@@ -371,7 +372,11 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 SlotName = slotName
             });
 
-            if (loadResponse?.Data != testData)
+            if (loadResponse == null)
+                return TestResult.Failed("Load after compression returned null");
+
+            var loadedData = Encoding.UTF8.GetString(loadResponse.Data);
+            if (loadedData != testData)
                 return TestResult.Failed("Decompressed data does not match original");
 
             return TestResult.Successful($"Save with compression successful, size: {saveResponse.SizeBytes} bytes");
@@ -385,7 +390,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             await saveLoadClient.LoadAsync(new LoadRequest
             {
                 GameId = TEST_GAME_ID,
-                OwnerId = Guid.NewGuid().ToString(),
+                OwnerId = Guid.NewGuid(),
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = $"nonexistent-{Guid.NewGuid()}"
             });
@@ -396,26 +401,26 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("multi-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Save multiple versions
             for (var i = 1; i <= 3; i++)
             {
+                var data = Encoding.UTF8.GetBytes($"{{\"version\":{i}}}");
                 await saveLoadClient.SaveAsync(new SaveRequest
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
                     OwnerType = OwnerType.ACCOUNT,
                     SlotName = slotName,
-                    Category = SaveCategory.MANUAL,
-                    Data = $"{{\"version\":{i}}}"
+                    Category = SaveCategory.MANUAL_SAVE,
+                    Data = data
                 });
             }
 
             // List versions
             var versionsResponse = await saveLoadClient.ListVersionsAsync(new ListVersionsRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName
@@ -443,25 +448,25 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("list-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Create slot with some versions
             for (var i = 0; i < 3; i++)
             {
+                var data = Encoding.UTF8.GetBytes($"{{\"i\":{i}}}");
                 await saveLoadClient.SaveAsync(new SaveRequest
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
                     OwnerType = OwnerType.ACCOUNT,
                     SlotName = slotName,
-                    Category = SaveCategory.MANUAL,
-                    Data = $"{{\"i\":{i}}}"
+                    Category = SaveCategory.MANUAL_SAVE,
+                    Data = data
                 });
             }
 
             var response = await saveLoadClient.ListVersionsAsync(new ListVersionsRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName
@@ -488,23 +493,23 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("pin-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Save a version
+            var data = Encoding.UTF8.GetBytes("""{"checkpoint":"boss-fight"}""");
             var saveResponse = await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"checkpoint":"boss-fight"}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data
             });
 
-            // Pin it
+            // Pin it (PinVersionRequest does not have GameId)
             var pinResponse = await saveLoadClient.PinVersionAsync(new PinVersionRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
@@ -524,7 +529,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (pinResponse == null)
                 return TestResult.Failed("PinVersion returned null");
 
-            if (!pinResponse.IsPinned)
+            if (!pinResponse.Pinned)
                 return TestResult.Failed("PinVersion did not set pinned flag");
 
             return TestResult.Successful($"PinVersion successful: checkpoint '{pinResponse.CheckpointName}'");
@@ -535,25 +540,24 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("unpin-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
-            // Save and pin
+            // Save and pin in one go using PinAsCheckpoint
+            var data = Encoding.UTF8.GetBytes("""{"x":1}""");
             var saveResponse = await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"x":1}""",
-                Pinned = true,
-                CheckpointName = "To Unpin"
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data,
+                PinAsCheckpoint = "To Unpin"
             });
 
-            // Unpin it
+            // Unpin it (UnpinVersionRequest does not have GameId)
             var unpinResponse = await saveLoadClient.UnpinVersionAsync(new UnpinVersionRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
@@ -572,7 +576,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (unpinResponse == null)
                 return TestResult.Failed("UnpinVersion returned null");
 
-            if (unpinResponse.IsPinned)
+            if (unpinResponse.Pinned)
                 return TestResult.Failed("UnpinVersion did not clear pinned flag");
 
             return TestResult.Successful("UnpinVersion successful");
@@ -583,33 +587,34 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("del-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Save two versions
+            var data1 = Encoding.UTF8.GetBytes("""{"v":1}""");
             await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"v":1}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data1
             });
 
+            var data2 = Encoding.UTF8.GetBytes("""{"v":2}""");
             await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"v":2}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data2
             });
 
-            // Delete version 1
+            // Delete version 1 (DeleteVersionRequest does not have GameId)
             var deleteResponse = await saveLoadClient.DeleteVersionAsync(new DeleteVersionRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
@@ -639,27 +644,29 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("load-ver");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Save two versions
+            var data1 = Encoding.UTF8.GetBytes("""{"version":"first"}""");
             await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"version":"first"}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data1
             });
 
+            var data2 = Encoding.UTF8.GetBytes("""{"version":"second"}""");
             await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"version":"second"}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = data2
             });
 
             // Load version 1 specifically
@@ -684,7 +691,8 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (loadResponse == null)
                 return TestResult.Failed("Load specific version returned null");
 
-            if (!loadResponse.Data?.Contains("first") ?? true)
+            var loadedData = Encoding.UTF8.GetString(loadResponse.Data);
+            if (!loadedData.Contains("first"))
                 return TestResult.Failed("Load returned wrong version data");
 
             return TestResult.Successful($"Load specific version successful, got version {loadResponse.VersionNumber}");
@@ -698,24 +706,21 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
-            var ownerId = Guid.NewGuid().ToString();
-            var uniqueTag = $"query-tag-{Guid.NewGuid():N}".Substring(0, 20);
+            var ownerId = Guid.NewGuid();
 
-            // Create a slot with a tag
+            // Create a slot
             await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = "query-test",
-                Category = SaveCategory.MANUAL,
-                Tags = [uniqueTag]
+                Category = SaveCategory.MANUAL_SAVE
             });
 
             // Query by owner
             var response = await saveLoadClient.QuerySavesAsync(new QuerySavesRequest
             {
-                GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT
             });
@@ -745,32 +750,35 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("delta");
-            var ownerId = Guid.NewGuid().ToString();
+            var ownerId = Guid.NewGuid();
 
             // Save base version
+            var baseData = Encoding.UTF8.GetBytes("""{"player":{"name":"Hero","level":1,"gold":100}}""");
             var baseResponse = await saveLoadClient.SaveAsync(new SaveRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
-                Data = """{"player":{"name":"Hero","level":1,"gold":100}}"""
+                Category = SaveCategory.MANUAL_SAVE,
+                Data = baseData
             });
 
             if (baseResponse == null)
                 return TestResult.Failed("Base save failed");
 
-            // Save delta (incremental changes)
+            // Save delta (incremental changes) - using JSON Patch format
+            var jsonPatch = """[{"op":"replace","path":"/player/level","value":2},{"op":"replace","path":"/player/gold","value":150}]""";
+            var deltaBytes = Encoding.UTF8.GetBytes(jsonPatch);
             var deltaResponse = await saveLoadClient.SaveDeltaAsync(new SaveDeltaRequest
             {
                 GameId = TEST_GAME_ID,
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                BaseVersionNumber = baseResponse.VersionNumber,
-                Data = """{"player":{"name":"Hero","level":2,"gold":150}}""",
-                DeltaAlgorithm = DeltaAlgorithm.JSON_PATCH
+                BaseVersion = baseResponse.VersionNumber,
+                Delta = deltaBytes,
+                Algorithm = DeltaAlgorithm.JSON_PATCH
             });
 
             // Load with delta reconstruction
@@ -794,8 +802,12 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
             if (deltaResponse == null)
                 return TestResult.Failed("SaveDelta returned null");
 
-            if (loadResponse == null || !loadResponse.Data?.Contains("level\":2") == true)
-                return TestResult.Failed("Delta reconstruction failed");
+            if (loadResponse == null)
+                return TestResult.Failed("LoadWithDeltas returned null");
+
+            var loadedData = Encoding.UTF8.GetString(loadResponse.Data);
+            if (!loadedData.Contains("level\":2") && !loadedData.Contains("\"level\": 2"))
+                return TestResult.Failed("Delta reconstruction may have failed - checking original data returned");
 
             return TestResult.Successful($"SaveDelta successful, delta version {deltaResponse.VersionNumber}");
         }, "Save delta");
@@ -809,8 +821,8 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
             var slotName = GenerateTestSlug("verify");
-            var ownerId = Guid.NewGuid().ToString();
-            var testData = """{"integrity":"test"}""";
+            var ownerId = Guid.NewGuid();
+            var testData = Encoding.UTF8.GetBytes("""{"integrity":"test"}""");
 
             // Save data
             await saveLoadClient.SaveAsync(new SaveRequest
@@ -819,7 +831,7 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 OwnerId = ownerId,
                 OwnerType = OwnerType.ACCOUNT,
                 SlotName = slotName,
-                Category = SaveCategory.MANUAL,
+                Category = SaveCategory.MANUAL_SAVE,
                 Data = testData
             });
 
@@ -845,9 +857,9 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("VerifyIntegrity returned null");
 
             if (!response.Valid)
-                return TestResult.Failed($"VerifyIntegrity failed: {string.Join(", ", response.Errors ?? [])}");
+                return TestResult.Failed($"VerifyIntegrity failed: {response.ErrorMessage}");
 
-            return TestResult.Successful($"VerifyIntegrity successful, {response.VersionsChecked} versions checked");
+            return TestResult.Successful($"VerifyIntegrity successful, version {response.VersionNumber} verified");
         }, "Verify integrity");
 
     #endregion
@@ -858,35 +870,41 @@ public class SaveLoadTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var saveLoadClient = GetServiceClient<ISaveLoadClient>();
-            var ownerId = Guid.NewGuid().ToString();
-            var slotNames = new[] { "bulk-1", "bulk-2", "bulk-3" };
+            var ownerId = Guid.NewGuid();
+            var slotIds = new List<Guid>();
 
-            // Create slots
-            foreach (var name in slotNames)
+            // Create slots and collect their IDs
+            for (var i = 0; i < 3; i++)
             {
-                await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
+                var createResponse = await saveLoadClient.CreateSlotAsync(new CreateSlotRequest
                 {
                     GameId = TEST_GAME_ID,
                     OwnerId = ownerId,
                     OwnerType = OwnerType.ACCOUNT,
-                    SlotName = name,
-                    Category = SaveCategory.MANUAL
+                    SlotName = $"bulk-{i}",
+                    Category = SaveCategory.MANUAL_SAVE
                 });
+
+                if (createResponse != null)
+                {
+                    slotIds.Add(createResponse.SlotId);
+                }
             }
 
-            // Bulk delete
+            if (slotIds.Count == 0)
+                return TestResult.Failed("Failed to create any slots for bulk delete test");
+
+            // Bulk delete using slot IDs
             var response = await saveLoadClient.BulkDeleteSlotsAsync(new BulkDeleteSlotsRequest
             {
                 GameId = TEST_GAME_ID,
-                OwnerId = ownerId,
-                OwnerType = OwnerType.ACCOUNT,
-                SlotNames = slotNames.ToList()
+                SlotIds = slotIds
             });
 
             if (response == null)
                 return TestResult.Failed("BulkDeleteSlots returned null");
 
-            return TestResult.Successful($"BulkDeleteSlots successful: {response.SlotsDeleted} slots deleted, {response.TotalBytesFreed} bytes freed");
+            return TestResult.Successful($"BulkDeleteSlots successful: {response.DeletedCount} slots deleted, {response.BytesFreed} bytes freed");
         }, "Bulk delete slots");
 
     #endregion

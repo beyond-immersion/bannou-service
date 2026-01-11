@@ -7526,6 +7526,46 @@
             <br/>
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.VersionNumber">
+            <summary>
+            Version number that was queued
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.SizeBytes">
+            <summary>
+            Size of the queued save data in bytes
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveQueuedEvent.QueueDepth">
             <summary>
             Current number of pending uploads in queue
@@ -7539,6 +7579,31 @@
         <member name="T:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent">
             <summary>
             Published when async upload to MinIO completes successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.VersionNumber">
+            <summary>
+            Version number that was uploaded
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadCompletedEvent.AssetId">
@@ -7568,6 +7633,41 @@
             <br/>
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.SlotId">
+            <summary>
+            Save slot identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.SlotName">
+            <summary>
+            Human-readable slot name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.VersionNumber">
+            <summary>
+            Version number that failed to upload
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerId">
+            <summary>
+            Owner entity ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.OwnerType">
+            <summary>
+            Type of entity that owns this save (ACCOUNT, CHARACTER, SESSION, REALM)
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Events.SaveUploadFailedEvent.ErrorMessage">
             <summary>
             Last error message
@@ -7591,6 +7691,26 @@
         <member name="T:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent">
             <summary>
             Published when storage circuit breaker changes state
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.EventId">
+            <summary>
+            Unique event identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.Timestamp">
+            <summary>
+            Event timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.PreviousState">
+            <summary>
+            Previous circuit breaker state before the transition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.NewState">
+            <summary>
+            New circuit breaker state after the transition
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.CircuitBreakerStateChangedEvent.FailureCount">
@@ -41270,6 +41390,11 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.OwnerId">
             <summary>
             Entity ID that owns the save slot
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.OwnerType">
+            <summary>
+            Type of entity that owns this save slot
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CollapseDeltasRequest.SlotName">
