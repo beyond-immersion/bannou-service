@@ -1841,39 +1841,135 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     public async Task<(StatusCodes, QuerySavesResponse?)> QuerySavesAsync(QuerySavesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing QuerySaves operation");
+        _logger.LogDebug(
+            "Querying saves for owner {OwnerId} ({OwnerType})",
+            body.OwnerId, body.OwnerType);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method QuerySaves not yet implemented");
+            var ownerIdStr = body.OwnerId.ToString();
+            var ownerTypeStr = body.OwnerType.ToString();
+            var categoryStr = body.Category.ToString();
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Query slots for this owner
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slots = await slotQueryStore.QueryAsync(
+                s => s.OwnerId == ownerIdStr && s.OwnerType == ownerTypeStr,
+                cancellationToken);
+
+            // Filter by category if specified
+            if (body.Category != default)
+            {
+                slots = slots.Where(s => s.Category == categoryStr).ToList();
+            }
+
+            // Query versions for matching slots
+            var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var results = new List<QueryResultItem>();
+
+            foreach (var slot in slots)
+            {
+                var versions = await versionQueryStore.QueryAsync(
+                    v => v.SlotId == slot.SlotId,
+                    cancellationToken);
+
+                // Apply version filters
+                foreach (var version in versions)
+                {
+                    // Filter by date
+                    if (body.CreatedAfter != default && version.CreatedAt < body.CreatedAfter)
+                    {
+                        continue;
+                    }
+                    if (body.CreatedBefore != default && version.CreatedAt > body.CreatedBefore)
+                    {
+                        continue;
+                    }
+
+                    // Filter by pinned status
+                    if (body.PinnedOnly && !version.IsPinned)
+                    {
+                        continue;
+                    }
+
+                    // Filter by schema version
+                    if (!string.IsNullOrEmpty(body.SchemaVersion) && version.SchemaVersion != body.SchemaVersion)
+                    {
+                        continue;
+                    }
+
+                    // Filter by metadata
+                    if (body.MetadataFilter != null && body.MetadataFilter.Count > 0)
+                    {
+                        if (version.Metadata == null)
+                        {
+                            continue;
+                        }
+
+                        bool metadataMatch = true;
+                        foreach (var kvp in body.MetadataFilter)
+                        {
+                            if (!version.Metadata.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                            {
+                                metadataMatch = false;
+                                break;
+                            }
+                        }
+                        if (!metadataMatch)
+                        {
+                            continue;
+                        }
+                    }
+
+                    results.Add(new QueryResultItem
+                    {
+                        SlotId = Guid.Parse(slot.SlotId),
+                        SlotName = slot.SlotName,
+                        OwnerId = Guid.Parse(slot.OwnerId),
+                        OwnerType = Enum.TryParse<OwnerType>(slot.OwnerType, out var ot) ? ot : OwnerType.ACCOUNT,
+                        Category = Enum.TryParse<SaveCategory>(slot.Category, out var cat) ? cat : SaveCategory.MANUAL_SAVE,
+                        VersionNumber = version.VersionNumber,
+                        SizeBytes = version.SizeBytes,
+                        SchemaVersion = version.SchemaVersion,
+                        DisplayName = version.CheckpointName,
+                        Pinned = version.IsPinned,
+                        CheckpointName = version.CheckpointName,
+                        CreatedAt = version.CreatedAt,
+                        Metadata = version.Metadata?.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value?.ToString() ?? string.Empty)
+                    });
+                }
+            }
+
+            // Sort results
+            results = body.SortBy switch
+            {
+                QuerySavesRequestSortBy.Created_at => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                    ? results.OrderBy(r => r.CreatedAt).ToList()
+                    : results.OrderByDescending(r => r.CreatedAt).ToList(),
+                QuerySavesRequestSortBy.Size_bytes => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                    ? results.OrderBy(r => r.SizeBytes).ToList()
+                    : results.OrderByDescending(r => r.SizeBytes).ToList(),
+                QuerySavesRequestSortBy.Slot_name => body.SortOrder == QuerySavesRequestSortOrder.Asc
+                    ? results.OrderBy(r => r.SlotName).ToList()
+                    : results.OrderByDescending(r => r.SlotName).ToList(),
+                _ => results.OrderByDescending(r => r.CreatedAt).ToList()
+            };
+
+            // Apply pagination
+            var totalCount = results.Count;
+            results = results.Skip(body.Offset).Take(body.Limit).ToList();
+
+            _logger.LogInformation(
+                "Query returned {Count} results out of {Total} total",
+                results.Count, totalCount);
+
+            return (StatusCodes.OK, new QuerySavesResponse
+            {
+                Results = results,
+                TotalCount = totalCount
+            });
         }
         catch (Exception ex)
         {
@@ -1888,49 +1984,174 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of CopySave operation.
-    /// TODO: Implement business logic for this method.
+    /// Copies a save from one slot to another (optionally cross-owner or cross-game).
     /// </summary>
     public async Task<(StatusCodes, SaveResponse?)> CopySaveAsync(CopySaveRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CopySave operation");
+        _logger.LogDebug(
+            "Copying save from {SourceSlot} to {TargetSlot}",
+            body.SourceSlotName, body.TargetSlotName);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CopySave not yet implemented");
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Find source slot
+            var sourceOwnerType = body.SourceOwnerType.ToString();
+            var sourceOwnerId = body.SourceOwnerId.ToString();
+            var sourceSlotKey = SaveSlotMetadata.GetStateKey(body.SourceGameId, sourceOwnerType, sourceOwnerId, body.SourceSlotName);
+            var sourceSlot = await slotStore.GetAsync(sourceSlotKey, cancellationToken);
+
+            if (sourceSlot == null)
+            {
+                _logger.LogWarning("Source slot not found: {SlotKey}", sourceSlotKey);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get source version
+            var sourceVersionNumber = body.SourceVersion ?? sourceSlot.LatestVersion;
+            if (!sourceVersionNumber.HasValue)
+            {
+                _logger.LogWarning("Source slot has no versions");
+                return (StatusCodes.NotFound, null);
+            }
+            var sourceVersionKey = SaveVersionManifest.GetStateKey(sourceSlot.SlotId, sourceVersionNumber.Value);
+            var sourceVersion = await versionStore.GetAsync(sourceVersionKey, cancellationToken);
+
+            if (sourceVersion == null)
+            {
+                _logger.LogWarning("Source version {Version} not found", sourceVersionNumber);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Load source data
+            var sourceData = await LoadVersionDataAsync(sourceSlot.SlotId, sourceVersion, cancellationToken);
+            if (sourceData == null)
+            {
+                _logger.LogError("Failed to load source version data");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Find or create target slot
+            var targetOwnerType = body.TargetOwnerType.ToString();
+            var targetOwnerId = body.TargetOwnerId.ToString();
+            var targetSlotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerType, targetOwnerId, body.TargetSlotName);
+            var targetSlot = await slotStore.GetAsync(targetSlotKey, cancellationToken);
+
+            if (targetSlot == null)
+            {
+                // Create target slot
+                var category = body.TargetCategory != default ? body.TargetCategory.ToString() : sourceSlot.Category;
+                targetSlot = new SaveSlotMetadata
+                {
+                    SlotId = Guid.NewGuid().ToString(),
+                    GameId = body.TargetGameId,
+                    OwnerId = targetOwnerId,
+                    OwnerType = targetOwnerType,
+                    SlotName = body.TargetSlotName,
+                    Category = category,
+                    MaxVersions = sourceSlot.MaxVersions,
+                    LatestVersion = 0,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                };
+                await slotStore.SaveAsync(targetSlot.GetStateKey(), targetSlot, cancellationToken: cancellationToken);
+            }
+
+            // Create new version in target slot
+            var newVersionNumber = (targetSlot.LatestVersion ?? 0) + 1;
+            var contentHash = Hashing.ContentHasher.ComputeHash(sourceData);
+            var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+            var compressedData = Compression.CompressionHelper.Compress(sourceData, compressionTypeEnum);
+
+            var newVersion = new SaveVersionManifest
+            {
+                SlotId = targetSlot.SlotId,
+                VersionNumber = newVersionNumber,
+                ContentHash = contentHash,
+                SizeBytes = sourceData.Length,
+                CompressedSizeBytes = compressedData.Length,
+                CompressionType = compressionTypeEnum.ToString(),
+                SchemaVersion = sourceVersion.SchemaVersion,
+                CheckpointName = sourceVersion.CheckpointName,
+                Metadata = sourceVersion.Metadata != null ? new Dictionary<string, object>(sourceVersion.Metadata) : null,
+                IsPinned = false,
+                IsDelta = false,
+                UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE",
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
+
+            // Update target slot
+            targetSlot.LatestVersion = newVersionNumber;
+            targetSlot.UpdatedAt = DateTimeOffset.UtcNow;
+            await slotStore.SaveAsync(targetSlot.GetStateKey(), targetSlot, cancellationToken: cancellationToken);
+
+            // Store in hot cache
+            var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+            var hotEntry = new HotSaveEntry
+            {
+                SlotId = targetSlot.SlotId,
+                VersionNumber = newVersionNumber,
+                Data = Convert.ToBase64String(compressedData),
+                ContentHash = contentHash,
+                IsCompressed = compressionTypeEnum != CompressionType.NONE,
+                CompressionType = compressionTypeEnum.ToString(),
+                SizeBytes = sourceData.Length,
+                CachedAt = DateTimeOffset.UtcNow
+            };
+            var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
+            await hotCacheStore.SaveAsync(
+                hotEntry.GetStateKey(),
+                hotEntry,
+                new StateOptions { Ttl = hotCacheTtlSeconds },
+                cancellationToken);
+
+            // Queue for upload if enabled
+            if (_configuration.AsyncUploadEnabled)
+            {
+                var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var pendingEntry = new PendingUploadEntry
+                {
+                    UploadId = Guid.NewGuid().ToString(),
+                    SlotId = targetSlot.SlotId,
+                    VersionNumber = newVersionNumber,
+                    GameId = body.TargetGameId,
+                    OwnerId = targetOwnerId,
+                    OwnerType = targetOwnerType,
+                    Data = Convert.ToBase64String(compressedData),
+                    ContentHash = contentHash,
+                    CompressedSizeBytes = compressedData.Length,
+                    Priority = 1,
+                    QueuedAt = DateTimeOffset.UtcNow
+                };
+                var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
+                await pendingStore.SaveAsync(
+                    pendingEntry.GetStateKey(),
+                    pendingEntry,
+                    new StateOptions { Ttl = pendingTtlSeconds },
+                    cancellationToken);
+            }
+
+            _logger.LogInformation(
+                "Copied save from {SourceSlot} version {SourceVersion} to {TargetSlot} version {TargetVersion}",
+                body.SourceSlotName, sourceVersionNumber, body.TargetSlotName, newVersionNumber);
+
+            return (StatusCodes.OK, new SaveResponse
+            {
+                SlotId = Guid.Parse(targetSlot.SlotId),
+                VersionNumber = newVersionNumber,
+                SizeBytes = sourceData.Length,
+                CreatedAt = newVersion.CreatedAt,
+                UploadPending = _configuration.AsyncUploadEnabled
+            });
         }
         catch (Exception ex)
         {
@@ -1945,49 +2166,178 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of ExportSaves operation.
-    /// TODO: Implement business logic for this method.
+    /// Creates a ZIP archive of saves for the owner and uploads it to asset storage.
     /// </summary>
     public async Task<(StatusCodes, ExportSavesResponse?)> ExportSavesAsync(ExportSavesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ExportSaves operation");
+        _logger.LogDebug(
+            "Exporting saves for owner {OwnerId} ({OwnerType}) game {GameId}",
+            body.OwnerId, body.OwnerType, body.GameId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ExportSaves not yet implemented");
+            var ownerIdStr = body.OwnerId.ToString();
+            var ownerTypeStr = body.OwnerType.ToString();
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Query slots for this owner
+            var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slots = await slotQueryStore.QueryAsync(
+                s => s.GameId == body.GameId && s.OwnerId == ownerIdStr && s.OwnerType == ownerTypeStr,
+                cancellationToken);
+
+            // Filter by specific slot names if provided
+            if (body.SlotNames != null && body.SlotNames.Count > 0)
+            {
+                var slotNameSet = new HashSet<string>(body.SlotNames);
+                slots = slots.Where(s => slotNameSet.Contains(s.SlotName)).ToList();
+            }
+
+            if (!slots.Any())
+            {
+                _logger.LogWarning("No slots found to export");
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Create ZIP archive in memory
+            using var memoryStream = new MemoryStream();
+            using (var archive = new System.IO.Compression.ZipArchive(memoryStream, System.IO.Compression.ZipArchiveMode.Create, true))
+            {
+                var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+                var manifest = new ExportManifest
+                {
+                    GameId = body.GameId,
+                    OwnerId = ownerIdStr,
+                    OwnerType = ownerTypeStr,
+                    ExportedAt = DateTimeOffset.UtcNow,
+                    Slots = new List<ExportSlotEntry>()
+                };
+
+                foreach (var slot in slots)
+                {
+                    // Get the latest version
+                    if (!slot.LatestVersion.HasValue)
+                    {
+                        continue;
+                    }
+
+                    var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, slot.LatestVersion.Value);
+                    var version = await versionStore.GetAsync(versionKey, cancellationToken);
+                    if (version == null)
+                    {
+                        continue;
+                    }
+
+                    // Load the data
+                    var data = await LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+                    if (data == null)
+                    {
+                        _logger.LogWarning("Failed to load data for slot {SlotName}", slot.SlotName);
+                        continue;
+                    }
+
+                    // Add data file to archive
+                    var dataEntry = archive.CreateEntry($"slots/{slot.SlotName}/data.bin");
+                    using (var entryStream = dataEntry.Open())
+                    {
+                        await entryStream.WriteAsync(data, cancellationToken);
+                    }
+
+                    manifest.Slots.Add(new ExportSlotEntry
+                    {
+                        SlotId = slot.SlotId,
+                        SlotName = slot.SlotName,
+                        Category = slot.Category,
+                        DisplayName = slot.SlotName,
+                        VersionNumber = version.VersionNumber,
+                        SchemaVersion = version.SchemaVersion,
+                        ContentHash = version.ContentHash,
+                        SizeBytes = data.Length,
+                        CreatedAt = version.CreatedAt
+                    });
+                }
+
+                // Add manifest to archive
+                var manifestEntry = archive.CreateEntry("manifest.json");
+                using (var entryStream = manifestEntry.Open())
+                {
+                    var manifestJson = System.Text.Json.JsonSerializer.Serialize(manifest);
+                    var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
+                    await entryStream.WriteAsync(manifestBytes, cancellationToken);
+                }
+            }
+
+            memoryStream.Position = 0;
+            var archiveData = memoryStream.ToArray();
+
+            // Upload archive to asset service
+            var uploadRequest = new UploadRequest
+            {
+                Owner = "save-load",
+                Filename = $"export_{body.GameId}_{body.OwnerId}_{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.zip",
+                ContentType = "application/zip",
+                Size = archiveData.Length,
+                Metadata = new AssetMetadataInput { AssetType = AssetType.Other }
+            };
+
+            var (uploadStatus, uploadResponse) = await _assetClient.RequestUploadAsync(uploadRequest, cancellationToken);
+            if (uploadStatus != StatusCodes.OK || uploadResponse?.UploadUrl == null)
+            {
+                _logger.LogError("Failed to request upload URL for export archive");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Upload to presigned URL
+            using var httpClient = new HttpClient();
+            var uploadContent = new ByteArrayContent(archiveData);
+            uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
+            var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
+
+            if (!uploadResult.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to upload export archive: {Status}", uploadResult.StatusCode);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Complete upload
+            var completeRequest = new CompleteUploadRequest
+            {
+                UploadId = uploadResponse.UploadId
+            };
+            var (completeStatus, assetMetadata) = await _assetClient.CompleteUploadAsync(completeRequest, cancellationToken);
+
+            if (completeStatus != StatusCodes.OK || assetMetadata == null)
+            {
+                _logger.LogError("Failed to complete export archive upload");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Get download URL
+            var getAssetResponse = await _assetClient.GetAssetAsync(
+                new GetAssetRequest { AssetId = assetMetadata.AssetId },
+                cancellationToken);
+
+            if (getAssetResponse?.DownloadUrl == null)
+            {
+                _logger.LogError("Failed to get download URL for export");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            _logger.LogInformation(
+                "Exported {SlotCount} slots for owner {OwnerId}, archive size {Size} bytes",
+                slots.Count(), body.OwnerId, archiveData.Length);
+
+            return (StatusCodes.OK, new ExportSavesResponse
+            {
+                DownloadUrl = getAssetResponse.DownloadUrl,
+                ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                SizeBytes = archiveData.Length
+            });
         }
         catch (Exception ex)
         {
@@ -2002,49 +2352,235 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of ImportSaves operation.
-    /// TODO: Implement business logic for this method.
+    /// Imports saves from an uploaded export archive.
     /// </summary>
     public async Task<(StatusCodes, ImportSavesResponse?)> ImportSavesAsync(ImportSavesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing ImportSaves operation");
+        _logger.LogDebug(
+            "Importing saves from archive {AssetId} for owner {OwnerId} ({OwnerType})",
+            body.ArchiveAssetId, body.TargetOwnerId, body.TargetOwnerType);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ImportSaves not yet implemented");
+            // Download the archive
+            var assetResponse = await _assetClient.GetAssetAsync(
+                new GetAssetRequest { AssetId = body.ArchiveAssetId.ToString() },
+                cancellationToken);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            if (assetResponse?.DownloadUrl == null)
+            {
+                _logger.LogError("Failed to get download URL for archive asset");
+                return (StatusCodes.NotFound, null);
+            }
+
+            using var httpClient = new HttpClient();
+            var archiveData = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
+
+            // Parse the archive
+            ExportManifest? manifest = null;
+            var slotDataMap = new Dictionary<string, byte[]>();
+
+            using (var memoryStream = new MemoryStream(archiveData))
+            using (var archive = new System.IO.Compression.ZipArchive(memoryStream, System.IO.Compression.ZipArchiveMode.Read))
+            {
+                // Read manifest
+                var manifestEntry = archive.GetEntry("manifest.json");
+                if (manifestEntry == null)
+                {
+                    _logger.LogError("Archive missing manifest.json");
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                using (var manifestStream = manifestEntry.Open())
+                using (var reader = new StreamReader(manifestStream))
+                {
+                    var manifestJson = await reader.ReadToEndAsync(cancellationToken);
+                    manifest = System.Text.Json.JsonSerializer.Deserialize<ExportManifest>(manifestJson);
+                }
+
+                if (manifest == null || manifest.Slots == null)
+                {
+                    _logger.LogError("Invalid manifest in archive");
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                // Read slot data
+                foreach (var slotEntry in manifest.Slots)
+                {
+                    var dataEntryPath = $"slots/{slotEntry.SlotName}/data.bin";
+                    var dataEntry = archive.GetEntry(dataEntryPath);
+                    if (dataEntry == null)
+                    {
+                        _logger.LogWarning("Missing data file for slot {SlotName}", slotEntry.SlotName);
+                        continue;
+                    }
+
+                    using var dataStream = dataEntry.Open();
+                    using var dataMemory = new MemoryStream();
+                    await dataStream.CopyToAsync(dataMemory, cancellationToken);
+                    slotDataMap[slotEntry.SlotName] = dataMemory.ToArray();
+                }
+            }
+
+            var targetOwnerIdStr = body.TargetOwnerId.ToString();
+            var targetOwnerTypeStr = body.TargetOwnerType.ToString();
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+
+            var importedSlots = 0;
+            var importedVersions = 0;
+            var skippedSlots = 0;
+            var conflicts = new List<string>();
+
+            foreach (var slotEntry in manifest.Slots)
+            {
+                if (!slotDataMap.TryGetValue(slotEntry.SlotName, out var data))
+                {
+                    continue;
+                }
+
+                // Check for existing slot
+                var slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
+                var existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
+
+                if (existingSlot != null)
+                {
+                    switch (body.ConflictResolution)
+                    {
+                        case ConflictResolution.SKIP:
+                            conflicts.Add(slotEntry.SlotName);
+                            skippedSlots++;
+                            continue;
+
+                        case ConflictResolution.OVERWRITE:
+                            // Delete existing slot and versions
+                            var existingVersions = await _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName)
+                                .QueryAsync(v => v.SlotId == existingSlot.SlotId, cancellationToken);
+                            foreach (var existingVersion in existingVersions)
+                            {
+                                await versionStore.DeleteAsync(existingVersion.GetStateKey(), cancellationToken);
+                            }
+                            await slotStore.DeleteAsync(existingSlot.GetStateKey(), cancellationToken);
+                            break;
+
+                        case ConflictResolution.RENAME:
+                            var counter = 1;
+                            var baseName = slotEntry.SlotName;
+                            while (existingSlot != null)
+                            {
+                                slotEntry.SlotName = $"{baseName}_{counter}";
+                                slotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerTypeStr, targetOwnerIdStr, slotEntry.SlotName);
+                                existingSlot = await slotStore.GetAsync(slotKey, cancellationToken);
+                                counter++;
+                            }
+                            break;
+                    }
+                }
+
+                // Create slot
+                var newSlot = new SaveSlotMetadata
+                {
+                    SlotId = Guid.NewGuid().ToString(),
+                    GameId = body.TargetGameId,
+                    OwnerId = targetOwnerIdStr,
+                    OwnerType = targetOwnerTypeStr,
+                    SlotName = slotEntry.SlotName,
+                    Category = slotEntry.Category ?? "manual",
+                    MaxVersions = _configuration.DefaultMaxVersionsManualSave,
+                    LatestVersion = 1,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                };
+                await slotStore.SaveAsync(newSlot.GetStateKey(), newSlot, cancellationToken: cancellationToken);
+                importedSlots++;
+
+                // Create version
+                var contentHash = Hashing.ContentHasher.ComputeHash(data);
+                var compressionTypeEnum = Enum.TryParse<CompressionType>(_configuration.DefaultCompressionType, out var ct) ? ct : CompressionType.GZIP;
+                var compressedData = Compression.CompressionHelper.Compress(data, compressionTypeEnum);
+
+                var newVersion = new SaveVersionManifest
+                {
+                    SlotId = newSlot.SlotId,
+                    VersionNumber = 1,
+                    ContentHash = contentHash,
+                    SizeBytes = data.Length,
+                    CompressedSizeBytes = compressedData.Length,
+                    CompressionType = compressionTypeEnum.ToString(),
+                    SchemaVersion = slotEntry.SchemaVersion,
+                    CheckpointName = slotEntry.DisplayName,
+                    IsPinned = false,
+                    IsDelta = false,
+                    UploadStatus = _configuration.AsyncUploadEnabled ? "PENDING" : "COMPLETE",
+                    CreatedAt = DateTimeOffset.UtcNow
+                };
+                await versionStore.SaveAsync(newVersion.GetStateKey(), newVersion, cancellationToken: cancellationToken);
+                importedVersions++;
+
+                // Store in hot cache
+                var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
+                var hotEntry = new HotSaveEntry
+                {
+                    SlotId = newSlot.SlotId,
+                    VersionNumber = 1,
+                    Data = Convert.ToBase64String(compressedData),
+                    ContentHash = contentHash,
+                    IsCompressed = compressionTypeEnum != CompressionType.NONE,
+                    CompressionType = compressionTypeEnum.ToString(),
+                    SizeBytes = data.Length,
+                    CachedAt = DateTimeOffset.UtcNow
+                };
+                var hotCacheTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
+                await hotCacheStore.SaveAsync(
+                    hotEntry.GetStateKey(),
+                    hotEntry,
+                    new StateOptions { Ttl = hotCacheTtlSeconds },
+                    cancellationToken);
+
+                // Queue for upload if enabled
+                if (_configuration.AsyncUploadEnabled)
+                {
+                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                    var pendingEntry = new PendingUploadEntry
+                    {
+                        UploadId = Guid.NewGuid().ToString(),
+                        SlotId = newSlot.SlotId,
+                        VersionNumber = 1,
+                        GameId = body.TargetGameId,
+                        OwnerId = targetOwnerIdStr,
+                        OwnerType = targetOwnerTypeStr,
+                        Data = Convert.ToBase64String(compressedData),
+                        ContentHash = contentHash,
+                        CompressedSizeBytes = compressedData.Length,
+                        Priority = 1,
+                        QueuedAt = DateTimeOffset.UtcNow
+                    };
+                    var pendingTtlSeconds = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
+                    await pendingStore.SaveAsync(
+                        pendingEntry.GetStateKey(),
+                        pendingEntry,
+                        new StateOptions { Ttl = pendingTtlSeconds },
+                        cancellationToken);
+                }
+            }
+
+            _logger.LogInformation(
+                "Imported {Slots} slots, {Versions} versions, skipped {Skipped} due to conflicts",
+                importedSlots, importedVersions, skippedSlots);
+
+            return (StatusCodes.OK, new ImportSavesResponse
+            {
+                ImportedSlots = importedSlots,
+                ImportedVersions = importedVersions,
+                SkippedSlots = skippedSlots,
+                Conflicts = conflicts
+            });
         }
         catch (Exception ex)
         {
@@ -2059,49 +2595,87 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Implementation of VerifyIntegrity operation.
-    /// TODO: Implement business logic for this method.
+    /// Verifies the integrity of save data by comparing hash values.
     /// </summary>
     public async Task<(StatusCodes, VerifyIntegrityResponse?)> VerifyIntegrityAsync(VerifyIntegrityRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing VerifyIntegrity operation");
+        _logger.LogDebug(
+            "Verifying integrity for slot {SlotName} owner {OwnerId}",
+            body.SlotName, body.OwnerId);
 
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method VerifyIntegrity not yet implemented");
+            var ownerIdStr = body.OwnerId.ToString();
+            var ownerTypeStr = body.OwnerType.ToString();
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.OK, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+            // Find the slot
+            var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
+            var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
+            var slot = await slotStore.GetAsync(slotKey, cancellationToken);
+
+            if (slot == null)
+            {
+                _logger.LogWarning("Slot not found: {SlotKey}", slotKey);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get the version to verify
+            var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
+            var versionNumber = body.VersionNumber ?? slot.LatestVersion;
+            if (!versionNumber.HasValue)
+            {
+                _logger.LogWarning("No version to verify");
+                return (StatusCodes.NotFound, null);
+            }
+
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber.Value);
+            var version = await versionStore.GetAsync(versionKey, cancellationToken);
+
+            if (version == null)
+            {
+                _logger.LogWarning("Version {Version} not found", versionNumber);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var expectedHash = version.ContentHash;
+
+            // Try to load the data
+            var data = await LoadVersionDataAsync(slot.SlotId, version, cancellationToken);
+
+            if (data == null)
+            {
+                return (StatusCodes.OK, new VerifyIntegrityResponse
+                {
+                    Valid = false,
+                    VersionNumber = versionNumber.Value,
+                    ExpectedHash = expectedHash,
+                    ActualHash = null,
+                    ErrorMessage = "Unable to load save data for verification"
+                });
+            }
+
+            // Compute actual hash
+            var actualHash = Hashing.ContentHasher.ComputeHash(data);
+            var hashesMatch = string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase);
+
+            _logger.LogInformation(
+                "Integrity verification for version {Version}: {Result} (expected {Expected}, actual {Actual})",
+                versionNumber, hashesMatch ? "VALID" : "INVALID", expectedHash, actualHash);
+
+            return (StatusCodes.OK, new VerifyIntegrityResponse
+            {
+                Valid = hashesMatch,
+                VersionNumber = versionNumber.Value,
+                ExpectedHash = expectedHash,
+                ActualHash = actualHash,
+                ErrorMessage = hashesMatch ? null : "Hash mismatch - data may be corrupted"
+            });
         }
         catch (Exception ex)
         {
@@ -2116,7 +2690,7 @@ public partial class SaveLoadService : ISaveLoadService
                 details: null,
                 stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
