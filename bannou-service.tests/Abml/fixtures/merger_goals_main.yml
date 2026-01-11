@@ -1,0 +1,18 @@
+version: "2.0"
+metadata:
+  id: main
+
+imports:
+  - file: "ai.yml"
+    as: "ai"
+
+goals:
+  survive:
+    priority: 100
+    conditions:
+      health: "> 0"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Hello" }

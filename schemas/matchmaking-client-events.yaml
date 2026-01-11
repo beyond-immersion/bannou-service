@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Client Events API
+  description: |
+    Server-to-client push events for the Matchmaking service.
+    These events notify clients of matchmaking status changes, match formation,
+    and cancellation delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "matchmaking.{event_type}" naming convention.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Queue Joined Event
+    # ============================================
+
+    QueueJoinedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the player when they successfully join a matchmaking queue.
+        Includes ticket information and estimated wait time.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - ticketId
+        - queueId
+        - queueDisplayName
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.queue_joined"
+          description: Fixed event type identifier
+        ticketId:
+          type: string
+          format: uuid
+          description: Unique identifier for the matchmaking ticket
+        queueId:
+          type: string
+          description: ID of the queue joined
+        queueDisplayName:
+          type: string
+          description: Human-readable queue name
+        estimatedWaitSeconds:
+          type: integer
+          nullable: true
+          description: Estimated wait time in seconds (null if unknown)
+        position:
+          type: integer
+          nullable: true
+          description: Approximate position in queue (null if not tracked)
+
+    # ============================================
+    # Match Found Event
+    # ============================================
+
+    MatchFoundEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all matched players when a match is formed.
+        Players must accept or decline within the timeout period.
+        Includes match details and accept deadline.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - matchId
+        - queueId
+        - queueDisplayName
+        - playerCount
+        - acceptDeadline
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.match_found"
+          description: Fixed event type identifier
+        matchId:
+          type: string
+          format: uuid
+          description: Unique identifier for this match
+        queueId:
+          type: string
+          description: Queue the match was formed from
+        queueDisplayName:
+          type: string
+          description: Human-readable queue name
+        playerCount:
+          type: integer
+          description: Total number of players in the match
+        acceptDeadline:
+          type: string
+          format: date-time
+          description: Deadline to accept/decline the match
+        acceptTimeoutSeconds:
+          type: integer
+          description: Seconds remaining to accept
+        averageSkillRating:
+          type: number
+          nullable: true
+          description: Average skill rating of matched players (if using skill)
+        teamAssignment:
+          type: integer
+          nullable: true
+          description: Team number the player is assigned to (for team games)
+        partyMembersMatched:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Account IDs of party members who are also in this match
+
+    # ============================================
+    # Match Accepted Events
+    # ============================================
+
+    MatchPlayerAcceptedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all match participants when a player accepts.
+        Shows progress toward match start.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - matchId
+        - acceptedCount
+        - totalCount
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.player_accepted"
+          description: Fixed event type identifier
+        matchId:
+          type: string
+          format: uuid
+          description: Match identifier
+        acceptedCount:
+          type: integer
+          description: Number of players who have accepted
+        totalCount:
+          type: integer
+          description: Total players who need to accept
+        allAccepted:
+          type: boolean
+          default: false
+          description: Whether all players have accepted
+
+    MatchConfirmedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all match participants when all players have accepted.
+        Includes the game session ID to join.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - matchId
+        - gameSessionId
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.match_confirmed"
+          description: Fixed event type identifier
+        matchId:
+          type: string
+          format: uuid
+          description: Match identifier
+        gameSessionId:
+          type: string
+          format: uuid
+          description: ID of the created game session
+        reservationToken:
+          type: string
+          description: Token to claim reservation when joining session
+        joinDeadlineSeconds:
+          type: integer
+          nullable: true
+          description: Seconds to join before reservation expires
+
+    # ============================================
+    # Cancellation Events
+    # ============================================
+
+    MatchmakingCancelledEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent when matchmaking is cancelled for any reason.
+        Includes the specific reason code for UI feedback.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - ticketId
+        - queueId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.cancelled"
+          description: Fixed event type identifier
+        ticketId:
+          type: string
+          format: uuid
+          description: Ticket that was cancelled
+        queueId:
+          type: string
+          description: Queue the ticket was in
+        reason:
+          $ref: '#/components/schemas/CancelReason'
+          description: Reason for cancellation
+        reasonDetail:
+          type: string
+          nullable: true
+          description: Additional detail about the cancellation
+        waitTimeSeconds:
+          type: number
+          nullable: true
+          description: How long the player was waiting before cancellation
+        canRequeue:
+          type: boolean
+          default: true
+          description: Whether the player can immediately requeue
+
+    MatchDeclinedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all match participants when someone declines.
+        Includes information about automatic requeuing.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - matchId
+        - queueId
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.match_declined"
+          description: Fixed event type identifier
+        matchId:
+          type: string
+          format: uuid
+          description: Match that was declined
+        queueId:
+          type: string
+          description: Queue the match was from
+        declinedByOther:
+          type: boolean
+          default: true
+          description: Whether someone else declined (false if you declined)
+        autoRequeued:
+          type: boolean
+          default: false
+          description: Whether you have been automatically requeued
+        newTicketId:
+          type: string
+          format: uuid
+          nullable: true
+          description: New ticket ID if auto-requeued
+
+    # ============================================
+    # Status Update Event
+    # ============================================
+
+    MatchmakingStatusUpdateEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Periodic status update sent to players in queue.
+        Provides updated wait estimates and queue position.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - ticketId
+        - queueId
+        - intervalsElapsed
+      properties:
+        eventName:
+          type: string
+          default: "matchmaking.status_update"
+          description: Fixed event type identifier
+        ticketId:
+          type: string
+          format: uuid
+          description: Ticket identifier
+        queueId:
+          type: string
+          description: Queue identifier
+        intervalsElapsed:
+          type: integer
+          description: Number of processing intervals elapsed
+        maxIntervals:
+          type: integer
+          description: Maximum intervals before timeout/relaxation
+        currentSkillRange:
+          type: integer
+          nullable: true
+          description: Current skill matching range
+        estimatedWaitSeconds:
+          type: integer
+          nullable: true
+          description: Updated wait estimate
+        position:
+          type: integer
+          nullable: true
+          description: Current queue position (if tracked)
+
+    # ============================================
+    # Supporting Types
+    # ============================================
+
+    CancelReason:
+      type: string
+      description: Reason codes for matchmaking cancellation
+      enum:
+        - cancelled_by_user
+        - timeout
+        - session_disconnected
+        - party_disbanded
+        - match_declined
+        - queue_disabled

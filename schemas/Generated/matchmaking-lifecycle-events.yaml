@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for matchmaking service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: matchmaking-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    MatchmakingQueueCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to matchmaking-queue.created when a matchmakingqueue is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - queueId
+      - gameId
+      - displayName
+      - enabled
+      - minCount
+      - maxCount
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: matchmaking-queue.created
+          description: 'Event type identifier: matchmaking-queue.created'
+        queueId: &id001
+          type: string
+          description: "Unique identifier for the matchmaking queue"
+        gameId: &id002
+          type: string
+          description: "Game this queue is for"
+        displayName: &id003
+          type: string
+          description: "Human-readable queue name"
+        enabled: &id004
+          type: boolean
+          description: "Whether the queue is accepting tickets"
+        minCount: &id005
+          type: integer
+          description: "Minimum players for a match"
+        maxCount: &id006
+          type: integer
+          description: "Maximum players for a match"
+        createdAt: &id007
+          type: string
+          format: date-time
+          description: "When the queue was created"
+    MatchmakingQueueUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to matchmaking-queue.updated when a matchmakingqueue is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - queueId
+      - gameId
+      - displayName
+      - enabled
+      - minCount
+      - maxCount
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: matchmaking-queue.updated
+          description: 'Event type identifier: matchmaking-queue.updated'
+        queueId: *id001
+        gameId: *id002
+        displayName: *id003
+        enabled: *id004
+        minCount: *id005
+        maxCount: *id006
+        createdAt: *id007
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    MatchmakingQueueDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to matchmaking-queue.deleted when a matchmakingqueue is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - queueId
+      - gameId
+      - displayName
+      - enabled
+      - minCount
+      - maxCount
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: matchmaking-queue.deleted
+          description: 'Event type identifier: matchmaking-queue.deleted'
+        queueId: *id001
+        gameId: *id002
+        displayName: *id003
+        enabled: *id004
+        minCount: *id005
+        maxCount: *id006
+        createdAt: *id007
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

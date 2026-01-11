@@ -255,6 +255,7 @@ public partial class AuthService : IAuthService
 
             return (StatusCodes.OK, new RegisterResponse
             {
+                AccountId = accountResult.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ConnectUrl = new Uri(_configuration.ConnectUrl)

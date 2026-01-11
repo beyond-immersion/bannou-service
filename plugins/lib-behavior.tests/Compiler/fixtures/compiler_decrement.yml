@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - local: { variable: counter, value: "10" }
+    - decrement: { variable: counter, by: 1 }

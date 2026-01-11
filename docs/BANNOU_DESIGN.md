@@ -94,7 +94,7 @@ When a WebSocket message arrives, the Connect service extracts a 16-byte GUID fr
 Each service is an independent **plugin** - a .NET assembly that can be loaded or excluded at startup:
 
 ```
-lib-account/            # Account service plugin
+plugins/lib-account/    # Account service plugin
 ├── Generated/          # Auto-generated from schema (never edit)
 │   ├── AccountController.cs
 │   ├── IAccountService.cs

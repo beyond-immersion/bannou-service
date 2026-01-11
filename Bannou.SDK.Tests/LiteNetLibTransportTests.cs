@@ -65,6 +65,7 @@ public class LiteNetLibTransportTests
         var cfg = new GameTransportConfig { Port = 20000 + Random.Shared.Next(0, 1000) };
 
         bool clientGotMsg = false;
+        bool serverGotClient = false;
 
         client.OnServerMessage += (version, type, payload) =>
         {
@@ -75,10 +76,17 @@ public class LiteNetLibTransportTests
             clientGotMsg = true;
         };
 
+        // Track when server acknowledges client connection (required for SendToAll to work)
+        server.OnClientConnected += _ => serverGotClient = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Wait for server to register the client (not just client thinking it's connected)
+        while (!serverGotClient && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var snapshot = new ArenaStateSnapshot
         {
@@ -142,6 +150,7 @@ public class LiteNetLibTransportTests
         var cfg = new GameTransportConfig { Port = 22000 + Random.Shared.Next(0, 1000) };
 
         bool clientGotMsg = false;
+        bool serverGotClient = false;
 
         client.OnServerMessage += (version, type, payload) =>
         {
@@ -153,9 +162,15 @@ public class LiteNetLibTransportTests
             clientGotMsg = true;
         };
 
+        server.OnClientConnected += _ => serverGotClient = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
-        await Task.Delay(50, cts.Token);
+
+        while (!serverGotClient && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var opp = new OpportunityDataMessage
         {
@@ -218,6 +233,7 @@ public class LiteNetLibTransportTests
 
         var cfg = new GameTransportConfig { Port = 24000 + Random.Shared.Next(0, 1000) };
         bool clientGot = false;
+        bool serverGotClient = false;
 
         client.OnServerMessage += (version, type, payload) =>
         {
@@ -228,9 +244,15 @@ public class LiteNetLibTransportTests
             clientGot = true;
         };
 
+        server.OnClientConnected += _ => serverGotClient = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
-        await Task.Delay(50, cts.Token);
+
+        while (!serverGotClient && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var ce = new CombatEventMessage
         {
@@ -257,6 +279,7 @@ public class LiteNetLibTransportTests
 
         var cfg = new GameTransportConfig { Port = 25000 + Random.Shared.Next(0, 1000) };
         bool clientGot = false;
+        bool serverGotClient = false;
 
         client.OnServerMessage += (ver, type, payload) =>
         {
@@ -268,9 +291,15 @@ public class LiteNetLibTransportTests
             clientGot = true;
         };
 
+        server.OnClientConnected += _ => serverGotClient = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
-        await Task.Delay(50, cts.Token);
+
+        while (!serverGotClient && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var deltaMsg = new ArenaStateDelta
         {
@@ -302,6 +331,7 @@ public class LiteNetLibTransportTests
 
         var cfg = new GameTransportConfig { Port = 26000 + Random.Shared.Next(0, 1000) };
         bool got = false;
+        bool serverGotClient = false;
 
         client.OnServerMessage += (ver, type, payload) =>
         {
@@ -313,9 +343,15 @@ public class LiteNetLibTransportTests
             got = true;
         };
 
+        server.OnClientConnected += _ => serverGotClient = true;
+
         await server.StartAsync(cfg, cts.Token);
         await client.ConnectAsync("127.0.0.1", cfg.Port, GameProtocolEnvelope.CurrentVersion, cts.Token);
-        await Task.Delay(50, cts.Token);
+
+        while (!serverGotClient && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
 
         var extMsg = new CinematicExtensionMessage
         {

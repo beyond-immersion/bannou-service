@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: main
+
+imports:
+  - file: "lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Working" }
+    on_error:
+      - call: { flow: "lib.handle_error" }

@@ -638,10 +638,16 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             "description": "Response from successful user registration",
             "additionalProperties": false,
             "required": [
+                "accountId",
                 "accessToken",
                 "connectUrl"
             ],
             "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the newly created account"
+                },
                 "accessToken": {
                     "type": "string",
                     "description": "JWT access token for immediate authentication",

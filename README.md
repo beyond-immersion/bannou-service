@@ -13,7 +13,7 @@ cd bannou-service
 make up-compose
 
 # Run tests
-make test                  # Unit tests (438 total)
+make test                  # Unit tests (3,300+ total)
 make test-http             # HTTP integration tests
 make test-edge             # WebSocket protocol tests
 ```
@@ -35,7 +35,7 @@ make test-edge             # WebSocket protocol tests
 ## Key Features
 
 - **WebSocket-First**: Connect service edge gateway with 31-byte binary headers for zero-copy routing
-- **Schema-Driven**: OpenAPI specs generate controllers, models, clients, and tests—[you write only 18-35% of the code](docs/reference/AUTOMATION-ANALYSIS.md)
+- **Schema-Driven**: OpenAPI specs generate controllers, models, clients, and tests—you write only 18-35% of the code
 - **Plugin Architecture**: Each service is an independent assembly, loadable via environment config
 - **Infrastructure Abstraction**: Portable infrastructure (databases, messaging, service mesh) via lib-state, lib-messaging, and lib-mesh
 - **Monoservice Flexibility**: Same binary deploys as monolith or distributed microservices
@@ -73,12 +73,13 @@ make down-compose          # Stop and cleanup
 ```
 bannou-service/
 ├── schemas/              # OpenAPI specifications (source of truth)
-├── lib-*/                # Service plugins (one per service)
+├── plugins/lib-*/        # Service plugins (32 services)
 ├── bannou-service/       # Main application and shared code
+├── Bannou.SDK/           # Server SDK (mesh clients, behavior runtime)
+├── Bannou.Client.SDK/    # Game client SDK (WebSocket, behavior)
+├── GameProtocol/         # UDP game state protocol
+├── GameTransport/        # LiteNetLib transport layer
 ├── docs/                 # Documentation
-│   ├── guides/           # How-to guides
-│   ├── reference/        # Technical reference
-│   └── operations/       # CI/CD and infrastructure
 ├── provisioning/         # Docker and deployment configs
 └── scripts/              # Code generation and build scripts
 ```

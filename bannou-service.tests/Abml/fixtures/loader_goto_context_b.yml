@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: goto_context_b
+
+flows:
+  target:
+    actions:
+    - log: { message: "In B.target (reached via context-relative goto)" }

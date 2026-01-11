@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: call_context_a
+
+imports:
+  - file: "call_context_b.yml"
+    as: "b"
+
+flows:
+  entry:
+    actions:
+    - log: { message: "In A.entry" }
+    - call: { flow: "b.helper" }
+    - log: { message: "Back in A.entry" }

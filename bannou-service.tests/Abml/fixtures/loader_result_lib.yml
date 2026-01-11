@@ -1,0 +1,9 @@
+version: "2.0"
+metadata:
+  id: result_lib
+
+flows:
+  compute:
+    actions:
+    - log: { message: "Computing..." }
+    - return: { value: 42 }

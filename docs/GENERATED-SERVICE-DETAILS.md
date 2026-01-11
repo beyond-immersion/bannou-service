@@ -23,10 +23,11 @@ This document provides a compact reference of all Bannou services and their API 
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
 Des... |
 | [Game Service](#game-service) | 1.0.0 | 5 | Registry service for game services that users can subscribe ... |
-| [Game Session](#game-session) | 2.0.0 | 8 | Minimal game session management for Arcadia and other games. |
+| [Game Session](#game-session) | 2.0.0 | 11 | Minimal game session management for Arcadia and other games. |
 | [Leaderboard](#leaderboard) | 1.0.0 | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [Location](#location) | 1.0.0 | 17 | Location management service for Arcadia game world. |
 | [Mapping](#mapping) | 1.0.0 | 18 | Spatial data management service for Arcadia game worlds. |
+| [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
@@ -539,9 +540,17 @@ Minimal game session management for Arcadia and other games.
 | `POST` | `/sessions/create` | Create new game session | authenticated |
 | `POST` | `/sessions/get` | Get game session details | user |
 | `POST` | `/sessions/join` | Join a game session | authenticated |
+| `POST` | `/sessions/join-session` | Join a specific game session by ID | authenticated |
 | `POST` | `/sessions/kick` | Kick player from game session (admin only) | admin |
 | `POST` | `/sessions/leave` | Leave a game session | user |
+| `POST` | `/sessions/leave-session` | Leave a specific game session by ID | user |
 | `POST` | `/sessions/list` | List available game sessions | authenticated |
+
+### Internal
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/sessions/publish-join-shortcut` | Publish join shortcut for matchmade session | authenticated |
 
 ---
 
@@ -668,6 +677,45 @@ Spatial data management service for Arcadia game worlds.
 | `POST` | `/mapping/publish` | Publish map data update (RPC path) | authenticated |
 | `POST` | `/mapping/publish-objects` | Publish metadata object changes (batch) | authenticated |
 | `POST` | `/mapping/request-snapshot` | Request full snapshot for cold start | user |
+
+---
+
+## Matchmaking {#matchmaking}
+
+**Version**: 1.0.0 | **Schema**: `schemas/matchmaking-api.yaml`
+
+Matchmaking service for competitive and casual game matching.
+
+### Matchmaking
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/matchmaking/accept` | Accept a formed match | user |
+| `POST` | `/matchmaking/decline` | Decline a formed match | user |
+| `POST` | `/matchmaking/join` | Join matchmaking queue | user |
+| `POST` | `/matchmaking/leave` | Leave matchmaking queue | user |
+| `POST` | `/matchmaking/status` | Get matchmaking status | user |
+
+### Queue Administration
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/matchmaking/queue/create` | Create a new matchmaking queue | admin |
+| `POST` | `/matchmaking/queue/delete` | Delete a matchmaking queue | admin |
+| `POST` | `/matchmaking/queue/update` | Update a matchmaking queue | admin |
+
+### Queues
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/matchmaking/queue/get` | Get queue details | user |
+| `POST` | `/matchmaking/queue/list` | List available matchmaking queues | user |
+
+### Statistics
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/matchmaking/stats` | Get queue statistics | user |
 
 ---
 
@@ -1114,8 +1162,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 31
-- **Total endpoints**: 346
+- **Total services**: 32
+- **Total endpoints**: 360
 
 ---
 

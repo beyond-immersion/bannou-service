@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    a: { type: float, default: 5 }
+    b: { type: float, default: 3 }
+
+flows:
+  main:
+    actions:
+    - set: { variable: result, value: "${a + b * 2}" }

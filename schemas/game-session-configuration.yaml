@@ -31,3 +31,33 @@ x-service-configuration:
       description: Default session timeout in seconds
       default: 7200
       env: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
+    DefaultReservationTtlSeconds:
+      type: integer
+      description: Default TTL for player reservations when not specified in request
+      default: 60
+      env: GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS
+    DefaultLobbyMaxPlayers:
+      type: integer
+      description: Default maximum players for game lobbies
+      default: 100
+      env: GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS
+    CleanupIntervalSeconds:
+      type: integer
+      description: Interval between reservation cleanup cycles
+      default: 30
+      env: GAME_SESSION_CLEANUP_INTERVAL_SECONDS
+    CleanupServiceStartupDelaySeconds:
+      type: integer
+      description: Delay before cleanup service starts (allows other services to initialize)
+      default: 10
+      env: GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS
+    StartupServiceDelaySeconds:
+      type: integer
+      description: Delay before startup service initializes subscription caches
+      default: 2
+      env: GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS
+    SupportedGameServices:
+      type: string
+      description: Comma-separated list of supported game service stub names
+      default: "arcadia,generic"
+      env: GAME_SESSION_SUPPORTED_GAME_SERVICES

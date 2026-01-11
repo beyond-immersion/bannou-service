@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: test
+
+context:
+  variables:
+    a: { type: float, default: 5 }
+    b: { type: float, default: 10 }
+
+flows:
+  main:
+    actions:
+    - set: { variable: minimum, value: "${min(a, b)}" }
+    - set: { variable: maximum, value: "${max(a, b)}" }

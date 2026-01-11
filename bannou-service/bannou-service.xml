@@ -15796,6 +15796,496 @@
             Optional reason for deletion (e.g., "Merged into {targetId}")
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent">
+            <summary>
+            Published when a new matchmaking ticket is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.Timestamp">
+            <summary>
+            When the ticket was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.TicketId">
+            <summary>
+            ID of the matchmaking ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.QueueId">
+            <summary>
+            Queue the ticket was submitted to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.AccountId">
+            <summary>
+            Account that created the ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.PartyId">
+            <summary>
+            Party ID if this is a party ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.PartySize">
+            <summary>
+            Number of players in the party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCreatedEvent.SkillRating">
+            <summary>
+            Effective skill rating for matching
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent">
+            <summary>
+            Published when a matchmaking ticket status changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.Timestamp">
+            <summary>
+            When the status changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.TicketId">
+            <summary>
+            ID of the matchmaking ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.PreviousStatus">
+            <summary>
+            Status before the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.NewStatus">
+            <summary>
+            Status after the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.IntervalsElapsed">
+            <summary>
+            Number of processing intervals elapsed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketUpdatedEvent.CurrentSkillRange">
+            <summary>
+            Current skill matching range
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent">
+            <summary>
+            Published when a matchmaking ticket is cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.Timestamp">
+            <summary>
+            When the ticket was cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.TicketId">
+            <summary>
+            ID of the cancelled ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.QueueId">
+            <summary>
+            Queue the ticket was in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.AccountId">
+            <summary>
+            Account that owned the ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.PartyId">
+            <summary>
+            Party ID if this was a party ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.Reason">
+            <summary>
+            Reason for cancellation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEvent.WaitTimeSeconds">
+            <summary>
+            How long the ticket was active before cancellation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent">
+            <summary>
+            Published when a match is successfully formed from tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.Timestamp">
+            <summary>
+            When the match was formed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.MatchId">
+            <summary>
+            Unique identifier for this match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.QueueId">
+            <summary>
+            Queue the match was formed from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.Tickets">
+            <summary>
+            Tickets included in this match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.PlayerCount">
+            <summary>
+            Total number of players in the match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.AverageSkillRating">
+            <summary>
+            Average skill rating of matched players
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.SkillRatingSpread">
+            <summary>
+            Difference between highest and lowest skill
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchFormedEvent.AcceptDeadline">
+            <summary>
+            Deadline for all players to accept
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent">
+            <summary>
+            Published when all players accept a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.Timestamp">
+            <summary>
+            When the match was fully accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.MatchId">
+            <summary>
+            Match identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.QueueId">
+            <summary>
+            Queue the match was from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.GameSessionId">
+            <summary>
+            Created game session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.PlayerCount">
+            <summary>
+            Number of players in the match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchAcceptedEvent.AverageWaitTimeSeconds">
+            <summary>
+            Average time players waited for this match
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent">
+            <summary>
+            Published when a player declines a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.Timestamp">
+            <summary>
+            When the match was declined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.MatchId">
+            <summary>
+            Match that was declined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.QueueId">
+            <summary>
+            Queue the match was from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.DeclinedBy">
+            <summary>
+            Account that declined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.AffectedPlayers">
+            <summary>
+            Account IDs of all affected players
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingMatchDeclinedEvent.RequeuingPlayers">
+            <summary>
+            Players who will be automatically requeued
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingStatsEvent">
+            <summary>
+            Published periodically with queue statistics for monitoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingStatsEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingStatsEvent.Timestamp">
+            <summary>
+            When stats were collected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingStatsEvent.Stats">
+            <summary>
+            Statistics per queue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.QueueStatsSnapshot">
+            <summary>
+            Point-in-time statistics for a queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.QueueStatsSnapshot.QueueId">
+            <summary>
+            Queue identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.QueueStatsSnapshot.ActiveTickets">
+            <summary>
+            Current active ticket count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.QueueStatsSnapshot.MatchesFormedSinceLastSnapshot">
+            <summary>
+            Matches formed since last stats event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.QueueStatsSnapshot.AverageWaitSeconds">
+            <summary>
+            Current average wait time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.QueueStatsSnapshot.OldestTicketAgeSeconds">
+            <summary>
+            Age of the oldest ticket in queue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchedTicketInfo">
+            <summary>
+            Information about a ticket that was matched
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.TicketId">
+            <summary>
+            Ticket identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.AccountId">
+            <summary>
+            Account that owns the ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.PartyId">
+            <summary>
+            Party ID if this is a party ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.WebSocketSessionId">
+            <summary>
+            WebSocket session for event delivery
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.SkillRating">
+            <summary>
+            Player's skill rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchedTicketInfo.WaitTimeSeconds">
+            <summary>
+            How long this ticket was waiting
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent">
+            <summary>
+            Published to matchmaking-queue.created when a matchmakingqueue is created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.EventName">
+            <summary>
+            Event type identifier: matchmaking-queue.created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.QueueId">
+            <summary>
+            Unique identifier for the matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.Enabled">
+            <summary>
+            Whether the queue is accepting tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.MinCount">
+            <summary>
+            Minimum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.MaxCount">
+            <summary>
+            Maximum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueCreatedEvent.CreatedAt">
+            <summary>
+            When the queue was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent">
+            <summary>
+            Published to matchmaking-queue.updated when a matchmakingqueue is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.EventName">
+            <summary>
+            Event type identifier: matchmaking-queue.updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.QueueId">
+            <summary>
+            Unique identifier for the matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.Enabled">
+            <summary>
+            Whether the queue is accepting tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.MinCount">
+            <summary>
+            Minimum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.MaxCount">
+            <summary>
+            Maximum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.CreatedAt">
+            <summary>
+            When the queue was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueUpdatedEvent.ChangedFields">
+            <summary>
+            List of field names that were modified
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent">
+            <summary>
+            Published to matchmaking-queue.deleted when a matchmakingqueue is deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.EventName">
+            <summary>
+            Event type identifier: matchmaking-queue.deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.QueueId">
+            <summary>
+            Unique identifier for the matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.Enabled">
+            <summary>
+            Whether the queue is accepting tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.MinCount">
+            <summary>
+            Minimum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.MaxCount">
+            <summary>
+            Maximum players for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.CreatedAt">
+            <summary>
+            When the queue was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MatchmakingQueueDeletedEvent.DeletedReason">
+            <summary>
+            Optional reason for deletion (e.g., "Merged into {targetId}")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.MeshEndpointRegisteredEvent">
             <summary>
             Published when a new endpoint is registered in the service mesh.
@@ -23712,6 +24202,11 @@
             Response from successful user registration
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.AccountId">
+            <summary>
+            Unique identifier for the newly created account
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.AccessToken">
             <summary>
             JWT access token for immediate authentication
@@ -30697,6 +31192,48 @@
             <returns>Game action performed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.JoinGameSessionByIdAsync(BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join a specific game session by ID
+            </summary>
+            <remarks>
+            Join a game session by its session ID. Used for matchmade games where the session
+            <br/>is pre-created by the matchmaking service and the player has a reservation.
+            <br/>For matchmade sessions, a valid reservation token is required.
+            <br/>For lobby sessions, this allows joining by ID without going through gameType lookup.
+            </remarks>
+            <returns>Successfully joined game session</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.LeaveGameSessionByIdAsync(BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave a specific game session by ID
+            </summary>
+            <remarks>
+            Leave a game session by its session ID. This is the session-specific alternative
+            <br/>to /sessions/leave which uses gameType. Useful for matchmade sessions.
+            </remarks>
+            <returns>Successfully left game session</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.PublishJoinShortcutAsync(BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish join shortcut for matchmade session
+            </summary>
+            <remarks>
+            Internal endpoint for the matchmaking service to trigger shortcut publishing
+            <br/>to a specific player for a matchmade session. The shortcut allows the player
+            <br/>to join the session with their reservation token pre-bound.
+            </remarks>
+            <returns>Shortcut published successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionClient">
             <summary>
             Client implementation for the GameSession service.
@@ -30859,6 +31396,48 @@
             <returns>Game action performed successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.JoinGameSessionByIdAsync(BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join a specific game session by ID
+            </summary>
+            <remarks>
+            Join a game session by its session ID. Used for matchmade games where the session
+            <br/>is pre-created by the matchmaking service and the player has a reservation.
+            <br/>For matchmade sessions, a valid reservation token is required.
+            <br/>For lobby sessions, this allows joining by ID without going through gameType lookup.
+            </remarks>
+            <returns>Successfully joined game session</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.LeaveGameSessionByIdAsync(BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave a specific game session by ID
+            </summary>
+            <remarks>
+            Leave a game session by its session ID. This is the session-specific alternative
+            <br/>to /sessions/leave which uses gameType. Useful for matchmade sessions.
+            </remarks>
+            <returns>Successfully left game session</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.GameSession.GameSessionClient.PublishJoinShortcutAsync(BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Publish join shortcut for matchmade session
+            </summary>
+            <remarks>
+            Internal endpoint for the matchmaking service to trigger shortcut publishing
+            <br/>to a specific player for a matchmade session. The shortcut allows the player
+            <br/>to join the session with their reservation token pre-bound.
+            </remarks>
+            <returns>Shortcut published successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionClient.ObjectResponseResult`1">
             <summary>
             Represents the result of deserializing an HTTP response into an object.
@@ -30978,6 +31557,21 @@
             Game-specific configuration settings (null to use defaults)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.SessionType">
+            <summary>
+            Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.ExpectedPlayers">
+            <summary>
+            For matchmade sessions - list of account IDs expected to join. Reservations created for each.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.CreateGameSessionRequest.ReservationTtlSeconds">
+            <summary>
+            For matchmade sessions - how long reservations last before expiring (seconds)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionResponse">
             <summary>
             Complete details of a game session including players and settings
@@ -30991,6 +31585,11 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.GameType">
             <summary>
             Type of game for this session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.SessionType">
+            <summary>
+            Type of session - lobby or matchmade
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.SessionName">
@@ -31036,6 +31635,16 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.GameSettings">
             <summary>
             Game-specific configuration settings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.Reservations">
+            <summary>
+            For matchmade sessions - reservation tokens for expected players
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.GameSessionResponse.ReservationExpiresAt">
+            <summary>
+            For matchmade sessions - when reservations expire
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.GameSessionListResponse">
@@ -31316,6 +31925,156 @@
         <member name="P:BeyondImmersion.BannouService.GameSession.VoiceConnectionInfo.StunServers">
             <summary>
             STUN server URIs for NAT traversal (clients should configure these early)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.SessionType">
+            <summary>
+            Type of game session - determines join behavior
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
+            <summary>
+            A slot reservation for an expected player in a matchmade session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
+            <summary>
+            Account ID of the player this slot is reserved for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
+            <summary>
+            One-time use token for claiming this reservation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
+            <summary>
+            When this reservation was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
+            <summary>
+            Whether this reservation has been claimed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
+            <summary>
+            When this reservation was claimed (null if not yet claimed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
+            <summary>
+            Reservation token returned when creating a matchmade session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.AccountId">
+            <summary>
+            Account ID this reservation is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.Token">
+            <summary>
+            Token to claim this reservation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.ReservationInfo.ExpiresAt">
+            <summary>
+            When this reservation expires
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest">
+            <summary>
+            Request to join a specific game session by ID (for matchmade sessions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID of the client joining. Used for event delivery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.AccountId">
+            <summary>
+            Account ID of the player joining.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.GameSessionId">
+            <summary>
+            ID of the game session to join.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.ReservationToken">
+            <summary>
+            Token proving reservation (required for matchmade sessions)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.CharacterData">
+            <summary>
+            Game-specific character data (null if no character data)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.JoinGameSessionByIdRequest.VoiceEndpoint">
+            <summary>
+            Client's SIP endpoint for voice communication (null if not using voice)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest">
+            <summary>
+            Request to publish a join shortcut for a matchmade session to a player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.TargetWebSocketSessionId">
+            <summary>
+            WebSocket session ID to receive the shortcut
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.GameSessionId">
+            <summary>
+            ID of the game session to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutRequest.ReservationToken">
+            <summary>
+            Token for this player's reservation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse">
+            <summary>
+            Response after publishing a join shortcut
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse.Success">
+            <summary>
+            Whether the shortcut was published successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.PublishJoinShortcutResponse.ShortcutRouteGuid">
+            <summary>
+            The route GUID for the published shortcut (null if failed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest">
+            <summary>
+            Request to leave a specific game session by ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID of the client leaving.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.AccountId">
+            <summary>
+            Account ID of the player leaving.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.GameSession.LeaveGameSessionByIdRequest.GameSessionId">
+            <summary>
+            ID of the game session to leave.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient">
@@ -35509,6 +36268,1178 @@
         <member name="P:BeyondImmersion.BannouService.Mapping.DeleteDefinitionResponse.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient">
+            <summary>
+            Client interface for the Matchmaking service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.ListQueuesAsync(BeyondImmersion.BannouService.Matchmaking.ListQueuesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available matchmaking queues
+            </summary>
+            <remarks>
+            List all available matchmaking queues that players can join.
+            <br/>Returns queue configuration details including skill settings.
+            </remarks>
+            <returns>Queues retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.GetQueueAsync(BeyondImmersion.BannouService.Matchmaking.GetQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get queue details
+            </summary>
+            <remarks>
+            Get detailed configuration for a specific matchmaking queue.
+            </remarks>
+            <returns>Queue details retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.CreateQueueAsync(BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new matchmaking queue
+            </summary>
+            <remarks>
+            Create a new matchmaking queue with specified configuration.
+            <br/>Admin only. Queue configuration includes skill settings, party limits,
+            <br/>and exclusive group membership.
+            </remarks>
+            <returns>Queue created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.UpdateQueueAsync(BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a matchmaking queue
+            </summary>
+            <remarks>
+            Update configuration of an existing matchmaking queue.
+            <br/>Admin only. Changes take effect for new tickets only.
+            </remarks>
+            <returns>Queue updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.DeleteQueueAsync(BeyondImmersion.BannouService.Matchmaking.DeleteQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a matchmaking queue
+            </summary>
+            <remarks>
+            Delete a matchmaking queue. Admin only.
+            <br/>Existing tickets in the queue will be cancelled with reason 'queue_disabled'.
+            </remarks>
+            <returns>Queue deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.JoinMatchmakingAsync(BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join matchmaking queue
+            </summary>
+            <remarks>
+            Join a matchmaking queue with specified properties and query.
+            <br/>Creates a matchmaking ticket and begins searching for compatible players.
+            <br/>Returns immediately after ticket creation. Match results are delivered
+            <br/>via WebSocket push events.
+            </remarks>
+            <returns>Successfully joined matchmaking queue</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.LeaveMatchmakingAsync(BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave matchmaking queue
+            </summary>
+            <remarks>
+            Leave a matchmaking queue and cancel the ticket.
+            <br/>Only available when actively in a queue (shortcut/prebound).
+            </remarks>
+            <returns>Successfully left matchmaking queue</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.GetMatchmakingStatusAsync(BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get matchmaking status
+            </summary>
+            <remarks>
+            Get current matchmaking status for the player's active ticket.
+            <br/>Only available when actively in a queue (shortcut/prebound).
+            </remarks>
+            <returns>Status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.AcceptMatchAsync(BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Accept a formed match
+            </summary>
+            <remarks>
+            Accept a match that has been formed. Only available when a match
+            <br/>is pending acceptance (shortcut/prebound after match formation).
+            <br/>All players must accept within the timeout for the match to start.
+            </remarks>
+            <returns>Match acceptance recorded</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.DeclineMatchAsync(BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Decline a formed match
+            </summary>
+            <remarks>
+            Decline a match that has been formed. Only available when a match
+            <br/>is pending acceptance (shortcut/prebound after match formation).
+            <br/>Declining cancels the match for all participants.
+            </remarks>
+            <returns>Match declined</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient.GetMatchmakingStatsAsync(BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get queue statistics
+            </summary>
+            <remarks>
+            Get operational statistics for matchmaking queues.
+            <br/>Includes queue depths, average wait times, and match rates.
+            </remarks>
+            <returns>Statistics retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient">
+            <summary>
+            Client implementation for the Matchmaking service.
+            Provides strongly-typed methods for invoking service endpoints via the mesh infrastructure.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient._serviceName">
+            <summary>
+            Service name used for app-id resolution. Extracted from class name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Implements IServiceClient.ServiceName.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.#ctor(BeyondImmersion.BannouService.Services.IMeshInvocationClient,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Matchmaking.MatchmakingClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient"/> class.
+            </summary>
+            <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
+            <param name="resolver">The service app mapping resolver for endpoint resolution.</param>
+            <param name="logger">Optional logger for diagnostic output.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.JsonSerializerSettings">
+            <summary>
+            Gets the JSON serializer settings used for request and response serialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ApplyHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Applies stored headers to a request message.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ListQueuesAsync(BeyondImmersion.BannouService.Matchmaking.ListQueuesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available matchmaking queues
+            </summary>
+            <remarks>
+            List all available matchmaking queues that players can join.
+            <br/>Returns queue configuration details including skill settings.
+            </remarks>
+            <returns>Queues retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.GetQueueAsync(BeyondImmersion.BannouService.Matchmaking.GetQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get queue details
+            </summary>
+            <remarks>
+            Get detailed configuration for a specific matchmaking queue.
+            </remarks>
+            <returns>Queue details retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.CreateQueueAsync(BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new matchmaking queue
+            </summary>
+            <remarks>
+            Create a new matchmaking queue with specified configuration.
+            <br/>Admin only. Queue configuration includes skill settings, party limits,
+            <br/>and exclusive group membership.
+            </remarks>
+            <returns>Queue created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.UpdateQueueAsync(BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a matchmaking queue
+            </summary>
+            <remarks>
+            Update configuration of an existing matchmaking queue.
+            <br/>Admin only. Changes take effect for new tickets only.
+            </remarks>
+            <returns>Queue updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.DeleteQueueAsync(BeyondImmersion.BannouService.Matchmaking.DeleteQueueRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a matchmaking queue
+            </summary>
+            <remarks>
+            Delete a matchmaking queue. Admin only.
+            <br/>Existing tickets in the queue will be cancelled with reason 'queue_disabled'.
+            </remarks>
+            <returns>Queue deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.JoinMatchmakingAsync(BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Join matchmaking queue
+            </summary>
+            <remarks>
+            Join a matchmaking queue with specified properties and query.
+            <br/>Creates a matchmaking ticket and begins searching for compatible players.
+            <br/>Returns immediately after ticket creation. Match results are delivered
+            <br/>via WebSocket push events.
+            </remarks>
+            <returns>Successfully joined matchmaking queue</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.LeaveMatchmakingAsync(BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Leave matchmaking queue
+            </summary>
+            <remarks>
+            Leave a matchmaking queue and cancel the ticket.
+            <br/>Only available when actively in a queue (shortcut/prebound).
+            </remarks>
+            <returns>Successfully left matchmaking queue</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.GetMatchmakingStatusAsync(BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get matchmaking status
+            </summary>
+            <remarks>
+            Get current matchmaking status for the player's active ticket.
+            <br/>Only available when actively in a queue (shortcut/prebound).
+            </remarks>
+            <returns>Status retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.AcceptMatchAsync(BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Accept a formed match
+            </summary>
+            <remarks>
+            Accept a match that has been formed. Only available when a match
+            <br/>is pending acceptance (shortcut/prebound after match formation).
+            <br/>All players must accept within the timeout for the match to start.
+            </remarks>
+            <returns>Match acceptance recorded</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.DeclineMatchAsync(BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Decline a formed match
+            </summary>
+            <remarks>
+            Decline a match that has been formed. Only available when a match
+            <br/>is pending acceptance (shortcut/prebound after match formation).
+            <br/>Declining cancels the match for all participants.
+            </remarks>
+            <returns>Match declined</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.GetMatchmakingStatsAsync(BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get queue statistics
+            </summary>
+            <remarks>
+            Get operational statistics for matchmaking queues.
+            <br/>Includes queue depths, average wait times, and match rates.
+            </remarks>
+            <returns>Statistics retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ObjectResponseResult`1">
+            <summary>
+            Represents the result of deserializing an HTTP response into an object.
+            </summary>
+            <typeparam name="T">The type of the deserialized response object.</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ObjectResponseResult`1.#ctor(`0,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ObjectResponseResult`1"/> struct.
+            </summary>
+            <param name="responseObject">The deserialized response object.</param>
+            <param name="responseText">The raw response text.</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ObjectResponseResult`1.Object">
+            <summary>
+            Gets the deserialized response object.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ObjectResponseResult`1.Text">
+            <summary>
+            Gets the raw response text.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ReadResponseAsString">
+            <summary>
+            Gets or sets a value indicating whether to read the response as a string before deserialization.
+            When true, the response is read as text first; when false, it's streamed directly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Matchmaking.MatchmakingClient.ReadObjectResponseAsync``1(System.Net.Http.HttpResponseMessage,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Threading.CancellationToken)">
+            <summary>
+            Reads and deserializes an HTTP response into the specified type.
+            </summary>
+            <typeparam name="T">The type to deserialize the response into.</typeparam>
+            <param name="response">The HTTP response message to read.</param>
+            <param name="headers">The response headers.</param>
+            <param name="cancellationToken">A cancellation token.</param>
+            <returns>The deserialized response object and raw text.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.ListQueuesRequest">
+            <summary>
+            Request to list available matchmaking queues
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.ListQueuesRequest.GameId">
+            <summary>
+            Filter by game ID (null for all games)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.ListQueuesRequest.IncludeDisabled">
+            <summary>
+            Include disabled queues in the list (admin only)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.ListQueuesResponse">
+            <summary>
+            Response containing available matchmaking queues
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.ListQueuesResponse.Queues">
+            <summary>
+            List of available queues
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.QueueSummary">
+            <summary>
+            Summary information about a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.QueueId">
+            <summary>
+            Unique identifier for the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.Enabled">
+            <summary>
+            Whether the queue is currently accepting tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.MinCount">
+            <summary>
+            Minimum players required for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.MaxCount">
+            <summary>
+            Maximum players in a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.CurrentTickets">
+            <summary>
+            Current number of tickets in queue (if available)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueSummary.AverageWaitSeconds">
+            <summary>
+            Average wait time in seconds (if available)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.GetQueueRequest">
+            <summary>
+            Request to get details of a specific queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetQueueRequest.QueueId">
+            <summary>
+            ID of the queue to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.QueueResponse">
+            <summary>
+            Full configuration details of a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.QueueId">
+            <summary>
+            Unique identifier for the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.Description">
+            <summary>
+            Detailed description of the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.Enabled">
+            <summary>
+            Whether the queue is currently accepting tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.MinCount">
+            <summary>
+            Minimum players required for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.MaxCount">
+            <summary>
+            Maximum players in a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.CountMultiple">
+            <summary>
+            Player count must be divisible by this (e.g., 2 for pairs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.IntervalSeconds">
+            <summary>
+            Seconds between match processing intervals
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.MaxIntervals">
+            <summary>
+            Maximum intervals before relaxing to minCount
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.SkillExpansion">
+            <summary>
+            Skill window expansion steps
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.PartySkillAggregation">
+            <summary>
+            How to calculate party skill rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.PartySkillWeights">
+            <summary>
+            Weights for weighted party skill aggregation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.PartyMaxSize">
+            <summary>
+            Maximum party size for this queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.AllowConcurrent">
+            <summary>
+            Whether players can be in multiple queues
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.ExclusiveGroup">
+            <summary>
+            Exclusive group name (player can only be in one queue of the group)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.UseSkillRating">
+            <summary>
+            Whether to use lib-analytics skill rating for matching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.RatingCategory">
+            <summary>
+            lib-analytics rating category to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.StartWhenMinimumReached">
+            <summary>
+            Start match with minCount after maxIntervals (for large lobbies)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.RequiresRegistration">
+            <summary>
+            Whether players must be registered for a tournament
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.TournamentIdRequired">
+            <summary>
+            Whether a tournament ID is required to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.MatchAcceptTimeoutSeconds">
+            <summary>
+            Seconds players have to accept/decline a formed match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.CreatedAt">
+            <summary>
+            When the queue was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueResponse.UpdatedAt">
+            <summary>
+            When the queue was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest">
+            <summary>
+            Request to create a new matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.QueueId">
+            <summary>
+            Unique identifier for the queue (lowercase alphanumeric with hyphens)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.GameId">
+            <summary>
+            Game this queue is for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.DisplayName">
+            <summary>
+            Human-readable queue name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.Description">
+            <summary>
+            Detailed description of the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.MinCount">
+            <summary>
+            Minimum players required for a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.MaxCount">
+            <summary>
+            Maximum players in a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.CountMultiple">
+            <summary>
+            Player count must be divisible by this
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.IntervalSeconds">
+            <summary>
+            Seconds between match processing intervals
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.MaxIntervals">
+            <summary>
+            Maximum intervals before relaxing to minCount
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.SkillExpansion">
+            <summary>
+            Skill window expansion steps
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.PartySkillAggregation">
+            <summary>
+            How to calculate party skill rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.PartySkillWeights">
+            <summary>
+            Weights for weighted party skill aggregation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.PartyMaxSize">
+            <summary>
+            Maximum party size for this queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.AllowConcurrent">
+            <summary>
+            Whether players can be in multiple queues
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.ExclusiveGroup">
+            <summary>
+            Exclusive group name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.UseSkillRating">
+            <summary>
+            Whether to use lib-analytics skill rating
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.RatingCategory">
+            <summary>
+            lib-analytics rating category to use
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.StartWhenMinimumReached">
+            <summary>
+            Start match with minCount after maxIntervals
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.RequiresRegistration">
+            <summary>
+            Require tournament registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.TournamentIdRequired">
+            <summary>
+            Require tournament ID to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.CreateQueueRequest.MatchAcceptTimeoutSeconds">
+            <summary>
+            Seconds to accept/decline a match
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest">
+            <summary>
+            Request to update a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.QueueId">
+            <summary>
+            ID of the queue to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.DisplayName">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.Enabled">
+            <summary>
+            Enable or disable the queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.MinCount">
+            <summary>
+            New minimum count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.MaxCount">
+            <summary>
+            New maximum count
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.CountMultiple">
+            <summary>
+            New count multiple
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.IntervalSeconds">
+            <summary>
+            New interval seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.MaxIntervals">
+            <summary>
+            New max intervals
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.SkillExpansion">
+            <summary>
+            New skill expansion steps
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.PartySkillAggregation">
+            <summary>
+            New party skill aggregation method
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.PartyMaxSize">
+            <summary>
+            New party max size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.UpdateQueueRequest.MatchAcceptTimeoutSeconds">
+            <summary>
+            New match accept timeout
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.DeleteQueueRequest">
+            <summary>
+            Request to delete a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.DeleteQueueRequest.QueueId">
+            <summary>
+            ID of the queue to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.SkillExpansionStep">
+            <summary>
+            A step in the skill window expansion curve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.SkillExpansionStep.Intervals">
+            <summary>
+            Number of intervals after which this step applies
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.SkillExpansionStep.Range">
+            <summary>
+            Skill range (null means any skill level)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.PartySkillAggregation">
+            <summary>
+            Method for aggregating party member skills
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.SessionGameType">
+            <summary>
+            Game type for created sessions (maps to game-session service GameType)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest">
+            <summary>
+            Request to join a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID for event delivery
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.AccountId">
+            <summary>
+            Account ID of the player joining
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.QueueId">
+            <summary>
+            ID of the queue to join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.PartyId">
+            <summary>
+            Party ID if joining as part of a party
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.PartyMembers">
+            <summary>
+            Party member information (required if partyId provided)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.StringProperties">
+            <summary>
+            String properties for query matching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.NumericProperties">
+            <summary>
+            Numeric properties for query matching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.Query">
+            <summary>
+            Lucene-like query for opponent matching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingRequest.TournamentId">
+            <summary>
+            Tournament ID if joining tournament queue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.PartyMemberInfo">
+            <summary>
+            Information about a party member for matchmaking
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.PartyMemberInfo.AccountId">
+            <summary>
+            Account ID of the party member
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.PartyMemberInfo.WebSocketSessionId">
+            <summary>
+            WebSocket session ID for event delivery
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.PartyMemberInfo.SkillRating">
+            <summary>
+            Pre-fetched skill rating (optional, will be looked up if not provided)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingResponse">
+            <summary>
+            Response after joining a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingResponse.TicketId">
+            <summary>
+            Unique identifier for this matchmaking ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingResponse.QueueId">
+            <summary>
+            Queue that was joined
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingResponse.EstimatedWaitSeconds">
+            <summary>
+            Estimated wait time based on current queue (null if unknown)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.JoinMatchmakingResponse.Position">
+            <summary>
+            Approximate position in queue (null if not tracked)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest">
+            <summary>
+            Request to leave a matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.LeaveMatchmakingRequest.TicketId">
+            <summary>
+            ID of the ticket to cancel
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest">
+            <summary>
+            Request to get matchmaking status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatusRequest.TicketId">
+            <summary>
+            ID of the ticket to query
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse">
+            <summary>
+            Current matchmaking status for a ticket
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.TicketId">
+            <summary>
+            Ticket identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.QueueId">
+            <summary>
+            Queue the ticket is in
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.Status">
+            <summary>
+            Current ticket status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.IntervalsElapsed">
+            <summary>
+            Number of processing intervals elapsed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.CurrentSkillRange">
+            <summary>
+            Current skill matching range (null if skill not used)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.EstimatedWaitSeconds">
+            <summary>
+            Updated estimated wait time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.CreatedAt">
+            <summary>
+            When the ticket was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatusResponse.MatchId">
+            <summary>
+            Match ID if a match has been found
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.TicketStatus">
+            <summary>
+            Current status of a matchmaking ticket
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest">
+            <summary>
+            Request to accept a formed match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchRequest.MatchId">
+            <summary>
+            ID of the match to accept
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse">
+            <summary>
+            Response after accepting a match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse.MatchId">
+            <summary>
+            Match identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse.AllAccepted">
+            <summary>
+            Whether all players have accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse.AcceptedCount">
+            <summary>
+            Number of players who have accepted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse.TotalCount">
+            <summary>
+            Total players who need to accept
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.AcceptMatchResponse.GameSessionId">
+            <summary>
+            Game session ID (set when all players accept)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest">
+            <summary>
+            Request to decline a formed match
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest.WebSocketSessionId">
+            <summary>
+            WebSocket session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest.AccountId">
+            <summary>
+            Account ID of the player
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.DeclineMatchRequest.MatchId">
+            <summary>
+            ID of the match to decline
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatsRequest">
+            <summary>
+            Request to get matchmaking statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatsRequest.QueueId">
+            <summary>
+            Filter by specific queue (null for all queues)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.GetMatchmakingStatsRequest.GameId">
+            <summary>
+            Filter by game ID
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatsResponse">
+            <summary>
+            Matchmaking operational statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatsResponse.Timestamp">
+            <summary>
+            When these stats were collected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.MatchmakingStatsResponse.QueueStats">
+            <summary>
+            Statistics per queue
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.QueueStats">
+            <summary>
+            Statistics for a single matchmaking queue
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.QueueId">
+            <summary>
+            Queue identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.CurrentTickets">
+            <summary>
+            Number of active tickets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.MatchesFormedLastHour">
+            <summary>
+            Matches formed in the last hour
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.AverageWaitSeconds">
+            <summary>
+            Average wait time in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.MedianWaitSeconds">
+            <summary>
+            Median wait time in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.TimeoutRatePercent">
+            <summary>
+            Percentage of tickets that timed out
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Matchmaking.QueueStats.CancelRatePercent">
+            <summary>
+            Percentage of tickets cancelled by user
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Matchmaking.CancelReason">
+            <summary>
+            Reason codes for matchmaking cancellation
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Mesh.IMeshClient">

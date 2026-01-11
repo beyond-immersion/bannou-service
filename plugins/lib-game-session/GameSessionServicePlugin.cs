@@ -21,5 +21,8 @@ public class GameSessionServicePlugin : StandardServicePlugin<IGameSessionServic
 
         // Register the startup service to initialize subscription caches on startup
         services.AddHostedService<GameSessionStartupService>();
+
+        // Register the cleanup service to handle expired reservations
+        services.AddHostedService<ReservationCleanupService>();
     }
 }

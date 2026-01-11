@@ -1,0 +1,10 @@
+version: '2.0'
+metadata:
+  id: multi-local-test
+flows:
+  main:
+    actions:
+      - local: { variable: a, value: '10' }
+      - local: { variable: b, value: '20' }
+      - local: { variable: c, value: '12' }
+      - global: { variable: result, value: 'a + b + c' }

@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - emit_intent:
+        action: "attack"
+        channel: "action"
+        urgency: "0.8"

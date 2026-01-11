@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: goto_context_a
+
+imports:
+  - file: "goto_context_b.yml"
+    as: "b"
+
+flows:
+  entry:
+    actions:
+    - log: { message: "In A.entry" }
+    - goto: { flow: "b.target" }
+    - log: { message: "After goto (should NOT appear)" }

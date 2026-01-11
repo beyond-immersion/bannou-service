@@ -1,0 +1,10 @@
+version: '2.0'
+metadata:
+  id: input-test
+context:
+  variables:
+    health: { default: 100 }
+flows:
+  main:
+    actions:
+      - global: { variable: result, value: 'health * 2' }

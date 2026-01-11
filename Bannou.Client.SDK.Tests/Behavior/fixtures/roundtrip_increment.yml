@@ -1,0 +1,11 @@
+version: '2.0'
+metadata:
+  id: increment-test
+flows:
+  main:
+    actions:
+      - local: { variable: counter, value: '10' }
+      - increment: { variable: counter }
+      - increment: { variable: counter }
+      - increment: { variable: counter }
+      - global: { variable: result, value: 'counter' }

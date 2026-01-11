@@ -811,6 +811,11 @@ public class Program
         foreach (ServiceTest serviceTest in gameSessionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load matchmaking websocket tests
+        var matchmakingTestHandler = new MatchmakingWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in matchmakingTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load client event tests (tests session-specific event delivery via RabbitMQ)
         var clientEventTestHandler = new ClientEventTestHandler();
         foreach (ServiceTest serviceTest in clientEventTestHandler.GetServiceTests())

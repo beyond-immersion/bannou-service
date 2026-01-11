@@ -1,0 +1,133 @@
+name: 'Generated Files Validation'
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+jobs:
+  validate-generated:
+    name: Validate Generated Files Match Schemas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore NuGet Packages
+        run: dotnet restore
+
+      - name: Install NSwag Global Tool
+        run: |
+          echo "Installing NSwag for code generation..."
+          dotnet tool install --global NSwag.ConsoleCore --version 14.5.0 || echo "NSwag already installed"
+
+      - name: Install Python Dependencies
+        run: |
+          echo "Installing Python dependencies for code generation..."
+          pip install ruamel.yaml
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install eclint
+        run: npm install -g eclint
+
+      - name: Regenerate All Services
+        run: |
+          echo "Regenerating all service controllers, models, and clients..."
+          scripts/generate-all-services.sh
+
+      - name: Regenerate Client SDK
+        run: |
+          echo "Regenerating Client SDK behavior files..."
+          scripts/generate-client-sdk.sh
+
+      - name: Format Generated Files
+        run: |
+          echo "Formatting regenerated files (line endings, whitespace, C# format)..."
+          make format
+
+      - name: Check for Uncommitted Changes
+        id: check-changes
+        run: |
+          # Check if regeneration produced any differences from committed files
+          if git diff --quiet; then
+            echo "All generated files are up to date with schemas."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Generated files do not match committed files!"
+            echo ""
+            echo "The following files differ after regeneration:"
+            git diff --name-only
+            echo ""
+            echo "This usually means someone modified a schema but forgot to run:"
+            echo "  scripts/generate-all-services.sh"
+            echo "  scripts/generate-client-sdk.sh"
+            echo "  make format"
+            echo ""
+            echo "Please regenerate locally, format, and commit the updated Generated files."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show Detailed Diff (on failure)
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          echo "Detailed diff of changed files:"
+          echo "================================"
+          git diff --stat
+          echo ""
+          echo "First 200 lines of actual diff:"
+          git diff | head -200
+
+      - name: Fail if Changes Detected
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          echo "::error::Generated files are out of sync with schemas. Please regenerate and commit."
+          exit 1
+
+      - name: Get Commit Info
+        if: always()
+        id: commit_info
+        run: |
+          {
+            echo "COMMIT_MESSAGE<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+
+      - name: Notify Success
+        if: success() && env.DISCORD_WEBHOOK != ''
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Generated Files Validation"
+          status: "success"
+          commit-message: ${{ env.COMMIT_MESSAGE }}
+          commit-author: ${{ env.COMMIT_AUTHOR }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      - name: Notify Failure
+        if: failure() && env.DISCORD_WEBHOOK != ''
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Generated Files Validation"
+          status: "failure"
+          commit-message: ${{ env.COMMIT_MESSAGE }}
+          commit-author: ${{ env.COMMIT_AUTHOR }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}

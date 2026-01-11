@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: Matchmaking Service Events
+  description: |
+    Event subscription and publication declarations for Matchmaking service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
+    Custom events for ticket and match lifecycle are manually defined.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Session lifecycle events from Connect service
+    - topic: session.connected
+      event: SessionConnectedEvent
+      handler: HandleSessionConnected
+    - topic: session.disconnected
+      event: SessionDisconnectedEvent
+      handler: HandleSessionDisconnected
+    - topic: session.reconnected
+      event: SessionReconnectedEvent
+      handler: HandleSessionReconnected
+  x-event-publications:
+    # Matchmaking state changes (for permission recompilation)
+    - topic: permission.session-state-changed
+      event: SessionStateChangeEvent
+      description: Published when player enters/exits matchmaking affecting permissions
+    # Ticket lifecycle events (auto-generated)
+    - topic: matchmaking.ticket-created
+      event: MatchmakingTicketCreatedEvent
+      description: Published when a new matchmaking ticket is created
+    - topic: matchmaking.ticket-updated
+      event: MatchmakingTicketUpdatedEvent
+      description: Published when a matchmaking ticket status changes
+    - topic: matchmaking.ticket-cancelled
+      event: MatchmakingTicketCancelledEvent
+      description: Published when a matchmaking ticket is cancelled
+    # Match lifecycle events
+    - topic: matchmaking.match-formed
+      event: MatchmakingMatchFormedEvent
+      description: Published when a match is successfully formed
+    - topic: matchmaking.match-accepted
+      event: MatchmakingMatchAcceptedEvent
+      description: Published when all players accept a match
+    - topic: matchmaking.match-declined
+      event: MatchmakingMatchDeclinedEvent
+      description: Published when a player declines a match
+    # Queue lifecycle events (auto-generated)
+    - topic: matchmaking.queue-created
+      event: MatchmakingQueueCreatedEvent
+      description: Published when a new queue is created
+    - topic: matchmaking.queue-updated
+      event: MatchmakingQueueUpdatedEvent
+      description: Published when a queue configuration changes
+    - topic: matchmaking.queue-deleted
+      event: MatchmakingQueueDeletedEvent
+      description: Published when a queue is deleted
+    # Operational stats
+    - topic: matchmaking.stats
+      event: MatchmakingStatsEvent
+      description: Published periodically with queue statistics
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  MatchmakingQueue:
+    model:
+      queueId: { type: string, primary: true, required: true, description: "Unique identifier for the matchmaking queue" }
+      gameId: { type: string, required: true, description: "Game this queue is for" }
+      displayName: { type: string, required: true, description: "Human-readable queue name" }
+      enabled: { type: boolean, required: true, description: "Whether the queue is accepting tickets" }
+      minCount: { type: integer, required: true, description: "Minimum players for a match" }
+      maxCount: { type: integer, required: true, description: "Maximum players for a match" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the queue was created" }
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Ticket Events
+    # =========================================================================
+
+    MatchmakingTicketCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new matchmaking ticket is created
+      required:
+        - eventId
+        - timestamp
+        - ticketId
+        - queueId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the ticket was created
+        ticketId:
+          type: string
+          format: uuid
+          description: ID of the matchmaking ticket
+        queueId:
+          type: string
+          description: Queue the ticket was submitted to
+        accountId:
+          type: string
+          format: uuid
+          description: Account that created the ticket
+        partyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party ID if this is a party ticket
+        partySize:
+          type: integer
+          nullable: true
+          description: Number of players in the party
+        skillRating:
+          type: number
+          nullable: true
+          description: Effective skill rating for matching
+
+    MatchmakingTicketUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a matchmaking ticket status changes
+      required:
+        - eventId
+        - timestamp
+        - ticketId
+        - previousStatus
+        - newStatus
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the status changed
+        ticketId:
+          type: string
+          format: uuid
+          description: ID of the matchmaking ticket
+        previousStatus:
+          type: string
+          description: Status before the change
+        newStatus:
+          type: string
+          description: Status after the change
+        intervalsElapsed:
+          type: integer
+          nullable: true
+          description: Number of processing intervals elapsed
+        currentSkillRange:
+          type: integer
+          nullable: true
+          description: Current skill matching range
+
+    MatchmakingTicketCancelledEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a matchmaking ticket is cancelled
+      required:
+        - eventId
+        - timestamp
+        - ticketId
+        - queueId
+        - accountId
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the ticket was cancelled
+        ticketId:
+          type: string
+          format: uuid
+          description: ID of the cancelled ticket
+        queueId:
+          type: string
+          description: Queue the ticket was in
+        accountId:
+          type: string
+          format: uuid
+          description: Account that owned the ticket
+        partyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party ID if this was a party ticket
+        reason:
+          type: string
+          enum:
+            - cancelled_by_user
+            - timeout
+            - session_disconnected
+            - party_disbanded
+            - match_declined
+            - queue_disabled
+          description: Reason for cancellation
+        waitTimeSeconds:
+          type: number
+          nullable: true
+          description: How long the ticket was active before cancellation
+
+    # =========================================================================
+    # Match Events
+    # =========================================================================
+
+    MatchmakingMatchFormedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a match is successfully formed from tickets
+      required:
+        - eventId
+        - timestamp
+        - matchId
+        - queueId
+        - tickets
+        - playerCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the match was formed
+        matchId:
+          type: string
+          format: uuid
+          description: Unique identifier for this match
+        queueId:
+          type: string
+          description: Queue the match was formed from
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedTicketInfo'
+          description: Tickets included in this match
+        playerCount:
+          type: integer
+          description: Total number of players in the match
+        averageSkillRating:
+          type: number
+          nullable: true
+          description: Average skill rating of matched players
+        skillRatingSpread:
+          type: number
+          nullable: true
+          description: Difference between highest and lowest skill
+        acceptDeadline:
+          type: string
+          format: date-time
+          description: Deadline for all players to accept
+
+    MatchmakingMatchAcceptedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when all players accept a match
+      required:
+        - eventId
+        - timestamp
+        - matchId
+        - queueId
+        - gameSessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the match was fully accepted
+        matchId:
+          type: string
+          format: uuid
+          description: Match identifier
+        queueId:
+          type: string
+          description: Queue the match was from
+        gameSessionId:
+          type: string
+          format: uuid
+          description: Created game session ID
+        playerCount:
+          type: integer
+          description: Number of players in the match
+        averageWaitTimeSeconds:
+          type: number
+          nullable: true
+          description: Average time players waited for this match
+
+    MatchmakingMatchDeclinedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player declines a match
+      required:
+        - eventId
+        - timestamp
+        - matchId
+        - queueId
+        - declinedBy
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the match was declined
+        matchId:
+          type: string
+          format: uuid
+          description: Match that was declined
+        queueId:
+          type: string
+          description: Queue the match was from
+        declinedBy:
+          type: string
+          format: uuid
+          description: Account that declined
+        affectedPlayers:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Account IDs of all affected players
+        requeuingPlayers:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Players who will be automatically requeued
+
+    # =========================================================================
+    # Statistics Event
+    # =========================================================================
+
+    MatchmakingStatsEvent:
+      type: object
+      additionalProperties: false
+      description: Published periodically with queue statistics for monitoring
+      required:
+        - eventId
+        - timestamp
+        - stats
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When stats were collected
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueStatsSnapshot'
+          description: Statistics per queue
+
+    QueueStatsSnapshot:
+      type: object
+      additionalProperties: false
+      description: Point-in-time statistics for a queue
+      required:
+        - queueId
+        - activeTickets
+        - matchesFormedSinceLastSnapshot
+      properties:
+        queueId:
+          type: string
+          description: Queue identifier
+        activeTickets:
+          type: integer
+          description: Current active ticket count
+        matchesFormedSinceLastSnapshot:
+          type: integer
+          description: Matches formed since last stats event
+        averageWaitSeconds:
+          type: number
+          nullable: true
+          description: Current average wait time
+        oldestTicketAgeSeconds:
+          type: number
+          nullable: true
+          description: Age of the oldest ticket in queue
+
+    # =========================================================================
+    # Supporting Types
+    # =========================================================================
+
+    MatchedTicketInfo:
+      type: object
+      additionalProperties: false
+      description: Information about a ticket that was matched
+      required:
+        - ticketId
+        - accountId
+      properties:
+        ticketId:
+          type: string
+          format: uuid
+          description: Ticket identifier
+        accountId:
+          type: string
+          format: uuid
+          description: Account that owns the ticket
+        partyId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Party ID if this is a party ticket
+        webSocketSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session for event delivery
+        skillRating:
+          type: number
+          nullable: true
+          description: Player's skill rating
+        waitTimeSeconds:
+          type: number
+          nullable: true
+          description: How long this ticket was waiting

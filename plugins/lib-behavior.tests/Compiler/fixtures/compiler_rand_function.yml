@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - set: { variable: r, value: "${rand()}" }

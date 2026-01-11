@@ -7,7 +7,7 @@ This guide walks through creating and extending Bannou service plugins using sch
 Bannou services are implemented as **plugins** - independent .NET assemblies that can be loaded or excluded at startup. Each plugin follows the same structure:
 
 ```
-lib-{service}/
+plugins/lib-{service}/
 ├── Generated/                    # Auto-generated (never edit)
 │   ├── {Service}Controller.cs
 │   ├── I{Service}Service.cs
@@ -28,13 +28,11 @@ Schema-first development means you write **18-35% of the code** for a typical se
 | ~500-2,000 lines of business logic | Validation, routing, serialization, permissions |
 | ~200-800 lines of tests | Test infrastructure and patterns to follow |
 
-**Key stats across 18 services:**
-- **63.6%** of service code is auto-generated
-- Schema-to-code amplification: **3.97x** (1 YAML line → 4 C# lines)
+**Key stats across 32 services:**
+- **~65%** of service code is auto-generated
+- Schema-to-code amplification: **~4x** (1 YAML line → 4 C# lines)
 - Simple CRUD services: 65-85% generated
 - Complex services (Auth, Connect): 35-50% generated
-
-For the complete analysis with per-service breakdowns, see [Automation Analysis](../reference/AUTOMATION-ANALYSIS.md).
 
 ## Creating a New Service
 
@@ -114,7 +112,7 @@ This creates the complete plugin structure with:
 Edit the service implementation file (the only manual file):
 
 ```csharp
-// lib-example/ExampleService.cs
+// plugins/lib-example/ExampleService.cs
 namespace BeyondImmersion.Bannou.Example;
 
 [BannouService("example", typeof(IExampleService), lifetime: ServiceLifetime.Scoped)]
@@ -384,7 +382,7 @@ BANNOU_EXAMPLE_TimeoutSeconds=60
 
 ### Unit Tests
 
-Located in `lib-{service}.tests/`:
+Located in `plugins/lib-{service}.tests/`:
 
 ```csharp
 [Test]

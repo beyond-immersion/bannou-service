@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: test
+
+flows:
+  main:
+    actions:
+    - goto: { flow: other }
+  other:
+    actions:
+    - log: { message: "Done" }

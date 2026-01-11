@@ -1,0 +1,14 @@
+version: "2.0"
+metadata:
+  id: a
+
+imports:
+  - file: "b.yml"
+    as: "b"
+
+flows:
+  start:
+    actions:
+      - log: { message: "A start" }
+      - call: { flow: "b.entry" }
+      - log: { message: "A end" }

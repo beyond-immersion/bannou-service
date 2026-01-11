@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: c
+
+flows:
+  deep:
+    actions:
+      - log: { message: "In C" }

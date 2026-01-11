@@ -669,7 +669,8 @@ public class Program
             new SpeciesTestHandler(),
             new StateTestHandler(),
             new SubscriptionTestHandler(),
-            new TestingTestHandler()
+            new TestingTestHandler(),
+            new MatchmakingTestHandler()
         };
 
         // Filter test handlers by plugin if specified

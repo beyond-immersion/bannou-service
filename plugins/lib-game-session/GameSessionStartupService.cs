@@ -1,10 +1,6 @@
 using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace BeyondImmersion.BannouService.GameSession;
 
@@ -16,23 +12,22 @@ namespace BeyondImmersion.BannouService.GameSession;
 public class GameSessionStartupService : BackgroundService
 {
     private readonly ISubscriptionClient _subscriptionClient;
+    private readonly GameSessionServiceConfiguration _configuration;
     private readonly ILogger<GameSessionStartupService> _logger;
-
-    /// <summary>
-    /// Game service stub names that this service handles.
-    /// </summary>
-    private static readonly string[] SupportedGameServices = { "arcadia", "generic" };
 
     /// <summary>
     /// Creates a new GameSessionStartupService instance.
     /// </summary>
     /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
+    /// <param name="configuration">Game session service configuration.</param>
     /// <param name="logger">Logger for this service.</param>
     public GameSessionStartupService(
         ISubscriptionClient subscriptionClient,
+        GameSessionServiceConfiguration configuration,
         ILogger<GameSessionStartupService> logger)
     {
         _subscriptionClient = subscriptionClient;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -41,8 +36,8 @@ public class GameSessionStartupService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Wait a short time for other services to initialize
-        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+        // Wait for other services to initialize
+        await Task.Delay(TimeSpan.FromSeconds(_configuration.StartupServiceDelaySeconds), stoppingToken);
 
         _logger.LogInformation("GameSessionStartupService initializing subscription caches...");
 
@@ -66,7 +61,10 @@ public class GameSessionStartupService : BackgroundService
     /// </summary>
     private async Task InitializeSubscriptionCachesAsync(CancellationToken cancellationToken)
     {
-        foreach (var stubName in SupportedGameServices)
+        var supportedGameServices = _configuration.SupportedGameServices?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            ?? new[] { "arcadia", "generic" };
+
+        foreach (var stubName in supportedGameServices)
         {
             try
             {

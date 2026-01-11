@@ -2,7 +2,7 @@
 
 > **Version**: 1.0
 > **Status**: Implemented
-> **Location**: `lib-behavior/Goap/`
+> **Location**: `plugins/lib-behavior/Goap/`
 > **Related**: [ABML Guide](./ABML.md)
 
 GOAP is an AI planning technique that enables NPCs to autonomously discover sequences of actions to achieve their goals. Instead of hand-crafting behavior trees or state machines, you define **what NPCs want** (goals) and **what they can do** (actions), and the planner figures out **how** to get there.

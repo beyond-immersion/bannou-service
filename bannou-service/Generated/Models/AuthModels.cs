@@ -160,6 +160,14 @@ public partial class RegisterResponse
 {
 
     /// <summary>
+    /// Unique identifier for the newly created account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
     /// JWT access token for immediate authentication
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accessToken")]

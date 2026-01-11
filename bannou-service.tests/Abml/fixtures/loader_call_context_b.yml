@@ -1,0 +1,8 @@
+version: "2.0"
+metadata:
+  id: call_context_b
+
+flows:
+  helper:
+    actions:
+    - log: { message: "In B.helper (reached via context-relative call)" }

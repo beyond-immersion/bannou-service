@@ -1,6 +1,7 @@
 # Potential Enhancements
 
 > **Created**: 2026-01-08
+> **Last Updated**: 2026-01-10
 > **Purpose**: Track potential enhancements, their value proposition, and implementation considerations
 > **Scope**: New services, features, and SDKs that could improve the Bannou platform
 
@@ -23,7 +24,8 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 | Account Management | lib-account | Complete (CRUD, verification, sessions) |
 | WebSocket Gateway | lib-connect | Complete (binary protocol, zero-copy routing) |
 | Permissions | lib-permission | Complete (role + session-state based) |
-| Game Sessions | lib-game-session | Complete (lobby system, chat, actions) |
+| Game Sessions | lib-game-session | Complete (lobby system, chat, reservations) |
+| **Matchmaking** | **lib-matchmaking** | **Complete (skill-based queues, party support, accept/decline)** |
 | NPC AI | lib-behavior | Complete (GOAP planner, ABML DSL) |
 | Voice Communication | lib-voice | Basic (WebRTC rooms, SIP signaling) |
 | Analytics & Skill Rating | lib-analytics | Complete (event ingestion, Glicko-2, summaries) |
@@ -31,53 +33,43 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 | Achievements | lib-achievement | Complete (progress, platform sync) |
 | Entity Relationships | lib-relationship | Complete (bidirectional, soft-delete) |
 
+### Recently Completed: Matchmaking Service
+
+The **lib-matchmaking** service was implemented in January 2026, delivering all originally-planned features:
+
+**Core Features Implemented:**
+- Queue management (create, update, delete, list, get)
+- Ticket-based matchmaking with join/leave/status operations
+- Skill-based matching using ratings from lib-analytics
+- Configurable skill window expansion over wait time
+- Match accept/decline flow with timeout handling
+
+**Advanced Features:**
+- Party support with skill aggregation (highest, average, weighted)
+- Exclusive groups (prevents conflicting concurrent queues)
+- Tournament support with registration requirements
+- Query-based property matching (region, mode preferences)
+- Auto-requeue on match decline
+- Reconnection handling via pending match storage
+
+**Integration:**
+- Game-session reservation system for matchmade sessions
+- Session-state shortcuts for leave/status/accept/decline
+- Client events via IClientEventPublisher
+- Server events for analytics and monitoring
+- Background processing for interval-based matching
+
+**Configuration:** Comprehensive queue-level configuration including interval timing, max wait, skill expansion curves, party limits, and more. See `docs/guides/MATCHMAKING.md` for full documentation.
+
 ---
 
 ## Tier 1: High-Value Enhancements
 
-### 1. Matchmaking Service (`lib-matchmaking`)
-
-**Description**: Queue-based matchmaking system that uses skill ratings from lib-analytics to create balanced matches. Players join queues with preferences, and the system periodically forms matches from compatible players.
-
-**Examples**:
-- Player queues for ranked 1v1; matched with opponent within skill range
-- Party of 3 queues for 5v5; system backfills remaining slots
-- Player prefers "capture the flag" mode; only matched with compatible queue
-
-**Key Features**:
-- Queue management (join, leave, status)
-- Skill-based matching using Glicko-2 ratings from lib-analytics
-- Expanding skill windows over wait time
-- Party/group queueing
-- Region awareness for latency optimization
-- Backfill support for partially-filled sessions
-- Match accept/decline flow
-
-**External Resources**:
-- [Open Match (Google)](https://open-match.dev/site/docs/) - Kubernetes-based matchmaking framework
-- [Glicko-2 Algorithm](http://www.glicko.net/glicko/glicko2.pdf) - Rating system specification
-- [OpenSkill](https://github.com/philihp/openskill.js) - Open-source TrueSkill alternative
-- [Redis Sorted Sets](https://redis.io/docs/data-types/sorted-sets/) - Queue implementation
-
-**Effort Estimate**: Medium (2-3 days for basic queue + skill matching)
-
-**Usefulness**: **HIGH**
-
-**Analysis**:
-- **PRO**: Skill-based matchmaking is expected by players in competitive games
-- **PRO**: lib-analytics already provides Glicko-2 ratings; this builds on existing work
-- **PRO**: Reduces player frustration from unbalanced matches
-- **PRO**: Party support enables social play patterns
-- **CONSIDERATION**: Requires sufficient player population for fast matching
-- **CONSIDERATION**: Complex tuning (skill windows, wait times) varies by game
-
----
-
-### 2. Engine SDKs
+### 1. Engine SDKs
 
 **Description**: Native SDK integrations for popular game engines beyond the current C#/.NET and TypeScript support.
 
-#### 2a. Godot SDK
+#### 1a. Godot SDK
 
 **Description**: GDScript or GDExtension (C++) bindings for Godot 4.x that provide WebSocket client with binary protocol support.
 
@@ -101,7 +93,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 - **PRO**: Single codebase can target multiple platforms
 - **CONSIDERATION**: GDExtension requires C++ expertise; GDScript simpler but slower
 
-#### 2b. Unreal SDK
+#### 1b. Unreal SDK
 
 **Description**: C++ SDK with Blueprints exposure, integrating with Unreal's Online Subsystem.
 
@@ -125,7 +117,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 - **CON**: High complexity due to UE's build system and C++ requirements
 - **CONSIDERATION**: May need separate builds for different UE versions
 
-#### 2c. Unity SDK Polish
+#### 1c. Unity SDK Polish
 
 **Description**: Improve existing Unity integration with proper package structure, documentation, and examples.
 
@@ -143,7 +135,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 3. Cloud Saves Service (`lib-save` or extension to `lib-state`)
+### 2. Cloud Saves Service (`lib-save` or extension to `lib-state`)
 
 **Description**: Player-scoped save data management with multiple slots, versioning, and cross-device sync.
 
@@ -177,7 +169,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ## Tier 2: Moderate-Value Enhancements
 
-### 4. Economy Service (`lib-economy`)
+### 3. Economy Service (`lib-economy`)
 
 **Description**: Virtual currency management, store system, and in-app purchase validation.
 
@@ -213,7 +205,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 5. Inventory Service (`lib-inventory`)
+### 4. Inventory Service (`lib-inventory`)
 
 **Description**: Item management with stacking, slots, and transfer capabilities.
 
@@ -244,7 +236,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 6. Clans/Guilds Service (`lib-guild`)
+### 5. Clans/Guilds Service (`lib-guild`)
 
 **Description**: Persistent player groups with hierarchy, roles, and shared resources.
 
@@ -279,7 +271,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ## Tier 3: Lower Priority / Specialized
 
-### 7. Replay System (`lib-replay`)
+### 6. Replay System (`lib-replay`)
 
 **Description**: Game state recording and playback for competitive integrity and content creation.
 
@@ -311,7 +303,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 8. Content Moderation (`lib-moderation`)
+### 7. Content Moderation (`lib-moderation`)
 
 **Description**: Chat and voice moderation with reporting, filtering, and moderator tools.
 
@@ -346,7 +338,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 9. Push Notifications
+### 8. Push Notifications
 
 **Description**: Mobile push notifications for re-engagement and real-time alerts.
 
@@ -373,7 +365,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ## Explicitly NOT Recommended
 
-### 10. Built-in Anti-Cheat
+### 9. Built-in Anti-Cheat
 
 **Description**: Server-side or client-side anti-cheat system.
 
@@ -390,7 +382,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 11. Game Server Hosting
+### 10. Game Server Hosting
 
 **Description**: Dedicated game server provisioning and management.
 
@@ -406,7 +398,7 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 ---
 
-### 12. Full CMS/Admin Dashboard
+### 11. Full CMS/Admin Dashboard
 
 **Description**: Comprehensive web-based admin UI for all services.
 
@@ -427,11 +419,10 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 
 | Enhancement | Effort | Usefulness | Dependencies | Recommended Order |
 |-------------|--------|------------|--------------|-------------------|
-| Matchmaking | Medium | High | lib-analytics (done) | 1st |
-| Godot SDK | Medium | High | None | 2nd |
-| Cloud Saves | Low-Medium | Medium-High | lib-state (done) | 3rd |
-| Unity Polish | Low | Medium | Existing NuGet | 4th |
-| Unreal SDK | High | Medium-High | None | 5th |
+| Godot SDK | Medium | High | None | 1st |
+| Cloud Saves | Low-Medium | Medium-High | lib-state (done) | 2nd |
+| Unity Polish | Low | Medium | Existing NuGet | 3rd |
+| Unreal SDK | High | Medium-High | None | 4th |
 | Economy | High | Medium | lib-state (done) | Later |
 | Inventory | Medium | Medium | Economy (optional) | Later |
 | Guilds | Medium-High | Medium | lib-relationship (done) | Later |
@@ -448,13 +439,16 @@ Before reviewing potential enhancements, here's what Bannou already provides:
 | 2026-01-08 | Anti-cheat NOT recommended | Arms race, external solutions better |
 | 2026-01-08 | Game hosting NOT recommended | Agones/GameLift more appropriate |
 | 2026-01-08 | Push notifications = integration docs | Firebase already ubiquitous |
+| 2026-01-10 | **Matchmaking IMPLEMENTED** | Full-featured lib-matchmaking with skill-based queues, party support, match accept/decline, exclusive groups, configurable skill expansion, tournament support, and game-session reservation integration |
 
 ---
 
 ## Open Questions
 
 1. **Matchmaking regions**: How should cross-region matching work? Latency thresholds?
-2. **Party skill disparity**: How to handle parties with widely different skill levels?
+   - *Current approach*: Region handled via ticket `stringProperties` (e.g., `region:us-west`); game-specific query matching filters by region. Latency thresholds are left to the game client to enforce via queue selection.
+2. ~~**Party skill disparity**: How to handle parties with widely different skill levels?~~
+   - *RESOLVED*: lib-matchmaking supports `partySkillAggregation` with `highest` (anti-smurf), `average` (casual), and `weighted` (custom weights) modes per queue.
 3. **Economy fraud prevention**: What anti-fraud measures are essential vs optional?
 4. **SDK versioning**: How to maintain SDKs across engine version changes?
 

@@ -1,0 +1,13 @@
+version: "2.0"
+metadata:
+  id: main
+
+imports:
+  - file: "lib.yml"
+    as: "lib"
+
+flows:
+  start:
+    actions:
+      - log: { message: "Main start" }
+      - call: { flow: "lib.greet" }

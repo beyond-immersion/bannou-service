@@ -1,0 +1,12 @@
+version: '2.0'
+metadata:
+  id: multi-input-test
+context:
+  variables:
+    a: { default: 0 }
+    b: { default: 0 }
+    c: { default: 0 }
+flows:
+  main:
+    actions:
+      - global: { variable: result, value: 'a + b * c' }

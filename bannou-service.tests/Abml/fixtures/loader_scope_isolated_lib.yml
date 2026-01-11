@@ -1,0 +1,11 @@
+version: "2.0"
+metadata:
+  id: scope_isolated_lib
+
+flows:
+  create_var:
+    actions:
+    - set:
+        variable: lib_only_var
+        value: "created_in_lib"
+    - log: { message: "In lib: ${lib_only_var}" }

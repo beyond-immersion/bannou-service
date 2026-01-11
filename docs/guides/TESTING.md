@@ -20,7 +20,7 @@ Comprehensive testing documentation for Bannou's schema-driven microservices arc
 - ✅ **CORRECT**: Testing auth endpoints in `http-tester` (service integration)
 
 ### Quick Decision Guide
-- **Testing specific service logic?** → `lib-{service}.tests/`
+- **Testing specific service logic?** → `plugins/lib-{service}.tests/`
 - **Testing service-to-service calls?** → `http-tester/`
 - **Testing WebSocket protocol?** → `edge-tester/`
 - **Testing core framework?** → `unit-tests/`
@@ -128,19 +128,19 @@ Before understanding the specific test types, you must understand the strict iso
 - Testing Connect service routing and binary protocol
 - Testing real-time features and client-server communication
 
-### 1. Unit Tests (189+ Total)
+### 1. Unit Tests (3,100+ Total)
 
-**Service Test Structure**: Each service has comprehensive unit tests in `lib-{service}.tests/`:
+**Service Test Structure**: Each service has comprehensive unit tests in `plugins/plugins/lib-{service}.tests/`:
 
 ```
-lib-account.tests/           # Account service tests
-lib-auth.tests/              # Authentication service tests
-lib-behavior.tests/          # Behavior service tests
-lib-connect.tests/           # Connect service tests
-lib-game-session.tests/      # Game session tests
-lib-permission.tests/        # Permission service tests
-lib-website.tests/           # Website service tests
-unit-tests/                  # Core framework tests (155 tests)
+plugins/lib-account.tests/           # Account service tests
+plugins/lib-auth.tests/              # Authentication service tests
+plugins/lib-behavior.tests/          # Behavior service tests
+plugins/lib-connect.tests/           # Connect service tests
+plugins/lib-game-session.tests/      # Game session tests
+plugins/lib-permission.tests/        # Permission service tests
+plugins/lib-website.tests/           # Website service tests
+bannou-service.tests/                # Core framework tests
 ```
 
 **Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection:
@@ -334,7 +334,7 @@ Tests are automatically created for each service plugin via `scripts/generate-te
 
 **Test Project Structure**:
 ```
-lib-{service}.tests/
+plugins/lib-{service}.tests/
 ├── GlobalUsings.cs              # xUnit global imports
 ├── {Service}ServiceTests.cs     # Main service tests
 └── lib-{service}.tests.csproj   # Test project file
@@ -532,7 +532,7 @@ public async Task TestRealAuthEndpoint()
 
 **When you want to test something, ask these questions**:
 
-1. **Am I testing a specific service's functionality?** → Use `lib-{service}.tests/`
+1. **Am I testing a specific service's functionality?** → Use `plugins/lib-{service}.tests/`
 2. **Am I testing service-to-service communication?** → Use `http-tester/`
 3. **Am I testing WebSocket protocol or Connect service?** → Use `edge-tester/`
 4. **Am I testing core framework functionality?** → Use `unit-tests/`
