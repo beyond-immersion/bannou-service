@@ -40505,6 +40505,11 @@
             Game identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.OwnerId">
+            <summary>
+            Entity ID that owns the slot
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.RenameSlotRequest.SlotName">
             <summary>
             Current slot name
@@ -40550,9 +40555,39 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceGameId">
+            <summary>
+            Game identifier of the source save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceOwnerId">
+            <summary>
+            Entity ID that owns the source save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceSlotName">
+            <summary>
+            Name of the source slot to copy from
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceVersion">
             <summary>
             Version to copy (latest if null)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetGameId">
+            <summary>
+            Game identifier for the target save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetOwnerId">
+            <summary>
+            Entity ID that will own the copied save
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetSlotName">
+            <summary>
+            Name of the target slot to copy to
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.TargetCategory">
@@ -40563,6 +40598,16 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.OwnerId">
+            <summary>
+            Entity ID that owns the saves to export
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ExportSavesRequest.SlotNames">
@@ -40598,6 +40643,16 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.ArchiveAssetId">
             <summary>
             Asset ID of uploaded export archive
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.TargetGameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.TargetOwnerId">
+            <summary>
+            Entity ID that will own the imported saves
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ImportSavesRequest.ConflictResolution">

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
@@ -10,6 +11,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-save-load.tests")]
@@ -42,19 +44,22 @@ public partial class SaveLoadService : ISaveLoadService
     private readonly ILogger<SaveLoadService> _logger;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public SaveLoadService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<SaveLoadService> logger,
         SaveLoadServiceConfiguration configuration,
-        IAssetClient assetClient)
+        IAssetClient assetClient,
+        IHttpClientFactory httpClientFactory)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     /// <summary>
@@ -908,7 +913,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Download from presigned URL
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var data = await httpClient.GetByteArrayAsync(response.DownloadUrl, cancellationToken);
             return data;
         }
@@ -1837,8 +1842,7 @@ public partial class SaveLoadService : ISaveLoadService
     }
 
     /// <summary>
-    /// Implementation of QuerySaves operation.
-    /// TODO: Implement business logic for this method.
+    /// Queries saves based on filter criteria including owner, category, tags, and date ranges.
     /// </summary>
     public async Task<(StatusCodes, QuerySavesResponse?)> QuerySavesAsync(QuerySavesRequest body, CancellationToken cancellationToken)
     {
@@ -2267,7 +2271,7 @@ public partial class SaveLoadService : ISaveLoadService
                 var manifestEntry = archive.CreateEntry("manifest.json");
                 using (var entryStream = manifestEntry.Open())
                 {
-                    var manifestJson = System.Text.Json.JsonSerializer.Serialize(manifest);
+                    var manifestJson = BannouJson.Serialize(manifest);
                     var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
                     await entryStream.WriteAsync(manifestBytes, cancellationToken);
                 }
@@ -2294,7 +2298,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
 
             // Upload to presigned URL
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var uploadContent = new ByteArrayContent(archiveData);
             uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
             var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
@@ -2380,7 +2384,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var archiveData = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
 
             // Parse the archive
@@ -2402,7 +2406,7 @@ public partial class SaveLoadService : ISaveLoadService
                 using (var reader = new StreamReader(manifestStream))
                 {
                     var manifestJson = await reader.ReadToEndAsync(cancellationToken);
-                    manifest = System.Text.Json.JsonSerializer.Deserialize<ExportManifest>(manifestJson);
+                    manifest = BannouJson.Deserialize<ExportManifest>(manifestJson);
                 }
 
                 if (manifest == null || manifest.Slots == null)
@@ -2746,7 +2750,7 @@ public partial class SaveLoadService : ISaveLoadService
                     return (StatusCodes.InternalServerError, null);
                 }
 
-                using var httpClient = new HttpClient();
+                using var httpClient = _httpClientFactory.CreateClient();
                 data = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
             }
             else
@@ -3360,7 +3364,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return null;
             }
 
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var compressedData = await httpClient.GetByteArrayAsync(assetResponse.DownloadUrl, cancellationToken);
             var versionCompressionType = Enum.TryParse<CompressionType>(version.CompressionType, out var vct) ? vct : CompressionType.NONE;
             return Compression.CompressionHelper.Decompress(compressedData, versionCompressionType);
@@ -3490,7 +3494,7 @@ public partial class SaveLoadService : ISaveLoadService
             string? migrationPatchJson = null;
             if (body.MigrationPatch != null && body.MigrationPatch.Count > 0)
             {
-                migrationPatchJson = System.Text.Json.JsonSerializer.Serialize(body.MigrationPatch);
+                migrationPatchJson = BannouJson.Serialize(body.MigrationPatch);
             }
 
             // Create schema definition
@@ -3498,7 +3502,7 @@ public partial class SaveLoadService : ISaveLoadService
             {
                 Namespace = body.Namespace,
                 SchemaVersion = body.SchemaVersion,
-                SchemaJson = System.Text.Json.JsonSerializer.Serialize(body.Schema),
+                SchemaJson = BannouJson.Serialize(body.Schema),
                 PreviousVersion = body.PreviousVersion,
                 MigrationPatchJson = migrationPatchJson,
                 CreatedAt = DateTimeOffset.UtcNow
@@ -3583,7 +3587,7 @@ public partial class SaveLoadService : ISaveLoadService
                     Namespace = s.Namespace,
                     SchemaVersion = s.SchemaVersion,
                     Schema = !string.IsNullOrEmpty(s.SchemaJson)
-                        ? System.Text.Json.JsonSerializer.Deserialize<object>(s.SchemaJson)
+                        ? BannouJson.Deserialize<object>(s.SchemaJson)
                         : new object(),
                     PreviousVersion = s.PreviousVersion,
                     HasMigration = s.HasMigration,
@@ -3760,7 +3764,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var uploadContent = new ByteArrayContent(compressedData);
             uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
             var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);

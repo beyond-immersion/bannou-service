@@ -394,15 +394,15 @@ paths:
         slotName\",\n                \"newSlotName\"\n            ],\n            \"properties\": {\n                \"gameId\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Game identifier\"\n       \
         \         },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        \n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Current slot name\"\n                },\n                \"newSlotName\": {\n           \
-        \         \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n \
-        \                   \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n                    \"description\": \"New
-        slot name\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
-        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        }\n    }\n}"
+        : \"uuid\",\n                    \"description\": \"Entity ID that owns the slot\"\n                },\n         \
+        \       \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n              \
+        \  \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Current slot
+        name\"\n                },\n                \"newSlotName\": {\n                    \"type\": \"string\",\n      \
+        \              \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\"\
+        ,\n                    \"description\": \"New slot name\"\n                }\n            }\n        },\n        \"\
+        OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n       \
+        \         \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"\
+        description\": \"Type of entity that owns this save slot\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"required\": [\n\
         \                \"slotId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\
@@ -757,7 +757,8 @@ paths:
         \                \"compressionSavings\": {\n                    \"type\": \"number\",\n                    \"format\"\
         : \"double\",\n                    \"description\": \"Storage savings vs full snapshot (0-1)\"\n                },\n\
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"description\": \"When the delta version was created\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save incremental changes from base version\",\n    \"description\": \"\
         Creates a new version by applying a delta (patch) to a base version.\\nSignificantly reduces storage for large saves
         with small incremental changes.\\n\\nUses JSON Patch (RFC 6902) by default. The implementation is designed to\\nallow
@@ -872,20 +873,23 @@ paths:
   # ═══════════════════════════════════════════════════════════════════════════
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CollapseDeltasRequest\"\
-        ,\n    \"$defs\": {\n        \"CollapseDeltasRequest\": {\n            \"type\": \"object\",\n            \"required\"\
-        : [\n                \"gameId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"\
-        slotName\"\n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\"\
-        : \"string\"\n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\"\n                },\n                \"ownerType\": {\n                    \"\
-        $ref\": \"#/$defs/OwnerType\"\n                },\n                \"slotName\": {\n                    \"type\":
-        \"string\"\n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Version to collapse to (latest if
-        null)\"\n                },\n                \"deleteIntermediates\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": true,\n                    \"description\": \"Delete intermediate delta versions
-        after collapse\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n               \
-        \ \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns
-        this save slot\"\n        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"CollapseDeltasRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to collapse a delta chain into a full snapshot\",\n            \"required\": [\n                \"gameId\"\
+        ,\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n  \
+        \          \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Game identifier for namespace isolation\"\n                },\n                \"ownerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Entity ID that owns the save slot\"\n                },\n                \"ownerType\": {\n     \
+        \               \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"slotName\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"Name of the slot containing deltas to collapse\"\
+        \n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Version to collapse to (latest if null)\"\n\
+        \                },\n                \"deleteIntermediates\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"default\": true,\n                    \"description\": \"Delete intermediate delta versions after
+        collapse\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
+        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveResponse\"\
         ,\n    \"$defs\": {\n        \"SaveResponse\": {\n            \"type\": \"object\",\n            \"required\": [\n\
         \                \"slotId\",\n                \"versionNumber\",\n                \"contentHash\",\n             \
@@ -1319,25 +1323,29 @@ paths:
         [\n                \"sourceGameId\",\n                \"sourceOwnerId\",\n                \"sourceOwnerType\",\n \
         \               \"sourceSlotName\",\n                \"targetGameId\",\n                \"targetOwnerId\",\n     \
         \           \"targetOwnerType\",\n                \"targetSlotName\"\n            ],\n            \"properties\":
-        {\n                \"sourceGameId\": {\n                    \"type\": \"string\"\n                },\n           \
-        \     \"sourceOwnerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\n\
-        \                },\n                \"sourceOwnerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n\
-        \                },\n                \"sourceSlotName\": {\n                    \"type\": \"string\"\n           \
-        \     },\n                \"sourceVersion\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Version to copy (latest if null)\"\n                },\n\
-        \                \"targetGameId\": {\n                    \"type\": \"string\"\n                },\n             \
-        \   \"targetOwnerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\n  \
-        \              },\n                \"targetOwnerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n \
-        \               },\n                \"targetSlotName\": {\n                    \"type\": \"string\"\n            \
-        \    },\n                \"targetCategory\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n        \
-        \            \"description\": \"Category for new slot if auto-created\"\n                }\n            }\n      \
-        \  },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\"\
-        ,\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n     \
-        \       \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n  \
-        \          \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\"\
-        ,\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n       \
-        \     ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast
-        save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
+        {\n                \"sourceGameId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Game identifier of the source save\"\n                },\n                \"sourceOwnerId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Entity ID that owns the source save\"\n                },\n                \"sourceOwnerType\": {\n              \
+        \      \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"sourceSlotName\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Name of the source slot to copy from\"\n    \
+        \            },\n                \"sourceVersion\": {\n                    \"type\": \"integer\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Version to copy (latest if null)\"\n          \
+        \      },\n                \"targetGameId\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Game identifier for the target save\"\n                },\n                \"targetOwnerId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Entity ID that will own the copied save\"\n                },\n                \"targetOwnerType\": {\n      \
+        \              \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"targetSlotName\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Name of the target slot to copy to\"\n\
+        \                },\n                \"targetCategory\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
+        ,\n                    \"description\": \"Category for new slot if auto-created\"\n                }\n           \
+        \ }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n   \
+        \         ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"SaveCategory\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n               \
+        \ \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\
+        \n            ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot
+        fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
         nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20
         versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n\
         \    }\n}"
@@ -1405,15 +1413,17 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportSavesRequest\"\
         ,\n    \"$defs\": {\n        \"ExportSavesRequest\": {\n            \"type\": \"object\",\n            \"required\"\
         : [\n                \"gameId\",\n                \"ownerId\",\n                \"ownerType\"\n            ],\n  \
-        \          \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\"\n          \
-        \      },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        \n                },\n                \"slotNames\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Specific slots to export (all if null)\"\n                }\n            }\n        },\n        \"OwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"\
-        CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\"\
-        : \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        \          \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Game identifier for namespace isolation\"\n                },\n                \"ownerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Entity ID that owns the saves to export\"\n                },\n                \"ownerType\": {\n\
+        \                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"slotNames\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Specific slots to export (all if null)\"\n      \
+        \          }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n           \
+        \ \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n      \
+        \          \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n \
+        \       }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportSavesResponse\"\
         ,\n    \"$defs\": {\n        \"ExportSavesResponse\": {\n            \"type\": \"object\",\n            \"required\"\
         : [\n                \"downloadUrl\",\n                \"expiresAt\",\n                \"sizeBytes\"\n           \
@@ -1464,17 +1474,18 @@ paths:
         \                \"targetOwnerType\"\n            ],\n            \"properties\": {\n                \"archiveAssetId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Asset ID of uploaded export archive\"\n                },\n                \"targetGameId\": {\n\
-        \                    \"type\": \"string\"\n                },\n                \"targetOwnerId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\"\n                },\n                \"targetOwnerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"conflictResolution\"\
-        : {\n                    \"$ref\": \"#/$defs/ConflictResolution\",\n                    \"description\": \"How to
-        handle existing slots\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n           \
-        \     \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that
-        owns this save slot\"\n        },\n        \"ConflictResolution\": {\n            \"type\": \"string\",\n        \
-        \    \"enum\": [\n                \"SKIP\",\n                \"OVERWRITE\",\n                \"RENAME\",\n       \
-        \         \"FAIL\"\n            ],\n            \"description\": \"Strategy for handling conflicts during import\"\
-        \n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"description\": \"Game identifier for namespace isolation\"\
+        \n                },\n                \"targetOwnerId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Entity ID that will own the imported saves\"\
+        \n                },\n                \"targetOwnerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n\
+        \                },\n                \"conflictResolution\": {\n                    \"$ref\": \"#/$defs/ConflictResolution\"\
+        ,\n                    \"description\": \"How to handle existing slots\"\n                }\n            }\n     \
+        \   },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\"\
+        ,\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n     \
+        \       \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"ConflictResolution\":
+        {\n            \"type\": \"string\",\n            \"enum\": [\n                \"SKIP\",\n                \"OVERWRITE\"\
+        ,\n                \"RENAME\",\n                \"FAIL\"\n            ],\n            \"description\": \"Strategy
+        for handling conflicts during import\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ImportSavesResponse\"\
         ,\n    \"$defs\": {\n        \"ImportSavesResponse\": {\n            \"type\": \"object\",\n            \"required\"\
         : [\n                \"importedSlots\",\n                \"importedVersions\",\n                \"skippedSlots\"\n\
@@ -2863,6 +2874,7 @@ components:
         ownerId:
           type: string
           format: uuid
+          description: Entity ID that owns the slot
         ownerType:
           $ref: '#/components/schemas/OwnerType'
         slotName:
@@ -2908,26 +2920,32 @@ components:
       properties:
         sourceGameId:
           type: string
+          description: Game identifier of the source save
         sourceOwnerId:
           type: string
           format: uuid
+          description: Entity ID that owns the source save
         sourceOwnerType:
           $ref: '#/components/schemas/OwnerType'
         sourceSlotName:
           type: string
+          description: Name of the source slot to copy from
         sourceVersion:
           type: integer
           nullable: true
           description: Version to copy (latest if null)
         targetGameId:
           type: string
+          description: Game identifier for the target save
         targetOwnerId:
           type: string
           format: uuid
+          description: Entity ID that will own the copied save
         targetOwnerType:
           $ref: '#/components/schemas/OwnerType'
         targetSlotName:
           type: string
+          description: Name of the target slot to copy to
         targetCategory:
           $ref: '#/components/schemas/SaveCategory'
           description: Category for new slot if auto-created
@@ -2938,9 +2956,11 @@ components:
       properties:
         gameId:
           type: string
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
+          description: Entity ID that owns the saves to export
         ownerType:
           $ref: '#/components/schemas/OwnerType'
         slotNames:
@@ -2976,9 +2996,11 @@ components:
           description: Asset ID of uploaded export archive
         targetGameId:
           type: string
+          description: Game identifier for namespace isolation
         targetOwnerId:
           type: string
           format: uuid
+          description: Entity ID that will own the imported saves
         targetOwnerType:
           $ref: '#/components/schemas/OwnerType'
         conflictResolution:
@@ -3148,20 +3170,25 @@ components:
         createdAt:
           type: string
           format: date-time
+          description: When the delta version was created
 
     CollapseDeltasRequest:
       type: object
+      description: Request to collapse a delta chain into a full snapshot
       required: [gameId, ownerId, ownerType, slotName]
       properties:
         gameId:
           type: string
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
+          description: Entity ID that owns the save slot
         ownerType:
           $ref: '#/components/schemas/OwnerType'
         slotName:
           type: string
+          description: Name of the slot containing deltas to collapse
         versionNumber:
           type: integer
           nullable: true

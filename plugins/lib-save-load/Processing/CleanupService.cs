@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.SaveLoad.Models;
@@ -17,6 +19,7 @@ public class CleanupService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly SaveLoadServiceConfiguration _configuration;
+    private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<CleanupService> _logger;
 
     /// <summary>
@@ -25,10 +28,12 @@ public class CleanupService : BackgroundService
     public CleanupService(
         IServiceProvider serviceProvider,
         SaveLoadServiceConfiguration configuration,
+        AppConfiguration appConfiguration,
         ILogger<CleanupService> logger)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _appConfiguration = appConfiguration ?? throw new ArgumentNullException(nameof(appConfiguration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -40,9 +45,9 @@ public class CleanupService : BackgroundService
         // Check if cleanup should only run on control plane
         if (_configuration.CleanupControlPlaneOnly)
         {
-            // Check if we are the control plane instance
-            var effectiveAppId = Environment.GetEnvironmentVariable("EFFECTIVE_APP_ID") ?? "bannou";
-            var defaultAppId = Environment.GetEnvironmentVariable("DEFAULT_APP_ID") ?? "bannou";
+            // Check if we are the control plane instance by comparing effective app ID to default
+            var effectiveAppId = _appConfiguration.EffectiveAppId;
+            var defaultAppId = AppConstants.DEFAULT_APP_NAME;
 
             if (effectiveAppId != defaultAppId)
             {

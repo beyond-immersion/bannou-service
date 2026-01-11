@@ -2049,6 +2049,9 @@ public partial class RenameSlotRequest
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that owns the slot
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2160,11 +2163,17 @@ public partial class BulkDeleteSlotsResponse
 public partial class CopySaveRequest
 {
 
+    /// <summary>
+    /// Game identifier of the source save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceGameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string SourceGameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that owns the source save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceOwnerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2176,6 +2185,9 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType SourceOwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the source slot to copy from
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceSlotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2187,11 +2199,17 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonPropertyName("sourceVersion")]
     public int? SourceVersion { get; set; } = default!;
 
+    /// <summary>
+    /// Game identifier for the target save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string TargetGameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that will own the copied save
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2203,6 +2221,9 @@ public partial class CopySaveRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType TargetOwnerType { get; set; } = default!;
 
+    /// <summary>
+    /// Name of the target slot to copy to
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetSlotName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2233,11 +2254,17 @@ public partial class CopySaveRequest
 public partial class ExportSavesRequest
 {
 
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string GameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that owns the saves to export
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
@@ -2321,11 +2348,17 @@ public partial class ImportSavesRequest
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveAssetId { get; set; } = default!;
 
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetGameId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string TargetGameId { get; set; } = default!;
 
+    /// <summary>
+    /// Entity ID that will own the imported saves
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetOwnerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]

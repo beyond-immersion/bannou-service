@@ -1781,7 +1781,8 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that owns the slot"
                 },
                 "ownerType": {
                     "$ref": "#/$defs/OwnerType"
@@ -4110,17 +4111,20 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "sourceGameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier of the source save"
                 },
                 "sourceOwnerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that owns the source save"
                 },
                 "sourceOwnerType": {
                     "$ref": "#/$defs/OwnerType"
                 },
                 "sourceSlotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the source slot to copy from"
                 },
                 "sourceVersion": {
                     "type": "integer",
@@ -4128,17 +4132,20 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Version to copy (latest if null)"
                 },
                 "targetGameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for the target save"
                 },
                 "targetOwnerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that will own the copied save"
                 },
                 "targetOwnerType": {
                     "$ref": "#/$defs/OwnerType"
                 },
                 "targetSlotName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Name of the target slot to copy to"
                 },
                 "targetCategory": {
                     "$ref": "#/$defs/SaveCategory",
@@ -4332,11 +4339,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
             ],
             "properties": {
                 "gameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for namespace isolation"
                 },
                 "ownerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that owns the saves to export"
                 },
                 "ownerType": {
                     "$ref": "#/$defs/OwnerType"
@@ -4474,11 +4483,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Asset ID of uploaded export archive"
                 },
                 "targetGameId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Game identifier for namespace isolation"
                 },
                 "targetOwnerId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "description": "Entity ID that will own the imported saves"
                 },
                 "targetOwnerType": {
                     "$ref": "#/$defs/OwnerType"

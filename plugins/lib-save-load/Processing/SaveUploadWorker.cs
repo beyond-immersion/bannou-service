@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 
@@ -88,6 +89,7 @@ public class SaveUploadWorker : BackgroundService
         var stateStoreFactory = serviceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
         var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
+        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 
         var circuitBreaker = new StorageCircuitBreaker(
             stateStoreFactory,
@@ -128,7 +130,7 @@ public class SaveUploadWorker : BackgroundService
         {
             try
             {
-                await ProcessUploadAsync(entry, pendingStore, versionStore, assetClient, messageBus, circuitBreaker, cancellationToken);
+                await ProcessUploadAsync(entry, pendingStore, versionStore, assetClient, messageBus, circuitBreaker, httpClientFactory, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -145,6 +147,7 @@ public class SaveUploadWorker : BackgroundService
         IAssetClient assetClient,
         IMessageBus messageBus,
         StorageCircuitBreaker circuitBreaker,
+        IHttpClientFactory httpClientFactory,
         CancellationToken cancellationToken)
     {
         _logger.LogDebug(
@@ -178,7 +181,7 @@ public class SaveUploadWorker : BackgroundService
 
         // Upload data to presigned URL
         var data = Convert.FromBase64String(entry.Data);
-        using var httpClient = new HttpClient();
+        using var httpClient = httpClientFactory.CreateClient();
         using var content = new ByteArrayContent(data);
         content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
 

@@ -32,6 +32,9 @@ public class SaveLoadServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register SaveLoadServiceConfiguration here
 
+        // Register HttpClient factory for downloading save data from pre-signed URLs
+        services.AddHttpClient();
+
         // Register background workers
         services.AddHostedService<SaveUploadWorker>();
         services.AddHostedService<CleanupService>();
