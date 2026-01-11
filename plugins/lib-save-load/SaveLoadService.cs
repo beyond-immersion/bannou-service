@@ -577,6 +577,8 @@ public partial class SaveLoadService : ISaveLoadService
                 };
                 var pendingKey = PendingUploadEntry.GetStateKey(uploadId);
                 await pendingStore.SaveAsync(pendingKey, pendingEntry, cancellationToken: cancellationToken);
+                // Add to tracking set for Redis-based queue processing
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
                 uploadPending = true;
 
                 _logger.LogDebug("Queued async upload {UploadId} for slot {SlotId} version {Version}",
@@ -1136,9 +1138,10 @@ public partial class SaveLoadService : ISaveLoadService
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
-                    UploadId = Guid.NewGuid().ToString(),
+                    UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = newVersionNumber,
                     GameId = slot.GameId,
@@ -1161,6 +1164,8 @@ public partial class SaveLoadService : ISaveLoadService
                     pendingEntry,
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);
+                // Add to tracking set for Redis-based queue processing
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
             // Publish event
@@ -1452,9 +1457,10 @@ public partial class SaveLoadService : ISaveLoadService
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
-                    UploadId = Guid.NewGuid().ToString(),
+                    UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = resolvedVersionNumber,
                     GameId = slot.GameId,
@@ -1472,6 +1478,8 @@ public partial class SaveLoadService : ISaveLoadService
                     pendingEntry,
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);
+                // Add to tracking set for Redis-based queue processing
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
             // Delete intermediate versions if requested
@@ -2154,9 +2162,10 @@ public partial class SaveLoadService : ISaveLoadService
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
-                    UploadId = Guid.NewGuid().ToString(),
+                    UploadId = uploadId,
                     SlotId = targetSlot.SlotId,
                     VersionNumber = newVersionNumber,
                     GameId = body.TargetGameId,
@@ -2174,6 +2183,8 @@ public partial class SaveLoadService : ISaveLoadService
                     pendingEntry,
                     new StateOptions { Ttl = pendingTtlSeconds },
                     cancellationToken);
+                // Add to tracking set for Redis-based queue processing
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation(
@@ -2603,9 +2614,10 @@ public partial class SaveLoadService : ISaveLoadService
                 if (_configuration.AsyncUploadEnabled)
                 {
                     var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                    var uploadId = Guid.NewGuid().ToString();
                     var pendingEntry = new PendingUploadEntry
                     {
-                        UploadId = Guid.NewGuid().ToString(),
+                        UploadId = uploadId,
                         SlotId = newSlot.SlotId,
                         VersionNumber = 1,
                         GameId = body.TargetGameId,
@@ -2623,6 +2635,8 @@ public partial class SaveLoadService : ISaveLoadService
                         pendingEntry,
                         new StateOptions { Ttl = pendingTtlSeconds },
                         cancellationToken);
+                    // Add to tracking set for Redis-based queue processing
+                    await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
                 }
             }
 
@@ -2858,9 +2872,10 @@ public partial class SaveLoadService : ISaveLoadService
             if (_configuration.AsyncUploadEnabled)
             {
                 var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
+                var uploadId = Guid.NewGuid().ToString();
                 var pendingEntry = new PendingUploadEntry
                 {
-                    UploadId = Guid.NewGuid().ToString(),
+                    UploadId = uploadId,
                     SlotId = slot.SlotId,
                     VersionNumber = newVersionNumber,
                     GameId = slot.GameId,
@@ -2875,6 +2890,8 @@ public partial class SaveLoadService : ISaveLoadService
                     QueuedAt = DateTimeOffset.UtcNow
                 };
                 await pendingStore.SaveAsync(pendingEntry.GetStateKey(), pendingEntry, cancellationToken: cancellationToken);
+                // Add to tracking set for Redis-based queue processing
+                await pendingStore.AddToSetAsync(Processing.SaveUploadWorker.PendingUploadIdsSetKey, uploadId, cancellationToken: cancellationToken);
             }
 
             // Save version manifest

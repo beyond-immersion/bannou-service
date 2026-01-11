@@ -17,6 +17,12 @@ namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 /// </summary>
 public class SaveUploadWorker : BackgroundService
 {
+    /// <summary>
+    /// Key for the Redis set that tracks pending upload IDs.
+    /// Used because Redis key-value stores don't support LINQ queries.
+    /// </summary>
+    public const string PendingUploadIdsSetKey = "pending-upload-ids";
+
     private readonly IServiceProvider _serviceProvider;
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly ILogger<SaveUploadWorker> _logger;
@@ -107,24 +113,37 @@ public class SaveUploadWorker : BackgroundService
         var pendingStore = stateStoreFactory.GetStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
         var versionStore = stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
 
-        // Get pending uploads using queryable store
-        var queryableStore = stateStoreFactory.GetQueryableStore<PendingUploadEntry>(_configuration.PendingUploadStoreName);
-        var pendingEntries = await queryableStore.QueryAsync(
-            e => e.AttemptCount < _configuration.UploadRetryAttempts,
-            cancellationToken);
+        // Get pending upload IDs from tracking set (Redis doesn't support LINQ queries)
+        var pendingUploadIds = await pendingStore.GetSetAsync<string>(PendingUploadIdsSetKey, cancellationToken);
 
-        // Limit to batch size and order by priority
-        pendingEntries = pendingEntries
-            .OrderBy(e => e.Priority)
-            .Take(_configuration.UploadBatchSize)
-            .ToList();
-
-        if (!pendingEntries.Any())
+        if (pendingUploadIds.Count == 0)
         {
             return;
         }
 
-        _logger.LogDebug("Processing {Count} pending uploads", pendingEntries.Count());
+        // Fetch all pending entries using bulk get
+        var pendingKeys = pendingUploadIds.Select(PendingUploadEntry.GetStateKey).ToList();
+        var entriesDict = await pendingStore.GetBulkAsync(pendingKeys, cancellationToken);
+
+        // Filter by attempt count, order by priority, and take batch size
+        var pendingEntries = entriesDict.Values
+            .Where(e => e.AttemptCount < _configuration.UploadRetryAttempts)
+            .OrderBy(e => e.Priority)
+            .Take(_configuration.UploadBatchSize)
+            .ToList();
+
+        if (pendingEntries.Count == 0)
+        {
+            // Clean up expired/orphaned entries from the tracking set
+            var orphanedIds = pendingUploadIds.Except(entriesDict.Values.Select(e => e.UploadId)).ToList();
+            foreach (var orphanedId in orphanedIds)
+            {
+                await pendingStore.RemoveFromSetAsync(PendingUploadIdsSetKey, orphanedId, cancellationToken);
+            }
+            return;
+        }
+
+        _logger.LogDebug("Processing {Count} pending uploads", pendingEntries.Count);
 
         foreach (var entry in pendingEntries)
         {
@@ -207,8 +226,9 @@ public class SaveUploadWorker : BackgroundService
             await versionStore.SaveAsync(versionKey, manifest, cancellationToken: cancellationToken);
         }
 
-        // Delete pending entry
+        // Delete pending entry and remove from tracking set
         await pendingStore.DeleteAsync(entry.GetStateKey(), cancellationToken);
+        await pendingStore.RemoveFromSetAsync(PendingUploadIdsSetKey, entry.UploadId, cancellationToken);
 
         // Record success with circuit breaker
         await circuitBreaker.RecordSuccessAsync(cancellationToken);
@@ -271,8 +291,9 @@ public class SaveUploadWorker : BackgroundService
                 failedEvent,
                 cancellationToken: cancellationToken);
 
-            // Delete the failed entry after max attempts
+            // Delete the failed entry after max attempts and remove from tracking set
             await pendingStore.DeleteAsync(entry.GetStateKey(), cancellationToken);
+            await pendingStore.RemoveFromSetAsync(PendingUploadIdsSetKey, entry.UploadId, cancellationToken);
         }
         else
         {
