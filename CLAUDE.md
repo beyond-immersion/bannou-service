@@ -34,6 +34,8 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 @docs/BANNOU_DESIGN.md
 
+@docs/GENERATED-SERVICE-DETAILS.md
+
 ---
 
 ## 🚨 CRITICAL DEVELOPMENT CONSTRAINTS
