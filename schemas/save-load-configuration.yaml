@@ -1,0 +1,320 @@
+x-service-configuration:
+  properties:
+    MaxSaveSizeBytes:
+      type: integer
+      format: int64
+      env: SAVE_LOAD_MAX_SAVE_SIZE_BYTES
+      default: 104857600
+      description: Maximum size for a single save in bytes (default 100MB)
+
+    AutoCompressThresholdBytes:
+      type: integer
+      format: int64
+      env: SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES
+      default: 1048576
+      description: Auto-compress saves larger than this (default 1MB)
+
+    DefaultCompressionType:
+      type: string
+      env: SAVE_LOAD_DEFAULT_COMPRESSION_TYPE
+      default: GZIP
+      description: Default compression algorithm (NONE, GZIP, BROTLI)
+
+    SlotMetadataStoreName:
+      type: string
+      env: SAVE_LOAD_SLOT_METADATA_STORE_NAME
+      default: save-load-slots
+      description: State store name for slot metadata (MySQL backend)
+
+    VersionManifestStoreName:
+      type: string
+      env: SAVE_LOAD_VERSION_MANIFEST_STORE_NAME
+      default: save-load-versions
+      description: State store name for version manifests (MySQL backend)
+
+    HotCacheStoreName:
+      type: string
+      env: SAVE_LOAD_HOT_CACHE_STORE_NAME
+      default: save-load-cache
+      description: State store name for hot save cache (Redis backend)
+
+    HotCacheTtlMinutes:
+      type: integer
+      env: SAVE_LOAD_HOT_CACHE_TTL_MINUTES
+      default: 60
+      description: TTL for hot cache entries in minutes
+
+    SchemaStoreName:
+      type: string
+      env: SAVE_LOAD_SCHEMA_STORE_NAME
+      default: save-load-schemas
+      description: State store name for registered schemas
+
+    AssetBucket:
+      type: string
+      env: SAVE_LOAD_ASSET_BUCKET
+      default: game-saves
+      description: MinIO bucket for save assets
+
+    DefaultMaxVersionsQuickSave:
+      type: integer
+      env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_QUICK_SAVE
+      default: 1
+      description: Default max versions for QUICK_SAVE category
+
+    DefaultMaxVersionsAutoSave:
+      type: integer
+      env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE
+      default: 5
+      description: Default max versions for AUTO_SAVE category
+
+    DefaultMaxVersionsManualSave:
+      type: integer
+      env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE
+      default: 10
+      description: Default max versions for MANUAL_SAVE category
+
+    DefaultMaxVersionsCheckpoint:
+      type: integer
+      env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT
+      default: 20
+      description: Default max versions for CHECKPOINT category
+
+    DefaultMaxVersionsStateSnapshot:
+      type: integer
+      env: SAVE_LOAD_DEFAULT_MAX_VERSIONS_STATE_SNAPSHOT
+      default: 3
+      description: Default max versions for STATE_SNAPSHOT category
+
+    CleanupIntervalMinutes:
+      type: integer
+      env: SAVE_LOAD_CLEANUP_INTERVAL_MINUTES
+      default: 60
+      description: Interval for automatic cleanup task
+
+    CleanupControlPlaneOnly:
+      type: boolean
+      env: SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY
+      default: true
+      description: Run scheduled cleanup only on control plane instance (EffectiveAppID == DefaultAppId). Prevents duplicate cleanup work across multi-instance deployments.
+
+    SessionCleanupGracePeriodMinutes:
+      type: integer
+      env: SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES
+      default: 5
+      description: Grace period before cleaning up SESSION-owned saves after session ends. Allows other services to copy/promote saves to longer-term storage.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MIGRATION SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    MigrationsEnabled:
+      type: boolean
+      env: SAVE_LOAD_MIGRATIONS_ENABLED
+      default: true
+      description: Enable/disable schema migrations entirely
+
+    MigrationMaxPatchOperations:
+      type: integer
+      env: SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS
+      default: 1000
+      description: Maximum JSON Patch operations per migration (safety limit)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # RATE LIMITING & QUOTAS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    MaxSlotsPerOwner:
+      type: integer
+      env: SAVE_LOAD_MAX_SLOTS_PER_OWNER
+      default: 100
+      description: Maximum save slots per owner entity
+
+    MaxSavesPerMinute:
+      type: integer
+      env: SAVE_LOAD_MAX_SAVES_PER_MINUTE
+      default: 10
+      description: Rate limit - maximum saves per owner per minute
+
+    MaxTotalSizeBytesPerOwner:
+      type: integer
+      format: int64
+      env: SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER
+      default: 1073741824
+      description: Maximum total storage per owner (default 1GB)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # COMPRESSION SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    BrotliCompressionLevel:
+      type: integer
+      env: SAVE_LOAD_BROTLI_COMPRESSION_LEVEL
+      default: 6
+      minimum: 0
+      maximum: 11
+      description: Brotli compression level (0-11, higher = better compression, slower)
+
+    GzipCompressionLevel:
+      type: integer
+      env: SAVE_LOAD_GZIP_COMPRESSION_LEVEL
+      default: 6
+      minimum: 1
+      maximum: 9
+      description: GZIP compression level (1-9, higher = better compression, slower)
+
+    DefaultCompressionByCategory:
+      type: object
+      description: Default compression per category. Overrides DefaultCompressionType. QUICK_SAVE uses NONE, AUTO_SAVE and MANUAL_SAVE use GZIP, CHECKPOINT uses GZIP, STATE_SNAPSHOT uses BROTLI.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # THUMBNAIL SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ThumbnailMaxSizeBytes:
+      type: integer
+      env: SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES
+      default: 262144
+      description: Maximum thumbnail size in bytes (default 256KB)
+
+    ThumbnailAllowedFormats:
+      type: string
+      env: SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS
+      default: "image/jpeg,image/webp,image/png"
+      description: Comma-separated list of allowed thumbnail MIME types
+
+    ThumbnailUrlTtlMinutes:
+      type: integer
+      env: SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES
+      default: 60
+      description: TTL for thumbnail pre-signed URLs
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DELTA SAVE SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    DeltaSavesEnabled:
+      type: boolean
+      env: SAVE_LOAD_DELTA_SAVES_ENABLED
+      default: true
+      description: Enable delta/incremental save support
+
+    DefaultDeltaAlgorithm:
+      type: string
+      env: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
+      default: JSON_PATCH
+      description: Default algorithm for delta computation (JSON_PATCH, BSDIFF, XDELTA)
+
+    MaxDeltaChainLength:
+      type: integer
+      env: SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH
+      default: 10
+      description: Maximum number of deltas before forcing collapse. Longer chains increase load latency.
+
+    AutoCollapseEnabled:
+      type: boolean
+      env: SAVE_LOAD_AUTO_COLLAPSE_ENABLED
+      default: true
+      description: Automatically collapse delta chains during cleanup
+
+    DeltaSizeThresholdPercent:
+      type: integer
+      env: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
+      default: 50
+      description: If delta is larger than this percent of full save, store as full instead. Avoids storing deltas that dont provide meaningful savings.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DEVICE & CLOUD SYNC SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ConflictDetectionEnabled:
+      type: boolean
+      env: SAVE_LOAD_CONFLICT_DETECTION_ENABLED
+      default: true
+      description: Enable device-based conflict detection for cloud saves. Requires deviceId to be provided in save requests.
+
+    ConflictDetectionWindowMinutes:
+      type: integer
+      env: SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES
+      default: 5
+      description: Time window for considering saves as potentially conflicting. Saves from different devices within this window trigger conflict flag.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # STORAGE BACKEND PROTECTION
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    AsyncUploadEnabled:
+      type: boolean
+      env: SAVE_LOAD_ASYNC_UPLOAD_ENABLED
+      default: true
+      description: Queue uploads to MinIO/S3 instead of synchronous write. Save is acknowledged immediately when data is stored in Redis pending queue. Background worker uploads asynchronously.
+
+    PendingUploadStoreName:
+      type: string
+      env: SAVE_LOAD_PENDING_UPLOAD_STORE_NAME
+      default: save-load-pending
+      description: Redis store for pending uploads awaiting async processing
+
+    PendingUploadTtlMinutes:
+      type: integer
+      env: SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES
+      default: 60
+      description: TTL for pending uploads in Redis. If upload fails repeatedly, entry expires and save is considered failed (event published).
+
+    MaxConcurrentUploads:
+      type: integer
+      env: SAVE_LOAD_MAX_CONCURRENT_UPLOADS
+      default: 10
+      description: Maximum concurrent uploads to storage backend (semaphore). Prevents overwhelming MinIO/S3 during traffic spikes.
+
+    UploadBatchSize:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_BATCH_SIZE
+      default: 5
+      description: Number of pending uploads to process per batch cycle
+
+    UploadBatchIntervalMs:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS
+      default: 100
+      description: Interval between upload batch processing cycles
+
+    UploadRetryAttempts:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS
+      default: 3
+      description: Number of retry attempts for failed uploads before giving up
+
+    UploadRetryDelayMs:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_RETRY_DELAY_MS
+      default: 1000
+      description: Base delay between retry attempts (exponential backoff applied)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CIRCUIT BREAKER (Storage Backend)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    StorageCircuitBreakerEnabled:
+      type: boolean
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_ENABLED
+      default: true
+      description: Enable circuit breaker for storage backend (MinIO/S3). When open, new saves queue in Redis until circuit resets.
+
+    StorageCircuitBreakerThreshold:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD
+      default: 5
+      description: Number of consecutive failures before circuit opens
+
+    StorageCircuitBreakerResetSeconds:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS
+      default: 30
+      description: Seconds before attempting to close circuit (half-open state)
+
+    StorageCircuitBreakerHalfOpenAttempts:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS
+      default: 2
+      description: Successful uploads needed in half-open state to close circuit

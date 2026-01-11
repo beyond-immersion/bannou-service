@@ -125,7 +125,8 @@ public sealed class AssetCache : IDisposable
             // Evict entries until we have room
             while (_currentSize + sizeBytes > _maxSizeBytes && _lruList.Count > 0)
             {
-                var last = _lruList.Last!;
+                var last = _lruList.Last
+                    ?? throw new InvalidOperationException("LRU list is unexpectedly empty during eviction");
                 EvictEntry(last);
             }
 

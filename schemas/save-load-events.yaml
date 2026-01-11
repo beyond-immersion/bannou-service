@@ -1,0 +1,330 @@
+openapi: 3.0.3
+info:
+  title: Save-Load Service Events
+  version: 1.0.0
+  description: Events published by the Save-Load service
+
+  x-lifecycle:
+    SaveSlot:
+      model:
+        slotId: { type: string, format: uuid, primary: true, required: true }
+        gameId: { type: string, required: true }
+        ownerId: { type: string, format: uuid, required: true }
+        ownerType: { type: string, required: true }
+        slotName: { type: string, required: true }
+        category: { type: string, required: true }
+      sensitive: []
+      # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
+
+components:
+  schemas:
+    # Custom events beyond lifecycle (SaveSlot lifecycle events auto-generated)
+
+    SaveCreatedEvent:
+      type: object
+      description: Published when a new save version is created
+      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType, sizeBytes]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        versionNumber:
+          type: integer
+          description: New version number
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+        category:
+          type: string
+          description: Save category
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Save size in bytes
+        schemaVersion:
+          type: string
+          nullable: true
+          description: Schema version if specified
+        pinned:
+          type: boolean
+          description: Whether version is pinned
+        checkpointName:
+          type: string
+          nullable: true
+          description: Checkpoint name if pinned
+
+    SaveLoadedEvent:
+      type: object
+      description: Published when a save is loaded
+      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        versionNumber:
+          type: integer
+          description: Loaded version number
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+
+    SaveMigratedEvent:
+      type: object
+      description: Published when a save is migrated to a new schema version
+      required: [eventId, timestamp, slotId, fromSchemaVersion, toSchemaVersion]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        originalVersionNumber:
+          type: integer
+          description: Original version that was migrated
+        newVersionNumber:
+          type: integer
+          description: New version with migrated data
+        fromSchemaVersion:
+          type: string
+          description: Original schema version
+        toSchemaVersion:
+          type: string
+          description: Target schema version
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+
+    VersionPinnedEvent:
+      type: object
+      description: Published when a version is pinned as checkpoint
+      required: [eventId, timestamp, slotId, versionNumber]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        versionNumber:
+          type: integer
+          description: Pinned version number
+        checkpointName:
+          type: string
+          nullable: true
+          description: Checkpoint name if assigned
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+
+    CleanupCompletedEvent:
+      type: object
+      description: Published when automatic cleanup completes
+      required: [eventId, timestamp, versionsDeleted, bytesFreed]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        versionsDeleted:
+          type: integer
+          description: Number of versions cleaned up
+        slotsDeleted:
+          type: integer
+          description: Number of empty slots removed
+        bytesFreed:
+          type: integer
+          format: int64
+          description: Storage freed in bytes
+        durationMs:
+          type: integer
+          description: Cleanup duration in milliseconds
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ASYNC UPLOAD EVENTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    SaveQueuedEvent:
+      type: object
+      description: |
+        Published when a save is queued for async upload.
+        The save data is in Redis and immediately loadable, but not yet in MinIO.
+      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        queueDepth:
+          type: integer
+          description: Current number of pending uploads in queue
+
+    SaveUploadCompletedEvent:
+      type: object
+      description: Published when async upload to MinIO completes successfully
+      required: [eventId, timestamp, slotId, versionNumber, assetId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        assetId:
+          type: string
+          format: uuid
+          description: Asset ID in MinIO
+        uploadDurationMs:
+          type: integer
+          description: Time from queue to upload completion
+        queueWaitMs:
+          type: integer
+          description: Time spent waiting in queue
+
+    SaveUploadFailedEvent:
+      type: object
+      description: |
+        Published when async upload fails after all retry attempts.
+        The save data may still be in Redis hot cache but will expire.
+      required: [eventId, timestamp, slotId, versionNumber, errorMessage, retryCount]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          type: string
+        errorMessage:
+          type: string
+          description: Last error message
+        retryCount:
+          type: integer
+          description: Number of retry attempts made
+        willRetry:
+          type: boolean
+          description: Whether more retries will be attempted
+
+    CircuitBreakerStateChangedEvent:
+      type: object
+      description: Published when storage circuit breaker changes state
+      required: [eventId, timestamp, previousState, newState]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        previousState:
+          type: string
+          enum: [CLOSED, OPEN, HALF_OPEN]
+        newState:
+          type: string
+          enum: [CLOSED, OPEN, HALF_OPEN]
+        failureCount:
+          type: integer
+          description: Consecutive failures (when opening)
+        successCount:
+          type: integer
+          description: Successful probes (when closing from half-open)
+        pendingUploads:
+          type: integer
+          description: Current queue depth when state changed

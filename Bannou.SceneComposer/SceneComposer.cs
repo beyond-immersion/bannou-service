@@ -168,12 +168,12 @@ public class SceneComposer : ISceneComposer
     /// <inheritdoc />
     public ComposerSceneNode CreateNode(NodeType type, string name, ComposerSceneNode? parent = null)
     {
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         var node = new ComposerSceneNode(type, name);
 
         var command = new CreateNodeCommand(
-            _currentScene!,
+            scene,
             node,
             parent,
             insertIndex: null,
@@ -189,10 +189,10 @@ public class SceneComposer : ISceneComposer
     public void DeleteNode(ComposerSceneNode node, bool deleteChildren = true)
     {
         if (node == null) throw new ArgumentNullException(nameof(node));
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         var command = new DeleteNodeCommand(
-            _currentScene!,
+            scene,
             node,
             deleteChildren,
             onCreated: OnNodeCreated,
@@ -229,14 +229,14 @@ public class SceneComposer : ISceneComposer
     public void ReparentNode(ComposerSceneNode node, ComposerSceneNode? newParent, int? insertIndex = null)
     {
         if (node == null) throw new ArgumentNullException(nameof(node));
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         // Prevent parenting to self or descendant
         if (newParent != null && (newParent == node || node.IsAncestorOf(newParent)))
             throw new InvalidOperationException("Cannot parent node to itself or a descendant");
 
         var command = new ReparentNodeCommand(
-            _currentScene!,
+            scene,
             node,
             newParent,
             insertIndex,
@@ -249,7 +249,7 @@ public class SceneComposer : ISceneComposer
     public ComposerSceneNode DuplicateNode(ComposerSceneNode node, bool deepClone = true)
     {
         if (node == null) throw new ArgumentNullException(nameof(node));
-        EnsureSceneLoaded();
+        var scene = EnsureSceneLoaded();
 
         var clone = node.Clone(deepClone);
 
@@ -257,7 +257,7 @@ public class SceneComposer : ISceneComposer
         clone.Name = $"{node.Name} Copy";
 
         var command = new CreateNodeCommand(
-            _currentScene!,
+            scene,
             clone,
             node.Parent,
             insertIndex: null,
@@ -762,10 +762,14 @@ public class SceneComposer : ISceneComposer
 
     #region Private Methods
 
-    private void EnsureSceneLoaded()
+    /// <summary>
+    /// Ensures a scene is loaded and returns it.
+    /// </summary>
+    /// <returns>The currently loaded scene.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no scene is loaded.</exception>
+    private ComposerScene EnsureSceneLoaded()
     {
-        if (_currentScene == null)
-            throw new InvalidOperationException("No scene is loaded");
+        return _currentScene ?? throw new InvalidOperationException("No scene is loaded");
     }
 
     private void ExecuteCommand(IEditorCommand command)

@@ -212,7 +212,9 @@ public sealed class StrideContentManager : IDisposable
         // Check cache first
         if (_cache.TryGet<Model>(assetId, out var cached))
         {
-            return cached!;
+            // TryGet returned true so cached is guaranteed non-null;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            return cached ?? throw new InvalidOperationException("Cache returned null for existing entry");
         }
 
         return await GetModelFromBundleAsync(assetId, cancellationToken);
@@ -281,7 +283,9 @@ public sealed class StrideContentManager : IDisposable
         // Check cache first
         if (_cache.TryGet<Texture>(assetId, out var cached))
         {
-            return cached!;
+            // TryGet returned true so cached is guaranteed non-null;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            return cached ?? throw new InvalidOperationException("Cache returned null for existing entry");
         }
 
         return await GetAssetAsync<Texture>(
@@ -311,7 +315,9 @@ public sealed class StrideContentManager : IDisposable
         var spriteCacheKey = $"sprite:{assetId}";
         if (_cache.TryGet<SpriteFromTexture>(spriteCacheKey, out var cached))
         {
-            return cached!;
+            // TryGet returned true so cached is guaranteed non-null;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            return cached ?? throw new InvalidOperationException("Cache returned null for existing entry");
         }
 
         // Load the underlying texture
@@ -457,7 +463,9 @@ public sealed class StrideContentManager : IDisposable
         // Check cache first
         if (_cache.TryGet<T>(assetId, out var cached))
         {
-            return cached!;
+            // TryGet returned true so cached is guaranteed non-null;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            return cached ?? throw new InvalidOperationException("Cache returned null for existing entry");
         }
 
         // Find in bundles
