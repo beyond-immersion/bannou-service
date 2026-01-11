@@ -8,15 +8,22 @@
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
 
-    <!-- Package metadata -->
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.Stride.SceneComposer</PackageId>
-    <Version>0.1.0</Version>
-    <Authors>Beyond Immersion</Authors>
-    <Company>Beyond Immersion</Company>
+    <Authors>BeyondImmersion</Authors>
     <Description>Stride engine extension for the Bannou SceneComposer SDK. Provides ISceneComposerBridge implementation, asset loaders, and gizmo rendering for Stride-based games. Note: Full functionality requires Windows.</Description>
     <PackageTags>bannou;stride;scene;editor;composition;gamedev</PackageTags>
-    <RepositoryUrl>https://github.com/beyondimmersion/bannou</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
 
     <!-- Build settings -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -28,6 +35,10 @@
     <RootNamespace>BeyondImmersion.Bannou.Stride.SceneComposer</RootNamespace>
     <AssemblyName>BeyondImmersion.Bannou.Stride.SceneComposer</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <!-- Make internals visible to test project -->
   <ItemGroup>

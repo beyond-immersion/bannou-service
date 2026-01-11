@@ -6,15 +6,22 @@
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
 
-    <!-- Package metadata -->
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.SceneComposer</PackageId>
-    <Version>0.1.0</Version>
-    <Authors>Beyond Immersion</Authors>
-    <Company>Beyond Immersion</Company>
+    <Authors>BeyondImmersion</Authors>
     <Description>Engine-agnostic scene composition SDK for Bannou. Provides hierarchical scene editing, undo/redo, multi-selection, and gizmo logic without engine dependencies.</Description>
     <PackageTags>bannou;scene;editor;composition;gamedev</PackageTags>
-    <RepositoryUrl>https://github.com/beyondimmersion/bannou</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
 
     <!-- Build settings -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -26,6 +33,10 @@
     <RootNamespace>BeyondImmersion.Bannou.SceneComposer</RootNamespace>
     <AssemblyName>BeyondImmersion.Bannou.SceneComposer</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <!-- Make internals visible to test project -->
   <ItemGroup>
