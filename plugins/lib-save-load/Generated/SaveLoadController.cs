@@ -918,21 +918,29 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "maxVersions": {
                     "type": "integer",
+                    "nullable": true,
                     "minimum": 1,
                     "maximum": 100,
-                    "description": "Override default max versions for this category"
+                    "description": "Override default max versions for this category (null = use category default)"
                 },
                 "retentionDays": {
                     "type": "integer",
+                    "nullable": true,
                     "minimum": 1,
                     "description": "Days to retain versions (null = indefinite)"
                 },
                 "compressionType": {
-                    "$ref": "#/$defs/CompressionType",
-                    "description": "Compression algorithm to use for save data"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CompressionType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Compression algorithm to use for save data (null = use category default)"
                 },
                 "tags": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string",
                         "maxLength": 32
@@ -942,6 +950,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
@@ -968,7 +977,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1415,7 +1424,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Type of entity that owns the save slots to list"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SaveCategory"
+                        }
+                    ],
+                    "nullable": true,
                     "description": "Optional filter by save category"
                 },
                 "includeVersionCount": {
@@ -1444,7 +1458,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -2165,7 +2179,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Slot name (auto-created if doesn't exist)"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SaveCategory"
+                        }
+                    ],
+                    "nullable": true,
                     "description": "Category for auto-created slots (defaults to MANUAL_SAVE)"
                 },
                 "data": {
@@ -2175,10 +2194,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "schemaVersion": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Schema version identifier for migration tracking"
                 },
                 "displayName": {
                     "type": "string",
+                    "nullable": true,
                     "maxLength": 128,
                     "description": "Human-readable name for this save"
                 },
@@ -2196,6 +2217,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
@@ -2203,6 +2225,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "pinAsCheckpoint": {
                     "type": "string",
+                    "nullable": true,
                     "maxLength": 64,
                     "description": "If provided, pin this version with checkpoint name"
                 }
@@ -2227,7 +2250,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -2418,10 +2441,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "versionNumber": {
                     "type": "integer",
+                    "nullable": true,
                     "description": "Specific version to load (defaults to latest)"
                 },
                 "checkpointName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Load by checkpoint name instead of version number"
                 },
                 "includeMetadata": {
@@ -2615,8 +2640,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                     "description": "Base64-encoded delta/patch data.\nFor JSON_PATCH: Array of RFC 6902 operations\ nFor BSDIFF/XDELTA: Binary patch data\n"
                 },
                 "algorithm": {
-                    "$ref": "#/$defs/DeltaAlgorithm",
-                    "description": "Delta computation algorithm to use"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeltaAlgorithm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Delta computation algorithm to use (defaults to JSON_PATCH)"
                 },
                 "schemaVersion": {
                     "type": "string",
@@ -2635,6 +2665,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "metadata": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
@@ -2819,10 +2850,12 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 },
                 "versionNumber": {
                     "type": "integer",
+                    "nullable": true,
                     "description": "Specific version to load (defaults to latest)"
                 },
                 "checkpointName": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Load by checkpoint name instead of version number"
                 },
                 "includeMetadata": {
@@ -3896,36 +3929,52 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Filter by owner ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/OwnerType"
+                        }
+                    ],
+                    "nullable": true,
                     "description": "Filter by owner type"
                 },
                 "category": {
-                    "$ref": "#/$defs/SaveCategory",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SaveCategory"
+                        }
+                    ],
+                    "nullable": true,
                     "description": "Filter by save category"
                 },
                 "createdAfter": {
                     "type": "string",
                     "format": "date-time",
+                    "nullable": true,
                     "description": "Filter by creation date"
                 },
                 "createdBefore": {
                     "type": "string",
                     "format": "date-time",
+                    "nullable": true,
                     "description": "Filter by creation date"
                 },
                 "pinnedOnly": {
                     "type": "boolean",
+                    "nullable": true,
                     "description": "Only return pinned versions"
                 },
                 "schemaVersion": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Filter by schema version"
                 },
                 "metadataFilter": {
                     "type": "object",
+                    "nullable": true,
                     "additionalProperties": {
                         "type": "string"
                     },
@@ -3982,7 +4031,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }

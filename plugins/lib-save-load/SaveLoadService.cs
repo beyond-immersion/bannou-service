@@ -102,7 +102,7 @@ public partial class SaveLoadService : ISaveLoadService
                 OwnerType = ownerType,
                 SlotName = body.SlotName,
                 Category = category.ToString(),
-                MaxVersions = maxVersions,
+                MaxVersions = (int)maxVersions,
                 RetentionDays = body.RetentionDays > 0 ? body.RetentionDays : null,
                 CompressionType = compressionType.ToString(),
                 VersionCount = 0,
@@ -463,8 +463,8 @@ public partial class SaveLoadService : ISaveLoadService
                     OwnerType = ownerType,
                     SlotName = body.SlotName,
                     Category = category.ToString(),
-                    MaxVersions = GetDefaultMaxVersions(category),
-                    CompressionType = GetDefaultCompressionType(category).ToString(),
+                    MaxVersions = GetDefaultMaxVersions((SaveCategory)category),
+                    CompressionType = GetDefaultCompressionType((SaveCategory)category).ToString(),
                     VersionCount = 0,
                     LatestVersion = null,
                     TotalSizeBytes = 0,
@@ -742,7 +742,7 @@ public partial class SaveLoadService : ISaveLoadService
             }
             else if (body.VersionNumber > 0)
             {
-                targetVersion = body.VersionNumber;
+                targetVersion = (int)body.VersionNumber;
             }
             else
             {
@@ -1253,7 +1253,7 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, (int)versionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (version == null)
@@ -1293,7 +1293,7 @@ public partial class SaveLoadService : ISaveLoadService
                 Timestamp = DateTimeOffset.UtcNow,
                 SlotId = Guid.Parse(slot.SlotId),
                 SlotName = slot.SlotName,
-                VersionNumber = versionNumber,
+                VersionNumber = (int)versionNumber,
                 OwnerId = body.OwnerId,
                 OwnerType = body.OwnerType.ToString()
             };
@@ -1302,7 +1302,7 @@ public partial class SaveLoadService : ISaveLoadService
             return (StatusCodes.OK, new LoadResponse
             {
                 SlotId = Guid.Parse(slot.SlotId),
-                VersionNumber = versionNumber,
+                VersionNumber = (int)versionNumber,
                 Data = data,
                 ContentHash = version.ContentHash,
                 SchemaVersion = version.SchemaVersion,

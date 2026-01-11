@@ -71,30 +71,34 @@ paths:
         \              \"description\": \"Slot name (lowercase alphanumeric with hyphens, single char like \\\"q\\\" allowed)\"\
         \n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n \
         \                   \"description\": \"Save category determining retention and cleanup behavior\"\n              \
-        \  },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"maximum\": 100,\n                    \"description\": \"Override default max versions
-        for this category\"\n                },\n                \"retentionDays\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"description\": \"Days to retain versions (null = indefinite)\"\
-        \n                },\n                \"compressionType\": {\n                    \"$ref\": \"#/$defs/CompressionType\"\
-        ,\n                    \"description\": \"Compression algorithm to use for save data\"\n                },\n     \
-        \           \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\",\n                        \"maxLength\": 32\n                    },\n          \
-        \          \"maxItems\": 20,\n                    \"description\": \"Searchable tags for slot categorization (e.g.,
-        \\\"boss-fight\\\", \\\"chapter-3\\\")\"\n                },\n                \"metadata\": {\n                  \
-        \  \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Custom key-value metadata for the slot\"\n      \
-        \          }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n           \
-        \ \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n      \
-        \          \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n \
-        \       },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n            \
-        \    \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
-        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
-        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
-        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
-        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
-        3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n           \
-        \ ],\n            \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
+        \  },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\"\
+        : \"Override default max versions for this category (null = use category default)\"\n                },\n        \
+        \        \"retentionDays\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Days to retain versions (null = indefinite)\"\
+        \n                },\n                \"compressionType\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/CompressionType\"\n                        }\n        \
+        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Compression algorithm
+        to use for save data (null = use category default)\"\n                },\n                \"tags\": {\n          \
+        \          \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n     \
+        \                   \"type\": \"string\",\n                        \"maxLength\": 32\n                    },\n   \
+        \                 \"maxItems\": 20,\n                    \"description\": \"Searchable tags for slot categorization
+        (e.g., \\\"boss-fight\\\", \\\"chapter-3\\\")\"\n                },\n                \"metadata\": {\n           \
+        \         \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Custom key-value metadata for the slot\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
+        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
+        entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
+        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
+        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
+        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
+        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
+        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n  \
+        \          \"type\": \"string\",\n            \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n\
+        \                \"BROTLI\"\n            ],\n            \"description\": \"Compression algorithm used for save data\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Complete metadata for a save slot including version statistics\",\n            \"required\": [\n               \
@@ -257,20 +261,21 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n               \
         \     \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns the save slots
-        to list\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
-        ,\n                    \"description\": \"Optional filter by save category\"\n                },\n               \
-        \ \"includeVersionCount\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
-        \                    \"description\": \"Include version count in response\"\n                }\n            }\n  \
-        \      },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n\
-        \            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\"\
-        ,\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n       \
-        \     ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast
-        save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
-        nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20
-        versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n\
-        \    }\n}"
+        to list\"\n                },\n                \"category\": {\n                    \"allOf\": [\n               \
+        \         {\n                            \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n         \
+        \           ],\n                    \"nullable\": true,\n                    \"description\": \"Optional filter by
+        save category\"\n                },\n                \"includeVersionCount\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Include version count in
+        response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
+        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
+        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
+        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
+        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
+        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
+        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
+        3 versions, rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSlotsResponse\"\
         ,\n    \"$defs\": {\n        \"ListSlotsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing a list of save slots for an owner\",\n            \"required\": [\n                \"slots\"\
@@ -562,13 +567,15 @@ paths:
         \                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\"\
         : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Slot name (auto-created if doesn't exist)\"\n\
-        \                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n  \
-        \                  \"description\": \"Category for auto-created slots (defaults to MANUAL_SAVE)\"\n              \
-        \  },\n                \"data\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        byte\",\n                    \"description\": \"Base64-encoded save data\"\n                },\n                \"\
-        schemaVersion\": {\n                    \"type\": \"string\",\n                    \"description\": \"Schema version
-        identifier for migration tracking\"\n                },\n                \"displayName\": {\n                    \"\
-        type\": \"string\",\n                    \"maxLength\": 128,\n                    \"description\": \"Human-readable
+        \                },\n                \"category\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n                    ],\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Category for auto-created slots (defaults
+        to MANUAL_SAVE)\"\n                },\n                \"data\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"byte\",\n                    \"description\": \"Base64-encoded save data\"\n    \
+        \            },\n                \"schemaVersion\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Schema version identifier for migration tracking\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 128,\n                    \"description\": \"Human-readable
         name for this save\"\n                },\n                \"thumbnail\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"byte\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Optional preview image (JPEG/WebP). Max size configurable\\n(default 256KB). Used for save slot previews in game
@@ -576,20 +583,21 @@ paths:
         \             \"maxLength\": 64,\n                    \"nullable\": true,\n                    \"description\": \"\
         Optional device identifier for cloud save conflict detection.\\nWhen provided, saves are prefixed/tagged with device
         info,\\nenabling opt-in cross-device sync with collision awareness.\\n\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Custom metadata (e.g.,
-        level, playtime, location)\"\n                },\n                \"pinAsCheckpoint\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 64,\n                    \"description\": \"If provided, pin this
-        version with checkpoint name\"\n                }\n            }\n        },\n        \"OwnerType\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n\
-        \                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity
-        that owns this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
-        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
-        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
-        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
-        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
-        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Custom metadata (e.g., level, playtime, location)\"\n                },\n                \"pinAsCheckpoint\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"If provided, pin this version with checkpoint name\"\n             \
+        \   }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"\
+        REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n  \
+        \      \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\"\
+        ,\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n           \
+        \     \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
+        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
+        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
+        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
+        rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveResponse\"\
         ,\n    \"$defs\": {\n        \"SaveResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Result of a save operation including version info and conflict detection\",\n            \"required\": [\n     \
@@ -673,14 +681,15 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
         owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Specific version to load (defaults
-        to latest)\"\n                },\n                \"checkpointName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Load by checkpoint name instead of version number\"\n                },\n\
-        \                \"includeMetadata\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Include version metadata in response\"\n                }\n      \
-        \      }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n     \
-        \           \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n\
-        \            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Specific version to load (defaults to latest)\"\n                },\n                \"checkpointName\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
+        {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
+        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
+        entity that owns this save slot\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadResponse\"\
         ,\n    \"$defs\": {\n        \"LoadResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Response containing loaded save data with integrity verification\",\n            \"required\": [\n             \
@@ -759,21 +768,23 @@ paths:
         \                \"delta\": {\n                    \"type\": \"string\",\n                    \"format\": \"byte\"\
         ,\n                    \"description\": \"Base64-encoded delta/patch data.\\nFor JSON_PATCH: Array of RFC 6902 operations\\
         nFor BSDIFF/XDELTA: Binary patch data\\n\"\n                },\n                \"algorithm\": {\n               \
-        \     \"$ref\": \"#/$defs/DeltaAlgorithm\",\n                    \"description\": \"Delta computation algorithm to
-        use\"\n                },\n                \"schemaVersion\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Schema version of this save for migration
-        tracking\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Human-readable name for this delta
-        save\"\n                },\n                \"deviceId\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Device identifier for cross-device sync conflict
-        detection\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n    \
-        \                \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Custom key-value metadata for this delta version\"\n                }\n  \
-        \          }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n \
-        \               \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\
-        \n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"\
-        DeltaAlgorithm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"JSON_PATCH\",\n\
-        \                \"BSDIFF\",\n                \"XDELTA\"\n            ],\n            \"default\": \"JSON_PATCH\"\
+        \     \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeltaAlgorithm\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Delta computation algorithm to use (defaults to JSON_PATCH)\"\n                },\n             \
+        \   \"schemaVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Schema version of this save for migration tracking\"\n                },\n  \
+        \              \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Human-readable name for this delta save\"\n                },\n          \
+        \      \"deviceId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Device identifier for cross-device sync conflict detection\"\n                },\n\
+        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": {\n                        \"type\": \"string\"\n                 \
+        \   },\n                    \"description\": \"Custom key-value metadata for this delta version\"\n              \
+        \  }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"\
+        REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n  \
+        \      \"DeltaAlgorithm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"JSON_PATCH\"\
+        ,\n                \"BSDIFF\",\n                \"XDELTA\"\n            ],\n            \"default\": \"JSON_PATCH\"\
         ,\n            \"description\": \"Algorithm used for delta computation.\\nJSON_PATCH: RFC 6902, best for structured
         JSON data\\nBSDIFF: Binary diff, good for general binary data\\nXDELTA: RFC 3284 VCDIFF, efficient for large binary
         files\\n\"\n        }\n    }\n}"
@@ -846,14 +857,15 @@ paths:
         : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
         owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Specific version to load (defaults
-        to latest)\"\n                },\n                \"checkpointName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Load by checkpoint name instead of version number\"\n                },\n\
-        \                \"includeMetadata\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Include version metadata in response\"\n                }\n      \
-        \      }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n     \
-        \           \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n\
-        \            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Specific version to load (defaults to latest)\"\n                },\n                \"checkpointName\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
+        {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
+        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
+        entity that owns this save slot\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadResponse\"\
         ,\n    \"$defs\": {\n        \"LoadResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Response containing loaded save data with integrity verification\",\n            \"required\": [\n             \
@@ -1268,39 +1280,44 @@ paths:
         ,\n    \"$defs\": {\n        \"QuerySavesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Advanced query for saves across multiple owners with filtering and sorting\",\n            \"properties\": {\n\
         \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Filter by owner ID\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Filter by owner
-        type\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
-        ,\n                    \"description\": \"Filter by save category\"\n                },\n                \"createdAfter\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Filter by creation date\"\n                },\n                \"createdBefore\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by owner ID\"\n        \
+        \        },\n                \"ownerType\": {\n                    \"allOf\": [\n                        {\n     \
+        \                       \"$ref\": \"#/$defs/OwnerType\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Filter by owner type\"\n             \
+        \   },\n                \"category\": {\n                    \"allOf\": [\n                        {\n           \
+        \                 \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n                    ],\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Filter by save category\"\n             \
+        \   },\n                \"createdAfter\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by creation
+        date\"\n                },\n                \"createdBefore\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by creation date\"\n                },\n                \"pinnedOnly\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Only return pinned versions\"\n                },\n       \
-        \         \"schemaVersion\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Filter by schema version\"\n                },\n                \"metadataFilter\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n   \
-        \                 },\n                    \"description\": \"Filter by metadata key-value pairs\"\n              \
-        \  },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"default\"\
-        : 0,\n                    \"description\": \"Pagination offset\"\n                },\n                \"limit\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 20,\n                    \"maximum\"\
-        : 100,\n                    \"description\": \"Maximum results\"\n                },\n                \"sortBy\":
-        {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"created_at\"\
-        ,\n                        \"size\",\n                        \"version_number\"\n                    ],\n       \
-        \             \"default\": \"created_at\",\n                    \"description\": \"Sort field\"\n                },\n\
-        \                \"sortOrder\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n  \
-        \                      \"asc\",\n                        \"desc\"\n                    ],\n                    \"\
-        default\": \"desc\",\n                    \"description\": \"Sort order\"\n                }\n            }\n    \
-        \    },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n\
-        \            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\"\
-        ,\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n       \
-        \     ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast
-        save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
-        nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20
-        versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n\
-        \    }\n}"
+        : \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Only return pinned
+        versions\"\n                },\n                \"schemaVersion\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Filter by schema version\"\n    \
+        \            },\n                \"metadataFilter\": {\n                    \"type\": \"object\",\n              \
+        \      \"nullable\": true,\n                    \"additionalProperties\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"description\": \"Filter by metadata key-value pairs\"\n  \
+        \              },\n                \"offset\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"default\": 0,\n                    \"description\": \"Pagination offset\"\n                },\n              \
+        \  \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n              \
+        \      \"maximum\": 100,\n                    \"description\": \"Maximum results\"\n                },\n         \
+        \       \"sortBy\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n              \
+        \          \"created_at\",\n                        \"size\",\n                        \"version_number\"\n      \
+        \              ],\n                    \"default\": \"created_at\",\n                    \"description\": \"Sort field\"\
+        \n                },\n                \"sortOrder\": {\n                    \"type\": \"string\",\n              \
+        \      \"enum\": [\n                        \"asc\",\n                        \"desc\"\n                    ],\n \
+        \                   \"default\": \"desc\",\n                    \"description\": \"Sort order\"\n                }\n\
+        \            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\
+        \n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"\
+        SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n \
+        \               \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n              \
+        \  \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
+        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
+        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
+        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
+        rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuerySavesResponse\"\
         ,\n    \"$defs\": {\n        \"QuerySavesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated results from a save query operation\",\n            \"required\": [\n                \"results\",\n\
@@ -2098,18 +2115,23 @@ components:
           description: Save category determining retention and cleanup behavior
         maxVersions:
           type: integer
+          nullable: true
           minimum: 1
           maximum: 100
-          description: Override default max versions for this category
+          description: Override default max versions for this category (null = use category default)
         retentionDays:
           type: integer
+          nullable: true
           minimum: 1
           description: Days to retain versions (null = indefinite)
         compressionType:
-          $ref: '#/components/schemas/CompressionType'
-          description: Compression algorithm to use for save data
+          allOf:
+          - $ref: '#/components/schemas/CompressionType'
+          nullable: true
+          description: Compression algorithm to use for save data (null = use category default)
         tags:
           type: array
+          nullable: true
           items:
             type: string
             maxLength: 32
@@ -2117,6 +2139,7 @@ components:
           description: Searchable tags for slot categorization (e.g., "boss-fight", "chapter-3")
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
           description: Custom key-value metadata for the slot
@@ -2162,7 +2185,9 @@ components:
           $ref: '#/components/schemas/OwnerType'
           description: Type of entity that owns the save slots to list
         category:
-          $ref: '#/components/schemas/SaveCategory'
+          allOf:
+          - $ref: '#/components/schemas/SaveCategory'
+          nullable: true
           description: Optional filter by save category
         includeVersionCount:
           type: boolean
@@ -2301,7 +2326,9 @@ components:
           type: string
           description: Slot name (auto-created if doesn't exist)
         category:
-          $ref: '#/components/schemas/SaveCategory'
+          allOf:
+          - $ref: '#/components/schemas/SaveCategory'
+          nullable: true
           description: Category for auto-created slots (defaults to MANUAL_SAVE)
         data:
           type: string
@@ -2309,9 +2336,11 @@ components:
           description: Base64-encoded save data
         schemaVersion:
           type: string
+          nullable: true
           description: Schema version identifier for migration tracking
         displayName:
           type: string
+          nullable: true
           maxLength: 128
           description: Human-readable name for this save
         thumbnail:
@@ -2331,11 +2360,13 @@ components:
             enabling opt-in cross-device sync with collision awareness.
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
           description: Custom metadata (e.g., level, playtime, location)
         pinAsCheckpoint:
           type: string
+          nullable: true
           maxLength: 64
           description: If provided, pin this version with checkpoint name
 
@@ -2427,9 +2458,11 @@ components:
           description: Slot name
         versionNumber:
           type: integer
+          nullable: true
           description: Specific version to load (defaults to latest)
         checkpointName:
           type: string
+          nullable: true
           description: Load by checkpoint name instead of version number
         includeMetadata:
           type: boolean
@@ -2660,29 +2693,39 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Filter by owner ID
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          allOf:
+          - $ref: '#/components/schemas/OwnerType'
+          nullable: true
           description: Filter by owner type
         category:
-          $ref: '#/components/schemas/SaveCategory'
+          allOf:
+          - $ref: '#/components/schemas/SaveCategory'
+          nullable: true
           description: Filter by save category
         createdAfter:
           type: string
           format: date-time
+          nullable: true
           description: Filter by creation date
         createdBefore:
           type: string
           format: date-time
+          nullable: true
           description: Filter by creation date
         pinnedOnly:
           type: boolean
+          nullable: true
           description: Only return pinned versions
         schemaVersion:
           type: string
+          nullable: true
           description: Filter by schema version
         metadataFilter:
           type: object
+          nullable: true
           additionalProperties:
             type: string
           description: Filter by metadata key-value pairs
@@ -3297,8 +3340,10 @@ components:
             For JSON_PATCH: Array of RFC 6902 operations
             For BSDIFF/XDELTA: Binary patch data
         algorithm:
-          $ref: '#/components/schemas/DeltaAlgorithm'
-          description: Delta computation algorithm to use
+          allOf:
+          - $ref: '#/components/schemas/DeltaAlgorithm'
+          nullable: true
+          description: Delta computation algorithm to use (defaults to JSON_PATCH)
         schemaVersion:
           type: string
           nullable: true
@@ -3313,6 +3358,7 @@ components:
           description: Device identifier for cross-device sync conflict detection
         metadata:
           type: object
+          nullable: true
           additionalProperties:
             type: string
           description: Custom key-value metadata for this delta version

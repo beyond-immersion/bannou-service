@@ -39641,7 +39641,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.MaxVersions">
             <summary>
-            Override default max versions for this category
+            Override default max versions for this category (null = use category default)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.RetentionDays">
@@ -39651,7 +39651,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.CompressionType">
             <summary>
-            Compression algorithm to use for save data
+            Compression algorithm to use for save data (null = use category default)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.Tags">
@@ -41309,7 +41309,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.Algorithm">
             <summary>
-            Delta computation algorithm to use
+            Delta computation algorithm to use (defaults to JSON_PATCH)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.SchemaVersion">

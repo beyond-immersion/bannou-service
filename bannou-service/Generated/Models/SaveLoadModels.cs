@@ -229,38 +229,38 @@ public partial class CreateSlotRequest
     public SaveCategory Category { get; set; } = default!;
 
     /// <summary>
-    /// Override default max versions for this category
+    /// Override default max versions for this category (null = use category default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxVersions")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int MaxVersions { get; set; } = default!;
+    public int? MaxVersions { get; set; } = default!;
 
     /// <summary>
     /// Days to retain versions (null = indefinite)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int RetentionDays { get; set; } = default!;
+    public int? RetentionDays { get; set; } = default!;
 
     /// <summary>
-    /// Compression algorithm to use for save data
+    /// Compression algorithm to use for save data (null = use category default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompressionType CompressionType { get; set; } = default!;
+    public CompressionType? CompressionType { get; set; } = default!;
 
     /// <summary>
     /// Searchable tags for slot categorization (e.g., "boss-fight", "chapter-3")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
     [System.ComponentModel.DataAnnotations.MaxLength(20)]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
     /// Custom key-value metadata for the slot
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -371,7 +371,7 @@ public partial class ListSlotsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SaveCategory Category { get; set; } = default!;
+    public SaveCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Include version count in response
@@ -688,7 +688,7 @@ public partial class SaveRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SaveCategory Category { get; set; } = default!;
+    public SaveCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Base64-encoded save data
@@ -702,14 +702,14 @@ public partial class SaveRequest
     /// Schema version identifier for migration tracking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for this save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Optional preview image (JPEG/WebP). Max size configurable
@@ -733,14 +733,14 @@ public partial class SaveRequest
     /// Custom metadata (e.g., level, playtime, location)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
     /// <summary>
     /// If provided, pin this version with checkpoint name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pinAsCheckpoint")]
     [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string PinAsCheckpoint { get; set; } = default!;
+    public string? PinAsCheckpoint { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -923,13 +923,13 @@ public partial class LoadRequest
     /// Specific version to load (defaults to latest)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
-    public int VersionNumber { get; set; } = default!;
+    public int? VersionNumber { get; set; } = default!;
 
     /// <summary>
     /// Load by checkpoint name instead of version number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("checkpointName")]
-    public string CheckpointName { get; set; } = default!;
+    public string? CheckpointName { get; set; } = default!;
 
     /// <summary>
     /// Include version metadata in response
@@ -1436,51 +1436,51 @@ public partial class QuerySavesRequest
     /// Filter by owner ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Filter by owner type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public OwnerType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by save category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SaveCategory Category { get; set; } = default!;
+    public SaveCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Filter by creation date
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAfter")]
-    public System.DateTimeOffset CreatedAfter { get; set; } = default!;
+    public System.DateTimeOffset? CreatedAfter { get; set; } = default!;
 
     /// <summary>
     /// Filter by creation date
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdBefore")]
-    public System.DateTimeOffset CreatedBefore { get; set; } = default!;
+    public System.DateTimeOffset? CreatedBefore { get; set; } = default!;
 
     /// <summary>
     /// Only return pinned versions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pinnedOnly")]
-    public bool PinnedOnly { get; set; } = default!;
+    public bool? PinnedOnly { get; set; } = default!;
 
     /// <summary>
     /// Filter by schema version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string SchemaVersion { get; set; } = default!;
+    public string? SchemaVersion { get; set; } = default!;
 
     /// <summary>
     /// Filter by metadata key-value pairs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadataFilter")]
-    public System.Collections.Generic.IDictionary<string, string> MetadataFilter { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? MetadataFilter { get; set; } = default!;
 
     /// <summary>
     /// Pagination offset
@@ -2896,11 +2896,11 @@ public partial class SaveDeltaRequest
     public byte[] Delta { get; set; } = default!;
 
     /// <summary>
-    /// Delta computation algorithm to use
+    /// Delta computation algorithm to use (defaults to JSON_PATCH)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeltaAlgorithm Algorithm { get; set; } = default!;
+    public DeltaAlgorithm? Algorithm { get; set; } = default!;
 
     /// <summary>
     /// Schema version of this save for migration tracking
@@ -2924,7 +2924,7 @@ public partial class SaveDeltaRequest
     /// Custom key-value metadata for this delta version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string> Metadata { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
