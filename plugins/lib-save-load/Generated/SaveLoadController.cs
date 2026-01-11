@@ -1158,11 +1158,19 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         "GetSlotRequest": {
             "type": "object",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -1370,10 +1378,18 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         "ListSlotsRequest": {
             "type": "object",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -1615,11 +1631,19 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         "DeleteSlotRequest": {
             "type": "object",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -2328,11 +2352,19 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         "LoadRequest": {
             "type": "object",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
@@ -2706,11 +2738,19 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         "LoadRequest": {
             "type": "object",
             "required": [
+                "gameId",
                 "ownerId",
                 "ownerType",
                 "slotName"
             ],
             "properties": {
+                "gameId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Game identifier for namespace isolation"
+                },
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",

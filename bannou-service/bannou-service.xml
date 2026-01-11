@@ -46472,6 +46472,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.GetSlotRequest.OwnerId">
             <summary>
             ID of the owning entity
@@ -46487,6 +46492,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.OwnerId">
             <summary>
             ID of the owning entity
@@ -46500,6 +46510,11 @@
         <member name="P:BeyondImmersion.BannouService.SaveLoad.ListSlotsRequest.AdditionalProperties">
             <summary>
             Gets or sets additional properties not defined in the schema.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.GameId">
+            <summary>
+            Game identifier for namespace isolation
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.DeleteSlotRequest.OwnerId">

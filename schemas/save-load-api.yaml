@@ -161,14 +161,17 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSlotRequest\"\
         ,\n    \"$defs\": {\n        \"GetSlotRequest\": {\n            \"type\": \"object\",\n            \"required\": [\n\
-        \                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n    \
-        \        \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n             \
-        \   },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n\
-        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Slot name\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
-        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
+        \                \"gameId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\
+        \n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 32,\n                    \"pattern\"\
+        : \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation\"\n     \
+        \           },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n      \
+        \          \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n           \
+        \     \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\
+        \n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n\
+        \                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
         \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"required\": [\n\
@@ -236,9 +239,12 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSlotsRequest\"\
         ,\n    \"$defs\": {\n        \"ListSlotsRequest\": {\n            \"type\": \"object\",\n            \"required\"\
-        : [\n                \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n\
-        \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
+        : [\n                \"gameId\",\n                \"ownerId\",\n                \"ownerType\"\n            ],\n  \
+        \          \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 32,\n                    \"pattern\": \"^[a-z][a-z0-9-]*$\"\
+        ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
+        \        \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
         : {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n                \"category\": {\n  \
         \                  \"$ref\": \"#/$defs/SaveCategory\"\n                },\n                \"includeVersionCount\"\
         : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
@@ -330,15 +336,18 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteSlotRequest\"\
         ,\n    \"$defs\": {\n        \"DeleteSlotRequest\": {\n            \"type\": \"object\",\n            \"required\"\
-        : [\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n\
-        \            \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n         \
-        \       },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n              \
-        \  },\n                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Slot name\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n               \
-        \ \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns
-        this save slot\"\n        }\n    }\n}"
+        : [\n                \"gameId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"\
+        slotName\"\n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 32,\n                   \
+        \ \"pattern\": \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation\"\
+        \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n\
+        \                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n     \
+        \           \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot
+        name\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
+        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteSlotResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteSlotResponse\": {\n            \"type\": \"object\",\n            \"required\"\
         : [\n                \"deleted\",\n                \"versionsDeleted\",\n                \"bytesFreed\"\n        \
@@ -626,16 +635,19 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadRequest\"\
         ,\n    \"$defs\": {\n        \"LoadRequest\": {\n            \"type\": \"object\",\n            \"required\": [\n\
-        \                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n    \
-        \        \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n             \
-        \   },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n\
-        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Slot name\"\n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Specific version to load (defaults to latest)\"\n                },\n  \
-        \              \"checkpointName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
-        {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        \                \"gameId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\
+        \n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 32,\n                    \"pattern\"\
+        : \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation\"\n     \
+        \           },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n      \
+        \          \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n           \
+        \     \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\
+        \n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Specific version to load (defaults to latest)\"\n                },\n             \
+        \   \"checkpointName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Load
+        by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\": {\n     \
+        \               \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
         : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
         \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
         ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
@@ -785,16 +797,19 @@ paths:
 
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadRequest\"\
         ,\n    \"$defs\": {\n        \"LoadRequest\": {\n            \"type\": \"object\",\n            \"required\": [\n\
-        \                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n    \
-        \        \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n             \
-        \   },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n\
-        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Slot name\"\n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Specific version to load (defaults to latest)\"\n                },\n  \
-        \              \"checkpointName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
-        {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        \                \"gameId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\
+        \n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 32,\n                    \"pattern\"\
+        : \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation\"\n     \
+        \           },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n      \
+        \          \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\n                },\n           \
+        \     \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\
+        \n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Specific version to load (defaults to latest)\"\n                },\n             \
+        \   \"checkpointName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Load
+        by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\": {\n     \
+        \               \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
         : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
         \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
         ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
@@ -2005,8 +2020,14 @@ components:
 
     GetSlotRequest:
       type: object
-      required: [ownerId, ownerType, slotName]
+      required: [gameId, ownerId, ownerType, slotName]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -2019,8 +2040,14 @@ components:
 
     ListSlotsRequest:
       type: object
-      required: [ownerId, ownerType]
+      required: [gameId, ownerId, ownerType]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -2036,8 +2063,14 @@ components:
 
     DeleteSlotRequest:
       type: object
-      required: [ownerId, ownerType, slotName]
+      required: [gameId, ownerId, ownerType, slotName]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -2254,8 +2287,14 @@ components:
 
     LoadRequest:
       type: object
-      required: [ownerId, ownerType, slotName]
+      required: [gameId, ownerId, ownerType, slotName]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid

@@ -269,6 +269,16 @@ public partial class GetSlotRequest
 {
 
     /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
+
+    /// <summary>
     /// ID of the owning entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
@@ -307,6 +317,16 @@ public partial class GetSlotRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListSlotsRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
@@ -349,6 +369,16 @@ public partial class ListSlotsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteSlotRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
@@ -790,6 +820,16 @@ public partial class SaveResponse
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoadRequest
 {
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9-]*$")]
+    public string GameId { get; set; } = default!;
 
     /// <summary>
     /// ID of the owning entity
