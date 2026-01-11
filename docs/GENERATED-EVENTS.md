@@ -262,6 +262,22 @@ This document lists all events defined in Bannou's event schemas.
 | `RealmParticipationDeletedEvent` | Lifecycle (Deleted) | `realm-participation.deleted` | Published when a realm's participation record is d... |
 | `RealmParticipationRecordedEvent` | Custom | `realm-participation-recorded` | Published when a realm's participation in a histor... |
 
+### Save Load
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CircuitBreakerStateChangedEvent` | Custom | `circuit-breaker-state-changed` | Published when storage circuit breaker changes sta... |
+| `CleanupCompletedEvent` | Custom | `cleanup-completed` | Published when automatic cleanup completes |
+| `SaveCreatedEvent` | Lifecycle (Created) | `save.created` | Published when a new save version is created |
+| `SaveLoadedEvent` | Custom | `save-loaded` | Published when a save is loaded |
+| `SaveMigratedEvent` | Custom | `save-migrated` | Published when a save is migrated to a new schema ... |
+| `SaveQueuedEvent` | Custom | `save-queued` | Published when a save is queued for async upload. |
+| `SaveUploadCompletedEvent` | Custom | `save-upload-completed` | Published when async upload to MinIO completes suc... |
+| `SaveUploadFailedEvent` | Custom | `save-upload-failed` | Published when async upload fails after all retry ... |
+| `VersionDeletedEvent` | Lifecycle (Deleted) | `version.deleted` | Published when a version is deleted |
+| `VersionPinnedEvent` | Custom | `version-pinned` | Published when a version is pinned as checkpoint |
+| `VersionUnpinnedEvent` | Custom | `version-unpinned` | Published when a version is unpinned |
+
 ### Scene
 
 | Event | Type | Likely Topic | Description |

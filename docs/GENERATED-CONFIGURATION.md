@@ -467,6 +467,58 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
+### Save Load
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `SAVE-LOAD_DEFAULTCOMPRESSIONBYCATEGORY` | object | **REQUIRED** | Default compression per category. Overrides DefaultCompressi... |
+| `SAVE_LOAD_ASSET_BUCKET` | string | `game-saves` | MinIO bucket for save assets |
+| `SAVE_LOAD_ASYNC_UPLOAD_ENABLED` | bool | `true` | Queue uploads to MinIO/S3 instead of synchronous write. Save... |
+| `SAVE_LOAD_AUTO_COLLAPSE_ENABLED` | bool | `true` | Automatically collapse delta chains during cleanup |
+| `SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES` | int | `1048576` | Auto-compress saves larger than this (default 1MB) |
+| `SAVE_LOAD_BROTLI_COMPRESSION_LEVEL` | int | `6` | Brotli compression level (0-11, higher = better compression,... |
+| `SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY` | bool | `true` | Run scheduled cleanup only on control plane instance (Effect... |
+| `SAVE_LOAD_CLEANUP_INTERVAL_MINUTES` | int | `60` | Interval for automatic cleanup task |
+| `SAVE_LOAD_CONFLICT_DETECTION_ENABLED` | bool | `true` | Enable device-based conflict detection for cloud saves. Requ... |
+| `SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES` | int | `5` | Time window for considering saves as potentially conflicting... |
+| `SAVE_LOAD_DEFAULT_COMPRESSION_TYPE` | string | `GZIP` | Default compression algorithm (NONE, GZIP, BROTLI) |
+| `SAVE_LOAD_DEFAULT_DELTA_ALGORITHM` | string | `JSON_PATCH` | Default algorithm for delta computation (JSON_PATCH, BSDIFF,... |
+| `SAVE_LOAD_DEFAULT_MAX_VERSIONS_AUTO_SAVE` | int | `5` | Default max versions for AUTO_SAVE category |
+| `SAVE_LOAD_DEFAULT_MAX_VERSIONS_CHECKPOINT` | int | `20` | Default max versions for CHECKPOINT category |
+| `SAVE_LOAD_DEFAULT_MAX_VERSIONS_MANUAL_SAVE` | int | `10` | Default max versions for MANUAL_SAVE category |
+| `SAVE_LOAD_DEFAULT_MAX_VERSIONS_QUICK_SAVE` | int | `1` | Default max versions for QUICK_SAVE category |
+| `SAVE_LOAD_DEFAULT_MAX_VERSIONS_STATE_SNAPSHOT` | int | `3` | Default max versions for STATE_SNAPSHOT category |
+| `SAVE_LOAD_DELTA_SAVES_ENABLED` | bool | `true` | Enable delta/incremental save support |
+| `SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT` | int | `50` | If delta is larger than this percent of full save, store as ... |
+| `SAVE_LOAD_GZIP_COMPRESSION_LEVEL` | int | `6` | GZIP compression level (1-9, higher = better compression, sl... |
+| `SAVE_LOAD_HOT_CACHE_STORE_NAME` | string | `save-load-cache` | State store name for hot save cache (Redis backend) |
+| `SAVE_LOAD_HOT_CACHE_TTL_MINUTES` | int | `60` | TTL for hot cache entries in minutes |
+| `SAVE_LOAD_MAX_CONCURRENT_UPLOADS` | int | `10` | Maximum concurrent uploads to storage backend (semaphore). P... |
+| `SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH` | int | `10` | Maximum number of deltas before forcing collapse. Longer cha... |
+| `SAVE_LOAD_MAX_SAVES_PER_MINUTE` | int | `10` | Rate limit - maximum saves per owner per minute |
+| `SAVE_LOAD_MAX_SAVE_SIZE_BYTES` | int | `104857600` | Maximum size for a single save in bytes (default 100MB) |
+| `SAVE_LOAD_MAX_SLOTS_PER_OWNER` | int | `100` | Maximum save slots per owner entity |
+| `SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER` | int | `1073741824` | Maximum total storage per owner (default 1GB) |
+| `SAVE_LOAD_MIGRATIONS_ENABLED` | bool | `true` | Enable/disable schema migrations entirely |
+| `SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS` | int | `1000` | Maximum JSON Patch operations per migration (safety limit) |
+| `SAVE_LOAD_PENDING_UPLOAD_STORE_NAME` | string | `save-load-pending` | Redis store for pending uploads awaiting async processing |
+| `SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES` | int | `60` | TTL for pending uploads in Redis. If upload fails repeatedly... |
+| `SAVE_LOAD_SCHEMA_STORE_NAME` | string | `save-load-schemas` | State store name for registered schemas |
+| `SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES` | int | `5` | Grace period before cleaning up SESSION-owned saves after se... |
+| `SAVE_LOAD_SLOT_METADATA_STORE_NAME` | string | `save-load-slots` | State store name for slot metadata (MySQL backend) |
+| `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_ENABLED` | bool | `true` | Enable circuit breaker for storage backend (MinIO/S3). When ... |
+| `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS` | int | `2` | Successful uploads needed in half-open state to close circui... |
+| `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS` | int | `30` | Seconds before attempting to close circuit (half-open state) |
+| `SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD` | int | `5` | Number of consecutive failures before circuit opens |
+| `SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS` | string | `image/jpeg,image/webp,image/png` | Comma-separated list of allowed thumbnail MIME types |
+| `SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES` | int | `262144` | Maximum thumbnail size in bytes (default 256KB) |
+| `SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES` | int | `60` | TTL for thumbnail pre-signed URLs |
+| `SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS` | int | `100` | Interval between upload batch processing cycles |
+| `SAVE_LOAD_UPLOAD_BATCH_SIZE` | int | `5` | Number of pending uploads to process per batch cycle |
+| `SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for failed uploads before giving up |
+| `SAVE_LOAD_UPLOAD_RETRY_DELAY_MS` | int | `1000` | Base delay between retry attempts (exponential backoff appli... |
+| `SAVE_LOAD_VERSION_MANIFEST_STORE_NAME` | string | `save-load-versions` | State store name for version manifests (MySQL backend) |
+
 ### Scene
 
 | Environment Variable | Type | Default | Description |
@@ -540,9 +592,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 386
-- **Required (no default)**: 47
-- **Optional (has default)**: 339
+- **Total properties**: 433
+- **Required (no default)**: 48
+- **Optional (has default)**: 385
 
 ## Environment Variable Naming Convention
 
