@@ -209,7 +209,7 @@ public class ReparentNodeCommand : IEditorCommand
     private readonly ComposerSceneNode? _newParent;
     private readonly int _oldIndex;
     private readonly int? _newIndex;
-    private readonly Action<ComposerSceneNode> _onReparented;
+    private readonly Action<ComposerSceneNode, ComposerSceneNode?, ComposerSceneNode?> _onReparented;
 
     public string Description => $"Move '{_node.Name}'";
 
@@ -218,7 +218,7 @@ public class ReparentNodeCommand : IEditorCommand
         ComposerSceneNode node,
         ComposerSceneNode? newParent,
         int? insertIndex,
-        Action<ComposerSceneNode> onReparented)
+        Action<ComposerSceneNode, ComposerSceneNode?, ComposerSceneNode?> onReparented)
     {
         _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         _node = node ?? throw new ArgumentNullException(nameof(node));
@@ -251,7 +251,7 @@ public class ReparentNodeCommand : IEditorCommand
             _scene.AddRootNode(_node, _newIndex);
         }
 
-        _onReparented(_node);
+        _onReparented(_node, _oldParent, _newParent);
     }
 
     public void Undo()
@@ -276,7 +276,7 @@ public class ReparentNodeCommand : IEditorCommand
             _scene.AddRootNode(_node, _oldIndex);
         }
 
-        _onReparented(_node);
+        _onReparented(_node, _newParent, _oldParent);
     }
 
     public bool CanMergeWith(IEditorCommand other) => false;
@@ -289,16 +289,32 @@ public class ReparentNodeCommand : IEditorCommand
 public class TransformNodeCommand : NodePropertyCommand<Transform>
 {
     private readonly ComposerSceneNode _node;
-    private readonly Action<ComposerSceneNode> _onTransformChanged;
+    private readonly Action<ComposerSceneNode, Transform, Transform> _onTransformChanged;
 
     public override string Description => $"Transform '{_node.Name}'";
 
+    /// <summary>
+    /// Create a transform command with explicit old and new values.
+    /// </summary>
     public TransformNodeCommand(
         ComposerSceneNode node,
         Transform oldTransform,
         Transform newTransform,
-        Action<ComposerSceneNode> onTransformChanged)
+        Action<ComposerSceneNode, Transform, Transform> onTransformChanged)
         : base(node.Id, oldTransform, newTransform)
+    {
+        _node = node ?? throw new ArgumentNullException(nameof(node));
+        _onTransformChanged = onTransformChanged ?? throw new ArgumentNullException(nameof(onTransformChanged));
+    }
+
+    /// <summary>
+    /// Create a transform command using the node's current transform as old value.
+    /// </summary>
+    public TransformNodeCommand(
+        ComposerSceneNode node,
+        Transform newTransform,
+        Action<ComposerSceneNode, Transform, Transform> onTransformChanged)
+        : base(node.Id, node.LocalTransform, newTransform)
     {
         _node = node ?? throw new ArgumentNullException(nameof(node));
         _onTransformChanged = onTransformChanged ?? throw new ArgumentNullException(nameof(onTransformChanged));
@@ -307,13 +323,13 @@ public class TransformNodeCommand : NodePropertyCommand<Transform>
     public override void Execute()
     {
         _node.LocalTransform = NewValue;
-        _onTransformChanged(_node);
+        _onTransformChanged(_node, OldValue, NewValue);
     }
 
     public override void Undo()
     {
         _node.LocalTransform = OldValue;
-        _onTransformChanged(_node);
+        _onTransformChanged(_node, NewValue, OldValue);
     }
 }
 
@@ -325,7 +341,7 @@ public class BindAssetCommand : IEditorCommand
     private readonly ComposerSceneNode _node;
     private readonly AssetReference _oldAsset;
     private readonly AssetReference _newAsset;
-    private readonly Action<ComposerSceneNode> _onAssetChanged;
+    private readonly Action<ComposerSceneNode, AssetReference, AssetReference> _onAssetChanged;
 
     public string Description => _newAsset.IsValid
         ? $"Set asset on '{_node.Name}'"
@@ -334,7 +350,7 @@ public class BindAssetCommand : IEditorCommand
     public BindAssetCommand(
         ComposerSceneNode node,
         AssetReference newAsset,
-        Action<ComposerSceneNode> onAssetChanged)
+        Action<ComposerSceneNode, AssetReference, AssetReference> onAssetChanged)
     {
         _node = node ?? throw new ArgumentNullException(nameof(node));
         _oldAsset = node.Asset;
@@ -345,13 +361,13 @@ public class BindAssetCommand : IEditorCommand
     public void Execute()
     {
         _node.Asset = _newAsset;
-        _onAssetChanged(_node);
+        _onAssetChanged(_node, _oldAsset, _newAsset);
     }
 
     public void Undo()
     {
         _node.Asset = _oldAsset;
-        _onAssetChanged(_node);
+        _onAssetChanged(_node, _newAsset, _oldAsset);
     }
 
     public bool CanMergeWith(IEditorCommand other) => false;

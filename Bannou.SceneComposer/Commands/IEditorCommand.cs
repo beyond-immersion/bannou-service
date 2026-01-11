@@ -62,8 +62,18 @@ public class CompoundCommand : IEditorCommand
 
     /// <summary>
     /// Add a command to this compound.
+    /// The command will be executed when Execute() is called.
     /// </summary>
     public void Add(IEditorCommand command)
+    {
+        _commands.Add(command ?? throw new ArgumentNullException(nameof(command)));
+    }
+
+    /// <summary>
+    /// Add a command that has already been executed.
+    /// Used when building compound from individually-executed commands.
+    /// </summary>
+    public void AddExecuted(IEditorCommand command)
     {
         _commands.Add(command ?? throw new ArgumentNullException(nameof(command)));
     }

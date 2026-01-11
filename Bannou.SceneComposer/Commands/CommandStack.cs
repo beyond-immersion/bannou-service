@@ -25,6 +25,16 @@ public class CommandStack
     public event EventHandler<CommandExecutedEventArgs>? CommandExecuted;
 
     /// <summary>
+    /// Raised when a command is undone.
+    /// </summary>
+    public event EventHandler<CommandExecutedEventArgs>? CommandUndone;
+
+    /// <summary>
+    /// Raised when a command is redone.
+    /// </summary>
+    public event EventHandler<CommandExecutedEventArgs>? CommandRedone;
+
+    /// <summary>
     /// Maximum number of commands to keep in history.
     /// </summary>
     public int MaxDepth => _maxDepth;
@@ -141,7 +151,9 @@ public class CommandStack
 
         _redoStack.Add(command);
 
-        CommandExecuted?.Invoke(this, new CommandExecutedEventArgs(command, CommandExecutionType.Undo));
+        var args = new CommandExecutedEventArgs(command, CommandExecutionType.Undo);
+        CommandExecuted?.Invoke(this, args);
+        CommandUndone?.Invoke(this, args);
         StateChanged?.Invoke(this, EventArgs.Empty);
 
         return true;
@@ -162,10 +174,51 @@ public class CommandStack
 
         _undoStack.Add(command);
 
-        CommandExecuted?.Invoke(this, new CommandExecutedEventArgs(command, CommandExecutionType.Redo));
+        var args = new CommandExecutedEventArgs(command, CommandExecutionType.Redo);
+        CommandExecuted?.Invoke(this, args);
+        CommandRedone?.Invoke(this, args);
         StateChanged?.Invoke(this, EventArgs.Empty);
 
         return true;
+    }
+
+    /// <summary>
+    /// Peek at the next undo command without removing it.
+    /// </summary>
+    /// <returns>The next undo command, or null if none.</returns>
+    public IEditorCommand? PeekUndo()
+    {
+        return _undoStack.Count > 0 ? _undoStack[^1] : null;
+    }
+
+    /// <summary>
+    /// Peek at the next redo command without removing it.
+    /// </summary>
+    /// <returns>The next redo command, or null if none.</returns>
+    public IEditorCommand? PeekRedo()
+    {
+        return _redoStack.Count > 0 ? _redoStack[^1] : null;
+    }
+
+    /// <summary>
+    /// Add an already-executed command to the undo stack.
+    /// Used for compound commands that were executed individually.
+    /// </summary>
+    /// <param name="command">Command that has already been executed.</param>
+    public void AddExecutedCommand(IEditorCommand command)
+    {
+        if (command == null) throw new ArgumentNullException(nameof(command));
+
+        _redoStack.Clear();
+        _undoStack.Add(command);
+        _lastCommandTime = DateTime.UtcNow;
+
+        while (_undoStack.Count > _maxDepth)
+        {
+            _undoStack.RemoveAt(0);
+        }
+
+        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
