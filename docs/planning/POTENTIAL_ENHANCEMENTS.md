@@ -135,42 +135,23 @@ The **lib-matchmaking** service was implemented in January 2026, delivering all 
 
 ---
 
-### 2. Cloud Saves Service (`lib-save-load`)
+### 2. Cloud Saves Service (`lib-save-load`) - IMPLEMENTED
 
-> **📋 DETAILED PLANNING DOCUMENT**: See [SAVE-LOAD-PLUGIN.md](SAVE-LOAD-PLUGIN.md) for complete design.
+> **✅ IMPLEMENTED**: January 2026. See `docs/guides/SAVING_AND_LOADING.md` for usage documentation.
 
 **Description**: Player-scoped save data management with multiple slots, versioning, and cross-device sync.
 
-**Examples**:
-- Player has 3 save slots; loads slot 2 on new device
-- Auto-save creates versioned checkpoint every 5 minutes
-- Conflict resolution when same save modified on multiple devices
-
-**Key Features** (from detailed planning doc):
+**Features Implemented** (26 endpoints):
 - Multiple save slots per player with polymorphic ownership (Account, Character, Session, Realm)
 - Versioning with rolling cleanup and pinnable checkpoints
 - Category-based behaviors (QuickSave, AutoSave, ManualSave, Checkpoint, StateSnapshot)
 - Schema migration via JSON Patch (RFC 6902)
+- Delta saves for incremental changes
 - Hybrid storage: Redis hot cache, MySQL metadata, MinIO/lib-asset for blobs
 - Rate limiting and per-owner quotas
 - Export/import for backup and disaster recovery
 - Integrity verification via SHA-256 content hashing
-
-**External Resources**:
-- [Steam Cloud](https://partner.steamgames.com/doc/features/cloud) - Reference implementation
-- [Epic Games Cloud Saves](https://dev.epicgames.com/docs/game-services/cloud-save) - Reference implementation
-- [JsonPatch.Net](https://www.nuget.org/packages/JsonPatch.Net/) - MIT-licensed JSON Patch library
-
-**Effort Estimate**: Medium (3-5 days including full endpoint set, schema, tests)
-
-**Usefulness**: **HIGH**
-
-**Analysis**:
-- **PRO**: Common player expectation for modern games
-- **PRO**: lib-state and lib-asset provide foundation; this adds game-specific semantics
-- **PRO**: Cross-device sync enables mobile/PC play
-- **PRO**: Polymorphic ownership supports diverse game architectures
-- **RESOLVED**: Large saves use lib-asset integration (MinIO pre-signed URLs)
+- Circuit breaker and async upload queue for storage protection
 
 ---
 
@@ -427,16 +408,15 @@ The **lib-matchmaking** service was implemented in January 2026, delivering all 
 | Enhancement | Effort | Usefulness | Dependencies | Recommended Order |
 |-------------|--------|------------|--------------|-------------------|
 | Godot SDK | Medium | High | None | 1st |
-| **Cloud Saves (lib-save-load)** | **Medium** | **High** | lib-state, lib-asset (done) | **2nd** |
-| Unity Polish | Low | Medium | Existing NuGet | 3rd |
-| Unreal SDK | High | Medium-High | None | 4th |
+| Unity Polish | Low | Medium | Existing NuGet | 2nd |
+| Unreal SDK | High | Medium-High | None | 3rd |
 | Economy | High | Medium | lib-state (done) | Later |
 | Inventory | Medium | Medium | Economy (optional) | Later |
 | Guilds | Medium-High | Medium | lib-relationship (done) | Later |
 | Moderation | Medium-High | Medium | lib-connect (done) | As needed |
 | Replay | High | Low-Medium | Game-specific | Not recommended |
 
-> **Note**: Cloud Saves has detailed planning complete in [SAVE-LOAD-PLUGIN.md](SAVE-LOAD-PLUGIN.md).
+> **Note**: Matchmaking and Cloud Saves are now fully implemented. See guides for usage.
 
 ---
 
@@ -449,7 +429,7 @@ The **lib-matchmaking** service was implemented in January 2026, delivering all 
 | 2026-01-08 | Game hosting NOT recommended | Agones/GameLift more appropriate |
 | 2026-01-08 | Push notifications = integration docs | Firebase already ubiquitous |
 | 2026-01-10 | **Matchmaking IMPLEMENTED** | Full-featured lib-matchmaking with skill-based queues, party support, match accept/decline, exclusive groups, configurable skill expansion, tournament support, and game-session reservation integration |
-| 2026-01-11 | **Cloud Saves planning complete** | lib-save-load design reviewed: JSON Patch migrations, polymorphic ownership, hybrid storage, rate limiting, session cleanup grace period, control plane scheduling. See [SAVE-LOAD-PLUGIN.md](SAVE-LOAD-PLUGIN.md) |
+| 2026-01-11 | **Cloud Saves IMPLEMENTED** | lib-save-load with 26 endpoints: JSON Patch migrations, polymorphic ownership, hybrid storage, delta saves, rate limiting, session cleanup grace period, circuit breaker, async upload queue |
 
 ---
 

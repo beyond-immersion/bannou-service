@@ -454,7 +454,7 @@ public partial class SaveLoadService : ISaveLoadService
             if (slot == null)
             {
                 // Auto-create slot with defaults
-                var category = body.Category;
+                var category = body.Category ?? SaveCategory.MANUAL_SAVE;
                 slot = new SaveSlotMetadata
                 {
                     SlotId = Guid.NewGuid().ToString(),
@@ -463,8 +463,8 @@ public partial class SaveLoadService : ISaveLoadService
                     OwnerType = ownerType,
                     SlotName = body.SlotName,
                     Category = category.ToString(),
-                    MaxVersions = GetDefaultMaxVersions((SaveCategory)category),
-                    CompressionType = GetDefaultCompressionType((SaveCategory)category).ToString(),
+                    MaxVersions = GetDefaultMaxVersions(category),
+                    CompressionType = GetDefaultCompressionType(category).ToString(),
                     VersionCount = 0,
                     LatestVersion = null,
                     TotalSizeBytes = 0,
@@ -1026,7 +1026,7 @@ public partial class SaveLoadService : ISaveLoadService
             var deltaProcessor = new DeltaProcessor(
                 _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
                 _configuration.MigrationMaxPatchOperations);
-            var algorithm = body.Algorithm.ToString();
+            var algorithm = (body.Algorithm ?? DeltaAlgorithm.JSON_PATCH).ToString();
             if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
             {
                 _logger.LogWarning("Invalid delta provided");
@@ -1244,16 +1244,18 @@ public partial class SaveLoadService : ISaveLoadService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get the target version (0 means latest)
+            // Get the target version (0 or null means latest)
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-            var versionNumber = body.VersionNumber == 0 ? (slot.LatestVersion ?? 0) : body.VersionNumber;
+            var versionNumber = (body.VersionNumber == null || body.VersionNumber == 0)
+                ? (slot.LatestVersion ?? 0)
+                : body.VersionNumber.Value;
             if (versionNumber == 0)
             {
                 _logger.LogWarning("Slot {SlotName} has no versions", body.SlotName);
                 return (StatusCodes.NotFound, null);
             }
 
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, (int)versionNumber);
+            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, versionNumber);
             var version = await versionStore.GetAsync(versionKey, cancellationToken);
 
             if (version == null)
@@ -1925,7 +1927,7 @@ public partial class SaveLoadService : ISaveLoadService
                     }
 
                     // Filter by pinned status
-                    if (body.PinnedOnly && !version.IsPinned)
+                    if (body.PinnedOnly == true && !version.IsPinned)
                     {
                         continue;
                     }
@@ -3642,7 +3644,8 @@ public partial class SaveLoadService : ISaveLoadService
             // Find latest version (the one with no successor)
             string? latestVersion = null;
             var versionSet = new HashSet<string>(schemaList.Select(s => s.SchemaVersion));
-            var predecessorSet = new HashSet<string>(schemaList.Where(s => !string.IsNullOrEmpty(s.PreviousVersion)).Select(s => s.PreviousVersion!));
+            // Where clause ensures PreviousVersion is not null/empty; coalesce satisfies compiler's nullable analysis
+            var predecessorSet = new HashSet<string>(schemaList.Where(s => !string.IsNullOrEmpty(s.PreviousVersion)).Select(s => s.PreviousVersion ?? string.Empty));
 
             foreach (var version in versionSet)
             {

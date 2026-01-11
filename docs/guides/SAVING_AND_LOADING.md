@@ -415,5 +415,3 @@ The service publishes events for integration:
 - Verify the archive format is valid (ZIP with manifest.json)
 
 ---
-
-*See [SAVE-LOAD-PLUGIN.md](../planning/SAVE-LOAD-PLUGIN.md) for full design documentation.*
