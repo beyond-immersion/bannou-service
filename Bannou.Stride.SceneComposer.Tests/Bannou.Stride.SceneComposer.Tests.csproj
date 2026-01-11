@@ -28,4 +28,11 @@
     <ProjectReference Include="..\Bannou.Stride.SceneComposer\Bannou.Stride.SceneComposer.csproj" />
   </ItemGroup>
 
+  <!-- Test fixture files -->
+  <ItemGroup>
+    <Content Include="TestFixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
