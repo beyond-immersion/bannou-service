@@ -365,6 +365,156 @@ public partial class VersionPinnedEvent
 }
 
 /// <summary>
+/// Published when a version is unpinned
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VersionUnpinnedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Slot identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SlotId { get; set; } = default!;
+
+    /// <summary>
+    /// Slot name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotName")]
+    public string SlotName { get; set; } = default!;
+
+    /// <summary>
+    /// Unpinned version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
+    public int VersionNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Previous checkpoint name before unpinning
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousCheckpointName")]
+    public string? PreviousCheckpointName { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    public string OwnerType { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published when a version is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VersionDeletedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// Event timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Slot identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SlotId { get; set; } = default!;
+
+    /// <summary>
+    /// Slot name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotName")]
+    public string SlotName { get; set; } = default!;
+
+    /// <summary>
+    /// Deleted version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versionNumber")]
+    public int VersionNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Storage freed in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bytesFreed")]
+    public long BytesFreed { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    public string OwnerType { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
 /// Published when automatic cleanup completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -175,6 +175,76 @@ components:
           type: string
           description: Owner entity type
 
+    VersionUnpinnedEvent:
+      type: object
+      description: Published when a version is unpinned
+      required: [eventId, timestamp, slotId, versionNumber]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        versionNumber:
+          type: integer
+          description: Unpinned version number
+        previousCheckpointName:
+          type: string
+          nullable: true
+          description: Previous checkpoint name before unpinning
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+
+    VersionDeletedEvent:
+      type: object
+      description: Published when a version is deleted
+      required: [eventId, timestamp, slotId, versionNumber, bytesFreed]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        slotId:
+          type: string
+          format: uuid
+          description: Slot identifier
+        slotName:
+          type: string
+          description: Slot name
+        versionNumber:
+          type: integer
+          description: Deleted version number
+        bytesFreed:
+          type: integer
+          format: int64
+          description: Storage freed in bytes
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity ID
+        ownerType:
+          type: string
+          description: Owner entity type
+
     CleanupCompletedEvent:
       type: object
       description: Published when automatic cleanup completes
