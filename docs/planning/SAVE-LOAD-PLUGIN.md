@@ -1,8 +1,9 @@
 # Save-Load Plugin Design Document
 
-> **Status**: Planning
-> **Version**: 1.0
+> **Status**: Planning (Complete)
+> **Version**: 1.2
 > **Created**: 2025-01-11
+> **Last Updated**: 2026-01-11
 > **Author**: Claude Code
 
 ## Executive Summary
@@ -23,16 +24,25 @@ The Save-Load plugin (`lib-save-load`) provides a generic, game-engine-agnostic 
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Ownership Model | Polymorphic | Maximum flexibility - any entity type can own saves |
+| Ownership Model | Polymorphic with lifecycle | Any entity type can own saves; SESSION saves are transient with configurable cleanup delay |
 | Storage Backend | Hybrid (Redis + Asset) | Fast access for active saves, durable versioning for backups |
 | Save Categories | First-class with behaviors | Predefined semantics for QuickSave, AutoSave, ManualSave, Checkpoint, StateSnapshot |
 | Versioning | Hybrid rolling + pinnable | Rolling cleanup by default, ability to pin important versions |
 | Integration | API-driven only | No event subscriptions; pure storage service pattern |
 | Access Control | Owner + Admin | Owners have full access, admins can manage all saves |
-| Schema Migration | Versioned with handlers | Plugin supports migration handlers for save schema evolution |
+| Schema Migration | JSON Patch (RFC 6902) | Declarative transformations via JsonPatch.Net (MIT); can be disabled entirely |
 | Size Limits | Configurable defaults | 100MB max, auto-compress >1MB, configurable per deployment |
 | Slot Model | Hybrid auto-create + pre-config | Slots auto-created on first save, but can be pre-configured with settings |
 | SDK Scope | Full CRUD + Query | Complete operations from initial release |
+| Asset Ownership | Save-Load service owns assets | Save-Load manages asset lifecycle, not the original caller |
+| Cleanup Strategy | ETag-based idempotency | Multi-instance safe cleanup using ETags; scheduled tasks run on control plane only |
+| Namespace Isolation | GameId required | Slots scoped by gameId to prevent cross-game collisions |
+| Rate Limiting | Configurable per-owner limits | Prevent abuse via max slots, saves/minute, and total size quotas |
+| Delta Saves | JSON Patch with fallback options | JSON Patch by default, swappable to BSDIFF/XDELTA for binary data |
+| Thumbnails | Optional with configurable limits | Preview images for save slots, 256KB default max |
+| Cloud Sync | Opt-in device-based conflict detection | DeviceId enables cross-device awareness without forcing sync |
+| Tags | First-class queryable field | Distinct from checkpoint names; for multi-result filtering |
+| Storage Protection | Async queue + circuit breaker | Decouple save acknowledgment from MinIO upload; prevent cascade failures |
 
 ---
 
@@ -134,6 +144,9 @@ OwnerType:
 
 SaveSlot:
   properties:
+    gameId:
+      type: string
+      description: Game identifier for namespace isolation
     ownerId:
       type: string
       format: uuid
@@ -142,6 +155,12 @@ SaveSlot:
       $ref: '#/components/schemas/OwnerType'
       description: Type of the owning entity
 ```
+
+**Session Ownership Lifecycle**:
+- SESSION-owned saves are **transient** - intended for temporary/ephemeral data (undo buffers, draft states, in-progress work)
+- When a session ends, SESSION-owned saves are cleaned up after a **configurable grace period** (default: 5 minutes)
+- During the grace period, other services can subscribe to `session.ended` events and copy/promote saves to longer-term storage (e.g., ACCOUNT ownership)
+- After grace period expiration, orphaned SESSION saves are deleted by the scheduled cleanup task
 
 ---
 
@@ -281,6 +300,58 @@ paths:
         '403':
           description: Not authorized to delete this slot
 
+  /save-load/slot/rename:
+    post:
+      tags: [Slots]
+      operationId: RenameSlot
+      summary: Rename a save slot
+      description: |
+        Renames an existing slot without affecting its versions or data.
+        The new name must not already exist for this owner.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameSlotRequest'
+      responses:
+        '200':
+          description: Slot renamed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotResponse'
+        '404':
+          description: Slot not found
+        '409':
+          description: Target name already exists
+
+  /save-load/slot/bulk-delete:
+    post:
+      tags: [Slots]
+      operationId: BulkDeleteSlots
+      summary: Delete multiple slots at once
+      description: |
+        Deletes multiple slots and all their versions in a single operation.
+        Useful for cleanup operations or account deletion.
+      x-permissions:
+        - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteSlotsRequest'
+      responses:
+        '200':
+          description: Slots deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteSlotsResponse'
+
   # ═══════════════════════════════════════════════════════════════════════════
   # SAVE/LOAD OPERATIONS
   # ═══════════════════════════════════════════════════════════════════════════
@@ -345,6 +416,103 @@ paths:
           description: Slot or version not found
         '403':
           description: Not authorized to load from this slot
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DELTA SAVES (Incremental)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /save-load/save-delta:
+    post:
+      tags: [Saves]
+      operationId: SaveDelta
+      summary: Save incremental changes from base version
+      description: |
+        Creates a new version by applying a delta (patch) to a base version.
+        Significantly reduces storage for large saves with small incremental changes.
+
+        Uses JSON Patch (RFC 6902) by default. The implementation is designed to
+        allow swapping to binary diff algorithms (bsdiff/xdelta) if needed for
+        specific use cases (e.g., binary game state).
+
+        Delta versions store only the patch; full data is reconstructed on load.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveDeltaRequest'
+      responses:
+        '200':
+          description: Delta save successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveDeltaResponse'
+        '400':
+          description: Invalid delta or base version not found
+        '409':
+          description: Base version has been deleted (cannot apply delta)
+        '413':
+          description: Delta too large (consider full save instead)
+
+  /save-load/load-with-deltas:
+    post:
+      tags: [Saves]
+      operationId: LoadWithDeltas
+      summary: Load save reconstructing from delta chain
+      description: |
+        Loads save data, automatically reconstructing from delta chain if needed.
+        Returns the full reconstructed data, not the raw delta.
+
+        For performance, the service may cache reconstructed data or collapse
+        delta chains during background cleanup.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadRequest'
+      responses:
+        '200':
+          description: Load successful (reconstructed if delta)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadResponse'
+        '404':
+          description: Slot or version not found
+        '422':
+          description: Delta chain broken (base version missing)
+
+  /save-load/collapse-deltas:
+    post:
+      tags: [Saves]
+      operationId: CollapseDeltas
+      summary: Collapse delta chain into full snapshot
+      description: |
+        Collapses a chain of delta versions into a single full snapshot.
+        Useful for reducing load latency or before deleting base versions.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollapseDeltasRequest'
+      responses:
+        '200':
+          description: Delta chain collapsed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveResponse'
+        '404':
+          description: Slot or version not found
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VERSION MANAGEMENT
@@ -479,6 +647,144 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuerySavesResponse'
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # COPY & TRANSFER OPERATIONS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /save-load/copy:
+    post:
+      tags: [Transfer]
+      operationId: CopySave
+      summary: Copy save to different slot or owner
+      description: |
+        Copies a save version to a different slot or owner.
+        Can copy to same owner (different slot) or different owner (with admin).
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopySaveRequest'
+      responses:
+        '200':
+          description: Save copied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveResponse'
+        '404':
+          description: Source slot or version not found
+        '403':
+          description: Not authorized to copy to target
+
+  /save-load/export:
+    post:
+      tags: [Transfer]
+      operationId: ExportSaves
+      summary: Export saves for backup/portability
+      description: |
+        Exports one or more slots with all versions as a downloadable archive.
+        Returns a pre-signed URL to download the export bundle.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportSavesRequest'
+      responses:
+        '200':
+          description: Export prepared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportSavesResponse'
+
+  /save-load/import:
+    post:
+      tags: [Transfer]
+      operationId: ImportSaves
+      summary: Import saves from backup
+      description: |
+        Imports saves from a previously exported archive.
+        Supports conflict resolution strategies for existing slots.
+      x-permissions:
+        - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportSavesRequest'
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportSavesResponse'
+        '400':
+          description: Invalid archive format
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # INTEGRITY & VALIDATION
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /save-load/verify:
+    post:
+      tags: [Validation]
+      operationId: VerifyIntegrity
+      summary: Verify save data integrity
+      description: |
+        Verifies the integrity of stored save data by comparing content hash
+        against the stored SHA-256 hash. Detects corruption or tampering.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyIntegrityRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyIntegrityResponse'
+        '404':
+          description: Slot or version not found
+
+  /save-load/version/promote:
+    post:
+      tags: [Versions]
+      operationId: PromoteVersion
+      summary: Promote old version to latest
+      description: |
+        Creates a new version from an existing older version, effectively
+        "promoting" it to be the latest. Useful for rollback scenarios.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoteVersionRequest'
+      responses:
+        '200':
+          description: Version promoted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveResponse'
+        '404':
+          description: Slot or version not found
 
   # ═══════════════════════════════════════════════════════════════════════════
   # SCHEMA MIGRATION
@@ -635,14 +941,46 @@ components:
       enum: [NONE, GZIP, BROTLI]
       description: Compression algorithm used for save data
 
+    ConflictResolution:
+      type: string
+      enum: [SKIP, OVERWRITE, RENAME, FAIL]
+      description: Strategy for handling conflicts during import
+
+    JsonPatchOperation:
+      type: object
+      required: [op, path]
+      description: |
+        JSON Patch operation per RFC 6902.
+        Uses JsonPatch.Net library (MIT licensed).
+      properties:
+        op:
+          type: string
+          enum: [add, remove, replace, move, copy, test]
+          description: Operation type
+        path:
+          type: string
+          description: JSON Pointer to target location
+        from:
+          type: string
+          nullable: true
+          description: Source path (for move/copy operations)
+        value:
+          description: Value to use (for add/replace/test operations)
+
     # ═══════════════════════════════════════════════════════════════════════════
     # SLOT MODELS
     # ═══════════════════════════════════════════════════════════════════════════
 
     CreateSlotRequest:
       type: object
-      required: [ownerId, ownerType, slotName, category]
+      required: [gameId, ownerId, ownerType, slotName, category]
       properties:
+        gameId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
         ownerId:
           type: string
           format: uuid
@@ -653,8 +991,8 @@ components:
           type: string
           minLength: 1
           maxLength: 64
-          pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$'
-          description: Slot name (lowercase alphanumeric with hyphens)
+          pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+          description: Slot name (lowercase alphanumeric with hyphens, single char like "q" allowed)
         category:
           $ref: '#/components/schemas/SaveCategory'
         maxVersions:
@@ -668,6 +1006,13 @@ components:
           description: Days to retain versions (null = indefinite)
         compressionType:
           $ref: '#/components/schemas/CompressionType'
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          maxItems: 20
+          description: Searchable tags for slot categorization (e.g., "boss-fight", "chapter-3")
         metadata:
           type: object
           additionalProperties:
@@ -806,8 +1151,11 @@ components:
 
     SaveRequest:
       type: object
-      required: [ownerId, ownerType, slotName, data]
+      required: [gameId, ownerId, ownerType, slotName, data]
       properties:
+        gameId:
+          type: string
+          description: Game identifier for namespace isolation
         ownerId:
           type: string
           format: uuid
@@ -831,6 +1179,21 @@ components:
           type: string
           maxLength: 128
           description: Human-readable name for this save
+        thumbnail:
+          type: string
+          format: byte
+          nullable: true
+          description: |
+            Optional preview image (JPEG/WebP). Max size configurable
+            (default 256KB). Used for save slot previews in game UI.
+        deviceId:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: |
+            Optional device identifier for cloud save conflict detection.
+            When provided, saves are prefixed/tagged with device info,
+            enabling opt-in cross-device sync with collision awareness.
         metadata:
           type: object
           additionalProperties:
@@ -874,6 +1237,24 @@ components:
           type: string
           nullable: true
           description: Checkpoint name if pinned
+        thumbnailUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Pre-signed URL to retrieve thumbnail (if provided)
+        conflictDetected:
+          type: boolean
+          description: |
+            True if this save overwrote a version from a different device.
+            Only relevant when deviceId is used for cloud sync.
+        conflictingDeviceId:
+          type: string
+          nullable: true
+          description: Device ID of the overwritten version (if conflict)
+        conflictingVersion:
+          type: integer
+          nullable: true
+          description: Version number that was overwritten (if conflict)
         createdAt:
           type: string
           format: date-time
@@ -881,6 +1262,11 @@ components:
         versionsCleanedUp:
           type: integer
           description: Number of old versions cleaned up by rolling policy
+        uploadPending:
+          type: boolean
+          description: |
+            True if async upload is enabled and data is queued for MinIO upload.
+            Save is immediately loadable from Redis cache, but not yet durable.
 
     LoadRequest:
       type: object
@@ -1298,10 +1684,14 @@ components:
           type: string
           nullable: true
           description: Previous version this migrates from
-        migrationScript:
-          type: string
+        migrationPatch:
+          type: array
           nullable: true
-          description: JavaScript migration function (sandboxed execution)
+          items:
+            $ref: '#/components/schemas/JsonPatchOperation'
+          description: |
+            JSON Patch (RFC 6902) operations to migrate from previousVersion.
+            Uses JsonPatch.Net library (MIT licensed).
 
     SchemaResponse:
       type: object
@@ -1435,6 +1825,327 @@ components:
           type: integer
           format: int64
           description: Storage used
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # NEW ENDPOINT MODELS (v1.1)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    RenameSlotRequest:
+      type: object
+      required: [gameId, ownerId, ownerType, slotName, newSlotName]
+      properties:
+        gameId:
+          type: string
+          description: Game identifier
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotName:
+          type: string
+          description: Current slot name
+        newSlotName:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+          description: New slot name
+
+    BulkDeleteSlotsRequest:
+      type: object
+      required: [gameId, slotIds]
+      properties:
+        gameId:
+          type: string
+          description: Game identifier
+        slotIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Slot IDs to delete
+
+    BulkDeleteSlotsResponse:
+      type: object
+      required: [deletedCount, bytesFreed]
+      properties:
+        deletedCount:
+          type: integer
+          description: Number of slots deleted
+        bytesFreed:
+          type: integer
+          format: int64
+          description: Total storage freed
+
+    CopySaveRequest:
+      type: object
+      required: [sourceGameId, sourceOwnerId, sourceOwnerType, sourceSlotName, targetGameId, targetOwnerId, targetOwnerType, targetSlotName]
+      properties:
+        sourceGameId:
+          type: string
+        sourceOwnerId:
+          type: string
+          format: uuid
+        sourceOwnerType:
+          $ref: '#/components/schemas/OwnerType'
+        sourceSlotName:
+          type: string
+        sourceVersion:
+          type: integer
+          nullable: true
+          description: Version to copy (latest if null)
+        targetGameId:
+          type: string
+        targetOwnerId:
+          type: string
+          format: uuid
+        targetOwnerType:
+          $ref: '#/components/schemas/OwnerType'
+        targetSlotName:
+          type: string
+        targetCategory:
+          $ref: '#/components/schemas/SaveCategory'
+          description: Category for new slot if auto-created
+
+    ExportSavesRequest:
+      type: object
+      required: [gameId, ownerId, ownerType]
+      properties:
+        gameId:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotNames:
+          type: array
+          items:
+            type: string
+          description: Specific slots to export (all if null)
+
+    ExportSavesResponse:
+      type: object
+      required: [downloadUrl, expiresAt, sizeBytes]
+      properties:
+        downloadUrl:
+          type: string
+          format: uri
+          description: Pre-signed URL to download export archive
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the download URL expires
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Archive size
+
+    ImportSavesRequest:
+      type: object
+      required: [archiveAssetId, targetGameId, targetOwnerId, targetOwnerType]
+      properties:
+        archiveAssetId:
+          type: string
+          format: uuid
+          description: Asset ID of uploaded export archive
+        targetGameId:
+          type: string
+        targetOwnerId:
+          type: string
+          format: uuid
+        targetOwnerType:
+          $ref: '#/components/schemas/OwnerType'
+        conflictResolution:
+          $ref: '#/components/schemas/ConflictResolution'
+          description: How to handle existing slots
+
+    ImportSavesResponse:
+      type: object
+      required: [importedSlots, importedVersions, skippedSlots]
+      properties:
+        importedSlots:
+          type: integer
+        importedVersions:
+          type: integer
+        skippedSlots:
+          type: integer
+          description: Slots skipped due to conflicts
+        conflicts:
+          type: array
+          items:
+            type: string
+          description: Names of slots that had conflicts
+
+    VerifyIntegrityRequest:
+      type: object
+      required: [gameId, ownerId, ownerType, slotName]
+      properties:
+        gameId:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+          nullable: true
+          description: Version to verify (latest if null)
+
+    VerifyIntegrityResponse:
+      type: object
+      required: [valid, versionNumber]
+      properties:
+        valid:
+          type: boolean
+          description: Whether integrity check passed
+        versionNumber:
+          type: integer
+          description: Version that was verified
+        expectedHash:
+          type: string
+          description: Expected SHA-256 hash
+        actualHash:
+          type: string
+          nullable: true
+          description: Actual hash (null if data unavailable)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if verification failed
+
+    PromoteVersionRequest:
+      type: object
+      required: [gameId, ownerId, ownerType, slotName, versionNumber]
+      properties:
+        gameId:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+          description: Old version to promote to latest
+        displayName:
+          type: string
+          nullable: true
+          description: Display name for promoted version
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DELTA SAVE MODELS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    DeltaAlgorithm:
+      type: string
+      enum: [JSON_PATCH, BSDIFF, XDELTA]
+      default: JSON_PATCH
+      description: |
+        Algorithm used for delta computation.
+        JSON_PATCH: RFC 6902, best for structured JSON data
+        BSDIFF: Binary diff, good for general binary data
+        XDELTA: RFC 3284 VCDIFF, efficient for large binary files
+
+    SaveDeltaRequest:
+      type: object
+      required: [gameId, ownerId, ownerType, slotName, baseVersion, delta]
+      properties:
+        gameId:
+          type: string
+          description: Game identifier
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotName:
+          type: string
+        baseVersion:
+          type: integer
+          description: Version number this delta is based on
+        delta:
+          type: string
+          format: byte
+          description: |
+            Base64-encoded delta/patch data.
+            For JSON_PATCH: Array of RFC 6902 operations
+            For BSDIFF/XDELTA: Binary patch data
+        algorithm:
+          $ref: '#/components/schemas/DeltaAlgorithm'
+        schemaVersion:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+          nullable: true
+        deviceId:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    SaveDeltaResponse:
+      type: object
+      required: [slotId, versionNumber, baseVersion, deltaSizeBytes, estimatedFullSizeBytes, createdAt]
+      properties:
+        slotId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: integer
+          description: New version number
+        baseVersion:
+          type: integer
+          description: Base version this delta is relative to
+        deltaSizeBytes:
+          type: integer
+          format: int64
+          description: Size of stored delta
+        estimatedFullSizeBytes:
+          type: integer
+          format: int64
+          description: Estimated size when reconstructed
+        chainLength:
+          type: integer
+          description: Number of deltas in chain to base snapshot
+        compressionSavings:
+          type: number
+          format: double
+          description: Storage savings vs full snapshot (0-1)
+        createdAt:
+          type: string
+          format: date-time
+
+    CollapseDeltasRequest:
+      type: object
+      required: [gameId, ownerId, ownerType, slotName]
+      properties:
+        gameId:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          $ref: '#/components/schemas/OwnerType'
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+          nullable: true
+          description: Version to collapse to (latest if null)
+        deleteIntermediates:
+          type: boolean
+          default: true
+          description: Delete intermediate delta versions after collapse
 ```
 
 ---
@@ -1536,11 +2247,264 @@ x-service-configuration:
       default: 60
       description: Interval for automatic cleanup task
 
-    MigrationSandboxTimeoutMs:
+    CleanupControlPlaneOnly:
+      type: boolean
+      env: SAVE_LOAD_CLEANUP_CONTROL_PLANE_ONLY
+      default: true
+      description: |
+        Run scheduled cleanup only on control plane instance
+        (EffectiveAppID == DefaultAppId). Prevents duplicate cleanup
+        work across multi-instance deployments.
+
+    SessionCleanupGracePeriodMinutes:
       type: integer
-      env: SAVE_LOAD_MIGRATION_SANDBOX_TIMEOUT_MS
-      default: 5000
-      description: Timeout for migration script execution
+      env: SAVE_LOAD_SESSION_CLEANUP_GRACE_PERIOD_MINUTES
+      default: 5
+      description: |
+        Grace period before cleaning up SESSION-owned saves after
+        session ends. Allows other services to copy/promote saves
+        to longer-term storage.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MIGRATION SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    MigrationsEnabled:
+      type: boolean
+      env: SAVE_LOAD_MIGRATIONS_ENABLED
+      default: true
+      description: Enable/disable schema migrations entirely
+
+    MigrationMaxPatchOperations:
+      type: integer
+      env: SAVE_LOAD_MIGRATION_MAX_PATCH_OPERATIONS
+      default: 1000
+      description: Maximum JSON Patch operations per migration (safety limit)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # RATE LIMITING & QUOTAS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    MaxSlotsPerOwner:
+      type: integer
+      env: SAVE_LOAD_MAX_SLOTS_PER_OWNER
+      default: 100
+      description: Maximum save slots per owner entity
+
+    MaxSavesPerMinute:
+      type: integer
+      env: SAVE_LOAD_MAX_SAVES_PER_MINUTE
+      default: 10
+      description: Rate limit - maximum saves per owner per minute
+
+    MaxTotalSizeBytesPerOwner:
+      type: integer
+      format: int64
+      env: SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER
+      default: 1073741824
+      description: Maximum total storage per owner (default 1GB)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # COMPRESSION SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    BrotliCompressionLevel:
+      type: integer
+      env: SAVE_LOAD_BROTLI_COMPRESSION_LEVEL
+      default: 6
+      minimum: 0
+      maximum: 11
+      description: Brotli compression level (0-11, higher = better compression, slower)
+
+    GzipCompressionLevel:
+      type: integer
+      env: SAVE_LOAD_GZIP_COMPRESSION_LEVEL
+      default: 6
+      minimum: 1
+      maximum: 9
+      description: GZIP compression level (1-9, higher = better compression, slower)
+
+    DefaultCompressionByCategory:
+      type: object
+      description: |
+        Default compression per category. Overrides DefaultCompressionType
+        per category for optimal speed/size tradeoffs.
+        QUICK_SAVE: NONE (speed priority)
+        AUTO_SAVE: GZIP (balance)
+        MANUAL_SAVE: GZIP (balance)
+        CHECKPOINT: GZIP (balance)
+        STATE_SNAPSHOT: BROTLI (size priority)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # THUMBNAIL SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ThumbnailMaxSizeBytes:
+      type: integer
+      env: SAVE_LOAD_THUMBNAIL_MAX_SIZE_BYTES
+      default: 262144
+      description: Maximum thumbnail size in bytes (default 256KB)
+
+    ThumbnailAllowedFormats:
+      type: string
+      env: SAVE_LOAD_THUMBNAIL_ALLOWED_FORMATS
+      default: "image/jpeg,image/webp,image/png"
+      description: Comma-separated list of allowed thumbnail MIME types
+
+    ThumbnailUrlTtlMinutes:
+      type: integer
+      env: SAVE_LOAD_THUMBNAIL_URL_TTL_MINUTES
+      default: 60
+      description: TTL for thumbnail pre-signed URLs
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DELTA SAVE SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    DeltaSavesEnabled:
+      type: boolean
+      env: SAVE_LOAD_DELTA_SAVES_ENABLED
+      default: true
+      description: Enable delta/incremental save support
+
+    DefaultDeltaAlgorithm:
+      type: string
+      env: SAVE_LOAD_DEFAULT_DELTA_ALGORITHM
+      default: JSON_PATCH
+      description: Default algorithm for delta computation (JSON_PATCH, BSDIFF, XDELTA)
+
+    MaxDeltaChainLength:
+      type: integer
+      env: SAVE_LOAD_MAX_DELTA_CHAIN_LENGTH
+      default: 10
+      description: |
+        Maximum number of deltas before forcing collapse.
+        Longer chains increase load latency.
+
+    AutoCollapseEnabled:
+      type: boolean
+      env: SAVE_LOAD_AUTO_COLLAPSE_ENABLED
+      default: true
+      description: Automatically collapse delta chains during cleanup
+
+    DeltaSizeThresholdPercent:
+      type: integer
+      env: SAVE_LOAD_DELTA_SIZE_THRESHOLD_PERCENT
+      default: 50
+      description: |
+        If delta is larger than this % of full save, store as full instead.
+        Avoids storing deltas that don't provide meaningful savings.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DEVICE & CLOUD SYNC SETTINGS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    ConflictDetectionEnabled:
+      type: boolean
+      env: SAVE_LOAD_CONFLICT_DETECTION_ENABLED
+      default: true
+      description: |
+        Enable device-based conflict detection for cloud saves.
+        Requires deviceId to be provided in save requests.
+
+    ConflictDetectionWindowMinutes:
+      type: integer
+      env: SAVE_LOAD_CONFLICT_DETECTION_WINDOW_MINUTES
+      default: 5
+      description: |
+        Time window for considering saves as potentially conflicting.
+        Saves from different devices within this window trigger conflict flag.
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # STORAGE BACKEND PROTECTION
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    AsyncUploadEnabled:
+      type: boolean
+      env: SAVE_LOAD_ASYNC_UPLOAD_ENABLED
+      default: true
+      description: |
+        Queue uploads to MinIO/S3 instead of synchronous write.
+        Save is acknowledged immediately when data is stored in Redis pending queue.
+        Background worker uploads to asset storage asynchronously.
+        Provides consistent response times and protects storage backend from spikes.
+
+    PendingUploadStoreName:
+      type: string
+      env: SAVE_LOAD_PENDING_UPLOAD_STORE_NAME
+      default: save-load-pending
+      description: Redis store for pending uploads awaiting async processing
+
+    PendingUploadTtlMinutes:
+      type: integer
+      env: SAVE_LOAD_PENDING_UPLOAD_TTL_MINUTES
+      default: 60
+      description: |
+        TTL for pending uploads in Redis. If upload fails repeatedly,
+        entry expires and save is considered failed (event published).
+
+    MaxConcurrentUploads:
+      type: integer
+      env: SAVE_LOAD_MAX_CONCURRENT_UPLOADS
+      default: 10
+      description: |
+        Maximum concurrent uploads to storage backend (semaphore).
+        Prevents overwhelming MinIO/S3 during traffic spikes.
+        Applies globally across all service instances via distributed semaphore.
+
+    UploadBatchSize:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_BATCH_SIZE
+      default: 5
+      description: Number of pending uploads to process per batch cycle
+
+    UploadBatchIntervalMs:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_BATCH_INTERVAL_MS
+      default: 100
+      description: Interval between upload batch processing cycles
+
+    UploadRetryAttempts:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_RETRY_ATTEMPTS
+      default: 3
+      description: Number of retry attempts for failed uploads before giving up
+
+    UploadRetryDelayMs:
+      type: integer
+      env: SAVE_LOAD_UPLOAD_RETRY_DELAY_MS
+      default: 1000
+      description: Base delay between retry attempts (exponential backoff applied)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CIRCUIT BREAKER (Storage Backend)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    StorageCircuitBreakerEnabled:
+      type: boolean
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_ENABLED
+      default: true
+      description: |
+        Enable circuit breaker for storage backend (MinIO/S3).
+        When open, new saves queue in Redis until circuit resets.
+
+    StorageCircuitBreakerThreshold:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_THRESHOLD
+      default: 5
+      description: Number of consecutive failures before circuit opens
+
+    StorageCircuitBreakerResetSeconds:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_RESET_SECONDS
+      default: 30
+      description: Seconds before attempting to close circuit (half-open state)
+
+    StorageCircuitBreakerHalfOpenAttempts:
+      type: integer
+      env: SAVE_LOAD_STORAGE_CIRCUIT_BREAKER_HALF_OPEN_ATTEMPTS
+      default: 2
+      description: Successful uploads needed in half-open state to close circuit
 ```
 
 ---
@@ -1558,15 +2522,17 @@ info:
     SaveSlot:
       model:
         slotId: { type: string, format: uuid, primary: true, required: true }
+        gameId: { type: string, required: true }
         ownerId: { type: string, format: uuid, required: true }
         ownerType: { type: string, required: true }
         slotName: { type: string, required: true }
         category: { type: string, required: true }
       sensitive: []
+      # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
 
 components:
   schemas:
-    # Custom events beyond lifecycle
+    # Custom events beyond lifecycle (SaveSlot lifecycle events auto-generated)
 
     SaveCreatedEvent:
       type: object
@@ -1749,6 +2715,133 @@ components:
         durationMs:
           type: integer
           description: Cleanup duration in milliseconds
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ASYNC UPLOAD EVENTS
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    SaveQueuedEvent:
+      type: object
+      description: |
+        Published when a save is queued for async upload.
+        The save data is in Redis and immediately loadable, but not yet in MinIO.
+      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        queueDepth:
+          type: integer
+          description: Current number of pending uploads in queue
+
+    SaveUploadCompletedEvent:
+      type: object
+      description: Published when async upload to MinIO completes successfully
+      required: [eventId, timestamp, slotId, versionNumber, assetId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        assetId:
+          type: string
+          format: uuid
+          description: Asset ID in MinIO
+        uploadDurationMs:
+          type: integer
+          description: Time from queue to upload completion
+        queueWaitMs:
+          type: integer
+          description: Time spent waiting in queue
+
+    SaveUploadFailedEvent:
+      type: object
+      description: |
+        Published when async upload fails after all retry attempts.
+        The save data may still be in Redis hot cache but will expire.
+      required: [eventId, timestamp, slotId, versionNumber, errorMessage, retryCount]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        slotId:
+          type: string
+          format: uuid
+        slotName:
+          type: string
+        versionNumber:
+          type: integer
+        ownerId:
+          type: string
+          format: uuid
+        ownerType:
+          type: string
+        errorMessage:
+          type: string
+          description: Last error message
+        retryCount:
+          type: integer
+          description: Number of retry attempts made
+        willRetry:
+          type: boolean
+          description: Whether more retries will be attempted
+
+    CircuitBreakerStateChangedEvent:
+      type: object
+      description: Published when storage circuit breaker changes state
+      required: [eventId, timestamp, previousState, newState]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        previousState:
+          type: string
+          enum: [CLOSED, OPEN, HALF_OPEN]
+        newState:
+          type: string
+          enum: [CLOSED, OPEN, HALF_OPEN]
+        failureCount:
+          type: integer
+          description: Consecutive failures (when opening)
+        successCount:
+          type: integer
+          description: Successful probes (when closing from half-open)
+        pendingUploads:
+          type: integer
+          description: Current queue depth when state changed
 ```
 
 ---
@@ -1866,18 +2959,73 @@ game-saves/
         └── {schemaVersion}.json       # Backup of registered schemas
 ```
 
-### Upload Flow
+### Upload Flow (Async Mode - Default)
+
+**Request Path** (fast, user-facing):
+```
+Save Request → Compress → Hash → Store in Redis Pending Queue → Ack to Client
+                                        ↓
+                              Publish SaveQueuedEvent
+```
 
 1. **Save Request** received with data
 2. **Compress** data if above threshold
 3. **Calculate** SHA-256 content hash
+4. **Store** compressed data in Redis pending queue with TTL
+5. **Create** provisional version manifest (status: PENDING)
+6. **Cache** in Redis hot cache (immediately loadable)
+7. **Return** SaveResponse with `uploadPending: true`
+8. **Publish** SaveQueuedEvent
+
+**Background Upload Worker** (throttled, storage-friendly):
+```
+Poll Pending Queue → Acquire Semaphore → Check Circuit Breaker
+        ↓                                        ↓
+   Upload to MinIO ←──────────────────── If OPEN: skip, retry later
+        ↓
+   Update Manifest (status: COMPLETE)
+        ↓
+   Remove from Pending Queue
+        ↓
+   Publish SaveCreatedEvent
+```
+
+1. **Dequeue** batch of pending uploads (configurable batch size)
+2. **Acquire** distributed semaphore slot (max concurrent uploads)
+3. **Check** circuit breaker state
+   - If OPEN: return items to queue, wait for reset
+   - If HALF-OPEN: proceed with limited attempts
 4. **Request upload URL** from Asset service
 5. **Upload** compressed data to MinIO
 6. **Complete upload** notification to Asset service
-7. **Create** version manifest in MySQL store
-8. **Cache** in Redis hot cache
-9. **Apply** rolling cleanup if needed
-10. **Publish** SaveCreatedEvent
+7. **Update** version manifest (status: PENDING → COMPLETE)
+8. **Release** semaphore slot
+9. **Remove** from pending queue
+10. **Apply** rolling cleanup if needed
+11. **Publish** SaveCreatedEvent
+
+**Failure Handling**:
+- Upload failure → increment retry count, exponential backoff
+- Max retries exceeded → publish SaveUploadFailedEvent, remove from queue
+- Circuit breaker opens after N consecutive failures
+- Half-open state probes with limited traffic
+
+### Upload Flow (Sync Mode - Optional)
+
+When `AsyncUploadEnabled: false`, uses traditional synchronous flow:
+
+1. **Save Request** received with data
+2. **Compress** data if above threshold
+3. **Calculate** SHA-256 content hash
+4. **Acquire** distributed semaphore slot (still rate-limited)
+5. **Check** circuit breaker (fail fast if OPEN)
+6. **Request upload URL** from Asset service
+7. **Upload** compressed data to MinIO
+8. **Complete upload** notification to Asset service
+9. **Create** version manifest in MySQL store
+10. **Cache** in Redis hot cache
+11. **Apply** rolling cleanup if needed
+12. **Publish** SaveCreatedEvent
 
 ### Load Flow
 
@@ -1964,18 +3112,22 @@ public static class SaveLoadExtensions
     /// </summary>
     public static Task<SaveResponse> QuickSaveCharacterAsync(
         this ISaveLoadClient client,
+        string gameId,
         Guid characterId,
         byte[] data,
+        string? deviceId = null,
         Dictionary<string, string>? metadata = null,
         CancellationToken ct = default)
     {
         return client.SaveAsync(new SaveRequest
         {
+            GameId = gameId,
             OwnerId = characterId,
             OwnerType = OwnerType.CHARACTER,
-            SlotName = "quicksave",
+            SlotName = "q",  // Single char slot name allowed
             Category = SaveCategory.QUICK_SAVE,
             Data = Convert.ToBase64String(data),
+            DeviceId = deviceId,
             Metadata = metadata ?? new()
         }, ct);
     }
@@ -1985,17 +3137,204 @@ public static class SaveLoadExtensions
     /// </summary>
     public static Task<LoadResponse?> LoadQuickSaveAsync(
         this ISaveLoadClient client,
+        string gameId,
         Guid characterId,
         CancellationToken ct = default)
     {
         return client.LoadAsync(new LoadRequest
         {
+            GameId = gameId,
             OwnerId = characterId,
             OwnerType = OwnerType.CHARACTER,
-            SlotName = "quicksave"
+            SlotName = "q"
         }, ct);
     }
+
+    /// <summary>
+    /// Auto-save with debouncing to prevent rapid successive saves.
+    /// Uses internal tracking to skip saves within debounce window.
+    /// </summary>
+    public static async Task<SaveResponse?> AutoSaveWithDebounceAsync(
+        this ISaveLoadClient client,
+        string gameId,
+        Guid ownerId,
+        OwnerType ownerType,
+        string slotName,
+        byte[] data,
+        TimeSpan debounce,
+        string? deviceId = null,
+        CancellationToken ct = default)
+    {
+        // Implementation uses internal ConcurrentDictionary to track last save times
+        // per slot and skip if within debounce window. Returns null if debounced.
+        // Actual implementation in SDK.
+        throw new NotImplementedException("SDK internal implementation");
+    }
+
+    /// <summary>
+    /// Load with fallback to older versions if latest fails.
+    /// Useful for recovering from corrupted saves.
+    /// </summary>
+    public static async Task<LoadResponse?> LoadWithFallbackAsync(
+        this ISaveLoadClient client,
+        LoadRequest request,
+        int maxFallbackVersions = 3,
+        CancellationToken ct = default)
+    {
+        // Try latest, then progressively older versions
+        var response = await client.LoadAsync(request, ct);
+        if (response != null) return response;
+
+        // Get version list and try older versions
+        var versions = await client.ListVersionsAsync(new ListVersionsRequest
+        {
+            GameId = request.GameId,
+            OwnerId = request.OwnerId,
+            OwnerType = request.OwnerType,
+            SlotName = request.SlotName
+        }, ct);
+
+        foreach (var version in versions.Versions.OrderByDescending(v => v.VersionNumber).Take(maxFallbackVersions))
+        {
+            try
+            {
+                var fallbackRequest = request with { VersionNumber = version.VersionNumber };
+                response = await client.LoadAsync(fallbackRequest, ct);
+                if (response != null) return response;
+            }
+            catch
+            {
+                // Continue to next version
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Create a named checkpoint before a risky operation.
+    /// Saves current state with a pinned checkpoint name.
+    /// </summary>
+    public static async Task<SaveResponse> CreateCheckpointAsync(
+        this ISaveLoadClient client,
+        string gameId,
+        Guid ownerId,
+        OwnerType ownerType,
+        string slotName,
+        string checkpointName,
+        CancellationToken ct = default)
+    {
+        // Load current, then save as pinned checkpoint
+        var current = await client.LoadAsync(new LoadRequest
+        {
+            GameId = gameId,
+            OwnerId = ownerId,
+            OwnerType = ownerType,
+            SlotName = slotName
+        }, ct) ?? throw new InvalidOperationException("Cannot create checkpoint: no existing save");
+
+        return await client.SaveAsync(new SaveRequest
+        {
+            GameId = gameId,
+            OwnerId = ownerId,
+            OwnerType = ownerType,
+            SlotName = slotName,
+            Category = SaveCategory.CHECKPOINT,
+            Data = current.Data,
+            PinAsCheckpoint = checkpointName,
+            DisplayName = $"Checkpoint: {checkpointName}"
+        }, ct);
+    }
+
+    /// <summary>
+    /// Save with thumbnail from screenshot.
+    /// Resizes and compresses image to meet size requirements.
+    /// </summary>
+    public static Task<SaveResponse> SaveWithThumbnailAsync(
+        this ISaveLoadClient client,
+        SaveRequest request,
+        byte[] screenshotData,
+        CancellationToken ct = default)
+    {
+        // Resize/compress to 256KB max, convert to JPEG
+        // Actual implementation uses ImageSharp or similar
+        var thumbnail = CompressThumbnail(screenshotData, 256 * 1024);
+        request.Thumbnail = Convert.ToBase64String(thumbnail);
+        return client.SaveAsync(request, ct);
+    }
+
+    /// <summary>
+    /// Save delta for incremental updates.
+    /// Automatically computes JSON Patch from previous version.
+    /// </summary>
+    public static async Task<SaveDeltaResponse> SaveDeltaAutoAsync(
+        this ISaveLoadClient client,
+        string gameId,
+        Guid ownerId,
+        OwnerType ownerType,
+        string slotName,
+        string newDataJson,
+        CancellationToken ct = default)
+    {
+        // Load current version to compute delta
+        var current = await client.LoadAsync(new LoadRequest
+        {
+            GameId = gameId,
+            OwnerId = ownerId,
+            OwnerType = ownerType,
+            SlotName = slotName
+        }, ct);
+
+        if (current == null)
+        {
+            throw new InvalidOperationException("Cannot save delta: no base version exists");
+        }
+
+        // Compute JSON Patch using JsonPatch.Net
+        var patch = ComputeJsonPatch(current.Data, newDataJson);
+
+        return await client.SaveDeltaAsync(new SaveDeltaRequest
+        {
+            GameId = gameId,
+            OwnerId = ownerId,
+            OwnerType = ownerType,
+            SlotName = slotName,
+            BaseVersion = current.VersionNumber,
+            Delta = Convert.ToBase64String(Encoding.UTF8.GetBytes(patch)),
+            Algorithm = DeltaAlgorithm.JSON_PATCH
+        }, ct);
+    }
+
+    private static byte[] CompressThumbnail(byte[] data, int maxSize) => throw new NotImplementedException();
+    private static string ComputeJsonPatch(string source, string target) => throw new NotImplementedException();
 }
+```
+
+### Tags vs Labels
+
+**Tags** (on slots/saves) are for **querying and filtering** across multiple results:
+```csharp
+// Query all saves tagged with "boss-fight" or "chapter-3"
+var results = await client.QuerySavesAsync(new QuerySavesRequest
+{
+    GameId = "arcadia",
+    OwnerId = accountId,
+    OwnerType = OwnerType.ACCOUNT,
+    Tags = new[] { "boss-fight", "chapter-3" }  // OR filter
+});
+```
+
+**Checkpoint names** (on versions) are for **direct loading** by name:
+```csharp
+// Load the specific checkpoint named "before-final-boss"
+var save = await client.LoadAsync(new LoadRequest
+{
+    GameId = "arcadia",
+    OwnerId = accountId,
+    OwnerType = OwnerType.ACCOUNT,
+    SlotName = "main",
+    CheckpointName = "before-final-boss"  // Exact match
+});
 ```
 
 ---
@@ -2132,27 +3471,150 @@ public static class SaveLoadExtensions
 
 1. **NO event subscriptions** - This is a pure storage service
 2. **Polymorphic ownership** - Use EntityType+EntityId consistently
-3. **Hybrid storage** - Redis for hot cache, MySQL for metadata, Asset for blobs
-4. **Rolling cleanup** - Respect maxVersions per category
-5. **Compression** - Auto-compress above threshold
-6. **Schema migration** - Sandboxed execution with timeout
-7. **Content hashing** - SHA-256 for all save data
+3. **GameId isolation** - All slots require gameId for namespace separation
+4. **Hybrid storage** - Redis for hot cache, MySQL for metadata, Asset for blobs
+5. **Rolling cleanup** - Respect maxVersions per category; run on control plane only
+6. **Compression** - Auto-compress above threshold; per-category defaults
+7. **Schema migration** - JSON Patch (RFC 6902); can be disabled entirely
+8. **Content hashing** - SHA-256 for all save data
+9. **Session cleanup** - Grace period before orphan cleanup
+10. **Rate limiting** - Enforce per-owner quotas
+11. **Asset ownership** - Save-Load service owns all assets
 
 ---
 
 ## Open Questions for Implementation
 
-1. **Migration Script Sandboxing**: Use Jint (JavaScript interpreter, BSD-2 licensed - T18 compliant) for migration scripts. Security considerations: timeout enforcement, memory limits, no file/network access.
+### Resolved in v1.1 Review
 
-2. **Large Save Streaming**: For very large saves (>100MB), consider chunked upload/download. May need separate endpoint.
+1. **Session Ownership Lifecycle**: ✅ RESOLVED
+   - SESSION-owned saves are transient only
+   - Configurable grace period (default 5 min) before cleanup after session ends
+   - Allows other services to copy/promote saves during grace period
 
-3. **Cross-Region Replication**: Asset service handles this, but may need additional metadata for region-aware routing.
+2. **Migration Script Approach**: ✅ RESOLVED
+   - Use JSON Patch (RFC 6902) via JsonPatch.Net library (MIT licensed)
+   - Simpler than JavaScript sandboxing, declarative transformations
+   - Migrations can be disabled entirely via `MigrationsEnabled` config
 
-4. **Quota Enforcement**: Currently no per-owner quota. May add in future version.
+3. **Asset Ownership**: ✅ RESOLVED
+   - Save-Load service owns all assets, not the original caller
+   - Manages full asset lifecycle (create, cleanup, orphan detection)
 
-5. **Encryption at Rest**: Currently relies on MinIO/infrastructure encryption. May add application-level encryption for sensitive saves.
+4. **Multi-Instance Cleanup**: ✅ RESOLVED
+   - ETag-based idempotency for cleanup operations
+   - Scheduled tasks run on control plane only (`EffectiveAppID == DefaultAppId`)
+   - Prevents duplicate cleanup work across instances
+
+5. **Quota Enforcement**: ✅ RESOLVED
+   - Added configurable rate limits and quotas:
+     - `MaxSlotsPerOwner`: 100 (default)
+     - `MaxSavesPerMinute`: 10 (default)
+     - `MaxTotalSizeBytesPerOwner`: 1GB (default)
+
+6. **GameId/Namespace Isolation**: ✅ RESOLVED
+   - `gameId` is required on slot creation
+   - Prevents cross-game slot name collisions
+
+### Resolved in v1.2 Enhancements
+
+7. **Delta Saves**: ✅ RESOLVED
+   - Full delta/incremental save support added
+   - Uses JSON Patch (RFC 6902) by default
+   - Swappable to BSDIFF/XDELTA for binary data
+   - Auto-collapse of delta chains during cleanup
+   - Configurable chain length limits
+
+8. **Thumbnail/Preview Support**: ✅ RESOLVED
+   - Optional thumbnail field on SaveRequest
+   - Configurable max size (default 256KB)
+   - Supports JPEG/WebP/PNG formats
+   - Pre-signed URLs for retrieval
+
+9. **Device-Based Conflict Detection**: ✅ RESOLVED
+   - Optional deviceId on saves for opt-in cloud sync
+   - Conflict detection when saves from different devices
+   - Configurable detection window
+   - SaveResponse includes conflict info
+
+10. **Tags for Query/Filtering**: ✅ RESOLVED
+    - Tags on slots for search/filter across multiple results
+    - Distinct from checkpoint names (for direct load by name)
+    - Documented in SDK "Tags vs Labels" section
+
+11. **Enhanced SDK Helpers**: ✅ RESOLVED
+    - AutoSaveWithDebounce for rate-limited auto-saves
+    - LoadWithFallback for corrupted save recovery
+    - CreateCheckpoint for named checkpoints
+    - SaveWithThumbnail for screenshot-based previews
+    - SaveDeltaAuto for automatic diff computation
+
+### Remaining Open Questions
+
+12. **Large Save Streaming**: For saves >100MB, should we:
+    - (a) Rely on lib-asset's multipart upload (existing pattern)
+    - (b) Add chunked save/load endpoints
+    - (c) Reject with size limit error
+
+    **Current approach**: Rely on lib-asset multipart (option a)
+
+13. **Cross-Region Replication**: Asset service handles storage replication.
+    May need region metadata for latency-aware routing in future.
+
+14. **Encryption at Rest**: Currently relies on MinIO/infrastructure encryption.
+    Application-level encryption could be added for sensitive saves. Consider
+    integration with lib-auth for key management.
+
+---
+
+## Performance Targets
+
+| Metric | Target |
+|--------|--------|
+| Save latency (10MB) | < 500ms |
+| Load latency (cached) | < 50ms |
+| Load latency (cold, 10MB) | < 1s |
+| Load latency (delta chain, 5 deep) | < 200ms |
+| Query performance (1000 results) | < 100ms |
+| Cleanup overhead | < 5% of request time |
+| Delta save vs full save | > 80% size reduction |
+
+---
+
+## Test Scenarios (Required)
+
+| Scenario | Test Type |
+|----------|-----------|
+| Concurrent saves to same slot | Integration |
+| Rolling cleanup with pinned versions | Unit |
+| Load from corrupted/missing asset | Integration |
+| Migration failure handling | Unit |
+| Hot cache miss fallback | Unit |
+| Multi-instance cleanup coordination | Integration |
+| Maximum slot/version limits | Unit |
+| Rate limiting enforcement | Unit |
+| Session cleanup after grace period | Integration |
+| Export/import round-trip | Integration |
+| Integrity verification (valid/invalid) | Unit |
+| **Delta save/load cycle** | Integration |
+| **Delta chain collapse** | Unit |
+| **Delta chain max length enforcement** | Unit |
+| **Thumbnail upload/retrieve** | Integration |
+| **Conflict detection across devices** | Integration |
+| **Tags filtering in queries** | Unit |
+| **LoadWithFallback SDK helper** | Integration |
+| **Async upload queue processing** | Integration |
+| **Circuit breaker state transitions** | Unit |
+| **Circuit breaker half-open recovery** | Integration |
+| **Concurrent upload semaphore limiting** | Integration |
+| **Pending upload recovery after restart** | Integration |
+| **Load from pending upload (before MinIO sync)** | Unit |
+| **Upload retry with exponential backoff** | Unit |
 
 ---
 
 *Document created: 2025-01-11*
-*Ready for implementation review*
+*v1.1 Review completed: 2026-01-11*
+*v1.2 Enhancements added: 2026-01-11*
+*v1.2.1 Storage protection patterns: 2026-01-11*
+*Ready for implementation*
