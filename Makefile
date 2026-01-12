@@ -108,6 +108,7 @@ up-external: ## Start external client testing stack (OpenResty on ports 80/443)
 	docker compose --env-file .env \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external up -d
@@ -130,6 +131,7 @@ down-external: ## Stop external client testing stack
 	docker compose \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external down --remove-orphans
@@ -139,6 +141,7 @@ logs-external: ## View external stack bannou logs
 	docker compose \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external logs -f bannou

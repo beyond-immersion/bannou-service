@@ -69,13 +69,13 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Storage access key/username
     /// Environment variable: ASSET_STORAGE_ACCESS_KEY
     /// </summary>
-    public string? StorageAccessKey { get; set; }
+    public string StorageAccessKey { get; set; } = "minioadmin";
 
     /// <summary>
     /// Storage secret key/password
     /// Environment variable: ASSET_STORAGE_SECRET_KEY
     /// </summary>
-    public string? StorageSecretKey { get; set; }
+    public string StorageSecretKey { get; set; } = "minioadmin";
 
     /// <summary>
     /// Storage region (for S3/R2)

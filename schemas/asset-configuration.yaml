@@ -32,17 +32,15 @@ x-service-configuration:
 
     StorageAccessKey:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage access key/username
       env: ASSET_STORAGE_ACCESS_KEY
-      example: "minioadmin"
+      default: "minioadmin"
 
     StorageSecretKey:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage secret key/password
       env: ASSET_STORAGE_SECRET_KEY
-      example: "your-minio-secret-key"
+      default: "minioadmin"
 
     StorageRegion:
       type: string
