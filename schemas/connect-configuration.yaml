@@ -73,9 +73,9 @@ x-service-configuration:
     # NOTE: JWT validation is delegated to Auth service via HTTP, no local secret needed
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
+      description: RabbitMQ connection string for client event subscriptions
       env: CONNECT_RABBITMQ_CONNECTION_STRING
-      example: "amqp://guest:guest@rabbitmq:5672"
+      default: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
       description: Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.

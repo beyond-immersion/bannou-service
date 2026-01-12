@@ -114,11 +114,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
-    /// RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
+    /// RabbitMQ connection string for client event subscriptions
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string RabbitMqConnectionString { get; set; } = string.Empty;
+    public string RabbitMqConnectionString { get; set; } = "amqp://guest:guest@rabbitmq:5672";
 
     /// <summary>
     /// Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
