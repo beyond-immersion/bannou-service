@@ -49,6 +49,7 @@ public partial class AuthService : IAuthService
     private const string REDIS_STATE_STORE = "auth-statestore";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
+    private const string DEFAULT_CONNECT_URL = "ws://localhost:5014/connect";
 
     // OAuth provider URLs
     private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
@@ -90,6 +91,33 @@ public partial class AuthService : IAuthService
         var jwtConfig = Program.Configuration;
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
             jwtConfig.JwtSecret?.Length ?? 0, jwtConfig.JwtIssuer, jwtConfig.JwtAudience, _configuration.MockProviders);
+    }
+
+    /// <summary>
+    /// Gets the effective WebSocket URL for client connections.
+    /// Priority: AUTH_CONNECT_URL > ws://BANNOU_SERVICE_DOMAIN/connect > default localhost
+    /// </summary>
+    private Uri EffectiveConnectUrl
+    {
+        get
+        {
+            // If explicit ConnectUrl is configured, use it
+            if (!string.IsNullOrWhiteSpace(_configuration.ConnectUrl) &&
+                _configuration.ConnectUrl != DEFAULT_CONNECT_URL)
+            {
+                return new Uri(_configuration.ConnectUrl);
+            }
+
+            // If ServiceDomain is configured, derive WebSocket URL from it
+            var serviceDomain = Program.Configuration?.ServiceDomain;
+            if (!string.IsNullOrWhiteSpace(serviceDomain))
+            {
+                return new Uri($"wss://{serviceDomain}/connect");
+            }
+
+            // Default to localhost
+            return new Uri(DEFAULT_CONNECT_URL);
+        }
     }
 
     /// <inheritdoc/>
@@ -173,7 +201,7 @@ public partial class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri(_configuration.ConnectUrl)
+                ConnectUrl = EffectiveConnectUrl
             });
         }
         catch (Exception ex)
@@ -260,7 +288,7 @@ public partial class AuthService : IAuthService
                 AccountId = accountResult.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ConnectUrl = new Uri(_configuration.ConnectUrl)
+                ConnectUrl = EffectiveConnectUrl
             });
         }
         catch (Exception ex)
@@ -337,7 +365,7 @@ public partial class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri(_configuration.ConnectUrl)
+                ConnectUrl = EffectiveConnectUrl
             });
         }
         catch (Exception ex)
@@ -420,7 +448,7 @@ public partial class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri(_configuration.ConnectUrl)
+                ConnectUrl = EffectiveConnectUrl
             });
         }
         catch (Exception ex)
@@ -489,7 +517,7 @@ public partial class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = newRefreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri(_configuration.ConnectUrl)
+                ConnectUrl = EffectiveConnectUrl
             });
         }
         catch (Exception ex)
@@ -2278,7 +2306,7 @@ public partial class AuthService : IAuthService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-            ConnectUrl = new Uri(_configuration.ConnectUrl)
+            ConnectUrl = EffectiveConnectUrl
         });
     }
 
@@ -2314,7 +2342,7 @@ public partial class AuthService : IAuthService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-            ConnectUrl = new Uri(_configuration.ConnectUrl)
+            ConnectUrl = EffectiveConnectUrl
         });
     }
 

@@ -23,7 +23,10 @@ x-service-configuration:
     # Connect Service URL
     ConnectUrl:
       type: string
-      description: URL to the Connect service for WebSocket connections returned to clients after authentication.
+      description: |
+        URL to the Connect service for WebSocket connections returned to clients after authentication.
+        If not set but BANNOU_SERVICE_DOMAIN is configured, defaults to wss://{ServiceDomain}/connect.
+        Otherwise defaults to ws://localhost:5014/connect.
       env: AUTH_CONNECT_URL
       default: "ws://localhost:5014/connect"
 
@@ -62,10 +65,12 @@ x-service-configuration:
       env: AUTH_DISCORD_CLIENT_SECRET
     DiscordRedirectUri:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
-      description: Discord OAuth redirect URI
+      nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
+      description: |
+        Discord OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set -
+        defaults to https://{ServiceDomain}/auth/oauth/discord/callback.
       env: AUTH_DISCORD_REDIRECT_URI
-      example: "https://your-domain.com/auth/callback/discord"
+      example: "https://your-domain.com/auth/oauth/discord/callback"
 
     # Google OAuth
     GoogleClientId:
@@ -80,10 +85,12 @@ x-service-configuration:
       env: AUTH_GOOGLE_CLIENT_SECRET
     GoogleRedirectUri:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
-      description: Google OAuth redirect URI
+      nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
+      description: |
+        Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set -
+        defaults to https://{ServiceDomain}/auth/oauth/google/callback.
       env: AUTH_GOOGLE_REDIRECT_URI
-      example: "https://your-domain.com/auth/callback/google"
+      example: "https://your-domain.com/auth/oauth/google/callback"
 
     # Twitch OAuth
     TwitchClientId:
@@ -98,10 +105,12 @@ x-service-configuration:
       env: AUTH_TWITCH_CLIENT_SECRET
     TwitchRedirectUri:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (provider disabled if not set)
-      description: Twitch OAuth redirect URI
+      nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
+      description: |
+        Twitch OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set -
+        defaults to https://{ServiceDomain}/auth/oauth/twitch/callback.
       env: AUTH_TWITCH_REDIRECT_URI
-      example: "https://your-domain.com/auth/callback/twitch"
+      example: "https://your-domain.com/auth/oauth/twitch/callback"
 
     # Steam Authentication
     SteamApiKey:

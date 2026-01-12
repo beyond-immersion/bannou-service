@@ -167,4 +167,11 @@ public class AppConfiguration : BaseServiceConfiguration
     /// Environment variable: BANNOU_JWTAUDIENCE
     /// </summary>
     public string JwtAudience { get; set; } = "bannou-api";
+
+    /// <summary>
+    /// Service domain for URL generation.
+    /// When set, OAuth redirect URIs and WebSocket URLs default to this domain.
+    /// Environment variable: BANNOU_SERVICE_DOMAIN
+    /// </summary>
+    public string? ServiceDomain { get; set; }
 }
