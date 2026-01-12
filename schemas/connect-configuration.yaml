@@ -84,10 +84,7 @@ x-service-configuration:
     ConnectUrl:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
-      description: |
-        WebSocket URL returned to clients for reconnection.
-        If not set but BANNOU_SERVICE_DOMAIN is configured, defaults to wss://{ServiceDomain}/connect.
-        Otherwise defaults to ws://localhost:5014/connect.
+      description: WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.
       env: CONNECT_URL
 
     ConnectionMode:

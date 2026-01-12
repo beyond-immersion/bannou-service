@@ -128,7 +128,7 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string ServerSalt { get; set; } = string.Empty;
 
     /// <summary>
-    /// WebSocket URL returned to clients for reconnection
+    /// WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.
     /// Environment variable: CONNECT_URL
     /// </summary>
     public string? ConnectUrl { get; set; }

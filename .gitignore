@@ -7,6 +7,8 @@ nupkg/
 .env
 # Allow CI-specific environment files (non-sensitive)
 !.env.ci.*
+# Allow example environment files
+!.env.example*
 
 # SDK Generated/Behavior directories are committed (behavior files with namespace transformation)
 # Regeneration only needed when lib-behavior changes - run scripts/generate-client-sdk.sh

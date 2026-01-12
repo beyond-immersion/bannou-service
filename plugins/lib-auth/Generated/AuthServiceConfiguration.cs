@@ -54,7 +54,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public int JwtExpirationMinutes { get; set; } = 60;
 
     /// <summary>
-    /// URL to the Connect service for WebSocket connections returned to clients after authentication.
+    /// URL to Connect service for WebSocket connections. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set, else ws://localhost:5014/connect.
     /// Environment variable: AUTH_CONNECT_URL
     /// </summary>
     public string ConnectUrl { get; set; } = "ws://localhost:5014/connect";
@@ -96,7 +96,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? DiscordClientSecret { get; set; }
 
     /// <summary>
-    /// Discord OAuth redirect URI
+    /// Discord OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set (defaults to https://{domain}/auth/oauth/discord/callback).
     /// Environment variable: AUTH_DISCORD_REDIRECT_URI
     /// </summary>
     public string? DiscordRedirectUri { get; set; }
@@ -114,7 +114,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? GoogleClientSecret { get; set; }
 
     /// <summary>
-    /// Google OAuth redirect URI
+    /// Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set (defaults to https://{domain}/auth/oauth/google/callback).
     /// Environment variable: AUTH_GOOGLE_REDIRECT_URI
     /// </summary>
     public string? GoogleRedirectUri { get; set; }
@@ -132,7 +132,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? TwitchClientSecret { get; set; }
 
     /// <summary>
-    /// Twitch OAuth redirect URI
+    /// Twitch OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN is set (defaults to https://{domain}/auth/oauth/twitch/callback).
     /// Environment variable: AUTH_TWITCH_REDIRECT_URI
     /// </summary>
     public string? TwitchRedirectUri { get; set; }
