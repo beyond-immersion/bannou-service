@@ -32,6 +32,9 @@ public class TokenServiceTests
 
     public TokenServiceTests()
     {
+        // Configure JWT settings in Program.Configuration (used by TokenService)
+        TestConfigurationHelper.ConfigureJwt();
+
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockSubscriptionClient = new Mock<ISubscriptionClient>();
@@ -41,9 +44,6 @@ public class TokenServiceTests
 
         _configuration = new AuthServiceConfiguration
         {
-            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
-            JwtIssuer = "test-issuer",
-            JwtAudience = "test-audience",
             JwtExpirationMinutes = 60
         };
 
@@ -276,81 +276,73 @@ public class TokenServiceTests
     }
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithMissingJwtSecret_ShouldThrow()
+    public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowArgumentException()
     {
-        // Arrange
+        // Arrange - JWT config now comes from Program.Configuration
+        // Empty JwtSecret causes SymmetricSecurityKey to throw ArgumentException
+        TestConfigurationHelper.ConfigureJwt(jwtSecret: "", jwtIssuer: "test-issuer", jwtAudience: "test-audience");
         var account = CreateTestAccount();
-        var configWithNoSecret = new AuthServiceConfiguration
-        {
-            JwtSecret = "",
-            JwtIssuer = "test-issuer",
-            JwtAudience = "test-audience",
-            JwtExpirationMinutes = 60
-        };
 
-        var service = new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionClient.Object,
-            _mockSessionService.Object,
-            configWithNoSecret,
-            _mockMessageBus.Object,
-            _mockLogger.Object);
+        // Act & Assert - SymmetricSecurityKey throws ArgumentException for zero-length key
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _service.GenerateAccessTokenAsync(account));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.GenerateAccessTokenAsync(account));
+        // Cleanup - restore valid config for other tests
+        TestConfigurationHelper.ConfigureJwt();
     }
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithMissingJwtIssuer_ShouldThrow()
+    public async Task GenerateAccessTokenAsync_WithEmptyJwtIssuer_ShouldStillGenerateToken()
     {
-        // Arrange
+        // Arrange - JWT config now comes from Program.Configuration
+        // Empty issuer is technically valid (JWT will have no issuer claim)
+        // In production, validation happens at startup in Program.cs
+        TestConfigurationHelper.ConfigureJwt(
+            jwtSecret: "test-jwt-secret-at-least-32-characters-long-for-security",
+            jwtIssuer: "",
+            jwtAudience: "test-audience");
         var account = CreateTestAccount();
-        var configWithNoIssuer = new AuthServiceConfiguration
-        {
-            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
-            JwtIssuer = "",
-            JwtAudience = "test-audience",
-            JwtExpirationMinutes = 60
-        };
 
-        var service = new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionClient.Object,
-            _mockSessionService.Object,
-            configWithNoIssuer,
-            _mockMessageBus.Object,
-            _mockLogger.Object);
+        // Setup subscription client to return empty subscriptions
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.GenerateAccessTokenAsync(account));
+        // Act - should not throw (issuer validation is done at startup, not runtime)
+        var result = await _service.GenerateAccessTokenAsync(account);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+
+        // Cleanup - restore valid config for other tests
+        TestConfigurationHelper.ConfigureJwt();
     }
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithMissingJwtAudience_ShouldThrow()
+    public async Task GenerateAccessTokenAsync_WithEmptyJwtAudience_ShouldStillGenerateToken()
     {
-        // Arrange
+        // Arrange - JWT config now comes from Program.Configuration
+        // Empty audience is technically valid (JWT will have no audience claim)
+        // In production, validation happens at startup in Program.cs
+        TestConfigurationHelper.ConfigureJwt(
+            jwtSecret: "test-jwt-secret-at-least-32-characters-long-for-security",
+            jwtIssuer: "test-issuer",
+            jwtAudience: "");
         var account = CreateTestAccount();
-        var configWithNoAudience = new AuthServiceConfiguration
-        {
-            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
-            JwtIssuer = "test-issuer",
-            JwtAudience = "",
-            JwtExpirationMinutes = 60
-        };
 
-        var service = new TokenService(
-            _mockStateStoreFactory.Object,
-            _mockSubscriptionClient.Object,
-            _mockSessionService.Object,
-            configWithNoAudience,
-            _mockMessageBus.Object,
-            _mockLogger.Object);
+        // Setup subscription client to return empty subscriptions
+        _mockSubscriptionClient.Setup(c => c.QueryCurrentSubscriptionsAsync(It.IsAny<QueryCurrentSubscriptionsRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.GenerateAccessTokenAsync(account));
+        // Act - should not throw (audience validation is done at startup, not runtime)
+        var result = await _service.GenerateAccessTokenAsync(account);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotEmpty(result);
+
+        // Cleanup - restore valid config for other tests
+        TestConfigurationHelper.ConfigureJwt();
     }
 
     [Fact]

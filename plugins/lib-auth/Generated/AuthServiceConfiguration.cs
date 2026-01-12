@@ -48,25 +48,6 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Secret key for JWT token signing (REQUIRED - service fails fast if missing)
-    /// Environment variable: AUTH_JWT_SECRET
-    /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string JwtSecret { get; set; } = string.Empty;
-
-    /// <summary>
-    /// JWT token issuer
-    /// Environment variable: AUTH_JWT_ISSUER
-    /// </summary>
-    public string JwtIssuer { get; set; } = "bannou-auth";
-
-    /// <summary>
-    /// JWT token audience
-    /// Environment variable: AUTH_JWT_AUDIENCE
-    /// </summary>
-    public string JwtAudience { get; set; } = "bannou-api";
-
-    /// <summary>
     /// JWT token expiration time in minutes
     /// Environment variable: AUTH_JWT_EXPIRATION_MINUTES
     /// </summary>

@@ -153,10 +153,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_GOOGLE_CLIENT_ID` | string | **REQUIRED** | Google OAuth client ID |
 | `AUTH_GOOGLE_CLIENT_SECRET` | string | **REQUIRED** | Google OAuth client secret |
 | `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI |
-| `AUTH_JWT_AUDIENCE` | string | `bannou-api` | JWT token audience |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
-| `AUTH_JWT_ISSUER` | string | `bannou-auth` | JWT token issuer |
-| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing (REQUIRED - service fails f... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
@@ -235,7 +232,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
-| `CONNECT_JWT_PUBLIC_KEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
@@ -592,9 +588,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 433
-- **Required (no default)**: 48
-- **Optional (has default)**: 385
+- **Total properties**: 429
+- **Required (no default)**: 46
+- **Optional (has default)**: 383
 
 ## Environment Variable Naming Convention
 

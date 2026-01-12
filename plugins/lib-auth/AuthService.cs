@@ -86,8 +86,10 @@ public partial class AuthService : IAuthService
         // Register event handlers via partial class (AuthServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
 
+        // JWT config comes from core AppConfiguration (BANNOU_JWT_*), validated at startup in Program.cs
+        var jwtConfig = Program.Configuration;
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
-            _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience, _configuration.MockProviders);
+            jwtConfig.JwtSecret?.Length ?? 0, jwtConfig.JwtIssuer, jwtConfig.JwtAudience, _configuration.MockProviders);
     }
 
     /// <inheritdoc/>
@@ -966,8 +968,10 @@ public partial class AuthService : IAuthService
             }
 
             // Validate JWT signature and extract claims
+            // Use core app configuration for JWT settings (validated at startup in Program.cs)
+            var jwtConfig = Program.Configuration;
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret);
+            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
 
             try
             {
@@ -976,9 +980,9 @@ public partial class AuthService : IAuthService
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = _configuration.JwtIssuer,
+                    ValidIssuer = jwtConfig.JwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = _configuration.JwtAudience,
+                    ValidAudience = jwtConfig.JwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
@@ -1114,7 +1118,8 @@ public partial class AuthService : IAuthService
     private string HashPassword(string password)
     {
         // Simplified password hashing - use BCrypt in production
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + _configuration.JwtSecret));
+        // Use core app configuration for JWT secret (validated at startup in Program.cs)
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + Program.Configuration.JwtSecret));
     }
 
     private bool VerifyPassword(string password, string? hash)
@@ -1136,17 +1141,20 @@ public partial class AuthService : IAuthService
         if (_configuration == null)
             throw new InvalidOperationException("AuthServiceConfiguration is null");
 
-        if (string.IsNullOrWhiteSpace(_configuration.JwtSecret))
+        // Use core app configuration for JWT settings (validated at startup in Program.cs)
+        var jwtConfig = Program.Configuration;
+
+        if (string.IsNullOrWhiteSpace(jwtConfig.JwtSecret))
             throw new InvalidOperationException("JWT secret is not configured");
 
-        if (string.IsNullOrWhiteSpace(_configuration.JwtIssuer))
+        if (string.IsNullOrWhiteSpace(jwtConfig.JwtIssuer))
             throw new InvalidOperationException("JWT issuer is not configured");
 
-        if (string.IsNullOrWhiteSpace(_configuration.JwtAudience))
+        if (string.IsNullOrWhiteSpace(jwtConfig.JwtAudience))
             throw new InvalidOperationException("JWT audience is not configured");
 
         _logger.LogDebug("Generating access token for account {AccountId} with JWT config: Secret={SecretLength}, Issuer={Issuer}, Audience={Audience}",
-            account.AccountId, _configuration.JwtSecret?.Length, _configuration.JwtIssuer, _configuration.JwtAudience);
+            account.AccountId, jwtConfig.JwtSecret?.Length, jwtConfig.JwtIssuer, jwtConfig.JwtAudience);
 
         // Generate opaque session key for JWT Redis key security
         var sessionKey = Guid.NewGuid().ToString("N");
@@ -1222,8 +1230,8 @@ public partial class AuthService : IAuthService
         await AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         // JWT contains only opaque session key - no sensitive data
-        var jwtSecret = _configuration.JwtSecret ?? throw new InvalidOperationException("JWT secret is not configured");
-        var key = Encoding.UTF8.GetBytes(jwtSecret);
+        // jwtConfig already retrieved above; validated at startup in Program.cs
+        var key = Encoding.UTF8.GetBytes(jwtConfig.JwtSecret!);
 
 
         try
@@ -1274,8 +1282,8 @@ public partial class AuthService : IAuthService
                 NotBefore = DateTime.UtcNow,
                 IssuedAt = DateTime.UtcNow,
                 SigningCredentials = signingCredentials,
-                Issuer = _configuration.JwtIssuer,
-                Audience = _configuration.JwtAudience
+                Issuer = jwtConfig.JwtIssuer,
+                Audience = jwtConfig.JwtAudience
             };
 
             var jwt = tokenHandler.CreateToken(tokenDescriptor);

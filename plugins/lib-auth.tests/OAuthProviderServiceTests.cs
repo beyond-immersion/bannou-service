@@ -31,6 +31,9 @@ public class OAuthProviderServiceTests
 
     public OAuthProviderServiceTests()
     {
+        // Configure JWT settings in Program.Configuration (used by auth services)
+        TestConfigurationHelper.ConfigureJwt();
+
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAccountClient = new Mock<IAccountClient>();
@@ -40,9 +43,6 @@ public class OAuthProviderServiceTests
 
         _configuration = new AuthServiceConfiguration
         {
-            JwtSecret = "test-jwt-secret-at-least-32-characters-long-for-security",
-            JwtIssuer = "test-issuer",
-            JwtAudience = "test-audience",
             JwtExpirationMinutes = 60,
             MockProviders = false,
             // Discord configuration

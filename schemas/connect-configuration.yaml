@@ -70,11 +70,7 @@ x-service-configuration:
       description: Rate limit window in minutes
       default: 1
       env: CONNECT_RATE_LIMIT_WINDOW_MINUTES
-    JwtPublicKey:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (uses shared secret if not set)
-      description: RSA public key for JWT validation (PEM format)
-      env: CONNECT_JWT_PUBLIC_KEY
+    # NOTE: JWT validation is delegated to Auth service via HTTP, no local secret needed
     RabbitMqConnectionString:
       type: string
       description: RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.

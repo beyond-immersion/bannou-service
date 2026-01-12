@@ -114,12 +114,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
-    /// RSA public key for JWT validation (PEM format)
-    /// Environment variable: CONNECT_JWT_PUBLIC_KEY
-    /// </summary>
-    public string? JwtPublicKey { get; set; }
-
-    /// <summary>
     /// RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
     /// Environment variable: CONNECT_RABBITMQ_CONNECTION_STRING
     /// </summary>

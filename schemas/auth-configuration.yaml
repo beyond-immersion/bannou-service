@@ -12,21 +12,8 @@ paths: {}
 x-service-configuration:
   properties:
     # JWT Configuration
-    JwtSecret:
-      type: string
-      description: Secret key for JWT token signing (REQUIRED - service fails fast if missing)
-      env: AUTH_JWT_SECRET
-      example: "your-jwt-secret-key-change-in-production-min-32-chars"
-    JwtIssuer:
-      type: string
-      description: JWT token issuer
-      env: AUTH_JWT_ISSUER
-      default: "bannou-auth"
-    JwtAudience:
-      type: string
-      description: JWT token audience
-      env: AUTH_JWT_AUDIENCE
-      default: "bannou-api"
+    # NOTE: JwtSecret, JwtIssuer, JwtAudience are now in core AppConfiguration (BANNOU_JWT_*)
+    # Auth service uses Program.Configuration for these to avoid duplication
     JwtExpirationMinutes:
       type: integer
       description: JWT token expiration time in minutes
