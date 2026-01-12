@@ -26,9 +26,9 @@ x-service-configuration:
 
     StorageEndpoint:
       type: string
-      description: Storage endpoint URL (MinIO/S3 compatible)
+      description: Storage endpoint host:port (MinIO/S3 compatible, no http prefix)
       env: ASSET_STORAGE_ENDPOINT
-      default: "http://minio:9000"
+      default: "minio:9000"
 
     StorageAccessKey:
       type: string

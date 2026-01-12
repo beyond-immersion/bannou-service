@@ -60,10 +60,10 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string StorageBucket { get; set; } = "bannou-assets";
 
     /// <summary>
-    /// Storage endpoint URL (MinIO/S3 compatible)
+    /// Storage endpoint host:port (MinIO/S3 compatible, no http prefix)
     /// Environment variable: ASSET_STORAGE_ENDPOINT
     /// </summary>
-    public string StorageEndpoint { get; set; } = "http://minio:9000";
+    public string StorageEndpoint { get; set; } = "minio:9000";
 
     /// <summary>
     /// Storage access key/username
