@@ -8,7 +8,7 @@ RABBITMQ_HOST="${RABBITMQ_HOST:-rabbitmq}"
 RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
 REDIS_HOST="${REDIS_HOST:-bannou-redis}"
 REDIS_PORT="${REDIS_PORT:-6379}"
-MYSQL_HOST="${MYSQL_HOST:-account-db}"
+MYSQL_HOST="${MYSQL_HOST:-bannou-mysql}"
 MYSQL_PORT="${MYSQL_PORT:-3306}"
 
 # Timeout configuration
@@ -57,7 +57,7 @@ wait_for_service "$RABBITMQ_HOST" "$RABBITMQ_PORT" "RabbitMQ"
 # Wait for Redis (statestore) - required for all state stores
 wait_for_service "$REDIS_HOST" "$REDIS_PORT" "Redis"
 
-# Wait for MySQL (account-statestore) - optional
+# Wait for MySQL (state persistence) - optional
 wait_for_service "$MYSQL_HOST" "$MYSQL_PORT" "MySQL"
 
 elapsed=$(($(date +%s) - start_time))

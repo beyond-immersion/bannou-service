@@ -147,7 +147,7 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Redis connection string for orchestrator state.
     /// Environment variable: ORCHESTRATOR_REDIS_CONNECTION_STRING
     /// </summary>
-    public string RedisConnectionString { get; set; } = "redis:6379";
+    public string RedisConnectionString { get; set; } = "bannou-redis:6379";
 
     /// <summary>
     /// RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.

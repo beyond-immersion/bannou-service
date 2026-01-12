@@ -28,7 +28,7 @@ services:
       # Asset state Redis (same as bannou-redis) for token validation
       - ASSET_REDIS_HOST=bannou-redis
       - ASSET_REDIS_PORT=6379
-      - SERVICE_DOMAIN=${SERVICE_DOMAIN}
+      - BANNOU_SERVICE_DOMAIN=${BANNOU_SERVICE_DOMAIN}
     networks:
       - default   # Internal network - reach bannou, routing-redis via service names
       - external  # External network - accept edge tester connections

@@ -374,7 +374,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for service registry storage. |
+| `MESH_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for service registry storage. |
 | `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
 | `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
@@ -434,7 +434,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
 
 ### Permission
 
@@ -552,8 +552,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
-| `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `STATE_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
+| `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscription
@@ -589,8 +589,8 @@ This document lists all configuration options defined in Bannou's configuration 
 ## Configuration Summary
 
 - **Total properties**: 429
-- **Required (no default)**: 46
-- **Optional (has default)**: 383
+- **Required (no default)**: 45
+- **Optional (has default)**: 384
 
 ## Environment Variable Naming Convention
 

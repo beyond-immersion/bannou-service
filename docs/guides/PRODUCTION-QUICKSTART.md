@@ -64,8 +64,18 @@ nano .env
 | `BANNOU_JWT_SECRET` | JWT signing key (64 chars) | `openssl rand -hex 32` |
 | `CONNECT_SERVER_SALT` | GUID generation salt (32 chars) | `openssl rand -hex 16` |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | Internal auth (64 chars) | `openssl rand -hex 32` |
-| `MYSQL_PASSWORD` | Database password | `openssl rand -hex 16` |
-| `MYSQL_ROOT_PASSWORD` | Database root password | `openssl rand -hex 16` |
+
+### Infrastructure Defaults
+
+The following infrastructure is auto-configured with standard Docker service names:
+
+| Service | Default Connection |
+|---------|-------------------|
+| Redis | `bannou-redis:6379` |
+| MySQL | `server=bannou-mysql;database=bannou;user=guest;password=guest` |
+| RabbitMQ | `rabbitmq:5672` |
+
+Override only if using non-standard hostnames or credentials.
 
 ### Automatic URL Defaults
 
@@ -98,8 +108,8 @@ make up-external
 
 This runs the full production stack:
 - Bannou monoservice (all services)
-- Redis (state/cache)
-- MySQL (accounts)
+- bannou-redis (state/cache)
+- bannou-mysql (state persistence)
 - RabbitMQ (messaging)
 - MinIO (asset storage)
 - OpenResty (edge proxy on 80/443)

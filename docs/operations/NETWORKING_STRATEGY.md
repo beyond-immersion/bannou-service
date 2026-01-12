@@ -18,7 +18,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
    - Service name resolution works out of the box
 
 2. **Service-to-Service Communication**
-   - Containers use service names: `bannou`, `rabbitmq`, `account-db`
+   - Containers use service names: `bannou`, `rabbitmq`, `bannou-mysql`
    - All bindings to `0.0.0.0` (not `127.0.0.1`)
 
 3. **No depends_on Blocks**
@@ -48,7 +48,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 **Services:**
 - `bannou` (all services enabled)
 - `rabbitmq`
-- `account-db`, `bannou-redis`, `auth-redis` (from services.yml)
+- `bannou-mysql`, `bannou-redis`, `auth-redis` (from services.yml)
 - `bannou-http-tester` (http-tester service)
 
 **Network:**
@@ -58,7 +58,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 **Communication:**
 - HTTP Tester → Bannou: `http://bannou:80/account/...` (via service name)
 - Bannou → RabbitMQ: `rabbitmq:5672` (service name)
-- Bannou → MySQL: `account-db:3306` (service name)
+- Bannou → MySQL: `bannou-mysql:3306` (service name)
 - Bannou → Redis: `bannou-redis:6379` (service name)
 
 ### Layer 3: Edge/WebSocket Tests (External Client)
@@ -67,8 +67,7 @@ Previous docker-compose networking setup failed on WSL2/Windows due to:
 **Services:**
 - `bannou` (all services enabled)
 - `rabbitmq`
-- `account-db`, `bannou-redis`, `auth-redis`
-- `routing-redis` (for NGINX routing state)
+- `bannou-mysql`, `bannou-redis`- `routing-redis` (for NGINX routing state)
 - `openresty` (NGINX edge proxy - TWO NETWORKS)
 - `bannou-edge-tester` (external network ONLY)
 
@@ -92,7 +91,7 @@ healthcheck:
 
 ### Database/Infrastructure Services
 ```yaml
-account-db:
+bannou-mysql:
   # No network config needed - uses default bridge
   # MySQL binds to 0.0.0.0:3306 by default
 
@@ -182,8 +181,7 @@ echo "OpenResty is ready!"
    - Keep `127.0.0.1` for same-container communication (sidecar pattern)
 
 4. **Update environment variables**
-   - Database hosts: `account-db`, `bannou-redis`, `auth-redis`
-   - RabbitMQ host: `rabbitmq`
+   - Database hosts: `bannou-mysql`, `bannou-redis`   - RabbitMQ host: `rabbitmq`
 
 5. **Configure dual-network for OpenResty**
    - Internal (default) network for backend services

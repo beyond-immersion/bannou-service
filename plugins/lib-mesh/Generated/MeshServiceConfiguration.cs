@@ -57,7 +57,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Redis connection string for service registry storage.
     /// Environment variable: MESH_REDIS_CONNECTION_STRING
     /// </summary>
-    public string RedisConnectionString { get; set; } = "redis:6379";
+    public string RedisConnectionString { get; set; } = "bannou-redis:6379";
 
     /// <summary>
     /// Prefix for all mesh-related Redis keys

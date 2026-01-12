@@ -1,6 +1,6 @@
 # Service Dependencies - WSL2 Compatible
 # Database and caching services using default bridge network
-# All services reachable by service name (bannou-redis, account-db)
+# All services reachable by service name (bannou-redis, bannou-mysql)
 
 services:
 
@@ -19,16 +19,16 @@ services:
       timeout: 3s
       retries: 5
 
-  # MySQL for account service
-  account-db:
+  # MySQL for state persistence
+  bannou-mysql:
     image: mysql:8.1.0
     environment:
-      - MYSQL_DATABASE=accounts
+      - MYSQL_DATABASE=bannou
       - MYSQL_USER=guest
       - MYSQL_PASSWORD=guest
       - MYSQL_ROOT_PASSWORD=rootpassword
     volumes:
-      - account-data:/var/lib/mysql
+      - bannou-mysql-data:/var/lib/mysql
       - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./mysql/run-init/:/docker-entrypoint-initdb.d
     healthcheck:
@@ -40,4 +40,4 @@ services:
 
 volumes:
   bannou-redis-data:
-  account-data:
+  bannou-mysql-data:

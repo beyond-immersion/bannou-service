@@ -218,7 +218,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Infrastructure service names that dynamically created containers need to resolve
         // IMPORTANT: DEFAULT_APP_NAME must be included so deployed containers can reach the orchestrator
         // for fetching initial service mappings via BANNOU_MAPPING_SOURCE_APP_ID
-        var serviceNames = new[] { AppConstants.DEFAULT_APP_NAME, "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
+        var serviceNames = new[] { AppConstants.DEFAULT_APP_NAME, "rabbitmq", "bannou-redis", "bannou-mysql" };
 
         try
         {

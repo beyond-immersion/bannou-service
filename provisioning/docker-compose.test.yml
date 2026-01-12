@@ -10,6 +10,6 @@ services:
     # (test.infrastructure, test.http, test.edge each set their own env_file)
     environment:
       - ASPNETCORE_ENVIRONMENT=Testing
-      - SERVICE_DOMAIN=${SERVICE_DOMAIN:-test}
+      - BANNOU_SERVICE_DOMAIN=${BANNOU_SERVICE_DOMAIN:-test}
       # Admin role auto-assignment for testing - emails ending with @admin.test.local get admin role
       - ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local

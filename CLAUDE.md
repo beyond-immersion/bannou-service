@@ -308,17 +308,12 @@ BANNOU_HTTP_Web_Host_Port=5012    # Service-specific with prefix
 BANNOU_HTTPS_Web_Host_Port=5013
 
 # Service Configuration
-SERVICE_DOMAIN=example.com
+BANNOU_SERVICE_DOMAIN=example.com
 
-# Database Configuration
-ACCOUNT_DB_USER=testuser
-ACCOUNT_DB_PASSWORD=testpassword
-
-# Auth Configuration
-AUTH_JWT_SECRET=bannou-dev-secret-key-2025-please-change-in-production
-AUTH_JWT_ISSUER=bannou-auth-dev
-AUTH_JWT_AUDIENCE=bannou-api-dev
-AUTH_JWT_EXPIRATION_MINUTES=60
+# JWT Configuration (consolidated in main app)
+BANNOU_JWT_SECRET=bannou-dev-secret-key-2025-please-change-in-production
+BANNOU_JWT_ISSUER=bannou-auth-dev
+BANNOU_JWT_AUDIENCE=bannou-api-dev
 ```
 
 **Configuration Implementation Details**:

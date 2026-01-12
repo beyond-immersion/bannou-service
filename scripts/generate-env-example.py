@@ -323,7 +323,7 @@ def generate_env_example(config_by_service: dict) -> str:
         "# =============================================================================",
         "# Local Development Configuration",
         "# =============================================================================",
-        "SERVICE_DOMAIN=localhost",
+        "BANNOU_SERVICE_DOMAIN=localhost",
         "HTTP_WEB_HOST_PORT=8080",
         "HTTPS_WEB_HOST_PORT=8443",
         "",
