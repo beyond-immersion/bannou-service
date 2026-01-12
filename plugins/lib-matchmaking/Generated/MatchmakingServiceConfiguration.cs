@@ -54,11 +54,10 @@ public class MatchmakingServiceConfiguration : IServiceConfiguration
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Server salt for GUID generation. REQUIRED - must be shared across all instances for matchmaking GUIDs to work correctly.
+    /// Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.
     /// Environment variable: MATCHMAKING_SERVER_SALT
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string ServerSalt { get; set; } = string.Empty;
+    public string ServerSalt { get; set; } = "bannou-dev-matchmaking-salt-change-in-production";
 
     /// <summary>
     /// Default interval between match processing cycles
