@@ -121,11 +121,10 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string RabbitMqConnectionString { get; set; } = string.Empty;
 
     /// <summary>
-    /// Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
+    /// Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
     /// Environment variable: CONNECT_SERVER_SALT
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string ServerSalt { get; set; } = string.Empty;
+    public string ServerSalt { get; set; } = "bannou-dev-connect-salt-change-in-production";
 
     /// <summary>
     /// WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.

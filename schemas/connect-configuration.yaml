@@ -78,9 +78,9 @@ x-service-configuration:
       example: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
-      description: Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
+      description: Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
       env: CONNECT_SERVER_SALT
-      example: "your-server-salt-for-guid-generation"
+      default: "bannou-dev-connect-salt-change-in-production"
     ConnectUrl:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
