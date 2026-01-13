@@ -8,8 +8,7 @@ services:
   # DO NOT CHANGE TO redis-stack-server - Redis 8.4+ has all modules integrated
   bannou-redis:
     image: redis:latest
-    ports:
-      - "6379:6379"  # For development access
+    # No ports exposed - accessed via Docker network
     command: redis-server --databases 16 --appendonly yes
     volumes:
       - bannou-redis-data:/data

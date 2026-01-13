@@ -1,16 +1,14 @@
-# External/Production Deployment - OpenResty on 80/443
-# Stack with base + services + storage + ingress + this file for production
+# External/Production Deployment
+# Only OpenResty exposed on standard ports 80/443
+# All other services communicate via Docker network only
 
 services:
-  # OpenResty on standard ports (80/443) - the primary external entry point
-  # Note: This adds to the ports from ingress.yml, giving us both sets
+  # OpenResty - the only internet-facing service
   openresty:
     ports:
-      - "80:80"       # HTTP - standard port for production
-      - "443:443"     # HTTPS - standard port for production
+      - "80:80"
+      - "443:443"
 
-  # Bannou - loads .env file
-  # Note: Bannou still exposes 8080/8443 from base compose for development access
-  # In production, use firewall rules to block external access to 8080/8443
+  # Bannou loads .env file for configuration
   bannou:
     env_file: ../.env

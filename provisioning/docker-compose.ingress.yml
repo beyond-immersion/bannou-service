@@ -13,10 +13,7 @@ services:
   # OpenResty Edge Proxy with Lua + Redis routing
   openresty:
     image: openresty/openresty:1.21.4.2-0-alpine
-    ports:
-      - "${OPENRESTY_HTTP_PORT:-9080}:80"   # HTTP - configurable, defaults to 9080 to avoid conflicts
-      - "${OPENRESTY_HTTPS_PORT:-9443}:443" # HTTPS - configurable, defaults to 9443
-      - "9081:8080"  # Admin/status interface
+    # No ports in base - external.yml adds 80/443 for production
     volumes:
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
       - ./openresty/lua:/usr/local/openresty/lua:ro
@@ -46,8 +43,7 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - routing-redis-data:/data
-    ports:
-      - "6380:6379"  # Expose on different port than bannou-redis
+    # No ports exposed - accessed via Docker network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
