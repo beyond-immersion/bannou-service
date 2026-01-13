@@ -282,8 +282,8 @@ public class Program
         // PURPOSE: This check verifies that ALL services with user-accessible endpoints have correctly
         // registered their permissions via RegisterServicePermissionsAsync(). Each service below has
         // at least one user-role endpoint included to ensure permission registration is working.
-        // Services without user-role endpoints (Analytics, Behavior, Documentation, Messaging,
-        // Orchestrator, Permission, State) are tested in the admin check or not applicable.
+        // Services without user-role endpoints (Actor, Analytics, Behavior, Documentation, Mesh, Messaging,
+        // Orchestrator, Permission, State) are tested in the admin check or not WebSocket-accessible.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // Auth service (already authenticated, so these should be available)
@@ -296,8 +296,7 @@ public class Program
             // Achievement service
             "/achievement/list-unlocked",              // Achievement - user role
 
-            // Actor service
-            "/actor/get",                              // Actor - user role
+            // NOTE: Actor service now has admin-only endpoints (was changed from user for security)
 
             // Asset service
             "/assets/get",                             // Asset - user role
@@ -332,8 +331,7 @@ public class Program
             // Matchmaking service
             "/matchmaking/status",                     // Matchmaking - user role
 
-            // Mesh service
-            "/mesh/health",                            // Mesh - user role
+            // NOTE: Mesh service intentionally excluded - infrastructure service not for client access
 
             // Realm service
             "/realm/get",                              // Realm - user role
@@ -655,9 +653,9 @@ public class Program
         // PURPOSE: This check verifies that ALL services with admin-only endpoints have correctly
         // registered their permissions via RegisterServicePermissionsAsync(). Each service below has
         // at least one admin-role endpoint included to ensure permission registration is working.
-        // Services without admin-role endpoints (Actor, Auth, Behavior, Voice, Website) have only
-        // user/developer/anonymous endpoints and are tested in the user check or not applicable.
-        // Services with no defined endpoints (Analytics, Messaging, State) are not WebSocket-accessible.
+        // Services without admin-role endpoints (Auth, Behavior, Website) have only user/developer/anonymous
+        // endpoints and are tested in the user check.
+        // Services with no WebSocket endpoints (Mesh, Messaging, Orchestrator, State) are internal only.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // Account service
@@ -665,6 +663,12 @@ public class Program
 
             // Achievement service
             "/achievement/platform/sync",              // Achievement - admin role
+
+            // Actor service (changed from user to admin for security)
+            "/actor/get",                              // Actor - admin role
+
+            // Analytics service (read endpoints are admin-accessible)
+            "/analytics/summary/get",                  // Analytics - admin role
 
             // Asset service
             "/assets/delete",                          // Asset - admin role
@@ -702,11 +706,8 @@ public class Program
             // Matchmaking service
             "/matchmaking/queue/create",               // Matchmaking - admin role
 
-            // Mesh service
-            "/mesh/endpoints/list",                    // Mesh - admin role
-
-            // Orchestrator service
-            "/orchestrator/status",                    // Orchestrator - admin role
+            // NOTE: Mesh service intentionally excluded - infrastructure service not for client access
+            // NOTE: Orchestrator service intentionally excluded - infrastructure service not for client access
 
             // Permission service
             "/permission/services/list",               // Permission - admin role
@@ -733,7 +734,10 @@ public class Program
             "/species/create",                         // Species - admin role
 
             // Subscription service
-            "/subscription/create"                     // Subscription - admin role
+            "/subscription/create",                    // Subscription - admin role
+
+            // Voice service (debug endpoints exposed to admin)
+            "/voice/room/get"                          // Voice - admin role
         };
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))

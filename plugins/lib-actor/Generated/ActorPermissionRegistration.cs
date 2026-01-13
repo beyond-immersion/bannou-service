@@ -89,7 +89,7 @@ public static class ActorPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -104,7 +104,7 @@ public static class ActorPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -164,7 +164,7 @@ public static class ActorPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -194,7 +194,7 @@ public static class ActorPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -210,21 +210,6 @@ public static class ActorPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/actor/query-options",
-            Method = ServiceEndpointMethod.POST,
-            Description = "QueryOptions",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -284,7 +269,7 @@ public static class ActorPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

@@ -67,6 +67,21 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/sessions/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "listGameSessions",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/sessions/get",
             Method = ServiceEndpointMethod.POST,
             Description = "getGameSession",

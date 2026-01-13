@@ -136,19 +136,19 @@ goals, memories) to characters - NOT ...
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/actor/encounter/end` | End an active encounter | developer |
-| `POST` | `/actor/encounter/get` | Get the current encounter state for an actor | user |
+| `POST` | `/actor/encounter/get` | Get the current encounter state for an actor | admin |
 | `POST` | `/actor/encounter/start` | Start an encounter managed by an Event Brain actor | developer |
 | `POST` | `/actor/encounter/update-phase` | Update the phase of an active encounter | developer |
-| `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | user |
+| `POST` | `/actor/get` | Get actor instance (instantiate-on-access if template allows) | admin |
 | `POST` | `/actor/inject-perception` | Inject a perception event into an actor's queue (testing) | developer |
-| `POST` | `/actor/list` | List actors with optional filters | user |
-| `POST` | `/actor/query-options` | Query an actor for its available options | user |
+| `POST` | `/actor/list` | List actors with optional filters | admin |
+| `POST` | `/actor/query-options` | Query an actor for its available options | authenticated |
 | `POST` | `/actor/spawn` | Spawn a new actor from a template | developer |
 | `POST` | `/actor/stop` | Stop a running actor | developer |
 | `POST` | `/actor/template/create` | Create an actor template (category definition) | developer |
 | `POST` | `/actor/template/delete` | Delete an actor template | developer |
-| `POST` | `/actor/template/get` | Get an actor template by ID or category | user |
-| `POST` | `/actor/template/list` | List all actor templates | user |
+| `POST` | `/actor/template/get` | Get an actor template by ID or category | admin |
+| `POST` | `/actor/template/list` | List all actor templates | admin |
 | `POST` | `/actor/template/update` | Update an actor template | developer |
 
 ---
@@ -163,7 +163,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/controller-history/query` | Query controller history | authenticated |
+| `POST` | `/analytics/controller-history/query` | Query controller history | admin |
 | `POST` | `/analytics/controller-history/record` | Record controller possession event | authenticated |
 
 ### Event Ingestion
@@ -177,15 +177,15 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | authenticated |
+| `POST` | `/analytics/rating/get` | Get entity Glicko-2 skill rating | admin |
 | `POST` | `/analytics/rating/update` | Update entity skill rating after match | authenticated |
 
 ### Statistics
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/analytics/summary/get` | Get entity statistics summary | authenticated |
-| `POST` | `/analytics/summary/query` | Query entity summaries with filters | authenticated |
+| `POST` | `/analytics/summary/get` | Get entity statistics summary | admin |
+| `POST` | `/analytics/summary/query` | Query entity summaries with filters | admin |
 
 ---
 
@@ -546,7 +546,7 @@ Minimal game session management for Arcadia and other games.
 | `POST` | `/sessions/kick` | Kick player from game session (admin only) | admin |
 | `POST` | `/sessions/leave` | Leave a game session | user |
 | `POST` | `/sessions/leave-session` | Leave a specific game session by ID | user |
-| `POST` | `/sessions/list` | List available game sessions | authenticated |
+| `POST` | `/sessions/list` | List available game sessions | admin |
 
 ### Internal
 
@@ -733,29 +733,29 @@ HTTP routing and Redis-backed service discovery.
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mesh/health` | Get mesh health status | user |
+| `POST` | `/mesh/health` | Get mesh health status | authenticated |
 
 ### Registration
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mesh/deregister` | Deregister a service endpoint | user |
-| `POST` | `/mesh/heartbeat` | Update endpoint health and load | user |
-| `POST` | `/mesh/register` | Register a service endpoint | user |
+| `POST` | `/mesh/deregister` | Deregister a service endpoint | authenticated |
+| `POST` | `/mesh/heartbeat` | Update endpoint health and load | authenticated |
+| `POST` | `/mesh/register` | Register a service endpoint | authenticated |
 
 ### Routing
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mesh/mappings` | Get service-to-app-id mappings | user |
-| `POST` | `/mesh/route` | Get optimal endpoint for routing | user |
+| `POST` | `/mesh/mappings` | Get service-to-app-id mappings | authenticated |
+| `POST` | `/mesh/route` | Get optimal endpoint for routing | authenticated |
 
 ### Service Discovery
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/mesh/endpoints/get` | Get endpoints for a service | user |
-| `POST` | `/mesh/endpoints/list` | List all registered endpoints | admin |
+| `POST` | `/mesh/endpoints/get` | Get endpoints for a service | authenticated |
+| `POST` | `/mesh/endpoints/list` | List all registered endpoints | authenticated |
 
 ---
 
@@ -786,28 +786,28 @@ Central intelligence for Bannou environment management and service orchestration
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/orchestrator/backends/list` | Detect available container orchestration backends | admin |
-| `POST` | `/orchestrator/clean` | Clean up unused resources | admin |
-| `POST` | `/orchestrator/config/rollback` | Rollback to previous configuration | admin |
-| `POST` | `/orchestrator/config/version` | Get current configuration version and metadata | admin |
-| `POST` | `/orchestrator/containers/request-restart` | Request container restart (self-service pattern) | admin |
-| `POST` | `/orchestrator/containers/status` | Get container health and restart history | admin |
-| `POST` | `/orchestrator/deploy` | Deploy or update an environment | admin |
-| `POST` | `/orchestrator/health/infrastructure` | Check infrastructure component health | admin |
-| `POST` | `/orchestrator/health/services` | Get health status of all services | admin |
-| `POST` | `/orchestrator/logs` | Get service/container logs | admin |
-| `POST` | `/orchestrator/presets/list` | List available deployment presets | admin |
+| `POST` | `/orchestrator/backends/list` | Detect available container orchestration backends | authenticated |
+| `POST` | `/orchestrator/clean` | Clean up unused resources | authenticated |
+| `POST` | `/orchestrator/config/rollback` | Rollback to previous configuration | authenticated |
+| `POST` | `/orchestrator/config/version` | Get current configuration version and metadata | authenticated |
+| `POST` | `/orchestrator/containers/request-restart` | Request container restart (self-service pattern) | authenticated |
+| `POST` | `/orchestrator/containers/status` | Get container health and restart history | authenticated |
+| `POST` | `/orchestrator/deploy` | Deploy or update an environment | authenticated |
+| `POST` | `/orchestrator/health/infrastructure` | Check infrastructure component health | authenticated |
+| `POST` | `/orchestrator/health/services` | Get health status of all services | authenticated |
+| `POST` | `/orchestrator/logs` | Get service/container logs | authenticated |
+| `POST` | `/orchestrator/presets/list` | List available deployment presets | authenticated |
 | `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | authenticated |
-| `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | admin |
+| `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | authenticated |
 | `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | authenticated |
-| `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | admin |
-| `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | admin |
-| `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | admin |
-| `POST` | `/orchestrator/services/restart` | Restart service with optional configuration | admin |
-| `POST` | `/orchestrator/services/should-restart` | Check if service needs restart | admin |
-| `POST` | `/orchestrator/status` | Get current environment status | admin |
-| `POST` | `/orchestrator/teardown` | Tear down the current environment | admin |
-| `POST` | `/orchestrator/topology` | Update service topology without full redeploy | admin |
+| `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | authenticated |
+| `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | authenticated |
+| `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | authenticated |
+| `POST` | `/orchestrator/services/restart` | Restart service with optional configuration | authenticated |
+| `POST` | `/orchestrator/services/should-restart` | Check if service needs restart | authenticated |
+| `POST` | `/orchestrator/status` | Get current environment status | authenticated |
+| `POST` | `/orchestrator/teardown` | Tear down the current environment | authenticated |
+| `POST` | `/orchestrator/topology` | Update service topology without full redeploy | authenticated |
 
 ---
 
@@ -843,7 +843,7 @@ Redis-backed high-performance permission system for WebSocket services.
 | `POST` | `/permission/clear-session-state` | Clear session state for specific service | authenticated |
 | `POST` | `/permission/get-session-info` | Get complete session information | authenticated |
 | `POST` | `/permission/update-session-role` | Update session role (affects all services) | authenticated |
-| `POST` | `/permission/update-session-state` | Update session state for specific service | admin |
+| `POST` | `/permission/update-session-state` | Update session state for specific service | authenticated |
 
 ---
 
@@ -1168,7 +1168,7 @@ Voice communication coordination service for P2P and room-based audio.
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
 | `POST` | `/voice/peer/answer` | Send SDP answer to complete WebRTC handshake | user |
-| `POST` | `/voice/peer/heartbeat` | Update peer endpoint TTL | authenticated |
+| `POST` | `/voice/peer/heartbeat` | Update peer endpoint TTL | admin |
 
 ### Voice Rooms
 
@@ -1176,7 +1176,7 @@ Voice communication coordination service for P2P and room-based audio.
 |--------|------|---------|--------|
 | `POST` | `/voice/room/create` | Create voice room for a game session | authenticated |
 | `POST` | `/voice/room/delete` | Delete voice room | authenticated |
-| `POST` | `/voice/room/get` | Get voice room details | authenticated |
+| `POST` | `/voice/room/get` | Get voice room details | admin |
 | `POST` | `/voice/room/join` | Join voice room and register SIP endpoint | authenticated |
 | `POST` | `/voice/room/leave` | Leave voice room | authenticated |
 

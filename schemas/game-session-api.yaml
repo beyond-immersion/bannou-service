@@ -25,7 +25,9 @@ paths:
       operationId: listGameSessions
       tags:
       - Game Sessions
-      x-permissions: []
+      x-permissions:
+      - role: admin
+        states: {}
       x-rate-limit:
         requestsPerMinute: 30
         requestsPerHour: 500

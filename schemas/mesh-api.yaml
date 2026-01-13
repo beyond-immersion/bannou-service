@@ -37,9 +37,7 @@ paths:
       operationId: getEndpoints
       tags:
       - Service Discovery
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -117,9 +115,7 @@ paths:
       operationId: listEndpoints
       tags:
       - Service Discovery
-      x-permissions:
-      - role: admin
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -206,9 +202,7 @@ paths:
       operationId: registerEndpoint
       tags:
       - Registration
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -291,9 +285,7 @@ paths:
       operationId: deregisterEndpoint
       tags:
       - Registration
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -325,9 +317,7 @@ paths:
       operationId: heartbeat
       tags:
       - Registration
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -386,9 +376,7 @@ paths:
       operationId: getRoute
       tags:
       - Routing
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -466,9 +454,7 @@ paths:
       operationId: getMappings
       tags:
       - Routing
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
@@ -517,9 +503,7 @@ paths:
       operationId: getHealth
       tags:
       - Diagnostics
-      x-permissions:
-      - role: user
-        states: {}
+      x-permissions: []
       requestBody:
         required: true
         content:
