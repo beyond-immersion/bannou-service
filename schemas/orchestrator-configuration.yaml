@@ -11,6 +11,13 @@ info:
 paths: {}
 x-service-configuration:
   properties:
+    # Security Configuration
+    SecureWebsocket:
+      type: boolean
+      description: When true, publishes blank permission registration making orchestrator inaccessible via WebSocket. Set false for testing.
+      env: ORCHESTRATOR_SECURE_WEBSOCKET
+      default: true
+
     # Cache Configuration
     CacheTtlMinutes:
       type: integer

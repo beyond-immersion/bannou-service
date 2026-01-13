@@ -48,6 +48,12 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
+    /// When true, publishes blank permission registration making orchestrator inaccessible via WebSocket. Set false for testing.
+    /// Environment variable: ORCHESTRATOR_SECURE_WEBSOCKET
+    /// </summary>
+    public bool SecureWebsocket { get; set; } = true;
+
+    /// <summary>
     /// Cache TTL in minutes for orchestrator data
     /// Environment variable: ORCHESTRATOR_CACHE_TTL_MINUTES
     /// </summary>
