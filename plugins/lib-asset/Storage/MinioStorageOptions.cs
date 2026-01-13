@@ -6,9 +6,15 @@ namespace BeyondImmersion.BannouService.Asset.Storage;
 public class MinioStorageOptions
 {
     /// <summary>
-    /// MinIO server endpoint (e.g., "minio:9000" or "s3.amazonaws.com").
+    /// MinIO server endpoint for internal service connections (e.g., "minio:9000").
     /// </summary>
     public string Endpoint { get; set; } = "minio:9000";
+
+    /// <summary>
+    /// Public endpoint for pre-signed URLs accessible by clients.
+    /// If null, uses Endpoint. Use for Docker/K8s where internal hostname differs from public access.
+    /// </summary>
+    public string? PublicEndpoint { get; set; }
 
     /// <summary>
     /// Access key (username) for authentication.

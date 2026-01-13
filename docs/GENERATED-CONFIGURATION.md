@@ -127,9 +127,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_STATESTORE_NAME` | string | `asset-statestore` | Name of the state store for asset metadata |
 | `ASSET_STORAGE_ACCESS_KEY` | string | `minioadmin` | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
-| `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port (MinIO/S3 compatible, no http pre... |
+| `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port for internal service connections ... |
 | `ASSET_STORAGE_FORCE_PATH_STYLE` | bool | `true` | Force path-style URLs (required for MinIO) |
 | `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type (minio, s3, r2, azure, filesystem) |
+| `ASSET_STORAGE_PUBLIC_ENDPOINT` | string | **REQUIRED** | Public endpoint for pre-signed URLs accessible by clients. I... |
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
 | `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
@@ -544,8 +545,8 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 415
-- **Required (no default)**: 39
+- **Total properties**: 416
+- **Required (no default)**: 40
 - **Optional (has default)**: 376
 
 ## Environment Variable Naming Convention

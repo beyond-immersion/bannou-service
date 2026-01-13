@@ -26,9 +26,16 @@ x-service-configuration:
 
     StorageEndpoint:
       type: string
-      description: Storage endpoint host:port (MinIO/S3 compatible, no http prefix)
+      description: Storage endpoint host:port for internal service connections (MinIO/S3 compatible, no http prefix)
       env: ASSET_STORAGE_ENDPOINT
       default: "minio:9000"
+
+    StoragePublicEndpoint:
+      type: string
+      nullable: true
+      description: Public endpoint for pre-signed URLs accessible by clients. If not set, uses StorageEndpoint. Use for Docker/K8s where internal hostname differs from public access.
+      env: ASSET_STORAGE_PUBLIC_ENDPOINT
+      example: "localhost:9000"
 
     StorageAccessKey:
       type: string
