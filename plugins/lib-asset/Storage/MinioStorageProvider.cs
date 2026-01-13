@@ -84,11 +84,11 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         {
             // WORKAROUND: MinIO .NET SDK v7 bug (github.com/minio/minio-dotnet/issues/1150)
             // WithHeaders() for Content-Type causes SDK to serialize type name instead of value.
-            // Don't include Content-Type in signed headers - client can still send it, MinIO
-            // will store it, but signature won't validate it. Fix pending in PR #1158.
-            var reqParams = new Dictionary<string, string>();
+            // We EXCLUDE Content-Type from signing but INCLUDE x-amz-meta headers which work correctly.
+            // Client should still send Content-Type - MinIO stores it, just won't validate signature.
+            var headersToSign = new Dictionary<string, string>();
 
-            // Headers that client should send (for documentation/client guidance)
+            // Headers that client must send (returned in PreSignedUploadResult.RequiredHeaders)
             var requiredHeaders = new Dictionary<string, string>
             {
                 { "Content-Type", contentType }
@@ -98,8 +98,9 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
             {
                 foreach (var kvp in metadata)
                 {
-                    // Note: x-amz-meta headers also affected by SDK bug, omit from signing
-                    requiredHeaders[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
+                    var headerName = $"x-amz-meta-{kvp.Key}";
+                    headersToSign[headerName] = kvp.Value;
+                    requiredHeaders[headerName] = kvp.Value;
                 }
             }
 
@@ -108,10 +109,10 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
                 .WithObject(key)
                 .WithExpiry((int)expiration.TotalSeconds);
 
-            // Only add headers if we have non-Content-Type headers to sign
-            if (reqParams.Count > 0)
+            // Include x-amz-meta headers in signing so MinIO accepts them
+            if (headersToSign.Count > 0)
             {
-                args.WithHeaders(reqParams);
+                args.WithHeaders(headersToSign);
             }
 
             var presignedUrl = await _minioClient.PresignedPutObjectAsync(args)
