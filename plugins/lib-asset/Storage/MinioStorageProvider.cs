@@ -82,12 +82,13 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
 
         try
         {
-            var reqParams = new Dictionary<string, string>
-            {
-                { "Content-Type", contentType }
-            };
+            // WORKAROUND: MinIO .NET SDK v7 bug (github.com/minio/minio-dotnet/issues/1150)
+            // WithHeaders() for Content-Type causes SDK to serialize type name instead of value.
+            // Don't include Content-Type in signed headers - client can still send it, MinIO
+            // will store it, but signature won't validate it. Fix pending in PR #1158.
+            var reqParams = new Dictionary<string, string>();
 
-            // Add custom metadata headers
+            // Headers that client should send (for documentation/client guidance)
             var requiredHeaders = new Dictionary<string, string>
             {
                 { "Content-Type", contentType }
@@ -97,17 +98,23 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
             {
                 foreach (var kvp in metadata)
                 {
-                    reqParams[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
+                    // Note: x-amz-meta headers also affected by SDK bug, omit from signing
                     requiredHeaders[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
                 }
             }
 
-            var presignedUrl = await _minioClient.PresignedPutObjectAsync(
-                new PresignedPutObjectArgs()
-                    .WithBucket(bucket)
-                    .WithObject(key)
-                    .WithExpiry((int)expiration.TotalSeconds)
-                    .WithHeaders(reqParams))
+            var args = new PresignedPutObjectArgs()
+                .WithBucket(bucket)
+                .WithObject(key)
+                .WithExpiry((int)expiration.TotalSeconds);
+
+            // Only add headers if we have non-Content-Type headers to sign
+            if (reqParams.Count > 0)
+            {
+                args.WithHeaders(reqParams);
+            }
+
+            var presignedUrl = await _minioClient.PresignedPutObjectAsync(args)
                 .ConfigureAwait(false);
 
             return new StorageModels.PreSignedUploadResult(
