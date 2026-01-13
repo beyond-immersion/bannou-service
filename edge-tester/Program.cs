@@ -282,8 +282,10 @@ public class Program
         // PURPOSE: This check verifies that ALL services with user-accessible endpoints have correctly
         // registered their permissions via RegisterServicePermissionsAsync(). Each service below has
         // at least one user-role endpoint included to ensure permission registration is working.
-        // Services without user-role endpoints (Actor, Analytics, Behavior, Documentation, Mesh, Messaging,
-        // Orchestrator, Permission, State) are tested in the admin check or not WebSocket-accessible.
+        // Services excluded from this check:
+        // - Admin/internal only: Actor, Analytics, Behavior, Documentation, Mesh, Messaging, Orchestrator, Permission, State
+        // - Require session state: GameSession (game-session:in_game), Voice (voice:ringing)
+        // - Browser-facing GET only: Website
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // Auth service (already authenticated, so these should be available)
@@ -316,8 +318,7 @@ public class Program
             // Game Service registry
             "/game-service/services/list",             // GameService - user role
 
-            // Game Session service
-            "/sessions/get",                           // GameSession - user role
+            // NOTE: GameSession user endpoints require game-session:in_game state - tested via integration flows
 
             // Leaderboard service
             "/leaderboard/rank/get",                   // Leaderboard - user role
@@ -329,7 +330,7 @@ public class Program
             "/mapping/query/point",                    // Mapping - user role
 
             // Matchmaking service
-            "/matchmaking/status",                     // Matchmaking - user role
+            "/matchmaking/stats",                      // Matchmaking - user role (no state required)
 
             // NOTE: Mesh service intentionally excluded - infrastructure service not for client access
 
@@ -355,13 +356,10 @@ public class Program
             "/species/get",                            // Species - user role
 
             // Subscription service
-            "/subscription/get",                       // Subscription - user role
+            "/subscription/get"                        // Subscription - user role
 
-            // Voice service
-            "/voice/peer/answer",                      // Voice - user role
-
-            // Website service
-            "/website/account/profile"                 // Website - user role
+            // NOTE: Voice user endpoints require voice:ringing state - tested via integration flows
+            // NOTE: Website endpoints are GET (browser-facing) - not exposed via WebSocket
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
