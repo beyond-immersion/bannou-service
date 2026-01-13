@@ -145,8 +145,15 @@ main() {
     # 2. Add new empty [Unreleased] section above it
     TODAY=$(date +%Y-%m-%d)
 
+    # Find the current latest version (will become prev_ver for comparison link)
+    PREV_VERSION=$(grep -oP '^\[\K[0-9]+\.[0-9]+\.[0-9]+(?=\]:)' "$CHANGELOG_FILE" | head -1)
+    if [ -z "$PREV_VERSION" ]; then
+        echo -e "${YELLOW}Warning: Could not find previous version for comparison link${NC}"
+        PREV_VERSION="0.0.0"
+    fi
+
     # Create temp file with updated changelog
-    awk -v new_ver="$NEW_VERSION" -v today="$TODAY" -v repo="beyond-immersion/bannou-service" '
+    awk -v new_ver="$NEW_VERSION" -v prev_ver="$PREV_VERSION" -v today="$TODAY" -v repo="beyond-immersion/bannou-service" '
     /^## \[Unreleased\]/ {
         print "## [Unreleased]"
         print ""
@@ -159,15 +166,7 @@ main() {
     /^\[Unreleased\]:/ {
         print "[Unreleased]: https://github.com/" repo "/compare/v" new_ver "...HEAD"
         print "[" new_ver "]: https://github.com/" repo "/compare/v" prev_ver "...v" new_ver
-        prev_ver = new_ver
         next
-    }
-    # Track previous version for comparison links
-    /^\[[0-9]+\.[0-9]+\.[0-9]+\]:/ {
-        if (!prev_ver) {
-            match($0, /\[([0-9]+\.[0-9]+\.[0-9]+)\]/, arr)
-            prev_ver = arr[1]
-        }
     }
     { print }
     ' "$CHANGELOG_FILE" > "$CHANGELOG_FILE.tmp"
