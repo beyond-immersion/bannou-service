@@ -102,7 +102,7 @@ public partial class MappingService : IMappingService
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
         // Register event handlers via partial class (MappingServiceEvents.cs)
-        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
+        RegisterEventConsumers(eventConsumer);
     }
 
     #region Key Building Helpers

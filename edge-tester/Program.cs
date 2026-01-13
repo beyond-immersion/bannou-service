@@ -278,10 +278,92 @@ public class Program
         // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
         // Admin-only endpoints (like /account, /permission/services) are tested via AdminClient.
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
+        //
+        // PURPOSE: This check verifies that ALL services with user-accessible endpoints have correctly
+        // registered their permissions via RegisterServicePermissionsAsync(). Each service below has
+        // at least one user-role endpoint included to ensure permission registration is working.
+        // Services without user-role endpoints (Analytics, Behavior, Documentation, Messaging,
+        // Orchestrator, Permission, State) are tested in the admin check or not applicable.
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/auth/validate",       // Auth service - user role, default state
-            "/auth/sessions/list"   // Auth service - user role, default state
+            // Auth service (already authenticated, so these should be available)
+            "/auth/validate",                          // Auth - user role
+            "/auth/sessions/list",                     // Auth - user role
+
+            // Account service (user-level profile operations)
+            "/account/profile/update",                 // Account - user role
+
+            // Achievement service
+            "/achievement/list-unlocked",              // Achievement - user role
+
+            // Actor service
+            "/actor/get",                              // Actor - user role
+
+            // Asset service
+            "/assets/get",                             // Asset - user role
+
+            // Character service
+            "/character/get",                          // Character - user role
+
+            // Character History service
+            "/character-history/get-participation",    // CharacterHistory - user role
+
+            // Character Personality service
+            "/character-personality/get",              // CharacterPersonality - user role
+
+            // Connect service
+            "/client-capabilities",                    // Connect - user role
+
+            // Game Service registry
+            "/game-service/services/list",             // GameService - user role
+
+            // Game Session service
+            "/sessions/get",                           // GameSession - user role
+
+            // Leaderboard service
+            "/leaderboard/rank/get",                   // Leaderboard - user role
+
+            // Location service
+            "/location/get",                           // Location - user role
+
+            // Mapping service
+            "/mapping/query/point",                    // Mapping - user role
+
+            // Matchmaking service
+            "/matchmaking/status",                     // Matchmaking - user role
+
+            // Mesh service
+            "/mesh/health",                            // Mesh - user role
+
+            // Realm service
+            "/realm/get",                              // Realm - user role
+
+            // Realm History service
+            "/realm-history/get-lore",                 // RealmHistory - user role
+
+            // Relationship service
+            "/relationship/get",                       // Relationship - user role
+
+            // Relationship Type service
+            "/relationship-type/get",                  // RelationshipType - user role
+
+            // Save/Load service
+            "/save-load/load",                         // SaveLoad - user role
+
+            // Scene service
+            "/scene/get",                              // Scene - user role
+
+            // Species service
+            "/species/get",                            // Species - user role
+
+            // Subscription service
+            "/subscription/get",                       // Subscription - user role
+
+            // Voice service
+            "/voice/peer/answer",                      // Voice - user role
+
+            // Website service
+            "/website/account/profile"                 // Website - user role
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
@@ -569,17 +651,89 @@ public class Program
 
         // Wait for admin-specific APIs to be available in the capability manifest.
         // This ensures all services are fully ready before tests run.
-        // Include at least one endpoint from each service that has edge tests.
+        //
+        // PURPOSE: This check verifies that ALL services with admin-only endpoints have correctly
+        // registered their permissions via RegisterServicePermissionsAsync(). Each service below has
+        // at least one admin-role endpoint included to ensure permission registration is working.
+        // Services without admin-role endpoints (Actor, Auth, Behavior, Voice, Website) have only
+        // user/developer/anonymous endpoints and are tested in the user check or not applicable.
+        // Services with no defined endpoints (Analytics, Messaging, State) are not WebSocket-accessible.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "/account/delete",    // Account service - admin role, needed for account deletion tests
-            "/account",           // Account service - admin role, list/get operations
-            "/realm/create",      // Realm service - admin role
-            "/location/create",   // Location service - admin role
-            "/species/create",    // Species service - admin role
-            "/character/create",  // Character service - admin role
-            "/relationship/create", // Relationship service - admin role
-            "/relationship-type/create" // RelationshipType service - admin role
+            // Account service
+            "/account/list",                           // Account - admin role
+
+            // Achievement service
+            "/achievement/platform/sync",              // Achievement - admin role
+
+            // Asset service
+            "/assets/delete",                          // Asset - admin role
+
+            // Character service
+            "/character/create",                       // Character - admin role
+
+            // Character History service
+            "/character-history/delete-all",           // CharacterHistory - admin role
+
+            // Character Personality service
+            "/character-personality/delete",           // CharacterPersonality - admin role
+
+            // Connect service
+            "/connect/get-account-sessions",           // Connect - admin role
+
+            // Documentation service
+            "/documentation/create",                   // Documentation - admin role
+
+            // Game Service registry
+            "/game-service/services/create",           // GameService - admin role
+
+            // Game Session service
+            "/sessions/kick",                          // GameSession - admin role
+
+            // Leaderboard service
+            "/leaderboard/season/create",              // Leaderboard - admin role
+
+            // Location service
+            "/location/create",                        // Location - admin role
+
+            // Mapping service
+            "/mapping/definition/delete",              // Mapping - admin role
+
+            // Matchmaking service
+            "/matchmaking/queue/create",               // Matchmaking - admin role
+
+            // Mesh service
+            "/mesh/endpoints/list",                    // Mesh - admin role
+
+            // Orchestrator service
+            "/orchestrator/status",                    // Orchestrator - admin role
+
+            // Permission service
+            "/permission/services/list",               // Permission - admin role
+
+            // Realm service
+            "/realm/create",                           // Realm - admin role
+
+            // Realm History service
+            "/realm-history/delete-all",               // RealmHistory - admin role
+
+            // Relationship service
+            "/relationship/create",                    // Relationship - admin role
+
+            // Relationship Type service
+            "/relationship-type/create",               // RelationshipType - admin role
+
+            // Save/Load service
+            "/save-load/admin/stats",                  // SaveLoad - admin role
+
+            // Scene service
+            "/scene/register-validation-rules",        // Scene - admin role
+
+            // Species service
+            "/species/create",                         // Species - admin role
+
+            // Subscription service
+            "/subscription/create"                     // Subscription - admin role
         };
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))
