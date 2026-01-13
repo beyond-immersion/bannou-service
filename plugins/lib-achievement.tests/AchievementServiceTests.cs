@@ -123,7 +123,6 @@ public class AchievementServiceTests
         Assert.Equal(300, config.ProgressCacheTtlSeconds);
         Assert.Equal(60, config.RarityCalculationIntervalMinutes);
         Assert.Equal(5.0, config.RareThresholdPercent);
-        Assert.True(config.Enabled);
     }
 
     [Fact]

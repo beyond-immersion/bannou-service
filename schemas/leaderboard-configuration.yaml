@@ -11,11 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Leaderboard service
-      default: true
-      env: LEADERBOARD_ENABLED
     # State Store Configuration
     DefinitionStoreName:
       type: string

@@ -11,12 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Behavior service
-      default: true
-      env: BEHAVIOR_ENABLED
-
     # === Urgency Thresholds (Tier 2) ===
     LowUrgencyThreshold:
       type: number

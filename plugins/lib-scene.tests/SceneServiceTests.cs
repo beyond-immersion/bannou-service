@@ -34,7 +34,6 @@ public class SceneServiceTests
 
         // Assert
         Assert.NotNull(config);
-        Assert.True(config.Enabled);
         Assert.Equal("scenes", config.AssetBucket);
         Assert.Equal(60, config.DefaultCheckoutTtlMinutes);
         Assert.Equal(10000, config.MaxNodeCount);
@@ -60,13 +59,6 @@ public class SceneServiceTests
         Assert.Equal(200, config.MaxListResults);
         Assert.Equal(100, config.MaxSearchResults);
         Assert.Equal(60, config.CheckoutExpirationCheckIntervalSeconds);
-    }
-
-    [Fact]
-    public void SceneServiceConfiguration_Enabled_DefaultsToTrue()
-    {
-        var config = new SceneServiceConfiguration();
-        Assert.True(config.Enabled);
     }
 
     [Fact]

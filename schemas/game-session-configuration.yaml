@@ -11,11 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Game Session service
-      default: true
-      env: GAME_SESSION_ENABLED
     ServerSalt:
       type: string
       description: Server salt for GUID generation. Must be shared across all instances for session GUIDs to work correctly. Change in production.

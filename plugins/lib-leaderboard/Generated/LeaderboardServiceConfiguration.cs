@@ -48,12 +48,6 @@ public class LeaderboardServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Leaderboard service
-    /// Environment variable: LEADERBOARD_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Name of the state store for leaderboard definitions (MySQL recommended)
     /// Environment variable: LEADERBOARD_DEFINITION_STORE_NAME
     /// </summary>

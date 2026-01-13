@@ -11,11 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Analytics service
-      default: true
-      env: ANALYTICS_ENABLED
     # State Store Configuration
     SummaryStoreName:
       type: string

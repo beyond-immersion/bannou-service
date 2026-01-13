@@ -48,12 +48,6 @@ public class MatchmakingServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Matchmaking service
-    /// Environment variable: MATCHMAKING_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.
     /// Environment variable: MATCHMAKING_SERVER_SALT
     /// </summary>

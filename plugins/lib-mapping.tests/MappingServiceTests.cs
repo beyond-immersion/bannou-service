@@ -49,7 +49,6 @@ public class MappingServiceTests
 
         _configuration = new MappingServiceConfiguration
         {
-            Enabled = true,
             AuthorityTimeoutSeconds = 60,
             AuthorityGracePeriodSeconds = 30,
             AuthorityHeartbeatIntervalSeconds = 30,
@@ -170,7 +169,6 @@ public class MappingServiceTests
         var config = new MappingServiceConfiguration();
 
         // Assert - verify defaults from schema
-        Assert.True(config.Enabled);
         Assert.Equal(60, config.AuthorityTimeoutSeconds);
         Assert.Equal(30, config.AuthorityGracePeriodSeconds);
         Assert.Equal(30, config.AuthorityHeartbeatIntervalSeconds);

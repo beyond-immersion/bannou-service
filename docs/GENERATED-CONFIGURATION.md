@@ -20,7 +20,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
 | `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
-| `ACHIEVEMENT_ENABLED` | bool | `true` | Enable/disable Achievement service |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (stub - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (stub - not implemented) |
 | `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
@@ -73,7 +72,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ANALYTICS_ENABLED` | bool | `true` | Enable/disable Analytics service |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
 | `ANALYTICS_EVENT_BUFFER_SIZE` | int | `1000` | Maximum events to buffer before flushing to storage |
 | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | double | `350.0` | Default rating deviation for new entities (higher = less cer... |
@@ -183,7 +181,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_DEFAULT_STORAGE_THRESHOLD` | double | `0.7` | Significance score threshold for storing memories (0.0-1.0) |
 | `BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD` | double | `0.8` | Urgency threshold for fast-tracking threat perceptions (0.0-... |
 | `BEHAVIOR_DEFAULT_THREAT_WEIGHT` | double | `10.0` | Attention priority weight for threat perceptions |
-| `BEHAVIOR_ENABLED` | bool | `true` | Enable/disable Behavior service |
 | `BEHAVIOR_GOAP_METADATA_KEY_PREFIX` | string | `goap-metadata:` | Key prefix for GOAP metadata entries |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH` | int | `3` | Maximum depth for GOAP planning search at high urgency |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES` | int | `200` | Maximum nodes to explore during GOAP planning at high urgenc... |
@@ -280,7 +277,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
-| `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
 | `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
@@ -292,18 +288,11 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
 | `LEADERBOARD_DEFINITION_STORE_NAME` | string | `leaderboard-definition` | Name of the state store for leaderboard definitions (MySQL r... |
-| `LEADERBOARD_ENABLED` | bool | `true` | Enable/disable Leaderboard service |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_RANKING_STORE_NAME` | string | `leaderboard-ranking` | Name of the state store for rankings (Redis required for sor... |
 | `LEADERBOARD_RANK_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached rank queries |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
 | `LEADERBOARD_SEASON_STORE_NAME` | string | `leaderboard-season` | Name of the state store for season data (MySQL recommended) |
-
-### Location
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `LOCATION_ENABLED` | bool | `true` | Enable/disable Location service |
 
 ### Mapping
 
@@ -314,7 +303,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended heartbeat interval for authorities (for client g... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
-| `MAPPING_ENABLED` | bool | `true` | Enable/disable Mapping service |
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
 | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
 | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
@@ -345,7 +333,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS` | int | `30` | Default time for players to accept a formed match |
 | `MATCHMAKING_DEFAULT_MAX_INTERVALS` | int | `6` | Default maximum intervals before timeout/relaxation |
 | `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | int | `120` | Default TTL for player reservations in game sessions created... |
-| `MATCHMAKING_ENABLED` | bool | `true` | Enable/disable Matchmaking service |
 | `MATCHMAKING_IMMEDIATE_MATCH_CHECK_ENABLED` | bool | `true` | Enable immediate match check on ticket creation (quick match... |
 | `MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER` | int | `3` | Maximum number of concurrent tickets a player can have |
 | `MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS` | int | `300` | TTL for pending match data in Redis (for reconnection handli... |
@@ -441,28 +428,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSION_ENABLED` | bool | `true` | Enable/disable Permission service |
 | `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
 | `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
 | `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
-
-### Realm
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `REALM_ENABLED` | bool | `true` | Enable/disable Realm service |
-
-### Relationship
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `RELATIONSHIP_ENABLED` | bool | `true` | Enable/disable Relationship service |
-
-### Relationship Type
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
 ### Save Load
 
@@ -527,7 +495,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
 | `SCENE_DEFAULT_VERSION_RETENTION_COUNT` | int | `3` | Default number of versions to retain per scene |
-| `SCENE_ENABLED` | bool | `true` | Enable/disable Scene service |
 | `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
 | `SCENE_MAX_LIST_RESULTS` | int | `200` | Maximum results returned in a single list query |
 | `SCENE_MAX_NODE_COUNT` | int | `10000` | Maximum nodes allowed in a single scene |
@@ -537,12 +504,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SCENE_MAX_TAGS_PER_NODE` | int | `20` | Maximum tags allowed per node |
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
 | `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
-
-### Species
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `SPECIES_ENABLED` | bool | `true` | Enable/disable Species service |
 
 ### State
 
@@ -581,17 +542,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
 
-### Website
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `WEBSITE_ENABLED` | bool | `true` | Enable/disable Website service |
-
 ## Configuration Summary
 
-- **Total properties**: 430
+- **Total properties**: 415
 - **Required (no default)**: 39
-- **Optional (has default)**: 391
+- **Optional (has default)**: 376
 
 ## Environment Variable Naming Convention
 

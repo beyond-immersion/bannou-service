@@ -734,10 +734,9 @@ public class Program
             "/species/create",                         // Species - admin role
 
             // Subscription service
-            "/subscription/create",                    // Subscription - admin role
+            "/subscription/create"                     // Subscription - admin role
 
-            // Voice service (debug endpoints exposed to admin)
-            "/voice/room/get"                          // Voice - admin role
+            // NOTE: Voice service disabled in edge tests (VOICE_SERVICE_DISABLED=true)
         };
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))

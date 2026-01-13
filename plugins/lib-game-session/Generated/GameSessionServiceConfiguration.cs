@@ -48,12 +48,6 @@ public class GameSessionServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Game Session service
-    /// Environment variable: GAME_SESSION_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Server salt for GUID generation. Must be shared across all instances for session GUIDs to work correctly. Change in production.
     /// Environment variable: GAME_SESSION_SERVER_SALT
     /// </summary>

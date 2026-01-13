@@ -48,7 +48,7 @@ public class RelationshipServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Relationship service
+    /// Default configuration property - can be removed if not needed.
     /// Environment variable: RELATIONSHIP_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;

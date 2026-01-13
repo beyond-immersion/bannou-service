@@ -1004,7 +1004,6 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         var config = new MatchmakingServiceConfiguration();
 
         // Assert
-        Assert.True(config.Enabled);
         Assert.Equal(15, config.ProcessingIntervalSeconds);
         Assert.Equal(6, config.DefaultMaxIntervals);
         Assert.Equal(3, config.MaxConcurrentTicketsPerPlayer);
