@@ -6,8 +6,9 @@ set -e
 # Default values matching Bannou defaults
 export BANNOU_SERVICE_DOMAIN="${BANNOU_SERVICE_DOMAIN:-localhost}"
 export ASSET_STORAGE_ENDPOINT="${ASSET_STORAGE_ENDPOINT:-minio:9000}"
-export SSL_CERT_PATH="${SSL_CERT_PATH:-/etc/nginx/ssl/cert.pem}"
-export SSL_KEY_PATH="${SSL_KEY_PATH:-/etc/nginx/ssl/key.pem}"
+# Default SSL paths match docker-compose.ingress.yml mount: ./certificates:/certs
+export SSL_CERT_PATH="${SSL_CERT_PATH:-/certs/cert.pem}"
+export SSL_KEY_PATH="${SSL_KEY_PATH:-/certs/key.pem}"
 
 # Resolve script directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
