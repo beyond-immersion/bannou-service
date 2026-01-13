@@ -20,7 +20,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
 | `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
-| `ACHIEVEMENT_ENABLED` | bool | `true` | Enable/disable Achievement service |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (stub - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (stub - not implemented) |
 | `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
@@ -73,7 +72,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ANALYTICS_ENABLED` | bool | `true` | Enable/disable Analytics service |
 | `ANALYTICS_EVENT_BUFFER_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds to flush event buffer |
 | `ANALYTICS_EVENT_BUFFER_SIZE` | int | `1000` | Maximum events to buffer before flushing to storage |
 | `ANALYTICS_GLICKO2_DEFAULT_DEVIATION` | double | `350.0` | Default rating deviation for new entities (higher = less cer... |
@@ -127,13 +125,14 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
 | `ASSET_PROCESSOR_POOL_STORE_NAME` | string | `asset-processor-pool` | Name of the state store for processor pool management |
 | `ASSET_STATESTORE_NAME` | string | `asset-statestore` | Name of the state store for asset metadata |
-| `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username |
+| `ASSET_STORAGE_ACCESS_KEY` | string | `minioadmin` | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
-| `ASSET_STORAGE_ENDPOINT` | string | `http://minio:9000` | Storage endpoint URL (MinIO/S3 compatible) |
+| `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port for internal service connections ... |
 | `ASSET_STORAGE_FORCE_PATH_STYLE` | bool | `true` | Force path-style URLs (required for MinIO) |
 | `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type (minio, s3, r2, azure, filesystem) |
+| `ASSET_STORAGE_PUBLIC_ENDPOINT` | string | **REQUIRED** | Public endpoint for pre-signed URLs accessible by clients. I... |
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
-| `ASSET_STORAGE_SECRET_KEY` | string | **REQUIRED** | Storage secret key/password |
+| `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
 | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | string | `temp` | Path prefix for temporary upload staging in storage bucket |
 | `ASSET_TEXTURE_PROCESSOR_POOL_TYPE` | string | `texture-processor` | Pool type name for texture processing |
@@ -146,17 +145,14 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to the Connect service for WebSocket connections returne... |
+| `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to Connect service for WebSocket connections. Defaults t... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
-| `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI |
+| `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAI... |
 | `AUTH_GOOGLE_CLIENT_ID` | string | **REQUIRED** | Google OAuth client ID |
 | `AUTH_GOOGLE_CLIENT_SECRET` | string | **REQUIRED** | Google OAuth client secret |
-| `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI |
-| `AUTH_JWT_AUDIENCE` | string | `bannou-api` | JWT token audience |
+| `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN... |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
-| `AUTH_JWT_ISSUER` | string | `bannou-auth` | JWT token issuer |
-| `AUTH_JWT_SECRET` | string | **REQUIRED** | Secret key for JWT token signing (REQUIRED - service fails f... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
@@ -167,7 +163,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `AUTH_STEAM_APP_ID` | string | **REQUIRED** | Steam application ID |
 | `AUTH_TWITCH_CLIENT_ID` | string | **REQUIRED** | Twitch OAuth client ID |
 | `AUTH_TWITCH_CLIENT_SECRET` | string | **REQUIRED** | Twitch OAuth client secret |
-| `AUTH_TWITCH_REDIRECT_URI` | string | **REQUIRED** | Twitch OAuth redirect URI |
+| `AUTH_TWITCH_REDIRECT_URI` | string | **REQUIRED** | Twitch OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN... |
 
 ### Behavior
 
@@ -186,7 +182,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_DEFAULT_STORAGE_THRESHOLD` | double | `0.7` | Significance score threshold for storing memories (0.0-1.0) |
 | `BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD` | double | `0.8` | Urgency threshold for fast-tracking threat perceptions (0.0-... |
 | `BEHAVIOR_DEFAULT_THREAT_WEIGHT` | double | `10.0` | Attention priority weight for threat perceptions |
-| `BEHAVIOR_ENABLED` | bool | `true` | Enable/disable Behavior service |
 | `BEHAVIOR_GOAP_METADATA_KEY_PREFIX` | string | `goap-metadata:` | Key prefix for GOAP metadata entries |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH` | int | `3` | Maximum depth for GOAP planning search at high urgency |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES` | int | `200` | Maximum nodes to explore during GOAP planning at high urgenc... |
@@ -235,16 +230,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
-| `CONNECT_JWT_PUBLIC_KEY` | string | **REQUIRED** | RSA public key for JWT validation (PEM format) |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions. N... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | `amqp://guest:guest@rabbitmq:5672` (insecure) | RabbitMQ connection string for client event subscriptions |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
-| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. REQUIRED - must be s... |
+| `CONNECT_SERVER_SALT` | string | `bannou-dev-connect-salt-change-in-production` | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
-| `CONNECT_URL` | string | **REQUIRED** | WebSocket URL returned to clients for reconnection |
+| `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
 
 ### Documentation
 
@@ -284,9 +278,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
-| `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
-| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
 | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
 
@@ -296,18 +289,11 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
 | `LEADERBOARD_DEFINITION_STORE_NAME` | string | `leaderboard-definition` | Name of the state store for leaderboard definitions (MySQL r... |
-| `LEADERBOARD_ENABLED` | bool | `true` | Enable/disable Leaderboard service |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_RANKING_STORE_NAME` | string | `leaderboard-ranking` | Name of the state store for rankings (Redis required for sor... |
 | `LEADERBOARD_RANK_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached rank queries |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
 | `LEADERBOARD_SEASON_STORE_NAME` | string | `leaderboard-season` | Name of the state store for season data (MySQL recommended) |
-
-### Location
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `LOCATION_ENABLED` | bool | `true` | Enable/disable Location service |
 
 ### Mapping
 
@@ -318,7 +304,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_AUTHORITY_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended heartbeat interval for authorities (for client g... |
 | `MAPPING_AUTHORITY_TIMEOUT_SECONDS` | int | `60` | Time in seconds before authority expires without heartbeat |
 | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | int | `3600` | Default TTL for cached layer data (ephemeral kinds) |
-| `MAPPING_ENABLED` | bool | `true` | Enable/disable Mapping service |
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
 | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
 | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
@@ -349,12 +334,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MATCHMAKING_DEFAULT_MATCH_ACCEPT_TIMEOUT_SECONDS` | int | `30` | Default time for players to accept a formed match |
 | `MATCHMAKING_DEFAULT_MAX_INTERVALS` | int | `6` | Default maximum intervals before timeout/relaxation |
 | `MATCHMAKING_DEFAULT_RESERVATION_TTL_SECONDS` | int | `120` | Default TTL for player reservations in game sessions created... |
-| `MATCHMAKING_ENABLED` | bool | `true` | Enable/disable Matchmaking service |
 | `MATCHMAKING_IMMEDIATE_MATCH_CHECK_ENABLED` | bool | `true` | Enable immediate match check on ticket creation (quick match... |
 | `MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER` | int | `3` | Maximum number of concurrent tickets a player can have |
 | `MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS` | int | `300` | TTL for pending match data in Redis (for reconnection handli... |
 | `MATCHMAKING_PROCESSING_INTERVAL_SECONDS` | int | `15` | Default interval between match processing cycles |
-| `MATCHMAKING_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `MATCHMAKING_SERVER_SALT` | string | `bannou-dev-matchmaking-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS` | int | `60` | Interval between stats event publications |
 
 ### Mesh
@@ -378,7 +362,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for service registry storage. |
+| `MESH_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for service registry storage. |
 | `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
 | `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
 | `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
@@ -438,34 +422,16 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
-| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
 ### Permission
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSION_ENABLED` | bool | `true` | Enable/disable Permission service |
 | `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
 | `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
 | `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
-
-### Realm
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `REALM_ENABLED` | bool | `true` | Enable/disable Realm service |
-
-### Relationship
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `RELATIONSHIP_ENABLED` | bool | `true` | Enable/disable Relationship service |
-
-### Relationship Type
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `RELATIONSHIP_TYPE_ENABLED` | bool | `true` | Enable/disable Relationship Type service |
 
 ### Save Load
 
@@ -530,7 +496,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
 | `SCENE_DEFAULT_VERSION_RETENTION_COUNT` | int | `3` | Default number of versions to retain per scene |
-| `SCENE_ENABLED` | bool | `true` | Enable/disable Scene service |
 | `SCENE_MAX_CHECKOUT_EXTENSIONS` | int | `10` | Maximum number of times a checkout can be extended |
 | `SCENE_MAX_LIST_RESULTS` | int | `200` | Maximum results returned in a single list query |
 | `SCENE_MAX_NODE_COUNT` | int | `10000` | Maximum nodes allowed in a single scene |
@@ -541,12 +506,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
 | `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
 
-### Species
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `SPECIES_ENABLED` | bool | `true` | Enable/disable Species service |
-
 ### State
 
 | Environment Variable | Type | Default | Description |
@@ -556,8 +515,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations (strong or ev... |
 | `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
 | `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
-| `STATE_MYSQL_CONNECTION_STRING` | string | **REQUIRED** | MySQL connection string for MySQL-backed state stores |
-| `STATE_REDIS_CONNECTION_STRING` | string | `redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
+| `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
 ### Subscription
@@ -584,17 +543,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
 
-### Website
-
-| Environment Variable | Type | Default | Description |
-|---------------------|------|---------|-------------|
-| `WEBSITE_ENABLED` | bool | `true` | Enable/disable Website service |
-
 ## Configuration Summary
 
-- **Total properties**: 433
-- **Required (no default)**: 48
-- **Optional (has default)**: 385
+- **Total properties**: 416
+- **Required (no default)**: 40
+- **Optional (has default)**: 376
 
 ## Environment Variable Naming Convention
 

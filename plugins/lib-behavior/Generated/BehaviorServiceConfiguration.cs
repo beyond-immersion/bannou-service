@@ -48,12 +48,6 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Behavior service
-    /// Environment variable: BEHAVIOR_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Threshold below which urgency is considered low (0.0-1.0)
     /// Environment variable: BEHAVIOR_LOW_URGENCY_THRESHOLD
     /// </summary>

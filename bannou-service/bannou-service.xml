@@ -9202,6 +9202,13 @@
             Environment variable: BANNOU_JWTAUDIENCE
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.ServiceDomain">
+            <summary>
+            Service domain for URL generation.
+            When set, OAuth redirect URIs and WebSocket URLs default to this domain.
+            Environment variable: BANNOU_SERVICE_DOMAIN
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BannouJson">
              <summary>
              Static helper for JSON serialization/deserialization that always uses Bannou's

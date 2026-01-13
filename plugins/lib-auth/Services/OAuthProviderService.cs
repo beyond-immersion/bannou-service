@@ -62,11 +62,11 @@ public class OAuthProviderService : IOAuthProviderService
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var discordClientId = _configuration.DiscordClientId;
         var discordClientSecret = _configuration.DiscordClientSecret;
-        var discordRedirectUri = _configuration.DiscordRedirectUri;
+        var discordRedirectUri = GetEffectiveRedirectUri(_configuration.DiscordRedirectUri, "discord");
 
         if (discordClientId == null || discordClientSecret == null || discordRedirectUri == null)
         {
-            _logger.LogError("Discord OAuth not configured - set AUTH_DISCORD_CLIENT_ID, AUTH_DISCORD_CLIENT_SECRET, and AUTH_DISCORD_REDIRECT_URI");
+            _logger.LogError("Discord OAuth not configured - set AUTH_DISCORD_CLIENT_ID, AUTH_DISCORD_CLIENT_SECRET, or set BANNOU_SERVICE_DOMAIN");
             return null;
         }
 
@@ -148,11 +148,11 @@ public class OAuthProviderService : IOAuthProviderService
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var googleClientId = _configuration.GoogleClientId;
         var googleClientSecret = _configuration.GoogleClientSecret;
-        var googleRedirectUri = _configuration.GoogleRedirectUri;
+        var googleRedirectUri = GetEffectiveRedirectUri(_configuration.GoogleRedirectUri, "google");
 
         if (googleClientId == null || googleClientSecret == null || googleRedirectUri == null)
         {
-            _logger.LogError("Google OAuth not configured - set AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET, and AUTH_GOOGLE_REDIRECT_URI");
+            _logger.LogError("Google OAuth not configured - set AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET, or set BANNOU_SERVICE_DOMAIN");
             return null;
         }
 
@@ -234,11 +234,11 @@ public class OAuthProviderService : IOAuthProviderService
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var twitchClientId = _configuration.TwitchClientId;
         var twitchClientSecret = _configuration.TwitchClientSecret;
-        var twitchRedirectUri = _configuration.TwitchRedirectUri;
+        var twitchRedirectUri = GetEffectiveRedirectUri(_configuration.TwitchRedirectUri, "twitch");
 
         if (twitchClientId == null || twitchClientSecret == null || twitchRedirectUri == null)
         {
-            _logger.LogError("Twitch OAuth not configured - set AUTH_TWITCH_CLIENT_ID, AUTH_TWITCH_CLIENT_SECRET, and AUTH_TWITCH_REDIRECT_URI");
+            _logger.LogError("Twitch OAuth not configured - set AUTH_TWITCH_CLIENT_ID, AUTH_TWITCH_CLIENT_SECRET, or set BANNOU_SERVICE_DOMAIN");
             return null;
         }
 
@@ -512,7 +512,13 @@ public class OAuthProviderService : IOAuthProviderService
                     _logger.LogError("Discord Client ID not configured");
                     return null;
                 }
-                var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
+                var effectiveDiscordRedirect = redirectUri ?? GetEffectiveRedirectUri(_configuration.DiscordRedirectUri, "discord");
+                if (effectiveDiscordRedirect == null)
+                {
+                    _logger.LogError("Discord redirect URI not configured - set AUTH_DISCORD_REDIRECT_URI or BANNOU_SERVICE_DOMAIN");
+                    return null;
+                }
+                var discordRedirectUri = HttpUtility.UrlEncode(effectiveDiscordRedirect);
                 return $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
 
             case Provider.Google:
@@ -521,7 +527,13 @@ public class OAuthProviderService : IOAuthProviderService
                     _logger.LogError("Google Client ID not configured");
                     return null;
                 }
-                var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
+                var effectiveGoogleRedirect = redirectUri ?? GetEffectiveRedirectUri(_configuration.GoogleRedirectUri, "google");
+                if (effectiveGoogleRedirect == null)
+                {
+                    _logger.LogError("Google redirect URI not configured - set AUTH_GOOGLE_REDIRECT_URI or BANNOU_SERVICE_DOMAIN");
+                    return null;
+                }
+                var googleRedirectUri = HttpUtility.UrlEncode(effectiveGoogleRedirect);
                 return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
 
             case Provider.Twitch:
@@ -530,7 +542,13 @@ public class OAuthProviderService : IOAuthProviderService
                     _logger.LogError("Twitch Client ID not configured");
                     return null;
                 }
-                var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
+                var effectiveTwitchRedirect = redirectUri ?? GetEffectiveRedirectUri(_configuration.TwitchRedirectUri, "twitch");
+                if (effectiveTwitchRedirect == null)
+                {
+                    _logger.LogError("Twitch redirect URI not configured - set AUTH_TWITCH_REDIRECT_URI or BANNOU_SERVICE_DOMAIN");
+                    return null;
+                }
+                var twitchRedirectUri = HttpUtility.UrlEncode(effectiveTwitchRedirect);
                 return $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
 
             default:
@@ -569,6 +587,32 @@ public class OAuthProviderService : IOAuthProviderService
             Email = null,
             DisplayName = $"Steam_{_configuration.MockSteamId.Substring(_configuration.MockSteamId.Length - 6)}"
         };
+    }
+
+    /// <summary>
+    /// Gets the effective redirect URI for an OAuth provider.
+    /// Uses explicit config if set, otherwise derives from ServiceDomain if available.
+    /// </summary>
+    /// <param name="configuredUri">The explicitly configured redirect URI (nullable)</param>
+    /// <param name="provider">The provider name (discord, google, twitch)</param>
+    /// <returns>The effective redirect URI, or null if neither is configured</returns>
+    private static string? GetEffectiveRedirectUri(string? configuredUri, string provider)
+    {
+        // If explicit redirect URI is configured, use it
+        if (!string.IsNullOrWhiteSpace(configuredUri))
+        {
+            return configuredUri;
+        }
+
+        // If ServiceDomain is configured, derive the redirect URI from it
+        var serviceDomain = Program.Configuration?.ServiceDomain;
+        if (!string.IsNullOrWhiteSpace(serviceDomain))
+        {
+            return $"https://{serviceDomain}/auth/oauth/{provider}/callback";
+        }
+
+        // Neither configured - return null to indicate provider should be disabled
+        return null;
     }
 
     #region OAuth Response Models

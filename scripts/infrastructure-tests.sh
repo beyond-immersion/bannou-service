@@ -55,7 +55,7 @@ run_test "TESTING plugin execution" "curl --verbose --fail --max-time 10 http://
 
 # Test 4: Configuration validation
 echo "🔍 Testing Configuration..."
-run_test "Environment variables accessible" "test -n \"$SERVICE_DOMAIN\" || echo 'SERVICE_DOMAIN not set, using defaults'"
+run_test "Environment variables accessible" "test -n \"$BANNOU_SERVICE_DOMAIN\" || echo 'BANNOU_SERVICE_DOMAIN not set, using defaults'"
 
 # Summary
 echo ""

@@ -11,6 +11,13 @@ info:
 paths: {}
 x-service-configuration:
   properties:
+    # Security Configuration
+    SecureWebsocket:
+      type: boolean
+      description: When true, publishes blank permission registration making orchestrator inaccessible via WebSocket. Set false for testing.
+      env: ORCHESTRATOR_SECURE_WEBSOCKET
+      default: true
+
     # Cache Configuration
     CacheTtlMinutes:
       type: integer
@@ -113,7 +120,7 @@ x-service-configuration:
       type: string
       description: Redis connection string for orchestrator state.
       env: ORCHESTRATOR_REDIS_CONNECTION_STRING
-      default: "redis:6379"
+      default: "bannou-redis:6379"
     RabbitMqConnectionString:
       type: string
       description: RabbitMQ connection string for orchestrator messaging. No default - credentials vary by environment.

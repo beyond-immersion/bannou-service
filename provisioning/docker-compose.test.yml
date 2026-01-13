@@ -1,15 +1,15 @@
 # Test Configuration - Shared settings for all test scenarios
 # This file provides common test environment overrides
 # Stack with specific test files: test.infrastructure, test.http, or test.edge
+#
+# NOTE: Application configuration (ASPNETCORE_ENVIRONMENT, credentials, feature flags)
+# belongs in .env.test.* files, NOT here. Docker Compose 'environment:' overrides 'env_file:',
+# so hardcoding values here silently ignores the env file settings.
 
 services:
 
   # Bannou test configuration overrides
   bannou:
-    # Test env file will be overridden by specific test compose files
+    # All application configuration comes from env_file in specific test compose files
     # (test.infrastructure, test.http, test.edge each set their own env_file)
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Testing
-      - SERVICE_DOMAIN=${SERVICE_DOMAIN:-test}
-      # Admin role auto-assignment for testing - emails ending with @admin.test.local get admin role
-      - ACCOUNT_ADMIN_EMAIL_DOMAIN=@admin.test.local
+    # Do NOT add environment variables here - they override env_file values

@@ -48,12 +48,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Scene service
-    /// Environment variable: SCENE_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// lib-asset bucket for storing scene documents
     /// Environment variable: SCENE_ASSET_BUCKET
     /// </summary>

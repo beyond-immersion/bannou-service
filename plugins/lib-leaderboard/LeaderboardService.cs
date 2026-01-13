@@ -1108,6 +1108,20 @@ public partial class LeaderboardService : ILeaderboardService
         };
 
     #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permission service on startup.
+    /// Overrides the default IBannouService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Leaderboard service permissions...");
+        await LeaderboardPermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+    }
+
+    #endregion
 }
 
 #region Internal Data Models

@@ -11,16 +11,11 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Matchmaking service
-      default: true
-      env: MATCHMAKING_ENABLED
     ServerSalt:
       type: string
-      description: Server salt for GUID generation. REQUIRED - must be shared across all instances for matchmaking GUIDs to work correctly.
+      description: Server salt for GUID generation. Must be shared across all instances for matchmaking GUIDs to work correctly. Change in production.
       env: MATCHMAKING_SERVER_SALT
-      example: "your-server-salt-for-matchmaking-guids"
+      default: "bannou-dev-matchmaking-salt-change-in-production"
     ProcessingIntervalSeconds:
       type: integer
       description: Default interval between match processing cycles

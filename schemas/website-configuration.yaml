@@ -10,9 +10,4 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Website service
-      default: true
-      env: WEBSITE_ENABLED
+  properties: {}

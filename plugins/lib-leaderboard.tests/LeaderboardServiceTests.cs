@@ -109,7 +109,6 @@ public class LeaderboardServiceTests
         Assert.Equal(1000, config.ScoreUpdateBatchSize);
         Assert.Equal(60, config.RankCacheTtlSeconds);
         Assert.True(config.AutoArchiveOnSeasonEnd);
-        Assert.True(config.Enabled);
     }
 
     [Fact]

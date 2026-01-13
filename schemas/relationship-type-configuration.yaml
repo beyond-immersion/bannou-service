@@ -10,9 +10,4 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Relationship Type service
-      default: true
-      env: RELATIONSHIP_TYPE_ENABLED
+  properties: {}

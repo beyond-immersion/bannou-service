@@ -1,6 +1,17 @@
-# External Client Testing - Loads environment from .env file
-# Stack with base + services + ingress + this file for external client testing
+# External/Production Deployment
+# Only OpenResty exposed on standard ports 80/443
+# All other services communicate via Docker network only
 
 services:
+  # OpenResty - the only internet-facing service
+  openresty:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Certbot webroot for ACME challenges (certificate renewal)
+      - ./certbot-webroot:/var/www/certbot:ro
+
+  # Bannou loads .env file for configuration
   bannou:
     env_file: ../.env

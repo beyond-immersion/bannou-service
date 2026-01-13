@@ -48,7 +48,7 @@ public class LocationServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Location service
+    /// Default configuration property - can be removed if not needed.
     /// Environment variable: LOCATION_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;

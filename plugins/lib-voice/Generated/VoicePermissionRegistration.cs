@@ -67,6 +67,36 @@ public static class VoicePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/voice/room/get",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getVoiceRoom",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/peer/heartbeat",
+            Method = ServiceEndpointMethod.POST,
+            Description = "peerHeartbeat",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/voice/peer/answer",
             Method = ServiceEndpointMethod.POST,
             Description = "answerPeer",

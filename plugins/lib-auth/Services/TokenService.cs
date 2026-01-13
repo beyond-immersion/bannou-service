@@ -52,14 +52,8 @@ public class TokenService : ITokenService
         if (account == null)
             throw new ArgumentNullException(nameof(account));
 
-        if (string.IsNullOrWhiteSpace(_configuration.JwtSecret))
-            throw new InvalidOperationException("JWT secret is not configured");
-
-        if (string.IsNullOrWhiteSpace(_configuration.JwtIssuer))
-            throw new InvalidOperationException("JWT issuer is not configured");
-
-        if (string.IsNullOrWhiteSpace(_configuration.JwtAudience))
-            throw new InvalidOperationException("JWT audience is not configured");
+        // Use core app configuration for JWT settings (validated at startup in Program.cs)
+        var jwtConfig = Program.Configuration;
 
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
@@ -120,8 +114,8 @@ public class TokenService : ITokenService
         await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
         await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
-        // Generate JWT
-        var key = Encoding.UTF8.GetBytes(_configuration.JwtSecret);
+        // Generate JWT using core app configuration
+        var key = Encoding.UTF8.GetBytes(jwtConfig.JwtSecret!);
         var tokenHandler = new JwtSecurityTokenHandler();
 
         var claims = new List<Claim>
@@ -145,8 +139,8 @@ public class TokenService : ITokenService
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             SigningCredentials = signingCredentials,
-            Issuer = _configuration.JwtIssuer,
-            Audience = _configuration.JwtAudience
+            Issuer = jwtConfig.JwtIssuer,
+            Audience = jwtConfig.JwtAudience
         };
 
         var jwt = tokenHandler.CreateToken(tokenDescriptor);
@@ -223,7 +217,9 @@ public class TokenService : ITokenService
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret);
+            // Use core app configuration for JWT settings (validated at startup in Program.cs)
+            var jwtConfig = Program.Configuration;
+            var key = Encoding.ASCII.GetBytes(jwtConfig.JwtSecret!);
 
             try
             {
@@ -232,9 +228,9 @@ public class TokenService : ITokenService
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = _configuration.JwtIssuer,
+                    ValidIssuer = jwtConfig.JwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = _configuration.JwtAudience,
+                    ValidAudience = jwtConfig.JwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };

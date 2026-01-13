@@ -4,3 +4,4 @@ using System.Runtime.CompilerServices;
 [assembly: ApiController]
 [assembly: InternalsVisibleTo("bannou-service.tests")]
 [assembly: InternalsVisibleTo("lib-testing")]
+[assembly: InternalsVisibleTo("test-utilities")]

@@ -185,10 +185,9 @@ Copy `.env.example` to `.env` and configure:
 cp .env.example .env
 
 # Critical settings for production
-AUTH_JWT_SECRET=your-32-char-minimum-secret
-STATE_REDIS_CONNECTION_STRING=redis:6379
-STATE_MYSQL_CONNECTION_STRING=server=mysql;database=bannou;...
-MESSAGING_RABBITMQ_HOST=rabbitmq
+BANNOU_JWT_SECRET=your-64-char-minimum-secret
+BANNOU_SERVICE_DOMAIN=your-domain.example.com
+# Infrastructure defaults: bannou-redis:6379, bannou-mysql, rabbitmq:5672
 ```
 
 ### Service Enable/Disable

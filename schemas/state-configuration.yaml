@@ -27,13 +27,13 @@ x-service-configuration:
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: Redis connection string (host:port format) for Redis-backed state stores
       env: STATE_REDIS_CONNECTION_STRING
-      default: "redis:6379"
+      default: "bannou-redis:6379"
     MySqlConnectionString:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
       description: MySQL connection string for MySQL-backed state stores
       env: STATE_MYSQL_CONNECTION_STRING
-      example: "server=mysql;database=bannou;user=bannou;password=your-password"
+      default: "server=bannou-mysql;database=bannou;user=guest;password=guest"
     ConnectionTimeoutSeconds:
       type: integer
       description: Total timeout in seconds for establishing Redis/MySQL connections

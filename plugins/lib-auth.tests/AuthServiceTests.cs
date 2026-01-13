@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -38,12 +39,12 @@ public class AuthServiceTests
 
     public AuthServiceTests()
     {
+        // Configure JWT settings in Program.Configuration (used by auth services)
+        TestConfigurationHelper.ConfigureJwt();
+
         _mockLogger = new Mock<ILogger<AuthService>>();
         _configuration = new AuthServiceConfiguration
         {
-            JwtSecret = "test-jwt-secret-at-least-32-chars-long",
-            JwtIssuer = "test-issuer",
-            JwtAudience = "test-audience",
             JwtExpirationMinutes = 60,
             MockProviders = true,  // Enable mock providers for testing
             // OAuth provider test configuration
@@ -126,37 +127,30 @@ public class AuthServiceTests
     public void AuthServiceConfiguration_ShouldBindFromEnvironmentVariables()
     {
         // Arrange
-        var testSecret = "test-jwt-secret-from-env";
-        var testIssuer = "test-issuer";
-        var testAudience = "test-audience";
+        // Note: JWT secret/issuer/audience are now in core AppConfiguration (BANNOU_JWT_*)
+        // AuthServiceConfiguration only contains auth-specific settings like expiration
         var testExpiration = 120;
+        var testMockProviders = true;
 
         try
         {
             // Set environment variables with AUTH_ prefix and UPPER_SNAKE_CASE format
-            // The normalization converts AUTH_JWT_SECRET -> JwtSecret
-            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", testSecret);
-            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", testIssuer);
-            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", testAudience);
             Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", testExpiration.ToString());
+            Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", testMockProviders.ToString());
 
             // Act - Build configuration using the same method as dependency injection
             var config = BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration<AuthServiceConfiguration>();
 
             // Assert
             Assert.NotNull(config);
-            Assert.Equal(testSecret, config.JwtSecret);
-            Assert.Equal(testIssuer, config.JwtIssuer);
-            Assert.Equal(testAudience, config.JwtAudience);
             Assert.Equal(testExpiration, config.JwtExpirationMinutes);
+            Assert.Equal(testMockProviders, config.MockProviders);
         }
         finally
         {
             // Clean up environment variables
-            Environment.SetEnvironmentVariable("AUTH_JWT_SECRET", null);
-            Environment.SetEnvironmentVariable("AUTH_JWT_ISSUER", null);
-            Environment.SetEnvironmentVariable("AUTH_JWT_AUDIENCE", null);
             Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", null);
+            Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", null);
         }
     }
 

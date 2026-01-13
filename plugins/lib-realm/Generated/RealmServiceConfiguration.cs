@@ -48,7 +48,7 @@ public class RealmServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Realm service
+    /// Default configuration property - can be removed if not needed.
     /// Environment variable: REALM_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;

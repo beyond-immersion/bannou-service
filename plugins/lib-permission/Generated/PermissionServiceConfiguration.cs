@@ -48,12 +48,6 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Permission service
-    /// Environment variable: PERMISSION_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Maximum retries for acquiring distributed lock
     /// Environment variable: PERMISSION_LOCK_MAX_RETRIES
     /// </summary>

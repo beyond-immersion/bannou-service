@@ -48,12 +48,6 @@ public class MappingServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Mapping service
-    /// Environment variable: MAPPING_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Time in seconds before authority expires without heartbeat
     /// Environment variable: MAPPING_AUTHORITY_TIMEOUT_SECONDS
     /// </summary>

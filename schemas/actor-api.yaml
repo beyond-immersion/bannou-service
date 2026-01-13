@@ -112,7 +112,8 @@ paths:
       operationId: GetActorTemplate
       summary: Get an actor template by ID or category
       x-permissions:
-      - role: user
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -180,7 +181,8 @@ paths:
       operationId: ListActorTemplates
       summary: List all actor templates
       x-permissions:
-      - role: user
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -453,7 +455,8 @@ paths:
         If the actor doesn't exist but a matching template has auto-spawn enabled,
         instantiates the actor and returns it.
       x-permissions:
-      - role: user
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -552,7 +555,8 @@ paths:
       operationId: ListActors
       summary: List actors with optional filters
       x-permissions:
-      - role: user
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -758,8 +762,7 @@ paths:
         - fresh: Inject context and wait for actor to recompute options
         - cached: Return cached options if within maxAgeMs, else recompute
         - stale_ok: Return cached options regardless of age
-      x-permissions:
-      - role: user
+      x-permissions: []  # Internal only - used by other actor instances
       requestBody:
         required: true
         content:
@@ -1021,7 +1024,8 @@ paths:
         Retrieves the current encounter state for an Event Brain actor. Returns
         null encounter data if the actor is not managing an encounter.
       x-permissions:
-      - role: user
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:

@@ -15,12 +15,6 @@ paths: {}
 x-service-configuration:
   properties:
     # Service Enable/Disable
-    Enabled:
-      type: boolean
-      description: Enable/disable Scene service
-      default: true
-      env: SCENE_ENABLED
-
     # Storage Configuration
     AssetBucket:
       type: string

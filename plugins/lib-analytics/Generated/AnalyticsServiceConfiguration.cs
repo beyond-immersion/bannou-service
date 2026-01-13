@@ -48,12 +48,6 @@ public class AnalyticsServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Analytics service
-    /// Environment variable: ANALYTICS_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Name of the state store for entity summaries (Redis recommended)
     /// Environment variable: ANALYTICS_SUMMARY_STORE_NAME
     /// </summary>

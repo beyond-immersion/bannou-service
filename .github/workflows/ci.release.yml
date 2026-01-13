@@ -1,0 +1,195 @@
+name: 'Platform Release'
+
+# Triggers when VERSION file changes on master, or manually
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'VERSION'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (do not create tag/release, just show what would happen)'
+        required: false
+        default: 'false'
+        type: boolean
+      force:
+        description: 'Force release even if tag exists (for re-releasing)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+jobs:
+  release:
+    name: Create Platform Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for tag detection
+
+      - name: Read Version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Version from VERSION file: ${VERSION}"
+
+      - name: Check if Tag Exists
+        id: check_tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Tag ${TAG} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag ${TAG} does not exist yet"
+          fi
+
+      - name: Validate Release
+        if: steps.check_tag.outputs.exists == 'true' && inputs.force != true
+        run: |
+          echo "❌ Tag ${{ steps.version.outputs.tag }} already exists!"
+          echo ""
+          echo "If you need to re-release this version, run the workflow manually with force=true"
+          echo "Or bump the VERSION file to a new version."
+          exit 1
+
+      - name: Extract Release Notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          echo "📝 Extracting release notes for version ${VERSION}..."
+
+          # Extract the section for this version from CHANGELOG.md
+          # Look for ## [VERSION] and capture until the next ## [ or end of notable sections
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "\\[" ver "\\]") {
+                found=1
+                next
+              }
+            }
+            found && /^---$/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$NOTES" ]; then
+            echo "⚠️ No release notes found for version ${VERSION} in CHANGELOG.md"
+            echo "Using default release notes."
+            NOTES="Release ${VERSION}
+
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details."
+          fi
+
+          # Write to file for GitHub Release (handles multiline better)
+          echo "$NOTES" > release_notes.md
+
+          echo "📝 Release notes:"
+          cat release_notes.md
+
+      - name: Find Previous Version Tag
+        id: previous
+        run: |
+          # Find the most recent v* tag (excluding the one we're about to create)
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+          PREVIOUS_TAG=$(git tag -l 'v*' --sort=-v:refname | grep -v "^${CURRENT_TAG}$" | head -n 1)
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "previous_tag=" >> $GITHUB_OUTPUT
+            echo "📌 No previous release tag found"
+          else
+            echo "previous_tag=${PREVIOUS_TAG}" >> $GITHUB_OUTPUT
+            echo "📌 Previous release tag: ${PREVIOUS_TAG}"
+          fi
+
+      - name: Create Git Tag
+        if: inputs.dry_run != true
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$TAG" -m "Release ${VERSION}"
+          git push origin "$TAG"
+
+          echo "✅ Created and pushed tag: ${TAG}"
+
+      - name: Create GitHub Release
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          PREVIOUS_TAG="${{ steps.previous.outputs.previous_tag }}"
+
+          # Build release body
+          {
+            echo "## Bannou Platform v${VERSION}"
+            echo ""
+            cat release_notes.md
+            echo ""
+            echo "---"
+            echo ""
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG}"
+            else
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/commits/${TAG}"
+            fi
+          } > full_release_notes.md
+
+          gh release create "$TAG" \
+            --title "v${VERSION}" \
+            --notes-file full_release_notes.md
+
+          echo "✅ Created GitHub Release: ${TAG}"
+
+      - name: Dry Run Summary
+        if: inputs.dry_run == true
+        run: |
+          echo "🧪 DRY RUN SUMMARY"
+          echo "=================="
+          echo ""
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Tag: ${{ steps.version.outputs.tag }}"
+          echo "Tag exists: ${{ steps.check_tag.outputs.exists }}"
+          echo "Previous tag: ${{ steps.previous.outputs.previous_tag }}"
+          echo ""
+          echo "Release notes that would be used:"
+          echo "---"
+          cat release_notes.md
+          echo "---"
+          echo ""
+          echo "Actions that would be taken:"
+          echo "  1. Create git tag: ${{ steps.version.outputs.tag }}"
+          echo "  2. Push tag to origin"
+          echo "  3. Create GitHub Release with above notes"
+          echo ""
+          echo "To perform the actual release, run this workflow again with dry_run=false"
+
+      - name: Notify Discord
+        if: always() && inputs.dry_run != true && steps.check_tag.outputs.exists != 'true'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Platform Release v${{ steps.version.outputs.version }}"
+          status: ${{ job.status }}
+          commit-message: "Release v${{ steps.version.outputs.version }}"
+          commit-author: ${{ github.actor }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}

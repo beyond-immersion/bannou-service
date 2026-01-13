@@ -130,7 +130,9 @@ paths:
       operationId: getVoiceRoom
       tags:
       - Voice Rooms
-      x-permissions: []
+      x-permissions:
+      - role: admin
+        states: {}  # Admin access for debugging
       requestBody:
         required: true
         content:
@@ -374,7 +376,9 @@ paths:
       operationId: peerHeartbeat
       tags:
       - Voice Peers
-      x-permissions: []
+      x-permissions:
+      - role: admin
+        states: {}  # Admin access for debugging
       requestBody:
         required: true
         content:

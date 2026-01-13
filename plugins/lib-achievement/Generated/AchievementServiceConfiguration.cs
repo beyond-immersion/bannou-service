@@ -48,12 +48,6 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Achievement service
-    /// Environment variable: ACHIEVEMENT_ENABLED
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
     /// Name of the state store for achievement definitions (MySQL recommended)
     /// Environment variable: ACHIEVEMENT_DEFINITION_STORE_NAME
     /// </summary>

@@ -60,22 +60,28 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public string StorageBucket { get; set; } = "bannou-assets";
 
     /// <summary>
-    /// Storage endpoint URL (MinIO/S3 compatible)
+    /// Storage endpoint host:port for internal service connections (MinIO/S3 compatible, no http prefix)
     /// Environment variable: ASSET_STORAGE_ENDPOINT
     /// </summary>
-    public string StorageEndpoint { get; set; } = "http://minio:9000";
+    public string StorageEndpoint { get; set; } = "minio:9000";
+
+    /// <summary>
+    /// Public endpoint for pre-signed URLs accessible by clients. If not set, uses StorageEndpoint. Use for Docker/K8s where internal hostname differs from public access.
+    /// Environment variable: ASSET_STORAGE_PUBLIC_ENDPOINT
+    /// </summary>
+    public string? StoragePublicEndpoint { get; set; }
 
     /// <summary>
     /// Storage access key/username
     /// Environment variable: ASSET_STORAGE_ACCESS_KEY
     /// </summary>
-    public string? StorageAccessKey { get; set; }
+    public string StorageAccessKey { get; set; } = "minioadmin";
 
     /// <summary>
     /// Storage secret key/password
     /// Environment variable: ASSET_STORAGE_SECRET_KEY
     /// </summary>
-    public string? StorageSecretKey { get; set; }
+    public string StorageSecretKey { get; set; } = "minioadmin";
 
     /// <summary>
     /// Storage region (for S3/R2)

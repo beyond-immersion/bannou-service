@@ -449,4 +449,18 @@ public partial class WebsiteService : IWebsiteService
             return (StatusCodes.InternalServerError, null);
         }
     }
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permission service on startup.
+    /// Overrides the default IBannouService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Website service permissions...");
+        await WebsitePermissionRegistration.RegisterViaEventAsync(_messageBus, _logger);
+    }
+
+    #endregion
 }

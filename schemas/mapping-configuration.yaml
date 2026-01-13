@@ -15,12 +15,6 @@ paths: {}
 x-service-configuration:
   properties:
     # Service Enable/Disable
-    Enabled:
-      type: boolean
-      description: Enable/disable Mapping service
-      default: true
-      env: MAPPING_ENABLED
-
     # Authority Management
     AuthorityTimeoutSeconds:
       type: integer

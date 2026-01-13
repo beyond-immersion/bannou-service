@@ -7,13 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.10.0] - 2026-01-13
+
 ### Added
-- Godot SceneComposer SDK with unit tests
+- **Godot SceneComposer SDK** with unit tests for scene composition in Godot projects
+- **OpenResty Configuration System**: Template-based nginx config generation
+  - SSL termination templates for HTTPS endpoints
+  - MinIO storage proxy templates (port 9000 and subdomain patterns)
+  - Dynamic config generation via `generate-configs.sh`
+  - Override directory for environment-specific configs
+- **Production Deployment Tooling**:
+  - ACME challenge configuration for Let's Encrypt certificate renewal
+  - Certbot webroot integration with OpenResty
+  - Production quickstart guide (`docs/guides/PRODUCTION-QUICKSTART.md`)
+- **Release Management**: `scripts/prepare-release.sh` for semantic version releases
+- **Releasing Guide** (`docs/guides/RELEASING.md`): Complete release workflow documentation
+- **Permission Registration Tests**: Verify all plugins register permissions correctly
+- **TestConfigurationHelper**: Shared test utilities for configuration testing
 
 ### Changed
+- **Configuration Defaults**: All services now work out-of-box without secrets
+  - JWT, salts, and credentials have development defaults
+  - MinIO accepts host:port format (not full URLs)
+  - RabbitMQ queue names have sensible defaults
+- **JWT Centralized**: Token configuration moved to AppConfiguration (web host access)
+- **Asset Service**: Pre-signed URLs now use `BANNOU_SERVICE_DOMAIN` when set
+- **Permission System**: More secure defaults, reasonable role assignments
+- **OpenResty Networking**: Only OpenResty exposes ports; services communicate via Docker network
+- **Environment Variables**: Removed hardcoded overrides from Makefile and docker-compose files
 - Save-load plugin uses Redis instead of SQL for pending upload state
 
 ### Fixed
+- Asset upload tests failing due to incorrect service domain in presigned URLs
+- Permission registration missing for several plugins
 - References to planning docs cleaned up
 - Nullable reference fixes throughout codebase
 
@@ -168,7 +196,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.6.0...v0.7.0

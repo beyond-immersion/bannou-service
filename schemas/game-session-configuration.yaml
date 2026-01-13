@@ -11,16 +11,11 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Game Session service
-      default: true
-      env: GAME_SESSION_ENABLED
     ServerSalt:
       type: string
-      description: Server salt for GUID generation. REQUIRED - must be shared across all instances for session GUIDs to work correctly.
+      description: Server salt for GUID generation. Must be shared across all instances for session GUIDs to work correctly. Change in production.
       env: GAME_SESSION_SERVER_SALT
-      example: "your-server-salt-for-session-guids"
+      default: "bannou-dev-game-session-salt-change-in-production"
     MaxPlayersPerSession:
       type: integer
       description: Maximum players allowed per session

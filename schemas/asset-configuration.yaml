@@ -26,23 +26,28 @@ x-service-configuration:
 
     StorageEndpoint:
       type: string
-      description: Storage endpoint URL (MinIO/S3 compatible)
+      description: Storage endpoint host:port for internal service connections (MinIO/S3 compatible, no http prefix)
       env: ASSET_STORAGE_ENDPOINT
-      default: "http://minio:9000"
+      default: "minio:9000"
+
+    StoragePublicEndpoint:
+      type: string
+      nullable: true
+      description: Public endpoint for pre-signed URLs accessible by clients. If not set, uses StorageEndpoint. Use for Docker/K8s where internal hostname differs from public access.
+      env: ASSET_STORAGE_PUBLIC_ENDPOINT
+      example: "localhost:9000"
 
     StorageAccessKey:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage access key/username
       env: ASSET_STORAGE_ACCESS_KEY
-      example: "minioadmin"
+      default: "minioadmin"
 
     StorageSecretKey:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable (service validates at startup if storage requires auth)
       description: Storage secret key/password
       env: ASSET_STORAGE_SECRET_KEY
-      example: "your-minio-secret-key"
+      default: "minioadmin"
 
     StorageRegion:
       type: string

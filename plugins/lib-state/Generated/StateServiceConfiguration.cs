@@ -57,13 +57,13 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// Redis connection string (host:port format) for Redis-backed state stores
     /// Environment variable: STATE_REDIS_CONNECTION_STRING
     /// </summary>
-    public string? RedisConnectionString { get; set; } = "redis:6379";
+    public string? RedisConnectionString { get; set; } = "bannou-redis:6379";
 
     /// <summary>
     /// MySQL connection string for MySQL-backed state stores
     /// Environment variable: STATE_MYSQL_CONNECTION_STRING
     /// </summary>
-    public string? MySqlConnectionString { get; set; }
+    public string? MySqlConnectionString { get; set; } = "server=bannou-mysql;database=bannou;user=guest;password=guest";
 
     /// <summary>
     /// Total timeout in seconds for establishing Redis/MySQL connections

@@ -30,6 +30,23 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             .Configure<AssetServiceConfiguration>((options, config) =>
             {
                 options.Endpoint = config.StorageEndpoint;
+
+                // Public endpoint for pre-signed URLs: use explicit config, or derive from ServiceDomain
+                if (!string.IsNullOrWhiteSpace(config.StoragePublicEndpoint))
+                {
+                    options.PublicEndpoint = config.StoragePublicEndpoint;
+                }
+                else
+                {
+                    var serviceDomain = Program.Configuration?.ServiceDomain;
+                    if (!string.IsNullOrWhiteSpace(serviceDomain))
+                    {
+                        // Default: use ServiceDomain with port 9000 for direct MinIO access
+                        options.PublicEndpoint = $"{serviceDomain}:9000";
+                    }
+                    // If neither configured, PublicEndpoint stays null and URLs use internal endpoint
+                }
+
                 options.AccessKey = config.StorageAccessKey;
                 options.SecretKey = config.StorageSecretKey;
                 options.UseSSL = config.StorageUseSsl;

@@ -15,9 +15,7 @@ services:
       - "./certificates:/certificates"
       - "logs-data:/app/logs/"
       - "./orchestrator/presets:/app/provisioning/orchestrator/presets:ro"
-    ports:
-      - "8080:80"
-      - "8443:443"
+    # No ports exposed - accessed via OpenResty proxy or Docker network
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:80/health"]
       interval: 30s
@@ -32,9 +30,7 @@ services:
   # Loads definitions.json for client events direct exchange and queue expiry policy
   rabbitmq:
     image: rabbitmq:4.0-management
-    ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
+    # No ports exposed - accessed via Docker network
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest

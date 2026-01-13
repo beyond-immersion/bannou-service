@@ -11,12 +11,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    Enabled:
-      type: boolean
-      description: Enable/disable Permission service
-      default: true
-      env: PERMISSION_ENABLED
-
     # === Distributed Lock Parameters (Tier 1) ===
     LockMaxRetries:
       type: integer

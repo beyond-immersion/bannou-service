@@ -108,6 +108,7 @@ up-external: ## Start external client testing stack (OpenResty on ports 80/443)
 	docker compose --env-file .env \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external up -d
@@ -130,6 +131,7 @@ down-external: ## Stop external client testing stack
 	docker compose \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external down --remove-orphans
@@ -139,6 +141,7 @@ logs-external: ## View external stack bannou logs
 	docker compose \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
 		-f provisioning/docker-compose.ingress.yml \
 		-f provisioning/docker-compose.external.yml \
 		--project-name bannou-external logs -f bannou
@@ -377,21 +380,21 @@ test-http: prepare-fixtures
 	else \
 		echo "🧪 Running HTTP integration tests (service-to-service via mesh)..."; \
 	fi
-	@SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		build --no-cache
-	@SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		up -d
-	@( SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@( PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -487,7 +490,7 @@ test-logs-dir:
 test-http-dev: test-logs-dir prepare-fixtures ## HTTP tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting HTTP integration tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -900,9 +903,65 @@ test-voice-down: ## Stop Voice test containers
 	@echo "✅ Voice test containers stopped"
 
 # =============================================================================
-# GIT TAGGING
+# VERSIONING & RELEASES
+# =============================================================================
+# Semantic versioning workflow for platform releases.
+# See docs/guides/RELEASING.md for full documentation.
+#
+# Quick workflow:
+#   1. make prepare-release VERSION=x.y.z   (updates VERSION + CHANGELOG)
+#   2. Review changes with git diff
+#   3. make release-commit VERSION=x.y.z    (commits the changes)
+#   4. Create PR to master
+#   5. Merge triggers automatic tag + GitHub Release
 # =============================================================================
 
+version: ## Show current platform and SDK versions
+	@echo "📦 Platform version: $$(cat VERSION | tr -d '[:space:]')"
+	@echo "📦 SDK version:      $$(cat SDK_VERSION | tr -d '[:space:]')"
+
+prepare-release: ## Prepare a release (updates VERSION + CHANGELOG). Usage: make prepare-release VERSION=x.y.z
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Error: VERSION parameter required"; \
+		echo "Usage: make prepare-release VERSION=x.y.z"; \
+		echo "Example: make prepare-release VERSION=0.10.0"; \
+		exit 1; \
+	fi
+	@scripts/prepare-release.sh $(VERSION)
+
+release-commit: ## Commit release preparation changes. Usage: make release-commit VERSION=x.y.z
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Error: VERSION parameter required"; \
+		echo "Usage: make release-commit VERSION=x.y.z"; \
+		exit 1; \
+	fi
+	@echo "📝 Committing release preparation for v$(VERSION)..."
+	git add VERSION CHANGELOG.md
+	git commit -m "chore: prepare release v$(VERSION)"
+	@echo ""
+	@echo "✅ Release preparation committed"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Push branch:     git push origin HEAD"
+	@echo "  2. Create PR to master"
+	@echo "  3. Merge to trigger automatic release"
+
+release-status: ## Show release status (last tag, pending changes)
+	@echo "📋 Release Status"
+	@echo "================="
+	@echo ""
+	@echo "Current VERSION file: $$(cat VERSION | tr -d '[:space:]')"
+	@echo ""
+	@echo "Last platform release tag:"
+	@git tag -l 'v*' --sort=-v:refname | head -n 1 || echo "  (no tags found)"
+	@echo ""
+	@echo "Last SDK release tag:"
+	@git tag -l 'sdk-v*' --sort=-v:refname | head -n 1 || echo "  (no tags found)"
+	@echo ""
+	@echo "Unreleased changes in CHANGELOG:"
+	@awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{exit} /^---$$/{exit} found && NF {print "  " $$0}' CHANGELOG.md || echo "  (none)"
+
+# Legacy tag command (creates timestamped tags)
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'

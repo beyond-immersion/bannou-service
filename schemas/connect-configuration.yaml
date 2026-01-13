@@ -70,25 +70,21 @@ x-service-configuration:
       description: Rate limit window in minutes
       default: 1
       env: CONNECT_RATE_LIMIT_WINDOW_MINUTES
-    JwtPublicKey:
-      type: string
-      nullable: true  # NRT: Optional config MUST be nullable (uses shared secret if not set)
-      description: RSA public key for JWT validation (PEM format)
-      env: CONNECT_JWT_PUBLIC_KEY
+    # NOTE: JWT validation is delegated to Auth service via HTTP, no local secret needed
     RabbitMqConnectionString:
       type: string
-      description: RabbitMQ connection string for client event subscriptions. No default - credentials vary by environment.
+      description: RabbitMQ connection string for client event subscriptions
       env: CONNECT_RABBITMQ_CONNECTION_STRING
-      example: "amqp://guest:guest@rabbitmq:5672"
+      default: "amqp://guest:guest@rabbitmq:5672"
     ServerSalt:
       type: string
-      description: Server salt for client GUID generation. REQUIRED - must be shared across all Connect instances for session shortcuts to work correctly.
+      description: Server salt for client GUID generation. Must be shared across all Connect instances for session shortcuts to work correctly. Change in production.
       env: CONNECT_SERVER_SALT
-      example: "your-server-salt-for-guid-generation"
+      default: "bannou-dev-connect-salt-change-in-production"
     ConnectUrl:
       type: string
-      nullable: true  # NRT: Optional config MUST be nullable
-      description: WebSocket URL returned to clients for reconnection
+      nullable: true  # NRT: Optional config MUST be nullable (defaults to ServiceDomain if not set)
+      description: WebSocket URL for client reconnection. Defaults to wss://{BANNOU_SERVICE_DOMAIN}/connect if domain set.
       env: CONNECT_URL
 
     ConnectionMode:

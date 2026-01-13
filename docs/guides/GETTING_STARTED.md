@@ -251,23 +251,23 @@ CONNECT_SERVER_SALT=your-server-salt-for-guid-generation
 
 #### State Management (STATE_*)
 ```bash
-STATE_REDIS_CONNECTION_STRING=redis:6379
-STATE_MYSQL_CONNECTION_STRING=server=mysql;database=bannou;user=bannou;password=your-password
+# Defaults (only override if using non-standard hostnames):
+# STATE_REDIS_CONNECTION_STRING=bannou-redis:6379
+# STATE_MYSQL_CONNECTION_STRING=server=bannou-mysql;database=bannou;user=guest;password=guest
 ```
 
 #### Messaging (MESSAGING_*)
 ```bash
-MESSAGING_RABBITMQ_HOST=rabbitmq
-MESSAGING_RABBITMQ_PORT=5672
-MESSAGING_RABBITMQ_USERNAME=guest
-MESSAGING_RABBITMQ_PASSWORD=guest
+# Defaults (only override if using non-standard hostnames):
+# MESSAGING_RABBITMQ_HOST=rabbitmq
+# MESSAGING_RABBITMQ_PORT=5672
 ```
 
 #### Service Mesh (MESH_*)
 ```bash
-MESH_REDIS_CONNECTION_STRING=redis:6379
-MESH_ENDPOINT_HOST=bannou-service
-MESH_ENDPOINT_PORT=80
+# Defaults (only override if using non-standard hostnames):
+# MESH_REDIS_CONNECTION_STRING=bannou-redis:6379
+MESH_ENDPOINT_HOST=bannou  # Docker service name
 ```
 
 ### Service Enable/Disable Flags
@@ -299,7 +299,7 @@ This starts:
 - **bannou**: All 32 services on port 8080
 - **rabbitmq**: Message broker on port 5672 (management: 15672)
 - **bannou-redis**: Redis on port 6379
-- **account-db**: MySQL on port 3306
+- **bannou-mysql**: MySQL on port 3306
 
 Verify:
 ```bash

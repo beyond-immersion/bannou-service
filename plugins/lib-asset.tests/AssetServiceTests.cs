@@ -1530,7 +1530,7 @@ public class AssetConfigurationTests
         // Assert - verify default values from configuration schema
         Assert.Equal("minio", config.StorageProvider);
         Assert.Equal("bannou-assets", config.StorageBucket);
-        Assert.Equal("http://minio:9000", config.StorageEndpoint);
+        Assert.Equal("minio:9000", config.StorageEndpoint);
         Assert.Equal(3600, config.TokenTtlSeconds);
         Assert.Equal(500, config.MaxUploadSizeMb);
         Assert.Equal(50, config.MultipartThresholdMb);

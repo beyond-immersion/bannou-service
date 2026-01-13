@@ -48,7 +48,7 @@ public class SpeciesServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Enable/disable Species service
+    /// Default configuration property - can be removed if not needed.
     /// Environment variable: SPECIES_ENABLED
     /// </summary>
     public bool Enabled { get; set; } = true;
