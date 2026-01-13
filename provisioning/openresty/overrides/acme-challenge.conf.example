@@ -1,0 +1,21 @@
+# ACME challenge location for Let's Encrypt certificate renewal
+# Copy this file to acme-challenge.conf and update server_name for your domain
+#
+# Certbot places challenge files in /var/www/certbot/.well-known/acme-challenge/
+# which is mounted from ./certbot-webroot via docker-compose.external.yml
+
+server {
+    listen 80;
+    server_name YOUR_DOMAIN_HERE;
+
+    # ACME challenge - must be accessible for cert renewal
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files $uri =404;
+    }
+
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

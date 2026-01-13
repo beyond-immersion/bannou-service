@@ -8,6 +8,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      # Certbot webroot for ACME challenges (certificate renewal)
+      - ./certbot-webroot:/var/www/certbot:ro
 
   # Bannou loads .env file for configuration
   bannou:

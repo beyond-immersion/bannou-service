@@ -17,6 +17,8 @@ services:
     volumes:
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
       - ./openresty/lua:/usr/local/openresty/lua:ro
+      - ./openresty/generated:/usr/local/openresty/generated:ro
+      - ./openresty/overrides:/usr/local/openresty/overrides:ro
       - ./certificates:/certs:ro
     environment:
       # Use bannou-redis for service routing (orchestrator writes routing data there)
