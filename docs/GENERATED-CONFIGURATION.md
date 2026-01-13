@@ -127,13 +127,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
 | `ASSET_PROCESSOR_POOL_STORE_NAME` | string | `asset-processor-pool` | Name of the state store for processor pool management |
 | `ASSET_STATESTORE_NAME` | string | `asset-statestore` | Name of the state store for asset metadata |
-| `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username |
+| `ASSET_STORAGE_ACCESS_KEY` | string | `minioadmin` | Storage access key/username |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
-| `ASSET_STORAGE_ENDPOINT` | string | `http://minio:9000` | Storage endpoint URL (MinIO/S3 compatible) |
+| `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port (MinIO/S3 compatible, no http pre... |
 | `ASSET_STORAGE_FORCE_PATH_STYLE` | bool | `true` | Force path-style URLs (required for MinIO) |
 | `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type (minio, s3, r2, azure, filesystem) |
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
-| `ASSET_STORAGE_SECRET_KEY` | string | **REQUIRED** | Storage secret key/password |
+| `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
 | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | string | `temp` | Path prefix for temporary upload staging in storage bucket |
 | `ASSET_TEXTURE_PROCESSOR_POOL_TYPE` | string | `texture-processor` | Pool type name for texture processing |
@@ -235,10 +235,10 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
 | `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
-| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for client event subscriptions. N... |
+| `CONNECT_RABBITMQ_CONNECTION_STRING` | string | `amqp://guest:guest@rabbitmq:5672` (insecure) | RabbitMQ connection string for client event subscriptions |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_SECONDS` | int | `300` | Window for client reconnection after disconnect in seconds (... |
-| `CONNECT_SERVER_SALT` | string | **REQUIRED** | Server salt for client GUID generation. REQUIRED - must be s... |
+| `CONNECT_SERVER_SALT` | string | `bannou-dev-connect-salt-change-in-production` | Server salt for client GUID generation. Must be shared acros... |
 | `CONNECT_SESSION_TTL_SECONDS` | int | `86400` | Session time-to-live in seconds (default 24 hours) |
 | `CONNECT_URL` | string | **REQUIRED** | WebSocket URL for client reconnection. Defaults to wss://{BA... |
 
@@ -282,7 +282,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `7200` | Default session timeout in seconds |
 | `GAME_SESSION_ENABLED` | bool | `true` | Enable/disable Game Session service |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
-| `GAME_SESSION_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `GAME_SESSION_SERVER_SALT` | string | `bannou-dev-game-session-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
 | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `arcadia,generic` | Comma-separated list of supported game service stub names |
 
@@ -350,7 +350,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MATCHMAKING_MAX_CONCURRENT_TICKETS_PER_PLAYER` | int | `3` | Maximum number of concurrent tickets a player can have |
 | `MATCHMAKING_PENDING_MATCH_REDIS_KEY_TTL_SECONDS` | int | `300` | TTL for pending match data in Redis (for reconnection handli... |
 | `MATCHMAKING_PROCESSING_INTERVAL_SECONDS` | int | `15` | Default interval between match processing cycles |
-| `MATCHMAKING_SERVER_SALT` | string | **REQUIRED** | Server salt for GUID generation. REQUIRED - must be shared a... |
+| `MATCHMAKING_SERVER_SALT` | string | `bannou-dev-matchmaking-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
 | `MATCHMAKING_STATS_PUBLISH_INTERVAL_SECONDS` | int | `60` | Interval between stats event publications |
 
 ### Mesh
@@ -589,8 +589,8 @@ This document lists all configuration options defined in Bannou's configuration 
 ## Configuration Summary
 
 - **Total properties**: 429
-- **Required (no default)**: 45
-- **Optional (has default)**: 384
+- **Required (no default)**: 39
+- **Optional (has default)**: 390
 
 ## Environment Variable Naming Convention
 
