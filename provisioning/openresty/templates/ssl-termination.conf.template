@@ -1,0 +1,187 @@
+# SSL Termination Layer for Bannou
+# Generated from template - do not edit directly
+# Run generate-configs.sh to regenerate after env changes
+#
+# Variables used:
+#   ${BANNOU_SERVICE_DOMAIN} - Main domain (e.g., demo.beyond-immersion.com)
+#   ${SSL_CERT_PATH} - Path to SSL certificate
+#   ${SSL_KEY_PATH} - Path to SSL private key
+
+# SSL settings shared across all server blocks
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+ssl_prefer_server_ciphers off;
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 1d;
+
+# Main HTTPS server - mirrors HTTP config with SSL termination
+server {
+    listen 443 ssl;
+    server_name ${BANNOU_SERVICE_DOMAIN};
+
+    ssl_certificate ${SSL_CERT_PATH};
+    ssl_certificate_key ${SSL_KEY_PATH};
+
+    # Variables for dynamic routing (set by Lua)
+    set $target_app_id "bannou";
+    set $target_host "bannou";
+    set $target_port "80";
+
+    # Health check
+    location = /health {
+        access_log off;
+        return 200 "OpenResty SSL OK\n";
+    }
+
+    # Auth endpoints
+    location = /auth/register {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    location = /auth/login {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    location = /auth/refresh {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    location = /auth/validate {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    location = /auth/logout {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    location ~ ^/auth/oauth/(.+)/callback$ {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location ~ ^/auth/oauth/(.+)$ {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /auth/steam/verify {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    location = /auth/password/reset {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    location = /auth/password/confirm {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Content-Type $content_type;
+    }
+
+    # WebSocket endpoint with upgrade (wss://)
+    location ~ ^/connect(/.*)?$ {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_connect_timeout 60s;
+    }
+
+    # Direct MinIO proxy for pre-signed URLs (bucket path)
+    location ~ ^/bannou-assets/ {
+        limit_req zone=asset_download burst=100 nodelay;
+        client_max_body_size 500M;
+        proxy_request_buffering off;
+
+        proxy_pass http://minio_backend;
+        proxy_set_header Host minio:9000;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 600s;
+        proxy_read_timeout 600s;
+    }
+
+    # Block metadata endpoints
+    location ~ /meta/ {
+        return 404;
+    }
+
+    # Catch-all for API and website
+    location / {
+        access_by_lua_file /usr/local/openresty/lua/service_route.lua;
+
+        proxy_pass http://$target_host:$target_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}

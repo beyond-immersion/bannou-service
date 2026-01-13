@@ -52,6 +52,12 @@ msbuild.wrn
 
 [Pp]rovisioning/[Cc]ertificates/
 
+# OpenResty generated configs (from templates)
+provisioning/openresty/generated/*.conf
+provisioning/openresty/overrides/*.conf
+!provisioning/openresty/generated/.gitkeep
+!provisioning/openresty/overrides/.gitkeep
+
 # MegaLinter reports
 megalinter-reports/
 

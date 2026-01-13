@@ -1,0 +1,3 @@
+# This directory contains generated nginx configs
+# Files are created by generate-configs.sh from templates
+# Do not edit files here - edit templates instead

@@ -1,0 +1,3 @@
+# This directory contains environment-specific nginx config overrides
+# Files here are gitignored and will be included after generated configs
+# Use for production-specific settings, custom rate limits, etc.
