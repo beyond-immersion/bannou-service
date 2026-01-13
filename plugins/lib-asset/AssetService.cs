@@ -181,13 +181,16 @@ public partial class AssetService : IAssetService
             else
             {
                 // Generate single upload URL
+                // Note: Metadata is NOT signed in the presigned URL - it's stored in the upload session
+                // and applied during CompleteUploadAsync. This simplifies client implementation
+                // (they only need to send Content-Type) and avoids signature mismatches.
                 var uploadResult = await _storageProvider.GenerateUploadUrlAsync(
                     _configuration.StorageBucket,
                     storageKey,
                     body.ContentType,
                     body.Size,
                     expiration,
-                    body.Metadata?.Tags != null ? new Dictionary<string, string> { { "tags", string.Join(",", body.Metadata.Tags) } } : null)
+                    metadata: null)  // Metadata applied server-side during CompleteUploadAsync
                     .ConfigureAwait(false);
 
                 response = new UploadResponse

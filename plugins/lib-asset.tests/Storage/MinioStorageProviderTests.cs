@@ -1,3 +1,5 @@
+using Amazon.S3;
+using Amazon.S3.Model;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -16,12 +18,14 @@ namespace BeyondImmersion.BannouService.Asset.Tests.Storage;
 public class MinioStorageProviderTests
 {
     private readonly Mock<IMinioClient> _mockMinioClient;
+    private readonly Mock<IAmazonS3> _mockS3Client;
     private readonly Mock<ILogger<MinioStorageProvider>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
 
     public MinioStorageProviderTests()
     {
         _mockMinioClient = new Mock<IMinioClient>();
+        _mockS3Client = new Mock<IAmazonS3>();
         _mockLogger = new Mock<ILogger<MinioStorageProvider>>();
         _mockMessageBus = new Mock<IMessageBus>();
     }
@@ -30,12 +34,13 @@ public class MinioStorageProviderTests
     {
         return new MinioStorageProvider(
             _mockMinioClient.Object,
+            _mockS3Client.Object,
             Options.Create(options),
             _mockLogger.Object,
             _mockMessageBus.Object);
     }
 
-    #region URL Rewriting Tests - GenerateUploadUrlAsync
+    #region URL Rewriting Tests - GenerateUploadUrlAsync (uses AWS SDK)
 
     [Fact]
     public async Task GenerateUploadUrlAsync_WithPublicEndpoint_RewritesHttpUrlToHttps()
@@ -49,8 +54,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bucket/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -73,8 +78,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "https://minio:9000/bucket/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -97,8 +102,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bucket/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -121,8 +126,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bucket/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -131,6 +136,97 @@ public class MinioStorageProviderTests
 
         // Assert
         Assert.Equal(internalUrl, result.UploadUrl);
+    }
+
+    [Fact]
+    public async Task GenerateUploadUrlAsync_SetsContentTypeInRequest()
+    {
+        // Arrange
+        var options = new MinioStorageOptions
+        {
+            Endpoint = "minio:9000",
+            PublicEndpoint = null
+        };
+        var provider = CreateProvider(options);
+        GetPreSignedUrlRequest? capturedRequest = null;
+
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
+            .Callback<GetPreSignedUrlRequest>(req => capturedRequest = req)
+            .ReturnsAsync("http://minio:9000/bucket/test-key?X-Amz-Signature=abc123");
+
+        // Act
+        await provider.GenerateUploadUrlAsync(
+            "bucket", "test-key", "application/x-bannou-bundle", 1024, TimeSpan.FromHours(1));
+
+        // Assert - Content-Type is set in the request (will be signed)
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("application/x-bannou-bundle", capturedRequest.ContentType);
+        Assert.Equal(HttpVerb.PUT, capturedRequest.Verb);
+        Assert.Equal("bucket", capturedRequest.BucketName);
+        Assert.Equal("test-key", capturedRequest.Key);
+    }
+
+    [Fact]
+    public async Task GenerateUploadUrlAsync_SetsMetadataInRequest()
+    {
+        // Arrange
+        var options = new MinioStorageOptions
+        {
+            Endpoint = "minio:9000",
+            PublicEndpoint = null
+        };
+        var provider = CreateProvider(options);
+        GetPreSignedUrlRequest? capturedRequest = null;
+        var metadata = new Dictionary<string, string>
+        {
+            { "upload-id", "test-upload-123" },
+            { "bundle-id", "bundle-456" }
+        };
+
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
+            .Callback<GetPreSignedUrlRequest>(req => capturedRequest = req)
+            .ReturnsAsync("http://minio:9000/bucket/test-key?X-Amz-Signature=abc123");
+
+        // Act
+        await provider.GenerateUploadUrlAsync(
+            "bucket", "test-key", "application/json", 1024, TimeSpan.FromHours(1), metadata);
+
+        // Assert - Metadata is added to the request (will be signed as x-amz-meta-* headers)
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("test-upload-123", capturedRequest.Metadata["upload-id"]);
+        Assert.Equal("bundle-456", capturedRequest.Metadata["bundle-id"]);
+    }
+
+    [Fact]
+    public async Task GenerateUploadUrlAsync_ReturnsRequiredHeadersIncludingMetadata()
+    {
+        // Arrange
+        var options = new MinioStorageOptions
+        {
+            Endpoint = "minio:9000",
+            PublicEndpoint = null
+        };
+        var provider = CreateProvider(options);
+        var metadata = new Dictionary<string, string>
+        {
+            { "upload-id", "test-upload-123" }
+        };
+
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
+            .ReturnsAsync("http://minio:9000/bucket/test-key?X-Amz-Signature=abc123");
+
+        // Act
+        var result = await provider.GenerateUploadUrlAsync(
+            "bucket", "test-key", "application/json", 1024, TimeSpan.FromHours(1), metadata);
+
+        // Assert - RequiredHeaders includes Content-Type and x-amz-meta headers
+        Assert.Contains("Content-Type", result.RequiredHeaders.Keys);
+        Assert.Equal("application/json", result.RequiredHeaders["Content-Type"]);
+        Assert.Contains("x-amz-meta-upload-id", result.RequiredHeaders.Keys);
+        Assert.Equal("test-upload-123", result.RequiredHeaders["x-amz-meta-upload-id"]);
     }
 
     #endregion
@@ -278,8 +374,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bucket/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -302,8 +398,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bannou-assets/test-key?X-Amz-Signature=abc123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act
@@ -326,8 +422,8 @@ public class MinioStorageProviderTests
         var provider = CreateProvider(options);
         var internalUrl = "http://minio:9000/bucket/key?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=abc&X-Amz-Date=20250115&X-Amz-Expires=3600&X-Amz-Signature=xyz123";
 
-        _mockMinioClient
-            .Setup(c => c.PresignedPutObjectAsync(It.IsAny<PresignedPutObjectArgs>()))
+        _mockS3Client
+            .Setup(c => c.GetPreSignedURLAsync(It.IsAny<GetPreSignedUrlRequest>()))
             .ReturnsAsync(internalUrl);
 
         // Act

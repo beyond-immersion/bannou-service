@@ -1,3 +1,5 @@
+using Amazon.Runtime;
+using Amazon.S3;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Metrics;
@@ -82,6 +84,28 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             }
 
             return client.Build();
+        });
+
+        // Register AWS S3 client for presigned URLs (MinIO SDK has bug with Content-Type signing)
+        // See: https://github.com/minio/minio-dotnet/issues/1150
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<MinioStorageOptions>>().Value;
+            var logger = sp.GetService<ILogger<MinioStorageProvider>>();
+
+            var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+            var config = new AmazonS3Config
+            {
+                ServiceURL = $"{(options.UseSSL ? "https" : "http")}://{options.Endpoint}",
+                ForcePathStyle = true, // Required for MinIO
+                UseHttp = !options.UseSSL
+            };
+
+            logger?.LogInformation(
+                "Configuring AWS S3 client for MinIO presigned URLs: ServiceURL={ServiceURL}",
+                config.ServiceURL);
+
+            return new AmazonS3Client(credentials, config);
         });
 
         // Register storage provider
