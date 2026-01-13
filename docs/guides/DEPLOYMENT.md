@@ -202,6 +202,122 @@ In distributed deployments, the Orchestrator publishes service routing informati
 3. `ServiceAppMappingResolver` updates routing tables atomically
 4. Requests route to correct nodes based on current topology
 
+## OpenResty Edge Proxy Configuration
+
+OpenResty serves as the edge proxy for all external traffic, providing:
+- SSL/TLS termination (HTTPS, WSS)
+- Dynamic service routing via Lua + Redis
+- Rate limiting for asset operations
+- MinIO storage proxy for pre-signed URLs
+
+### Configuration Architecture
+
+OpenResty uses a hybrid configuration approach:
+- **Lua `os.getenv()`** for runtime configuration (Redis hosts, etc.)
+- **envsubst templates** for compile-time directives (`server_name`)
+
+```
+provisioning/openresty/
+├── templates/                    # Checked into git
+│   ├── ssl-termination.conf.template
+│   └── storage-proxy.conf.template
+├── generated/                    # Gitignored - created by generate-configs.sh
+├── overrides/                    # Gitignored - production customizations
+├── lua/                          # Lua scripts for dynamic routing
+├── nginx.conf                    # Main config (includes generated/*.conf)
+├── generate-configs.sh           # Template processor
+└── docker-entrypoint.sh          # Generates configs then starts nginx
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BANNOU_SERVICE_DOMAIN` | `localhost` | Domain for SSL server blocks |
+| `ASSET_STORAGE_ENDPOINT` | `minio:9000` | Internal MinIO endpoint |
+| `ASSET_STORAGE_PUBLIC_ENDPOINT` | `{domain}:9000` | Public MinIO endpoint for pre-signed URLs |
+| `SSL_CERT_PATH` | `/etc/nginx/ssl/cert.pem` | SSL certificate path |
+| `SSL_KEY_PATH` | `/etc/nginx/ssl/key.pem` | SSL private key path |
+
+### Generating Configs
+
+```bash
+# Set environment variables
+export BANNOU_SERVICE_DOMAIN=demo.example.com
+export ASSET_STORAGE_ENDPOINT=minio:9000
+
+# Generate configs from templates
+cd provisioning/openresty
+./generate-configs.sh
+```
+
+Output shows substituted values and generated files:
+```
+=== OpenResty Config Generation ===
+BANNOU_SERVICE_DOMAIN: demo.example.com
+ASSET_STORAGE_ENDPOINT: minio:9000
+...
+Generating: ssl-termination.conf
+Generating: storage-proxy.conf
+```
+
+### MinIO Storage Proxy
+
+Pre-signed URLs for asset uploads/downloads are rewritten to use public endpoints. The storage proxy supports two access patterns:
+
+**Port-based** (default):
+```
+https://demo.example.com:9000/bannou-assets/key?signature
+```
+
+**Subdomain-based** (optional):
+```
+https://storage.demo.example.com/bannou-assets/key?signature
+```
+
+Configure which pattern to use:
+```bash
+# Port-based (default when BANNOU_SERVICE_DOMAIN is set)
+ASSET_STORAGE_PUBLIC_ENDPOINT=demo.example.com:9000
+
+# Subdomain-based
+ASSET_STORAGE_PUBLIC_ENDPOINT=storage.demo.example.com
+```
+
+### Production Overrides
+
+For environment-specific configurations that shouldn't be templated, create files in `overrides/`:
+
+```nginx
+# overrides/rate-limiting.conf
+limit_req_zone $binary_remote_addr zone=api:10m rate=100r/s;
+
+# overrides/custom-headers.conf
+add_header X-Frame-Options "SAMEORIGIN" always;
+```
+
+These files are gitignored and included after generated configs.
+
+### Docker Integration
+
+The `docker-entrypoint.sh` script handles config generation at container startup:
+
+```yaml
+# docker-compose.yml
+services:
+  openresty:
+    image: openresty/openresty:alpine
+    entrypoint: ["/etc/openresty/docker-entrypoint.sh"]
+    environment:
+      - BANNOU_SERVICE_DOMAIN=${BANNOU_SERVICE_DOMAIN}
+      - ASSET_STORAGE_ENDPOINT=${ASSET_STORAGE_ENDPOINT:-minio:9000}
+      - SSL_CERT_PATH=/etc/nginx/ssl/cert.pem
+      - SSL_KEY_PATH=/etc/nginx/ssl/key.pem
+    volumes:
+      - ./openresty:/etc/openresty:ro
+      - ./certificates:/etc/nginx/ssl:ro
+```
+
 ## Networking Considerations
 
 ### WSL2 Docker Networking

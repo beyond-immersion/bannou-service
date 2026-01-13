@@ -223,13 +223,91 @@ AUTH_STEAM_API_KEY=your-steam-api-key
 AUTH_STEAM_APP_ID=your-app-id
 ```
 
+## Step 10: Configure SSL/TLS (HTTPS)
+
+Bannou uses OpenResty for SSL termination. The configuration uses templates with environment variable substitution.
+
+### Generate or Obtain SSL Certificates
+
+**Option A: Let's Encrypt (production)**
+```bash
+# Install certbot
+apt install certbot
+
+# Generate certificate
+certbot certonly --standalone -d your-domain.com
+
+# Certificates are saved to:
+# /etc/letsencrypt/live/your-domain.com/fullchain.pem
+# /etc/letsencrypt/live/your-domain.com/privkey.pem
+```
+
+**Option B: Self-signed (development/testing)**
+```bash
+mkdir -p provisioning/certificates
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout provisioning/certificates/key.pem \
+    -out provisioning/certificates/cert.pem \
+    -subj "/CN=your-domain.com"
+```
+
+### Configure SSL Environment Variables
+
+Add to your `.env`:
+
+```bash
+# SSL Certificate Paths
+SSL_CERT_PATH=/etc/nginx/ssl/cert.pem
+SSL_KEY_PATH=/etc/nginx/ssl/key.pem
+
+# For MinIO storage proxy (both patterns work)
+ASSET_STORAGE_PUBLIC_ENDPOINT=your-domain.com:9000
+# Or use subdomain: storage.your-domain.com
+```
+
+### Generate OpenResty Configs
+
+```bash
+cd provisioning/openresty
+./generate-configs.sh
+```
+
+This creates SSL-enabled server blocks from templates using your environment variables.
+
+### Mount Certificates in Docker
+
+Update your Docker Compose to mount the certificates:
+
+```yaml
+services:
+  openresty:
+    volumes:
+      - ./certificates:/etc/nginx/ssl:ro
+      # Or for Let's Encrypt:
+      - /etc/letsencrypt/live/your-domain.com:/etc/nginx/ssl:ro
+```
+
+### Verify SSL Configuration
+
+```bash
+# Test HTTPS endpoint
+curl -k https://your-domain.com/health
+
+# Test WebSocket (wss://)
+# Your game client should now connect via wss://your-domain.com/connect
+
+# Test MinIO storage proxy (port 9000)
+curl -k https://your-domain.com:9000/health
+```
+
 ## Security Checklist
 
 - [ ] Generate unique secrets for each environment
-- [ ] Configure firewall (only allow 22, 80, 443)
-- [ ] Set up SSL certificates for HTTPS
+- [ ] Configure firewall (only allow 22, 80, 443, 9000)
+- [ ] Set up SSL certificates for HTTPS (Step 10)
 - [ ] Configure backup for MySQL and Redis data volumes
 - [ ] Review admin email configuration
+- [ ] Regenerate OpenResty configs after domain changes
 
 ## Troubleshooting
 

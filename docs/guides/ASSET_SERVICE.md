@@ -46,13 +46,19 @@ Request a pre-signed upload URL for a new asset.
 ```json
 {
   "upload_id": "550e8400-e29b-41d4-a716-446655440000",
-  "upload_url": "https://minio:9000/bannou-assets/temp/...",
+  "upload_url": "https://demo.example.com:9000/bannou-assets/temp/...",
   "expires_at": "2025-01-15T12:00:00Z",
   "multipart": false
 }
 ```
 
 For files larger than 50MB (configurable), `multipart: true` with an array of `part_urls`.
+
+**Note:** The `upload_url` uses the configured public endpoint (not the internal `minio:9000`). Configure via:
+- `ASSET_STORAGE_PUBLIC_ENDPOINT` - Explicit public endpoint
+- Falls back to `BANNOU_SERVICE_DOMAIN:9000` if not set
+
+See [Deployment Guide - MinIO Storage Proxy](DEPLOYMENT.md#minio-storage-proxy) for OpenResty configuration.
 
 #### Complete Upload
 ```
