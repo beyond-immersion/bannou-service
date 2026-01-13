@@ -1,6 +1,15 @@
-# External Client Testing - Loads environment from .env file
-# Stack with base + services + ingress + this file for external client testing
+# External/Production Deployment - OpenResty on 80/443, bannou internal only
+# Stack with base + services + storage + ingress + this file for production
 
 services:
+  # OpenResty on standard ports (80/443) - the ONLY external entry point
+  openresty:
+    ports: !reset
+      - "80:80"     # HTTP - standard port for production
+      - "443:443"   # HTTPS - standard port for production
+      - "9081:8080" # Admin interface (internal)
+
+  # Bannou - NO external ports in production, only accessible via OpenResty
   bannou:
     env_file: ../.env
+    ports: !reset []  # Clear all port mappings - internal access only via Docker network
