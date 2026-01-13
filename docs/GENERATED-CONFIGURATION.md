@@ -435,6 +435,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_RABBITMQ_CONNECTION_STRING` | string | **REQUIRED** | RabbitMQ connection string for orchestrator messaging. No de... |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
+| `ORCHESTRATOR_SECURE_WEBSOCKET` | bool | `true` | When true, publishes blank permission registration making or... |
 
 ### Permission
 
@@ -588,9 +589,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 429
+- **Total properties**: 430
 - **Required (no default)**: 39
-- **Optional (has default)**: 390
+- **Optional (has default)**: 391
 
 ## Environment Variable Naming Convention
 

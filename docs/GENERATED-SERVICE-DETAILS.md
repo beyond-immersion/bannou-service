@@ -786,28 +786,28 @@ Central intelligence for Bannou environment management and service orchestration
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
-| `POST` | `/orchestrator/backends/list` | Detect available container orchestration backends | authenticated |
-| `POST` | `/orchestrator/clean` | Clean up unused resources | authenticated |
-| `POST` | `/orchestrator/config/rollback` | Rollback to previous configuration | authenticated |
-| `POST` | `/orchestrator/config/version` | Get current configuration version and metadata | authenticated |
-| `POST` | `/orchestrator/containers/request-restart` | Request container restart (self-service pattern) | authenticated |
-| `POST` | `/orchestrator/containers/status` | Get container health and restart history | authenticated |
-| `POST` | `/orchestrator/deploy` | Deploy or update an environment | authenticated |
-| `POST` | `/orchestrator/health/infrastructure` | Check infrastructure component health | authenticated |
-| `POST` | `/orchestrator/health/services` | Get health status of all services | authenticated |
-| `POST` | `/orchestrator/logs` | Get service/container logs | authenticated |
-| `POST` | `/orchestrator/presets/list` | List available deployment presets | authenticated |
-| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | authenticated |
-| `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | authenticated |
-| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | authenticated |
-| `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | authenticated |
-| `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | authenticated |
-| `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | authenticated |
-| `POST` | `/orchestrator/services/restart` | Restart service with optional configuration | authenticated |
-| `POST` | `/orchestrator/services/should-restart` | Check if service needs restart | authenticated |
-| `POST` | `/orchestrator/status` | Get current environment status | authenticated |
-| `POST` | `/orchestrator/teardown` | Tear down the current environment | authenticated |
-| `POST` | `/orchestrator/topology` | Update service topology without full redeploy | authenticated |
+| `POST` | `/orchestrator/backends/list` | Detect available container orchestration backends | admin |
+| `POST` | `/orchestrator/clean` | Clean up unused resources | admin |
+| `POST` | `/orchestrator/config/rollback` | Rollback to previous configuration | admin |
+| `POST` | `/orchestrator/config/version` | Get current configuration version and metadata | admin |
+| `POST` | `/orchestrator/containers/request-restart` | Request container restart (self-service pattern) | admin |
+| `POST` | `/orchestrator/containers/status` | Get container health and restart history | admin |
+| `POST` | `/orchestrator/deploy` | Deploy or update an environment | admin |
+| `POST` | `/orchestrator/health/infrastructure` | Check infrastructure component health | admin |
+| `POST` | `/orchestrator/health/services` | Get health status of all services | admin |
+| `POST` | `/orchestrator/logs` | Get service/container logs | admin |
+| `POST` | `/orchestrator/presets/list` | List available deployment presets | admin |
+| `POST` | `/orchestrator/processing-pool/acquire` | Acquire a processor from a pool | admin |
+| `POST` | `/orchestrator/processing-pool/cleanup` | Cleanup idle processing pool instances | admin |
+| `POST` | `/orchestrator/processing-pool/release` | Release a processor back to the pool | admin |
+| `POST` | `/orchestrator/processing-pool/scale` | Scale a processing pool | admin |
+| `POST` | `/orchestrator/processing-pool/status` | Get processing pool status | admin |
+| `POST` | `/orchestrator/service-routing` | Get current service-to-app-id routing mappings | admin |
+| `POST` | `/orchestrator/services/restart` | Restart service with optional configuration | admin |
+| `POST` | `/orchestrator/services/should-restart` | Check if service needs restart | admin |
+| `POST` | `/orchestrator/status` | Get current environment status | admin |
+| `POST` | `/orchestrator/teardown` | Tear down the current environment | admin |
+| `POST` | `/orchestrator/topology` | Update service topology without full redeploy | admin |
 
 ---
 
@@ -843,7 +843,7 @@ Redis-backed high-performance permission system for WebSocket services.
 | `POST` | `/permission/clear-session-state` | Clear session state for specific service | authenticated |
 | `POST` | `/permission/get-session-info` | Get complete session information | authenticated |
 | `POST` | `/permission/update-session-role` | Update session role (affects all services) | authenticated |
-| `POST` | `/permission/update-session-state` | Update session state for specific service | authenticated |
+| `POST` | `/permission/update-session-state` | Update session state for specific service | admin |
 
 ---
 
