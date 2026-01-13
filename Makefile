@@ -380,21 +380,21 @@ test-http: prepare-fixtures
 	else \
 		echo "🧪 Running HTTP integration tests (service-to-service via mesh)..."; \
 	fi
-	@BANNOU_SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		build --no-cache
-	@BANNOU_SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		up -d
-	@( BANNOU_SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	@( PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
@@ -490,7 +490,7 @@ test-logs-dir:
 test-http-dev: test-logs-dir prepare-fixtures ## HTTP tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting HTTP integration tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	BANNOU_SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+	PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.storage.yml" \
