@@ -653,7 +653,7 @@ public class Program
         // at least one admin-role endpoint included to ensure permission registration is working.
         // Services without admin-role endpoints (Auth, Behavior, Website) have only user/developer/anonymous
         // endpoints and are tested in the user check.
-        // Services with no WebSocket endpoints (Mesh, Messaging, Orchestrator, State) are internal only.
+        // Services with no WebSocket endpoints (Mesh, Messaging, State) are internal only.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // Account service
@@ -705,7 +705,9 @@ public class Program
             "/matchmaking/queue/create",               // Matchmaking - admin role
 
             // NOTE: Mesh service intentionally excluded - infrastructure service not for client access
-            // NOTE: Orchestrator service intentionally excluded - infrastructure service not for client access
+
+            // Orchestrator service (required for edge tests - will add secure mode flag later)
+            "/orchestrator/status",                    // Orchestrator - admin role
 
             // Permission service
             "/permission/services/list",               // Permission - admin role

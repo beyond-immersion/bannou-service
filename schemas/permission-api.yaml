@@ -173,7 +173,9 @@ paths:
       operationId: updateSessionState
       tags:
       - Session Management
-      x-permissions: []  # Internal only - services update their own session states via events
+      x-permissions:
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:

@@ -65,6 +65,336 @@ public static class OrchestratorPermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/health/infrastructure",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetInfrastructureHealth",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/health/services",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetServicesHealth",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/services/restart",
+            Method = ServiceEndpointMethod.POST,
+            Description = "RestartService",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/services/should-restart",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ShouldRestartService",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/backends/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetBackends",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/presets/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetPresets",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/deploy",
+            Method = ServiceEndpointMethod.POST,
+            Description = "Deploy",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/service-routing",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetServiceRouting",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/teardown",
+            Method = ServiceEndpointMethod.POST,
+            Description = "Teardown",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/clean",
+            Method = ServiceEndpointMethod.POST,
+            Description = "Clean",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/logs",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetLogs",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/topology",
+            Method = ServiceEndpointMethod.POST,
+            Description = "UpdateTopology",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/containers/request-restart",
+            Method = ServiceEndpointMethod.POST,
+            Description = "RequestContainerRestart",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/containers/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetContainerStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/config/rollback",
+            Method = ServiceEndpointMethod.POST,
+            Description = "RollbackConfiguration",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/config/version",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetConfigVersion",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/acquire",
+            Method = ServiceEndpointMethod.POST,
+            Description = "AcquireProcessor",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/release",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ReleaseProcessor",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetPoolStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/scale",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ScalePool",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/orchestrator/processing-pool/cleanup",
+            Method = ServiceEndpointMethod.POST,
+            Description = "CleanupPool",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 
