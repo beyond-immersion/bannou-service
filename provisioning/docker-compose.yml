@@ -4,8 +4,9 @@
 services:
 
   # Bannou monoservice - binds to 0.0.0.0 for WSL2 compatibility
+  # Image can be overridden via BANNOU_IMAGE env var (default: bannou:latest)
   bannou:
-    image: bannou:latest
+    image: ${BANNOU_IMAGE:-bannou:latest}
     build:
       context: ../
       dockerfile: provisioning/Dockerfile

@@ -164,6 +164,66 @@ external-login: ## Login with test admin account and display JWT
 	@echo ""
 	@echo "💡 Use the accessToken above for authenticated requests"
 
+# =============================================================================
+# EXTERNAL IMAGE MANAGEMENT
+# =============================================================================
+# Commands for switching the external stack between local builds and remote images.
+# Use these when testing remote registry images (e.g., CI/CD builds).
+# =============================================================================
+
+external-use-dev: ## Switch external stack to use beyondimmersion/bannou-service:development
+	@echo "🔄 Switching external stack to development image..."
+	@docker tag beyondimmersion/bannou-service:development bannou:latest 2>/dev/null || \
+		(echo "❌ Image beyondimmersion/bannou-service:development not found" && \
+		echo "💡 Pull it with: docker pull beyondimmersion/bannou-service:development" && exit 1)
+	@echo "✅ Tagged beyondimmersion/bannou-service:development as bannou:latest"
+	@$(MAKE) external-update
+	@echo ""
+	@echo "✅ External stack now using development image"
+	@echo "💡 Use 'make external-use-local' to switch back to local build"
+
+external-use-local: ## Switch external stack back to locally-built image
+	@echo "🔄 Switching external stack to local build..."
+	@if docker image inspect bannou:local-backup >/dev/null 2>&1; then \
+		docker tag bannou:local-backup bannou:latest; \
+		echo "✅ Restored bannou:latest from local-backup"; \
+	else \
+		echo "⚠️  No local-backup found, rebuilding from source..."; \
+		docker compose --env-file .env \
+			-f provisioning/docker-compose.yml \
+			-f provisioning/docker-compose.services.yml \
+			-f provisioning/docker-compose.storage.yml \
+			-f provisioning/docker-compose.ingress.yml \
+			-f provisioning/docker-compose.external.yml \
+			--project-name bannou-external build bannou; \
+	fi
+	@$(MAKE) external-update
+	@echo ""
+	@echo "✅ External stack now using local build"
+
+external-update: ## Recreate bannou container with current bannou:latest image (no rebuild)
+	@echo "🔄 Updating external bannou container..."
+	@docker compose --env-file .env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		-f provisioning/docker-compose.external.yml \
+		--project-name bannou-external up -d --no-build --force-recreate bannou
+	@echo "⏳ Waiting for bannou to become healthy..."
+	@timeout 120 bash -c 'while ! docker inspect bannou-external-bannou-1 --format "{{.State.Health.Status}}" 2>/dev/null | grep -q "healthy"; do sleep 3; done' || \
+		(echo "⚠️  Timeout waiting for healthy status" && docker logs --tail 50 bannou-external-bannou-1)
+	@docker ps --filter "name=bannou-external-bannou-1" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+
+external-image: ## Show which image the external bannou container is using
+	@echo "📋 External bannou container image:"
+	@docker inspect bannou-external-bannou-1 --format 'Container: {{.Name}}' 2>/dev/null || echo "❌ Container not running"
+	@docker inspect bannou-external-bannou-1 --format 'Image: {{.Config.Image}}' 2>/dev/null || true
+	@docker inspect bannou-external-bannou-1 --format 'SHA: {{.Image}}' 2>/dev/null || true
+	@echo ""
+	@echo "📋 Available bannou images:"
+	@docker images --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}" | grep -E "bannou|development" || echo "  (none)"
+
 clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (improves grep results)
 	@echo "🧹 Cleaning build artifacts (bin/obj directories)..."
 	@rm -f build-output.txt 2>/dev/null || true
