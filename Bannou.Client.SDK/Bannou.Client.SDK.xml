@@ -33479,6 +33479,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest">
+            <summary>
+            Request to create a new save slot for an entity.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.GameId">
             <summary>
             Game identifier for namespace isolation (e.g., "arcadia", "fantasia")
@@ -33506,7 +33511,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.MaxVersions">
             <summary>
-            Override default max versions for this category
+            Override default max versions for this category (null = use category default)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.RetentionDays">
@@ -33516,7 +33521,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.CompressionType">
             <summary>
-            Compression algorithm to use for save data
+            Compression algorithm to use for save data (null = use category default)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CreateSlotRequest.Tags">
@@ -34835,6 +34840,11 @@
             Gets or sets additional properties not defined in the schema.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest">
+            <summary>
+            Request to copy save data from one slot to another, optionally across different entities or games.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.CopySaveRequest.SourceGameId">
             <summary>
             Game identifier of the source save
@@ -35169,7 +35179,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.Algorithm">
             <summary>
-            Delta computation algorithm to use
+            Delta computation algorithm to use (defaults to JSON_PATCH)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.SaveLoad.SaveDeltaRequest.SchemaVersion">

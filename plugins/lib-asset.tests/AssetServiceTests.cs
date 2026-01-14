@@ -27,6 +27,7 @@ public class AssetServiceTests
     private Mock<IStateStore<List<string>>> _mockIndexStore = null!;
     private Mock<IStateStore<BundleMetadata>> _mockBundleStore = null!;
     private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
+    private Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = null!;
     private Mock<IMessageBus> _mockMessageBus = null!;
     private Mock<ILogger<AssetService>> _mockLogger = null!;
     private AssetServiceConfiguration _configuration = null!;
@@ -44,6 +45,7 @@ public class AssetServiceTests
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
         _mockBundleStore = new Mock<IStateStore<BundleMetadata>>();
         _mockUploadSessionStore = new Mock<IStateStore<UploadSession>>();
+        _mockBundleUploadSessionStore = new Mock<IStateStore<BundleUploadSession>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<AssetService>>();
         _configuration = new AssetServiceConfiguration();
@@ -59,6 +61,7 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockIndexStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<BundleMetadata>(STATE_STORE)).Returns(_mockBundleStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<UploadSession>(STATE_STORE)).Returns(_mockUploadSessionStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<BundleUploadSession>(STATE_STORE)).Returns(_mockBundleUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
     }
 
