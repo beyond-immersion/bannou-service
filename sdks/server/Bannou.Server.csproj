@@ -1,0 +1,123 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BeyondImmersion.Bannou.Server</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.Server</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.Server</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Server SDK for Bannou service platform with service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;server;sdk;service-client</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
+    <PackageReference Include="LiteNetLib" Version="1.2.0" />
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
+  </ItemGroup>
+
+  <!-- Generated Files via MSBuild Target (VS-Compatible) -->
+  <!-- This target dynamically includes generated files from bannou-service -->
+  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <Compile Include="../../bannou-service/Generated/CommonClientEventsModels.cs" />
+      <Compile Include="../../bannou-service/Generated/Clients/*.cs" />
+      <Compile Include="../../bannou-service/Generated/Models/*.cs" />
+      <Compile Include="../../bannou-service/Generated/Events/*.cs" />
+      <Compile Include="../../bannou-service/Generated/CommonEventsModels.cs" />
+      <Compile Include="../../plugins/lib-*/Generated/*ClientEventsModels.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Service Client Infrastructure (for mesh service-to-service calls) -->
+  <ItemGroup>
+    <Compile Include="../../bannou-service/ServiceClients/IServiceClient.cs" Condition="Exists('../../bannou-service/ServiceClients/IServiceClient.cs')" />
+    <Compile Include="../../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../../bannou-service/Services/IServiceAppMappingResolver.cs')" />
+    <Compile Include="../../bannou-service/Services/IMeshInvocationClient.cs" Condition="Exists('../../bannou-service/Services/IMeshInvocationClient.cs')" />
+    <Compile Include="../../bannou-service/ApiException.cs" Condition="Exists('../../bannou-service/ApiException.cs')" />
+    <Compile Include="../../bannou-service/AppConstants.cs" Condition="Exists('../../bannou-service/AppConstants.cs')" />
+    <Compile Include="../../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../../bannou-service/Configuration/BannouJson.cs')" />
+  </ItemGroup>
+
+  <!-- Base Event Classes (required by generated event models) -->
+  <ItemGroup>
+    <Compile Include="../../bannou-service/Events/IBannouEvent.cs" Condition="Exists('../../bannou-service/Events/IBannouEvent.cs')" />
+    <Compile Include="../../bannou-service/Events/BaseServiceEvent.cs" Condition="Exists('../../bannou-service/Events/BaseServiceEvent.cs')" />
+    <Compile Include="../../bannou-service/ClientEvents/BaseClientEvent.cs" Condition="Exists('../../bannou-service/ClientEvents/BaseClientEvent.cs')" />
+  </ItemGroup>
+
+  <!-- WebSocket Binary Protocol -->
+  <ItemGroup>
+    <Compile Include="../../plugins/lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../../plugins/lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../../plugins/lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../../plugins/lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../../plugins/lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../../plugins/lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../../plugins/lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../../plugins/lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../../plugins/lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../../plugins/lib-connect/Protocol/ConnectionState.cs')" />
+  </ItemGroup>
+
+  <!-- Game transport protocol primitives -->
+  <ItemGroup>
+    <Compile Include="../protocol/*.cs" />
+    <Compile Include="../protocol/messages/*.cs" />
+    <Compile Include="../transport/*.cs" />
+  </ItemGroup>
+
+  <!-- Asset Bundle Infrastructure -->
+  <ItemGroup>
+    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleWriter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleWriter.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleManifest.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleIndex.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleValidator.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/BundleConverter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleConverter.cs')" />
+    <Compile Include="../../plugins/lib-asset/Bundles/IBundleConverter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/IBundleConverter.cs')" />
+  </ItemGroup>
+
+  <!-- SDK Source Files (shared with Client SDK) -->
+  <!-- These files live in sdks/client and are referenced here -->
+  <ItemGroup>
+    <Compile Include="../client/BannouClient.cs" />
+    <Compile Include="../client/BannouConnectionManager.cs" />
+    <Compile Include="../client/RemoteAssetCache.cs" />
+    <Compile Include="../client/MetaTypes.cs" />
+    <Compile Include="../client/ResponseCodes.cs" />
+  </ItemGroup>
+
+  <!-- Behavior Runtime (copied from lib-behavior with SDK namespace) -->
+  <!-- Generated by scripts/generate-client-sdk.sh with namespace transformation -->
+  <ItemGroup>
+    <Compile Remove="Generated/Behavior/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Generated/Behavior/**/*.cs" />
+  </ItemGroup>
+
+</Project>

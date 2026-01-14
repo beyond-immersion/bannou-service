@@ -6,7 +6,7 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 
 | Package | Purpose | Target |
 |---------|---------|--------|
-| `BeyondImmersion.Bannou.Client.SDK` | WebSocket client for game clients | Game clients |
+| `BeyondImmersion.Bannou.Client` | WebSocket client for game clients | Game clients |
 | `BeyondImmersion.Bannou.SDK` | Server SDK with mesh service clients | Game servers, internal services |
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling | Game clients with voice |
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing | Scene editor tools |
@@ -35,7 +35,7 @@ Are you building a scene editor?
 
 ## Client SDK
 
-**Package**: `BeyondImmersion.Bannou.Client.SDK`
+**Package**: `BeyondImmersion.Bannou.Client`
 
 Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 
@@ -50,13 +50,13 @@ Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.Bannou.Client;
 
 var client = new BannouClient();
 await client.ConnectWithTokenAsync(connectUrl, accessToken);

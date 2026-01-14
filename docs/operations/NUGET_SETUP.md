@@ -17,7 +17,7 @@ For **game servers** that need service-to-service calls AND WebSocket support.
 
 **Dependencies:** `System.Net.WebSockets.Client`, infrastructure lib references
 
-### **Client SDK** (`BeyondImmersion.Bannou.Client.SDK`)
+### **Client SDK** (`BeyondImmersion.Bannou.Client`)
 For **game clients** that ONLY communicate via WebSocket (no server infrastructure).
 
 **Includes:**
@@ -81,7 +81,7 @@ Add the following secret to your **production environment**:
 
 ### Client SDK
 ```xml
-<PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
+<PackageId>BeyondImmersion.Bannou.Client</PackageId>
 <Authors>BeyondImmersion</Authors>
 <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. For game clients - lightweight with no server infrastructure.</Description>
 <PackageTags>bannou;microservices;websocket;client;sdk;game-client</PackageTags>
@@ -127,7 +127,7 @@ dotnet add package BeyondImmersion.Bannou.SDK
 
 ### For Game Clients (WebSocket only)
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### PackageReference Format
@@ -136,7 +136,7 @@ dotnet add package BeyondImmersion.Bannou.Client.SDK
 <PackageReference Include="BeyondImmersion.Bannou.SDK" Version="*" />
 
 <!-- Client SDK -->
-<PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
+<PackageReference Include="BeyondImmersion.Bannou.Client" Version="*" />
 ```
 
 ## Security Considerations

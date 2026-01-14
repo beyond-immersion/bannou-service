@@ -73,7 +73,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm", "plugins\lib-re
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm.tests", "plugins\lib-realm.tests\lib-realm.tests.csproj", "{791A8F53-2355-47A1-AFAE-6D5741C6285F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.SDK.Tests", "Bannou.SDK.Tests\Bannou.SDK.Tests.csproj", "{ABCC276B-107B-4DC8-9899-6D7A63EF4543}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.Server.Tests", "sdks\server.tests\Bannou.Server.Tests.csproj", "{ABCC276B-107B-4DC8-9899-6D7A63EF4543}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice", "plugins\lib-voice\lib-voice.csproj", "{6D7A987A-7EFD-4965-90FA-27361CD31233}"
 EndProject

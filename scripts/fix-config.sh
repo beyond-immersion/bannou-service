@@ -17,7 +17,7 @@ find . -name "*.cs" \
     -not -path "./bin/*" \
     -not -path "./obj/*" \
     -not -path "./**/Generated/*" \
-    -not -path "./Bannou.Client.SDK/*" \
+    -not -path "./sdks/*" \
     -not -path "./**/obj/*" \
     -not -path "./**/bin/*" \
     | xargs eclint fix
@@ -30,7 +30,7 @@ find . -name "*.md" \
     -not -path "./.git/*" \
     -not -path "./node_modules/*" \
     -not -path "./**/Generated/*" \
-    -not -path "./Bannou.Client.SDK/*" \
+    -not -path "./sdks/*" \
     | xargs eclint fix
 
 # Fix YAML files

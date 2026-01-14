@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.SceneComposer</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Engine-agnostic scene composition SDK for Bannou. Provides hierarchical scene editing, undo/redo, multi-selection, and gizmo logic without engine dependencies.</Description>
+    <PackageTags>bannou;scene;editor;composition;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Allow missing XML docs during initial development -->
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SceneComposer</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Make internals visible to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SceneComposer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reactive extensions for IObservable support -->
+    <PackageReference Include="System.Reactive" Version="6.0.0" />
+
+    <!-- JSON serialization for scene data -->
+    <PackageReference Include="System.Text.Json" Version="9.0.2" />
+
+    <!-- YAML support for scene files -->
+    <PackageReference Include="YamlDotNet" Version="15.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference Bannou Client SDK for shared types (Scene, SceneNode, etc.) -->
+    <ProjectReference Include="../client/Bannou.Client.csproj" />
+  </ItemGroup>
+
+</Project>
