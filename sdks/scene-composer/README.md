@@ -331,8 +331,8 @@ composer.UndoRedoStateChanged += (sender, e) =>
 
 | Package | Engine | Notes |
 |---------|--------|-------|
-| `BeyondImmersion.Bannou.Stride.SceneComposer` | Stride Engine 4.3 | Windows, bundle loading, LRU cache |
-| `BeyondImmersion.Bannou.Godot.SceneComposer` | Godot 4.3+ | Cross-platform, res:// paths |
+| `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride Engine 4.3 | Windows, bundle loading, LRU cache |
+| `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot 4.3+ | Cross-platform, res:// paths |
 
 ## Dependencies
 
@@ -347,12 +347,12 @@ dotnet add package BeyondImmersion.Bannou.SceneComposer
 
 For Stride engine integration:
 ```bash
-dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Stride
 ```
 
 For Godot 4.x engine integration:
 ```bash
-dotnet add package BeyondImmersion.Bannou.Godot.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Godot
 ```
 
 ## License

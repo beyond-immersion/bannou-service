@@ -240,7 +240,7 @@ POST /bundles/get             # Get bundle with download URL
 
 ### 3.4 SDK Infrastructure
 
-**Location**: `/Bannou.Client.SDK/` and `/Bannou.SDK/`
+**Location**: `/sdks/client/` and `/sdks/server/`
 
 **Engine-Agnostic Components**:
 - `BannouClient` - WebSocket connection management
@@ -345,7 +345,7 @@ public interface ISceneComposer
 
 ### 4.2 SDK Core: AssetBundleManager (Engine-Agnostic)
 
-**Enhance Existing**: `RemoteAssetCache<T>` in `/Bannou.Client.SDK/`
+**Enhance Existing**: `RemoteAssetCache<T>` in `/sdks/client/`
 
 **Additional Responsibilities**:
 1. **Bundle Manifest Parsing**

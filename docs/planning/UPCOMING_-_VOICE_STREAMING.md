@@ -46,7 +46,7 @@ The design extends the existing voice plugin with a `StreamingCoordinator` helpe
 
 | Component | License | Status | Notes |
 |-----------|---------|--------|-------|
-| **SIPSorcery** | BSD-3-Clause | ✅ Approved | Pinned to v8.0.14 in Bannou.Client.Voice.SDK |
+| **SIPSorcery** | BSD-3-Clause | ✅ Approved | Pinned to v8.0.14 in sdks/client-voice |
 | **MediaMTX** | MIT | ✅ Approved | Optional test RTMP server |
 | **FFmpeg** | LGPL v2.1+ | ✅ Container | Process isolation, not linked |
 
@@ -705,4 +705,4 @@ services:
 
 - [MediaMTX](https://github.com/bluenviron/mediamtx) - MIT-licensed media server
 - [FFmpeg Licensing](https://www.ffmpeg.org/legal.html) - LGPL vs GPL
-- [SIPSorcery v8.0.14](https://www.nuget.org/packages/SIPSorcery/8.0.14) - BSD-3-Clause (pinned in Bannou.Client.Voice.SDK)
+- [SIPSorcery v8.0.14](https://www.nuget.org/packages/SIPSorcery/8.0.14) - BSD-3-Clause (pinned in sdks/client-voice)

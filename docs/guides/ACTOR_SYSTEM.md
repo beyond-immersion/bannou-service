@@ -1557,7 +1557,7 @@ POST /behavior/bundle/get
 | `lib-behavior/BehaviorService.cs:414-471` | Asset Service upload integration |
 | `lib-behavior/BehaviorBundleManager.cs` | Bundle grouping and management |
 | `lib-actor/Caching/BehaviorDocumentCache.cs` | YAML document caching for actors |
-| `Bannou.Client.SDK/Cache/RemoteAssetCache.cs` | Client-side caching with CRC |
+| `sdks/client/Cache/RemoteAssetCache.cs` | Client-side caching with CRC |
 
 #### Actor Template Reference
 

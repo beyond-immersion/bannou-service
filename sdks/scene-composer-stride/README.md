@@ -20,7 +20,7 @@ This package bridges the engine-agnostic SceneComposer SDK to the Stride game en
 ## Project Structure
 
 ```
-Bannou.Stride.SceneComposer/
+sdks/scene-composer-stride/
 ├── Bridge/                     # Engine bridge implementation
 │   └── StrideSceneComposerBridge.cs
 ├── Content/                    # High-level content management

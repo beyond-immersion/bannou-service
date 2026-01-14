@@ -392,7 +392,7 @@ async Task<bool> WaitForBannouAsync(IPermissionClient permissionClient, TimeSpan
 
 ## When NOT to Use This SDK
 
-Use **Bannou.Client.SDK** instead if you:
+Use **BeyondImmersion.Bannou.Client** instead if you:
 - Only need WebSocket communication (game clients)
 - Want minimal dependencies
 - Don't need service-to-service calls
@@ -405,7 +405,7 @@ Use **Bannou.Client.SDK** instead if you:
 ## Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.SDK
+dotnet add package BeyondImmersion.Bannou.Server
 ```
 
 ## Configuration

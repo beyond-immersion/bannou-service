@@ -96,12 +96,18 @@ make down-compose          # Stop and cleanup
 ```
 bannou-service/
 ├── schemas/              # OpenAPI specifications (source of truth)
-├── plugins/lib-*/        # Service plugins (32 services)
+├── plugins/lib-*/        # Service plugins (33 services)
 ├── bannou-service/       # Main application and shared code
-├── Bannou.SDK/           # Server SDK (mesh clients, behavior runtime)
-├── Bannou.Client.SDK/    # Game client SDK (WebSocket, behavior)
-├── GameProtocol/         # UDP game state protocol
-├── GameTransport/        # LiteNetLib transport layer
+├── sdks/                 # SDK packages
+│   ├── server/           # Server SDK (mesh clients, behavior runtime)
+│   ├── client/           # Client SDK (WebSocket, behavior)
+│   ├── client-voice/     # Voice communication SDK
+│   ├── protocol/         # UDP game state protocol
+│   ├── transport/        # LiteNetLib transport layer
+│   ├── scene-composer/   # Scene composition (engine-agnostic)
+│   ├── scene-composer-stride/  # Stride engine bridge
+│   └── scene-composer-godot/   # Godot engine bridge
+├── examples/             # Example projects and demos
 ├── docs/                 # Documentation
 ├── provisioning/         # Docker and deployment configs
 └── scripts/              # Code generation and build scripts

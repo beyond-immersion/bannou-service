@@ -8,7 +8,7 @@ Bannou provides two SDKs for different use cases:
 
 | SDK | Use Case | Dependencies |
 |-----|----------|--------------|
-| **Server SDK** (`BeyondImmersion.Bannou.SDK`) | Service-to-service communication | .NET, lib-mesh |
+| **Server SDK** (`BeyondImmersion.Bannou.Server`) | Service-to-service communication | .NET, lib-mesh |
 | **Client SDK** (`BeyondImmersion.Bannou.Client`) | Game clients | WebSocket only |
 
 This guide focuses on the **Client SDK** for game engine integration (Unity, Unreal, etc.).

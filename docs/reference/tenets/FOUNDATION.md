@@ -278,15 +278,15 @@ Backend selection is handled by `IStateStoreFactory` based on service configurat
 
 While infrastructure libs are mandatory for service code, certain specialized components have legitimate reasons for direct infrastructure access:
 
-#### 1. SDK/Client Bundle Code (Bannou.SDK)
+#### 1. SDK/Client Bundle Code (sdks/server, sdks/client)
 
-Client SDK packages that ship to external consumers may use `System.Text.Json` directly instead of `BannouJson`. This is because:
-- SDK must be self-contained without internal Bannou dependencies
+Client and Server SDK packages that ship to external consumers may use `System.Text.Json` directly instead of `BannouJson`. This is because:
+- SDKs must be self-contained without internal Bannou dependencies
 - Clients need standard .NET serialization they can configure
 - `BannouJson` is an internal abstraction not exposed to SDK consumers
 
 ```csharp
-// In Bannou.SDK (allowed):
+// In SDK packages (allowed):
 var json = JsonSerializer.Serialize(request, options);
 
 // In lib-* or bannou-service (forbidden):

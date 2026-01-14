@@ -299,7 +299,7 @@ else
 
 ## When NOT to Use This SDK
 
-Use **Bannou.SDK** instead if you need:
+Use **BeyondImmersion.Bannou.Server** instead if you need:
 - Service-to-service communication (game servers calling Bannou services)
 - Generated service clients (`IAuthClient`, `IAccountClient`, etc.)
 - Mesh infrastructure integration
