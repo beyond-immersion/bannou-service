@@ -8,7 +8,7 @@ runs:
       id: check-sdk
       shell: bash
       run: |
-        echo "🔍 Checking if BeyondImmersion.Bannou.Client.SDK is published..."
+        echo "🔍 Checking if BeyondImmersion.Bannou.Client is published..."
         if dotnet restore edge-tester -p:UsePublishedSDK=true --verbosity quiet 2>/dev/null; then
           echo "sdk_available=true" >> $GITHUB_OUTPUT
           echo "✅ Published SDK found - running backward compatibility tests"

@@ -19,6 +19,7 @@ cat << 'EOF'
 🐳 DOCKER & COMPOSE
   build-compose             Build Docker containers (all services)
   build-compose-services SERVICES="auth account"  Build with specific services only
+  push-dev                  Build and push development image to Docker Hub
   build-plugins SERVICES="auth account"           Build specific plugins only
   build-service-libs        Build all service plugins for Docker
   up-compose                Start services locally

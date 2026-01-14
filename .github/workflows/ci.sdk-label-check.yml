@@ -32,13 +32,16 @@ jobs:
 
           # Files that affect the SDK
           SDK_PATTERNS=(
-            "SDK_VERSION"
-            "Bannou.SDK/"
-            "Bannou.Client.SDK/"
+            "sdks/SDK_VERSION"
+            "sdks/server/"
+            "sdks/client/"
+            "sdks/protocol/"
+            "sdks/transport/"
+            "sdks/scene-composer"
             "scripts/generate-client-sdk.sh"
-            "lib-connect/Protocol/"
-            "lib-behavior/Runtime/"
-            "lib-behavior/Intent/"
+            "plugins/lib-connect/Protocol/"
+            "plugins/lib-behavior/Runtime/"
+            "plugins/lib-behavior/Intent/"
           )
 
           for pattern in "${SDK_PATTERNS[@]}"; do

@@ -75,7 +75,7 @@ Game clients connect via WebSocket using the **BannouClient SDK**.
 ### Quick Example (C#)
 
 ```csharp
-using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.Bannou.Client;
 
 // Connect with credentials
 var client = new BannouClient();

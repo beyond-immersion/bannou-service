@@ -6,6 +6,8 @@ FROM bannou:latest AS bannou-base
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 # Build argument to control SDK source (current vs published)
+# Default to local SDK source - edge-tester/Dockerfile.dockerignore includes sdks/
+# Switch to UsePublishedSDK=true once SDK is published to NuGet
 ARG UsePublishedSDK=false
 
 # Copy source code and solution

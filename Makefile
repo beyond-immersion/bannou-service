@@ -55,12 +55,24 @@ quick: ## Quick development cycle - clean, generate, fix, build, unit tests (no 
 build: ## Build all .NET projects
 	dotnet build
 
+build-sdks: ## Build all SDK projects (separate from server)
+	@echo "🔧 Building SDK projects..."
+	dotnet build sdks/bannou-sdks.sln
+	@echo "✅ SDK build completed"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
 		-f provisioning/docker-compose.yml \
 		-f provisioning/docker-compose.services.yml \
 		--project-name bannou build
+
+push-dev: build-compose ## Build and push development image to Docker Hub
+	@echo "🏷️  Tagging bannou:latest as beyondimmersion/bannou-service:development"
+	docker tag bannou:latest beyondimmersion/bannou-service:development
+	@echo "🚀 Pushing beyondimmersion/bannou-service:development"
+	docker push beyondimmersion/bannou-service:development
+	@echo "✅ Push complete"
 
 up-compose: ## Start services locally (base + services)
 	if [ ! -f .env ]; then touch .env; fi
@@ -164,6 +176,66 @@ external-login: ## Login with test admin account and display JWT
 	@echo ""
 	@echo "💡 Use the accessToken above for authenticated requests"
 
+# =============================================================================
+# EXTERNAL IMAGE MANAGEMENT
+# =============================================================================
+# Commands for switching the external stack between local builds and remote images.
+# Use these when testing remote registry images (e.g., CI/CD builds).
+# =============================================================================
+
+external-use-dev: ## Switch external stack to use beyondimmersion/bannou-service:development
+	@echo "🔄 Switching external stack to development image..."
+	@docker tag beyondimmersion/bannou-service:development bannou:latest 2>/dev/null || \
+		(echo "❌ Image beyondimmersion/bannou-service:development not found" && \
+		echo "💡 Pull it with: docker pull beyondimmersion/bannou-service:development" && exit 1)
+	@echo "✅ Tagged beyondimmersion/bannou-service:development as bannou:latest"
+	@$(MAKE) external-update
+	@echo ""
+	@echo "✅ External stack now using development image"
+	@echo "💡 Use 'make external-use-local' to switch back to local build"
+
+external-use-local: ## Switch external stack back to locally-built image
+	@echo "🔄 Switching external stack to local build..."
+	@if docker image inspect bannou:local-backup >/dev/null 2>&1; then \
+		docker tag bannou:local-backup bannou:latest; \
+		echo "✅ Restored bannou:latest from local-backup"; \
+	else \
+		echo "⚠️  No local-backup found, rebuilding from source..."; \
+		docker compose --env-file .env \
+			-f provisioning/docker-compose.yml \
+			-f provisioning/docker-compose.services.yml \
+			-f provisioning/docker-compose.storage.yml \
+			-f provisioning/docker-compose.ingress.yml \
+			-f provisioning/docker-compose.external.yml \
+			--project-name bannou-external build bannou; \
+	fi
+	@$(MAKE) external-update
+	@echo ""
+	@echo "✅ External stack now using local build"
+
+external-update: ## Recreate bannou container with current bannou:latest image (no rebuild)
+	@echo "🔄 Updating external bannou container..."
+	@docker compose --env-file .env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.storage.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		-f provisioning/docker-compose.external.yml \
+		--project-name bannou-external up -d --no-build --force-recreate bannou
+	@echo "⏳ Waiting for bannou to become healthy..."
+	@timeout 120 bash -c 'while ! docker inspect bannou-external-bannou-1 --format "{{.State.Health.Status}}" 2>/dev/null | grep -q "healthy"; do sleep 3; done' || \
+		(echo "⚠️  Timeout waiting for healthy status" && docker logs --tail 50 bannou-external-bannou-1)
+	@docker ps --filter "name=bannou-external-bannou-1" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+
+external-image: ## Show which image the external bannou container is using
+	@echo "📋 External bannou container image:"
+	@docker inspect bannou-external-bannou-1 --format 'Container: {{.Name}}' 2>/dev/null || echo "❌ Container not running"
+	@docker inspect bannou-external-bannou-1 --format 'Image: {{.Config.Image}}' 2>/dev/null || true
+	@docker inspect bannou-external-bannou-1 --format 'SHA: {{.Image}}' 2>/dev/null || true
+	@echo ""
+	@echo "📋 Available bannou images:"
+	@docker images --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}" | grep -E "bannou|development" || echo "  (none)"
+
 clean-build-artifacts: ## Remove bin/obj directories and build-output.txt (improves grep results)
 	@echo "🧹 Cleaning build artifacts (bin/obj directories)..."
 	@rm -f build-output.txt 2>/dev/null || true
@@ -187,6 +259,7 @@ clean: ## Clean generated files, build artifacts, and caches (add PLUGIN=name fo
 		$(MAKE) clean-build-artifacts; \
 		echo "🧹 Cleaning all generated files..."; \
 		find . -path "./plugins/lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		find . -path "./sdks/*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
 		rm -rf bannou-service/Generated 2>/dev/null || true; \
 		echo "🧹 Cleaning caches and resources..."; \
 		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \
@@ -340,6 +413,12 @@ test-unit:
 	@echo "🧪 Running .NET unit tests..."
 	dotnet test
 	@echo "✅ .NET unit tests completed"
+
+# SDK unit testing (separate from server tests)
+test-sdks: ## Run all SDK tests
+	@echo "🧪 Running SDK tests..."
+	dotnet test sdks/bannou-sdks.sln
+	@echo "✅ SDK tests completed"
 
 # Infrastructure integration testing (matches CI workflow)
 # Uses minimal service configuration (TESTING service only) - no databases, no ingress
@@ -918,7 +997,7 @@ test-voice-down: ## Stop Voice test containers
 
 version: ## Show current platform and SDK versions
 	@echo "📦 Platform version: $$(cat VERSION | tr -d '[:space:]')"
-	@echo "📦 SDK version:      $$(cat SDK_VERSION | tr -d '[:space:]')"
+	@echo "📦 SDK version:      $$(cat sdks/SDK_VERSION | tr -d '[:space:]')"
 
 prepare-release: ## Prepare a release (updates VERSION + CHANGELOG). Usage: make prepare-release VERSION=x.y.z
 	@if [ -z "$(VERSION)" ]; then \

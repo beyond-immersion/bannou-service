@@ -1,4 +1,4 @@
-using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Voice;

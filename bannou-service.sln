@@ -73,8 +73,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm", "plugins\lib-re
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-realm.tests", "plugins\lib-realm.tests\lib-realm.tests.csproj", "{791A8F53-2355-47A1-AFAE-6D5741C6285F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.SDK.Tests", "Bannou.SDK.Tests\Bannou.SDK.Tests.csproj", "{ABCC276B-107B-4DC8-9899-6D7A63EF4543}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice", "plugins\lib-voice\lib-voice.csproj", "{6D7A987A-7EFD-4965-90FA-27361CD31233}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-voice.tests", "plugins\lib-voice.tests\lib-voice.tests.csproj", "{D0433697-6CC3-4607-8856-C7AECA1DCB8A}"
@@ -790,24 +788,6 @@ Global
 		{791A8F53-2355-47A1-AFAE-6D5741C6285F}.Release|x64.Build.0 = Release|Any CPU
 		{791A8F53-2355-47A1-AFAE-6D5741C6285F}.Release|x86.ActiveCfg = Release|Any CPU
 		{791A8F53-2355-47A1-AFAE-6D5741C6285F}.Release|x86.Build.0 = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|x64.Build.0 = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Debug|x86.Build.0 = Debug|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|Any CPU.ActiveCfg = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|Any CPU.Build.0 = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|x64.ActiveCfg = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|x64.Build.0 = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|x86.ActiveCfg = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Development|x86.Build.0 = Development|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|x64.ActiveCfg = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|x64.Build.0 = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|x86.ActiveCfg = Release|Any CPU
-		{ABCC276B-107B-4DC8-9899-6D7A63EF4543}.Release|x86.Build.0 = Release|Any CPU
 		{6D7A987A-7EFD-4965-90FA-27361CD31233}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6D7A987A-7EFD-4965-90FA-27361CD31233}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D7A987A-7EFD-4965-90FA-27361CD31233}.Debug|x64.ActiveCfg = Debug|Any CPU

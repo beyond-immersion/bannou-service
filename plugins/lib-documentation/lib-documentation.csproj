@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Documentation</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Documentation</RootNamespace>
     <ServiceLib>documentation</ServiceLib>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
@@ -22,7 +21,5 @@
     <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>

@@ -176,18 +176,21 @@ public partial class AssetService : IAssetService
                 };
 
                 var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 // Generate single upload URL
+                // Note: Metadata is NOT signed in the presigned URL - it's stored in the upload session
+                // and applied during CompleteUploadAsync. This simplifies client implementation
+                // (they only need to send Content-Type) and avoids signature mismatches.
                 var uploadResult = await _storageProvider.GenerateUploadUrlAsync(
                     _configuration.StorageBucket,
                     storageKey,
                     body.ContentType,
                     body.Size,
                     expiration,
-                    body.Metadata?.Tags != null ? new Dictionary<string, string> { { "tags", string.Join(",", body.Metadata.Tags) } } : null)
+                    metadata: null)  // Metadata applied server-side during CompleteUploadAsync
                     .ConfigureAwait(false);
 
                 response = new UploadResponse
@@ -221,7 +224,7 @@ public partial class AssetService : IAssetService
                 };
 
                 var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("RequestUpload: Created upload session {UploadId}, multipart={IsMultipart}",
@@ -270,9 +273,36 @@ public partial class AssetService : IAssetService
 
         try
         {
-            // Retrieve upload session
+            // Retrieve upload session - check both regular and bundle upload prefixes
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-            var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+            var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+
+            // If not found, check for bundle upload session and convert
+            if (session == null)
+            {
+                var bundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                var bundleSession = await bundleStore.GetAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
+
+                if (bundleSession != null)
+                {
+                    // Convert BundleUploadSession to UploadSession for processing
+                    session = new UploadSession
+                    {
+                        UploadId = body.UploadId,
+                        Filename = bundleSession.Filename,
+                        Size = bundleSession.SizeBytes,
+                        ContentType = bundleSession.ContentType,
+                        Owner = bundleSession.Owner,
+                        StorageKey = bundleSession.StorageKey,
+                        IsMultipart = false,
+                        PartCount = 0,
+                        CreatedAt = bundleSession.CreatedAt,
+                        ExpiresAt = bundleSession.ExpiresAt,
+                        IsComplete = false
+                    };
+                    _logger.LogDebug("CompleteUpload: Found bundle upload session {UploadId}", body.UploadId);
+                }
+            }
 
             if (session == null)
             {
@@ -284,7 +314,10 @@ public partial class AssetService : IAssetService
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
                 _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
-                await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+                // Delete both possible session keys (only one will exist)
+                await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+                var expiredBundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                await expiredBundleStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -302,7 +335,7 @@ public partial class AssetService : IAssetService
                 await _storageProvider.CompleteMultipartUploadAsync(
                     _configuration.StorageBucket,
                     session.StorageKey,
-                    body.UploadId.ToString("N"),
+                    body.UploadId.ToString(),
                     storageParts).ConfigureAwait(false);
             }
 
@@ -377,8 +410,10 @@ public partial class AssetService : IAssetService
             // Store index entries for search
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
-            // Delete upload session
-            await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+            // Delete upload session (both regular and bundle prefixes - only one will exist)
+            await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+            var bundleSessionStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+            await bundleSessionStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
@@ -1229,9 +1264,10 @@ public partial class AssetService : IAssetService
 
             // Generate upload ID and storage key
             var uploadIdGuid = Guid.NewGuid();
-            var uploadId = uploadIdGuid.ToString("N");
+            var uploadId = uploadIdGuid.ToString(); // Standard format with dashes for Redis key consistency
+            var uploadIdForPath = uploadIdGuid.ToString("N"); // No dashes for S3 paths (cleaner)
             var sanitizedFilename = SanitizeFilename(body.Filename);
-            var storageKey = $"{_configuration.BundleUploadPathPrefix}/{uploadId}/{sanitizedFilename}";
+            var storageKey = $"{_configuration.BundleUploadPathPrefix}/{uploadIdForPath}/{sanitizedFilename}";
             var bucket = _configuration.StorageBucket;
 
             // Determine content type
@@ -1250,7 +1286,7 @@ public partial class AssetService : IAssetService
                 new Dictionary<string, string>
                 {
                     { "bundle-id", body.ManifestPreview.BundleId },
-                    { "upload-id", uploadId },
+                    { "upload-id", uploadIdForPath }, // Use path format for S3 metadata
                     { "validation-required", "true" }
                 });
 

@@ -357,7 +357,7 @@ The **BannouClient SDK** enables game clients to communicate with Bannou service
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### Connection Patterns
@@ -365,7 +365,7 @@ dotnet add package BeyondImmersion.Bannou.Client.SDK
 #### Pattern 1: Login with Credentials
 
 ```csharp
-using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.Bannou.Client;
 
 var client = new BannouClient();
 

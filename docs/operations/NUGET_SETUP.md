@@ -4,7 +4,7 @@
 
 Bannou publishes **two SDK packages** to NuGet for different use cases:
 
-### **Server SDK** (`BeyondImmersion.Bannou.SDK`)
+### **Server SDK** (`BeyondImmersion.Bannou.Server`)
 For **game servers** that need service-to-service calls AND WebSocket support.
 
 **Includes:**
@@ -17,7 +17,7 @@ For **game servers** that need service-to-service calls AND WebSocket support.
 
 **Dependencies:** `System.Net.WebSockets.Client`, infrastructure lib references
 
-### **Client SDK** (`BeyondImmersion.Bannou.Client.SDK`)
+### **Client SDK** (`BeyondImmersion.Bannou.Client`)
 For **game clients** that ONLY communicate via WebSocket (no server infrastructure).
 
 **Includes:**
@@ -29,7 +29,7 @@ For **game clients** that ONLY communicate via WebSocket (no server infrastructu
 **Dependencies:** `System.Net.WebSockets.Client` (no server infrastructure)
 
 **What's NOT Included:**
-- Service Clients (use `Bannou.SDK` if you need these)
+- Service Clients (use `BeyondImmersion.Bannou.Server` if you need these)
 - Server infrastructure libs
 
 ## Package Configuration
@@ -73,7 +73,7 @@ Add the following secret to your **production environment**:
 
 ### Server SDK
 ```xml
-<PackageId>BeyondImmersion.Bannou.SDK</PackageId>
+<PackageId>BeyondImmersion.Bannou.Server</PackageId>
 <Authors>BeyondImmersion</Authors>
 <Description>Server SDK for Bannou service platform with service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
 <PackageTags>bannou;microservices;websocket;server;sdk;service-client</PackageTags>
@@ -81,7 +81,7 @@ Add the following secret to your **production environment**:
 
 ### Client SDK
 ```xml
-<PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
+<PackageId>BeyondImmersion.Bannou.Client</PackageId>
 <Authors>BeyondImmersion</Authors>
 <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. For game clients - lightweight with no server infrastructure.</Description>
 <PackageTags>bannou;microservices;websocket;client;sdk;game-client</PackageTags>
@@ -122,21 +122,21 @@ graph TD
 
 ### For Game Servers (with service mesh)
 ```bash
-dotnet add package BeyondImmersion.Bannou.SDK
+dotnet add package BeyondImmersion.Bannou.Server
 ```
 
 ### For Game Clients (WebSocket only)
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### PackageReference Format
 ```xml
 <!-- Server SDK -->
-<PackageReference Include="BeyondImmersion.Bannou.SDK" Version="*" />
+<PackageReference Include="BeyondImmersion.Bannou.Server" Version="*" />
 
 <!-- Client SDK -->
-<PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
+<PackageReference Include="BeyondImmersion.Bannou.Client" Version="*" />
 ```
 
 ## Security Considerations
@@ -158,10 +158,10 @@ To test your NuGet configuration locally:
 scripts/generate-client-sdk.sh
 
 # Build and pack Server SDK
-dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
+dotnet pack sdks/server --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
 
 # Build and pack Client SDK
-dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
+dotnet pack sdks/client --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
 
 # Test publish (dry run)
 dotnet nuget push ./test-packages/*.nupkg --api-key YOUR_API_KEY --source https://api.nuget.org/v3/index.json --dry-run

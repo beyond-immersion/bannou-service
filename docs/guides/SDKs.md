@@ -6,27 +6,27 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 
 | Package | Purpose | Target |
 |---------|---------|--------|
-| `BeyondImmersion.Bannou.Client.SDK` | WebSocket client for game clients | Game clients |
-| `BeyondImmersion.Bannou.SDK` | Server SDK with mesh service clients | Game servers, internal services |
+| `BeyondImmersion.Bannou.Client` | WebSocket client for game clients | Game clients |
+| `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients | Game servers, internal services |
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling | Game clients with voice |
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing | Scene editor tools |
-| `BeyondImmersion.Bannou.Stride.SceneComposer` | Stride engine integration | Stride-based editors |
-| `BeyondImmersion.Bannou.Godot.SceneComposer` | Godot 4.x engine integration | Godot-based editors |
+| `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration | Stride-based editors |
+| `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot 4.x engine integration | Godot-based editors |
 
 ## Decision Guide
 
 ```
 Are you building a game client?
-├─ Yes → Use Bannou.Client.SDK
-│        └─ Need voice chat? → Also add Bannou.Client.Voice
+├─ Yes → Use BeyondImmersion.Bannou.Client
+│        └─ Need voice chat? → Also add BeyondImmersion.Bannou.Client.Voice
 │
 └─ No, building a game server or internal service
-   └─ Use Bannou.SDK (includes everything from Client.SDK)
+   └─ Use BeyondImmersion.Bannou.Server (includes everything from Client)
 
 Are you building a scene editor?
-├─ Yes → Start with Bannou.SceneComposer (engine-agnostic core)
-│        └─ Using Stride? → Add Bannou.Stride.SceneComposer
-│        └─ Using Godot? → Add Bannou.Godot.SceneComposer
+├─ Yes → Start with BeyondImmersion.Bannou.SceneComposer (engine-agnostic core)
+│        └─ Using Stride? → Add BeyondImmersion.Bannou.SceneComposer.Stride
+│        └─ Using Godot? → Add BeyondImmersion.Bannou.SceneComposer.Godot
 │
 └─ No → You don't need the SceneComposer packages
 ```
@@ -35,7 +35,7 @@ Are you building a scene editor?
 
 ## Client SDK
 
-**Package**: `BeyondImmersion.Bannou.Client.SDK`
+**Package**: `BeyondImmersion.Bannou.Client`
 
 Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 
@@ -50,13 +50,13 @@ Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.Bannou.Client;
 
 var client = new BannouClient();
 await client.ConnectWithTokenAsync(connectUrl, accessToken);
@@ -78,8 +78,8 @@ client.OnEvent += (sender, eventData) =>
 ### Game Transport (UDP)
 
 ```csharp
-using BeyondImmersion.Bannou.GameProtocol;
-using BeyondImmersion.Bannou.GameTransport;
+using BeyondImmersion.Bannou.Protocol;
+using BeyondImmersion.Bannou.Transport;
 
 var transport = new LiteNetLibClientTransport();
 await transport.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);
@@ -102,7 +102,7 @@ await transport.SendAsync(GameMessageType.PlayerInput, bytes, reliable: true);
 
 ## Server SDK
 
-**Package**: `BeyondImmersion.Bannou.SDK`
+**Package**: `BeyondImmersion.Bannou.Server`
 
 Server SDK for game servers and internal services communicating with Bannou.
 
@@ -112,12 +112,12 @@ Server SDK for game servers and internal services communicating with Bannou.
 - **Mesh service routing** for dynamic service-to-service communication
 - **Event subscription** for real-time updates via pub/sub
 - **All models and events** from Client SDK plus server-specific infrastructure
-- **Includes BannouClient** for WebSocket communication (you don't need Client.SDK separately)
+- **Includes BannouClient** for WebSocket communication (you don't need Client separately)
 
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.SDK
+dotnet add package BeyondImmersion.Bannou.Server
 ```
 
 ### Quick Start
@@ -265,7 +265,7 @@ composer.Redo();
 
 ## Stride SceneComposer
 
-**Package**: `BeyondImmersion.Bannou.Stride.SceneComposer`
+**Package**: `BeyondImmersion.Bannou.SceneComposer.Stride`
 
 Stride engine integration for the SceneComposer SDK.
 
@@ -286,14 +286,14 @@ Stride engine integration for the SceneComposer SDK.
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Stride
 ```
 
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Stride.SceneComposer;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+using BeyondImmersion.Bannou.SceneComposer.Stride;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 
 // Set up content manager
 var contentManager = new StrideContentManager(GraphicsDevice, maxCacheSize: 512 * 1024 * 1024);
@@ -313,7 +313,7 @@ var model = await contentManager.LoadModelAsync("characters", "warrior");
 
 ## Godot SceneComposer
 
-**Package**: `BeyondImmersion.Bannou.Godot.SceneComposer`
+**Package**: `BeyondImmersion.Bannou.SceneComposer.Godot`
 
 Godot 4.x engine integration for the SceneComposer SDK.
 
@@ -333,13 +333,13 @@ Godot 4.x engine integration for the SceneComposer SDK.
 ### Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Godot.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Godot
 ```
 
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Godot.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Godot;
 
 public partial class SceneEditor : Node3D
 {
@@ -404,18 +404,18 @@ transport.FuzzOptions.MaxDelayMs = 50;         // Up to 50ms delay
 
 ## Version Compatibility
 
-All SDKs share the same version number and are released together. The version is stored in `SDK_VERSION` at the repository root.
+All SDKs share the same version number and are released together. The version is stored in `sdks/SDK_VERSION`.
 
-**Current version**: Check the `SDK_VERSION` file or [NuGet packages](https://www.nuget.org/packages?q=BeyondImmersion.Bannou).
+**Current version**: Check the `sdks/SDK_VERSION` file or [NuGet packages](https://www.nuget.org/packages?q=BeyondImmersion.Bannou).
 
 ---
 
 ## Further Reading
 
-- [Client SDK README](../../Bannou.Client.SDK/README.md) - Full client SDK documentation
-- [Server SDK README](../../Bannou.SDK/README.md) - Full server SDK documentation
-- [Voice SDK README](../../Bannou.Client.Voice.SDK/README.md) - Voice SDK documentation
-- [SceneComposer README](../../Bannou.SceneComposer/README.md) - Core SceneComposer docs
-- [Stride SceneComposer README](../../Bannou.Stride.SceneComposer/README.md) - Stride integration
-- [Godot SceneComposer README](../../Bannou.Godot.SceneComposer/README.md) - Godot integration
+- [Client SDK README](../../sdks/client/README.md) - Full client SDK documentation
+- [Server SDK README](../../sdks/server/README.md) - Full server SDK documentation
+- [Voice SDK README](../../sdks/client-voice/README.md) - Voice SDK documentation
+- [SceneComposer README](../../sdks/scene-composer/README.md) - Core SceneComposer docs
+- [Stride SceneComposer README](../../sdks/scene-composer-stride/README.md) - Stride integration
+- [Godot SceneComposer README](../../sdks/scene-composer-godot/README.md) - Godot integration
 - [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Binary protocol details

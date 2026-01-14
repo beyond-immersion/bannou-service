@@ -34,8 +34,8 @@ jobs:
       - name: Get Current Version and Last Release Tag
         id: version
         run: |
-          # Read current base version from SDK_VERSION file (in repo root)
-          CURRENT_VERSION=$(cat SDK_VERSION | tr -d '[:space:]')
+          # Read current base version from SDK_VERSION file
+          CURRENT_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
           echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
           echo "📌 Current SDK_VERSION: ${CURRENT_VERSION}"
 
@@ -186,7 +186,7 @@ jobs:
       - name: Update SDK_VERSION File
         if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
         run: |
-          echo "${{ steps.new_version.outputs.new_version }}" > SDK_VERSION
+          echo "${{ steps.new_version.outputs.new_version }}" > sdks/SDK_VERSION
           echo "✅ Updated SDK_VERSION to ${{ steps.new_version.outputs.new_version }}"
 
       - name: Restore NuGet Packages
@@ -204,36 +204,36 @@ jobs:
           VERSION="${{ steps.new_version.outputs.new_version }}"
           echo "📦 Building SDKs v${VERSION}..."
 
-          # Build and pack Server SDK (Bannou.SDK)
-          echo "📦 Building Server SDK (Bannou.SDK)..."
-          dotnet restore Bannou.SDK
-          dotnet build Bannou.SDK --configuration Release --no-restore
-          dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          # Build and pack Server SDK
+          echo "📦 Building Server SDK..."
+          dotnet restore sdks/server
+          dotnet build sdks/server --configuration Release --no-restore
+          dotnet pack sdks/server --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
-          # Build and pack Client SDK (Bannou.Client.SDK)
-          echo "📦 Building Client SDK (Bannou.Client.SDK)..."
-          dotnet restore Bannou.Client.SDK
-          dotnet build Bannou.Client.SDK --configuration Release --no-restore
-          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          # Build and pack Client SDK
+          echo "📦 Building Client SDK..."
+          dotnet restore sdks/client
+          dotnet build sdks/client --configuration Release --no-restore
+          dotnet pack sdks/client --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
-          # Build and pack SceneComposer SDK (Bannou.SceneComposer)
-          echo "📦 Building SceneComposer SDK (Bannou.SceneComposer)..."
-          dotnet restore Bannou.SceneComposer
-          dotnet build Bannou.SceneComposer --configuration Release --no-restore
-          dotnet pack Bannou.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          # Build and pack SceneComposer SDK
+          echo "📦 Building SceneComposer SDK..."
+          dotnet restore sdks/scene-composer
+          dotnet build sdks/scene-composer --configuration Release --no-restore
+          dotnet pack sdks/scene-composer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
-          # Build and pack Stride SceneComposer SDK (Bannou.Stride.SceneComposer)
+          # Build and pack Stride SceneComposer SDK
           # Note: Uses net10.0 on Linux (full Stride functionality requires Windows)
-          echo "📦 Building Stride SceneComposer SDK (Bannou.Stride.SceneComposer)..."
-          dotnet restore Bannou.Stride.SceneComposer
-          dotnet build Bannou.Stride.SceneComposer --configuration Release --no-restore
-          dotnet pack Bannou.Stride.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          echo "📦 Building Stride SceneComposer SDK..."
+          dotnet restore sdks/scene-composer-stride
+          dotnet build sdks/scene-composer-stride --configuration Release --no-restore
+          dotnet pack sdks/scene-composer-stride --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
-          # Build and pack Godot SceneComposer SDK (Bannou.Godot.SceneComposer)
-          echo "📦 Building Godot SceneComposer SDK (Bannou.Godot.SceneComposer)..."
-          dotnet restore Bannou.Godot.SceneComposer
-          dotnet build Bannou.Godot.SceneComposer --configuration Release --no-restore
-          dotnet pack Bannou.Godot.SceneComposer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          # Build and pack Godot SceneComposer SDK
+          echo "📦 Building Godot SceneComposer SDK..."
+          dotnet restore sdks/scene-composer-godot
+          dotnet build sdks/scene-composer-godot --configuration Release --no-restore
+          dotnet pack sdks/scene-composer-godot --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
           echo "✅ Packages built: ./nuget-packages/"
           ls -la ./nuget-packages/
@@ -259,7 +259,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add SDK_VERSION
+          git add sdks/SDK_VERSION
           git commit -m "chore: bump SDK version to ${VERSION}
 
           🤖 Generated by SDK Release workflow"
@@ -297,12 +297,12 @@ jobs:
 
           **For Game Servers** (with mesh service-to-service calls):
           \`\`\`bash
-          dotnet add package BeyondImmersion.Bannou.SDK --version ${VERSION}
+          dotnet add package BeyondImmersion.Bannou.Server --version ${VERSION}
           \`\`\`
 
           **For Game Clients** (WebSocket only):
           \`\`\`bash
-          dotnet add package BeyondImmersion.Bannou.Client.SDK --version ${VERSION}
+          dotnet add package BeyondImmersion.Bannou.Client --version ${VERSION}
           \`\`\`
 
           **For Scene Editing** (engine-agnostic):
@@ -312,12 +312,12 @@ jobs:
 
           **For Stride Engine** (scene editing with Stride):
           \`\`\`bash
-          dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer --version ${VERSION}
+          dotnet add package BeyondImmersion.Bannou.SceneComposer.Stride --version ${VERSION}
           \`\`\`
 
           **For Godot Engine** (scene editing with Godot 4.x):
           \`\`\`bash
-          dotnet add package BeyondImmersion.Bannou.Godot.SceneComposer --version ${VERSION}
+          dotnet add package BeyondImmersion.Bannou.SceneComposer.Godot --version ${VERSION}
           \`\`\`
 
           ### What's Changed

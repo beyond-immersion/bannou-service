@@ -131,7 +131,7 @@ Example: 1.0.0-preview.123
 The `ci.sdk-release.yml` workflow requires:
 1. `sdk-release` label on PR
 2. Manual workflow dispatch
-3. Version bump in `SDK_VERSION` file
+3. Version bump in `sdks/SDK_VERSION` file
 
 ```bash
 # Trigger stable release
@@ -244,7 +244,7 @@ await Task.Delay(1000);  # Or use proper health checks
 
 1. Verify NuGet API key is valid
 2. Check version doesn't already exist
-3. Ensure `SDK_VERSION` file is updated
+3. Ensure `sdks/SDK_VERSION` file is updated
 
 ### Discord Notifications Not Working
 

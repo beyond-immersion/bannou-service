@@ -8,8 +8,8 @@ Bannou provides two SDKs for different use cases:
 
 | SDK | Use Case | Dependencies |
 |-----|----------|--------------|
-| **Server SDK** (`BeyondImmersion.Bannou.SDK`) | Service-to-service communication | .NET, lib-mesh |
-| **Client SDK** (`BeyondImmersion.Bannou.Client.SDK`) | Game clients | WebSocket only |
+| **Server SDK** (`BeyondImmersion.Bannou.Server`) | Service-to-service communication | .NET, lib-mesh |
+| **Client SDK** (`BeyondImmersion.Bannou.Client`) | Game clients | WebSocket only |
 
 This guide focuses on the **Client SDK** for game engine integration (Unity, Unreal, etc.).
 
@@ -399,7 +399,7 @@ async function sendWithRetry(capabilityName, payload, maxRetries = 3) {
 ### NuGet (Unity/.NET)
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Client.SDK
+dotnet add package BeyondImmersion.Bannou.Client
 ```
 
 ### npm (TypeScript)

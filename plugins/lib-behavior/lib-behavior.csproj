@@ -1,14 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="../../ServiceLib.targets" />
+  <Import Project="../ServiceLib.targets" />
 
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Behavior</RootNamespace>
 		<ServiceLib>behavior</ServiceLib>
-		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../../bannou-service/bannou-service.csproj" />
 		<ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
 		<ProjectReference Include="../lib-state/lib-state.csproj" />
 	</ItemGroup>

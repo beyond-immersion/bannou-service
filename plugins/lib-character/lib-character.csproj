@@ -1,15 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Character</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Character</RootNamespace>
     <ServiceLib>character</ServiceLib>
   </PropertyGroup>
+
   <ItemGroup>
     <!-- All service clients and models are in bannou-service/Generated/ - no cross-service references needed -->
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
@@ -19,7 +18,5 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>

@@ -9,8 +9,8 @@ echo "🔧 Generating Bannou SDK behavior runtime files..."
 # =============================================================================
 # lib-behavior uses namespace BeyondImmersion.BannouService.Behavior
 # SDKs need their own namespaces:
-#   - Server SDK: BeyondImmersion.Bannou.SDK.Behavior
-#   - Client SDK: BeyondImmersion.Bannou.Client.SDK.Behavior
+#   - Server SDK: BeyondImmersion.Bannou.Server.Behavior
+#   - Client SDK: BeyondImmersion.Bannou.Client.Behavior
 #
 # This script ONLY regenerates the behavior runtime files with namespace
 # transformation. The SDK .csproj files are static and committed to git.
@@ -66,26 +66,26 @@ copy_behavior_files() {
 }
 
 # =============================================================================
-# SERVER SDK: Bannou.SDK
+# SERVER SDK: sdks/server
 # =============================================================================
 
-SERVER_SDK_DIR="Bannou.SDK"
+SERVER_SDK_DIR="sdks/server"
 mkdir -p "$SERVER_SDK_DIR/Generated/Behavior"
 
 # Copy behavior files with Server SDK namespace
-copy_behavior_files "$SERVER_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.SDK.Behavior"
+copy_behavior_files "$SERVER_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.Server.Behavior"
 
 echo "✅ Server SDK behavior files: $SERVER_SDK_DIR/Generated/Behavior/"
 
 # =============================================================================
-# CLIENT SDK: Bannou.Client.SDK
+# CLIENT SDK: sdks/client
 # =============================================================================
 
-CLIENT_SDK_DIR="Bannou.Client.SDK"
+CLIENT_SDK_DIR="sdks/client"
 mkdir -p "$CLIENT_SDK_DIR/Generated/Behavior"
 
 # Copy behavior files with Client SDK namespace
-copy_behavior_files "$CLIENT_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.Client.SDK.Behavior"
+copy_behavior_files "$CLIENT_SDK_DIR/Generated/Behavior" "BeyondImmersion.Bannou.Client.Behavior"
 
 echo "✅ Client SDK behavior files: $CLIENT_SDK_DIR/Generated/Behavior/"
 

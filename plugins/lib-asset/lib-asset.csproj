@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Asset</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Asset</RootNamespace>
     <ServiceLib>asset</ServiceLib>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
@@ -19,12 +18,12 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <!-- MinIO S3-compatible storage provider -->
     <PackageReference Include="Minio" Version="7.0.0" />
+    <!-- AWS SDK for presigned URLs (MinIO SDK has bug with Content-Type signing) -->
+    <PackageReference Include="AWSSDK.S3" Version="4.0.0.3" />
     <!-- LZ4 compression for .bannou bundle format -->
     <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
     <!-- FFmpeg wrapper for audio/video transcoding -->
     <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>

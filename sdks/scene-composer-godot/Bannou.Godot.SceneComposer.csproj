@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Godot 4.3 uses .NET 8.0 -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.SceneComposer.Godot</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Godot 4.x engine extension for the Bannou SceneComposer SDK. Provides ISceneComposerBridge implementation, asset loading, and gizmo rendering for Godot-based games.</Description>
+    <PackageTags>bannou;godot;scene;editor;composition;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer.Godot</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SceneComposer.Godot</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Make internals visible to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SceneComposer.Godot.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Godot 4.3 C# bindings -->
+    <PackageReference Include="GodotSharp" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference the engine-agnostic SceneComposer SDK -->
+    <ProjectReference Include="../scene-composer/Bannou.SceneComposer.csproj" />
+  </ItemGroup>
+
+</Project>

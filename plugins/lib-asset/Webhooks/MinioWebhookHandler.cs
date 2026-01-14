@@ -118,7 +118,7 @@ public class MinioWebhookHandler
         }
 
         // Look up the upload session
-        var stateKey = $"{_configuration.UploadSessionKeyPrefix}{uploadId:N}";
+        var stateKey = $"{_configuration.UploadSessionKeyPrefix}{uploadId}";
         var session = await _stateStore.GetAsync(stateKey).ConfigureAwait(false);
 
         if (session == null)

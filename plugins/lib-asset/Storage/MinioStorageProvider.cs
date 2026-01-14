@@ -1,3 +1,5 @@
+using Amazon.S3;
+using Amazon.S3.Model;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,10 +12,12 @@ namespace BeyondImmersion.BannouService.Asset.Storage;
 /// <summary>
 /// MinIO/S3-compatible implementation of the asset storage provider.
 /// Supports pre-signed URLs, multipart uploads, versioning, and object management.
+/// Uses AWS SDK for presigned URLs (MinIO SDK has Content-Type signing bug).
 /// </summary>
 public class MinioStorageProvider : StorageModels.IAssetStorageProvider
 {
     private readonly IMinioClient _minioClient;
+    private readonly IAmazonS3 _s3Client;
     private readonly MinioStorageOptions _options;
     private readonly ILogger<MinioStorageProvider> _logger;
     private readonly IMessageBus _messageBus;
@@ -53,16 +57,19 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     /// Initializes a new instance of the <see cref="MinioStorageProvider"/> class.
     /// </summary>
     /// <param name="minioClient">MinIO client for storage operations.</param>
+    /// <param name="s3Client">AWS S3 client for presigned URLs (works around MinIO SDK bug).</param>
     /// <param name="options">Storage configuration options.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
     public MinioStorageProvider(
         IMinioClient minioClient,
+        IAmazonS3 s3Client,
         IOptions<MinioStorageOptions> options,
         ILogger<MinioStorageProvider> logger,
         IMessageBus messageBus)
     {
         _minioClient = minioClient ?? throw new ArgumentNullException(nameof(minioClient));
+        _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -82,33 +89,46 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
 
         try
         {
-            var reqParams = new Dictionary<string, string>
+            // Use AWS SDK for presigned URLs - MinIO SDK has Content-Type signing bug
+            // See: https://github.com/minio/minio-dotnet/issues/1150
+            var request = new GetPreSignedUrlRequest
             {
-                { "Content-Type", contentType }
+                BucketName = bucket,
+                Key = key,
+                Verb = HttpVerb.PUT,
+                Expires = DateTime.UtcNow.Add(expiration),
+                ContentType = contentType
             };
 
-            // Add custom metadata headers
+            // Headers that client must send (returned in PreSignedUploadResult.RequiredHeaders)
             var requiredHeaders = new Dictionary<string, string>
             {
                 { "Content-Type", contentType }
             };
 
+            // Add custom metadata - AWS SDK properly signs these
             if (metadata != null)
             {
                 foreach (var kvp in metadata)
                 {
-                    reqParams[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
+                    request.Metadata.Add(kvp.Key, kvp.Value);
                     requiredHeaders[$"x-amz-meta-{kvp.Key}"] = kvp.Value;
                 }
             }
 
-            var presignedUrl = await _minioClient.PresignedPutObjectAsync(
-                new PresignedPutObjectArgs()
-                    .WithBucket(bucket)
-                    .WithObject(key)
-                    .WithExpiry((int)expiration.TotalSeconds)
-                    .WithHeaders(reqParams))
-                .ConfigureAwait(false);
+            var presignedUrl = await _s3Client.GetPreSignedURLAsync(request).ConfigureAwait(false);
+
+            // AWS SDK v4 generates HTTPS URLs by default regardless of UseHttp configuration
+            // See: https://github.com/aws/aws-sdk-net/issues/1253
+            // When SSL is disabled, we must manually correct the scheme
+            if (!_options.UseSSL && presignedUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                presignedUrl = "http://" + presignedUrl.Substring(8);
+            }
+
+            _logger.LogDebug(
+                "Generated presigned URL with AWS SDK: ContentType={ContentType}, MetadataCount={MetadataCount}",
+                contentType, metadata?.Count ?? 0);
 
             return new StorageModels.PreSignedUploadResult(
                 RewriteUrlForPublicAccess(presignedUrl),
