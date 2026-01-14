@@ -153,11 +153,62 @@ These are referenced directly by other SDK projects via `<Compile Include="...">
 
 ## Version Management
 
-All SDK packages share a single version number defined in `sdks/SDK_VERSION`. This ensures:
+All SDK packages share a single version number defined in `sdks/SDK_VERSION`.
 
-- Consistent versioning across all packages
-- Simplified dependency management
-- Clear release coordination
+### Unified Versioning Strategy
+
+We use **unified versioning** (also called "lockstep versioning"), where all SDK packages share the same version number and are published together on every release.
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Version source | Single `SDK_VERSION` file | One source of truth |
+| Publish scope | All SDKs every release | Simplicity, clear compatibility |
+| Version gaps | None (all packages always in sync) | Avoids user confusion |
+
+### Why Full Publish (Not Sparse)
+
+We considered two patterns:
+
+1. **Full publish** (chosen): All SDKs published every release, even if unchanged
+2. **Sparse publish**: Only publish SDKs that changed
+
+We chose full publish because:
+
+- **Simplicity**: No complex change detection needed
+- **Clear compatibility**: "All 1.5.0 packages work together" is unambiguous
+- **Industry norm**: Microsoft publishes 100+ ASP.NET Core packages per release, even unchanged ones
+- **NuGet handles it**: Publishing identical code with a new version is fine
+- **Transitive dependencies**: When `SceneComposer` changes, `SceneComposer.Stride` and `SceneComposer.Godot` depend on it, so they'd need publishing anyway
+
+The "wasted" NuGet bandwidth from republishing unchanged packages is negligible compared to the cognitive simplicity.
+
+### Release Workflow
+
+Releases are triggered manually via the `ci.sdk-release.yml` workflow:
+
+1. **PR labels drive version bumps**: PRs that affect SDKs must have one of:
+   - `sdk:major` - Breaking changes
+   - `sdk:minor` - New features (backwards compatible)
+   - `sdk:patch` - Bug fixes
+   - `sdk:none` - No SDK impact
+
+2. **Automatic version calculation**: The workflow scans merged PRs since the last `sdk-v*` tag and determines the appropriate bump (major > minor > patch)
+
+3. **All packages published**: Every SDK is built, packed, and pushed to NuGet with the new version
+
+4. **Tag created**: A git tag `sdk-v{version}` marks the release point
+
+### What This Means for Consumers
+
+- **Version compatibility is guaranteed**: If you use `BeyondImmersion.Bannou.Client` 1.5.0 with `BeyondImmersion.Bannou.SceneComposer` 1.5.0, they are guaranteed to be compatible
+- **No version gaps**: You'll never see `SceneComposer` at 1.5.0 while `SceneComposer.Stride` is at 1.2.0
+- **Simple upgrades**: Update all Bannou packages to the same version
+
+### References for This Decision
+
+- [Azure SDK unified versioning](https://azure.github.io/azure-sdk/policies_releases.html)
+- [ASP.NET Core shared framework versioning](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/target-aspnetcore)
+- Internal discussion: 2025-01-14
 
 ## References
 
