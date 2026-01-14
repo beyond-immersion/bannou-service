@@ -1,7 +1,7 @@
-using Godot;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
-using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
+using Godot;
 using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
+using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Godot.Gizmo;
 

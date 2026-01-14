@@ -1,6 +1,6 @@
-using Xunit;
-using Godot;
 using BeyondImmersion.Bannou.SceneComposer.Godot.Math;
+using Godot;
+using Xunit;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Godot.Tests.Math;
 

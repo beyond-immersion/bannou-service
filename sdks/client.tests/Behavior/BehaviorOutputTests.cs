@@ -3,9 +3,9 @@
 // Tests for structured output extraction from interpreter output buffers.
 // =============================================================================
 
-using System.Numerics;
 using BeyondImmersion.Bannou.Client.Behavior.Intent;
 using BeyondImmersion.Bannou.Client.Behavior.Runtime;
+using System.Numerics;
 using Xunit;
 
 namespace BeyondImmersion.Bannou.Client.Tests.Behavior;

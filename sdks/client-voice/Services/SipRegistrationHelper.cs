@@ -1,7 +1,7 @@
-using System.Net;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
+using System.Net;
 
 namespace BeyondImmersion.Bannou.Client.Voice.Services;
 

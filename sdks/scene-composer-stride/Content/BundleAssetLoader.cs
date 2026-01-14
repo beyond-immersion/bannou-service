@@ -1,9 +1,9 @@
+using BeyondImmersion.BannouService.Asset.Bundles;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using BeyondImmersion.BannouService.Asset.Bundles;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 

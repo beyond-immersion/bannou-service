@@ -1,14 +1,14 @@
+using Stride.Animations;
+using Stride.Core;
+using Stride.Core.Reflection;
+using Stride.Core.Serialization;
+using Stride.Core.Serialization.Contents;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Stride.Animations;
-using Stride.Core;
-using Stride.Core.Reflection;
-using Stride.Core.Serialization;
-using Stride.Core.Serialization.Contents;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 
@@ -146,40 +146,21 @@ public sealed class AnimationClipLoader : IStrideAssetLoader<AnimationClip>
 
     private AnimationClip LoadAnimationFromChunk(MemoryStream stream, string assetId)
     {
-        var contentManager = _services.GetService<ContentManager>();
-        if (contentManager == null)
-        {
-            throw new InvalidOperationException(
+        var contentManager = _services.GetService<ContentManager>() ?? throw new InvalidOperationException(
                 "ContentManager not available. Ensure Stride is properly initialized.");
-        }
-
         var streamReader = new BinarySerializationReader(stream);
 
-        var chunkHeader = ChunkHeader.Read(streamReader);
-        if (chunkHeader == null)
-        {
-            throw new InvalidOperationException(
+        var chunkHeader = ChunkHeader.Read(streamReader) ?? throw new InvalidOperationException(
                 $"Invalid animation data for '{assetId}' - missing CHNK header");
-        }
-
         Log($"Loading animation '{assetId}' with type '{chunkHeader.Type}'");
 
-        var headerObjType = AssemblyRegistry.GetType(chunkHeader.Type);
-        if (headerObjType == null)
-        {
-            throw new InvalidOperationException(
+        var headerObjType = AssemblyRegistry.GetType(chunkHeader.Type) ?? throw new InvalidOperationException(
                 $"Cannot resolve type '{chunkHeader.Type}' for animation '{assetId}'");
-        }
 
         // THEORETICAL: Animations might serialize as AnimationClip or a derived type
-        var serializer = GetContentSerializer(contentManager.Serializer, headerObjType, typeof(AnimationClip));
-        if (serializer == null)
-        {
-            throw new InvalidOperationException(
+        var serializer = GetContentSerializer(contentManager.Serializer, headerObjType, typeof(AnimationClip)) ?? throw new InvalidOperationException(
                 $"No content serializer found for type '{headerObjType}' (animation '{assetId}'). " +
                 "This may indicate the animation format is not supported.");
-        }
-
         var context = CreateSerializerContext(assetId, contentManager);
 
         if (chunkHeader.OffsetToReferences != -1)

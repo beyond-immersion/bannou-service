@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using BeyondImmersion.Bannou.SceneComposer;
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Events;
@@ -12,11 +9,14 @@ using Stride.Core;
 using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Input;
-using SdkVector3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
-using SdkQuaternion = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
-using SdkVector2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
-using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using ComposerCore = BeyondImmersion.Bannou.SceneComposer.SceneComposer;
+using SdkQuaternion = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
+using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
+using SdkVector2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
+using SdkVector3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Examples;
 

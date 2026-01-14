@@ -1,3 +1,9 @@
+using Stride.Core;
+using Stride.Core.Reflection;
+using Stride.Core.Serialization;
+using Stride.Core.Serialization.Contents;
+using Stride.Graphics;
+using Stride.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -5,12 +11,6 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Stride.Core;
-using Stride.Core.Reflection;
-using Stride.Core.Serialization;
-using Stride.Core.Serialization.Contents;
-using Stride.Graphics;
-using Stride.Rendering;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 
@@ -136,39 +136,22 @@ public sealed class ModelLoader : IStrideAssetLoader<Model>
     private Model LoadModel(byte[] data, string assetId, DependencyResolver? dependencyResolver = null)
     {
         // Get the content manager from services
-        var contentManager = _services.GetService<ContentManager>();
-        if (contentManager == null)
-        {
-            throw new InvalidOperationException(
+        var contentManager = _services.GetService<ContentManager>() ?? throw new InvalidOperationException(
                 "ContentManager not available. Ensure Stride is properly initialized.");
-        }
-
         using var stream = new MemoryStream(data);
         var streamReader = new BinarySerializationReader(stream);
 
         // Read the ChunkHeader (magic "CHNK", version, type, offsets)
-        var chunkHeader = ChunkHeader.Read(streamReader);
-        if (chunkHeader == null)
-        {
-            throw new InvalidOperationException(
+        var chunkHeader = ChunkHeader.Read(streamReader) ?? throw new InvalidOperationException(
                 $"Invalid asset data for '{assetId}' - missing CHNK header");
-        }
 
         // Get the object type from the header
-        var headerObjType = AssemblyRegistry.GetType(chunkHeader.Type);
-        if (headerObjType == null)
-        {
-            throw new InvalidOperationException(
+        var headerObjType = AssemblyRegistry.GetType(chunkHeader.Type) ?? throw new InvalidOperationException(
                 $"Cannot resolve type '{chunkHeader.Type}' for asset '{assetId}'");
-        }
 
         // Get the serializer via reflection (GetSerializer is internal)
-        var serializer = GetContentSerializer(contentManager.Serializer, headerObjType, typeof(Model));
-        if (serializer == null)
-        {
-            throw new InvalidOperationException(
+        var serializer = GetContentSerializer(contentManager.Serializer, headerObjType, typeof(Model)) ?? throw new InvalidOperationException(
                 $"No content serializer found for type '{headerObjType}' (asset '{assetId}')");
-        }
 
         // Read chunk references first (if present) and pre-load dependencies
         List<ChunkReference>? chunkReferences = null;

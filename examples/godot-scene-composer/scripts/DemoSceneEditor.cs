@@ -1,15 +1,15 @@
-using System.Collections.Generic;
-using System.Linq;
-using Godot;
-using BeyondImmersion.Bannou.SceneComposer.Godot.Bridge;
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Events;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Bridge;
 using BeyondImmersion.Bannou.SceneComposer.SceneGraph;
 using BeyondImmersion.Bannou.SceneComposer.Selection;
-using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
-using SdkTransform = BeyondImmersion.Bannou.SceneComposer.Math.Transform;
+using Godot;
+using System.Collections.Generic;
+using System.Linq;
 using ComposerCore = BeyondImmersion.Bannou.SceneComposer.SceneComposer;
+using SdkTransform = BeyondImmersion.Bannou.SceneComposer.Math.Transform;
+using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Godot.Demo;
 

@@ -1,7 +1,7 @@
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 using Xunit;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Tests;

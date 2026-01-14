@@ -1,14 +1,14 @@
 using BeyondImmersion.Bannou.SceneComposer.Math;
-using StrideVec3 = Stride.Core.Mathematics.Vector3;
-using StrideQuat = Stride.Core.Mathematics.Quaternion;
-using StrideColor = Stride.Core.Mathematics.Color;
-using StrideColor4 = Stride.Core.Mathematics.Color4;
-using StrideRay = Stride.Core.Mathematics.Ray;
-using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
-using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkColor = BeyondImmersion.Bannou.SceneComposer.Math.Color;
+using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 using SdkVec2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
+using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
+using StrideColor = Stride.Core.Mathematics.Color;
+using StrideColor4 = Stride.Core.Mathematics.Color4;
+using StrideQuat = Stride.Core.Mathematics.Quaternion;
+using StrideRay = Stride.Core.Mathematics.Ray;
+using StrideVec3 = Stride.Core.Mathematics.Vector3;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride;
 

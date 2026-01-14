@@ -1,8 +1,8 @@
+using Stride.Graphics;
+using Stride.Rendering;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stride.Graphics;
-using Stride.Rendering;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 

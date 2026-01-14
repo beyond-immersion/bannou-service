@@ -1,5 +1,5 @@
-using System;
 using BeyondImmersion.Bannou.Protocol;
+using System;
 
 namespace BeyondImmersion.Bannou.Transport;
 

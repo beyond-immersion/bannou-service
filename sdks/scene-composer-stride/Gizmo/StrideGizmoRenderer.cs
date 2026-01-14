@@ -1,12 +1,12 @@
-using System;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Graphics;
 using Stride.Rendering;
-using StrideVector3 = Stride.Core.Mathematics.Vector3;
+using System;
 using StrideQuaternion = Stride.Core.Mathematics.Quaternion;
 using StrideRay = Stride.Core.Mathematics.Ray;
+using StrideVector3 = Stride.Core.Mathematics.Vector3;
 
 namespace BeyondImmersion.Bannou.SceneComposer.Stride;
 

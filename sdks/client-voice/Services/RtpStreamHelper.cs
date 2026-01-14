@@ -1,8 +1,8 @@
+using SIPSorcery.Media;
+using SIPSorcery.Net;
+using SIPSorceryMedia.Abstractions;
 using System.Collections.Concurrent;
 using System.Net;
-using SIPSorcery.Net;
-using SIPSorcery.Media;
-using SIPSorceryMedia.Abstractions;
 
 namespace BeyondImmersion.Bannou.Client.Voice.Services;
 
