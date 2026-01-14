@@ -256,6 +256,72 @@ public class AssetServiceTests
         Assert.True(result.Multipart.UploadUrls.Count > 0);
     }
 
+    /// <summary>
+    /// Regression test: Verifies that the upload session Redis key format matches
+    /// what CompleteUploadAsync uses for lookup.
+    ///
+    /// Previously, sessions were stored with Guid.ToString("N") (no dashes) but
+    /// the JSON response serialized Guids with dashes. When clients sent back
+    /// the UploadId, the lookup key format needed to match the storage key format.
+    /// Now both use the default Guid format (with dashes) for consistency.
+    /// </summary>
+    [Fact]
+    public async Task RequestUploadAsync_UploadIdFormat_ShouldMatchCompleteUploadLookupFormat()
+    {
+        // Arrange
+        _configuration.MultipartThresholdMb = 100;
+        _configuration.MaxUploadSizeMb = 500;
+        _configuration.TokenTtlSeconds = 3600;
+        _configuration.UploadSessionKeyPrefix = "upload-session:";
+        var service = CreateService();
+
+        var request = new UploadRequest
+        {
+            Filename = "test.png",
+            Size = 1024,
+            ContentType = "image/png"
+        };
+
+        var uploadResult = new PreSignedUploadResult(
+            UploadUrl: "https://storage.example.com/upload",
+            Key: "temp/test.png",
+            ExpiresAt: DateTime.UtcNow.AddHours(1),
+            RequiredHeaders: new Dictionary<string, string>());
+
+        _mockStorageProvider
+            .Setup(s => s.GenerateUploadUrlAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<long>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<IDictionary<string, string>>()))
+            .ReturnsAsync(uploadResult);
+
+        string? savedKey = null;
+        _mockUploadSessionStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<UploadSession>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, UploadSession, StateOptions?, CancellationToken>((key, _, _, _) => savedKey = key)
+            .ReturnsAsync("etag");
+
+        // Act
+        var (status, result) = await service.RequestUploadAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.NotNull(savedKey);
+
+        // The key stored in Redis should use the same format as the response UploadId
+        // When CompleteUpload receives the UploadId, it formats it and looks up by key
+        var expectedKey = $"upload-session:{result.UploadId}";
+        Assert.Equal(expectedKey, savedKey);
+
+        // Verify the UploadId has dashes (standard Guid format, not "N" format)
+        var uploadIdStr = result.UploadId.ToString();
+        Assert.Contains("-", uploadIdStr);
+    }
+
     #endregion
 
     #region CompleteUploadAsync Tests

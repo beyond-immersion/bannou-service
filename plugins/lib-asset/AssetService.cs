@@ -176,7 +176,7 @@ public partial class AssetService : IAssetService
                 };
 
                 var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -224,7 +224,7 @@ public partial class AssetService : IAssetService
                 };
 
                 var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId:N}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await sessionStore.SaveAsync($"{_configuration.UploadSessionKeyPrefix}{uploadId}", session, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("RequestUpload: Created upload session {UploadId}, multipart={IsMultipart}",
@@ -275,7 +275,7 @@ public partial class AssetService : IAssetService
         {
             // Retrieve upload session
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-            var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+            var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             if (session == null)
             {
@@ -287,7 +287,7 @@ public partial class AssetService : IAssetService
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
                 _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
-                await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+                await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -305,7 +305,7 @@ public partial class AssetService : IAssetService
                 await _storageProvider.CompleteMultipartUploadAsync(
                     _configuration.StorageBucket,
                     session.StorageKey,
-                    body.UploadId.ToString("N"),
+                    body.UploadId.ToString(),
                     storageParts).ConfigureAwait(false);
             }
 
@@ -381,7 +381,7 @@ public partial class AssetService : IAssetService
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
             // Delete upload session
-            await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId:N}", cancellationToken).ConfigureAwait(false);
+            await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
