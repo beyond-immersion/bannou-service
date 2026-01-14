@@ -1,3 +1,4 @@
+using System;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using Stride.Core.Mathematics;
 using Stride.Engine;
@@ -236,7 +237,7 @@ public class StrideGizmoRenderer
         distance = float.MaxValue;
 
         var denom = Vector3.Dot(planeNormal, ray.Direction);
-        if (Math.Abs(denom) < 0.0001f)
+        if (System.Math.Abs(denom) < 0.0001f)
             return false;
 
         var t = -Vector3.Dot(planeNormal, ray.Position) / denom;

@@ -517,7 +517,7 @@ public class StrideSceneEditorScript : SyncScript
 
         var cameraPos = _bridge.GetCameraPosition();
         var distance = (gizmoPosition - cameraPos).Length;
-        return Math.Max(0.1, distance * 0.1); // Scale based on distance
+        return System.Math.Max(0.1, distance * 0.1); // Scale based on distance
     }
 
     /// <summary>
@@ -661,7 +661,7 @@ public class StrideSceneEditorScript : SyncScript
     {
         var sinp = 2 * (q.W * q.X - q.Z * q.Y);
         float pitch;
-        if (Math.Abs(sinp) >= 1)
+        if (System.Math.Abs(sinp) >= 1)
             pitch = MathF.CopySign(MathUtil.PiOverTwo, sinp);
         else
             pitch = MathF.Asin(sinp);
