@@ -52,17 +52,28 @@ if [ ! -f "$PROJECT_FILE" ]; then
 
     cat > "$PROJECT_FILE" << EOF
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
+  <!--
+    ServiceLib.targets provides:
+    - TargetFramework (net9.0)
+    - ImplicitUsings (enable)
+    - Nullable (enable)
+    - RootNamespace base (BeyondImmersion.BannouService)
+    - ProjectReference to bannou-service with Private="false"
+
+    DO NOT redefine these properties - extend RootNamespace using \$(RootNamespace).YourExtension
+  -->
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.$SERVICE_PASCAL</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>\$(RootNamespace).$SERVICE_PASCAL</RootNamespace>
     <ServiceLib>$SERVICE_NAME</ServiceLib>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
+    <!-- Add plugin-to-plugin references here as needed -->
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -70,8 +81,6 @@ if [ ! -f "$PROJECT_FILE" ]; then
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>
 EOF

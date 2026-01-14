@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Asset</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Asset</RootNamespace>
     <ServiceLib>asset</ServiceLib>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
     <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
@@ -26,7 +25,5 @@
     <!-- FFmpeg wrapper for audio/video transcoding -->
     <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>

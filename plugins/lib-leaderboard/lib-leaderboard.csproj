@@ -1,15 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Leaderboard</RootNamespace>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Leaderboard</RootNamespace>
     <ServiceLib>leaderboard</ServiceLib>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,7 +15,5 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
-
-  <Import Project="../../ServiceLib.targets" />
 
 </Project>

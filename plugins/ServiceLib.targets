@@ -9,7 +9,8 @@
 
 	<ItemGroup>
 		<!-- Prevent plugin outputs from copying bannou-service.dll; use already-loaded assembly in default context -->
-		<ProjectReference Include="..\..\bannou-service\bannou-service.csproj" Private="false" />
+		<!-- Use MSBuildThisFileDirectory to resolve path relative to ServiceLib.targets, not the importing project -->
+		<ProjectReference Include="$(MSBuildThisFileDirectory)../bannou-service/bannou-service.csproj" Private="false" />
 	</ItemGroup>
 
 	<PropertyGroup>
