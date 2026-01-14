@@ -32,7 +32,7 @@ jobs:
 
           # Files that affect the SDK
           SDK_PATTERNS=(
-            "SDK_VERSION"
+            "sdks/SDK_VERSION"
             "sdks/server/"
             "sdks/client/"
             "sdks/protocol/"

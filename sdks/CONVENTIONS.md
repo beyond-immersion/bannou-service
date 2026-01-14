@@ -8,6 +8,9 @@ All SDK projects live under the `sdks/` directory with lowercase kebab-case nami
 
 ```
 sdks/
+├── bannou-sdks.sln              # SDK solution file (separate from server)
+├── SDK_VERSION                  # Shared version number for all SDK packages
+├── CONVENTIONS.md               # This file - SDK naming conventions
 ├── client/                      # Core client SDK
 ├── client.tests/                # Client SDK tests
 ├── client-voice/                # Voice chat extension
@@ -104,9 +107,30 @@ When creating a new SDK package:
 
 1. **Create directory** under `sdks/` with kebab-case name
 2. **Create csproj** with all three identifiers aligned (PackageId, RootNamespace, AssemblyName)
-3. **Add to solution** using `dotnet sln bannou-service.sln add sdks/{name}/{name}.csproj`
+3. **Add to SDK solution** using `dotnet sln sdks/bannou-sdks.sln add sdks/{name}/{name}.csproj`
 4. **Create test project** in `sdks/{name}.tests/` with matching conventions
 5. **Update documentation** in `docs/guides/SDKs.md`
+
+## Building and Testing SDKs
+
+SDKs are built and tested separately from the server using the SDK solution:
+
+```bash
+# Build all SDK projects
+make build-sdks
+
+# Run all SDK tests
+make test-sdks
+
+# Or directly with dotnet
+dotnet build sdks/bannou-sdks.sln
+dotnet test sdks/bannou-sdks.sln
+```
+
+**Note**: The SDK solution (`sdks/bannou-sdks.sln`) is separate from the server solution (`bannou-service.sln`) because:
+- SDKs target different .NET versions (including .NET 10.0 for Stride/Godot)
+- SDKs are excluded from Docker builds (server-only containers)
+- CI workflows build SDKs individually for NuGet packaging
 
 ## Engine-Specific SDK Pattern
 
@@ -129,7 +153,7 @@ These are referenced directly by other SDK projects via `<Compile Include="...">
 
 ## Version Management
 
-All SDK packages share a single version number defined in `SDK_VERSION` at the repository root. This ensures:
+All SDK packages share a single version number defined in `sdks/SDK_VERSION`. This ensures:
 
 - Consistent versioning across all packages
 - Simplified dependency management

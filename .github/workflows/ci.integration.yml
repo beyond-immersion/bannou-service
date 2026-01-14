@@ -132,8 +132,8 @@ jobs:
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         id: pack
         run: |
-          # Read base version from SDK_VERSION file (in repo root)
-          BASE_VERSION=$(cat SDK_VERSION | tr -d '[:space:]')
+          # Read base version from SDK_VERSION file
+          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
           PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
           echo "📦 Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT

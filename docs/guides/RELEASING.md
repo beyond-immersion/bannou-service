@@ -9,7 +9,7 @@ Bannou uses [Semantic Versioning](https://semver.org/) with two separate version
 | Track | Version File | Tag Format | Published To |
 |-------|--------------|------------|--------------|
 | **Platform** | `VERSION` | `v{major}.{minor}.{patch}` | GitHub Releases |
-| **SDK** | `SDK_VERSION` | `sdk-v{major}.{minor}.{patch}` | NuGet.org |
+| **SDK** | `sdks/SDK_VERSION` | `sdk-v{major}.{minor}.{patch}` | NuGet.org |
 
 ## Quick Reference
 
@@ -219,7 +219,7 @@ Check that:
 | File | Purpose |
 |------|---------|
 | `VERSION` | Platform version (single line) |
-| `SDK_VERSION` | SDK version (single line) |
+| `sdks/SDK_VERSION` | SDK version (single line) |
 | `CHANGELOG.md` | Release notes history |
 | `.github/workflows/ci.release.yml` | Platform release automation |
 | `.github/workflows/ci.sdk-release.yml` | SDK release automation |

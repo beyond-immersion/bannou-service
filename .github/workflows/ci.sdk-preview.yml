@@ -68,7 +68,7 @@ jobs:
       - name: Generate Preview Version
         id: version
         run: |
-          BASE_VERSION=$(cat SDK_VERSION | tr -d '[:space:]')
+          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
           # Use timestamp for unique preview versions
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           PREVIEW_VERSION="${BASE_VERSION}-preview.manual.${TIMESTAMP}"

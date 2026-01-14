@@ -404,9 +404,9 @@ transport.FuzzOptions.MaxDelayMs = 50;         // Up to 50ms delay
 
 ## Version Compatibility
 
-All SDKs share the same version number and are released together. The version is stored in `SDK_VERSION` at the repository root.
+All SDKs share the same version number and are released together. The version is stored in `sdks/SDK_VERSION`.
 
-**Current version**: Check the `SDK_VERSION` file or [NuGet packages](https://www.nuget.org/packages?q=BeyondImmersion.Bannou).
+**Current version**: Check the `sdks/SDK_VERSION` file or [NuGet packages](https://www.nuget.org/packages?q=BeyondImmersion.Bannou).
 
 ---
 

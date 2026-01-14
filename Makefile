@@ -55,6 +55,11 @@ quick: ## Quick development cycle - clean, generate, fix, build, unit tests (no 
 build: ## Build all .NET projects
 	dotnet build
 
+build-sdks: ## Build all SDK projects (separate from server)
+	@echo "🔧 Building SDK projects..."
+	dotnet build sdks/bannou-sdks.sln
+	@echo "✅ SDK build completed"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
@@ -408,6 +413,12 @@ test-unit:
 	@echo "🧪 Running .NET unit tests..."
 	dotnet test
 	@echo "✅ .NET unit tests completed"
+
+# SDK unit testing (separate from server tests)
+test-sdks: ## Run all SDK tests
+	@echo "🧪 Running SDK tests..."
+	dotnet test sdks/bannou-sdks.sln
+	@echo "✅ SDK tests completed"
 
 # Infrastructure integration testing (matches CI workflow)
 # Uses minimal service configuration (TESTING service only) - no databases, no ingress
@@ -986,7 +997,7 @@ test-voice-down: ## Stop Voice test containers
 
 version: ## Show current platform and SDK versions
 	@echo "📦 Platform version: $$(cat VERSION | tr -d '[:space:]')"
-	@echo "📦 SDK version:      $$(cat SDK_VERSION | tr -d '[:space:]')"
+	@echo "📦 SDK version:      $$(cat sdks/SDK_VERSION | tr -d '[:space:]')"
 
 prepare-release: ## Prepare a release (updates VERSION + CHANGELOG). Usage: make prepare-release VERSION=x.y.z
 	@if [ -z "$(VERSION)" ]; then \
