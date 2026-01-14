@@ -10,7 +10,7 @@ using SdkColor = BeyondImmersion.Bannou.SceneComposer.Math.Color;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 using SdkVec2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride;
 
 /// <summary>
 /// Conversion utilities between SceneComposer SDK types and Stride types.

@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Tests;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Tests;
 
 /// <summary>
 /// Unit tests for BundleAssetLoader lifecycle and error handling.

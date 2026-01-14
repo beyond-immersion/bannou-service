@@ -1,7 +1,7 @@
-using BeyondImmersion.Bannou.Stride.SceneComposer.Caching;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Caching;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Tests;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Tests;
 
 /// <summary>
 /// Unit tests for the AssetCache LRU cache implementation.

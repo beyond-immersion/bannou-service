@@ -11,7 +11,7 @@
     <VersionPrefix>0.1.0</VersionPrefix>
 
     <!-- NuGet Package Metadata -->
-    <PackageId>BeyondImmersion.Bannou.Godot.SceneComposer</PackageId>
+    <PackageId>BeyondImmersion.Bannou.SceneComposer.Godot</PackageId>
     <Authors>BeyondImmersion</Authors>
     <Description>Godot 4.x engine extension for the Bannou SceneComposer SDK. Provides ISceneComposerBridge implementation, asset loading, and gizmo rendering for Godot-based games.</Description>
     <PackageTags>bannou;godot;scene;editor;composition;gamedev</PackageTags>
@@ -31,8 +31,8 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
 
     <!-- Assembly info -->
-    <RootNamespace>BeyondImmersion.Bannou.Godot.SceneComposer</RootNamespace>
-    <AssemblyName>BeyondImmersion.Bannou.Godot.SceneComposer</AssemblyName>
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer.Godot</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SceneComposer.Godot</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,7 +41,7 @@
 
   <!-- Make internals visible to test project -->
   <ItemGroup>
-    <InternalsVisibleTo Include="BeyondImmersion.Bannou.Godot.SceneComposer.Tests" />
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SceneComposer.Godot.Tests" />
   </ItemGroup>
 
   <ItemGroup>

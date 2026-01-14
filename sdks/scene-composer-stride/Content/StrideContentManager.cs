@@ -4,15 +4,15 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BeyondImmersion.BannouService.Asset.Bundles;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Caching;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Loaders;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Caching;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 using Stride.Core;
 using Stride.Core.Serialization.Contents;
 using Stride.Graphics;
 using Stride.Rendering;
 using Stride.Rendering.Sprites;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 
 /// <summary>
 /// Content type constants matching those used by the AssetTool.

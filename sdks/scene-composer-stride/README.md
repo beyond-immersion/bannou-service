@@ -105,8 +105,8 @@ The asset loading system is organized in tiers:
 
 ```csharp
 using BeyondImmersion.Bannou.SceneComposer;
-using BeyondImmersion.Bannou.Stride.SceneComposer;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+using BeyondImmersion.Bannou.SceneComposer.Stride;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 using Stride.Engine;
 
 public class SceneEditorScript : SyncScript
@@ -224,7 +224,7 @@ cache.Clear();
 SDK uses double precision; Stride uses single precision. Use the `StrideTypeConverter`:
 
 ```csharp
-using BeyondImmersion.Bannou.Stride.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Stride;
 
 // SDK to Stride
 var sdkPos = new SdkVector3(10.5, 20.0, 30.0);
@@ -364,7 +364,7 @@ The package builds on all platforms for CI purposes, but full runtime functional
 ## Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Stride.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Stride
 ```
 
 This will also install the core SceneComposer SDK as a dependency.

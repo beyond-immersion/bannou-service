@@ -10,7 +10,7 @@ using Stride.Core.Reflection;
 using Stride.Core.Serialization;
 using Stride.Core.Serialization.Contents;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Loaders;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 
 /// <summary>
 /// Loads compiled Stride animation clips from bundle data.

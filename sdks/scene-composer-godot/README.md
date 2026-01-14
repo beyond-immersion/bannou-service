@@ -62,7 +62,7 @@ The asset loading system uses Godot's native resource system:
 ## Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Godot.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Godot;
 using BeyondImmersion.Bannou.SceneComposer;
 
 public partial class SceneEditorScript : Node3D
@@ -140,7 +140,7 @@ var mesh = await loader.LoadMeshAsync("res://models/large_model.glb");
 SDK uses double precision; Godot uses single precision. The `GodotTypeConverter` handles all conversions:
 
 ```csharp
-using BeyondImmersion.Bannou.Godot.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Godot;
 
 // SDK to Godot (extension methods)
 var sdkPos = new SdkVector3(10.5, 20.0, 30.0);
@@ -255,7 +255,7 @@ The bridge handles coordinate conversion internally, but be aware when:
 ## Installation
 
 ```bash
-dotnet add package BeyondImmersion.Bannou.Godot.SceneComposer
+dotnet add package BeyondImmersion.Bannou.SceneComposer.Godot
 ```
 
 This will also install the core SceneComposer SDK as a dependency.

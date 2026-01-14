@@ -3,7 +3,7 @@ using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Gizmo;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Gizmo;
 
 /// <summary>
 /// Renders transform gizmos for the Godot engine.

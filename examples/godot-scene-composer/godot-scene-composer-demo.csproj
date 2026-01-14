@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <RootNamespace>BeyondImmersion.Bannou.Godot.SceneComposer.Demo</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer.Godot.Demo</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

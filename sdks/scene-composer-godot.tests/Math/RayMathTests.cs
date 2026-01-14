@@ -1,8 +1,8 @@
 using Xunit;
 using Godot;
-using BeyondImmersion.Bannou.Godot.SceneComposer.Math;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Math;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Tests.Math;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Tests.Math;
 
 /// <summary>
 /// Tests for RayMath utility class.

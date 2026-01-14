@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.Bannou.Stride.SceneComposer.Tests</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer.Stride.Tests</RootNamespace>
 
     <IsPackable>false</IsPackable>
     <Configurations>Debug;Release;Development</Configurations>

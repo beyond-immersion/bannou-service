@@ -12,7 +12,7 @@ using SdkTransform = BeyondImmersion.Bannou.SceneComposer.Math.Transform;
 using SdkColor = BeyondImmersion.Bannou.SceneComposer.Math.Color;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Tests.Conversion;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Tests.Conversion;
 
 /// <summary>
 /// Tests for GodotTypeConverter - verifies bidirectional conversion between SDK and Godot types.

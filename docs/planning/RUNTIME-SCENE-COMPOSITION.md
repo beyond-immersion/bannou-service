@@ -442,7 +442,7 @@ public interface IAssetLoader<T>
 
 ### 4.4 Stride Extension Package
 
-**New Package**: `BeyondImmersion.Bannou.Stride.SceneComposer`
+**New Package**: `BeyondImmersion.Bannou.SceneComposer.Stride`
 
 **Contents**:
 - `StrideSceneComposerBridge : ISceneComposerBridge`
@@ -603,7 +603,7 @@ AssetSlot:
 **Goal**: Create Stride-specific implementation using SDK core.
 
 **Tasks**:
-1. Create `BeyondImmersion.Bannou.Stride.SceneComposer` project
+1. Create `BeyondImmersion.Bannou.SceneComposer.Stride` project
 2. Implement `StrideSceneComposerBridge`
 3. Port `ModelLoader`, `TextureLoader` as `IAssetLoader<T>` implementations
 4. Port `TransformGizmo` → `StrideTransformGizmo`
@@ -612,7 +612,7 @@ AssetSlot:
 7. Integration test with stride-demo
 
 **Deliverables**:
-- NuGet package: `BeyondImmersion.Bannou.Stride.SceneComposer`
+- NuGet package: `BeyondImmersion.Bannou.SceneComposer.Stride`
 - stride-demo refactored to use new SDK
 - No functionality regression
 
@@ -759,7 +759,7 @@ Bannou.SceneComposer/              # NuGet: BeyondImmersion.Bannou.SceneComposer
     ├── ISceneComposerBridge.cs
     └── IAssetLoader.cs
 
-Bannou.Stride.SceneComposer/       # NuGet: BeyondImmersion.Bannou.Stride.SceneComposer
+Bannou.Stride.SceneComposer/       # NuGet: BeyondImmersion.Bannou.SceneComposer.Stride
 ├── StrideSceneComposerBridge.cs
 ├── StrideTransformGizmo.cs        # From stride-demo
 ├── StrideEditorCamera.cs

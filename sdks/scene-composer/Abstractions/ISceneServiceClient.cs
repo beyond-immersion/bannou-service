@@ -2,7 +2,7 @@ namespace BeyondImmersion.Bannou.SceneComposer.Abstractions;
 
 /// <summary>
 /// Client interface for communicating with the lib-scene service.
-/// Implementations may use WebSocket (via Bannou.Client.SDK) or HTTP.
+/// Implementations may use WebSocket (via BeyondImmersion.Bannou.Client) or HTTP.
 /// </summary>
 public interface ISceneServiceClient
 {

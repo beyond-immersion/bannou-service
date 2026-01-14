@@ -12,7 +12,7 @@ using Stride.Core.Serialization.Contents;
 using Stride.Graphics;
 using Stride.Rendering;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Loaders;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 
 /// <summary>
 /// Delegate for resolving model dependencies from bundles.

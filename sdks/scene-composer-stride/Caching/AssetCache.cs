@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Caching;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Caching;
 
 /// <summary>
 /// LRU cache for loaded assets with size-based eviction.

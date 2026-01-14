@@ -7,7 +7,7 @@ using StrideVector3 = Stride.Core.Mathematics.Vector3;
 using StrideQuaternion = Stride.Core.Mathematics.Quaternion;
 using StrideRay = Stride.Core.Mathematics.Ray;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride;
 
 /// <summary>
 /// Renders transform gizmos for the Stride scene composer.

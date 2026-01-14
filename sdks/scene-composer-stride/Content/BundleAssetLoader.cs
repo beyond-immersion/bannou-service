@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BeyondImmersion.BannouService.Asset.Bundles;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 
 /// <summary>
 /// Wraps a BannouBundleReader with fast asset ID lookup and manifest access.

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using BeyondImmersion.Bannou.Godot.SceneComposer.Bridge;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Bridge;
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Events;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
@@ -11,7 +11,7 @@ using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 using SdkTransform = BeyondImmersion.Bannou.SceneComposer.Math.Transform;
 using ComposerCore = BeyondImmersion.Bannou.SceneComposer.SceneComposer;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Demo;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Demo;
 
 /// <summary>
 /// Demo scene editor showing basic SDK integration.

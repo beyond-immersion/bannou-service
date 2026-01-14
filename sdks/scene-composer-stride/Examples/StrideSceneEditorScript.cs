@@ -6,8 +6,8 @@ using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Events;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using BeyondImmersion.Bannou.SceneComposer.SceneGraph;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Bridge;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Bridge;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 using Stride.Core;
 using Stride.Core.Mathematics;
 using Stride.Engine;
@@ -18,7 +18,7 @@ using SdkVector2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 using ComposerCore = BeyondImmersion.Bannou.SceneComposer.SceneComposer;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Examples;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Examples;
 
 /// <summary>
 /// Stride SyncScript that integrates the Bannou SceneComposer SDK for runtime scene editing.

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Math;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Math;
 
 /// <summary>
 /// Utility class for ray-based mathematical operations.

@@ -10,7 +10,7 @@ using Stride.Core.Serialization;
 using Stride.Core.Serialization.Contents;
 using Stride.Graphics;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Loaders;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 
 /// <summary>
 /// Loads compiled Stride textures (.sdtex) from bundle data.

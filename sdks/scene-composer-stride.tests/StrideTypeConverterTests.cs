@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.SceneComposer.Math;
-using BeyondImmersion.Bannou.Stride.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Stride;
 using Xunit;
 using StrideVec2 = Stride.Core.Mathematics.Vector2;
 using StrideVec3 = Stride.Core.Mathematics.Vector3;
@@ -13,7 +13,7 @@ using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkColor = BeyondImmersion.Bannou.SceneComposer.Math.Color;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Tests;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Tests;
 
 /// <summary>
 /// Unit tests for StrideTypeConverter conversions between SDK and Stride types.

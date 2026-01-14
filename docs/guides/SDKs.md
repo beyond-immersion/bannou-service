@@ -292,8 +292,8 @@ dotnet add package BeyondImmersion.Bannou.SceneComposer.Stride
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Stride.SceneComposer;
-using BeyondImmersion.Bannou.Stride.SceneComposer.Content;
+using BeyondImmersion.Bannou.SceneComposer.Stride;
+using BeyondImmersion.Bannou.SceneComposer.Stride.Content;
 
 // Set up content manager
 var contentManager = new StrideContentManager(GraphicsDevice, maxCacheSize: 512 * 1024 * 1024);
@@ -339,7 +339,7 @@ dotnet add package BeyondImmersion.Bannou.SceneComposer.Godot
 ### Quick Start
 
 ```csharp
-using BeyondImmersion.Bannou.Godot.SceneComposer;
+using BeyondImmersion.Bannou.SceneComposer.Godot;
 
 public partial class SceneEditor : Node3D
 {

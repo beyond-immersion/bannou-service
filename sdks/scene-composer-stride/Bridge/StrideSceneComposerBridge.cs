@@ -18,7 +18,7 @@ using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
 using SdkQuaternion = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkTransform = BeyondImmersion.Bannou.SceneComposer.Math.Transform;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer.Bridge;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride.Bridge;
 
 /// <summary>
 /// Stride implementation of ISceneComposerBridge.

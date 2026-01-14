@@ -1,6 +1,6 @@
 using Stride.Rendering;
 
-namespace BeyondImmersion.Bannou.Stride.SceneComposer;
+namespace BeyondImmersion.Bannou.SceneComposer.Stride;
 
 /// <summary>
 /// Interface for loading Stride assets from Bannou bundles.

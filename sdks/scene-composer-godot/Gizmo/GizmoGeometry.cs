@@ -1,6 +1,6 @@
 using Godot;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Gizmo;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Gizmo;
 
 /// <summary>
 /// Pure geometry generation functions for gizmo rendering.

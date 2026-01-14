@@ -5,13 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
-    <RootNamespace>BeyondImmersion.Bannou.Godot.SceneComposer.Tests</RootNamespace>
-    <AssemblyName>BeyondImmersion.Bannou.Godot.SceneComposer.Tests</AssemblyName>
+    <RootNamespace>BeyondImmersion.Bannou.SceneComposer.Godot.Tests</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SceneComposer.Godot.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Disable Godot-specific build targets that require the editor -->
     <EnableGodotAnalyzers>false</EnableGodotAnalyzers>
+    <!-- Override Godot SDK's non-standard output path for test runner compatibility -->
+    <OutputPath>bin/$(Configuration)/$(TargetFramework)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

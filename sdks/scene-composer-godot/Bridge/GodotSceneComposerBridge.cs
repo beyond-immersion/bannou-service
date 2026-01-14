@@ -2,7 +2,7 @@ using Godot;
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
 using BeyondImmersion.Bannou.SceneComposer.Math;
-using BeyondImmersion.Bannou.Godot.SceneComposer.Math;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Math;
 using SdkVec3 = BeyondImmersion.Bannou.SceneComposer.Math.Vector3;
 using SdkQuat = BeyondImmersion.Bannou.SceneComposer.Math.Quaternion;
 using SdkRay = BeyondImmersion.Bannou.SceneComposer.Math.Ray;
@@ -11,7 +11,7 @@ using SdkVec2 = BeyondImmersion.Bannou.SceneComposer.Abstractions.Vector2;
 using GodotVec3 = Godot.Vector3;
 using GodotVec2 = Godot.Vector2;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Bridge;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Bridge;
 
 /// <summary>
 /// Godot 4.x implementation of ISceneComposerBridge.

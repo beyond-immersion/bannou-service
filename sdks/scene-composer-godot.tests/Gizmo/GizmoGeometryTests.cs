@@ -1,8 +1,8 @@
 using Xunit;
 using Godot;
-using BeyondImmersion.Bannou.Godot.SceneComposer.Gizmo;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Gizmo;
 
-namespace BeyondImmersion.Bannou.Godot.SceneComposer.Tests.Gizmo;
+namespace BeyondImmersion.Bannou.SceneComposer.Godot.Tests.Gizmo;
 
 /// <summary>
 /// Tests for GizmoGeometry procedural mesh generation.
