@@ -273,9 +273,36 @@ public partial class AssetService : IAssetService
 
         try
         {
-            // Retrieve upload session
+            // Retrieve upload session - check both regular and bundle upload prefixes
             var sessionStore = _stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
             var session = await sessionStore.GetAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+
+            // If not found, check for bundle upload session and convert
+            if (session == null)
+            {
+                var bundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                var bundleSession = await bundleStore.GetAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
+
+                if (bundleSession != null)
+                {
+                    // Convert BundleUploadSession to UploadSession for processing
+                    session = new UploadSession
+                    {
+                        UploadId = body.UploadId,
+                        Filename = bundleSession.Filename,
+                        Size = bundleSession.SizeBytes,
+                        ContentType = bundleSession.ContentType,
+                        Owner = bundleSession.Owner,
+                        StorageKey = bundleSession.StorageKey,
+                        IsMultipart = false,
+                        PartCount = 0,
+                        CreatedAt = bundleSession.CreatedAt,
+                        ExpiresAt = bundleSession.ExpiresAt,
+                        IsComplete = false
+                    };
+                    _logger.LogDebug("CompleteUpload: Found bundle upload session {UploadId}", body.UploadId);
+                }
+            }
 
             if (session == null)
             {
@@ -287,7 +314,10 @@ public partial class AssetService : IAssetService
             if (DateTimeOffset.UtcNow > session.ExpiresAt)
             {
                 _logger.LogWarning("CompleteUpload: Upload session expired {UploadId}", body.UploadId);
+                // Delete both possible session keys (only one will exist)
                 await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+                var expiredBundleStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+                await expiredBundleStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
                 return (StatusCodes.BadRequest, null); // Session expired
             }
 
@@ -380,8 +410,10 @@ public partial class AssetService : IAssetService
             // Store index entries for search
             await IndexAssetAsync(assetMetadata, cancellationToken).ConfigureAwait(false);
 
-            // Delete upload session
+            // Delete upload session (both regular and bundle prefixes - only one will exist)
             await sessionStore.DeleteAsync($"{_configuration.UploadSessionKeyPrefix}{body.UploadId}", cancellationToken).ConfigureAwait(false);
+            var bundleSessionStore = _stateStoreFactory.GetStore<BundleUploadSession>(_configuration.StatestoreName);
+            await bundleSessionStore.DeleteAsync($"bundle-upload:{body.UploadId}", cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("CompleteUpload: Asset created {AssetId}, finalKey={FinalKey}, requiresProcessing={RequiresProcessing}",
                 assetId, finalKey, requiresProcessing);
@@ -1232,9 +1264,10 @@ public partial class AssetService : IAssetService
 
             // Generate upload ID and storage key
             var uploadIdGuid = Guid.NewGuid();
-            var uploadId = uploadIdGuid.ToString("N");
+            var uploadId = uploadIdGuid.ToString(); // Standard format with dashes for Redis key consistency
+            var uploadIdForPath = uploadIdGuid.ToString("N"); // No dashes for S3 paths (cleaner)
             var sanitizedFilename = SanitizeFilename(body.Filename);
-            var storageKey = $"{_configuration.BundleUploadPathPrefix}/{uploadId}/{sanitizedFilename}";
+            var storageKey = $"{_configuration.BundleUploadPathPrefix}/{uploadIdForPath}/{sanitizedFilename}";
             var bucket = _configuration.StorageBucket;
 
             // Determine content type
@@ -1253,7 +1286,7 @@ public partial class AssetService : IAssetService
                 new Dictionary<string, string>
                 {
                     { "bundle-id", body.ManifestPreview.BundleId },
-                    { "upload-id", uploadId },
+                    { "upload-id", uploadIdForPath }, // Use path format for S3 metadata
                     { "validation-required", "true" }
                 });
 
