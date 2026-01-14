@@ -62,6 +62,13 @@ build-compose: ## Build Docker containers (all services)
 		-f provisioning/docker-compose.services.yml \
 		--project-name bannou build
 
+push-dev: build-compose ## Build and push development image to Docker Hub
+	@echo "🏷️  Tagging bannou:latest as beyondimmersion/bannou-service:development"
+	docker tag bannou:latest beyondimmersion/bannou-service:development
+	@echo "🚀 Pushing beyondimmersion/bannou-service:development"
+	docker push beyondimmersion/bannou-service:development
+	@echo "✅ Push complete"
+
 up-compose: ## Start services locally (base + services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \
