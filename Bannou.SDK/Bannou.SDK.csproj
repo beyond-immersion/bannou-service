@@ -84,9 +84,9 @@
 
   <!-- Game transport protocol primitives -->
   <ItemGroup>
-    <Compile Include="../GameProtocol/*.cs" />
-    <Compile Include="../GameProtocol/Messages/*.cs" />
-    <Compile Include="../GameTransport/*.cs" />
+    <Compile Include="../sdks/protocol/*.cs" />
+    <Compile Include="../sdks/protocol/messages/*.cs" />
+    <Compile Include="../sdks/transport/*.cs" />
   </ItemGroup>
 
   <!-- Asset Bundle Infrastructure -->

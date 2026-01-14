@@ -1,7 +1,7 @@
 using MessagePack;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.Bannou.GameProtocol.Messages;
+namespace BeyondImmersion.Bannou.Protocol.Messages;
 
 /// <summary>
 /// Full state snapshot (server -> client).

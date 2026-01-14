@@ -1,7 +1,7 @@
 using MessagePack;
 using System;
 
-namespace BeyondImmersion.Bannou.GameProtocol;
+namespace BeyondImmersion.Bannou.Protocol;
 
 /// <summary>
 /// Helper for serializing/deserializing game transport messages with a 2-byte envelope:

@@ -78,8 +78,8 @@ client.OnEvent += (sender, eventData) =>
 ### Game Transport (UDP)
 
 ```csharp
-using BeyondImmersion.Bannou.GameProtocol;
-using BeyondImmersion.Bannou.GameTransport;
+using BeyondImmersion.Bannou.Protocol;
+using BeyondImmersion.Bannou.Transport;
 
 var transport = new LiteNetLibClientTransport();
 await transport.ConnectAsync("127.0.0.1", 9000, GameProtocolEnvelope.CurrentVersion);

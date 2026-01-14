@@ -1,6 +1,7 @@
 using System;
+using BeyondImmersion.Bannou.Protocol;
 
-namespace BeyondImmersion.Bannou.GameTransport;
+namespace BeyondImmersion.Bannou.Transport;
 
 /// <summary>
 /// Base configuration for game transport.
@@ -26,5 +27,5 @@ public sealed class GameTransportConfig
     /// <summary>
     /// Protocol version expected by this server/client.
     /// </summary>
-    public byte ProtocolVersion { get; init; } = GameProtocol.GameProtocolEnvelope.CurrentVersion;
+    public byte ProtocolVersion { get; init; } = GameProtocolEnvelope.CurrentVersion;
 }

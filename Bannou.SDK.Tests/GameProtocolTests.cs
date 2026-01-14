@@ -1,4 +1,4 @@
-using BeyondImmersion.Bannou.GameProtocol;
+using BeyondImmersion.Bannou.Protocol;
 using MessagePack;
 using System;
 using Xunit;

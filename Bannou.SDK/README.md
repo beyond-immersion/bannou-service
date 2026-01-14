@@ -208,9 +208,9 @@ client.OnEvent += (sender, eventData) =>
 ## Game Transport (UDP) Quick Start (LiteNetLib)
 
 ```csharp
-using BeyondImmersion.Bannou.GameProtocol;
-using BeyondImmersion.Bannou.GameProtocol.Messages;
-using BeyondImmersion.Bannou.GameTransport;
+using BeyondImmersion.Bannou.Protocol;
+using BeyondImmersion.Bannou.Protocol.Messages;
+using BeyondImmersion.Bannou.Transport;
 using MessagePack;
 
 // Server

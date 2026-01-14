@@ -1,7 +1,7 @@
 using MessagePack;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.Bannou.GameProtocol.Messages;
+namespace BeyondImmersion.Bannou.Protocol.Messages;
 
 /// <summary>
 /// State delta (server -> client) using per-entity bitmask for changed fields.

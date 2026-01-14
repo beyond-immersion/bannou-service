@@ -1,9 +1,9 @@
-using BeyondImmersion.Bannou.GameProtocol;
+using BeyondImmersion.Bannou.Protocol;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.Bannou.GameTransport;
+namespace BeyondImmersion.Bannou.Transport;
 
 /// <summary>
 /// Delegate for handling messages received from clients.

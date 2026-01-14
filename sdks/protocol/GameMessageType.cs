@@ -1,4 +1,4 @@
-namespace BeyondImmersion.Bannou.GameProtocol;
+namespace BeyondImmersion.Bannou.Protocol;
 
 /// <summary>
 /// Message type prefix for game transport messages (server/client).

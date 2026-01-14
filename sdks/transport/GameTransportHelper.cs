@@ -1,9 +1,9 @@
-using BeyondImmersion.Bannou.GameProtocol;
+using BeyondImmersion.Bannou.Protocol;
 using MessagePack;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.Bannou.GameTransport;
+namespace BeyondImmersion.Bannou.Transport;
 
 /// <summary>
 /// Helper methods for serializing and sending game transport messages.

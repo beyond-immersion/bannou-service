@@ -1,7 +1,7 @@
 using MessagePack;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.Bannou.GameProtocol.Messages;
+namespace BeyondImmersion.Bannou.Protocol.Messages;
 
 /// <summary>
 /// Cinematic extension offer (server -> client) carrying attach point metadata and payload reference.

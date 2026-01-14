@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace BeyondImmersion.Bannou.GameProtocol.Messages;
+namespace BeyondImmersion.Bannou.Protocol.Messages;
 
 /// <summary>
 /// Client connect/join request (client -> server).

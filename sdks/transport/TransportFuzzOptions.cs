@@ -1,6 +1,6 @@
 using System;
 
-namespace BeyondImmersion.Bannou.GameTransport;
+namespace BeyondImmersion.Bannou.Transport;
 
 /// <summary>
 /// Fuzz settings for testing packet loss/reordering/delay.
