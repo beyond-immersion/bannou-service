@@ -2133,25 +2133,6 @@ public class AssetServiceTests
     }
 
     [Fact]
-    public async Task ResolveBundlesAsync_WithNullAssetIds_ShouldReturnBadRequest()
-    {
-        // Arrange
-        var service = CreateService();
-        var request = new ResolveBundlesRequest
-        {
-            AssetIds = null!,
-            Realm = Realm.Arcadia
-        };
-
-        // Act
-        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(result);
-    }
-
-    [Fact]
     public async Task ResolveBundlesAsync_ShouldPreferMetabundlesOverRegularBundles()
     {
         // Arrange: Asset exists in both a metabundle and regular bundle

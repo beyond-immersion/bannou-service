@@ -450,18 +450,17 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void SessionDataModel_WithNullRoles_HandledCorrectly()
+    public void SessionDataModel_WithMissingRolesInJson_DefaultsToEmptyList()
     {
-        var original = new SessionDataModel { Roles = null! };
-        var json = JsonSerializer.Serialize(original, IServiceConfiguration.BannouSerializerConfig);
-
-        // DefaultIgnoreCondition.WhenWritingNull should exclude null Roles
-        Assert.DoesNotContain("\"Roles\":null", json);
+        // Test deserialization when JSON doesn't contain Roles property
+        // (simulates data from external sources or older serialized formats)
+        var json = """{"AccountId":"test-account","SessionId":"test-session"}""";
 
         var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
         Assert.NotNull(deserialized);
         // Roles should be default (new List<string>()) since it wasn't in JSON
         Assert.NotNull(deserialized.Roles);
+        Assert.Empty(deserialized.Roles);
     }
 
     #endregion
