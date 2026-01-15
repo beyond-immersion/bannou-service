@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using BeyondImmersion.Bannou.AssetBundler.Helpers;
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.BannouService.Asset;
 using Microsoft.Extensions.Logging;
@@ -133,14 +134,7 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
         var uploadApiResponse = await _client.InvokeAsync<BundleUploadRequest, UploadResponse>(
             "POST", "/bundles/upload/request", uploadRequest, cancellationToken: ct);
 
-        if (!uploadApiResponse.IsSuccess || uploadApiResponse.Result == null)
-        {
-            var errorCode = uploadApiResponse.Error?.ResponseCode ?? 500;
-            var errorMessage = uploadApiResponse.Error?.Message ?? "Unknown error";
-            throw new InvalidOperationException($"Failed to request upload URL: {errorCode} - {errorMessage}");
-        }
-
-        var uploadResponse = uploadApiResponse.Result;
+        var uploadResponse = AssetApiHelpers.EnsureSuccess(uploadApiResponse, "request upload URL");
 
         if (_options.VerboseLogging)
         {
@@ -182,9 +176,7 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
 
         if (!completeApiResponse.IsSuccess)
         {
-            var errorCode = completeApiResponse.Error?.ResponseCode ?? 500;
-            var errorMessage = completeApiResponse.Error?.Message ?? "Unknown error";
-            throw new InvalidOperationException($"Failed to complete upload: {errorCode} - {errorMessage}");
+            throw AssetApiHelpers.CreateApiException("complete upload", completeApiResponse);
         }
 
         _logger?.LogInformation(

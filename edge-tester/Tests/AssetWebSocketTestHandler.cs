@@ -59,6 +59,8 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
                     new
                     {
                         tags = new[] { "test" },
+                        assetType = "behavior",
+                        realm = "arcadia",
                         limit = 10,
                         offset = 0
                     },
@@ -300,7 +302,7 @@ public class AssetWebSocketTestHandler : IServiceTestHandler
 
                 var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                     "POST",
-                    "/bundles/create",
+                    "/bundles/metabundle/create",
                     new
                     {
                         metabundleId = metabundleId,

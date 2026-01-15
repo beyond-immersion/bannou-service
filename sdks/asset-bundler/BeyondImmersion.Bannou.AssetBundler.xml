@@ -859,6 +859,62 @@
             UI/sprite texture.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers">
+            <summary>
+            Shared helpers for asset bundler API operations.
+            Consolidates common enum parsing and error handling patterns.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealm(System.String,System.Nullable{BeyondImmersion.BannouService.Asset.Realm})">
+            <summary>
+            Parses a realm string to the Realm enum.
+            </summary>
+            <param name="realm">Realm string (case-insensitive).</param>
+            <param name="defaultValue">Value to return if realm is null/empty (default: null).</param>
+            <returns>Parsed realm or default value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseRealmRequired(System.String,BeyondImmersion.BannouService.Asset.Realm)">
+            <summary>
+            Parses a realm string to the Realm enum, throwing on unknown values.
+            </summary>
+            <param name="realm">Realm string (case-insensitive).</param>
+            <param name="defaultValue">Value to return if realm is null/empty.</param>
+            <returns>Parsed realm.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if realm string is unrecognized.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseBundleType(System.String)">
+            <summary>
+            Parses a bundle type string to the BundleType enum.
+            </summary>
+            <param name="bundleType">Bundle type string (case-insensitive).</param>
+            <returns>Parsed bundle type or null if unrecognized.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.ParseLifecycle(System.String)">
+            <summary>
+            Parses a lifecycle status string to the BundleLifecycle enum.
+            </summary>
+            <param name="status">Status string (case-insensitive).</param>
+            <returns>Parsed lifecycle status or null if unrecognized.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.CreateApiException``1(System.String,BeyondImmersion.Bannou.Client.ApiResponse{``0})">
+            <summary>
+            Creates an exception from an API error response.
+            </summary>
+            <typeparam name="TResponse">Response type.</typeparam>
+            <param name="operation">Description of the operation that failed.</param>
+            <param name="response">The API response containing the error.</param>
+            <returns>Exception with formatted error message.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Helpers.AssetApiHelpers.EnsureSuccess``1(BeyondImmersion.Bannou.Client.ApiResponse{``0},System.String)">
+            <summary>
+            Throws an exception if the API response indicates failure.
+            </summary>
+            <typeparam name="TResponse">Response type.</typeparam>
+            <param name="response">The API response to check.</param>
+            <param name="operation">Description of the operation (for error message).</param>
+            <returns>The successful result.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if response is not successful or result is null.</exception>
+        </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient">
             <summary>
             Client for requesting server-side metabundle creation.
@@ -886,11 +942,6 @@
             <param name="request">The metabundle request.</param>
             <param name="ct">Cancellation token.</param>
             <returns>The created metabundle result.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient.ParseRealm(System.String)">
-            <summary>
-            Parses a realm string to the Realm enum.
-            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest">
             <summary>

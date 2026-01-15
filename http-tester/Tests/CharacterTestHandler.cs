@@ -37,20 +37,6 @@ public class CharacterTestHandler : BaseHttpTestHandler
     ];
 
     /// <summary>
-    /// Helper to create a test realm for character tests.
-    /// </summary>
-    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
-    {
-        var realmClient = GetServiceClient<IRealmClient>();
-        return await realmClient.CreateRealmAsync(new CreateRealmRequest
-        {
-            Code = $"CHAR_TEST_{DateTime.Now.Ticks}_{suffix}",
-            Name = $"Character Test Realm {suffix}",
-            Category = "TEST"
-        });
-    }
-
-    /// <summary>
     /// Helper to create a test species and add it to a realm for character tests.
     /// </summary>
     private static async Task<SpeciesResponse> CreateTestSpeciesAsync(Guid realmId, string suffix)
@@ -78,7 +64,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCreateCharacter(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("CREATE");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "CREATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "CREATE");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -108,7 +94,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetCharacter(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("GET");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "GET");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "GET");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -139,7 +125,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestUpdateCharacter(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("UPDATE");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "UPDATE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "UPDATE");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -176,7 +162,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestDeleteCharacter(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("DELETE");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "DELETE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "DELETE");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -210,7 +196,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestListCharacters(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("LIST");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "LIST");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIST");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -248,7 +234,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetCharactersByRealm(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("REALM");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "REALM");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "REALM");
             var characterClient = GetServiceClient<ICharacterClient>();
 
@@ -306,7 +292,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
             var characterClient = GetServiceClient<ICharacterClient>();
 
             // Create a realm with some characters first
-            var realm = await CreateTestRealmAsync("REALMID_REQ");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "REALMID_REQ");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "REALMID_REQ");
 
             // Create a test character
@@ -347,7 +333,7 @@ public class CharacterTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCompleteCharacterLifecycle(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("LIFECYCLE");
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "LIFECYCLE");
             var species = await CreateTestSpeciesAsync(realm.RealmId, "LIFECYCLE");
             var characterClient = GetServiceClient<ICharacterClient>();
 

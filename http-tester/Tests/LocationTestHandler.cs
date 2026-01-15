@@ -53,27 +53,13 @@ public class LocationTestHandler : BaseHttpTestHandler
         new ServiceTest(TestCompleteLocationLifecycle, "CompleteLocationLifecycle", "Location", "Test complete location lifecycle with hierarchy"),
     ];
 
-    /// <summary>
-    /// Helper method to create a test realm for location tests.
-    /// </summary>
-    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
-    {
-        var realmClient = GetServiceClient<IRealmClient>();
-        return await realmClient.CreateRealmAsync(new CreateRealmRequest
-        {
-            Code = $"LOC_TEST_REALM_{DateTime.Now.Ticks}_{suffix}",
-            Name = $"Location Test Realm {suffix}",
-            Category = "TEST"
-        });
-    }
-
     private static async Task<TestResult> TestCreateLocation(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
             // Create a realm for the location
-            var realm = await CreateTestRealmAsync("CREATE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "CREATE");
 
             var createRequest = new CreateLocationRequest
             {
@@ -103,7 +89,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("GET");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "GET");
 
             // Create a location first
             var createRequest = new CreateLocationRequest
@@ -133,7 +119,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("GETCODE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "BYCODE");
 
             // Create a location first
             var code = $"CODE_LOC_{DateTime.Now.Ticks}";
@@ -165,7 +151,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("UPDATE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "UPDATE");
 
             // Create a location
             var createRequest = new CreateLocationRequest
@@ -201,7 +187,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("DELETE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "DELETE");
 
             // Create a location
             var createRequest = new CreateLocationRequest
@@ -248,7 +234,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("LIST");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "LIST");
 
             // Create some locations
             for (var i = 0; i < 3; i++)
@@ -279,7 +265,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("LISTREALM");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "BYREALM");
 
             // Create locations in the realm
             for (var i = 0; i < 3; i++)
@@ -310,7 +296,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("ROOT");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "ROOT");
 
             // Create root locations (no parent)
             for (var i = 0; i < 3; i++)
@@ -345,7 +331,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("SETPARENT");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "SETPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -386,7 +372,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("REMOVEPARENT");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "REMOVEPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -430,7 +416,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("LISTBYPARENT");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "BYPARENT");
 
             // Create parent location
             var parent = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -471,7 +457,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("ANCESTORS");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "ANCESTORS");
 
             // Create hierarchy: Region -> City -> District
             var region = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -524,7 +510,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("DESCENDANTS");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "DESCENDANTS");
 
             // Create hierarchy: Region -> 2 Cities -> 2 Districts each
             var region = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -577,7 +563,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("DEPRECATE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "DEPRECATE");
 
             // Create a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -609,7 +595,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("UNDEPRECATE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "UNDEPRECATE");
 
             // Create and deprecate a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -642,7 +628,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("EXISTS");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "EXISTS");
 
             // Create a location
             var location = await locationClient.CreateLocationAsync(new CreateLocationRequest
@@ -696,7 +682,7 @@ public class LocationTestHandler : BaseHttpTestHandler
         {
             var locationClient = GetServiceClient<ILocationClient>();
 
-            var realm = await CreateTestRealmAsync("DUPCODE");
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "CONFLICT");
 
             var code = $"DUPLICATE_LOC_{DateTime.Now.Ticks}";
 

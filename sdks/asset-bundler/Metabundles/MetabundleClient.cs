@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.AssetBundler.Helpers;
 using BeyondImmersion.Bannou.AssetBundler.Upload;
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.BannouService.Asset;
@@ -61,21 +62,14 @@ public sealed class MetabundleClient
             AssetFilter = request.AssetFilter?.ToList(),
             Version = request.Version ?? "1.0.0",
             Owner = request.Owner ?? throw new ArgumentNullException(nameof(request), "Owner is required"),
-            Realm = ParseRealm(request.Realm),
+            Realm = AssetApiHelpers.ParseRealmRequired(request.Realm),
             Description = request.Description
         };
 
         var apiResponse = await _client.InvokeAsync<CreateMetabundleRequest, CreateMetabundleResponse>(
             "POST", "/bundles/metabundle/create", apiRequest, cancellationToken: ct);
 
-        if (!apiResponse.IsSuccess || apiResponse.Result == null)
-        {
-            var errorCode = apiResponse.Error?.ResponseCode ?? 500;
-            var errorMessage = apiResponse.Error?.Message ?? "Unknown error";
-            throw new InvalidOperationException($"Failed to create metabundle: {errorCode} - {errorMessage}");
-        }
-
-        var response = apiResponse.Result;
+        var response = AssetApiHelpers.EnsureSuccess(apiResponse, "create metabundle");
 
         _logger?.LogInformation(
             "Created metabundle {MetabundleId} with {AssetCount} assets",
@@ -88,24 +82,6 @@ public sealed class MetabundleClient
             AssetCount = response.AssetCount,
             TotalSizeBytes = response.SizeBytes,
             CreatedAt = DateTimeOffset.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Parses a realm string to the Realm enum.
-    /// </summary>
-    private static Realm ParseRealm(string? realm)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return Realm.Omega;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => throw new ArgumentException($"Unknown realm: {realm}", nameof(realm))
         };
     }
 }

@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -148,5 +150,24 @@ public abstract class BaseHttpTestHandler : IServiceTestHandler
     protected static string GenerateTestEmail(string prefix = "test")
     {
         return $"{GenerateTestId(prefix)}@example.com";
+    }
+
+    /// <summary>
+    /// Creates a test realm for tests that need realm-dependent resources.
+    /// Consolidates the repeated realm creation pattern used by Location, Species, and Character tests.
+    /// </summary>
+    /// <param name="prefix">Code prefix for uniqueness (e.g., "LOC", "SPECIES", "CHAR")</param>
+    /// <param name="description">Human-readable description for the name (e.g., "Location", "Species")</param>
+    /// <param name="suffix">Test-specific suffix for identification</param>
+    /// <returns>The created realm response</returns>
+    protected static async Task<RealmResponse> CreateTestRealmAsync(string prefix, string description, string suffix)
+    {
+        var realmClient = GetServiceClient<IRealmClient>();
+        return await realmClient.CreateRealmAsync(new CreateRealmRequest
+        {
+            Code = $"{prefix}_{DateTime.Now.Ticks}_{suffix}",
+            Name = $"{description} Test Realm {suffix}",
+            Category = "TEST"
+        });
     }
 }

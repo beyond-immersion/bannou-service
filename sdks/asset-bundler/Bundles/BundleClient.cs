@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.AssetBundler.Helpers;
 using BeyondImmersion.Bannou.AssetBundler.Upload;
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.BannouService.Asset;
@@ -60,12 +61,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
             "POST", "/bundles/get", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<BundleWithDownloadUrl>("get bundle", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "get bundle");
 
         return new BundleResult
         {
@@ -108,12 +104,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<UpdateBundleRequest, UpdateBundleResponse>(
             "POST", "/bundles/update", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<UpdateBundleResponse>("update bundle", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "update bundle");
 
         _logger?.LogInformation(
             "Updated bundle {BundleId} to version {Version}",
@@ -157,12 +148,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<DeleteBundleRequest, DeleteBundleResponse>(
             "POST", "/bundles/delete", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<DeleteBundleResponse>("delete bundle", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "delete bundle");
 
         _logger?.LogInformation(
             "Deleted bundle {BundleId}, status={Status}",
@@ -200,12 +186,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<RestoreBundleRequest, RestoreBundleResponse>(
             "POST", "/bundles/restore", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<RestoreBundleResponse>("restore bundle", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "restore bundle");
 
         _logger?.LogInformation(
             "Restored bundle {BundleId} from version {FromVersion}",
@@ -248,12 +229,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<ListBundleVersionsRequest, ListBundleVersionsResponse>(
             "POST", "/bundles/list-versions", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<ListBundleVersionsResponse>("list bundle versions", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "list bundle versions");
 
         return new VersionHistoryResult
         {
@@ -291,12 +267,12 @@ public sealed class BundleClient
             Tags = query.Tags,
             TagExists = query.TagExists?.ToList(),
             TagNotExists = query.TagNotExists?.ToList(),
-            Status = ParseLifecycle(query.Status),
+            Status = AssetApiHelpers.ParseLifecycle(query.Status),
             CreatedAfter = query.CreatedAfter,
             CreatedBefore = query.CreatedBefore,
             NameContains = query.NameContains,
-            Realm = ParseRealm(query.Realm),
-            BundleType = ParseBundleType(query.BundleType),
+            Realm = AssetApiHelpers.ParseRealm(query.Realm),
+            BundleType = AssetApiHelpers.ParseBundleType(query.BundleType),
             Limit = query.Limit,
             Offset = query.Offset,
             IncludeDeleted = query.IncludeDeleted
@@ -305,12 +281,7 @@ public sealed class BundleClient
         var response = await _client.InvokeAsync<QueryBundlesRequest, QueryBundlesResponse>(
             "POST", "/bundles/query", request, cancellationToken: ct);
 
-        if (!response.IsSuccess || response.Result == null)
-        {
-            throw CreateException<QueryBundlesResponse>("query bundles", response);
-        }
-
-        var result = response.Result;
+        var result = AssetApiHelpers.EnsureSuccess(response, "query bundles");
 
         return new QueryResult
         {
@@ -373,57 +344,6 @@ public sealed class BundleClient
         };
     }
 
-    private static Realm? ParseRealm(string? realm)
-    {
-        if (string.IsNullOrEmpty(realm))
-            return null;
-
-        return realm.ToLowerInvariant() switch
-        {
-            "omega" => Realm.Omega,
-            "arcadia" => Realm.Arcadia,
-            "fantasia" => Realm.Fantasia,
-            "shared" => Realm.Shared,
-            _ => null
-        };
-    }
-
-    private static BundleType? ParseBundleType(string? bundleType)
-    {
-        if (string.IsNullOrEmpty(bundleType))
-            return null;
-
-        return bundleType.ToLowerInvariant() switch
-        {
-            "source" => BundleType.Source,
-            "metabundle" => BundleType.Metabundle,
-            _ => null
-        };
-    }
-
-    private static BundleLifecycle? ParseLifecycle(string? status)
-    {
-        if (string.IsNullOrEmpty(status))
-            return null;
-
-        return status.ToLowerInvariant() switch
-        {
-            "active" => BundleLifecycle.Active,
-            "deleted" => BundleLifecycle.Deleted,
-            "processing" => BundleLifecycle.Processing,
-            _ => null
-        };
-    }
-
-    private static Exception CreateException<TResponse>(
-        string operation,
-        ApiResponse<TResponse> response)
-        where TResponse : class
-    {
-        var errorCode = response.Error?.ResponseCode ?? 500;
-        var errorMessage = response.Error?.Message ?? "Unknown error";
-        return new InvalidOperationException($"Failed to {operation}: {errorCode} - {errorMessage}");
-    }
 }
 
 /// <summary>
