@@ -458,17 +458,6 @@ public sealed class EntityResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_NullBindingName_Throws()
-    {
-        // Arrange
-        var bindings = CutsceneBindings.Empty;
-
-        // Act & Assert (ArgumentNullException inherits from ArgumentException)
-        await Assert.ThrowsAnyAsync<ArgumentException>(
-            () => _resolver.ResolveAsync(null!, bindings));
-    }
-
-    [Fact]
     public async Task ResolveAsync_EmptyBindingName_Throws()
     {
         // Arrange
@@ -477,14 +466,6 @@ public sealed class EntityResolverTests
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
             () => _resolver.ResolveAsync("", bindings));
-    }
-
-    [Fact]
-    public async Task ResolveAsync_NullBindings_Throws()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _resolver.ResolveAsync("hero", null!));
     }
 
     // =========================================================================

@@ -131,6 +131,8 @@ Tenets are organized into three categories based on when they're needed:
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
+| Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
+| Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
 | `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |

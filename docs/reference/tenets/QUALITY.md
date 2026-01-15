@@ -154,6 +154,51 @@ catch {
 3. **If test is wrong**: Fix the test, then ensure implementation passes
 4. **NEVER**: Change a correct test to pass with buggy implementation
 
+### Nullable Reference Types and Invalid Null Tests
+
+**Rule**: Tests MUST NOT use null-forgiving operators (`null!`) to bypass compile-time null safety.
+
+Bannou uses Nullable Reference Types (NRTs) for compile-time null safety. When a parameter is declared as non-nullable (e.g., `AccountResponse account` not `AccountResponse? account`), the type system guarantees callers cannot pass null without explicit bypassing.
+
+**Tests that use `null!` to test null handling on non-nullable parameters are invalid**:
+
+```csharp
+// INVALID TEST - tests impossible scenario
+[Fact]
+public async Task GetAccount_WithNullId_ShouldThrow()
+{
+    // The type system prevents this - this test is meaningless
+    await Assert.ThrowsAsync<ArgumentNullException>(() =>
+        _service.GetAccountAsync(null!));  // null! bypasses NRT - BAD
+}
+```
+
+**Why these tests are invalid**:
+1. The NRT system provides compile-time guarantees - null cannot be passed without `null!`
+2. Using `null!` explicitly defeats the type system's purpose
+3. Adding runtime null checks to "fix" these tests adds unnecessary defensive code
+4. The test validates a code path that properly-typed code can never reach
+
+**What to do when you find such tests**:
+1. **Remove the test** - it tests an impossible scenario
+2. **Do NOT** add runtime null checks to make the test pass
+3. If null is a valid input, make the parameter nullable (`Type?`) and test appropriately
+
+**Valid null testing** - when the parameter IS nullable:
+
+```csharp
+// VALID TEST - parameter accepts null by design
+public async Task<Response> GetAccountAsync(string? optionalFilter)
+
+[Fact]
+public async Task GetAccount_WithNullFilter_ReturnsAllAccounts()
+{
+    // null is explicitly allowed by the type signature
+    var result = await _service.GetAccountAsync(null);
+    Assert.NotEmpty(result.Accounts);
+}
+```
+
 ---
 
 ## Tenet 16: Naming Conventions (CONSOLIDATED)
@@ -224,6 +269,8 @@ Generated files in `*/Generated/` directories get their XML documentation from O
 | Logging passwords/tokens | T10 | Redact or log length only |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
+| Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
+| Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
 | Wrong naming pattern | T16 | Follow category-specific pattern |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
 | Missing env var in config doc | T19 | Add environment variable to summary |

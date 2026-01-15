@@ -560,51 +560,6 @@ public class BehaviorBundleManagerTests
     }
 
     [Fact]
-    public async Task SaveGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-        var metadata = new CachedGoapMetadata();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.SaveGoapMetadataAsync(null!, metadata));
-    }
-
-    [Fact]
-    public async Task SaveGoapMetadataAsync_NullMetadata_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.SaveGoapMetadataAsync("behavior-123", null!));
-    }
-
-    [Fact]
-    public async Task GetGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.GetGoapMetadataAsync(null!));
-    }
-
-    [Fact]
-    public async Task RemoveGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RemoveGoapMetadataAsync(null!));
-    }
-
-    [Fact]
     public async Task SaveGoapMetadataAsync_ComplexMetadata_PreservesAllFields()
     {
         // Arrange
