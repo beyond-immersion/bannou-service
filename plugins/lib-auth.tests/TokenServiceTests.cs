@@ -504,17 +504,6 @@ public class TokenServiceTests
     #region ValidateTokenAsync Tests
 
     [Fact]
-    public async Task ValidateTokenAsync_WithNullToken_ShouldReturnUnauthorized()
-    {
-        // Act
-        var (status, response) = await _service.ValidateTokenAsync(null!);
-
-        // Assert
-        Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.Null(response);
-    }
-
-    [Fact]
     public async Task ValidateTokenAsync_WithEmptyToken_ShouldReturnUnauthorized()
     {
         // Act

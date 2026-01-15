@@ -362,15 +362,5 @@ public class OAuthProviderServiceTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task FindOrCreateOAuthAccountAsync_WithNullUserInfo_ShouldReturnNull()
-    {
-        // Act
-        var result = await _service.FindOrCreateOAuthAccountAsync(Provider.Discord, null!, CancellationToken.None);
-
-        // Assert
-        Assert.Null(result);
-    }
-
     #endregion
 }

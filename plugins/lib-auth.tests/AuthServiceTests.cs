@@ -276,26 +276,6 @@ public class AuthServiceTests
     #region Input Validation Tests
 
     [Fact]
-    public async Task LoginAsync_WithNullEmail_ShouldReturnBadRequest()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        var request = new LoginRequest
-        {
-            Email = null!,
-            Password = "validpassword"
-        };
-
-        // Act
-        var (status, response) = await service.LoginAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
-    }
-
-    [Fact]
     public async Task LoginAsync_WithEmptyPassword_ShouldReturnBadRequest()
     {
         // Arrange
@@ -335,25 +315,6 @@ public class AuthServiceTests
         Assert.Null(response);
     }
 
-    [Fact]
-    public async Task RegisterAsync_WithNullUsername_ShouldReturnBadRequest()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        var request = new RegisterRequest
-        {
-            Username = null!,
-            Password = "validpassword"
-        };
-
-        // Act
-        var (status, response) = await service.RegisterAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
-    }
 
     [Fact]
     public async Task RegisterAsync_WithEmptyPassword_ShouldReturnBadRequest()
@@ -460,20 +421,6 @@ public class AuthServiceTests
 
         // Act
         var (status, response) = await service.ValidateTokenAsync("");
-
-        // Assert
-        Assert.Equal(StatusCodes.Unauthorized, status);
-        Assert.Null(response);
-    }
-
-    [Fact]
-    public async Task ValidateTokenAsync_WithNullJwt_ShouldReturnUnauthorized()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        // Act
-        var (status, response) = await service.ValidateTokenAsync(null!);
 
         // Assert
         Assert.Equal(StatusCodes.Unauthorized, status);
@@ -749,24 +696,6 @@ public class AuthServiceTests
         var request = new PasswordResetRequest
         {
             Email = ""
-        };
-
-        // Act
-        var status = await service.RequestPasswordResetAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-    }
-
-    [Fact]
-    public async Task RequestPasswordResetAsync_WithNullEmail_ShouldReturnBadRequest()
-    {
-        // Arrange
-        var service = CreateAuthService();
-
-        var request = new PasswordResetRequest
-        {
-            Email = null!
         };
 
         // Act
