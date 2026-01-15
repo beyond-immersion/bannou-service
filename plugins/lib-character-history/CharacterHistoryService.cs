@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -27,7 +28,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
 
-    private const string STATE_STORE = "character-history-statestore";
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "participation-event-";
     private const string BACKSTORY_KEY_PREFIX = "backstory-";
@@ -59,7 +59,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
             stateStoreFactory,
-            STATE_STORE,
+            StateStoreDefinitions.CharacterHistory,
             PARTICIPATION_KEY_PREFIX,
             PARTICIPATION_INDEX_KEY_PREFIX,
             PARTICIPATION_BY_EVENT_KEY_PREFIX);
@@ -69,7 +69,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             new BackstoryStorageConfiguration<BackstoryData, BackstoryElementData>
             {
                 StateStoreFactory = stateStoreFactory,
-                StateStoreName = STATE_STORE,
+                StateStoreName = StateStoreDefinitions.CharacterHistory,
                 KeyPrefix = BACKSTORY_KEY_PREFIX,
                 ElementMatcher = new BackstoryElementMatcher<BackstoryElementData>(
                     getType: e => e.ElementType,

@@ -271,6 +271,16 @@ x-state-stores:
     service: Character
     purpose: Persistent character data
 
+  character-history-statestore:
+    backend: mysql
+    service: CharacterHistory
+    purpose: Character historical events and backstory
+
+  character-personality-statestore:
+    backend: mysql
+    service: CharacterPersonality
+    purpose: Character personality traits and combat preferences
+
   game-session-statestore:
     backend: mysql
     service: GameSession
@@ -285,6 +295,11 @@ x-state-stores:
     backend: mysql
     service: Realm
     purpose: Realm definitions and configuration
+
+  realm-history-statestore:
+    backend: mysql
+    service: RealmHistory
+    purpose: Realm historical events and lore
 
   relationship-statestore:
     backend: mysql
@@ -310,3 +325,28 @@ x-state-stores:
     backend: mysql
     service: Subscription
     purpose: User subscriptions to game services
+
+  scene-statestore:
+    backend: mysql
+    service: Scene
+    purpose: Hierarchical scene composition storage
+
+  # ============================================================================
+  # Redis Stores - Spatial/Mapping Data
+  # ============================================================================
+
+  mapping-statestore:
+    backend: redis
+    prefix: mapping
+    service: Mapping
+    purpose: Spatial map data and channels
+
+  # ============================================================================
+  # Orchestrator - Primary Store
+  # ============================================================================
+
+  orchestrator-statestore:
+    backend: redis
+    prefix: orch
+    service: Orchestrator
+    purpose: Primary orchestrator state

@@ -25,7 +25,6 @@ public partial class AccountService : IAccountService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
 
-    private const string ACCOUNT_STATE_STORE = "account-statestore"; // MySQL-backed state store
     private const string ACCOUNT_KEY_PREFIX = "account-";
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
@@ -79,7 +78,7 @@ public partial class AccountService : IAccountService
                 page, pageSize, hasFilters);
 
             // Get the list of all account IDs (sorted by creation order)
-            var accountIdStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNT_STATE_STORE);
+            var accountIdStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
             var accountIds = await accountIdStore.GetAsync(ACCOUNT_LIST_KEY, cancellationToken) ?? new List<string>();
 
             var totalCount = accountIds.Count;
@@ -206,13 +205,13 @@ public partial class AccountService : IAccountService
     /// </summary>
     private async Task<AccountResponse?> LoadAccountResponseAsync(string accountId, CancellationToken cancellationToken)
     {
-        var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
         var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
         if (account == null || account.DeletedAt.HasValue)
             return null;
 
-        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE);
+        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
         var authMethods = await authMethodsStore.GetAsync($"{AUTH_METHODS_KEY_PREFIX}{accountId}", cancellationToken) ?? new List<AuthMethodInfo>();
 
         return new AccountResponse
@@ -237,7 +236,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Creating account for email: {Email}", body.Email);
 
             // Check if email already exists
-            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             var existingAccountId = await emailIndexStore.GetAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 cancellationToken);
@@ -285,7 +284,7 @@ public partial class AccountService : IAccountService
             };
 
             // Store in state store
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
 
             // Create email index for quick lookup
@@ -383,7 +382,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Retrieving account: {AccountId}", accountId);
 
             // Get from lib-state store (replaces Entity Framework query)
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -439,7 +438,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Updating account: {AccountId}", accountId);
 
             // Get existing account
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -537,7 +536,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Retrieving account by email: {Email}", email);
 
             // Get the account ID from email index
-            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             var accountId = await emailIndexStore.GetAsync(
                 $"{EMAIL_INDEX_KEY_PREFIX}{email.ToLowerInvariant()}",
                 cancellationToken);
@@ -549,7 +548,7 @@ public partial class AccountService : IAccountService
             }
 
             // Get the full account data
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -608,7 +607,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
 
             // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
@@ -649,7 +648,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
 
             // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
@@ -659,7 +658,7 @@ public partial class AccountService : IAccountService
 
             // Get existing auth methods
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE);
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
             var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
 
             // Validate ExternalId - required for OAuth linking and provider index
@@ -696,7 +695,7 @@ public partial class AccountService : IAccountService
 
             // Create provider index for lookup
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
 
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
@@ -757,7 +756,7 @@ public partial class AccountService : IAccountService
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
 
             // Get the account ID from provider index
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             var accountId = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
 
             if (string.IsNullOrEmpty(accountId))
@@ -767,7 +766,7 @@ public partial class AccountService : IAccountService
             }
 
             // Get the full account data
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -822,7 +821,7 @@ public partial class AccountService : IAccountService
         try
         {
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE);
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
             var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
 
             return authMethods ?? new List<AuthMethodInfo>();
@@ -847,7 +846,7 @@ public partial class AccountService : IAccountService
             // Handle profile update similar to account update
             try
             {
-                var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+                var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
                 var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
                 if (account == null)
@@ -921,7 +920,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
             // Get existing account for event publishing
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -937,7 +936,7 @@ public partial class AccountService : IAccountService
             await accountStore.SaveAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", account);
 
             // Remove email index
-            var emailIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
 
             // Remove from accounts list index
@@ -974,7 +973,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
 
             // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null || account.DeletedAt.HasValue)
@@ -984,7 +983,7 @@ public partial class AccountService : IAccountService
 
             // Get existing auth methods
             var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(ACCOUNT_STATE_STORE);
+            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
             var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken) ?? new List<AuthMethodInfo>();
 
             // Find the auth method to remove
@@ -1002,7 +1001,7 @@ public partial class AccountService : IAccountService
 
             // Remove provider index
             var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(ACCOUNT_STATE_STORE);
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
             await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
 
             _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
@@ -1035,7 +1034,7 @@ public partial class AccountService : IAccountService
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
 
             // Get existing account
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -1080,7 +1079,7 @@ public partial class AccountService : IAccountService
                 accountId, body.EmailVerified);
 
             // Get existing account
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(ACCOUNT_STATE_STORE);
+            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
             var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
 
             if (account == null)
@@ -1196,7 +1195,7 @@ public partial class AccountService : IAccountService
     private async Task AddAccountToIndexAsync(string accountId, CancellationToken cancellationToken)
     {
         const int maxRetries = 3;
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNT_STATE_STORE);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -1244,7 +1243,7 @@ public partial class AccountService : IAccountService
     private async Task RemoveAccountFromIndexAsync(string accountId, CancellationToken cancellationToken)
     {
         const int maxRetries = 3;
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(ACCOUNT_STATE_STORE);
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Account);
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {

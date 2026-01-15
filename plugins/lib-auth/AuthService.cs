@@ -47,7 +47,6 @@ public partial class AuthService : IAuthService
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
 
-    private const string REDIS_STATE_STORE = "auth-statestore";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
     private const string DEFAULT_CONNECT_URL = "ws://localhost:5014/connect";
@@ -641,13 +640,13 @@ public partial class AuthService : IAuthService
                 {
                     // Get session keys from index to delete all sessions
                     var indexKey = $"account-sessions:{validateResponse.AccountId}";
-                    var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+                    var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
                     var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
 
                     if (sessionKeys != null && sessionKeys.Count > 0)
                     {
                         // Delete all sessions
-                        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+                        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
                         var deleteTasks = sessionKeys.Select(key =>
                             sessionStore.DeleteAsync($"session:{key}", cancellationToken));
                         await Task.WhenAll(deleteTasks);
@@ -669,7 +668,7 @@ public partial class AuthService : IAuthService
             else
             {
                 // Logout current session only
-                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
                 await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
@@ -721,7 +720,7 @@ public partial class AuthService : IAuthService
             }
 
             // Get session data to find account ID for index cleanup
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
             var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
             // Remove the session data from Redis
@@ -800,7 +799,7 @@ public partial class AuthService : IAuthService
                 };
 
                 // Store reset token in Redis with TTL
-                var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(REDIS_STATE_STORE);
+                var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(StateStoreDefinitions.Auth);
                 await resetStore.SaveAsync(
                     $"password-reset:{resetToken}",
                     resetData,
@@ -881,7 +880,7 @@ public partial class AuthService : IAuthService
             }
 
             // Look up the reset token in Redis
-            var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(REDIS_STATE_STORE);
+            var resetStore = _stateStoreFactory.GetStore<PasswordResetData>(StateStoreDefinitions.Auth);
             var resetData = await resetStore.GetAsync($"password-reset:{body.Token}", cancellationToken);
 
             if (resetData == null)
@@ -1035,7 +1034,7 @@ public partial class AuthService : IAuthService
                 _logger.LogDebug("Looking up session state for SessionKey: {SessionKey}", sessionKey);
 
                 // Lookup session data from Redis
-                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+                var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
                 var sessionData = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
 
                 if (sessionData == null)
@@ -1240,7 +1239,7 @@ public partial class AuthService : IAuthService
         _logger.LogDebug("Saving session for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
             account.AccountId, sessionKey, sessionData.ExpiresAt);
 
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
         await sessionStore.SaveAsync(
             $"session:{sessionKey}",
             sessionData,
@@ -1334,7 +1333,7 @@ public partial class AuthService : IAuthService
     private async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken)
     {
         var redisKey = $"refresh_token:{refreshToken}";
-        var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+        var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
         await refreshStore.SaveAsync(
             redisKey,
             new StringWrapper { Value = accountId },
@@ -1347,7 +1346,7 @@ public partial class AuthService : IAuthService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
             var wrapper = await refreshStore.GetAsync(redisKey, cancellationToken);
             return wrapper?.Value;
         }
@@ -1363,7 +1362,7 @@ public partial class AuthService : IAuthService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var refreshStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
             await refreshStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
@@ -1389,7 +1388,7 @@ public partial class AuthService : IAuthService
         try
         {
             // Use the reverse index to find the session key
-            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
             var wrapper = await indexStore.GetAsync($"session-id-index:{sessionId}", cancellationToken);
 
             if (wrapper != null && !string.IsNullOrEmpty(wrapper.Value))
@@ -1415,7 +1414,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
             await indexStore.SaveAsync(
                 $"session-id-index:{sessionId}",
                 new StringWrapper { Value = sessionKey },
@@ -1447,7 +1446,7 @@ public partial class AuthService : IAuthService
     {
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(REDIS_STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<StringWrapper>(StateStoreDefinitions.Auth);
             await indexStore.DeleteAsync($"session-id-index:{sessionId}", cancellationToken);
 
             _logger.LogDebug("Removed reverse index for session ID {SessionId}", sessionId);
@@ -1497,7 +1496,7 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
 
             // Get existing session list
             var existingSessions = await sessionIndexStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
@@ -1543,7 +1542,7 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
 
             // Get existing session list
             var existingSessions = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
@@ -1595,8 +1594,8 @@ public partial class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
             // Get session keys from account index
             var sessionKeys = await sessionIndexStore.GetAsync(indexKey, cancellationToken);
@@ -2175,7 +2174,7 @@ public partial class AuthService : IAuthService
     {
         var providerName = providerOverride ?? provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
-        var oauthLinkStore = _stateStoreFactory.GetStore<GuidWrapper>(REDIS_STATE_STORE);
+        var oauthLinkStore = _stateStoreFactory.GetStore<GuidWrapper>(StateStoreDefinitions.Auth);
 
         try
         {
@@ -2423,8 +2422,8 @@ public partial class AuthService : IAuthService
         {
             // Get session keys directly from the account index
             var indexKey = $"account-sessions:{accountId}";
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
             var sessionKeys = await sessionIndexStore.GetAsync(indexKey, CancellationToken.None);
 
@@ -2507,8 +2506,8 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
                 accountId, string.Join(", ", newRoles));
 
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
             var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
 
@@ -2579,8 +2578,8 @@ public partial class AuthService : IAuthService
                 authorizations = subscriptionsResponse.Subscriptions.Select(s => s.StubName).ToList();
             }
 
-            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
-            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+            var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+            var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
             var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
 

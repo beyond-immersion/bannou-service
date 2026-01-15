@@ -26,7 +26,6 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
-    private const string REDIS_STATE_STORE = "auth-statestore";
     private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
     private const string DISCORD_USER_URL = "https://discord.com/api/users/@me";
     private const string GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -397,7 +396,7 @@ public class OAuthProviderService : IOAuthProviderService
 
         try
         {
-            var linkStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
 
             // Check existing link (stored as string since Guid is a value type)
             var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);

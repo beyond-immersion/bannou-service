@@ -17,7 +17,6 @@ public class SessionService : ISessionService
     private readonly IMessageBus _messageBus;
     private readonly AuthServiceConfiguration _configuration;
     private readonly ILogger<SessionService> _logger;
-    private const string REDIS_STATE_STORE = "auth-statestore";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
 
@@ -130,7 +129,7 @@ public class SessionService : ISessionService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var listStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
             var existingSessions = await listStore.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
             if (!existingSessions.Contains(sessionKey))
@@ -167,7 +166,7 @@ public class SessionService : ISessionService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            var listStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
             var existingSessions = await listStore.GetAsync(indexKey, cancellationToken);
 
             if (existingSessions != null && existingSessions.Contains(sessionKey))
@@ -210,7 +209,7 @@ public class SessionService : ISessionService
     {
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             await stringStore.SaveAsync(
                 $"session-id-index:{sessionId}",
                 sessionKey,
@@ -238,7 +237,7 @@ public class SessionService : ISessionService
     {
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             await stringStore.DeleteAsync($"session-id-index:{sessionId}", cancellationToken);
             _logger.LogDebug("Removed reverse index: SessionId={SessionId}", sessionId);
         }
@@ -253,7 +252,7 @@ public class SessionService : ISessionService
     {
         try
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             var sessionKey = await stringStore.GetAsync($"session-id-index:{sessionId}", cancellationToken);
 
             if (!string.IsNullOrEmpty(sessionKey))
@@ -283,7 +282,7 @@ public class SessionService : ISessionService
     /// <inheritdoc/>
     public async Task DeleteSessionAsync(string sessionKey, CancellationToken cancellationToken = default)
     {
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
         await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
         _logger.LogDebug("Deleted session: SessionKey={SessionKey}", sessionKey);
     }
@@ -291,7 +290,7 @@ public class SessionService : ISessionService
     /// <inheritdoc/>
     public async Task<SessionDataModel?> GetSessionAsync(string sessionKey, CancellationToken cancellationToken = default)
     {
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
         return await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
     }
 
@@ -302,7 +301,7 @@ public class SessionService : ISessionService
             ? new StateOptions { Ttl = ttlSeconds.Value }
             : null;
 
-        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(REDIS_STATE_STORE);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
         await sessionStore.SaveAsync(
             $"session:{sessionKey}",
             sessionData,
@@ -316,7 +315,7 @@ public class SessionService : ISessionService
     public async Task<List<string>> GetSessionKeysForAccountAsync(string accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
-        var listStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
         var sessionKeys = await listStore.GetAsync(indexKey, cancellationToken);
 
         return sessionKeys ?? new List<string>();
@@ -326,7 +325,7 @@ public class SessionService : ISessionService
     public async Task DeleteAccountSessionsIndexAsync(string accountId, CancellationToken cancellationToken = default)
     {
         var indexKey = $"account-sessions:{accountId}";
-        var listStore = _stateStoreFactory.GetStore<List<string>>(REDIS_STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
         await listStore.DeleteAsync(indexKey, cancellationToken);
         _logger.LogDebug("Deleted account sessions index: AccountId={AccountId}", accountId);
     }

@@ -26,7 +26,6 @@ public class TokenService : ITokenService
     private readonly AuthServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
-    private const string REDIS_STATE_STORE = "auth-statestore";
 
     /// <summary>
     /// Initializes a new instance of TokenService.
@@ -158,7 +157,7 @@ public class TokenService : ITokenService
     public async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var redisKey = $"refresh_token:{refreshToken}";
-        var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
         await stringStore.SaveAsync(
             redisKey,
             accountId,
@@ -172,7 +171,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             return await stringStore.GetAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
@@ -197,7 +196,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             await stringStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
