@@ -90,6 +90,31 @@ public partial interface IAssetService : IBannouService
         Task<(StatusCodes, QueryBundlesByAssetResponse?)> QueryBundlesByAssetAsync(QueryBundlesByAssetRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// UpdateBundle operation
+        /// </summary>
+        Task<(StatusCodes, UpdateBundleResponse?)> UpdateBundleAsync(UpdateBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeleteBundle operation
+        /// </summary>
+        Task<(StatusCodes, DeleteBundleResponse?)> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RestoreBundle operation
+        /// </summary>
+        Task<(StatusCodes, RestoreBundleResponse?)> RestoreBundleAsync(RestoreBundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// QueryBundles operation
+        /// </summary>
+        Task<(StatusCodes, QueryBundlesResponse?)> QueryBundlesAsync(QueryBundlesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListBundleVersions operation
+        /// </summary>
+        Task<(StatusCodes, ListBundleVersionsResponse?)> ListBundleVersionsAsync(ListBundleVersionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// BulkGetAssets operation
         /// </summary>
         Task<(StatusCodes, BulkGetAssetsResponse?)> BulkGetAssetsAsync(BulkGetAssetsRequest body, CancellationToken cancellationToken = default(CancellationToken));

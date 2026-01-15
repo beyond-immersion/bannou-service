@@ -17,6 +17,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -197,6 +212,95 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     /// <returns>Bundles containing the asset</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesByAssetResponse>> QueryBundlesByAssetAsync(QueryBundlesByAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update bundle metadata
+    /// </summary>
+
+    /// <remarks>
+    /// Update metadata for an existing bundle (name, description, tags).
+    /// <br/>Does not modify bundle contents - for that, create a new bundle.
+    /// <br/>
+    /// <br/>Increments the bundle version and records the change in version history.
+    /// <br/>Only the bundle owner or admin can update.
+    /// </remarks>
+
+    /// <returns>Bundle updated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateBundleResponse>> UpdateBundleAsync(UpdateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Soft-delete a bundle
+    /// </summary>
+
+    /// <remarks>
+    /// Soft-delete a bundle, marking it as deleted but retaining data
+    /// <br/>for the configured retention period (default 30 days).
+    /// <br/>
+    /// <br/>Deleted bundles are excluded from resolution and queries by default.
+    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// <br/>
+    /// <br/>Only the bundle owner or admin can delete.
+    /// </remarks>
+
+    /// <returns>Bundle deleted successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundleAsync(DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Restore a soft-deleted bundle
+    /// </summary>
+
+    /// <remarks>
+    /// Restore a bundle that was soft-deleted, making it active again.
+    /// <br/>Can only restore bundles within their retention period.
+    /// <br/>
+    /// <br/>Only the bundle owner or admin can restore.
+    /// </remarks>
+
+    /// <returns>Bundle restored successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundleAsync(RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Query bundles with advanced filters
+    /// </summary>
+
+    /// <remarks>
+    /// Query bundles with flexible filtering options including:
+    /// <br/>- Tag matching (exact, exists, not exists)
+    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Date range filtering
+    /// <br/>- Name search (contains)
+    /// <br/>- Owner filtering
+    /// <br/>- Realm and bundle type filtering
+    /// <br/>
+    /// <br/>Supports pagination and sorting.
+    /// </remarks>
+
+    /// <returns>Query results</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesResponse>> QueryBundlesAsync(QueryBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List version history for a bundle
+    /// </summary>
+
+    /// <remarks>
+    /// Get the version history for a bundle, showing all metadata changes
+    /// <br/>over time. Each version record includes:
+    /// <br/>- Version number
+    /// <br/>- When the change was made
+    /// <br/>- Who made the change
+    /// <br/>- What changed
+    /// <br/>- Optional reason for the change
+    /// <br/>
+    /// <br/>The current version's full metadata snapshot is always included.
+    /// </remarks>
+
+    /// <returns>Version history</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBundleVersionsResponse>> ListBundleVersionsAsync(ListBundleVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Batch asset metadata lookup
@@ -478,6 +582,115 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.QueryBundlesByAssetAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update bundle metadata
+    /// </summary>
+    /// <remarks>
+    /// Update metadata for an existing bundle (name, description, tags).
+    /// <br/>Does not modify bundle contents - for that, create a new bundle.
+    /// <br/>
+    /// <br/>Increments the bundle version and records the change in version history.
+    /// <br/>Only the bundle owner or admin can update.
+    /// </remarks>
+    /// <returns>Bundle updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/update")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateBundleResponse>> UpdateBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateBundleAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Soft-delete a bundle
+    /// </summary>
+    /// <remarks>
+    /// Soft-delete a bundle, marking it as deleted but retaining data
+    /// <br/>for the configured retention period (default 30 days).
+    /// <br/>
+    /// <br/>Deleted bundles are excluded from resolution and queries by default.
+    /// <br/>Use permanent=true for immediate, unrecoverable deletion (admin only).
+    /// <br/>
+    /// <br/>Only the bundle owner or admin can delete.
+    /// </remarks>
+    /// <returns>Bundle deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/delete")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeleteBundleAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Restore a soft-deleted bundle
+    /// </summary>
+    /// <remarks>
+    /// Restore a bundle that was soft-deleted, making it active again.
+    /// <br/>Can only restore bundles within their retention period.
+    /// <br/>
+    /// <br/>Only the bundle owner or admin can restore.
+    /// </remarks>
+    /// <returns>Bundle restored successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/restore")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.RestoreBundleAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Query bundles with advanced filters
+    /// </summary>
+    /// <remarks>
+    /// Query bundles with flexible filtering options including:
+    /// <br/>- Tag matching (exact, exists, not exists)
+    /// <br/>- Status filtering (active, deleted)
+    /// <br/>- Date range filtering
+    /// <br/>- Name search (contains)
+    /// <br/>- Owner filtering
+    /// <br/>- Realm and bundle type filtering
+    /// <br/>
+    /// <br/>Supports pagination and sorting.
+    /// </remarks>
+    /// <returns>Query results</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/query")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesResponse>> QueryBundles([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.QueryBundlesAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List version history for a bundle
+    /// </summary>
+    /// <remarks>
+    /// Get the version history for a bundle, showing all metadata changes
+    /// <br/>over time. Each version record includes:
+    /// <br/>- Version number
+    /// <br/>- When the change was made
+    /// <br/>- Who made the change
+    /// <br/>- What changed
+    /// <br/>- Optional reason for the change
+    /// <br/>
+    /// <br/>The current version's full metadata snapshot is always included.
+    /// </remarks>
+    /// <returns>Version history</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/list-versions")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBundleVersionsResponse>> ListBundleVersions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBundleVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListBundleVersionsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -3142,6 +3355,1087 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             _QueryBundlesByAsset_Info,
             _QueryBundlesByAsset_RequestSchema,
             _QueryBundlesByAsset_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateBundle
+
+    private static readonly string _UpdateBundle_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateBundleRequest",
+    "$defs": {
+        "UpdateBundleRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to update bundle metadata",
+            "required": [
+                "bundleId"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier to update"
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New bundle name (null to leave unchanged)"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "New bundle description (null to leave unchanged)"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Replace all tags with these (null to leave unchanged)"
+                },
+                "addTags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tags to add (merged with existing)"
+                },
+                "removeTags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Tag keys to remove"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for the update (recorded in version history)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateBundle_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateBundleResponse",
+    "$defs": {
+        "UpdateBundleResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of bundle update operation",
+            "required": [
+                "bundleId",
+                "version",
+                "previousVersion",
+                "changes"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Updated bundle identifier"
+                },
+                "version": {
+                    "type": "integer",
+                    "description": "New version number after update"
+                },
+                "previousVersion": {
+                    "type": "integer",
+                    "description": "Version number before update"
+                },
+                "changes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of changes made (e.g., \"name changed\", \"tag 'env' added\")"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the update occurred"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateBundle_Info = """
+{
+    "summary": "Update bundle metadata",
+    "description": "Update metadata for an existing bundle (name, description, tags).\nDoes not modify bundle contents - for that, create a new bundle.\n\ nIncrements the bundle version and records the change in version history.\nOnly the bundle owner or admin can update.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "updateBundle"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateBundle_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/update",
+            _UpdateBundle_Info));
+
+    /// <summary>Returns request schema for UpdateBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateBundle_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/update",
+            "request-schema",
+            _UpdateBundle_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateBundle_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/update",
+            "response-schema",
+            _UpdateBundle_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateBundle_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/update",
+            _UpdateBundle_Info,
+            _UpdateBundle_RequestSchema,
+            _UpdateBundle_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeleteBundle
+
+    private static readonly string _DeleteBundle_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteBundleRequest",
+    "$defs": {
+        "DeleteBundleRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to delete a bundle",
+            "required": [
+                "bundleId"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier to delete"
+                },
+                "permanent": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, permanently delete (admin only). If false, soft-delete."
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deletion (recorded in version history)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteBundle_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteBundleResponse",
+    "$defs": {
+        "DeleteBundleResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of bundle deletion",
+            "required": [
+                "bundleId",
+                "status",
+                "deletedAt"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Deleted bundle identifier"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "deleted",
+                        "permanently_deleted"
+                    ],
+                    "description": "Deletion status"
+                },
+                "deletedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the bundle was deleted"
+                },
+                "retentionUntil": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When soft-deleted bundle will be permanently removed (null for permanent deletes)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteBundle_Info = """
+{
+    "summary": "Soft-delete a bundle",
+    "description": "Soft-delete a bundle, marking it as deleted but retaining data\nfor the configured retention period (default 30 days).\n\nDeleted bundles are excluded from resolution and queries by default.\nUse permanent=true for immediate, unrecoverable deletion (admin only).\n\nOnly the bundle owner or admin can delete.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "deleteBundle"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBundle_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/delete",
+            _DeleteBundle_Info));
+
+    /// <summary>Returns request schema for DeleteBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBundle_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/delete",
+            "request-schema",
+            _DeleteBundle_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBundle_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/delete",
+            "response-schema",
+            _DeleteBundle_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteBundle_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/delete",
+            _DeleteBundle_Info,
+            _DeleteBundle_RequestSchema,
+            _DeleteBundle_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestoreBundle
+
+    private static readonly string _RestoreBundle_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreBundleRequest",
+    "$defs": {
+        "RestoreBundleRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to restore a soft-deleted bundle",
+            "required": [
+                "bundleId"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier to restore"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for restoration (recorded in version history)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreBundle_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreBundleResponse",
+    "$defs": {
+        "RestoreBundleResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of bundle restoration",
+            "required": [
+                "bundleId",
+                "status",
+                "restoredAt",
+                "restoredFromVersion"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Restored bundle identifier"
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Current bundle status (should be \"active\")"
+                },
+                "restoredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the bundle was restored"
+                },
+                "restoredFromVersion": {
+                    "type": "integer",
+                    "description": "Version number the bundle was restored from"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreBundle_Info = """
+{
+    "summary": "Restore a soft-deleted bundle",
+    "description": "Restore a bundle that was soft-deleted, making it active again.\nCan only restore bundles within their retention period.\n\nOnly the bundle owner or admin can restore.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "restoreBundle"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestoreBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/restore/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/restore",
+            _RestoreBundle_Info));
+
+    /// <summary>Returns request schema for RestoreBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/restore/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/restore",
+            "request-schema",
+            _RestoreBundle_RequestSchema));
+
+    /// <summary>Returns response schema for RestoreBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/restore/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/restore",
+            "response-schema",
+            _RestoreBundle_ResponseSchema));
+
+    /// <summary>Returns full schema for RestoreBundle</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/restore/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreBundle_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/restore",
+            _RestoreBundle_Info,
+            _RestoreBundle_RequestSchema,
+            _RestoreBundle_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for QueryBundles
+
+    private static readonly string _QueryBundles_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryBundlesRequest",
+    "$defs": {
+        "QueryBundlesRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Advanced bundle query with filters",
+            "properties": {
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter by exact tag key-value matches"
+                },
+                "tagExists": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter bundles that have these tag keys (any value)"
+                },
+                "tagNotExists": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Filter bundles that do NOT have these tag keys"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BundleStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter by bundle status (null for active only by default)"
+                },
+                "createdAfter": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Filter bundles created after this time"
+                },
+                "createdBefore": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Filter bundles created before this time"
+                },
+                "nameContains": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter bundles with name containing this string (case-insensitive)"
+                },
+                "owner": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Filter by bundle owner account ID"
+                },
+                "realm": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/Realm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter by realm"
+                },
+                "bundleType": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BundleType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter by bundle type (source or metabundle)"
+                },
+                "sortField": {
+                    "type": "string",
+                    "enum": [
+                        "created_at",
+                        "updated_at",
+                        "name",
+                        "size"
+                    ],
+                    "nullable": true,
+                    "description": "Field to sort by (default created_at)"
+                },
+                "sortOrder": {
+                    "type": "string",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ],
+                    "nullable": true,
+                    "description": "Sort order (default desc)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Maximum results to return (max 1000)"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Pagination offset"
+                },
+                "includeDeleted": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include soft-deleted bundles in results"
+                }
+            }
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "deleted",
+                "processing"
+            ],
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+        },
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
+        },
+        "BundleType": {
+            "type": "string",
+            "enum": [
+                "source",
+                "metabundle"
+            ],
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryBundles_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryBundlesResponse",
+    "$defs": {
+        "QueryBundlesResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Bundle query results",
+            "required": [
+                "bundles",
+                "totalCount",
+                "limit",
+                "offset"
+            ],
+            "properties": {
+                "bundles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BundleMetadata"
+                    },
+                    "description": "Matching bundles"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of matching bundles (for pagination)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Page size used"
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Page offset used"
+                }
+            }
+        },
+        "BundleMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Complete metadata for an asset bundle",
+            "required": [
+                "bundleId",
+                "bundleType",
+                "version",
+                "metadataVersion",
+                "owner",
+                "realm",
+                "status",
+                "assetCount",
+                "createdAt"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Unique bundle identifier"
+                },
+                "bundleType": {
+                    "$ref": "#/$defs/BundleType",
+                    "description": "Whether source or metabundle"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Bundle content version string"
+                },
+                "metadataVersion": {
+                    "type": "integer",
+                    "description": "Metadata version number (increments on metadata changes)"
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable bundle name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Bundle description"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner account ID or service name"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm this bundle belongs to"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Key-value tags for categorization and filtering"
+                },
+                "status": {
+                    "$ref": "#/$defs/BundleStatus",
+                    "description": "Bundle lifecycle status"
+                },
+                "assetCount": {
+                    "type": "integer",
+                    "description": "Number of assets in the bundle"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "description": "Bundle file size in bytes (null if not yet calculated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the bundle was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the bundle metadata was last updated"
+                },
+                "deletedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the bundle was soft-deleted (null if active)"
+                }
+            }
+        },
+        "BundleType": {
+            "type": "string",
+            "enum": [
+                "source",
+                "metabundle"
+            ],
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+        },
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "deleted",
+                "processing"
+            ],
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryBundles_Info = """
+{
+    "summary": "Query bundles with advanced filters",
+    "description": "Query bundles with flexible filtering options including:\n- Tag matching (exact, exists, not exists)\n- Status filtering (active, deleted)\n- Date range filtering\n- Name search (contains)\n- Owner filtering\n- Realm and bundle type filtering\ n\nSupports pagination and sorting.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "queryBundles"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryBundles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/query/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryBundles_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/query",
+            _QueryBundles_Info));
+
+    /// <summary>Returns request schema for QueryBundles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/query/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryBundles_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/query",
+            "request-schema",
+            _QueryBundles_RequestSchema));
+
+    /// <summary>Returns response schema for QueryBundles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/query/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryBundles_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/query",
+            "response-schema",
+            _QueryBundles_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryBundles</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/query/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryBundles_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/query",
+            _QueryBundles_Info,
+            _QueryBundles_RequestSchema,
+            _QueryBundles_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListBundleVersions
+
+    private static readonly string _ListBundleVersions_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListBundleVersionsRequest",
+    "$defs": {
+        "ListBundleVersionsRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to list bundle version history",
+            "required": [
+                "bundleId"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier to get history for"
+                },
+                "limit": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Maximum versions to return"
+                },
+                "offset": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Pagination offset"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListBundleVersions_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListBundleVersionsResponse",
+    "$defs": {
+        "ListBundleVersionsResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Bundle version history",
+            "required": [
+                "bundleId",
+                "currentVersion",
+                "versions",
+                "totalCount"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Bundle identifier"
+                },
+                "currentVersion": {
+                    "type": "integer",
+                    "description": "Current version number"
+                },
+                "versions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BundleVersionRecord"
+                    },
+                    "description": "Version history records (newest first)"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of versions"
+                }
+            }
+        },
+        "BundleVersionRecord": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A single version record in bundle history",
+            "required": [
+                "version",
+                "createdAt",
+                "createdBy",
+                "changes"
+            ],
+            "properties": {
+                "version": {
+                    "type": "integer",
+                    "description": "Version number"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this version was created"
+                },
+                "createdBy": {
+                    "type": "string",
+                    "description": "Account ID that made the change"
+                },
+                "changes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of changes in this version"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason provided for the change"
+                },
+                "snapshot": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BundleMetadata"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Full metadata snapshot at this version (only for current version)"
+                }
+            }
+        },
+        "BundleMetadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Complete metadata for an asset bundle",
+            "required": [
+                "bundleId",
+                "bundleType",
+                "version",
+                "metadataVersion",
+                "owner",
+                "realm",
+                "status",
+                "assetCount",
+                "createdAt"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Unique bundle identifier"
+                },
+                "bundleType": {
+                    "$ref": "#/$defs/BundleType",
+                    "description": "Whether source or metabundle"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Bundle content version string"
+                },
+                "metadataVersion": {
+                    "type": "integer",
+                    "description": "Metadata version number (increments on metadata changes)"
+                },
+                "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable bundle name"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Bundle description"
+                },
+                "owner": {
+                    "type": "string",
+                    "description": "Owner account ID or service name"
+                },
+                "realm": {
+                    "$ref": "#/$defs/Realm",
+                    "description": "Game realm this bundle belongs to"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Key-value tags for categorization and filtering"
+                },
+                "status": {
+                    "$ref": "#/$defs/BundleStatus",
+                    "description": "Bundle lifecycle status"
+                },
+                "assetCount": {
+                    "type": "integer",
+                    "description": "Number of assets in the bundle"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "description": "Bundle file size in bytes (null if not yet calculated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the bundle was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the bundle metadata was last updated"
+                },
+                "deletedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the bundle was soft-deleted (null if active)"
+                }
+            }
+        },
+        "BundleType": {
+            "type": "string",
+            "enum": [
+                "source",
+                "metabundle"
+            ],
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+        },
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "omega",
+                "arcadia",
+                "fantasia",
+                "shared"
+            ],
+            "description": "Game realm the asset belongs to"
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "deleted",
+                "processing"
+            ],
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _ListBundleVersions_Info = """
+{
+    "summary": "List version history for a bundle",
+    "description": "Get the version history for a bundle, showing all metadata changes\nover time. Each version record includes:\n- Version number\ n- When the change was made\n- Who made the change\n- What changed\n- Optional reason for the change\n\nThe current version's full metadata snapshot is always included.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "listBundleVersions"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListBundleVersions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/list-versions/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBundleVersions_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/list-versions",
+            _ListBundleVersions_Info));
+
+    /// <summary>Returns request schema for ListBundleVersions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/list-versions/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBundleVersions_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/list-versions",
+            "request-schema",
+            _ListBundleVersions_RequestSchema));
+
+    /// <summary>Returns response schema for ListBundleVersions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/list-versions/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBundleVersions_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/list-versions",
+            "response-schema",
+            _ListBundleVersions_ResponseSchema));
+
+    /// <summary>Returns full schema for ListBundleVersions</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/list-versions/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListBundleVersions_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/list-versions",
+            _ListBundleVersions_Info,
+            _ListBundleVersions_RequestSchema,
+            _ListBundleVersions_ResponseSchema));
 
     #endregion
 

@@ -20,6 +20,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -1840,6 +1855,629 @@ public partial class BulkGetAssetsResponse
 
 }
 
+/// <summary>
+/// Bundle lifecycle status:
+/// <br/>- active: Bundle is available for use
+/// <br/>- deleted: Bundle has been soft-deleted (within retention period)
+/// <br/>- processing: Bundle is being processed (metabundle creation)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BundleStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    Active = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    Deleted = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Complete metadata for an asset bundle
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleMetadata
+{
+
+    /// <summary>
+    /// Unique bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether source or metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleType BundleType { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle content version string
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Metadata version number (increments on metadata changes)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadataVersion")]
+    public int MetadataVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable bundle name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Owner account ID or service name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm this bundle belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Key-value tags for categorization and filtering
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.IDictionary<string, string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of assets in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle file size in bytes (null if not yet calculated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle metadata was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle was soft-deleted (null if active)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
+    public System.DateTimeOffset? DeletedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to update bundle metadata
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateBundleRequest
+{
+
+    /// <summary>
+    /// Bundle identifier to update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// New bundle name (null to leave unchanged)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// New bundle description (null to leave unchanged)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Replace all tags with these (null to leave unchanged)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.IDictionary<string, string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Tags to add (merged with existing)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("addTags")]
+    public System.Collections.Generic.IDictionary<string, string>? AddTags { get; set; } = default!;
+
+    /// <summary>
+    /// Tag keys to remove
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removeTags")]
+    public System.Collections.Generic.ICollection<string>? RemoveTags { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for the update (recorded in version history)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of bundle update operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateBundleResponse
+{
+
+    /// <summary>
+    /// Updated bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// New version number after update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Version number before update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousVersion")]
+    public int PreviousVersion { get; set; } = default!;
+
+    /// <summary>
+    /// List of changes made (e.g., "name changed", "tag 'env' added")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Changes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// When the update occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to delete a bundle
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteBundleRequest
+{
+
+    /// <summary>
+    /// Bundle identifier to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, permanently delete (admin only). If false, soft-delete.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permanent")]
+    public bool Permanent { get; set; } = false;
+
+    /// <summary>
+    /// Optional reason for deletion (recorded in version history)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of bundle deletion
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeleteBundleResponse
+{
+
+    /// <summary>
+    /// Deleted bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Deletion status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DeleteBundleResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DeletedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When soft-deleted bundle will be permanently removed (null for permanent deletes)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retentionUntil")]
+    public System.DateTimeOffset? RetentionUntil { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore a soft-deleted bundle
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreBundleRequest
+{
+
+    /// <summary>
+    /// Bundle identifier to restore
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for restoration (recorded in version history)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of bundle restoration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreBundleResponse
+{
+
+    /// <summary>
+    /// Restored bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Current bundle status (should be "active")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Status { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle was restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("restoredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RestoredAt { get; set; } = default!;
+
+    /// <summary>
+    /// Version number the bundle was restored from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("restoredFromVersion")]
+    public int RestoredFromVersion { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Advanced bundle query with filters
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryBundlesRequest
+{
+
+    /// <summary>
+    /// Filter by exact tag key-value matches
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.IDictionary<string, string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Filter bundles that have these tag keys (any value)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tagExists")]
+    public System.Collections.Generic.ICollection<string>? TagExists { get; set; } = default!;
+
+    /// <summary>
+    /// Filter bundles that do NOT have these tag keys
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tagNotExists")]
+    public System.Collections.Generic.ICollection<string>? TagNotExists { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by bundle status (null for active only by default)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleStatus? Status { get; set; } = default!;
+
+    /// <summary>
+    /// Filter bundles created after this time
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAfter")]
+    public System.DateTimeOffset? CreatedAfter { get; set; } = default!;
+
+    /// <summary>
+    /// Filter bundles created before this time
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdBefore")]
+    public System.DateTimeOffset? CreatedBefore { get; set; } = default!;
+
+    /// <summary>
+    /// Filter bundles with name containing this string (case-insensitive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nameContains")]
+    public string? NameContains { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by bundle owner account ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm? Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by bundle type (source or metabundle)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleType? BundleType { get; set; } = default!;
+
+    /// <summary>
+    /// Field to sort by (default created_at)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sortField")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QueryBundlesRequestSortField? SortField { get; set; } = default!;
+
+    /// <summary>
+    /// Sort order (default desc)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QueryBundlesRequestSortOrder? SortOrder { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum results to return (max 1000)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = 100;
+
+    /// <summary>
+    /// Pagination offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = 0;
+
+    /// <summary>
+    /// Include soft-deleted bundles in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeleted")]
+    public bool IncludeDeleted { get; set; } = false;
+
+}
+
+/// <summary>
+/// Bundle query results
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryBundlesResponse
+{
+
+    /// <summary>
+    /// Matching bundles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundles")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BundleMetadata> Bundles { get; set; } = new System.Collections.ObjectModel.Collection<BundleMetadata>();
+
+    /// <summary>
+    /// Total number of matching bundles (for pagination)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+    /// <summary>
+    /// Page size used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = default!;
+
+    /// <summary>
+    /// Page offset used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list bundle version history
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListBundleVersionsRequest
+{
+
+    /// <summary>
+    /// Bundle identifier to get history for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum versions to return
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = 50;
+
+    /// <summary>
+    /// Pagination offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = 0;
+
+}
+
+/// <summary>
+/// Bundle version history
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListBundleVersionsResponse
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Current version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentVersion")]
+    public int CurrentVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Version history records (newest first)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BundleVersionRecord> Versions { get; set; } = new System.Collections.ObjectModel.Collection<BundleVersionRecord>();
+
+    /// <summary>
+    /// Total number of versions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single version record in bundle history
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleVersionRecord
+{
+
+    /// <summary>
+    /// Version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// When this version was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID that made the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CreatedBy { get; set; } = default!;
+
+    /// <summary>
+    /// List of changes in this version
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Changes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Reason provided for the change
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Full metadata snapshot at this version (only for current version)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("snapshot")]
+    public BundleMetadata? Snapshot { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CreateBundleResponseStatus
@@ -1876,6 +2514,54 @@ public enum CreateMetabundleResponseStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"failed")]
     Failed = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeleteBundleResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    Deleted = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"permanently_deleted")]
+    Permanently_deleted = 1,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum QueryBundlesRequestSortField
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
+    Created_at = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
+    Updated_at = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"name")]
+    Name = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"size")]
+    Size = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum QueryBundlesRequestSortOrder
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
+    Asc = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
+    Desc = 1,
 
 }
 #pragma warning restore CS1591
