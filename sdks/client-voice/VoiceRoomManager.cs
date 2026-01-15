@@ -3,7 +3,7 @@ using BeyondImmersion.Bannou.Client.Voice.Services;
 // Voice event models from generated code - these are included in the main SDK
 // via the lib-*/Generated/*ClientEventsModels.cs pattern
 using BeyondImmersion.Bannou.Voice.ClientEvents;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.Bannou.Client.Voice;

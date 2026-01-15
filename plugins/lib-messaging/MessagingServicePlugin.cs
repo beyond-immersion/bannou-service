@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;

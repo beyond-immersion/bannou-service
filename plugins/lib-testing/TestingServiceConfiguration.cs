@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Testing;

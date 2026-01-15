@@ -11,6 +11,8 @@
 		<!-- Prevent plugin outputs from copying bannou-service.dll; use already-loaded assembly in default context -->
 		<!-- Use MSBuildThisFileDirectory to resolve path relative to ServiceLib.targets, not the importing project -->
 		<ProjectReference Include="$(MSBuildThisFileDirectory)../bannou-service/bannou-service.csproj" Private="false" />
+		<!-- Core shared types (events, JSON, exceptions) - made available to all plugins -->
+		<ProjectReference Include="$(MSBuildThisFileDirectory)../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup>

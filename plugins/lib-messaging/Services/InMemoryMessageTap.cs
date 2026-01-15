@@ -1,7 +1,6 @@
 #nullable enable
 
-using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
