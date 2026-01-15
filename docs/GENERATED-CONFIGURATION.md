@@ -100,6 +100,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | string | `bundles/uploads` | Path prefix for bundle upload staging in storage bucket |
 | `ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX` | string | `bundles/zip-cache` | Path prefix for ZIP conversion cache in storage bucket |
 | `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
+| `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | int | `30` | Number of days to retain soft-deleted bundles before permane... |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
 | `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
@@ -547,9 +548,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 418
+- **Total properties**: 419
 - **Required (no default)**: 40
-- **Optional (has default)**: 378
+- **Optional (has default)**: 379
 
 ## Environment Variable Naming Convention
 
