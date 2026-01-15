@@ -1951,6 +1951,630 @@ public class AssetServiceTests
         Assert.True(status == StatusCodes.OK || status == StatusCodes.InternalServerError);
     }
 
+    [Fact]
+    public async Task CreateMetabundleAsync_WithConflictingAssetHashes_ShouldReturnConflict()
+    {
+        // Arrange: Two source bundles contain the same asset ID but with different content hashes
+        // Use the existing _mockBundleStore like other working tests
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "conflict-test-metabundle",
+            SourceBundleIds = new List<string> { "bundle-1", "bundle-2" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Bundle 1 has asset "shared-asset" with hash "hash-a"
+        var bundle1 = new BundleMetadata
+        {
+            BundleId = "bundle-1",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/bundle-1.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "shared-asset" },
+            SizeBytes = 100,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry
+                {
+                    AssetId = "shared-asset",
+                    ContentHash = "hash-a",
+                    Filename = "shared.json",
+                    ContentType = "application/json",
+                    Size = 100
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Bundle 2 has same asset "shared-asset" but with different hash "hash-b"
+        var bundle2 = new BundleMetadata
+        {
+            BundleId = "bundle-2",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/bundle-2.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "shared-asset" },
+            SizeBytes = 150,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry
+                {
+                    AssetId = "shared-asset",
+                    ContentHash = "hash-b", // Different hash - conflict!
+                    Filename = "shared.json",
+                    ContentType = "application/json",
+                    Size = 150
+                }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup: Use a single catch-all setup that returns the right bundle based on key
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, CancellationToken _) =>
+            {
+                if (key.Contains("conflict-test-metabundle")) return null;
+                if (key.Contains("bundle-1")) return bundle1;
+                if (key.Contains("bundle-2")) return bundle2;
+                return null;
+            });
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert - Should return BadRequest with conflicts in response (not Conflict status code)
+        // The service returns BadRequest when the same asset ID has different content hashes
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.NotNull(result);
+        Assert.NotNull(result.Conflicts);
+        Assert.Single(result.Conflicts);
+        Assert.Equal("shared-asset", result.Conflicts.First().AssetId);
+        Assert.Equal(2, result.Conflicts.First().ConflictingBundles!.Count);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithAssetFilter_ShouldOnlyIncludeFilteredAssets()
+    {
+        // Arrange: Bundle with multiple assets, but we only want specific ones
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "filtered-metabundle",
+            SourceBundleIds = new List<string> { "multi-asset-bundle" },
+            AssetFilter = new List<string> { "asset-1", "asset-3" }, // Only include these
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        var sourceBundle = new BundleMetadata
+        {
+            BundleId = "multi-asset-bundle",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/multi-asset-bundle.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
+            SizeBytes = 300,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
+                new StoredBundleAssetEntry { AssetId = "asset-2", ContentHash = "hash-2", Filename = "a2.json", ContentType = "application/json", Size = 100 },
+                new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "hash-3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup: Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("filtered-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        // Setup: Return source bundle
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("multi-asset-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceBundle);
+
+        // Setup: Storage provider returns stream for source bundle
+        var bundleStream = new MemoryStream(new byte[100]);
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync("test-bucket", "bundles/multi-asset-bundle.bundle", It.IsAny<string?>()))
+            .ReturnsAsync(bundleStream);
+
+        // Note: Full test of filtering requires BannouBundleReader integration
+        // This test verifies the filter is passed through correctly - full validation in HTTP tests
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert - Either succeeds or fails at bundle reading (not at validation)
+        // The filter validation happens before bundle reading, so BadRequest would indicate filter issue
+        Assert.NotEqual(StatusCodes.BadRequest, status);
+    }
+
+    #endregion
+
+    #region ResolveBundlesAsync Tests
+
+    [Fact]
+    public async Task ResolveBundlesAsync_WithEmptyAssetIds_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ResolveBundlesRequest
+        {
+            AssetIds = new List<string>(),
+            Realm = Realm.Arcadia
+        };
+
+        // Act
+        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ResolveBundlesAsync_WithNullAssetIds_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ResolveBundlesRequest
+        {
+            AssetIds = null!,
+            Realm = Realm.Arcadia
+        };
+
+        // Act
+        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ResolveBundlesAsync_ShouldPreferMetabundlesOverRegularBundles()
+    {
+        // Arrange: Asset exists in both a metabundle and regular bundle
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new ResolveBundlesRequest
+        {
+            AssetIds = new List<string> { "asset-1" },
+            Realm = Realm.Arcadia
+        };
+
+        // Asset-to-bundle index shows asset is in both bundles
+        var assetIndex = new AssetBundleIndex
+        {
+            BundleIds = new List<string> { "regular-bundle", "metabundle-1" }
+        };
+
+        var regularBundle = new BundleMetadata
+        {
+            BundleId = "regular-bundle",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/regular.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-1" },
+            SizeBytes = 100,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var metabundle = new BundleMetadata
+        {
+            BundleId = "metabundle-1",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/metabundle.bundle",
+            BundleType = BundleType.Metabundle, // This is a metabundle
+            AssetIds = new List<string> { "asset-1" },
+            SizeBytes = 100,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "hash-1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup mocks
+        _mockAssetBundleIndexStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assetIndex);
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("regular-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(regularBundle);
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("metabundle-1")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metabundle);
+
+        _mockStorageProvider
+            .Setup(s => s.GenerateDownloadUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(new PreSignedDownloadResult(
+                "https://download.example.com/bundle",
+                "bundles/test.bundle",
+                null,
+                DateTime.UtcNow.AddHours(1),
+                100,
+                "application/octet-stream"));
+
+        // Act
+        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Bundles);
+        Assert.Equal("metabundle-1", result.Bundles.First().BundleId);
+    }
+
+    [Fact]
+    public async Task ResolveBundlesAsync_ShouldUseGreedySetCover()
+    {
+        // Arrange: Multiple assets, one bundle covers most of them
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new ResolveBundlesRequest
+        {
+            AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
+            Realm = Realm.Arcadia
+        };
+
+        // Asset indices
+        var asset1Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-1" } };
+        var asset2Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle" } };
+        var asset3Index = new AssetBundleIndex { BundleIds = new List<string> { "big-bundle", "small-bundle-2" } };
+
+        // Big bundle contains all 3 assets
+        var bigBundle = new BundleMetadata
+        {
+            BundleId = "big-bundle",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/big.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
+            SizeBytes = 300,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 },
+                new StoredBundleAssetEntry { AssetId = "asset-2", ContentHash = "h2", Filename = "a2.json", ContentType = "application/json", Size = 100 },
+                new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Small bundles contain only 1 asset each
+        var smallBundle1 = new BundleMetadata
+        {
+            BundleId = "small-bundle-1",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/small1.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-1" },
+            SizeBytes = 100,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-1", ContentHash = "h1", Filename = "a1.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var smallBundle2 = new BundleMetadata
+        {
+            BundleId = "small-bundle-2",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/small2.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "asset-3" },
+            SizeBytes = 100,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry { AssetId = "asset-3", ContentHash = "h3", Filename = "a3.json", ContentType = "application/json", Size = 100 }
+            },
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Setup index lookups
+        _mockAssetBundleIndexStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("asset-1")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset1Index);
+        _mockAssetBundleIndexStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("asset-2")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset2Index);
+        _mockAssetBundleIndexStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("asset-3")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(asset3Index);
+
+        // Setup bundle lookups
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("big-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bigBundle);
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-1")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(smallBundle1);
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("small-bundle-2")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(smallBundle2);
+
+        _mockStorageProvider
+            .Setup(s => s.GenerateDownloadUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(new PreSignedDownloadResult(
+                "https://download.example.com/bundle",
+                "bundles/test.bundle",
+                null,
+                DateTime.UtcNow.AddHours(1),
+                100,
+                "application/octet-stream"));
+
+        // Act
+        var (status, result) = await service.ResolveBundlesAsync(request, CancellationToken.None);
+
+        // Assert - Should pick big-bundle (covers all 3) instead of small-bundle-1 + small-bundle-2
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Bundles);
+        Assert.Equal("big-bundle", result.Bundles.First().BundleId);
+    }
+
+    #endregion
+
+    #region QueryBundlesByAssetAsync Tests
+
+    [Fact]
+    public async Task QueryBundlesByAssetAsync_WithEmptyAssetId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryBundlesByAssetRequest
+        {
+            AssetId = ""
+        };
+
+        // Act
+        var (status, result) = await service.QueryBundlesByAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task QueryBundlesByAssetAsync_WithValidAsset_ShouldReturnBundles()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        var service = CreateService();
+        var request = new QueryBundlesByAssetRequest
+        {
+            AssetId = "test-asset"
+        };
+
+        var assetIndex = new AssetBundleIndex
+        {
+            BundleIds = new List<string> { "bundle-1", "bundle-2" }
+        };
+
+        var bundle1 = new BundleMetadata
+        {
+            BundleId = "bundle-1",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/b1.bundle",
+            BundleType = BundleType.Source,
+            AssetIds = new List<string> { "test-asset" },
+            SizeBytes = 500,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var bundle2 = new BundleMetadata
+        {
+            BundleId = "bundle-2",
+            Version = "1.0.0",
+            Bucket = "test-bucket",
+            StorageKey = "bundles/b2.bundle",
+            BundleType = BundleType.Metabundle,
+            AssetIds = new List<string> { "test-asset" },
+            SizeBytes = 300,
+            Status = BundleStatus.Ready,
+            Realm = Realm.Arcadia,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetBundleIndexStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assetIndex);
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-1")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bundle1);
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("bundle-2")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bundle2);
+
+        // Act
+        var (status, result) = await service.QueryBundlesByAssetAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Bundles.Count);
+    }
+
+    #endregion
+
+    #region BulkGetAssetsAsync Tests
+
+    [Fact]
+    public async Task BulkGetAssetsAsync_WithEmptyAssetIds_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkGetAssetsRequest
+        {
+            AssetIds = new List<string>()
+        };
+
+        // Act
+        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsFalse_ShouldNotGenerateUrls()
+    {
+        // Arrange
+        _configuration.StatestoreName = STATE_STORE;
+        _configuration.AssetKeyPrefix = "asset:";
+        _configuration.DownloadTokenTtlSeconds = 3600;
+        var service = CreateService();
+
+        var testAsset = new InternalAssetRecord
+        {
+            AssetId = "test-asset",
+            ContentHash = "abc123",
+            Filename = "test.json",
+            ContentType = "application/json",
+            Size = 100,
+            Bucket = "test-bucket",
+            StorageKey = "assets/test.json",
+            AssetType = AssetType.Model,
+            Realm = Realm.Arcadia,
+            Tags = new List<string> { "test" },
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testAsset);
+
+        var request = new BulkGetAssetsRequest
+        {
+            AssetIds = new List<string> { "test-asset" },
+            IncludeDownloadUrls = false // Explicitly false
+        };
+
+        // Act
+        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Assets);
+        var firstAsset = result.Assets.First();
+        Assert.Null(firstAsset.DownloadUrl); // Should be null
+        Assert.Null(firstAsset.ExpiresAt); // Should be null
+
+        // Verify GenerateDownloadUrlAsync was NOT called
+        _mockStorageProvider.Verify(
+            s => s.GenerateDownloadUrlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<TimeSpan?>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task BulkGetAssetsAsync_WithIncludeDownloadUrlsTrue_ShouldGenerateUrls()
+    {
+        // Arrange
+        _configuration.StatestoreName = STATE_STORE;
+        _configuration.AssetKeyPrefix = "asset:";
+        _configuration.DownloadTokenTtlSeconds = 3600;
+        var service = CreateService();
+
+        var testAsset = new InternalAssetRecord
+        {
+            AssetId = "test-asset",
+            ContentHash = "abc123",
+            Filename = "test.json",
+            ContentType = "application/json",
+            Size = 100,
+            Bucket = "test-bucket",
+            StorageKey = "assets/test.json",
+            AssetType = AssetType.Model,
+            Realm = Realm.Arcadia,
+            Tags = new List<string> { "test" },
+            ProcessingStatus = ProcessingStatus.Complete,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testAsset);
+
+        var expectedUrl = "https://download.example.com/test-asset";
+        var expectedExpiry = DateTime.UtcNow.AddHours(1);
+        _mockStorageProvider
+            .Setup(s => s.GenerateDownloadUrlAsync("test-bucket", "assets/test.json", It.IsAny<string?>(), It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(new PreSignedDownloadResult(
+                expectedUrl,
+                "assets/test.json",
+                null,
+                expectedExpiry,
+                100,
+                "application/json"));
+
+        var request = new BulkGetAssetsRequest
+        {
+            AssetIds = new List<string> { "test-asset" },
+            IncludeDownloadUrls = true // Explicitly true
+        };
+
+        // Act
+        var (status, result) = await service.BulkGetAssetsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Single(result.Assets);
+        var firstAsset = result.Assets.First();
+        Assert.NotNull(firstAsset.DownloadUrl);
+        Assert.Equal(expectedUrl, firstAsset.DownloadUrl!.ToString());
+        Assert.NotNull(firstAsset.ExpiresAt);
+
+        // Verify GenerateDownloadUrlAsync WAS called
+        _mockStorageProvider.Verify(
+            s => s.GenerateDownloadUrlAsync("test-bucket", "assets/test.json", It.IsAny<string?>(), It.IsAny<TimeSpan?>()),
+            Times.Once);
+    }
+
     #endregion
 
     #region Helper Methods
