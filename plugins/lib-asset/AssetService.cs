@@ -1550,7 +1550,7 @@ public partial class AssetService : IAssetService
 
             if (conflicts.Count > 0)
             {
-                // Log conflict details server-side for debugging (per T8, error responses return null)
+                // Log conflict details server-side for debugging
                 foreach (var conflict in conflicts)
                 {
                     var bundleHashes = conflict.ConflictingBundles?

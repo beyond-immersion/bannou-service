@@ -495,6 +495,11 @@ public class AssetServiceTests
             .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(true);
 
+        // Mock GetObjectAsync for SHA256 hash computation
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(() => new MemoryStream("test file content"u8.ToArray()));
+
         _mockStorageProvider
             .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(new StorageModels.ObjectMetadata("temp/test.png", null, "image/png", 1024, "abc123etag", DateTime.UtcNow, new Dictionary<string, string>()));
@@ -579,6 +584,11 @@ public class AssetServiceTests
         _mockStorageProvider
             .Setup(s => s.ObjectExistsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(true);
+
+        // Mock GetObjectAsync for SHA256 hash computation
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(() => new MemoryStream("test model content"u8.ToArray()));
 
         _mockStorageProvider
             .Setup(s => s.GetObjectMetadataAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
