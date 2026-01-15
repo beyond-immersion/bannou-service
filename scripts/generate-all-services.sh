@@ -35,6 +35,16 @@ fi
 echo -e "  🎯 Components: ${COMPONENTS[*]}"
 echo ""
 
+# Generate state store definitions from schema
+echo -e "${BLUE}🗄️  Generating state store definitions from schema...${NC}"
+if python3 "$SCRIPT_DIR/generate-state-stores.py"; then
+    echo -e "${GREEN}✅ State store definitions generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate state store definitions${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate lifecycle events from x-lifecycle definitions in schemas
 echo -e "${BLUE}🔄 Generating lifecycle events from x-lifecycle definitions...${NC}"
 if python3 "$SCRIPT_DIR/generate-lifecycle-events.py"; then

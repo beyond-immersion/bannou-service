@@ -19,7 +19,7 @@ public sealed class LocalMeshRedisManager : IMeshRedisManager
         MeshServiceConfiguration config,
         ILogger<LocalMeshRedisManager> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
 
         // Create a local endpoint representing this instance
         // Use the shared Program.ServiceGUID for consistent identification

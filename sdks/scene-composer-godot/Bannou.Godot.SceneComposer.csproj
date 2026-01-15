@@ -16,8 +16,8 @@
     <Description>Godot 4.x engine extension for the Bannou SceneComposer SDK. Provides ISceneComposerBridge implementation, asset loading, and gizmo rendering for Godot-based games.</Description>
     <PackageTags>bannou;godot;scene;editor;composition;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
@@ -52,6 +52,8 @@
   <ItemGroup>
     <!-- Reference the engine-agnostic SceneComposer SDK -->
     <ProjectReference Include="../scene-composer/Bannou.SceneComposer.csproj" />
+    <!-- Reference the asset loader Godot extension for bundle-based asset loading -->
+    <ProjectReference Include="../asset-loader-godot/Bannou.AssetLoader.Godot.csproj" />
   </ItemGroup>
 
 </Project>

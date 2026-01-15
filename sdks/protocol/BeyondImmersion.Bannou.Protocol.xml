@@ -1,0 +1,378 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.Protocol</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.Protocol.GameMessageType">
+            <summary>
+            Message type prefix for game transport messages (server/client).
+            The byte sits after the protocol version in the envelope.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.Unknown">
+            <summary>Unknown or uninitialized message.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.ArenaStateSnapshot">
+            <summary>Full state snapshot.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.ArenaStateDelta">
+            <summary>State delta update.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.CombatEvent">
+            <summary>Combat event batch.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.MatchState">
+            <summary>Match-level state update.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.OpportunityData">
+            <summary>Opportunity/QTE data for clients.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.CinematicExtension">
+            <summary>Cinematic extension payload reference.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.ConnectRequest">
+            <summary>Client requests to join/connect.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.PlayerInput">
+            <summary>Player input from client.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.OpportunityResponse">
+            <summary>Response to an opportunity/QTE.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameMessageType.Ping">
+            <summary>Latency/keepalive ping.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope">
+            <summary>
+            Helper for serializing/deserializing game transport messages with a 2-byte envelope:
+            [0] = protocol version, [1] = GameMessageType, [2..] = MessagePack-serialized payload (LZ4).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.CurrentVersion">
+            <summary>
+            Current protocol version for envelopes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.DefaultOptions">
+            <summary>
+            Default MessagePack options (LZ4 compression).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.Serialize``1(BeyondImmersion.Bannou.Protocol.GameMessageType,``0,System.Byte,MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Serialize a message with an envelope (version + message type).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.Parse(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Parse an envelope and return version, type, and payload slice.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.DeserializePayload``1(System.ReadOnlyMemory{System.Byte},MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Deserialize a payload after parsing the envelope.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Protocol.GameProtocolEnvelope.ParseAndDeserialize``1(System.ReadOnlySpan{System.Byte},MessagePack.MessagePackSerializerOptions)">
+            <summary>
+            Convenience: parse envelope and deserialize payload to a type.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateDelta">
+            <summary>
+            State delta (server -> client) using per-entity bitmask for changed fields.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateDelta.Tick">
+            <summary>Server tick when this delta was created.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateDelta.Entities">
+            <summary>Entities with changed state since last snapshot/delta.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta">
+            <summary>
+            Per-entity delta with bitmask indicating which fields changed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.EntityId">
+            <summary>Unique identifier of the entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.Flags">
+            <summary>
+            Bitmask of changed fields (flags below).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.X">
+            <summary>X position (only valid if Position flag set).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.Y">
+            <summary>Y position (only valid if Position flag set).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.Z">
+            <summary>Z position (only valid if Position flag set).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.RotationY">
+            <summary>Y-axis rotation in radians (only valid if Rotation flag set).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.Health">
+            <summary>Current health value (only valid if Health flag set).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta.ActionState">
+            <summary>Current action state identifier (only valid if ActionState flag set).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags">
+            <summary>
+            Bitmask flags indicating which fields in an <see cref="T:BeyondImmersion.Bannou.Protocol.Messages.EntityDelta"/> have changed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags.None">
+            <summary>No fields changed.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags.Position">
+            <summary>Position (X, Y, Z) changed.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags.Rotation">
+            <summary>Rotation changed.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags.Health">
+            <summary>Health changed.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.EntityDeltaFlags.ActionState">
+            <summary>Action state changed.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot">
+            <summary>
+            Full state snapshot (server -> client).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.Tick">
+            <summary>Server tick when this snapshot was created.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.Entities">
+            <summary>All entity states at this tick.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.Phase">
+            <summary>Current combat phase (0=Waiting, 1=Countdown, 2=Fighting, 3=Opportunity, 4=Cinematic, 5=Finished).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.CinematicId">
+            <summary>Cinematic ID when in cinematic phase (null otherwise).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.CinematicAttacker">
+            <summary>Cinematic attacker entity slot (0=MonsterA, 1=MonsterB).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.CinematicDefender">
+            <summary>Cinematic defender entity slot (0=MonsterA, 1=MonsterB).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ArenaStateSnapshot.CinematicTargetId">
+            <summary>Cinematic target object ID (e.g., boulder ID).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.EntityState">
+            <summary>
+            Basic entity state for snapshots.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.EntityId">
+            <summary>Unique identifier of the entity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.X">
+            <summary>X position in world space.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.Y">
+            <summary>Y position in world space.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.Z">
+            <summary>Z position in world space.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.RotationY">
+            <summary>Y-axis rotation in radians.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.Health">
+            <summary>Current health value.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.EntityState.ActionState">
+            <summary>Current action state identifier.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage">
+            <summary>
+            Cinematic extension offer (server -> client) carrying attach point metadata and payload reference.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.ExchangeId">
+            <summary>Unique identifier for this exchange/transaction.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.AttachPoint">
+            <summary>Behavior tree attach point where this extension should be applied.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.PayloadType">
+            <summary>Type of payload (default: "abml-bytecode").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.PayloadUrl">
+            <summary>URL where the payload can be fetched.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.Hint">
+            <summary>Optional hint for the client about the extension content.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.InitiateState">
+            <summary>
+            Optional key-value state bag to seed the next behavior when applied.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CinematicExtensionMessage.ValidUntilEpochMs">
+            <summary>
+            Unix epoch milliseconds when this extension expires.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.CombatEventMessage">
+            <summary>
+            Combat events batched per tick (server -> client).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEventMessage.Tick">
+            <summary>Server tick when these events occurred.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEventMessage.Events">
+            <summary>Combat events that occurred this tick.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent">
+            <summary>
+            Individual combat event within a batch.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.Type">
+            <summary>Type of combat event.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.SourceEntityId">
+            <summary>Entity that initiated the combat action.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.TargetEntityId">
+            <summary>Entity that received the combat action.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.Amount">
+            <summary>Amount of damage, healing, or effect value.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.RemainingHp">
+            <summary>Target's remaining HP after this event.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.CombatEvent.DurationMs">
+            <summary>Duration of effect in milliseconds (for staggers, etc.).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.CombatEventType">
+            <summary>
+            Types of combat events that can occur.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.CombatEventType.Hit">
+            <summary>Damage dealt to target.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.CombatEventType.Stagger">
+            <summary>Target staggered/interrupted.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.CombatEventType.Heal">
+            <summary>Health restored to target.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Protocol.Messages.CombatEventType.Block">
+            <summary>Attack blocked by target.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.ConnectRequestMessage">
+            <summary>
+            Client connect/join request (client -> server).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ConnectRequestMessage.PlayerId">
+            <summary>Unique identifier of the connecting player.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ConnectRequestMessage.SessionId">
+            <summary>Session identifier from the authentication system.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.ConnectRequestMessage.MatchId">
+            <summary>Match or game instance the player wants to join.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage">
+            <summary>
+            Opportunity/QTE prompt (server -> client).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.OpportunityId">
+            <summary>Unique identifier for this opportunity.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.Prompt">
+            <summary>Text prompt displayed to the player.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.Options">
+            <summary>Available options the player can select.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.DefaultOptionId">
+            <summary>Option to select if player doesn't respond in time.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.DeadlineMs">
+            <summary>Time limit in milliseconds before default is selected.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.ExchangeId">
+            <summary>Optional exchange identifier for correlated transactions.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityDataMessage.Forced">
+            <summary>Whether this opportunity requires immediate response (blocks gameplay).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.OpportunityOption">
+            <summary>
+            A selectable option within an opportunity/QTE prompt.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityOption.Id">
+            <summary>Unique identifier for this option (sent back in response).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityOption.Label">
+            <summary>Display label shown to the player.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.OpportunityResponseMessage">
+            <summary>
+            Client response to an opportunity/QTE.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityResponseMessage.OpportunityId">
+            <summary>Identifier of the opportunity being responded to.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityResponseMessage.SelectedOptionId">
+            <summary>Identifier of the option the player selected.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityResponseMessage.ExchangeId">
+            <summary>Optional exchange identifier for correlated transactions.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.OpportunityResponseMessage.ClientLatencyMs">
+            <summary>Client-measured latency in milliseconds (for timing compensation).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage">
+            <summary>
+            Player input (client -> server).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.Tick">
+            <summary>Client tick when this input was captured.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.MoveX">
+            <summary>Horizontal movement input (-1 to 1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.MoveY">
+            <summary>Vertical movement input (-1 to 1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.Action1">
+            <summary>Primary action button pressed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.Action2">
+            <summary>Secondary action button pressed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.Action3">
+            <summary>Tertiary action button pressed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Protocol.Messages.PlayerInputMessage.Dodge">
+            <summary>Dodge/evade button pressed.</summary>
+        </member>
+        <member name="T:MessagePack.GeneratedMessagePackResolver">
+            <summary>A MessagePack resolver that uses generated formatters for types in this assembly.</summary>
+        </member>
+        <member name="F:MessagePack.GeneratedMessagePackResolver.Instance">
+            <summary>An instance of this resolver that only returns formatters specifically generated for types in this assembly.</summary>
+        </member>
+    </members>
+</doc>

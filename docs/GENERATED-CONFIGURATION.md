@@ -100,6 +100,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | string | `bundles/uploads` | Path prefix for bundle upload staging in storage bucket |
 | `ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX` | string | `bundles/zip-cache` | Path prefix for ZIP conversion cache in storage bucket |
 | `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
+| `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | int | `30` | Number of days to retain soft-deleted bundles before permane... |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
 | `ASSET_FFMPEG_PATH` | string | **REQUIRED** | Path to FFmpeg binary (empty = use system PATH) |
 | `ASSET_FFMPEG_WORKING_DIR` | string | `/tmp/bannou-ffmpeg` | Working directory for FFmpeg temporary files |
@@ -107,6 +108,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_INDEX_KEY_PREFIX` | string | `asset-index:` | Key prefix for asset index entries in state store |
 | `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
+| `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
+| `ASSET_MAX_RESOLUTION_ASSETS` | int | `500` | Maximum number of asset IDs allowed in a single bundle resol... |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
 | `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
@@ -545,9 +548,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 416
+- **Total properties**: 419
 - **Required (no default)**: 40
-- **Optional (has default)**: 376
+- **Optional (has default)**: 379
 
 ## Environment Variable Naming Convention
 

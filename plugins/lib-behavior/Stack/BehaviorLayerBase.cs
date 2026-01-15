@@ -42,8 +42,8 @@ public abstract class BehaviorLayerBase : IBehaviorLayer
         int priority,
         ILogger? logger = null)
     {
-        Id = id ?? throw new ArgumentNullException(nameof(id));
-        DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+        Id = id;
+        DisplayName = displayName;
         Category = category;
         Priority = priority;
         _logger = logger;
@@ -189,7 +189,7 @@ public sealed class DelegateBehaviorLayer : BehaviorLayerBase
         ILogger? logger = null)
         : base(id, displayName, category, priority, logger)
     {
-        _evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
+        _evaluator = evaluator;
     }
 
     /// <inheritdoc/>

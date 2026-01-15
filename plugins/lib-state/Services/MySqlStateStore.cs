@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -36,9 +37,9 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string storeName,
         ILogger<MySqlStateStore<TValue>> logger)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _storeName = storeName ?? throw new ArgumentNullException(nameof(storeName));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _options = options;
+        _storeName = storeName;
+        _logger = logger;
     }
 
     /// <summary>
@@ -56,7 +57,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         using var context = CreateContext();
         var entry = await context.StateEntries
@@ -78,7 +78,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         using var context = CreateContext();
         var entry = await context.StateEntries
@@ -101,8 +100,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
 
         var json = BannouJson.Serialize(value);
         var etag = GenerateETag(json);
@@ -149,9 +146,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string etag,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(etag);
 
         using var context = CreateContext();
         var existing = await context.StateEntries
@@ -190,7 +184,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         using var context = CreateContext();
         var deleted = await context.StateEntries
@@ -206,7 +199,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         using var context = CreateContext();
         return await context.StateEntries
@@ -219,7 +211,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(keys);
 
         var keyList = keys.ToList();
         if (keyList.Count == 0)
@@ -254,7 +245,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         Expression<Func<TValue, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(predicate);
 
         // Load all values for this store, deserialize, then filter
         // Note: For true efficiency with large datasets, use SQL JSON functions
@@ -403,7 +393,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         IReadOnlyList<JsonQueryCondition> conditions,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(conditions);
 
         var (whereClauses, parameters) = BuildWhereClause(conditions);
 
@@ -547,7 +536,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         IReadOnlyList<JsonQueryCondition>? conditions = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(path);
 
         var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
         var escapedPath = EscapeJsonPath(path);
@@ -581,7 +569,6 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         IReadOnlyList<JsonQueryCondition>? conditions = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(path);
 
         var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
         var escapedPath = EscapeJsonPath(path);

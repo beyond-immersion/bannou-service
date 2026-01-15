@@ -53,7 +53,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         ExternalDialogueLoaderOptions options,
         ILogger<ExternalDialogueLoader>? logger = null)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _options = options;
         _logger = logger;
         _directories = new List<DialogueDirectory>();
         _cache = new MemoryCache(new MemoryCacheOptions());

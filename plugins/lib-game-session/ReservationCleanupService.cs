@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -24,7 +25,6 @@ public class ReservationCleanupService : BackgroundService
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly ILogger<ReservationCleanupService> _logger;
 
-    private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
 
@@ -101,8 +101,8 @@ public class ReservationCleanupService : BackgroundService
     private async Task CleanupExpiredReservationsAsync(CancellationToken cancellationToken)
     {
         // Get all session IDs
-        var store = _stateStoreFactory.GetStore<CleanupSessionModel>(STATE_STORE);
-        var listStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
+        var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
         var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
         var now = DateTimeOffset.UtcNow;
@@ -201,11 +201,11 @@ public class ReservationCleanupService : BackgroundService
                 cancellationToken);
 
             // Delete the session
-            var store = _stateStoreFactory.GetStore<CleanupSessionModel>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
             await store.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
             // Remove from list
-            var listStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
             var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
             if (sessionIds.Remove(sessionId))
             {
@@ -253,7 +253,7 @@ internal class CleanupPlayerModel
 /// <summary>
 /// Client event for session cancellation.
 /// </summary>
-internal class SessionCancelledClientEvent : BeyondImmersion.BannouService.ClientEvents.BaseClientEvent
+internal class SessionCancelledClientEvent : BaseClientEvent
 {
     public override string EventName => "game-session.session_cancelled";
     public string SessionId { get; set; } = string.Empty;

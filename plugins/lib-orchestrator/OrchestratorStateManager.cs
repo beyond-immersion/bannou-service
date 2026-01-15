@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
@@ -54,8 +55,8 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         IStateStoreFactory stateStoreFactory,
         ILogger<OrchestratorStateManager> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
     }
 
     /// <summary>

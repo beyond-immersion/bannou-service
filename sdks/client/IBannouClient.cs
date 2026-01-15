@@ -1,0 +1,157 @@
+namespace BeyondImmersion.Bannou.Client;
+
+/// <summary>
+/// Interface for Bannou WebSocket clients.
+/// Enables mocking for unit tests of code that depends on BannouClient.
+/// </summary>
+public interface IBannouClient : IAsyncDisposable
+{
+    /// <summary>
+    /// Whether the WebSocket connection is currently open.
+    /// </summary>
+    bool IsConnected { get; }
+
+    /// <summary>
+    /// Session ID assigned by the server after connection.
+    /// </summary>
+    string? SessionId { get; }
+
+    /// <summary>
+    /// All available API endpoints with their client-salted GUIDs.
+    /// Key format: "METHOD:/path" (e.g., "POST:/species/get")
+    /// </summary>
+    IReadOnlyDictionary<string, Guid> AvailableApis { get; }
+
+    /// <summary>
+    /// Current access token (JWT).
+    /// </summary>
+    string? AccessToken { get; }
+
+    /// <summary>
+    /// Current refresh token for re-authentication.
+    /// </summary>
+    string? RefreshToken { get; }
+
+    /// <summary>
+    /// Last error message from a failed operation.
+    /// </summary>
+    string? LastError { get; }
+
+    /// <summary>
+    /// Connects to a Bannou server using username/password authentication.
+    /// </summary>
+    /// <param name="serverUrl">Base URL (e.g., "http://localhost:8080" or "https://game.example.com")</param>
+    /// <param name="email">Account email</param>
+    /// <param name="password">Account password</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if connection successful</returns>
+    Task<bool> ConnectAsync(
+        string serverUrl,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Connects using an existing JWT token.
+    /// </summary>
+    /// <param name="serverUrl">Base URL (e.g., "http://localhost:8080")</param>
+    /// <param name="accessToken">Valid JWT access token</param>
+    /// <param name="refreshToken">Optional refresh token for re-authentication</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if connection successful</returns>
+    Task<bool> ConnectWithTokenAsync(
+        string serverUrl,
+        string accessToken,
+        string? refreshToken = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Connects in internal mode using a service token (or network-trust if token is null) without JWT login.
+    /// </summary>
+    /// <param name="connectUrl">Full WebSocket URL to the Connect service (internal node).</param>
+    /// <param name="serviceToken">Optional X-Service-Token for internal auth mode.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if connection successful</returns>
+    Task<bool> ConnectInternalAsync(
+        string connectUrl,
+        string? serviceToken = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Registers a new account and connects.
+    /// </summary>
+    /// <param name="serverUrl">Base URL</param>
+    /// <param name="username">Desired username</param>
+    /// <param name="email">Email address</param>
+    /// <param name="password">Password</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if registration and connection successful</returns>
+    Task<bool> RegisterAndConnectAsync(
+        string serverUrl,
+        string username,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the service GUID for a specific API endpoint.
+    /// </summary>
+    /// <param name="method">HTTP method (GET, POST, etc.)</param>
+    /// <param name="path">API path (e.g., "/account/profile")</param>
+    /// <returns>The client-salted GUID, or null if not found</returns>
+    Guid? GetServiceGuid(string method, string path);
+
+    /// <summary>
+    /// Invokes a service method by specifying the HTTP method and path.
+    /// </summary>
+    /// <typeparam name="TRequest">Request model type</typeparam>
+    /// <typeparam name="TResponse">Response model type</typeparam>
+    /// <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
+    /// <param name="path">API path (e.g., "/account/profile")</param>
+    /// <param name="request">Request payload</param>
+    /// <param name="channel">Message channel for ordering (default 0)</param>
+    /// <param name="timeout">Request timeout</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>ApiResponse containing either the success result or error details</returns>
+    Task<ApiResponse<TResponse>> InvokeAsync<TRequest, TResponse>(
+        string method,
+        string path,
+        TRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a fire-and-forget event (no response expected).
+    /// </summary>
+    /// <typeparam name="TRequest">Request model type</typeparam>
+    /// <param name="method">HTTP method</param>
+    /// <param name="path">API path</param>
+    /// <param name="request">Request payload</param>
+    /// <param name="channel">Message channel for ordering</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task SendEventAsync<TRequest>(
+        string method,
+        string path,
+        TRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Registers a handler for server-pushed events.
+    /// </summary>
+    /// <param name="eventType">Event type to handle (e.g., "capability_manifest")</param>
+    /// <param name="handler">Handler function receiving the JSON payload</param>
+    void OnEvent(string eventType, Action<string> handler);
+
+    /// <summary>
+    /// Removes an event handler.
+    /// </summary>
+    /// <param name="eventType">Event type to unregister</param>
+    void RemoveEventHandler(string eventType);
+
+    /// <summary>
+    /// Disconnects from the server.
+    /// </summary>
+    Task DisconnectAsync(CancellationToken cancellationToken = default);
+}

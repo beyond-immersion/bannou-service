@@ -262,7 +262,7 @@ public sealed class DocumentParser
                 var option = ParseOptionDefinition(item, optionType, errors);
                 if (option != null)
                 {
-                    options.Add(option);
+                    options.Add((OptionDefinition)option);
                 }
             }
 
@@ -548,7 +548,7 @@ public sealed class DocumentParser
             var action = ParseAction(item, errors);
             if (action != null)
             {
-                actions.Add(action);
+                actions.Add((ActionNode)action);
             }
         }
 

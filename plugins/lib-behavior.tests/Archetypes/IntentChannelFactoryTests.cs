@@ -194,14 +194,4 @@ public sealed class IntentChannelFactoryTests
         Assert.Null(channel.CurrentValue);
         Assert.Null(channel.LastUpdated);
     }
-
-    [Fact]
-    public void CreateChannels_NullArchetype_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var entityId = Guid.NewGuid();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _factory.CreateChannels(entityId, null!));
-    }
 }

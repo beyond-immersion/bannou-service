@@ -53,7 +53,7 @@ Tenets are organized into three categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T1** | Schema-First Development | All APIs, models, events, and configs defined in OpenAPI YAML before code |
-| **T2** | Code Generation System | 8-component pipeline generates code from schemas; never edit Generated/ |
+| **T2** | Code Generation System | 9-component pipeline generates code from schemas; never edit Generated/ |
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
@@ -131,6 +131,8 @@ Tenets are organized into three categories based on when they're needed:
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
+| Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
+| Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
 | `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |

@@ -7,7 +7,7 @@
 {{ ClientClassAccessModifier }} partial class {{ Class }} {% if GenerateClientInterfaces %}: I{{ Class }}, BeyondImmersion.BannouService.ServiceClients.IServiceClient<{{ Class }}>{% endif %}
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -296,15 +296,15 @@
             var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
 {%         elsif operation.ConsumesOnlyFormUrlEncoded -%}
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
-            var dictionary_ = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<System.Collections.Generic.Dictionary<string, string>>(json_);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
+            var dictionary_ = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<System.Collections.Generic.Dictionary<string, string>>(json_);
             var content_ = new System.Net.Http.FormUrlEncodedContent(dictionary_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
 {%         elsif operation.HasPlainTextBodyParameter -%}
             var content_ = new System.Net.Http.StringContent({{ operation.ContentParameter.VariableName }});
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
 {%         else -%}
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes({{ operation.ContentParameter.VariableName }});
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("{{ operation.Consumes }}");
 {%         endif -%}
@@ -359,7 +359,7 @@
                     content_.Add(new System.Net.Http.StringContent(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");
                 }
 {%                     elsif parameter.IsObject -%}
-                var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes({{ parameter.VariableName }});
+                var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes({{ parameter.VariableName }});
                 content_.Add(new System.Net.Http.ByteArrayContent(json_), "{{ parameter.Name }}");
 {%                     else -%}
                 content_.Add(new System.Net.Http.StringContent(ConvertToString({{ parameter.VariableName }}, System.Globalization.CultureInfo.InvariantCulture)), "{{ parameter.Name }}");

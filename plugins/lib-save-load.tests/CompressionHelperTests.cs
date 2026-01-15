@@ -161,32 +161,10 @@ public class CompressionHelperTests
     #region Edge Cases
 
     [Fact]
-    public void Compress_WithNullData_ReturnsEmptyArray()
-    {
-        // Arrange & Act
-        var result = CompressionHelper.Compress(null!, CompressionType.GZIP);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result);
-    }
-
-    [Fact]
     public void Compress_WithEmptyData_ReturnsEmptyArray()
     {
         // Arrange & Act
         var result = CompressionHelper.Compress(Array.Empty<byte>(), CompressionType.GZIP);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result);
-    }
-
-    [Fact]
-    public void Decompress_WithNullData_ReturnsEmptyArray()
-    {
-        // Arrange & Act
-        var result = CompressionHelper.Decompress(null!, CompressionType.GZIP);
 
         // Assert
         Assert.NotNull(result);

@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -33,10 +34,10 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         TimeSpan? defaultTtl,
         ILogger<RedisStateStore<TValue>> logger)
     {
-        _database = database ?? throw new ArgumentNullException(nameof(database));
-        _keyPrefix = keyPrefix ?? throw new ArgumentNullException(nameof(keyPrefix));
+        _database = database;
+        _keyPrefix = keyPrefix;
         _defaultTtl = defaultTtl;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     private string GetFullKey(string key) => $"{_keyPrefix}:{key}";
@@ -45,7 +46,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
     /// <inheritdoc/>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         var value = await _database.StringGetAsync(fullKey);
@@ -64,7 +64,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -94,8 +93,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -145,9 +142,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string etag,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(etag);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -195,7 +189,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -213,7 +206,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         return await _database.KeyExistsAsync(fullKey);
@@ -224,7 +216,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(keys);
 
         var keyList = keys.ToList();
         if (keyList.Count == 0)
@@ -266,8 +257,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -293,8 +282,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(items);
 
         var itemList = items.ToList();
         if (itemList.Count == 0)
@@ -325,8 +312,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         TItem item,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -343,7 +328,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var members = await _database.SetMembersAsync(setKey);
@@ -379,8 +363,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         TItem item,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -392,7 +374,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         return await _database.SetLengthAsync(setKey);
@@ -403,7 +384,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var deleted = await _database.KeyDeleteAsync(setKey);
@@ -420,7 +400,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         int ttlSeconds,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var ttl = TimeSpan.FromSeconds(ttlSeconds);
@@ -444,8 +423,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(member);
 
         var sortedSetKey = GetSortedSetKey(key);
         var added = await _database.SortedSetAddAsync(sortedSetKey, member, score);
@@ -470,8 +447,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(entries);
 
         var entryList = entries.ToList();
         if (entryList.Count == 0)
@@ -505,8 +480,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string member,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(member);
 
         var sortedSetKey = GetSortedSetKey(key);
         var removed = await _database.SortedSetRemoveAsync(sortedSetKey, member);
@@ -523,8 +496,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string member,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(member);
 
         var sortedSetKey = GetSortedSetKey(key);
         var score = await _database.SortedSetScoreAsync(sortedSetKey, member);
@@ -539,8 +510,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(member);
 
         var sortedSetKey = GetSortedSetKey(key);
 
@@ -561,7 +530,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         bool descending = true,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var sortedSetKey = GetSortedSetKey(key);
 
@@ -585,7 +553,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var sortedSetKey = GetSortedSetKey(key);
         return await _database.SortedSetLengthAsync(sortedSetKey);
@@ -598,8 +565,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         double increment,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(member);
 
         var sortedSetKey = GetSortedSetKey(key);
         var newScore = await _database.SortedSetIncrementAsync(sortedSetKey, member, increment);
@@ -615,7 +580,6 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var sortedSetKey = GetSortedSetKey(key);
         var deleted = await _database.KeyDeleteAsync(sortedSetKey);

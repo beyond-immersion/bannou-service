@@ -630,19 +630,6 @@ public class CognitionTypesTests
     }
 
     /// <summary>
-    /// Verifies that CognitionConstants.Initialize() throws on null config.
-    /// </summary>
-    [Fact]
-    public void CognitionConstants_Initialize_NullConfig_Throws()
-    {
-        // Arrange
-        CognitionConstants.Reset();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => CognitionConstants.Initialize(null!));
-    }
-
-    /// <summary>
     /// Verifies that default values are usable without calling Initialize().
     /// </summary>
     [Fact]

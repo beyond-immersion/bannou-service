@@ -42,8 +42,8 @@ public sealed class StateSchema
     /// <param name="outputs">Output variable definitions.</param>
     public StateSchema(IReadOnlyList<VariableDefinition> inputs, IReadOnlyList<VariableDefinition> outputs)
     {
-        Inputs = inputs ?? throw new ArgumentNullException(nameof(inputs));
-        Outputs = outputs ?? throw new ArgumentNullException(nameof(outputs));
+        Inputs = inputs;
+        Outputs = outputs;
 
         _inputHashToIndex = new Dictionary<uint, int>(inputs.Count);
         for (var i = 0; i < inputs.Count; i++)
@@ -128,7 +128,6 @@ public sealed class StateSchema
     /// <returns>Deserialized schema.</returns>
     public static StateSchema Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var inputCount = reader.ReadUInt16();
         var inputs = new VariableDefinition[inputCount];
@@ -153,7 +152,6 @@ public sealed class StateSchema
     /// <param name="writer">Binary writer.</param>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write((ushort)Inputs.Count);
         foreach (var input in Inputs)

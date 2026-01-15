@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
@@ -23,7 +24,6 @@ public partial class RelationshipService : IRelationshipService
     private readonly ILogger<RelationshipService> _logger;
     private readonly RelationshipServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "relationship-statestore";
     private const string RELATIONSHIP_KEY_PREFIX = "rel:";
     private const string ENTITY_INDEX_PREFIX = "entity-idx:";
     private const string TYPE_INDEX_PREFIX = "type-idx:";
@@ -70,7 +70,7 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
@@ -107,7 +107,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Get all relationship IDs for this entity from the entity index
             var entityIndexKey = BuildEntityIndexKey(body.EntityType.ToString(), body.EntityId.ToString());
-            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
                 .GetAsync(entityIndexKey, cancellationToken) ?? new List<string>();
 
             if (relationshipIds.Count == 0)
@@ -117,7 +117,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships
             var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
@@ -204,7 +204,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Get relationships from entity1's index
             var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type.ToString(), body.Entity1Id.ToString());
-            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+            var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
                 .GetAsync(entity1IndexKey, cancellationToken) ?? new List<string>();
 
             if (entity1RelationshipIds.Count == 0)
@@ -214,7 +214,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships from entity1
             var keys = entity1RelationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
@@ -288,7 +288,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Get all relationship IDs for this type from the type index
             var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId.ToString());
-            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+            var relationshipIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship)
                 .GetAsync(typeIndexKey, cancellationToken) ?? new List<string>();
 
             if (relationshipIds.Count == 0)
@@ -298,7 +298,7 @@ public partial class RelationshipService : IRelationshipService
 
             // Bulk load all relationships
             var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetBulkAsync(keys, cancellationToken);
 
             var relationships = new List<RelationshipModel>();
@@ -398,7 +398,7 @@ public partial class RelationshipService : IRelationshipService
                 body.Entity2Id.ToString(), body.Entity2Type.ToString(),
                 body.RelationshipTypeId.ToString());
 
-            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE)
+            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
                 .GetAsync(compositeKey, cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
@@ -426,11 +426,11 @@ public partial class RelationshipService : IRelationshipService
 
             // Save the relationship
             var relationshipKey = BuildRelationshipKey(relationshipId.ToString());
-            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
             // Update composite uniqueness index
-            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
                 .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
 
             // Update entity indices (both entities)
@@ -472,7 +472,7 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Updating relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
@@ -515,7 +515,7 @@ public partial class RelationshipService : IRelationshipService
             if (needsSave)
             {
                 model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+                await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                     .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
                 // Publish relationship updated event
@@ -556,7 +556,7 @@ public partial class RelationshipService : IRelationshipService
             _logger.LogInformation("Ending relationship: {RelationshipId}", body.RelationshipId);
 
             var relationshipKey = BuildRelationshipKey(body.RelationshipId.ToString());
-            var model = await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .GetAsync(relationshipKey, cancellationToken);
 
             if (model == null)
@@ -576,7 +576,7 @@ public partial class RelationshipService : IRelationshipService
             model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<RelationshipModel>(STATE_STORE)
+            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
                 .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
             // Clear composite uniqueness key to allow new relationships
@@ -584,7 +584,7 @@ public partial class RelationshipService : IRelationshipService
                 model.Entity1Id, model.Entity1Type,
                 model.Entity2Id, model.Entity2Type,
                 model.RelationshipTypeId);
-            await _stateStoreFactory.GetStore<string>(STATE_STORE)
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
                 .DeleteAsync(compositeKey, cancellationToken);
 
             // Publish relationship deleted/ended event
@@ -653,7 +653,7 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildEntityIndexKey(entityType, entityId);
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (!relationshipIds.Contains(relationshipId))
@@ -671,7 +671,7 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (!relationshipIds.Contains(relationshipId))
@@ -689,7 +689,7 @@ public partial class RelationshipService : IRelationshipService
         CancellationToken cancellationToken)
     {
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship);
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<string>();
 
         if (relationshipIds.Remove(relationshipId))
@@ -703,7 +703,7 @@ public partial class RelationshipService : IRelationshipService
     /// </summary>
     private async Task AddToAllRelationshipsListAsync(string relationshipId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Relationship);
         var allRelationships = await store.GetAsync(ALL_RELATIONSHIPS_KEY, cancellationToken) ?? new List<string>();
 
         if (!allRelationships.Contains(relationshipId))

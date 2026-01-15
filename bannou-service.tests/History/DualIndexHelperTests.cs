@@ -58,30 +58,6 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void Constructor_WithNullFactory_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new DualIndexHelper<TestRecord>(
-            null!,
-            TestStateStoreName,
-            RecordPrefix,
-            PrimaryIndexPrefix,
-            SecondaryIndexPrefix));
-    }
-
-    [Fact]
-    public void Constructor_WithNullStoreName_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _, _) = CreateMocks();
-
-        Assert.Throws<ArgumentNullException>(() => new DualIndexHelper<TestRecord>(
-            mockFactory.Object,
-            null!,
-            RecordPrefix,
-            PrimaryIndexPrefix,
-            SecondaryIndexPrefix));
-    }
-
-    [Fact]
     public void Constructor_WithConfiguration_SetsPropertiesCorrectly()
     {
         var (mockFactory, _, _) = CreateMocks();
@@ -94,12 +70,6 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
 
         var helper = new DualIndexHelper<TestRecord>(config);
         Assert.NotNull(helper);
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new DualIndexHelper<TestRecord>(null!));
     }
 
     [Fact]
@@ -177,16 +147,6 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
                 i.RecordIds.Contains("rec-1") && i.RecordIds.Contains("rec-2")),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task AddRecordAsync_WithNullRecord_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.AddRecordAsync(null!, "rec-1", "pk", "sk"));
     }
 
     [Fact]
@@ -491,16 +451,6 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
 
         var result = await helper.RemoveAllByPrimaryKeyAsync("", r => r.EventId);
         Assert.Equal(0, result);
-    }
-
-    [Fact]
-    public async Task RemoveAllByPrimaryKeyAsync_WithNullFunc_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _, _) = CreateMocks();
-        var helper = CreateHelper(mockFactory);
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.RemoveAllByPrimaryKeyAsync("entity-1", null!));
     }
 
     [Fact]

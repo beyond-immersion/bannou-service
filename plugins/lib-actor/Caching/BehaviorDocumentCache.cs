@@ -35,9 +35,9 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
         IHttpClientFactory httpClientFactory,
         ILogger<BehaviorDocumentCache> logger)
     {
-        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _scopeFactory = scopeFactory;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

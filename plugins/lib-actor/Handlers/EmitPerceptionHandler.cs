@@ -52,8 +52,8 @@ public sealed class EmitPerceptionHandler : IActionHandler
         IMessageBus messageBus,
         ILogger<EmitPerceptionHandler> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

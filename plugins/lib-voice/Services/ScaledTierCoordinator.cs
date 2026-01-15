@@ -33,11 +33,11 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         IMessageBus messageBus,
         VoiceServiceConfiguration configuration)
     {
-        _kamailioClient = kamailioClient ?? throw new ArgumentNullException(nameof(kamailioClient));
-        _rtpEngineClient = rtpEngineClient ?? throw new ArgumentNullException(nameof(rtpEngineClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _kamailioClient = kamailioClient;
+        _rtpEngineClient = rtpEngineClient;
+        _logger = logger;
+        _messageBus = messageBus;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />

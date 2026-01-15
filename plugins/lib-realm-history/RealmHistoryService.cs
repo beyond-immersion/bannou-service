@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -25,7 +26,6 @@ public partial class RealmHistoryService : IRealmHistoryService
     private readonly ILogger<RealmHistoryService> _logger;
     private readonly RealmHistoryServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "realm-history-statestore";
     private const string PARTICIPATION_KEY_PREFIX = "realm-participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "realm-participation-event-";
     private const string LORE_KEY_PREFIX = "realm-lore-";
@@ -49,10 +49,10 @@ public partial class RealmHistoryService : IRealmHistoryService
         RealmHistoryServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
@@ -91,7 +91,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             };
 
             // Store the participation record
-            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
             var participationData = new RealmParticipationData
             {
                 ParticipationId = participationId.ToString(),
@@ -112,7 +112,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 cancellationToken: cancellationToken);
 
             // Update the realm's participation index
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
             var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.RealmId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken)
                 ?? new RealmParticipationIndexData { RealmId = body.RealmId.ToString() };
@@ -170,7 +170,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
             var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.RealmId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
@@ -187,7 +187,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 });
             }
 
-            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
             var allParticipations = new List<RealmHistoricalParticipation>();
 
             foreach (var participationId in index.ParticipationIds)
@@ -255,7 +255,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
             var indexKey = $"{PARTICIPATION_BY_EVENT_KEY_PREFIX}{body.EventId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
@@ -272,7 +272,7 @@ public partial class RealmHistoryService : IRealmHistoryService
                 });
             }
 
-            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
             var allParticipations = new List<RealmHistoricalParticipation>();
 
             foreach (var participationId in index.ParticipationIds)
@@ -338,7 +338,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
             var participationKey = $"{PARTICIPATION_KEY_PREFIX}{body.ParticipationId}";
             var participation = await participationStore.GetAsync(participationKey, cancellationToken);
 
@@ -351,7 +351,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             await participationStore.DeleteAsync(participationKey, cancellationToken);
 
             // Update realm index
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
             var realmIndexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{participation.RealmId}";
             var realmIndex = await indexStore.GetAsync(realmIndexKey, cancellationToken);
             if (realmIndex != null)
@@ -414,7 +414,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var loreData = await loreStore.GetAsync(loreKey, cancellationToken);
 
@@ -480,7 +480,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var existing = await loreStore.GetAsync(loreKey, cancellationToken);
             var isNew = existing == null;
@@ -592,7 +592,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var existing = await loreStore.GetAsync(loreKey, cancellationToken);
             var isNew = existing == null;
@@ -697,7 +697,7 @@ public partial class RealmHistoryService : IRealmHistoryService
 
         try
         {
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var existing = await loreStore.GetAsync(loreKey, cancellationToken);
 
@@ -755,8 +755,8 @@ public partial class RealmHistoryService : IRealmHistoryService
             var loreDeleted = false;
 
             // Delete all participation records
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
-            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
+            var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
             var realmIndexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.RealmId}";
             var realmIndex = await indexStore.GetAsync(realmIndexKey, cancellationToken);
 
@@ -789,7 +789,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Delete lore
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var existingLore = await loreStore.GetAsync(loreKey, cancellationToken);
             if (existingLore != null)
@@ -851,7 +851,7 @@ public partial class RealmHistoryService : IRealmHistoryService
             var majorHistoricalEvents = new List<string>();
 
             // Get lore points
-            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(STATE_STORE);
+            var loreStore = _stateStoreFactory.GetStore<RealmLoreData>(StateStoreDefinitions.RealmHistory);
             var loreKey = $"{LORE_KEY_PREFIX}{body.RealmId}";
             var loreData = await loreStore.GetAsync(loreKey, cancellationToken);
 
@@ -870,13 +870,13 @@ public partial class RealmHistoryService : IRealmHistoryService
             }
 
             // Get historical events
-            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<RealmParticipationIndexData>(StateStoreDefinitions.RealmHistory);
             var indexKey = $"{PARTICIPATION_INDEX_KEY_PREFIX}{body.RealmId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
             if (index != null && index.ParticipationIds.Count > 0)
             {
-                var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(STATE_STORE);
+                var participationStore = _stateStoreFactory.GetStore<RealmParticipationData>(StateStoreDefinitions.RealmHistory);
                 var allParticipations = new List<RealmParticipationData>();
 
                 foreach (var participationId in index.ParticipationIds)

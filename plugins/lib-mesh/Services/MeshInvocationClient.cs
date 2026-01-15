@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -34,8 +35,8 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         IMeshRedisManager redisManager,
         ILogger<MeshInvocationClient> logger)
     {
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _redisManager = redisManager;
+        _logger = logger;
 
         // Create HTTP client for outbound requests
         var handler = new SocketsHttpHandler
@@ -62,9 +63,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         where TRequest : class
         where TResponse : class
     {
-        ArgumentNullException.ThrowIfNull(appId, nameof(appId));
-        ArgumentNullException.ThrowIfNull(methodName, nameof(methodName));
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
 
         var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
 
@@ -89,9 +87,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         CancellationToken cancellationToken = default)
         where TRequest : class
     {
-        ArgumentNullException.ThrowIfNull(appId, nameof(appId));
-        ArgumentNullException.ThrowIfNull(methodName, nameof(methodName));
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
 
         var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
 
@@ -111,8 +106,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         CancellationToken cancellationToken = default)
         where TResponse : class
     {
-        ArgumentNullException.ThrowIfNull(appId, nameof(appId));
-        ArgumentNullException.ThrowIfNull(methodName, nameof(methodName));
 
         var httpRequest = CreateInvokeMethodRequest(HttpMethod.Get, appId, methodName);
 
@@ -134,7 +127,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         HttpRequestMessage request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
 
         // Extract app-id and method from request headers/uri
         if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-app-id"), out var appId) ||
@@ -182,9 +174,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         string appId,
         string methodName)
     {
-        ArgumentNullException.ThrowIfNull(httpMethod, nameof(httpMethod));
-        ArgumentNullException.ThrowIfNull(appId, nameof(appId));
-        ArgumentNullException.ThrowIfNull(methodName, nameof(methodName));
 
         var request = new HttpRequestMessage(httpMethod, methodName);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -219,7 +208,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         string appId,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(appId, nameof(appId));
 
         var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
         return endpoint != null;

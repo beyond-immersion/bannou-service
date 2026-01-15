@@ -97,18 +97,6 @@ public sealed class CutsceneCoordinatorTests : IDisposable
                 CutsceneSessionOptions.Default));
     }
 
-    [Fact]
-    public async Task CreateSessionAsync_NullSessionId_ThrowsArgumentException()
-    {
-        // Act & Assert - ArgumentNullException inherits from ArgumentException
-        await Assert.ThrowsAnyAsync<ArgumentException>(() =>
-            _coordinator.CreateSessionAsync(
-                null!,
-                "cinematic1",
-                _participants,
-                CutsceneSessionOptions.Default));
-    }
-
     // =========================================================================
     // GET SESSION TESTS
     // =========================================================================

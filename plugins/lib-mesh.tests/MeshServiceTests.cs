@@ -1007,39 +1007,6 @@ public class MeshInvocationClientTests : IDisposable
         Assert.Equal("application/json", request.Content.Headers.ContentType?.MediaType);
     }
 
-    [Fact]
-    public void CreateInvokeMethodRequest_WithNullHttpMethod_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var client = CreateClient();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            client.CreateInvokeMethodRequest(null!, "bannou", "test/endpoint"));
-    }
-
-    [Fact]
-    public void CreateInvokeMethodRequest_WithNullAppId_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var client = CreateClient();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            client.CreateInvokeMethodRequest(HttpMethod.Get, null!, "test/endpoint"));
-    }
-
-    [Fact]
-    public void CreateInvokeMethodRequest_WithNullMethodName_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var client = CreateClient();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            client.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", null!));
-    }
-
     #endregion
 
     #region InvokeMethodWithResponseAsync Tests
@@ -1116,17 +1083,6 @@ public class MeshInvocationClientTests : IDisposable
 
         // Assert
         Assert.False(result);
-    }
-
-    [Fact]
-    public async Task IsServiceAvailableAsync_WithNullAppId_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var client = CreateClient();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            client.IsServiceAvailableAsync(null!, CancellationToken.None));
     }
 
     #endregion

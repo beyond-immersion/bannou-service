@@ -5,7 +5,6 @@ using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.Bannou.Behavior.Goap;
 using BeyondImmersion.Bannou.Behavior.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Behavior.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Behavior.Handlers;
@@ -44,9 +43,8 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // Register behavior model interpreter factory for runtime execution
         services.AddSingleton<IBehaviorModelInterpreterFactory, BehaviorModelInterpreterFactory>();
 
-        // Register asset client for storing compiled behavior models
-        // Uses mesh client for service-to-service calls
-        services.AddScoped<IAssetClient, AssetClient>();
+        // NOTE: IAssetClient is registered centrally by PluginLoader as Singleton.
+        // Plugins must NOT re-register clients - they override the central Singleton registration.
 
         // Register bundle manager for efficient behavior grouping and storage
         services.AddScoped<IBehaviorBundleManager, BehaviorBundleManager>();

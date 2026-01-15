@@ -22,7 +22,6 @@ public sealed class ActionCompilerRegistry
     /// <param name="context">The compilation context.</param>
     public ActionCompilerRegistry(CompilationContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         _expressionCompiler = new StackExpressionCompiler(context);
 
@@ -65,7 +64,6 @@ public sealed class ActionCompilerRegistry
     /// <param name="compiler">The compiler to register.</param>
     public void Register(IActionCompiler compiler)
     {
-        ArgumentNullException.ThrowIfNull(compiler);
         _compilers.Add(compiler);
     }
 
@@ -76,8 +74,6 @@ public sealed class ActionCompilerRegistry
     /// <param name="context">The compilation context.</param>
     public void Compile(ActionNode action, CompilationContext context)
     {
-        ArgumentNullException.ThrowIfNull(action);
-        ArgumentNullException.ThrowIfNull(context);
 
         foreach (var compiler in _compilers)
         {

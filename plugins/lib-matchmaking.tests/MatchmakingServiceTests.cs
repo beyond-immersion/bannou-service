@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ClientEvents;

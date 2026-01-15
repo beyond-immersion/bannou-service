@@ -182,7 +182,6 @@ public sealed class SituationalTriggerManager : ISituationalTriggerManager
     /// <inheritdoc/>
     public void RegisterTrigger(SituationalTriggerDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(definition);
 
         _triggerDefinitions[definition.TriggerId] = definition;
 

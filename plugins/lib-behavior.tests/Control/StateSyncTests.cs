@@ -202,32 +202,6 @@ public sealed class StateSyncTests
     }
 
     [Fact]
-    public async Task SyncStateAsync_NullState_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var stateSync = new StateSync();
-        var entityId = Guid.NewGuid();
-        var handoff = ControlHandoff.Instant();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => stateSync.SyncStateAsync(entityId, null!, handoff, CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task SyncStateAsync_NullHandoff_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var stateSync = new StateSync();
-        var entityId = Guid.NewGuid();
-        var state = new EntityState();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => stateSync.SyncStateAsync(entityId, state, null!, CancellationToken.None));
-    }
-
-    [Fact]
     public async Task SyncStateAsync_CancellationRequested_ThrowsOperationCanceledException()
     {
         // Arrange

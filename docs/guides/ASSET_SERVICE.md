@@ -175,6 +175,180 @@ POST /bundles/upload/request
 
 Request upload URL for a pre-built bundle (triggers validation pipeline).
 
+### Bundle Management
+
+#### Update Bundle Metadata
+```
+POST /bundles/update
+```
+
+Update bundle metadata (name, description, tags). Creates a new version record for audit trail.
+
+**Request Body:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "name": "Updated Bundle Name",
+  "description": "New description",
+  "add_tags": { "environment": "production" },
+  "remove_tags": ["deprecated"],
+  "reason": "Updated for release v2.0"
+}
+```
+
+**Response:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "version": 2,
+  "previous_version": 1,
+  "changes": ["name updated", "tags modified"],
+  "updated_at": "2025-01-15T12:00:00Z"
+}
+```
+
+#### Delete Bundle
+```
+POST /bundles/delete
+```
+
+Soft-delete a bundle (retains data for configurable retention period, default 30 days).
+
+**Request Body:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "reason": "No longer needed",
+  "permanent": false
+}
+```
+
+Set `permanent: true` for immediate permanent deletion (admin only).
+
+**Response:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "status": "deleted",
+  "deleted_at": "2025-01-15T12:00:00Z",
+  "retention_until": "2025-02-14T12:00:00Z"
+}
+```
+
+#### Restore Bundle
+```
+POST /bundles/restore
+```
+
+Restore a soft-deleted bundle within its retention period.
+
+**Request Body:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "reason": "Needed for rollback"
+}
+```
+
+**Response:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "status": "active",
+  "restored_at": "2025-01-15T12:00:00Z",
+  "restored_from_version": 3
+}
+```
+
+#### Query Bundles
+```
+POST /bundles/query
+```
+
+Query bundles with advanced filtering. Requires owner filter for efficient querying.
+
+**Request Body:**
+```json
+{
+  "owner": "account_123",
+  "tags": { "environment": "production" },
+  "tag_exists": ["release"],
+  "status": "active",
+  "bundle_type": "metabundle",
+  "realm": "arcadia",
+  "name_contains": "level",
+  "created_after": "2025-01-01T00:00:00Z",
+  "limit": 50,
+  "offset": 0,
+  "include_deleted": false
+}
+```
+
+**Response:**
+```json
+{
+  "bundles": [
+    {
+      "bundle_id": "bundle_123",
+      "bundle_type": "metabundle",
+      "version": "1.0.0",
+      "metadata_version": 2,
+      "name": "Level 1 Assets",
+      "owner": "account_123",
+      "realm": "arcadia",
+      "status": "active",
+      "asset_count": 25,
+      "size_bytes": 52428800,
+      "created_at": "2025-01-15T12:00:00Z"
+    }
+  ],
+  "total_count": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+#### List Bundle Versions
+```
+POST /bundles/list-versions
+```
+
+Get version history for a bundle (metadata changes, not content versions).
+
+**Request Body:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Response:**
+```json
+{
+  "bundle_id": "bundle_123",
+  "current_version": 3,
+  "versions": [
+    {
+      "version": 3,
+      "created_at": "2025-01-15T12:00:00Z",
+      "created_by": "account_123",
+      "changes": ["bundle restored"],
+      "reason": "Needed for rollback"
+    },
+    {
+      "version": 2,
+      "created_at": "2025-01-14T12:00:00Z",
+      "created_by": "account_123",
+      "changes": ["bundle deleted"],
+      "reason": "No longer needed"
+    }
+  ],
+  "total_count": 3
+}
+```
+
 ## Configuration
 
 Configuration is managed via the `AssetServiceConfiguration` class (generated from `schemas/asset-configuration.yaml`).
@@ -190,6 +364,7 @@ Configuration is managed via the `AssetServiceConfiguration` class (generated fr
 | `MaxUploadSizeMb` | int | `500` | Maximum single file upload size |
 | `MultipartThresholdMb` | int | `50` | Size threshold for multipart uploads |
 | `LargeFileThresholdMb` | int | `50` | Size threshold for processing pool delegation |
+| `DeletedBundleRetentionDays` | int | `30` | Days to retain soft-deleted bundles before permanent removal |
 
 ### Environment Variables
 
@@ -382,6 +557,7 @@ var data = await client.GetByteArrayAsync(asset.DownloadUrl);
 
 ### Creating Bundles
 
+**Server-side bundle creation** (from assets already uploaded to Bannou):
 ```csharp
 // Create bundle from multiple assets
 var bundle = await bannou.Bundles.CreateBundleAsync(new CreateBundleRequest {
@@ -395,3 +571,66 @@ var download = await bannou.Bundles.GetBundleAsync(new GetBundleRequest {
     Format = "bannou"  // or "zip" for ZIP conversion
 });
 ```
+
+**Client-side bundle creation** (using the AssetBundler SDK):
+
+For creating `.bannou` bundles locally before uploading (e.g., content pipelines, asset tooling), use the `BeyondImmersion.Bannou.AssetBundler` SDK. See [SDK Guide - AssetBundler](SDKs.md#assetbundler-sdk-core) for installation and usage.
+
+### Bundle Management (BundleClient SDK)
+
+The `BundleClient` provides high-level operations for bundle lifecycle management:
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Bundles;
+
+// Create client from uploader or directly from BannouClient
+var bundleClient = BundleClient.FromUploader(uploader);
+
+// Get bundle download URL
+var result = await bundleClient.GetAsync("bundle_123", BundleFormat.Zip);
+Console.WriteLine($"Download: {result.DownloadUrl}");
+
+// Update bundle metadata
+var update = new BundleMetadataUpdate
+{
+    Name = "Updated Name",
+    AddTags = new Dictionary<string, string> { ["env"] = "prod" },
+    Reason = "Release update"
+};
+var updateResult = await bundleClient.UpdateAsync("bundle_123", update);
+Console.WriteLine($"New version: {updateResult.Version}");
+
+// Soft-delete a bundle
+var deleteResult = await bundleClient.DeleteAsync("bundle_123", reason: "No longer needed");
+Console.WriteLine($"Retention until: {deleteResult.RetentionUntil}");
+
+// Restore within retention period
+var restoreResult = await bundleClient.RestoreAsync("bundle_123", reason: "Needed for rollback");
+
+// Query bundles with filters
+var query = new BundleQuery
+{
+    Owner = "account_123",
+    Tags = new Dictionary<string, string> { ["env"] = "prod" },
+    Status = "active"
+};
+var bundles = await bundleClient.QueryAsync(query);
+
+// Or enumerate all matching bundles (handles pagination)
+await foreach (var bundle in bundleClient.QueryAllAsync(query))
+{
+    Console.WriteLine($"Found: {bundle.BundleId}");
+}
+
+// Get version history
+var history = await bundleClient.GetVersionsAsync("bundle_123");
+foreach (var version in history.Versions)
+{
+    Console.WriteLine($"v{version.Version}: {string.Join(", ", version.Changes)}");
+}
+```
+
+## Further Reading
+
+- [SDK Guide - AssetBundler](SDKs.md#assetbundler-sdk-core) - Client-side bundle creation SDK
+- [SDK Conventions](../../sdks/CONVENTIONS.md) - SDK development standards and package registry

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;

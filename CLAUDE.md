@@ -330,7 +330,8 @@ Configuration classes are generated in `Generated/` from schema - never edit man
 ### Infrastructure Lib Patterns
 **State Management (lib-state)**:
 ```csharp
-_stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
+// Use StateStoreDefinitions constants (schema-first from schemas/state-stores.yaml)
+_stateStore = stateStoreFactory.GetStore<ServiceModel>(StateStoreDefinitions.ServiceName);
 await _stateStore.SaveAsync(key, data);
 var data = await _stateStore.GetAsync(key);
 ```

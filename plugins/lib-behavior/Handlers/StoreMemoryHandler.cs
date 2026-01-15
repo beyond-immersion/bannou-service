@@ -37,7 +37,7 @@ public sealed class StoreMemoryHandler : IActionHandler
     /// <param name="memoryStore">Memory store for storing memories.</param>
     public StoreMemoryHandler(IMemoryStore memoryStore)
     {
-        _memoryStore = memoryStore ?? throw new ArgumentNullException(nameof(memoryStore));
+        _memoryStore = memoryStore;
     }
 
     /// <inheritdoc/>

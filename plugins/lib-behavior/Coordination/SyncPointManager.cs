@@ -44,7 +44,7 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
         TimeSpan? defaultTimeout = null,
         ILogger<SyncPointManager>? logger = null)
     {
-        _defaultParticipants = defaultParticipants ?? throw new ArgumentNullException(nameof(defaultParticipants));
+        _defaultParticipants = defaultParticipants;
         _defaultTimeout = defaultTimeout;
         _logger = logger;
         _syncPoints = new ConcurrentDictionary<string, SyncPointTracker>(StringComparer.OrdinalIgnoreCase);

@@ -22,8 +22,8 @@ public class AssetEventEmitter : IAssetEventEmitter
         IClientEventPublisher publisher,
         ILogger<AssetEventEmitter> logger)
     {
-        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _publisher = publisher;
+        _logger = logger;
     }
 
     /// <inheritdoc />

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
@@ -212,7 +213,7 @@ public class MessagingServiceTests
         {
             Topic = "test.topic",
             Payload = new { Key = "value" },
-            Options = null!
+            Options = null
         };
 
         PublishOptions? capturedOptions = null;
@@ -658,7 +659,7 @@ public class MessagingServiceTests
         }, CancellationToken.None);
 
         // Act
-        var (statusCode, response) = await _service.ListTopicsAsync(null!, CancellationToken.None);
+        var (statusCode, response) = await _service.ListTopicsAsync(new ListTopicsRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);

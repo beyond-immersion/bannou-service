@@ -132,6 +132,18 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public int MultipartPartSizeMb { get; set; } = 16;
 
     /// <summary>
+    /// Maximum number of asset IDs allowed in a single bundle resolution request
+    /// Environment variable: ASSET_MAX_RESOLUTION_ASSETS
+    /// </summary>
+    public int MaxResolutionAssets { get; set; } = 500;
+
+    /// <summary>
+    /// Maximum number of asset IDs allowed in a single bulk get request
+    /// Environment variable: ASSET_MAX_BULK_GET_ASSETS
+    /// </summary>
+    public int MaxBulkGetAssets { get; set; } = 100;
+
+    /// <summary>
     /// File size threshold for delegating to processing pool
     /// Environment variable: ASSET_LARGE_FILE_THRESHOLD_MB
     /// </summary>
@@ -226,6 +238,12 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// Environment variable: ASSET_ZIP_CACHE_TTL_HOURS
     /// </summary>
     public int ZipCacheTtlHours { get; set; } = 24;
+
+    /// <summary>
+    /// Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
+    /// Environment variable: ASSET_DELETED_BUNDLE_RETENTION_DAYS
+    /// </summary>
+    public int DeletedBundleRetentionDays { get; set; } = 30;
 
     /// <summary>
     /// Secret for validating MinIO webhook requests

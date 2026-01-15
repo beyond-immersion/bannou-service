@@ -50,9 +50,6 @@ public sealed class GoapPlanner : IGoapPlanner
         PlanningOptions? options = null,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(currentState);
-        ArgumentNullException.ThrowIfNull(goal);
-        ArgumentNullException.ThrowIfNull(availableActions);
 
         options ??= PlanningOptions.Default;
 
@@ -175,8 +172,6 @@ public sealed class GoapPlanner : IGoapPlanner
         IReadOnlyList<GoapGoal>? activeGoals = null,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(currentState);
 
         // Plan completed?
         if (currentActionIndex >= plan.Actions.Count)

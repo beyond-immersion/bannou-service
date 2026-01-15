@@ -16,22 +16,18 @@ public class ActorRegistry : IActorRegistry
     /// <inheritdoc/>
     public bool TryRegister(string actorId, IActorRunner runner)
     {
-        ArgumentNullException.ThrowIfNull(actorId);
-        ArgumentNullException.ThrowIfNull(runner);
         return _actors.TryAdd(actorId, runner);
     }
 
     /// <inheritdoc/>
     public bool TryGet(string actorId, out IActorRunner? runner)
     {
-        ArgumentNullException.ThrowIfNull(actorId);
         return _actors.TryGetValue(actorId, out runner);
     }
 
     /// <inheritdoc/>
     public bool TryRemove(string actorId, out IActorRunner? runner)
     {
-        ArgumentNullException.ThrowIfNull(actorId);
         return _actors.TryRemove(actorId, out runner);
     }
 
@@ -50,7 +46,6 @@ public class ActorRegistry : IActorRegistry
     /// <inheritdoc/>
     public IEnumerable<IActorRunner> GetByCategory(string category)
     {
-        ArgumentNullException.ThrowIfNull(category);
         return _actors.Values
             .Where(r => string.Equals(r.Category, category, StringComparison.OrdinalIgnoreCase))
             .ToList();

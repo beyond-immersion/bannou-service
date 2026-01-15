@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -22,7 +23,6 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
 
-    private const string PERSONALITY_STATE_STORE = "character-personality-statestore";
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
 
@@ -72,7 +72,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var data = await store.GetAsync($"{PERSONALITY_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
             if (data == null)
@@ -109,7 +109,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
             var isNew = existing == null;
@@ -182,7 +182,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var data = await store.GetAsync(key, cancellationToken);
 
@@ -285,7 +285,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var store = _stateStoreFactory.GetStore<PersonalityData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var personalities = new List<PersonalityResponse>();
             var notFound = new List<Guid>();
 
@@ -339,7 +339,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
 
@@ -391,7 +391,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var data = await store.GetAsync($"{COMBAT_KEY_PREFIX}{body.CharacterId}", cancellationToken);
 
             if (data == null)
@@ -428,7 +428,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
             var isNew = existing == null;
@@ -504,7 +504,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var existing = await store.GetAsync(key, cancellationToken);
 
@@ -553,7 +553,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
 
         try
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(PERSONALITY_STATE_STORE);
+            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
             var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
             var data = await store.GetAsync(key, cancellationToken);
 

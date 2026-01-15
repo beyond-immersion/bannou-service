@@ -47,7 +47,6 @@ public sealed class EntityStateRegistry : IEntityStateRegistry
     /// <inheritdoc/>
     public void UpdateState(Guid entityId, EntityState state, string? source = null)
     {
-        ArgumentNullException.ThrowIfNull(state);
 
         EntityState? previousState = null;
         _states.AddOrUpdate(

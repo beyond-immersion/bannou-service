@@ -24,6 +24,11 @@
 LICENSE
 README.md
 
-# SDKs are client-side libraries, not needed for server Docker image
+# SDKs are mostly client-side libraries, not needed for server Docker image
+# Exceptions:
+#   - sdks/core/ contains shared types (BaseServiceEvent, etc.) needed by bannou-service
+#   - sdks/bundle-format/ needed by lib-asset for bundle reading/writing
 sdks/
+!sdks/core/
+!sdks/bundle-format/
 examples/

@@ -3,6 +3,7 @@
 // ABML action handler for querying actor options (Event Brain support).
 // =============================================================================
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
@@ -46,8 +47,8 @@ public sealed class QueryOptionsHandler : IActionHandler
         IActorClient actorClient,
         ILogger<QueryOptionsHandler> logger)
     {
-        _actorClient = actorClient ?? throw new ArgumentNullException(nameof(actorClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _actorClient = actorClient;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

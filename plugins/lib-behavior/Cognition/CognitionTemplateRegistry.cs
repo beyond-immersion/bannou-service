@@ -70,7 +70,6 @@ public sealed class CognitionTemplateRegistry : ICognitionTemplateRegistry
     /// <inheritdoc/>
     public void RegisterTemplate(CognitionTemplate template)
     {
-        ArgumentNullException.ThrowIfNull(template);
         ArgumentException.ThrowIfNullOrWhiteSpace(template.Id);
 
         _templates[template.Id] = template;

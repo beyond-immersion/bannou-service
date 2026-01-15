@@ -103,6 +103,7 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
         "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
+        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \

@@ -1,7 +1,6 @@
 #nullable enable
 
-using BeyondImmersion.BannouService.Configuration;
-using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -35,8 +34,8 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         InMemoryMessageBus messageBus,
         ILogger<InMemoryMessageTap> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
         _logger.LogWarning("InMemoryMessageTap initialized - taps will only work in-process");
     }
 
@@ -47,8 +46,6 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         string? sourceExchange = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceTopic);
-        ArgumentNullException.ThrowIfNull(destination);
 
         var tapId = Guid.NewGuid();
         var effectiveSourceExchange = sourceExchange ?? AppConstants.DEFAULT_APP_NAME;

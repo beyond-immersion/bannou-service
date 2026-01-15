@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
@@ -65,29 +66,6 @@ public class InMemoryMessageTapTests
 
         // Cleanup
         await handle.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task CreateTapAsync_WithNullSourceTopic_ShouldThrowArgumentNullException()
-    {
-        // Arrange
-        var destination = new TapDestination
-        {
-            Exchange = "test-exchange",
-            RoutingKey = "test-key"
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageTap.CreateTapAsync(null!, destination));
-    }
-
-    [Fact]
-    public async Task CreateTapAsync_WithNullDestination_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageTap.CreateTapAsync("test.topic", null!));
     }
 
     #endregion

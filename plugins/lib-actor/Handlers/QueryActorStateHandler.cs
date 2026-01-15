@@ -48,8 +48,8 @@ public sealed class QueryActorStateHandler : IActionHandler
         IActorRegistry actorRegistry,
         ILogger<QueryActorStateHandler> logger)
     {
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _actorRegistry = actorRegistry;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

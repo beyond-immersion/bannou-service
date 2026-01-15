@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -71,13 +72,13 @@ public partial class AnalyticsService : IAnalyticsService
         AnalyticsServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _gameServiceClient = gameServiceClient ?? throw new ArgumentNullException(nameof(gameServiceClient));
-        _gameSessionClient = gameSessionClient ?? throw new ArgumentNullException(nameof(gameSessionClient));
-        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _gameServiceClient = gameServiceClient;
+        _gameSessionClient = gameSessionClient;
+        _lockProvider = lockProvider;
+        _logger = logger;
+        _configuration = configuration;
 
         RegisterEventConsumers(eventConsumer);
     }

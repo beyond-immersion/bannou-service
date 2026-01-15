@@ -20,8 +20,6 @@ public static class GoapMetadataConverter
     /// <returns>GOAP goal ready for planning.</returns>
     public static GoapGoal ToGoapGoal(string name, GoapGoalDefinition definition)
     {
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(definition);
 
         return GoapGoal.FromMetadata(name, definition.Priority, definition.Conditions);
     }
@@ -34,8 +32,6 @@ public static class GoapMetadataConverter
     /// <returns>GOAP action ready for planning.</returns>
     public static GoapAction ToGoapAction(string flowName, GoapFlowMetadata metadata)
     {
-        ArgumentNullException.ThrowIfNull(flowName);
-        ArgumentNullException.ThrowIfNull(metadata);
 
         return GoapAction.FromMetadata(
             flowName,
@@ -51,7 +47,6 @@ public static class GoapMetadataConverter
     /// <returns>List of GOAP goals.</returns>
     public static IReadOnlyList<GoapGoal> ExtractGoals(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         var goals = new List<GoapGoal>();
         foreach (var (name, definition) in document.Goals)
@@ -69,7 +64,6 @@ public static class GoapMetadataConverter
     /// <returns>List of GOAP actions.</returns>
     public static IReadOnlyList<GoapAction> ExtractActions(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         var actions = new List<GoapAction>();
         foreach (var (flowName, flow) in document.Flows)
@@ -100,7 +94,6 @@ public static class GoapMetadataConverter
     /// <returns>True if document has GOAP content.</returns>
     public static bool HasGoapContent(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         if (document.Goals.Count > 0)
         {
@@ -125,7 +118,6 @@ public static class GoapMetadataConverter
     /// <returns>Number of goals.</returns>
     public static int GetGoalCount(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
         return document.Goals.Count;
     }
 
@@ -136,7 +128,6 @@ public static class GoapMetadataConverter
     /// <returns>Number of actions with goap: blocks.</returns>
     public static int GetActionCount(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         var count = 0;
         foreach (var (_, flow) in document.Flows)

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -5,6 +6,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Matchmaking.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
@@ -21,7 +23,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
 // Alias to distinguish client events CancelReason from service events
 using ClientCancelReason = BeyondImmersion.Bannou.Matchmaking.ClientEvents.CancelReason;
 using EventCancelReason = BeyondImmersion.BannouService.Events.MatchmakingTicketCancelledEventReason;
@@ -45,8 +46,8 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IPermissionClient _permissionClient;
+    private readonly IMatchmakingAlgorithm _algorithm;
 
-    private const string STATE_STORE = "matchmaking-statestore";
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
     private const string TICKET_KEY_PREFIX = "ticket:";
@@ -77,13 +78,16 @@ public partial class MatchmakingService : IMatchmakingService
         IGameSessionClient gameSessionClient,
         IPermissionClient permissionClient)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _gameSessionClient = gameSessionClient ?? throw new ArgumentNullException(nameof(gameSessionClient));
-        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _clientEventPublisher = clientEventPublisher;
+        _gameSessionClient = gameSessionClient;
+        _permissionClient = permissionClient;
+        // Instantiate directly since internal types are used
+        // Tests can access via InternalsVisibleTo
+        _algorithm = new MatchmakingAlgorithm();
 
         // Server salt from configuration - REQUIRED
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -369,7 +373,7 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Delete queue
-            await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+            await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
                 .DeleteAsync(QUEUE_KEY_PREFIX + body.QueueId, cancellationToken);
 
             // Remove from queue list
@@ -671,7 +675,7 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             var queue = await LoadQueueAsync(ticket.QueueId, cancellationToken);
-            var currentSkillRange = GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
+            var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
 
             return (StatusCodes.OK, new MatchmakingStatusResponse
             {
@@ -916,8 +920,8 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Try to form a match with current skill window (no expansion)
-            var currentSkillRange = GetCurrentSkillRange(queue, 0);
-            var matchedTickets = TryMatchTickets(tickets, queue, currentSkillRange);
+            var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, 0);
+            var matchedTickets = _algorithm.TryMatchTickets(tickets, queue, currentSkillRange);
 
             if (matchedTickets != null && matchedTickets.Count >= queue.MinCount)
             {
@@ -927,133 +931,6 @@ public partial class MatchmakingService : IMatchmakingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during immediate match check for ticket {TicketId}", ticket.TicketId);
-        }
-    }
-
-    /// <summary>
-    /// Tries to match tickets based on queue rules.
-    /// </summary>
-    private List<TicketModel>? TryMatchTickets(List<TicketModel> tickets, QueueModel queue, int? skillRange)
-    {
-        if (tickets.Count < queue.MinCount)
-            return null;
-
-        // Sort by creation time (FIFO)
-        var sortedTickets = tickets.OrderBy(t => t.CreatedAt).ToList();
-
-        // Simple matching: take first N that fit within skill range
-        var matched = new List<TicketModel>();
-        TicketModel? anchor = null;
-
-        foreach (var ticket in sortedTickets)
-        {
-            if (anchor == null)
-            {
-                anchor = ticket;
-                matched.Add(ticket);
-                continue;
-            }
-
-            // Check skill range
-            if (skillRange.HasValue && queue.UseSkillRating &&
-                anchor.SkillRating.HasValue && ticket.SkillRating.HasValue)
-            {
-                var diff = Math.Abs(anchor.SkillRating.Value - ticket.SkillRating.Value);
-                if (diff > skillRange.Value)
-                    continue;
-            }
-
-            // Check query match (simplified - full Lucene would need a parser library)
-            if (!string.IsNullOrEmpty(anchor.Query))
-            {
-                if (!MatchesQuery(ticket, anchor.Query))
-                    continue;
-            }
-
-            if (!string.IsNullOrEmpty(ticket.Query))
-            {
-                if (!MatchesQuery(anchor, ticket.Query))
-                    continue;
-            }
-
-            matched.Add(ticket);
-
-            // Check if we have enough
-            if (matched.Count >= queue.MaxCount)
-                break;
-
-            // Check count multiple
-            if (matched.Count >= queue.MinCount && matched.Count % queue.CountMultiple == 0)
-            {
-                // We have a valid match size
-                break;
-            }
-        }
-
-        // Final validation
-        if (matched.Count >= queue.MinCount && matched.Count % queue.CountMultiple == 0)
-        {
-            return matched;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Simplified query matching (checks if ticket properties match query constraints).
-    /// For full Lucene support, integrate a query parser library.
-    /// </summary>
-    private bool MatchesQuery(TicketModel ticket, string query)
-    {
-        // Simple key:value matching
-        // e.g., "region:na" matches if StringProperties["region"] == "na"
-        // e.g., "skill:>1000" matches if NumericProperties["skill"] > 1000
-
-        try
-        {
-            var parts = query.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var part in parts)
-            {
-                var colonIdx = part.IndexOf(':');
-                if (colonIdx <= 0) continue;
-
-                var key = part.Substring(0, colonIdx);
-                var value = part.Substring(colonIdx + 1);
-
-                // Check string property
-                if (ticket.StringProperties.TryGetValue(key, out var strVal))
-                {
-                    if (!strVal.Equals(value, StringComparison.OrdinalIgnoreCase))
-                        return false;
-                }
-                // Check numeric property
-                else if (ticket.NumericProperties.TryGetValue(key, out var numVal))
-                {
-                    if (value.StartsWith(">"))
-                    {
-                        if (double.TryParse(value.Substring(1), out var threshold))
-                        {
-                            if (numVal <= threshold) return false;
-                        }
-                    }
-                    else if (value.StartsWith("<"))
-                    {
-                        if (double.TryParse(value.Substring(1), out var threshold))
-                        {
-                            if (numVal >= threshold) return false;
-                        }
-                    }
-                    else if (double.TryParse(value, out var exact))
-                    {
-                        if (Math.Abs(numVal - exact) > 0.001) return false;
-                    }
-                }
-            }
-            return true;
-        }
-        catch
-        {
-            return true; // On parse error, allow the match
         }
     }
 
@@ -1607,13 +1484,13 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<string>> GetQueueIdsAsync(CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
     }
 
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (!list.Contains(queueId))
         {
@@ -1624,7 +1501,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (list.Remove(queueId))
         {
@@ -1634,61 +1511,61 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<QueueModel?> LoadQueueAsync(string queueId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_KEY_PREFIX + queueId, cancellationToken);
     }
 
     private async Task SaveQueueAsync(QueueModel queue, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(QUEUE_KEY_PREFIX + queue.QueueId, queue, cancellationToken: cancellationToken);
     }
 
     private async Task<TicketModel?> LoadTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task SaveTicketAsync(TicketModel ticket, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(TICKET_KEY_PREFIX + ticket.TicketId, ticket, cancellationToken: cancellationToken);
     }
 
     private async Task DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task<MatchModel?> LoadMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task SaveMatchAsync(MatchModel match, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(MATCH_KEY_PREFIX + match.MatchId, match, cancellationToken: cancellationToken);
     }
 
     private async Task DeleteMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task<List<Guid>> GetPlayerTicketsAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
     }
 
     private async Task AddToPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
@@ -1699,7 +1576,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
@@ -1709,7 +1586,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<Guid>> GetQueueTicketIdsAsync(string queueId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
     }
 
@@ -1721,7 +1598,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
@@ -1732,7 +1609,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
@@ -1744,20 +1621,20 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var wrapper = new PendingMatchWrapper { MatchId = matchId };
         var options = new StateOptions { Ttl = _configuration.PendingMatchRedisKeyTtlSeconds };
-        await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(PENDING_MATCH_PREFIX + accountId, wrapper, options, cancellationToken);
     }
 
     private async Task<Guid?> GetPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        var wrapper = await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        var wrapper = await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
         return wrapper?.MatchId;
     }
 
     private async Task ClearPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
     }
 
@@ -1799,20 +1676,6 @@ public partial class MatchmakingService : IMatchmakingService
             CreatedAt = queue.CreatedAt,
             UpdatedAt = queue.UpdatedAt
         };
-    }
-
-    private static int? GetCurrentSkillRange(QueueModel? queue, int intervalsElapsed)
-    {
-        if (queue?.SkillExpansion == null || queue.SkillExpansion.Count == 0)
-            return null;
-
-        // Find the applicable expansion step
-        var applicableStep = queue.SkillExpansion
-            .Where(s => s.Intervals <= intervalsElapsed)
-            .OrderByDescending(s => s.Intervals)
-            .FirstOrDefault();
-
-        return applicableStep?.Range;
     }
 
     #endregion
@@ -1921,7 +1784,7 @@ public partial class MatchmakingService : IMatchmakingService
             foreach (var group in groups)
             {
                 var groupTickets = group.ToList();
-                var skillRange = GetCurrentSkillRange(queue, group.Key);
+                var skillRange = _algorithm.GetCurrentSkillRange(queue, group.Key);
 
                 _logger.LogDebug("Processing {Count} tickets at interval {Interval} with skill range {Range}",
                     groupTickets.Count, group.Key, skillRange?.ToString() ?? "unlimited");
@@ -1929,7 +1792,7 @@ public partial class MatchmakingService : IMatchmakingService
                 // Try to match tickets in this interval group
                 while (groupTickets.Count >= queue.MinCount)
                 {
-                    var matched = TryMatchTickets(groupTickets, queue, skillRange);
+                    var matched = _algorithm.TryMatchTickets(groupTickets, queue, skillRange);
                     if (matched != null && matched.Count >= queue.MinCount)
                     {
                         await FormMatchAsync(matched, queue, cancellationToken);

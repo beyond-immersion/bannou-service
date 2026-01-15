@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Client;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Matchmaking;
 using System.Text;
 using System.Text.Json;

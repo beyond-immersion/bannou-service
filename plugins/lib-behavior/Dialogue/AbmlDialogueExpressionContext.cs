@@ -34,7 +34,7 @@ public sealed class AbmlDialogueExpressionContext : IDialogueExpressionContext
         IVariableScope scope,
         IExpressionEvaluator? evaluator = null)
     {
-        _scope = scope ?? throw new ArgumentNullException(nameof(scope));
+        _scope = scope;
         _evaluator = evaluator;
     }
 
@@ -46,7 +46,6 @@ public sealed class AbmlDialogueExpressionContext : IDialogueExpressionContext
     public static AbmlDialogueExpressionContext FromExecutionContext(
         BeyondImmersion.BannouService.Abml.Execution.ExecutionContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
         return new AbmlDialogueExpressionContext(scope, context.Evaluator);

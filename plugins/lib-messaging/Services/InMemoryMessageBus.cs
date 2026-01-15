@@ -1,6 +1,6 @@
 #nullable enable
 
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -24,7 +24,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
     public InMemoryMessageBus(ILogger<InMemoryMessageBus> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _logger.LogWarning("InMemoryMessageBus initialized - messages will NOT be persisted or delivered across processes");
     }
 
@@ -40,8 +40,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         await Task.CompletedTask;
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
-            ArgumentNullException.ThrowIfNull(eventData);
 
             var effectiveMessageId = messageId ?? Guid.NewGuid();
             _logger.LogDebug(
@@ -72,7 +70,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         await Task.CompletedTask;
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
 
             var effectiveMessageId = messageId ?? Guid.NewGuid();
             _logger.LogDebug(
@@ -119,8 +116,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         lock (_subscriptionLock)
         {
@@ -148,8 +143,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         Func<object, CancellationToken, Task> wrappedHandler = async (obj, ct) =>
         {
@@ -183,8 +176,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
     {
         // Note: queueName and queueTtl are ignored in-memory - used for RabbitMQ reconnection support
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         // For in-memory, we wrap the raw handler to receive serialized bytes
         Func<object, CancellationToken, Task> wrappedHandler = async (obj, ct) =>
@@ -211,7 +202,6 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     /// <inheritdoc/>
     public async Task UnsubscribeAsync(string topic)
     {
-        ArgumentNullException.ThrowIfNull(topic);
 
         lock (_subscriptionLock)
         {

@@ -81,36 +81,32 @@ jobs:
           VERSION="${{ steps.version.outputs.preview_version }}"
           echo "📦 Building and packing SDKs v${VERSION}..."
 
-          # Build and pack Server SDK
-          echo "📦 Building Server SDK..."
-          dotnet restore sdks/server
-          dotnet build sdks/server --configuration Release --no-restore
-          dotnet pack sdks/server --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          # Define all packable SDK projects
+          # Note: core, protocol, transport, bundle-format are internal (IsPackable=false)
+          SDK_PROJECTS=(
+            "sdks/server"
+            "sdks/client"
+            "sdks/client-voice"
+            "sdks/scene-composer"
+            "sdks/scene-composer-stride"
+            "sdks/scene-composer-godot"
+            "sdks/asset-bundler"
+            "sdks/asset-bundler-stride"
+            "sdks/asset-bundler-godot"
+            "sdks/asset-loader"
+            "sdks/asset-loader-client"
+            "sdks/asset-loader-server"
+            "sdks/asset-loader-stride"
+            "sdks/asset-loader-godot"
+          )
 
-          # Build and pack Client SDK
-          echo "📦 Building Client SDK..."
-          dotnet restore sdks/client
-          dotnet build sdks/client --configuration Release --no-restore
-          dotnet pack sdks/client --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
-
-          # Build and pack SceneComposer SDK
-          echo "📦 Building SceneComposer SDK..."
-          dotnet restore sdks/scene-composer
-          dotnet build sdks/scene-composer --configuration Release --no-restore
-          dotnet pack sdks/scene-composer --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
-
-          # Build and pack Stride SceneComposer SDK
-          # Note: Uses net10.0 on Linux (full Stride functionality requires Windows)
-          echo "📦 Building Stride SceneComposer SDK..."
-          dotnet restore sdks/scene-composer-stride
-          dotnet build sdks/scene-composer-stride --configuration Release --no-restore
-          dotnet pack sdks/scene-composer-stride --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
-
-          # Build and pack Godot SceneComposer SDK
-          echo "📦 Building Godot SceneComposer SDK..."
-          dotnet restore sdks/scene-composer-godot
-          dotnet build sdks/scene-composer-godot --configuration Release --no-restore
-          dotnet pack sdks/scene-composer-godot --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          for PROJECT in "${SDK_PROJECTS[@]}"; do
+            PROJECT_NAME=$(basename "$PROJECT")
+            echo "📦 Building ${PROJECT_NAME}..."
+            dotnet restore "$PROJECT"
+            dotnet build "$PROJECT" --configuration Release --no-restore
+            dotnet pack "$PROJECT" --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+          done
 
           echo "✅ Packages built:"
           ls -la ./nuget-packages/

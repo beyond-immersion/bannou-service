@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -27,12 +28,10 @@ public class MinioWebhookHandler
         ILogger<MinioWebhookHandler> logger,
         AssetServiceConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        ArgumentNullException.ThrowIfNull(configuration);
         _configuration = configuration;
         _stateStore = stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <summary>

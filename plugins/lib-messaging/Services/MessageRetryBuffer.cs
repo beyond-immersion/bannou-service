@@ -49,9 +49,9 @@ public sealed class MessageRetryBuffer : IAsyncDisposable
         MessagingServiceConfiguration configuration,
         ILogger<MessageRetryBuffer> logger)
     {
-        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _connectionManager = connectionManager;
+        _configuration = configuration;
+        _logger = logger;
 
         if (_configuration.RetryBufferEnabled)
         {

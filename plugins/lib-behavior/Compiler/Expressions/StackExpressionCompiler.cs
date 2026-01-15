@@ -24,7 +24,7 @@ public sealed class StackExpressionCompiler : IExpressionVisitor<Unit>
     /// <param name="context">The compilation context.</param>
     public StackExpressionCompiler(CompilationContext context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _context = context;
     }
 
     /// <summary>

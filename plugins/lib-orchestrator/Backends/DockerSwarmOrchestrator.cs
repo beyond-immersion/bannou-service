@@ -31,7 +31,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
 
     public DockerSwarmOrchestrator(ILogger<DockerSwarmOrchestrator> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _client = new DockerClientConfiguration().CreateClient();
     }
 

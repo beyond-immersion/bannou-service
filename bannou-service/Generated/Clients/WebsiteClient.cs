@@ -39,7 +39,7 @@ public partial interface IWebsiteClient
     /// Get website status and version
     /// </summary>
     /// <returns>Website service status</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -48,7 +48,7 @@ public partial interface IWebsiteClient
     /// </summary>
     /// <param name="slug">Page slug identifier</param>
     /// <returns>Page content retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -58,7 +58,7 @@ public partial interface IWebsiteClient
     /// <param name="limit">Number of news items to return</param>
     /// <param name="offset">Pagination offset</param>
     /// <returns>News items retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -66,7 +66,7 @@ public partial interface IWebsiteClient
     /// Get game server status for all realms
     /// </summary>
     /// <returns>Server status information</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -75,7 +75,7 @@ public partial interface IWebsiteClient
     /// </summary>
     /// <param name="platform">Filter by platform</param>
     /// <returns>Download links retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -84,7 +84,7 @@ public partial interface IWebsiteClient
     /// Submit contact form
     /// </summary>
     /// <returns>Contact form submitted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -92,7 +92,7 @@ public partial interface IWebsiteClient
     /// Get account profile for logged-in user
     /// </summary>
     /// <returns>Account profile retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -100,7 +100,7 @@ public partial interface IWebsiteClient
     /// Get character list for logged-in user
     /// </summary>
     /// <returns>Character list retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="includeUnpublished">The includeUnpublished parameter.</param>
@@ -109,7 +109,7 @@ public partial interface IWebsiteClient
     /// List all CMS pages
     /// </summary>
     /// <returns>Page list retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -118,7 +118,7 @@ public partial interface IWebsiteClient
     /// Create new CMS page
     /// </summary>
     /// <returns>Page created</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="slug">The slug parameter.</param>
@@ -128,7 +128,7 @@ public partial interface IWebsiteClient
     /// Update CMS page
     /// </summary>
     /// <returns>Page updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="slug">The slug parameter.</param>
@@ -137,7 +137,7 @@ public partial interface IWebsiteClient
     /// Delete CMS page
     /// </summary>
     /// <returns>Page deleted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -145,7 +145,7 @@ public partial interface IWebsiteClient
     /// Get site configuration
     /// </summary>
     /// <returns>Site settings retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -154,7 +154,7 @@ public partial interface IWebsiteClient
     /// Update site configuration
     /// </summary>
     /// <returns>Settings updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -162,7 +162,7 @@ public partial interface IWebsiteClient
     /// Get current theme configuration
     /// </summary>
     /// <returns>Theme configuration retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -171,7 +171,7 @@ public partial interface IWebsiteClient
     /// Update theme configuration
     /// </summary>
     /// <returns>Theme updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -179,7 +179,7 @@ public partial interface IWebsiteClient
     /// Get subscription status
     /// </summary>
     /// <returns>Subscription information retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
@@ -191,7 +191,7 @@ public partial interface IWebsiteClient
 public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<WebsiteClient>
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -326,7 +326,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get website status and version
     /// </summary>
     /// <returns>Website service status</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -369,14 +369,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<StatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -399,7 +399,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// </summary>
     /// <param name="slug">Page slug identifier</param>
     /// <returns>Page content retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (slug == null)
@@ -446,7 +446,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -456,14 +456,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Page not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Page not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -487,7 +487,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// <param name="limit">Number of news items to return</param>
     /// <param name="offset">Pagination offset</param>
     /// <returns>News items retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -540,14 +540,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<NewsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -569,7 +569,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get game server status for all realms
     /// </summary>
     /// <returns>Server status information</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -612,14 +612,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ServerStatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -642,7 +642,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// </summary>
     /// <param name="platform">Filter by platform</param>
     /// <returns>Download links retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -691,14 +691,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<DownloadsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -721,7 +721,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Submit contact form
     /// </summary>
     /// <returns>Contact form submitted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -741,7 +741,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -771,7 +771,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ContactResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -781,9 +781,9 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Invalid form data", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Invalid form data", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     if (status_ == 429)
@@ -791,14 +791,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Too many requests", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Too many requests", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -820,7 +820,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get account profile for logged-in user
     /// </summary>
     /// <returns>Account profile retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -863,7 +863,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AccountProfile>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -873,14 +873,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -902,7 +902,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get character list for logged-in user
     /// </summary>
     /// <returns>Character list retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -945,7 +945,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -955,14 +955,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -985,7 +985,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// List all CMS pages
     /// </summary>
     /// <returns>Page list retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1034,14 +1034,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<PageMetadata>>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1064,7 +1064,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Create new CMS page
     /// </summary>
     /// <returns>Page created</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1084,7 +1084,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1114,14 +1114,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1145,7 +1145,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Update CMS page
     /// </summary>
     /// <returns>Page updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (slug == null)
@@ -1169,7 +1169,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1199,14 +1199,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1229,7 +1229,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Delete CMS page
     /// </summary>
     /// <returns>Page deleted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (slug == null)
@@ -1277,7 +1277,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1299,7 +1299,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get site configuration
     /// </summary>
     /// <returns>Site settings retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1342,14 +1342,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1372,7 +1372,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Update site configuration
     /// </summary>
     /// <returns>Settings updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1392,7 +1392,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1422,14 +1422,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1451,7 +1451,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get current theme configuration
     /// </summary>
     /// <returns>Theme configuration retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1494,14 +1494,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ThemeConfig>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1524,7 +1524,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Update theme configuration
     /// </summary>
     /// <returns>Theme updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1544,7 +1544,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1575,7 +1575,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1597,7 +1597,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
     /// Get subscription status
     /// </summary>
     /// <returns>Subscription information retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1640,7 +1640,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1650,14 +1650,14 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
-                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1745,7 +1745,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
 
             if (response.Content == null)
             {
-                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
+                throw new BeyondImmersion.Bannou.Core.ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -1753,17 +1753,17 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                 var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
                     if (typedBody == null)
                     {
-                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
                     }
                     return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
             else
@@ -1772,10 +1772,10 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                 {
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
-                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                         if (typedBody == null)
                         {
-                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
                         }
                         return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
@@ -1783,7 +1783,7 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
                 }
             }
         }
@@ -1842,7 +1842,6 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         return result == null ? "" : result;
     }
 }
-
 
 
 

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Bundle.Format;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 
@@ -24,7 +25,7 @@ public sealed class BundleConverter : IBundleConverter
         string? cacheDirectory = null,
         TimeSpan? cacheTtl = null)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _cacheDirectory = cacheDirectory ?? Path.Combine(Path.GetTempPath(), "bannou-zip-cache");
         _cacheTtl = cacheTtl ?? TimeSpan.FromHours(24);
 

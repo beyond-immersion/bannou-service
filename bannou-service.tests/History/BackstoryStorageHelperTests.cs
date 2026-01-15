@@ -94,23 +94,6 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void Constructor_WithNullConfig_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new BackstoryStorageHelper<TestBackstory, TestElement>(null!));
-    }
-
-    [Fact]
-    public void Constructor_WithNullFactory_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _) = CreateMocks();
-        var config = CreateConfig(mockFactory) with { StateStoreFactory = null! };
-
-        Assert.Throws<ArgumentNullException>(() =>
-            new BackstoryStorageHelper<TestBackstory, TestElement>(config));
-    }
-
-    [Fact]
     public async Task GetAsync_WithValidId_ReturnsBackstory()
     {
         // Arrange
@@ -295,16 +278,6 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task SetAsync_WithNullElements_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.SetAsync("entity-1", null!, replaceExisting: false));
-    }
-
-    [Fact]
     public async Task AddElementAsync_NewBackstory_CreatesWithSingleElement()
     {
         // Arrange
@@ -397,16 +370,6 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             helper.AddElementAsync("", new TestElement()));
-    }
-
-    [Fact]
-    public async Task AddElementAsync_WithNullElement_ThrowsArgumentNullException()
-    {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            helper.AddElementAsync("entity-1", null!));
     }
 
     [Fact]
@@ -555,13 +518,4 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         Assert.Equal("Value", original.Value);
     }
 
-    [Fact]
-    public void BackstoryElementMatcher_Constructor_WithNullGetType_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new BackstoryElementMatcher<TestElement>(
-            null!,
-            e => e.Key,
-            (s, t) => { },
-            e => new TestElement()));
-    }
 }

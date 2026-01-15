@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -25,7 +26,6 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<OAuthProviderService> _logger;
 
-    private const string REDIS_STATE_STORE = "auth-statestore";
     private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
     private const string DISCORD_USER_URL = "https://discord.com/api/users/@me";
     private const string GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -45,12 +45,12 @@ public class OAuthProviderService : IOAuthProviderService
         IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _accountClient = accountClient;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -396,7 +396,7 @@ public class OAuthProviderService : IOAuthProviderService
 
         try
         {
-            var linkStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var linkStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
 
             // Check existing link (stored as string since Guid is a value type)
             var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);

@@ -99,6 +99,7 @@ bannou-service/
 ├── plugins/lib-*/        # Service plugins (33 services)
 ├── bannou-service/       # Main application and shared code
 ├── sdks/                 # SDK packages
+│   ├── core/             # Shared types (BannouJson, ApiException, base events)
 │   ├── server/           # Server SDK (mesh clients, behavior runtime)
 │   ├── client/           # Client SDK (WebSocket, behavior)
 │   ├── client-voice/     # Voice communication SDK

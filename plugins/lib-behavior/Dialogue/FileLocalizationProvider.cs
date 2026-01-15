@@ -58,7 +58,7 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
         LocalizationConfiguration config,
         ILogger<FileLocalizationProvider>? logger = null)
     {
-        _config = config ?? throw new ArgumentNullException(nameof(config));
+        _config = config;
         _logger = logger;
         _sources = new ConcurrentDictionary<string, ILocalizationSource>(StringComparer.OrdinalIgnoreCase);
         _reloadLock = new SemaphoreSlim(1, 1);
@@ -111,7 +111,6 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     public LocalizedText? GetTextWithFallback(string key, LocalizationContext context)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
-        ArgumentNullException.ThrowIfNull(context);
 
         // Try primary locale
         var text = GetTextFromSources(key, context.Locale, out var sourceName);
@@ -175,7 +174,6 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     /// <inheritdoc/>
     public void RegisterSource(ILocalizationSource source)
     {
-        ArgumentNullException.ThrowIfNull(source);
 
         _sources[source.Name] = source;
         _logger?.LogDebug(
@@ -275,9 +273,9 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
         int priority = 0,
         ILogger<YamlFileLocalizationSource>? logger = null)
     {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-        _directory = directory ?? throw new ArgumentNullException(nameof(directory));
-        _filePattern = filePattern ?? throw new ArgumentNullException(nameof(filePattern));
+        Name = name;
+        _directory = directory;
+        _filePattern = filePattern;
         Priority = priority;
         _logger = logger;
 

@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Client;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.EdgeTester.Application;
 using System.Net.WebSockets;
@@ -996,6 +996,11 @@ public class Program
         // load character websocket tests
         var characterTestHandler = new CharacterWebSocketTestHandler();
         foreach (ServiceTest serviceTest in characterTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load asset websocket tests
+        var assetTestHandler = new AssetWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in assetTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load relationship websocket tests

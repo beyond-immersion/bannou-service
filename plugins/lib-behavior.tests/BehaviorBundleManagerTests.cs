@@ -146,29 +146,6 @@ public class BehaviorBundleManagerTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task RecordBehaviorAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-        var metadata = new BehaviorMetadata { Name = "test" };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RecordBehaviorAsync(null!, "asset-123", null, metadata));
-    }
-
-    [Fact]
-    public async Task RecordBehaviorAsync_NullMetadata_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RecordBehaviorAsync("behavior-123", "asset-123", null, null!));
-    }
-
     #endregion
 
     #region AddToBundleAsync Tests
@@ -580,51 +557,6 @@ public class BehaviorBundleManagerTests
         _mockGoapMetadataStore.Verify(s => s.DeleteAsync(
             It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task SaveGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-        var metadata = new CachedGoapMetadata();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.SaveGoapMetadataAsync(null!, metadata));
-    }
-
-    [Fact]
-    public async Task SaveGoapMetadataAsync_NullMetadata_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.SaveGoapMetadataAsync("behavior-123", null!));
-    }
-
-    [Fact]
-    public async Task GetGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.GetGoapMetadataAsync(null!));
-    }
-
-    [Fact]
-    public async Task RemoveGoapMetadataAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RemoveGoapMetadataAsync(null!));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,11 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
         // Uses lib-state (connect-statestore) for state storage
         services.AddSingleton<ISessionManager, BannouSessionManager>();
         Logger?.LogDebug("Registered BannouSessionManager for session state management");
+
+        // Register helper services for improved testability
+        // Must be Singleton because ConnectService is Singleton and cannot consume scoped services
+        services.AddSingleton<ICapabilityManifestBuilder, CapabilityManifestBuilder>();
+        Logger?.LogDebug("Registered CapabilityManifestBuilder");
 
         Logger?.LogDebug("Service dependencies configured");
     }

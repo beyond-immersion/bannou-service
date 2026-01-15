@@ -17,8 +17,8 @@
     <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. Lightweight package for game clients.</Description>
     <PackageTags>bannou;microservices;websocket;client;game-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
@@ -34,6 +34,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Minimal dependencies - this is for game clients only -->
@@ -57,18 +59,9 @@
     </ItemGroup>
   </Target>
 
-  <!-- Shared Infrastructure -->
+  <!-- Shared Infrastructure from bannou-service (AppConstants only - core types moved to sdks/core) -->
   <ItemGroup>
-    <Compile Include="../../bannou-service/ApiException.cs" Condition="Exists('../../bannou-service/ApiException.cs')" />
     <Compile Include="../../bannou-service/AppConstants.cs" Condition="Exists('../../bannou-service/AppConstants.cs')" />
-    <Compile Include="../../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../../bannou-service/Configuration/BannouJson.cs')" />
-  </ItemGroup>
-
-  <!-- Base Event Classes (required by generated event models) -->
-  <ItemGroup>
-    <Compile Include="../../bannou-service/Events/IBannouEvent.cs" Condition="Exists('../../bannou-service/Events/IBannouEvent.cs')" />
-    <Compile Include="../../bannou-service/Events/BaseServiceEvent.cs" Condition="Exists('../../bannou-service/Events/BaseServiceEvent.cs')" />
-    <Compile Include="../../bannou-service/ClientEvents/BaseClientEvent.cs" Condition="Exists('../../bannou-service/ClientEvents/BaseClientEvent.cs')" />
   </ItemGroup>
 
   <!-- WebSocket Binary Protocol -->
@@ -80,19 +73,14 @@
     <Compile Include="../../plugins/lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../../plugins/lib-connect/Protocol/ConnectionState.cs')" />
   </ItemGroup>
 
-  <!-- Game transport protocol primitives -->
+  <!-- Shared SDK Libraries -->
   <ItemGroup>
-    <Compile Include="../protocol/*.cs" />
-    <Compile Include="../protocol/messages/*.cs" />
-    <Compile Include="../transport/*.cs" />
-  </ItemGroup>
-
-  <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
-  <ItemGroup>
-    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleManifest.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleIndex.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleValidator.cs')" />
+    <!-- Core types: events, JSON, exceptions -->
+    <ProjectReference Include="../core/BeyondImmersion.Bannou.Core.csproj" />
+    <!-- Transport includes Protocol transitively -->
+    <ProjectReference Include="../transport/BeyondImmersion.Bannou.Transport.csproj" />
+    <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
+    <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 
   <ItemGroup>

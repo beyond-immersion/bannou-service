@@ -22,8 +22,8 @@ public sealed class FFmpegService : IFFmpegService
         AssetServiceConfiguration configuration,
         ILogger<FFmpegService> logger)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration;
+        _logger = logger;
 
         // Ensure working directory exists
         _workingDirectory = string.IsNullOrEmpty(_configuration.FfmpegWorkingDirectory)

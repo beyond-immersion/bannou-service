@@ -50,8 +50,8 @@ public class PortainerOrchestrator : IContainerOrchestrator
         OrchestratorServiceConfiguration configuration,
         IHttpClientFactory httpClientFactory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger;
+        _configuration = configuration;
 
         var portainerUrl = configuration.PortainerUrl
             ?? throw new InvalidOperationException("PORTAINER_URL not configured");

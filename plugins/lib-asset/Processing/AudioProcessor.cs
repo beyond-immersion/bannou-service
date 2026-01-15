@@ -50,10 +50,10 @@ public sealed class AudioProcessor : IAssetProcessor
         ILogger<AudioProcessor> logger,
         AssetServiceConfiguration configuration)
     {
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _ffmpegService = ffmpegService ?? throw new ArgumentNullException(nameof(ffmpegService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _storageProvider = storageProvider;
+        _ffmpegService = ffmpegService;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />

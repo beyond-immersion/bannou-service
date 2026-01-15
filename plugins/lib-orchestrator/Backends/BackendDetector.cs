@@ -30,9 +30,9 @@ public class BackendDetector : IBackendDetector
         OrchestratorServiceConfiguration configuration,
         IHttpClientFactory httpClientFactory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger;
+        _configuration = configuration;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <summary>

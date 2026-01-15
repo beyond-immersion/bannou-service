@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Stride 4.3 requires .NET 10. Uses -windows TFM on Windows, plain net10.0 on other platforms for CI -->
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.AssetLoader.Stride</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Stride engine extension for Bannou Asset Loader. Provides type-specific loaders for Stride models, textures, and animations. Note: Full functionality requires Windows.</Description>
+    <PackageTags>bannou;assets;stride;loading;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1903</NoWarn>
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.AssetLoader.Stride</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.AssetLoader.Stride</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Stride Engine packages -->
+    <PackageReference Include="Stride.Engine" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Rendering" Version="4.3.0.2507" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference core Asset Loader SDK -->
+    <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
+  </ItemGroup>
+
+</Project>

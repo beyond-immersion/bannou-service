@@ -1,7 +1,7 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -53,9 +53,9 @@ public sealed class RabbitMQMessageBus : IMessageBus
         MessageRetryBuffer retryBuffer,
         ILogger<RabbitMQMessageBus> logger)
     {
-        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
-        _retryBuffer = retryBuffer ?? throw new ArgumentNullException(nameof(retryBuffer));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _connectionManager = connectionManager;
+        _retryBuffer = retryBuffer;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -72,8 +72,6 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
-            ArgumentNullException.ThrowIfNull(eventData);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
@@ -190,8 +188,6 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
-            ArgumentNullException.ThrowIfNull(contentType);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;

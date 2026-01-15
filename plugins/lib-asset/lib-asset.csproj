@@ -26,4 +26,9 @@
     <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 
+  <!-- Shared bundle format library -->
+  <ItemGroup>
+    <ProjectReference Include="../../sdks/bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
+  </ItemGroup>
+
 </Project>

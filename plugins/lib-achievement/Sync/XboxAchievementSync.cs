@@ -22,7 +22,7 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// </summary>
     public XboxAchievementSync(ILogger<XboxAchievementSync> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     /// <inheritdoc />

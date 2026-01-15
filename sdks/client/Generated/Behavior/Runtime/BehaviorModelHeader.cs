@@ -70,7 +70,6 @@ public readonly struct BehaviorModelHeader
     /// <exception cref="InvalidDataException">If magic bytes don't match.</exception>
     public static BehaviorModelHeader Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var magic = reader.ReadUInt32();
         if (magic != Magic)
@@ -98,7 +97,6 @@ public readonly struct BehaviorModelHeader
     /// <param name="writer">Binary writer.</param>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write(Magic);
         writer.Write(Version);
@@ -169,7 +167,6 @@ public readonly struct ExtensionHeader
     /// </summary>
     public static ExtensionHeader Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var parentIdBytes = reader.ReadBytes(16);
         var parentModelId = new Guid(parentIdBytes);
@@ -184,7 +181,6 @@ public readonly struct ExtensionHeader
     /// </summary>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write(ParentModelId.ToByteArray());
         writer.Write(AttachPointHash);

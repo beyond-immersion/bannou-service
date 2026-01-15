@@ -36,6 +36,19 @@ info:
     - topic: asset.bundle.created
       event: BundleCreatedEvent
       description: Published when a bundle is successfully created
+    - topic: asset.metabundle.created
+      event: MetabundleCreatedEvent
+      description: Published when a metabundle is successfully composed from source bundles
+    # Bundle management events
+    - topic: asset.bundle.updated
+      event: BundleUpdatedEvent
+      description: Published when bundle metadata is updated
+    - topic: asset.bundle.deleted
+      event: BundleDeletedEvent
+      description: Published when a bundle is soft-deleted or permanently deleted
+    - topic: asset.bundle.restored
+      event: BundleRestoredEvent
+      description: Published when a soft-deleted bundle is restored
 
 paths: {}  # Events don't have HTTP paths
 
@@ -324,6 +337,164 @@ components:
             Owner of this bundle. NOT a session ID.
             For user-initiated bundles: the accountId (UUID format).
             For service-initiated bundles: the service name (e.g., "orchestrator").
+
+    MetabundleCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a metabundle is successfully created from source bundles
+      required:
+        - metabundleId
+        - version
+        - realm
+        - sourceBundleCount
+        - assetCount
+        - bucket
+        - key
+      properties:
+        metabundleId:
+          type: string
+          description: Metabundle identifier
+        version:
+          type: string
+          description: Metabundle version string
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+          description: Game realm for this metabundle
+        sourceBundleCount:
+          type: integer
+          description: Number of source bundles composed
+        sourceBundleIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: List of source bundle IDs that were composed
+        assetCount:
+          type: integer
+          description: Number of unique assets in the metabundle
+        standaloneAssetCount:
+          type: integer
+          nullable: true
+          description: Number of standalone assets included directly (not from bundles)
+        bucket:
+          type: string
+          description: Storage bucket name
+        key:
+          type: string
+          description: Storage object key
+        sizeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Metabundle file size in bytes
+        owner:
+          type: string
+          nullable: true
+          description: |
+            Owner of this metabundle. NOT a session ID.
+            For user-initiated: the accountId (UUID format).
+            For service-initiated: the service name.
+
+    BundleUpdatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when bundle metadata is updated
+      required:
+        - bundleId
+        - version
+        - previousVersion
+        - changes
+        - updatedBy
+      properties:
+        bundleId:
+          type: string
+          description: Bundle identifier
+        version:
+          type: integer
+          description: New metadata version number after update
+        previousVersion:
+          type: integer
+          description: Previous metadata version number
+        changes:
+          type: array
+          items:
+            type: string
+          description: List of changes made (e.g., "name changed", "tag 'env' added")
+        reason:
+          type: string
+          nullable: true
+          description: Reason provided for the update
+        updatedBy:
+          type: string
+          description: Account ID or service name that performed the update
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+          description: Game realm of the bundle
+
+    BundleDeletedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a bundle is soft-deleted or permanently deleted
+      required:
+        - bundleId
+        - permanent
+        - deletedBy
+      properties:
+        bundleId:
+          type: string
+          description: Bundle identifier
+        permanent:
+          type: boolean
+          description: True if permanently deleted, false for soft-delete
+        retentionUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When soft-deleted bundle will be permanently removed (null for permanent deletes)
+        reason:
+          type: string
+          nullable: true
+          description: Reason provided for the deletion
+        deletedBy:
+          type: string
+          description: Account ID or service name that performed the deletion
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+          description: Game realm of the bundle
+
+    BundleRestoredEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a soft-deleted bundle is restored
+      required:
+        - bundleId
+        - restoredFromVersion
+        - restoredBy
+      properties:
+        bundleId:
+          type: string
+          description: Bundle identifier
+        restoredFromVersion:
+          type: integer
+          description: Metadata version the bundle was restored from
+        reason:
+          type: string
+          nullable: true
+          description: Reason provided for the restoration
+        restoredBy:
+          type: string
+          description: Account ID or service name that performed the restoration
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+          description: Game realm of the bundle
 
     # ==========================================================================
     # Supporting Types

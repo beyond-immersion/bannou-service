@@ -68,13 +68,13 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         ActorServiceConfiguration configuration,
         ILogger<ActorPoolNodeWorker> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _actorRunnerFactory = actorRunnerFactory ?? throw new ArgumentNullException(nameof(actorRunnerFactory));
-        _heartbeatEmitter = heartbeatEmitter ?? throw new ArgumentNullException(nameof(heartbeatEmitter));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _actorRegistry = actorRegistry;
+        _actorRunnerFactory = actorRunnerFactory;
+        _heartbeatEmitter = heartbeatEmitter;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

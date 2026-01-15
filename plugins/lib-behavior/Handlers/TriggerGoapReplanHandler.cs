@@ -60,9 +60,9 @@ public sealed class TriggerGoapReplanHandler : IActionHandler
         IServiceScopeFactory scopeFactory,
         ILogger<TriggerGoapReplanHandler> logger)
     {
-        _planner = planner ?? throw new ArgumentNullException(nameof(planner));
-        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _planner = planner;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

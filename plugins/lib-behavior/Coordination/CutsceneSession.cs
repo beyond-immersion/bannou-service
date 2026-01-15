@@ -50,10 +50,10 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         Func<Guid, object?>? behaviorDefaultResolver = null,
         ILogger<CutsceneSession>? logger = null)
     {
-        SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
-        CinematicId = cinematicId ?? throw new ArgumentNullException(nameof(cinematicId));
-        Participants = participants ?? throw new ArgumentNullException(nameof(participants));
-        Options = options ?? throw new ArgumentNullException(nameof(options));
+        SessionId = sessionId;
+        CinematicId = cinematicId;
+        Participants = participants;
+        Options = options;
         _behaviorDefaultResolver = behaviorDefaultResolver;
         _logger = logger;
 

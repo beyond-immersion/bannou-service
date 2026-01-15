@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -39,7 +40,6 @@ public partial class GameSessionService : IGameSessionService
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly IClientEventPublisher _clientEventPublisher;
 
-    private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
     private const string SESSION_LIST_KEY = "session-list";
     private const string LOBBY_KEY_PREFIX = "lobby:";
@@ -164,7 +164,7 @@ public partial class GameSessionService : IGameSessionService
                 body.GameType, body.Status);
 
             // Get all session IDs
-            var sessionIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+            var sessionIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession)
                 .GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
             var sessions = new List<GameSessionResponse>();
@@ -300,11 +300,11 @@ public partial class GameSessionService : IGameSessionService
             }
 
             // Save to state store
-            await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
+            await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
                 .SaveAsync(SESSION_KEY_PREFIX + session.SessionId, session, cancellationToken: cancellationToken);
 
             // Add to session list
-            var sessionListStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+            var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
             var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
 
             sessionIds.Add(session.SessionId);
@@ -423,7 +423,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
@@ -572,7 +572,7 @@ public partial class GameSessionService : IGameSessionService
                 return (StatusCodes.NotFound, null);
             }
 
-            var model = await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
+            var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
                 .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
@@ -666,7 +666,7 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
@@ -828,7 +828,7 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {AccountId} joining game session {GameSessionId} from WebSocket session {SessionId}",
                 accountId, gameSessionId, clientSessionId);
 
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
 
             if (model == null)
@@ -1016,7 +1016,7 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Player {AccountId} leaving game session {GameSessionId} from WebSocket session {SessionId}",
                 accountId, gameSessionId, clientSessionId);
 
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
 
             if (model == null)
@@ -1158,7 +1158,7 @@ public partial class GameSessionService : IGameSessionService
                 gameSessionId, targetSessionId);
 
             // Verify the game session exists
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + gameSessionId, cancellationToken);
 
             if (model == null)
@@ -1268,7 +1268,7 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogInformation("Kicking player {TargetAccountId} from session {SessionId}. Reason: {Reason}",
                 targetAccountId, sessionId, body.Reason);
 
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var model = await sessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
             if (model == null)
@@ -1356,7 +1356,7 @@ public partial class GameSessionService : IGameSessionService
                 return StatusCodes.NotFound;
             }
 
-            var model = await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
+            var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
                 .GetAsync(SESSION_KEY_PREFIX + lobbyId.ToString(), cancellationToken);
 
             if (model == null)
@@ -1653,7 +1653,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             var existing = await store.GetAsync(key) ?? new SubscriberSessionsModel { AccountId = accountId };
@@ -1677,7 +1677,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             var existing = await store.GetAsync(key);
@@ -1710,7 +1710,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             var existing = await store.GetAsync(key);
@@ -1731,7 +1731,7 @@ public partial class GameSessionService : IGameSessionService
     {
         try
         {
-            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<SubscriberSessionsModel>(StateStoreDefinitions.GameSession);
             var key = SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString();
 
             var existing = await store.GetAsync(key);
@@ -1874,7 +1874,7 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
 
             // Check for existing lobby
             var existingLobby = await sessionStore.GetAsync(lobbyKey);
@@ -1909,7 +1909,7 @@ public partial class GameSessionService : IGameSessionService
             await sessionStore.SaveAsync(lobbyKey, lobby);
 
             // Add to session list
-            var sessionListStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+            var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
             var sessionIds = await sessionListStore.GetAsync(SESSION_LIST_KEY) ?? new List<string>();
             sessionIds.Add(lobbyId.ToString());
             await sessionListStore.SaveAsync(SESSION_LIST_KEY, sessionIds);
@@ -1934,7 +1934,7 @@ public partial class GameSessionService : IGameSessionService
 
         try
         {
-            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE);
+            var sessionStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
             var existingLobby = await sessionStore.GetAsync(lobbyKey);
 
             if (existingLobby != null)
@@ -1980,7 +1980,7 @@ public partial class GameSessionService : IGameSessionService
 
     private async Task<GameSessionResponse?> LoadSessionAsync(string sessionId, CancellationToken cancellationToken)
     {
-        var model = await _stateStoreFactory.GetStore<GameSessionModel>(STATE_STORE)
+        var model = await _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession)
             .GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
         return model != null ? MapModelToResponse(model) : null;

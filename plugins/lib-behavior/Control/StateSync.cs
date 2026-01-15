@@ -51,7 +51,7 @@ public sealed class StateSyncCompletedEventArgs : EventArgs
         HandoffStyle handoffStyle)
     {
         EntityId = entityId;
-        SyncedState = syncedState ?? throw new ArgumentNullException(nameof(syncedState));
+        SyncedState = syncedState;
         HandoffStyle = handoffStyle;
         CompletedAt = DateTime.UtcNow;
     }
@@ -105,7 +105,7 @@ public sealed class StateSync : IStateSync
     /// <param name="logger">Optional logger.</param>
     public StateSync(IEntityStateRegistry stateRegistry, ILogger<StateSync>? logger = null)
     {
-        _stateRegistry = stateRegistry ?? throw new ArgumentNullException(nameof(stateRegistry));
+        _stateRegistry = stateRegistry;
         _logger = logger;
     }
 
@@ -142,8 +142,6 @@ public sealed class StateSync : IStateSync
         ControlHandoff handoff,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(finalCinematicState);
-        ArgumentNullException.ThrowIfNull(handoff);
 
         // Skip sync if not requested
         if (!handoff.SyncState)

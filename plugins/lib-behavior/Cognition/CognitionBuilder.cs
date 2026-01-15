@@ -43,7 +43,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
         IActionHandlerRegistry? handlerRegistry = null,
         ILogger<CognitionBuilder>? logger = null)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _registry = registry;
         _handlerRegistry = handlerRegistry;
         _logger = logger;
     }
@@ -66,7 +66,6 @@ public sealed class CognitionBuilder : ICognitionBuilder
     /// <inheritdoc/>
     public ICognitionPipeline Build(CognitionTemplate template, CognitionOverrides? overrides = null)
     {
-        ArgumentNullException.ThrowIfNull(template);
 
         // Clone stages for modification
         var mutableStages = CloneStages(template.Stages);
@@ -97,7 +96,6 @@ public sealed class CognitionBuilder : ICognitionBuilder
     public CognitionOverrideValidation ValidateOverrides(string templateId, CognitionOverrides overrides)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
-        ArgumentNullException.ThrowIfNull(overrides);
 
         var template = _registry.GetTemplate(templateId);
         if (template == null)
@@ -480,7 +478,6 @@ internal sealed class CognitionPipeline : ICognitionPipeline
         CognitionContext context,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         try
         {

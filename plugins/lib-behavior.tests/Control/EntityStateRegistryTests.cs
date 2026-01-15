@@ -243,17 +243,6 @@ public sealed class EntityStateRegistryTests
     }
 
     [Fact]
-    public void UpdateState_NullState_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var registry = new EntityStateRegistry();
-        var entityId = Guid.NewGuid();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => registry.UpdateState(entityId, null!));
-    }
-
-    [Fact]
     public void HasState_EmptyRegistry_ReturnsFalse()
     {
         // Arrange

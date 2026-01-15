@@ -17,6 +17,8 @@
 
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
+
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -409,6 +411,245 @@ public partial class BundleCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public string? Owner { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a metabundle is successfully created from source bundles
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MetabundleCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Metabundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle version string
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm for this metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RealmEnum? Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Number of source bundles composed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleCount")]
+    public int SourceBundleCount { get; set; } = default!;
+
+    /// <summary>
+    /// List of source bundle IDs that were composed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
+    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
+
+    /// <summary>
+    /// Number of unique assets in the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included directly (not from bundles)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Storage bucket name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bucket")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Bucket { get; set; } = default!;
+
+    /// <summary>
+    /// Storage object key
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Owner of this metabundle. NOT a session ID.
+    /// <br/>For user-initiated: the accountId (UUID format).
+    /// <br/>For service-initiated: the service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string? Owner { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when bundle metadata is updated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// New metadata version number after update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// Previous metadata version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousVersion")]
+    public int PreviousVersion { get; set; } = default!;
+
+    /// <summary>
+    /// List of changes made (e.g., "name changed", "tag 'env' added")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Changes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Reason provided for the update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID or service name that performed the update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string UpdatedBy { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RealmEnum? Realm { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a bundle is soft-deleted or permanently deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// True if permanently deleted, false for soft-delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permanent")]
+    public bool Permanent { get; set; } = default!;
+
+    /// <summary>
+    /// When soft-deleted bundle will be permanently removed (null for permanent deletes)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retentionUntil")]
+    public System.DateTimeOffset? RetentionUntil { get; set; } = default!;
+
+    /// <summary>
+    /// Reason provided for the deletion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID or service name that performed the deletion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DeletedBy { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RealmEnum? Realm { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a soft-deleted bundle is restored
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleRestoredEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Metadata version the bundle was restored from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("restoredFromVersion")]
+    public int RestoredFromVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Reason provided for the restoration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID or service name that performed the restoration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("restoredBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string RestoredBy { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RealmEnum? Realm { get; set; } = default!;
 
 }
 

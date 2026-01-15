@@ -314,7 +314,7 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
             Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing pub/sub event: {Topic}", "{{ subscription.topic }}");
 
             // Use BannouJson for consistent serialization with generated models
-            var serializedData = BeyondImmersion.BannouService.Configuration.BannouJson.Serialize(eventData);
+            var serializedData = BeyondImmersion.Bannou.Core.BannouJson.Serialize(eventData);
 
 {%-         comment -%}
             Extract event type information from schema $ref
@@ -331,7 +331,7 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
 {%-         assign fullTypeName = "BeyondImmersion.BannouService." | append: serviceName | append: "." | append: eventTypeName -%}
 
             // Deserialize using BannouJson for consistent handling
-            var typedEventData = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<{{ fullTypeName }}>(serializedData);
+            var typedEventData = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<{{ fullTypeName }}>(serializedData);
 
             if (typedEventData != null)
             {

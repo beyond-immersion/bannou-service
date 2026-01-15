@@ -1,5 +1,6 @@
 using Amazon.Runtime;
 using Amazon.S3;
+using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
 using BeyondImmersion.BannouService.Asset.Metrics;

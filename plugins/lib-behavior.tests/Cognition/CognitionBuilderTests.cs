@@ -50,13 +50,6 @@ public sealed class CognitionBuilderTests
     }
 
     [Fact]
-    public void Build_NullTemplateId_Throws()
-    {
-        // Act & Assert
-        Assert.ThrowsAny<ArgumentException>(() => _builder.Build((string)null!));
-    }
-
-    [Fact]
     public void Build_Template_ReturnsPipeline()
     {
         // Arrange
@@ -68,13 +61,6 @@ public sealed class CognitionBuilderTests
         // Assert
         Assert.NotNull(pipeline);
         Assert.Equal(CognitionTemplates.HumanoidBase, pipeline.TemplateId);
-    }
-
-    [Fact]
-    public void Build_NullTemplate_Throws()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _builder.Build((CognitionTemplate)null!));
     }
 
     [Fact]

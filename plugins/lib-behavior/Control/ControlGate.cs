@@ -111,7 +111,6 @@ public sealed class ControlGate : IControlGate
     /// <inheritdoc/>
     public async Task<bool> TakeControlAsync(ControlOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
         await Task.Yield();
@@ -164,7 +163,6 @@ public sealed class ControlGate : IControlGate
     /// <inheritdoc/>
     public async Task ReturnControlAsync(ControlHandoff handoff)
     {
-        ArgumentNullException.ThrowIfNull(handoff);
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
         await Task.Yield();

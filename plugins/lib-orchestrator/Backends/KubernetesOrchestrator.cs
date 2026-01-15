@@ -41,8 +41,8 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         ILogger<KubernetesOrchestrator> logger,
         OrchestratorServiceConfiguration configuration)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger;
+        _configuration = configuration;
 
         // Initialize Kubernetes client
         // See ORCHESTRATOR-SDK-REFERENCE.md for configuration patterns

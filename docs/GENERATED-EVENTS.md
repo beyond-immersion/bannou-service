@@ -68,6 +68,10 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
+| `BundleDeletedEvent` | Lifecycle (Deleted) | `bundle.deleted` | Event published when a bundle is soft-deleted or p... |
+| `BundleRestoredEvent` | Custom | `bundle-restored` | Event published when a soft-deleted bundle is rest... |
+| `BundleUpdatedEvent` | Lifecycle (Updated) | `bundle.updated` | Event published when bundle metadata is updated |
+| `MetabundleCreatedEvent` | Lifecycle (Created) | `metabundle.created` | Event published when a metabundle is successfully ... |
 
 ### Asset (client)
 

@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.AssetLoader</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Engine-agnostic asset loading SDK for Bannou. Provides bundle downloading, caching, registry, and type-specific asset loading without service dependencies.</Description>
+    <PackageTags>bannou;assets;bundles;loading;caching;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Allow missing XML docs during initial development -->
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.AssetLoader</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.AssetLoader</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Make internals visible to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.AssetLoader.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- LZ4 compression for bundle reading -->
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
+
+    <!-- Logging abstractions (optional dependency) -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- Reference bundle format library -->
+  <ItemGroup>
+    <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
+  </ItemGroup>
+
+</Project>

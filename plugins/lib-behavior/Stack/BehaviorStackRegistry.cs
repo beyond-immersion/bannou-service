@@ -28,7 +28,7 @@ public sealed class BehaviorStackRegistry : IBehaviorStackRegistry
         IIntentStackMerger merger,
         ILoggerFactory? loggerFactory = null)
     {
-        _merger = merger ?? throw new ArgumentNullException(nameof(merger));
+        _merger = merger;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory?.CreateLogger<BehaviorStackRegistry>();
         _stacks = new ConcurrentDictionary<Guid, IBehaviorStack>();
@@ -37,7 +37,6 @@ public sealed class BehaviorStackRegistry : IBehaviorStackRegistry
     /// <inheritdoc/>
     public IBehaviorStack GetOrCreate(Guid entityId, IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(archetype);
 
         return _stacks.GetOrAdd(entityId, id =>
         {

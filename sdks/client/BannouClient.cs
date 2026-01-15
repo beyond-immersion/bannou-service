@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System;
 using System.Collections.Concurrent;
@@ -17,7 +17,7 @@ namespace BeyondImmersion.Bannou.Client;
 /// High-level client for connecting to Bannou services via WebSocket.
 /// Handles authentication, connection lifecycle, capability discovery, and message correlation.
 /// </summary>
-public class BannouClient : IAsyncDisposable
+public class BannouClient : IBannouClient
 {
     private ClientWebSocket? _webSocket;
     private ConnectionState? _connectionState;

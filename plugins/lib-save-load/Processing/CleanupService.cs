@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Configuration;
@@ -31,10 +32,10 @@ public class CleanupService : BackgroundService
         AppConfiguration appConfiguration,
         ILogger<CleanupService> logger)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _appConfiguration = appConfiguration ?? throw new ArgumentNullException(nameof(appConfiguration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _serviceProvider = serviceProvider;
+        _configuration = configuration;
+        _appConfiguration = appConfiguration;
+        _logger = logger;
     }
 
     /// <summary>

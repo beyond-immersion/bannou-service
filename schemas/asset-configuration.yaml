@@ -99,6 +99,19 @@ x-service-configuration:
       env: ASSET_MULTIPART_PART_SIZE_MB
       default: 16
 
+    # API Limits
+    MaxResolutionAssets:
+      type: integer
+      description: Maximum number of asset IDs allowed in a single bundle resolution request
+      env: ASSET_MAX_RESOLUTION_ASSETS
+      default: 500
+
+    MaxBulkGetAssets:
+      type: integer
+      description: Maximum number of asset IDs allowed in a single bulk get request
+      env: ASSET_MAX_BULK_GET_ASSETS
+      default: 100
+
     # Processing Configuration
     LargeFileThresholdMb:
       type: integer
@@ -202,6 +215,13 @@ x-service-configuration:
       description: TTL for cached ZIP conversions in hours
       env: ASSET_ZIP_CACHE_TTL_HOURS
       default: 24
+
+    DeletedBundleRetentionDays:
+      type: integer
+      nullable: true
+      description: Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
+      env: ASSET_DELETED_BUNDLE_RETENTION_DAYS
+      default: 30
 
     # Webhook Configuration
     MinioWebhookSecret:

@@ -127,7 +127,6 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithConstantPool(ConstantPoolBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
         _constantPool = builder.ToList();
         return this;
     }
@@ -137,7 +136,7 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithConstantPool(IReadOnlyList<double> constants)
     {
-        _constantPool = constants ?? throw new ArgumentNullException(nameof(constants));
+        _constantPool = constants;
         return this;
     }
 
@@ -146,7 +145,6 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithStringTable(StringTableBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
         _stringTable = builder.ToList();
         return this;
     }
@@ -156,7 +154,7 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithStringTable(IReadOnlyList<string> strings)
     {
-        _stringTable = strings ?? throw new ArgumentNullException(nameof(strings));
+        _stringTable = strings;
         return this;
     }
 
@@ -165,7 +163,6 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithBytecode(BytecodeEmitter emitter)
     {
-        ArgumentNullException.ThrowIfNull(emitter);
         _bytecode = emitter.ToArray();
         return this;
     }
@@ -175,7 +172,7 @@ public sealed class BehaviorModelBuilder
     /// </summary>
     public BehaviorModelBuilder WithBytecode(byte[] bytecode)
     {
-        _bytecode = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
+        _bytecode = bytecode;
         return this;
     }
 

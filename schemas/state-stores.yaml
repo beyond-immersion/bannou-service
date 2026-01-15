@@ -1,0 +1,352 @@
+# Bannou State Store Definitions
+#
+# This file defines all state stores used by Bannou services.
+# Generated code provides typed constants and configuration.
+#
+# Schema: x-state-stores defines each store with:
+#   - backend: redis | mysql | memory
+#   - prefix: Redis key prefix (redis only)
+#   - table: MySQL table name (mysql only, defaults to store name with underscores)
+#   - service: Primary service that owns this store
+#   - purpose: Human-readable description
+#   - enableSearch: Enable RedisSearch full-text indexing (redis only)
+#
+# Generated artifacts:
+#   - bannou-service/Generated/StateStoreDefinitions.cs
+#   - docs/GENERATED-STATE-STORES.md
+
+openapi: 3.1.0
+info:
+  title: Bannou State Store Definitions
+  version: 1.0.0
+  description: |
+    Defines all state stores used by Bannou services.
+    This schema is the single source of truth for state store configuration.
+
+x-state-stores:
+  # ============================================================================
+  # Redis Stores - Ephemeral/Session Data
+  # ============================================================================
+
+  auth-statestore:
+    backend: redis
+    prefix: auth
+    service: Auth
+    purpose: Session and token state (ephemeral)
+
+  connect-statestore:
+    backend: redis
+    prefix: connect
+    service: Connect
+    purpose: WebSocket session state
+
+  permission-statestore:
+    backend: redis
+    prefix: permission
+    service: Permission
+    purpose: Permission cache and session capabilities
+
+  voice-statestore:
+    backend: redis
+    prefix: voice
+    service: Voice
+    purpose: Voice room and peer state
+
+  asset-statestore:
+    backend: redis
+    prefix: asset
+    service: Asset
+    purpose: Asset upload tracking and bundle state
+
+  # ============================================================================
+  # Orchestrator Stores
+  # ============================================================================
+
+  orchestrator-heartbeats:
+    backend: redis
+    prefix: "orch:hb"
+    service: Orchestrator
+    purpose: Service heartbeat tracking
+
+  orchestrator-routings:
+    backend: redis
+    prefix: "orch:rt"
+    service: Orchestrator
+    purpose: Service-to-app-id routing tables
+
+  orchestrator-config:
+    backend: redis
+    prefix: "orch:cfg"
+    service: Orchestrator
+    purpose: Configuration version and metadata
+
+  # ============================================================================
+  # Messaging Stores
+  # ============================================================================
+
+  messaging-external-subs:
+    backend: redis
+    prefix: "msg:subs"
+    service: Messaging
+    purpose: External subscription recovery data
+
+  # ============================================================================
+  # Actor/Behavior Stores - Agent Cognition Data
+  # ============================================================================
+
+  agent-memories:
+    backend: redis
+    prefix: "agent:mem"
+    service: Actor
+    purpose: Agent memory and cognitive state
+
+  actor-state:
+    backend: redis
+    prefix: "actor:state"
+    service: Actor
+    purpose: Runtime actor state
+
+  actor-templates:
+    backend: redis
+    prefix: "actor:tpl"
+    service: Actor
+    purpose: Actor template definitions
+
+  actor-instances:
+    backend: redis
+    prefix: "actor:inst"
+    service: Actor
+    purpose: Active actor instance registry
+
+  actor-pool-nodes:
+    backend: redis
+    prefix: "actor:pool"
+    service: Actor
+    purpose: Actor pool node assignments
+
+  actor-assignments:
+    backend: redis
+    prefix: "actor:assign"
+    service: Actor
+    purpose: Actor-to-node assignments
+
+  # ============================================================================
+  # Documentation Stores
+  # ============================================================================
+
+  documentation-statestore:
+    backend: redis
+    prefix: doc
+    service: Documentation
+    purpose: Documentation content and metadata
+
+  # ============================================================================
+  # Test Stores
+  # ============================================================================
+
+  test-search-statestore:
+    backend: redis
+    prefix: test-search
+    service: State
+    purpose: Test store with RedisSearch enabled
+    enableSearch: true
+
+  # ============================================================================
+  # Matchmaking Stores
+  # ============================================================================
+
+  matchmaking-statestore:
+    backend: redis
+    prefix: mm
+    service: Matchmaking
+    purpose: Matchmaking queue and ticket state
+
+  # ============================================================================
+  # Analytics Stores
+  # ============================================================================
+
+  analytics-summary:
+    backend: redis
+    prefix: "analytics:sum"
+    service: Analytics
+    purpose: Entity statistics summaries
+
+  analytics-rating:
+    backend: redis
+    prefix: "analytics:rating"
+    service: Analytics
+    purpose: Glicko-2 skill ratings
+
+  analytics-history:
+    backend: redis
+    prefix: "analytics:hist"
+    service: Analytics
+    purpose: Controller possession history
+
+  # ============================================================================
+  # Leaderboard Stores
+  # ============================================================================
+
+  leaderboard-definition:
+    backend: redis
+    prefix: "lb:def"
+    service: Leaderboard
+    purpose: Leaderboard definitions and metadata
+
+  leaderboard-ranking:
+    backend: redis
+    prefix: "lb:rank"
+    service: Leaderboard
+    purpose: Real-time ranking data (sorted sets)
+
+  leaderboard-season:
+    backend: mysql
+    service: Leaderboard
+    purpose: Season history and archives
+
+  # ============================================================================
+  # Achievement Stores
+  # ============================================================================
+
+  achievement-definition:
+    backend: redis
+    prefix: "ach:def"
+    service: Achievement
+    purpose: Achievement definitions
+
+  achievement-progress:
+    backend: redis
+    prefix: "ach:prog"
+    service: Achievement
+    purpose: Player achievement progress
+
+  achievement-unlock:
+    backend: redis
+    prefix: "ach:unlock"
+    service: Achievement
+    purpose: Unlocked achievements registry
+
+  # ============================================================================
+  # Save-Load Stores
+  # ============================================================================
+
+  save-load-slots:
+    backend: mysql
+    service: SaveLoad
+    purpose: Save slot metadata and ownership
+
+  save-load-versions:
+    backend: mysql
+    service: SaveLoad
+    purpose: Save version history
+
+  save-load-schemas:
+    backend: mysql
+    service: SaveLoad
+    purpose: Registered save data schemas
+
+  save-load-cache:
+    backend: redis
+    prefix: "saveload:cache"
+    service: SaveLoad
+    purpose: Recently accessed save data cache
+
+  save-load-pending:
+    backend: redis
+    prefix: "saveload:pending"
+    service: SaveLoad
+    purpose: Pending save operations
+
+  # ============================================================================
+  # MySQL Stores - Durable/Queryable Data
+  # ============================================================================
+
+  account-statestore:
+    backend: mysql
+    service: Account
+    purpose: Persistent account data
+
+  character-statestore:
+    backend: mysql
+    service: Character
+    purpose: Persistent character data
+
+  character-history-statestore:
+    backend: mysql
+    service: CharacterHistory
+    purpose: Character historical events and backstory
+
+  character-personality-statestore:
+    backend: mysql
+    service: CharacterPersonality
+    purpose: Character personality traits and combat preferences
+
+  game-session-statestore:
+    backend: mysql
+    service: GameSession
+    purpose: Game session state and history
+
+  location-statestore:
+    backend: mysql
+    service: Location
+    purpose: Location hierarchy and metadata
+
+  realm-statestore:
+    backend: mysql
+    service: Realm
+    purpose: Realm definitions and configuration
+
+  realm-history-statestore:
+    backend: mysql
+    service: RealmHistory
+    purpose: Realm historical events and lore
+
+  relationship-statestore:
+    backend: mysql
+    service: Relationship
+    purpose: Entity relationships
+
+  relationship-type-statestore:
+    backend: mysql
+    service: RelationshipType
+    purpose: Relationship type definitions
+
+  game-service-statestore:
+    backend: mysql
+    service: GameService
+    purpose: Game service registry
+
+  species-statestore:
+    backend: mysql
+    service: Species
+    purpose: Species definitions
+
+  subscription-statestore:
+    backend: mysql
+    service: Subscription
+    purpose: User subscriptions to game services
+
+  scene-statestore:
+    backend: mysql
+    service: Scene
+    purpose: Hierarchical scene composition storage
+
+  # ============================================================================
+  # Redis Stores - Spatial/Mapping Data
+  # ============================================================================
+
+  mapping-statestore:
+    backend: redis
+    prefix: mapping
+    service: Mapping
+    purpose: Spatial map data and channels
+
+  # ============================================================================
+  # Orchestrator - Primary Store
+  # ============================================================================
+
+  orchestrator-statestore:
+    backend: redis
+    prefix: orch
+    service: Orchestrator
+    purpose: Primary orchestrator state

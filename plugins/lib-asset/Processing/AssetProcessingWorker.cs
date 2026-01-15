@@ -4,6 +4,7 @@
 // Self-registers, emits heartbeats, and self-terminates after idle timeout.
 // =============================================================================
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Asset.Pool;
 using BeyondImmersion.BannouService.Configuration;
@@ -11,6 +12,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -68,17 +70,16 @@ public sealed class AssetProcessingWorker : BackgroundService
         IHostApplicationLifetime applicationLifetime,
         ILogger<AssetProcessingWorker> logger)
     {
-        _processorRegistry = processorRegistry ?? throw new ArgumentNullException(nameof(processorRegistry));
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        _stateStore = stateStoreFactory.GetStore<AssetMetadata>("asset-statestore");
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
-        _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _appConfiguration = appConfiguration ?? throw new ArgumentNullException(nameof(appConfiguration));
-        _applicationLifetime = applicationLifetime ?? throw new ArgumentNullException(nameof(applicationLifetime));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _processorRegistry = processorRegistry;
+        _stateStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
+        _storageProvider = storageProvider;
+        _orchestratorClient = orchestratorClient;
+        _poolManager = poolManager;
+        _messageBus = messageBus;
+        _configuration = configuration;
+        _appConfiguration = appConfiguration;
+        _applicationLifetime = applicationLifetime;
+        _logger = logger;
     }
 
     /// <summary>

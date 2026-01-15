@@ -51,9 +51,9 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration configuration,
         ILogger<ActorLocalMemoryStore> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -63,8 +63,6 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         int limit,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(entityId, nameof(entityId));
-        ArgumentNullException.ThrowIfNull(perceptions, nameof(perceptions));
 
         if (perceptions.Count == 0 || limit <= 0)
         {
@@ -120,8 +118,6 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         IReadOnlyList<Memory> context,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(entityId, nameof(entityId));
-        ArgumentNullException.ThrowIfNull(perception, nameof(perception));
 
         var memoryId = Guid.NewGuid().ToString();
 
@@ -160,7 +156,6 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         int limit,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(entityId, nameof(entityId));
 
         if (limit <= 0)
         {
@@ -205,8 +200,6 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         string memoryId,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(entityId, nameof(entityId));
-        ArgumentNullException.ThrowIfNull(memoryId, nameof(memoryId));
 
         _logger.LogDebug(
             "Removing memory {MemoryId} for entity {EntityId}",
@@ -228,7 +221,6 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// <inheritdoc/>
     public async Task ClearAsync(string entityId, CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(entityId, nameof(entityId));
 
         _logger.LogDebug("Clearing all memories for entity {EntityId}", entityId);
 

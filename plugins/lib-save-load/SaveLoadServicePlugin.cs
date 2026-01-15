@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.SaveLoad.Helpers;
 using BeyondImmersion.BannouService.SaveLoad.Processing;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -34,6 +35,12 @@ public class SaveLoadServicePlugin : BaseBannouPlugin
 
         // Register HttpClient factory for downloading save data from pre-signed URLs
         services.AddHttpClient();
+
+        // Register helper services for improved testability
+        services.AddScoped<IVersionDataLoader, VersionDataLoader>();
+        services.AddScoped<IVersionCleanupManager, VersionCleanupManager>();
+        services.AddScoped<ISaveExportImportManager, SaveExportImportManager>();
+        services.AddScoped<ISaveMigrationHandler, SaveMigrationHandler>();
 
         // Register background workers
         services.AddHostedService<SaveUploadWorker>();

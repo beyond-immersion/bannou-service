@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -35,10 +36,9 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         ILogger<SipEndpointRegistry> logger,
         VoiceServiceConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>("voice-statestore");
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>(StateStoreDefinitions.Voice);
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />

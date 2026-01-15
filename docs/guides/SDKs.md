@@ -6,9 +6,12 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 
 | Package | Purpose | Target |
 |---------|---------|--------|
+| `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) | All SDKs, server plugins |
 | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients | Game clients |
 | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients | Game servers, internal services |
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling | Game clients with voice |
+| `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline | Asset tooling |
+| `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation | Stride asset pipelines |
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing | Scene editor tools |
 | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration | Stride-based editors |
 | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot 4.x engine integration | Godot-based editors |
@@ -23,6 +26,12 @@ Are you building a game client?
 └─ No, building a game server or internal service
    └─ Use BeyondImmersion.Bannou.Server (includes everything from Client)
 
+Are you building asset bundling tools?
+├─ Yes → Start with BeyondImmersion.Bannou.AssetBundler (engine-agnostic core)
+│        └─ Compiling for Stride? → Add BeyondImmersion.Bannou.AssetBundler.Stride
+│
+└─ No → You don't need the AssetBundler packages
+
 Are you building a scene editor?
 ├─ Yes → Start with BeyondImmersion.Bannou.SceneComposer (engine-agnostic core)
 │        └─ Using Stride? → Add BeyondImmersion.Bannou.SceneComposer.Stride
@@ -30,6 +39,59 @@ Are you building a scene editor?
 │
 └─ No → You don't need the SceneComposer packages
 ```
+
+---
+
+## Core SDK
+
+**Package**: `BeyondImmersion.Bannou.Core`
+
+Foundation library providing shared types used across all Bannou SDKs and server plugins.
+
+### Features
+
+- **BannouJson**: Centralized JSON serialization with consistent settings (case-insensitive properties, enum string serialization, null value omission)
+- **ApiException**: Typed exception classes for API error handling with status codes, headers, and response bodies
+- **Base Event Types**: `BaseClientEvent` and `BaseServiceEvent` for event-driven communication
+- **IBannouEvent**: Common interface for all Bannou events
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.Core
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.Core;
+
+// JSON serialization with Bannou conventions
+var json = BannouJson.Serialize(myObject);
+var obj = BannouJson.Deserialize<MyType>(json);
+
+// Extension methods
+var json = myObject.ToJson();
+var obj = jsonString.FromJson<MyType>();
+
+// Apply Bannou settings to existing options
+var options = new JsonSerializerOptions();
+BannouJson.ApplyBannouSettings(options);
+```
+
+### JSON Serialization Settings
+
+BannouJson provides these consistent settings:
+- **Case-insensitive properties**: Accepts `firstName`, `FirstName`, or `FIRSTNAME`
+- **Enum string serialization**: Enums serialize as strings, not integers
+- **Null value omission**: Null properties are omitted from JSON output
+
+### When to Use
+
+The Core SDK is automatically included as a dependency of Client and Server SDKs. You typically don't need to reference it directly unless you're:
+- Building a custom SDK that needs Bannou's shared types
+- Working on server plugins that need BannouJson or ApiException
+- Creating custom event types that extend BaseClientEvent or BaseServiceEvent
 
 ---
 
@@ -202,6 +264,217 @@ if (voiceManager.IsInRoom && !voiceManager.IsMuted)
 | Scaled | 6+ | Via SIP/RTP server | 1 connection per client |
 
 The transition is automatic - your code doesn't need to change.
+
+---
+
+## AssetBundler SDK (Core)
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler`
+
+Engine-agnostic asset bundling SDK for creating `.bannou` bundle files. Use this as the foundation, then add an engine-specific package for asset compilation.
+
+### Features
+
+- **Asset sources**: Extract assets from directories or ZIP archives
+- **Type inference**: Automatic asset type detection (models, textures, audio, etc.)
+- **Processing pipeline**: Pluggable asset processors for engine-specific compilation
+- **State management**: Incremental builds with content hash tracking
+- **Bundle creation**: Write `.bannou` bundles with LZ4 compression
+- **Upload integration**: Upload bundles to Bannou Asset Service
+- **Metabundle requests**: Request server-side metabundle creation
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    BundlerPipeline                       │
+│  Source → Extract → Process → Bundle → Upload            │
+└─────────────────────────────────────────────────────────┘
+         │              │
+         v              v
+┌─────────────┐  ┌──────────────────┐
+│ IAssetSource│  │ IAssetProcessor  │
+│ - Directory │  │ - Raw (passthru) │
+│ - ZIP       │  │ - Stride         │
+└─────────────┘  │ - (Godot, etc.)  │
+                 └──────────────────┘
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Sources;
+using BeyondImmersion.Bannou.AssetBundler.Processing;
+using BeyondImmersion.Bannou.AssetBundler.Pipeline;
+
+// Create a source from a directory
+var source = new DirectoryAssetSource(
+    new DirectoryInfo("/path/to/assets"),
+    sourceId: "my-assets",
+    name: "My Asset Pack",
+    version: "1.0.0");
+
+// Create pipeline
+var pipeline = new BundlerPipeline();
+var state = new BundlerStateManager(new DirectoryInfo("/path/to/state"));
+
+var options = new BundlerOptions
+{
+    WorkingDirectory = "/tmp/bundler-work",
+    OutputDirectory = "/output/bundles"
+};
+
+// Execute (uses RawAssetProcessor by default for pass-through)
+var result = await pipeline.ExecuteAsync(source, null, state, null, options);
+Console.WriteLine($"Created bundle: {result.BundlePath}");
+```
+
+---
+
+## Stride AssetBundler
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler.Stride`
+
+Stride engine asset compilation for the AssetBundler SDK. Compiles FBX models and textures through Stride's asset pipeline.
+
+### Features
+
+- **StrideBatchCompiler**: Full `IAssetProcessor` implementation
+- **Project generation**: Creates temporary Stride projects for batch compilation
+- **Index parsing**: Extracts compiled assets from Stride's output
+- **Texture compression**: BC1/BC3/BC7/ETC2/ASTC options
+- **Dependency collection**: Handles buffer files for models
+
+### Requirements
+
+- .NET 8.0+
+- Stride 4.3.x (invoked via `dotnet build`, no NuGet dependency)
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler.Stride
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Stride.Compilation;
+
+// Create Stride compiler
+var compilerOptions = new StrideCompilerOptions
+{
+    StrideVersion = "4.3.0.2507",
+    TextureCompression = StrideTextureCompression.BC7,
+    GenerateMipmaps = true
+};
+
+var compiler = new StrideBatchCompiler(compilerOptions);
+
+// Use with pipeline
+var result = await pipeline.ExecuteAsync(source, compiler, state, null, options);
+```
+
+### Asset Type Mapping
+
+| Source Extension | Stride Output | Content Type |
+|-----------------|---------------|--------------|
+| `.fbx`, `.obj`, `.gltf` | Model | `application/x-stride-model` |
+| `.png`, `.jpg`, `.tga` | Texture | `application/x-stride-texture` |
+| `.anim` | Animation | `application/x-stride-animation` |
+
+---
+
+## Godot AssetBundler
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler.Godot`
+
+Godot 4.x engine asset processing for the AssetBundler SDK. Processes assets for Godot's runtime loading capabilities (GLB models, PNG/JPG/WebP textures, WAV/OGG/MP3 audio).
+
+### Features
+
+- **GodotAssetProcessor**: Full `IAssetProcessor` implementation for Godot-compatible formats
+- **Pass-through processing**: Godot-compatible formats pass through unchanged
+- **Format conversion**: Converts FBX→glTF, TGA/DDS/BMP→PNG, FLAC→OGG (extensible)
+- **Type inference**: `GodotTypeInferencer` determines asset types from filenames
+- **Content types**: MIME type helpers for Godot runtime loading
+
+### Requirements
+
+- .NET 9.0+
+- Optional: External converters for format conversion (FBX2glTF, ImageMagick, FFmpeg)
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler.Godot
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Godot;
+using BeyondImmersion.Bannou.AssetBundler.Godot.Processing;
+
+// Create Godot processor
+var processorOptions = new GodotProcessorOptions
+{
+    EnableConversion = true,
+    SkipUnconvertible = true,
+    MaxTextureSize = 4096,
+    OptimizePng = false
+};
+
+var processor = new GodotAssetProcessor(processorOptions);
+
+// Use with pipeline
+var result = await pipeline.ExecuteAsync(source, processor, state, null, options);
+```
+
+### Type Inference
+
+The `GodotTypeInferencer` determines asset types from filenames:
+
+| Pattern | Detected Type |
+|---------|---------------|
+| `*.glb`, `*.gltf`, `*.fbx`, `*.obj` | Model |
+| `*.png`, `*.jpg`, `*.webp`, `*.tga` | Texture |
+| `*.wav`, `*.ogg`, `*.mp3`, `*.flac` | Audio |
+| `*_normal.png`, `*_n.png` | Normal Map |
+| `*_emissive.png`, `*_e.png` | Emissive |
+| `spr_*.png`, `ui_*.png` | UI Texture |
+
+### Content Type Mapping
+
+| Source Extension | Godot Output | Content Type |
+|-----------------|--------------|--------------|
+| `.glb` | glTF Binary | `model/gltf-binary` |
+| `.gltf` | glTF JSON | `model/gltf+json` |
+| `.png` | PNG | `image/png` |
+| `.jpg`, `.jpeg` | JPEG | `image/jpeg` |
+| `.webp` | WebP | `image/webp` |
+| `.wav` | WAV | `audio/wav` |
+| `.ogg` | OGG Vorbis | `audio/ogg` |
+| `.mp3` | MP3 | `audio/mpeg` |
+
+### Processing Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `EnableConversion` | `true` | Enable format conversion |
+| `SkipUnconvertible` | `true` | Skip assets that can't be converted |
+| `FbxConverterPath` | `null` | Path to FBX2glTF converter |
+| `MaxTextureSize` | `4096` | Maximum texture dimension (0 = unlimited) |
+| `OptimizePng` | `false` | Apply PNG optimization |
+| `JpegQuality` | `90` | JPEG compression quality (1-100) |
+| `GenerateOrmTextures` | `false` | Generate ORM packed textures |
+| `TrackOriginalFormat` | `true` | Track original format in metadata |
 
 ---
 
@@ -410,11 +683,22 @@ All SDKs share the same version number and are released together. The version is
 
 ---
 
+## For SDK Developers
+
+If you're **developing or extending** the Bannou SDKs themselves (not just consuming them), see:
+
+- [SDK Conventions](../../sdks/CONVENTIONS.md) - **Definitive guide** for SDK naming, structure, versioning, and development patterns
+
+---
+
 ## Further Reading
 
+- [Core SDK README](../../sdks/core/README.md) - Shared types documentation
 - [Client SDK README](../../sdks/client/README.md) - Full client SDK documentation
 - [Server SDK README](../../sdks/server/README.md) - Full server SDK documentation
 - [Voice SDK README](../../sdks/client-voice/README.md) - Voice SDK documentation
+- [AssetBundler README](../../sdks/asset-bundler/README.md) - Core AssetBundler docs
+- [Stride AssetBundler README](../../sdks/asset-bundler-stride/README.md) - Stride compilation
 - [SceneComposer README](../../sdks/scene-composer/README.md) - Core SceneComposer docs
 - [Stride SceneComposer README](../../sdks/scene-composer-stride/README.md) - Stride integration
 - [Godot SceneComposer README](../../sdks/scene-composer-godot/README.md) - Godot integration

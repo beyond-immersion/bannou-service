@@ -164,13 +164,6 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
     }
 
     [Fact]
-    public void RegisterTemplate_NullTemplate_Throws()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _registry.RegisterTemplate(null!));
-    }
-
-    [Fact]
     public void RegisterTemplate_EmptyId_Throws()
     {
         // Arrange

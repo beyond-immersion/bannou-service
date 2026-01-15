@@ -23,7 +23,7 @@ public class PlayStationAchievementSync : IPlatformAchievementSync
     /// </summary>
     public PlayStationAchievementSync(ILogger<PlayStationAchievementSync> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     /// <inheritdoc />

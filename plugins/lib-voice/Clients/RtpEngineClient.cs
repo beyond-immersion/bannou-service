@@ -43,8 +43,8 @@ public class RtpEngineClient : IRtpEngineClient
         }
 
         _client = new UdpClient();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _logger = logger;
+        _messageBus = messageBus;
         _timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         // Resolve hostname to IP address (IPAddress.Parse only handles numeric IPs)

@@ -149,7 +149,8 @@ def scan_event_schemas(schemas_dir: Path) -> dict:
             service = extract_service_from_filename(yaml_file.name)
 
             # Extract schemas from components/schemas
-            schemas = content.get('components', {}).get('schemas', {})
+            # Use 'or {}' to handle explicit null in YAML (returns None instead of {})
+            schemas = content.get('components', {}).get('schemas', {}) or {}
 
             for event_name, event_schema in schemas.items():
                 # Skip non-event schemas (helper types)

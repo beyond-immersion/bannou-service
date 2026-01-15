@@ -3,6 +3,7 @@
 // Caches character personality data for actor behavior execution with TTL.
 // =============================================================================
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Services;

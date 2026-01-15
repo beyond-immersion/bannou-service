@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -25,7 +26,6 @@ public class TokenService : ITokenService
     private readonly AuthServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<TokenService> _logger;
-    private const string REDIS_STATE_STORE = "auth-statestore";
 
     /// <summary>
     /// Initializes a new instance of TokenService.
@@ -38,20 +38,17 @@ public class TokenService : ITokenService
         IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _subscriptionClient = subscriptionClient ?? throw new ArgumentNullException(nameof(subscriptionClient));
-        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _subscriptionClient = subscriptionClient;
+        _sessionService = sessionService;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    public async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        if (account == null)
-            throw new ArgumentNullException(nameof(account));
-
         // Use core app configuration for JWT settings (validated at startup in Program.cs)
         var jwtConfig = Program.Configuration;
 
@@ -144,7 +141,8 @@ public class TokenService : ITokenService
         };
 
         var jwt = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(jwt);
+        var jwtString = tokenHandler.WriteToken(jwt);
+        return (jwtString, sessionId);
     }
 
     /// <inheritdoc/>
@@ -157,7 +155,7 @@ public class TokenService : ITokenService
     public async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var redisKey = $"refresh_token:{refreshToken}";
-        var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
         await stringStore.SaveAsync(
             redisKey,
             accountId,
@@ -171,7 +169,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             return await stringStore.GetAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)
@@ -196,7 +194,7 @@ public class TokenService : ITokenService
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var stringStore = _stateStoreFactory.GetStore<string>(REDIS_STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
             await stringStore.DeleteAsync(redisKey, cancellationToken);
         }
         catch (Exception ex)

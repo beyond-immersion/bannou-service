@@ -48,16 +48,16 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
-        _personalityCache = personalityCache ?? throw new ArgumentNullException(nameof(personalityCache));
-        _executorFactory = executorFactory ?? throw new ArgumentNullException(nameof(executorFactory));
-        _expressionEvaluator = expressionEvaluator ?? throw new ArgumentNullException(nameof(expressionEvaluator));
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _meshClient = meshClient;
+        _config = config;
+        _loggerFactory = loggerFactory;
+        _stateStoreFactory = stateStoreFactory;
+        _behaviorCache = behaviorCache;
+        _personalityCache = personalityCache;
+        _executorFactory = executorFactory;
+        _expressionEvaluator = expressionEvaluator;
     }
 
     /// <inheritdoc/>
@@ -68,8 +68,6 @@ public class ActorRunnerFactory : IActorRunnerFactory
         object? configurationOverrides = null,
         object? initialState = null)
     {
-        ArgumentNullException.ThrowIfNull(actorId);
-        ArgumentNullException.ThrowIfNull(template);
 
         // Apply configuration overrides if provided
         var effectiveTemplate = template;

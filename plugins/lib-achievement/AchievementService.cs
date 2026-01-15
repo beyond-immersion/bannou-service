@@ -54,11 +54,11 @@ public partial class AchievementService : IAchievementService
         IEventConsumer eventConsumer,
         IEnumerable<IPlatformAchievementSync> platformSyncs)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _platformSyncs = platformSyncs ?? throw new ArgumentNullException(nameof(platformSyncs));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _platformSyncs = platformSyncs;
 
         RegisterEventConsumers(eventConsumer);
     }

@@ -53,7 +53,6 @@ public sealed class EntityResolver : IEntityResolver
         CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(bindingName);
-        ArgumentNullException.ThrowIfNull(bindings);
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
         await Task.Yield();
@@ -84,8 +83,6 @@ public sealed class EntityResolver : IEntityResolver
         EntityResolutionContext? context = null,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(bindingNames);
-        ArgumentNullException.ThrowIfNull(bindings);
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS (T23)
         await Task.Yield();
@@ -118,7 +115,6 @@ public sealed class EntityResolver : IEntityResolver
         if (string.IsNullOrWhiteSpace(bindingName))
             return false;
 
-        ArgumentNullException.ThrowIfNull(bindings);
 
         // Check explicit bindings (case-insensitive)
         if (ContainsCaseInsensitive(bindings.Participants, bindingName))

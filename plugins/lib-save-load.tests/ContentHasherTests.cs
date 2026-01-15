@@ -41,19 +41,6 @@ public class ContentHasherTests
     }
 
     [Fact]
-    public void ComputeHash_WithNullData_ReturnsEmptyStringHash()
-    {
-        // Arrange - null should be treated as empty
-        var expectedHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
-        // Act
-        var actualHash = ContentHasher.ComputeHash(null!);
-
-        // Assert
-        Assert.Equal(expectedHash, actualHash);
-    }
-
-    [Fact]
     public void ComputeHash_ReturnsLowercaseHexString()
     {
         // Arrange
@@ -203,19 +190,6 @@ public class ContentHasherTests
     }
 
     [Fact]
-    public void VerifyHash_WithNullExpectedHash_ReturnsFalse()
-    {
-        // Arrange
-        var data = Encoding.UTF8.GetBytes("test data");
-
-        // Act
-        var result = ContentHasher.VerifyHash(data, null!);
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
     public void VerifyHash_WithEmptyExpectedHash_ReturnsFalse()
     {
         // Arrange
@@ -226,19 +200,6 @@ public class ContentHasherTests
 
         // Assert
         Assert.False(result);
-    }
-
-    [Fact]
-    public void VerifyHash_WithNullData_AndMatchingEmptyHash_ReturnsTrue()
-    {
-        // Arrange - null data should hash to empty string hash
-        var emptyHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
-        // Act
-        var result = ContentHasher.VerifyHash(null!, emptyHash);
-
-        // Assert
-        Assert.True(result);
     }
 
     [Fact]

@@ -77,13 +77,6 @@ public class InMemoryStateStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAsync_WithNullKey_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _store.GetAsync(null!));
-    }
-
-    [Fact]
     public async Task GetAsync_WithExpiredKey_ReturnsNullAndRemovesEntry()
     {
         // Arrange - Save with 1 second TTL
@@ -187,23 +180,6 @@ public class InMemoryStateStoreTests : IDisposable
         var retrieved = await _store.GetAsync("key1");
         Assert.NotNull(retrieved);
         Assert.Equal(100, retrieved.Value);
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithNullKey_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = "1", Name = "Test", Value = 42 };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _store.SaveAsync(null!, entity));
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithNullValue_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _store.SaveAsync("key1", null!));
     }
 
     [Fact]
@@ -341,13 +317,6 @@ public class InMemoryStateStoreTests : IDisposable
 
         // Assert
         Assert.False(result);
-    }
-
-    [Fact]
-    public async Task DeleteAsync_WithNullKey_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _store.DeleteAsync(null!));
     }
 
     #endregion

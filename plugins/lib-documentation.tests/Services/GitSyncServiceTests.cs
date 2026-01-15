@@ -45,38 +45,11 @@ public class GitSyncServiceTests
     #region SyncRepositoryAsync Validation Tests
 
     [Fact]
-    public async Task SyncRepositoryAsync_WithNullRepositoryUrl_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.SyncRepositoryAsync(null!, "main", "/tmp/test"));
-    }
-
-    [Fact]
     public async Task SyncRepositoryAsync_WithEmptyRepositoryUrl_ShouldThrow()
     {
         // Arrange, Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
             _service.SyncRepositoryAsync("", "main", "/tmp/test"));
-    }
-
-    [Fact]
-    public async Task SyncRepositoryAsync_WithNullBranch_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.SyncRepositoryAsync("https://github.com/test/repo.git", null!, "/tmp/test"));
-    }
-
-    [Fact]
-    public async Task SyncRepositoryAsync_WithNullLocalPath_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.SyncRepositoryAsync("https://github.com/test/repo.git", "main", null!));
     }
 
     [Fact]
@@ -118,15 +91,6 @@ public class GitSyncServiceTests
     #region GetChangedFilesAsync Validation Tests
 
     [Fact]
-    public async Task GetChangedFilesAsync_WithNullLocalPath_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.GetChangedFilesAsync(null!, null, "abc123"));
-    }
-
-    [Fact]
     public async Task GetChangedFilesAsync_WithEmptyToCommit_ShouldThrow()
     {
         // Arrange, Act & Assert
@@ -153,12 +117,11 @@ public class GitSyncServiceTests
     #region GetMatchingFilesAsync Tests
 
     [Fact]
-    public async Task GetMatchingFilesAsync_WithNullLocalPath_ShouldThrow()
+    public async Task GetMatchingFilesAsync_WithEmptyLocalPath_ShouldThrow()
     {
         // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.GetMatchingFilesAsync(null!, ["*.md"], []));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _service.GetMatchingFilesAsync("", ["*.md"], []));
     }
 
     [Fact]
@@ -246,16 +209,6 @@ public class GitSyncServiceTests
     #region GetHeadCommit Tests
 
     [Fact]
-    public void GetHeadCommit_WithNullPath_ShouldReturnNull()
-    {
-        // Arrange, Act
-        var result = _service.GetHeadCommit(null!);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
     public void GetHeadCommit_WithEmptyPath_ShouldReturnNull()
     {
         // Arrange, Act
@@ -306,24 +259,6 @@ public class GitSyncServiceTests
     #endregion
 
     #region ReadFileContentAsync Tests
-
-    [Fact]
-    public async Task ReadFileContentAsync_WithNullLocalPath_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.ReadFileContentAsync(null!, "test.md"));
-    }
-
-    [Fact]
-    public async Task ReadFileContentAsync_WithNullFilePath_ShouldThrow()
-    {
-        // Arrange, Act & Assert
-        // ThrowIfNullOrWhiteSpace throws ArgumentNullException for null values
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.ReadFileContentAsync("/tmp/test", null!));
-    }
 
     [Fact]
     public async Task ReadFileContentAsync_WithNonExistentFile_ShouldReturnEmpty()
@@ -382,16 +317,6 @@ public class GitSyncServiceTests
     #region RepositoryExists Tests
 
     [Fact]
-    public void RepositoryExists_WithNullPath_ShouldReturnFalse()
-    {
-        // Arrange, Act
-        var result = _service.RepositoryExists(null!);
-
-        // Assert
-        Assert.False(result);
-    }
-
-    [Fact]
     public void RepositoryExists_WithEmptyPath_ShouldReturnFalse()
     {
         // Arrange, Act
@@ -442,13 +367,6 @@ public class GitSyncServiceTests
     #endregion
 
     #region CleanupRepositoryAsync Tests
-
-    [Fact]
-    public async Task CleanupRepositoryAsync_WithNullPath_ShouldNotThrow()
-    {
-        // Arrange, Act & Assert - Should not throw
-        await _service.CleanupRepositoryAsync(null!);
-    }
 
     [Fact]
     public async Task CleanupRepositoryAsync_WithNonExistentPath_ShouldNotThrow()

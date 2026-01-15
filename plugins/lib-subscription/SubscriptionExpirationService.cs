@@ -28,7 +28,6 @@ public class SubscriptionExpirationService : BackgroundService
     /// </summary>
     private static readonly TimeSpan ExpirationGracePeriod = TimeSpan.FromSeconds(30);
 
-    private const string STATE_STORE = "subscription-statestore";
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
     private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
@@ -111,7 +110,7 @@ public class SubscriptionExpirationService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         // Get the subscription index to find all subscription IDs
-        var indexStore = stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Subscription);
         var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
@@ -123,7 +122,7 @@ public class SubscriptionExpirationService : BackgroundService
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredCount = 0;
 
-        var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(STATE_STORE);
+        var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         foreach (var subscriptionId in subscriptionIndex)
         {
             try

@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.Core</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.Core.ApiException">
+            <summary>
+            Single source of truth for API exceptions across all Bannou services and SDKs.
+            Used by all generated clients and service models.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ApiException.StatusCode">
+            <summary>
+            HTTP status code of the error response.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ApiException.Response">
+            <summary>
+            Raw response body content, if available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ApiException.Headers">
+            <summary>
+            Response headers from the failed request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ApiException.#ctor(System.String,System.Int32,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Exception)">
+            <summary>
+            Creates a new ApiException with the specified details.
+            </summary>
+            <param name="message">Error message describing the failure.</param>
+            <param name="statusCode">HTTP status code of the error response.</param>
+            <param name="response">Raw response body content.</param>
+            <param name="headers">Response headers from the failed request.</param>
+            <param name="innerException">Inner exception that caused this failure.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ApiException.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.ApiException`1">
+            <summary>
+            Generic API exception with typed result for structured error responses.
+            </summary>
+            <typeparam name="TResult">Type of the error result payload.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ApiException`1.Result">
+            <summary>
+            Typed error result from the API response.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ApiException`1.#ctor(System.String,System.Int32,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},`0,System.Exception)">
+            <summary>
+            Creates a new ApiException with a typed result.
+            </summary>
+            <param name="message">Error message describing the failure.</param>
+            <param name="statusCode">HTTP status code of the error response.</param>
+            <param name="response">Raw response body content.</param>
+            <param name="headers">Response headers from the failed request.</param>
+            <param name="result">Typed error result from the API.</param>
+            <param name="innerException">Inner exception that caused this failure.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.BannouJson">
+             <summary>
+             Static helper for JSON serialization/deserialization that always uses Bannou's
+             standard configuration. This is the SINGLE SOURCE OF TRUTH for JSON serialization
+             settings across all Bannou services and SDKs.
+            
+             USE THIS INSTEAD OF JsonSerializer.Deserialize/Serialize DIRECTLY.
+            
+             This ensures consistent behavior across the codebase:
+             - Case-insensitive property matching (handles both PascalCase and camelCase)
+             - Enums serialize as strings matching C# enum names (e.g., "GettingStarted")
+             - Null values are ignored when writing
+             - Strict number handling (no string-to-number coercion)
+             - Proper handling of all Bannou model types
+            
+             Example usage:
+               var model = BannouJson.Deserialize&lt;MyModel&gt;(jsonString);
+               var json = BannouJson.Serialize(model);
+             </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.BannouJson.Options">
+            <summary>
+            Standard JSON serializer options used throughout Bannou.
+            This is the canonical configuration - all JSON operations should use this.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Deserialize``1(System.String)">
+            <summary>
+            Deserialize JSON string to object using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.DeserializeRequired``1(System.String)">
+            <summary>
+            Deserialize JSON string to object using Bannou's standard configuration.
+            Throws if result is null.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Serialize``1(``0)">
+            <summary>
+            Serialize object to JSON string using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Serialize(System.Object,System.Type)">
+            <summary>
+            Serialize object to JSON string using Bannou's standard configuration with explicit type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Deserialize``1(System.ReadOnlySpan{System.Byte})">
+            <summary>
+            Deserialize from UTF-8 bytes using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes``1(``0)">
+            <summary>
+            Serialize object to UTF-8 bytes using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync``1(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Async deserialize from stream using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.SerializeAsync``1(System.IO.Stream,``0,System.Threading.CancellationToken)">
+            <summary>
+            Async serialize to stream using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.SerializeToElement``1(``0)">
+            <summary>
+            Serialize object to JsonElement using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.ApplyBannouSettings(System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Apply Bannou's standard JSON serializer settings to an existing options object.
+            Use this when configuring external libraries (MassTransit, etc.) that provide their own options.
+            </summary>
+            <param name="target">The options object to configure</param>
+            <returns>The configured options object for fluent chaining</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.BannouJsonExtensions">
+            <summary>
+            Extension methods for JSON serialization using Bannou's standard configuration.
+            Provides a fluent API for common JSON operations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJsonExtensions.FromJson``1(System.String)">
+            <summary>
+            Deserialize this JSON string using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJsonExtensions.ToJson``1(``0)">
+            <summary>
+            Serialize this object to JSON using Bannou's standard configuration.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.BaseClientEvent">
+            <summary>
+            Base class for all server-to-client push events delivered via WebSocket.
+            All client events MUST inherit from this class and include these fields.
+            The eventName field is used for whitelist validation in Connect service.
+            </summary>
+            <remarks>
+            <para>
+            This class is the single source of truth for base client event properties.
+            All derived events generated via NSwag will inherit from this class.
+            </para>
+            <para>
+            Implements IBannouEvent for uniform event handling in message taps.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseClientEvent.EventName">
+            <summary>
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            Must be in the generated ClientEventWhitelist or will be rejected.
+            Convention: {service}.{event_name}
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseClientEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            Used for deduplication, tracing, and correlation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseClientEvent.Timestamp">
+            <summary>
+            When the event was generated (ISO 8601 format, UTC).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.BaseServiceEvent">
+            <summary>
+            Base class for all service-to-service events via RabbitMQ pub/sub.
+            All service events MUST inherit from this class and include these fields.
+            </summary>
+            <remarks>
+            <para>
+            This class is the single source of truth for base service event properties.
+            All derived events generated via NSwag will inherit from this class.
+            </para>
+            <para>
+            Implements IBannouEvent for uniform event handling in message taps.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseServiceEvent.EventName">
+            <summary>
+            Unique event type identifier (e.g., "session.connected").
+            Convention: {service}.{event_name} or {domain}.{event_name}
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseServiceEvent.EventId">
+            <summary>
+            Unique identifier for this event instance (UUID string).
+            Used for deduplication, tracing, and correlation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.BaseServiceEvent.Timestamp">
+            <summary>
+            When the event was created (ISO 8601 format, UTC).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.IBannouEvent">
+            <summary>
+            Base interface for all Bannou events (both service-to-service and client events).
+            All events in the system implement this interface, enabling uniform handling
+            in message taps and event processing pipelines.
+            </summary>
+            <remarks>
+            <para>
+            This interface defines the minimal contract for all events:
+            - EventId: Unique identifier for deduplication and tracing
+            - Timestamp: When the event was created
+            - EventName: The type/name of the event
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IBannouEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            Used for deduplication, tracing, and correlation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IBannouEvent.Timestamp">
+            <summary>
+            When the event was created (UTC).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.IBannouEvent.EventName">
+            <summary>
+            The type/name of the event - usually also the topic it's published on.
+            </summary>
+        </member>
+    </members>
+</doc>

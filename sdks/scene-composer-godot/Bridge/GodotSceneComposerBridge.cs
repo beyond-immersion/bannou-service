@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.SceneComposer.Abstractions;
 using BeyondImmersion.Bannou.SceneComposer.Gizmo;
+using BeyondImmersion.Bannou.SceneComposer.Godot.Loaders;
 using BeyondImmersion.Bannou.SceneComposer.Godot.Math;
 using BeyondImmersion.Bannou.SceneComposer.Math;
 using Godot;
@@ -26,6 +27,7 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
     private readonly Node3D _sceneRoot;
     private readonly Camera3D _camera;
     private readonly Viewport _viewport;
+    private readonly IAssetLoader? _assetLoader;
 
     // Selection state tracking for visual feedback
     private readonly HashSet<Guid> _selectedEntities = new();
@@ -52,11 +54,17 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
     /// <param name="sceneRoot">Root node where entities will be created.</param>
     /// <param name="camera">Camera for picking and camera operations.</param>
     /// <param name="viewport">Viewport for screen-to-world conversions.</param>
-    public GodotSceneComposerBridge(Node3D sceneRoot, Camera3D camera, Viewport viewport)
+    /// <param name="assetLoader">Optional asset loader for loading meshes/textures from Bannou bundles.</param>
+    public GodotSceneComposerBridge(
+        Node3D sceneRoot,
+        Camera3D camera,
+        Viewport viewport,
+        IAssetLoader? assetLoader = null)
     {
         _sceneRoot = sceneRoot ?? throw new ArgumentNullException(nameof(sceneRoot));
         _camera = camera ?? throw new ArgumentNullException(nameof(camera));
         _viewport = viewport ?? throw new ArgumentNullException(nameof(viewport));
+        _assetLoader = assetLoader;
 
         // Create placeholder mesh (small box)
         _placeholderMesh = CreatePlaceholderMesh();
@@ -181,6 +189,86 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
             return;
         }
 
+        // Try bundle-based loading first if we have an asset loader and a bundle ID
+        if (_assetLoader != null && !string.IsNullOrEmpty(asset.BundleId))
+        {
+            var loadedFromBundle = await TryLoadFromBundleAsync(entity, asset, ct);
+            if (loadedFromBundle)
+                return;
+        }
+
+        // Fall back to ResourceLoader for res:// paths
+        await LoadFromResourceLoaderAsync(entity, asset, ct);
+    }
+
+    /// <summary>
+    /// Attempts to load an asset from a Bannou bundle using the asset loader.
+    /// </summary>
+    /// <param name="entity">Entity to apply the asset to.</param>
+    /// <param name="asset">Asset reference containing bundle and asset IDs.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the asset was successfully loaded from a bundle.</returns>
+    private async Task<bool> TryLoadFromBundleAsync(Node3D entity, AssetReference asset, CancellationToken ct)
+    {
+        if (_assetLoader == null)
+            return false;
+
+        try
+        {
+            // Try to load as mesh first (most common for scene entities)
+            var mesh = await _assetLoader.LoadMeshAsync(asset.BundleId, asset.AssetId, asset.VariantId, ct);
+            if (mesh != null)
+            {
+                var meshInstance = FindChildOfType<MeshInstance3D>(entity);
+                if (meshInstance != null)
+                {
+                    meshInstance.Mesh = mesh;
+
+                    // Update collision shape to match mesh
+                    var staticBody = FindChildOfType<StaticBody3D>(entity);
+                    if (staticBody != null)
+                    {
+                        var collisionShape = FindChildOfType<CollisionShape3D>(staticBody);
+                        if (collisionShape != null)
+                        {
+                            collisionShape.Shape = mesh.CreateConvexShape();
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // Try texture as fallback
+            var texture = await _assetLoader.LoadTextureAsync(asset.BundleId, asset.AssetId, asset.VariantId, ct);
+            if (texture != null)
+            {
+                // For textures, we could apply to a material on the mesh
+                var meshInstance = FindChildOfType<MeshInstance3D>(entity);
+                if (meshInstance?.Mesh != null)
+                {
+                    var material = new StandardMaterial3D { AlbedoTexture = texture };
+                    meshInstance.MaterialOverride = material;
+                }
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            GD.PushWarning($"Failed to load asset '{asset.AssetId}' from bundle '{asset.BundleId}': {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Loads an asset using Godot's ResourceLoader (for res:// paths).
+    /// </summary>
+    /// <param name="entity">Entity to apply the asset to.</param>
+    /// <param name="asset">Asset reference containing the resource path.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task LoadFromResourceLoaderAsync(Node3D entity, AssetReference asset, CancellationToken ct)
+    {
         // For Godot, we use AssetId as the res:// path directly
         // BundleId can be ignored or used as a prefix
         var resourcePath = asset.AssetId;
@@ -536,12 +624,18 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
     #region Thumbnails
 
     /// <inheritdoc />
-    public Task<byte[]?> GetAssetThumbnailAsync(AssetReference asset, int width, int height, CancellationToken ct = default)
+    public async Task<byte[]?> GetAssetThumbnailAsync(AssetReference asset, int width, int height, CancellationToken ct = default)
     {
+        // If we have an asset loader, try to get thumbnail from there
+        if (_assetLoader != null && !string.IsNullOrEmpty(asset.BundleId))
+        {
+            return await _assetLoader.GetThumbnailAsync(asset.BundleId, asset.AssetId, width, height, ct);
+        }
+
         // Thumbnails require rendering the asset to a viewport texture
         // This is complex and may not be needed for initial implementation
-        // TODO: Implement thumbnail generation
-        return Task.FromResult<byte[]?>(null);
+        // TODO: Implement thumbnail generation for res:// resources
+        return null;
     }
 
     #endregion

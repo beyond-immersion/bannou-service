@@ -49,8 +49,8 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         IActorRegistry actorRegistry,
         ILogger<SetEncounterPhaseHandler> logger)
     {
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _actorRegistry = actorRegistry;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

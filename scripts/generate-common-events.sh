@@ -41,6 +41,7 @@ echo -e "${YELLOW}📄 Generating CommonEvents models...${NC}"
     "/generateClientInterfaces:false" \
     "/generateDtoTypes:true" \
     "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseServiceEvent" \
+    "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
     "/jsonLibrary:SystemTextJson" \
     "/generateNullableReferenceTypes:true" \
     "/newLineBehavior:LF" \

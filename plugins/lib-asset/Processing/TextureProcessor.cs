@@ -5,8 +5,9 @@ using System.Diagnostics;
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
 /// <summary>
-/// Processor for texture assets (images).
-/// Handles compression, resizing, and format conversion.
+/// Pass-through stub processor for texture assets (images).
+/// Currently performs validation and copies assets unchanged to processed location.
+/// Actual processing (compression, resizing, format conversion) not yet implemented.
 /// </summary>
 public sealed class TextureProcessor : IAssetProcessor
 {
@@ -39,9 +40,9 @@ public sealed class TextureProcessor : IAssetProcessor
         ILogger<TextureProcessor> logger,
         AssetServiceConfiguration configuration)
     {
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _storageProvider = storageProvider;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />
@@ -119,8 +120,8 @@ public sealed class TextureProcessor : IAssetProcessor
             var maxDimension = GetProcessingOption(context, "max_dimension", 4096);
             var targetFormat = GetProcessingOption(context, "target_format", "webp");
 
-            // TODO: Implement actual texture processing using SkiaSharp or ImageSharp
-            // For now, we do pass-through processing with metadata extraction
+            // Pass-through processing: copy asset unchanged to processed location.
+            // Processing options are recorded in metadata for future implementation.
             var processedKey = $"processed/{context.AssetId}/{context.Filename}";
             var bucket = _configuration.StorageBucket;
 

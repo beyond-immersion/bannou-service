@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -59,8 +60,8 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         string storeName,
         ILogger<InMemoryStateStore<TValue>> logger)
     {
-        _storeName = storeName ?? throw new ArgumentNullException(nameof(storeName));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _storeName = storeName;
+        _logger = logger;
 
         // Get or create the store for this name
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());
@@ -92,7 +93,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
         {
@@ -116,7 +116,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
         {
@@ -140,8 +139,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
 
         var json = BannouJson.Serialize(value);
         var ttl = options?.Ttl;
@@ -179,9 +176,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(etag);
 
         if (!long.TryParse(etag, out var expectedVersion))
         {
@@ -223,7 +217,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var deleted = _store.TryRemove(key, out _);
         _logger.LogDebug("Deleted key '{Key}' from store '{Store}' (existed: {Existed})",
@@ -237,7 +230,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (_store.TryGetValue(key, out var entry))
         {
@@ -257,7 +249,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(keys);
 
         var result = new Dictionary<string, TValue>();
         var keyList = keys.ToList();
@@ -318,8 +309,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var json = BannouJson.Serialize(item);
         DateTimeOffset? expiresAt = options?.Ttl.HasValue == true
@@ -356,8 +345,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(items);
 
         var itemList = items.ToList();
         if (itemList.Count == 0)
@@ -407,8 +394,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         if (!_setStore.TryGetValue(key, out var entry))
         {
@@ -440,7 +425,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (!_setStore.TryGetValue(key, out var entry))
         {
@@ -480,8 +464,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         if (!_setStore.TryGetValue(key, out var entry))
         {
@@ -508,7 +490,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (!_setStore.TryGetValue(key, out var entry))
         {
@@ -533,7 +514,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         var deleted = _setStore.TryRemove(key, out _);
 
@@ -550,7 +530,6 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
-        ArgumentNullException.ThrowIfNull(key);
 
         if (!_setStore.TryGetValue(key, out var entry))
         {

@@ -30,7 +30,7 @@
             try
             {
 {% if UseSystemTextJson -%}
-                var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
 {% else -%}
                 var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
 {% endif -%}
@@ -57,7 +57,7 @@
                 using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                 {
 {% if UseSystemTextJson -%}
-                    var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                    var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                     if (typedBody == null)
                     {
                         throw new {{ ExceptionClass }}("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);

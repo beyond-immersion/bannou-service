@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.CharacterHistory;
@@ -35,9 +36,6 @@ public partial class CharacterService : ICharacterService
     private readonly ICharacterHistoryClient _historyClient;
     private readonly IRelationshipClient _relationshipClient;
     private readonly IRelationshipTypeClient _relationshipTypeClient;
-
-    // State store names
-    private const string CHARACTER_STATE_STORE = "character-statestore";
 
     // Key prefixes for realm-partitioned storage
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -143,7 +141,7 @@ public partial class CharacterService : ICharacterService
             var characterKey = BuildCharacterKey(body.RealmId.ToString(), characterId.ToString());
 
             // Save character to state store
-            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
             // Add to realm index for efficient listing
@@ -269,7 +267,7 @@ public partial class CharacterService : ICharacterService
 
             // Save updated character
             var characterKey = BuildCharacterKey(character.RealmId, character.CharacterId);
-            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Character updated: {CharacterId}", body.CharacterId);
@@ -320,7 +318,7 @@ public partial class CharacterService : ICharacterService
             var characterKey = BuildCharacterKey(realmId, character.CharacterId);
 
             // Delete character from state store
-            await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
                 .DeleteAsync(characterKey, cancellationToken);
 
             // Remove from realm index
@@ -665,7 +663,7 @@ public partial class CharacterService : ICharacterService
 
             // Store archive
             var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            await _stateStoreFactory.GetStore<CharacterArchiveModel>(CHARACTER_STATE_STORE)
+            await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
                 .SaveAsync(archiveKey, MapToArchiveModel(archive), cancellationToken: cancellationToken);
 
             // Optionally delete source data
@@ -728,7 +726,7 @@ public partial class CharacterService : ICharacterService
             _logger.LogInformation("Getting archive for character: {CharacterId}", body.CharacterId);
 
             var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(CHARACTER_STATE_STORE)
+            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
                 .GetAsync(archiveKey, cancellationToken);
 
             if (archiveModel == null)
@@ -776,7 +774,7 @@ public partial class CharacterService : ICharacterService
 
             // Check if compressed
             var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(CHARACTER_STATE_STORE)
+            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
                 .GetAsync(archiveKey, cancellationToken);
             var isCompressed = archiveModel != null;
 
@@ -812,20 +810,20 @@ public partial class CharacterService : ICharacterService
 
             // Get/update reference tracking data
             var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
-            var refData = await _stateStoreFactory.GetStore<RefCountData>(CHARACTER_STATE_STORE)
+            var refData = await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
                 .GetAsync(refCountKey, cancellationToken) ?? new RefCountData { CharacterId = body.CharacterId.ToString() };
 
             // Track when refCount first hit zero
             if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
             {
                 refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await _stateStoreFactory.GetStore<RefCountData>(CHARACTER_STATE_STORE)
+                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
                     .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
             }
             else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
             {
                 refData.ZeroRefSinceUnix = null;
-                await _stateStoreFactory.GetStore<RefCountData>(CHARACTER_STATE_STORE)
+                await _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character)
                     .SaveAsync(refCountKey, refData, cancellationToken: cancellationToken);
             }
 
@@ -1205,7 +1203,7 @@ public partial class CharacterService : ICharacterService
         // Use global character index to find realm for character ID lookup
         // Global index is maintained by AddCharacterToRealmIndexAsync/RemoveCharacterFromRealmIndexAsync
         var globalIndexKey = $"character-global-index:{characterId}";
-        var realmId = await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+        var realmId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Character)
             .GetAsync(globalIndexKey, cancellationToken);
 
         if (string.IsNullOrEmpty(realmId))
@@ -1215,7 +1213,7 @@ public partial class CharacterService : ICharacterService
         }
 
         var characterKey = BuildCharacterKey(realmId, characterId);
-        return await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+        return await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
             .GetAsync(characterKey, cancellationToken);
     }
 
@@ -1229,7 +1227,7 @@ public partial class CharacterService : ICharacterService
     {
         // Step 1: Get character IDs from realm index (single query)
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var characterIds = await _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE)
+        var characterIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character)
             .GetAsync(realmIndexKey, cancellationToken) ?? new List<string>();
 
         if (characterIds.Count == 0)
@@ -1251,7 +1249,7 @@ public partial class CharacterService : ICharacterService
             .ToList();
 
         // Step 3: Bulk load all characters (single query instead of N queries)
-        var bulkResults = await _stateStoreFactory.GetStore<CharacterModel>(CHARACTER_STATE_STORE)
+        var bulkResults = await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
             .GetBulkAsync(keys, cancellationToken);
 
         // Step 4: Filter results
@@ -1295,7 +1293,7 @@ public partial class CharacterService : ICharacterService
     private async Task AddCharacterToRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var store = _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
         const int maxRetries = 3;
@@ -1336,14 +1334,14 @@ public partial class CharacterService : ICharacterService
 
         // Also add to global index for ID-based lookups
         var globalIndexKey = $"character-global-index:{characterId}";
-        await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Character)
             .SaveAsync(globalIndexKey, realmId, cancellationToken: cancellationToken);
     }
 
     private async Task RemoveCharacterFromRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var store = _stateStoreFactory.GetStore<List<string>>(CHARACTER_STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
         // Retry loop for optimistic concurrency
         const int maxRetries = 3;
@@ -1377,7 +1375,7 @@ public partial class CharacterService : ICharacterService
 
         // Remove from global index
         var globalIndexKey = $"character-global-index:{characterId}";
-        await _stateStoreFactory.GetStore<string>(CHARACTER_STATE_STORE)
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Character)
             .DeleteAsync(globalIndexKey, cancellationToken);
     }
 

@@ -1,0 +1,324 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.Transport</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.Transport.GameTransportConfig">
+            <summary>
+            Base configuration for game transport.
+            Does not bind to a specific networking stack (LiteNetLib to be wired later).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.GameTransportConfig.Port">
+            <summary>
+            UDP port for the game server.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.GameTransportConfig.SnapshotIntervalTicks">
+            <summary>
+            Interval (in ticks) between full snapshots (server → client).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.GameTransportConfig.BroadcastHz">
+            <summary>
+            Target broadcast tick rate (Hz).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.GameTransportConfig.ProtocolVersion">
+            <summary>
+            Protocol version expected by this server/client.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.GameTransportHelper">
+            <summary>
+            Helper methods for serializing and sending game transport messages.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.GameTransportHelper.Serialize``1(BeyondImmersion.Bannou.Protocol.GameMessageType,``0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.GameTransportHelper.SerializePayloadOnly``1(``0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.GameTransportHelper.BroadcastAsync``1(BeyondImmersion.Bannou.Transport.IGameServerTransport,BeyondImmersion.Bannou.Protocol.GameMessageType,``0,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.GameTransportHelper.SendAsync``1(BeyondImmersion.Bannou.Transport.IGameServerTransport,System.Int64,BeyondImmersion.Bannou.Protocol.GameMessageType,``0,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.ClientMessageReceived">
+            <summary>
+            Delegate for handling messages received from the server.
+            </summary>
+            <param name="version">Protocol version from the envelope.</param>
+            <param name="messageType">Type of message received.</param>
+            <param name="payload">Raw MessagePack payload (without envelope).</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.IGameClientTransport">
+            <summary>
+            Abstraction for a game client transport (e.g., LiteNetLib client).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameClientTransport.ConnectAsync(System.String,System.Int32,System.Byte,System.Threading.CancellationToken)">
+            <summary>
+            Connects to the game server.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameClientTransport.DisconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Disconnects from the game server.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameClientTransport.SendAsync(BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Sends a message to the server.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameClientTransport.OnConnected">
+            <summary>
+            Event raised when connected.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameClientTransport.OnDisconnected">
+            <summary>
+            Event raised when disconnected.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameClientTransport.OnServerMessage">
+            <summary>
+            Event raised when a message is received from the server.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.ServerMessageReceived">
+            <summary>
+            Delegate for handling messages received from clients.
+            </summary>
+            <param name="clientId">The client that sent the message.</param>
+            <param name="version">Protocol version from the envelope.</param>
+            <param name="messageType">Type of message received.</param>
+            <param name="payload">Raw MessagePack payload (without envelope).</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.IGameServerTransport">
+            <summary>
+            Abstraction for a game server transport host (e.g., LiteNetLib).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameServerTransport.StartAsync(BeyondImmersion.Bannou.Transport.GameTransportConfig,System.Threading.CancellationToken)">
+            <summary>
+            Starts listening for clients.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameServerTransport.StopAsync(System.Threading.CancellationToken)">
+            <summary>
+            Stops the transport and disconnects clients.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameServerTransport.BroadcastAsync(BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Broadcast a message to all connected clients.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.IGameServerTransport.SendAsync(System.Int64,BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Send a message to a specific client.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameServerTransport.OnClientConnected">
+            <summary>
+            Event raised when a client connects.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameServerTransport.OnClientDisconnected">
+            <summary>
+            Event raised when a client disconnects.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.IGameServerTransport.OnClientMessage">
+            <summary>
+            Event raised when a message is received from a client.
+            Provides envelope info and raw payload for higher layers to parse.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport">
+            <summary>
+            LiteNetLib-based client transport implementation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.FuzzOptions">
+            <summary>
+            Optional fuzz settings for testing packet loss/reordering/delay on client side.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnConnected">
+            <inheritdoc />
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnDisconnected">
+            <inheritdoc />
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnServerMessage">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.ConnectAsync(System.String,System.Int32,System.Byte,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.DisconnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.SendAsync(BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnPeerConnected(LiteNetLib.NetPeer)">
+            <summary>
+            Called when connected to the server. Raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnConnected"/>.
+            </summary>
+            <param name="peer">The server peer.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnPeerDisconnected(LiteNetLib.NetPeer,LiteNetLib.DisconnectInfo)">
+            <summary>
+            Called when disconnected from the server. Raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnDisconnected"/>.
+            </summary>
+            <param name="peer">The server peer.</param>
+            <param name="disconnectInfo">Details about the disconnection.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnNetworkReceive(LiteNetLib.NetPeer,LiteNetLib.NetPacketReader,System.Byte,LiteNetLib.DeliveryMethod)">
+            <summary>
+            Called when data is received from the server. Parses envelope and raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnServerMessage"/>.
+            </summary>
+            <param name="peer">The server peer.</param>
+            <param name="reader">Packet reader containing the data.</param>
+            <param name="channelNumber">Channel number the data was received on.</param>
+            <param name="deliveryMethod">Delivery method used.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnNetworkError(System.Net.IPEndPoint,System.Net.Sockets.SocketError)">
+            <summary>Called when a network error occurs. Currently unused.</summary>
+            <param name="endPoint">The endpoint where the error occurred.</param>
+            <param name="socketError">The socket error code.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnNetworkLatencyUpdate(LiteNetLib.NetPeer,System.Int32)">
+            <summary>Called when peer latency is updated. Currently unused.</summary>
+            <param name="peer">The peer whose latency was measured.</param>
+            <param name="latency">The measured latency in milliseconds.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnNetworkReceiveUnconnected(System.Net.IPEndPoint,LiteNetLib.NetPacketReader,LiteNetLib.UnconnectedMessageType)">
+            <summary>Called when an unconnected message is received. Currently unused.</summary>
+            <param name="remoteEndPoint">The sender's endpoint.</param>
+            <param name="reader">Packet reader containing the message.</param>
+            <param name="messageType">The unconnected message type.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.OnConnectionRequest(LiteNetLib.ConnectionRequest)">
+            <summary>Called when a connection request is received. Not applicable for client.</summary>
+            <param name="request">The connection request.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibClientTransport.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport">
+            <summary>
+            LiteNetLib-based server transport implementation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.FuzzOptions">
+            <summary>
+            Optional fuzz settings for testing packet loss/reorder/delay.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientConnected">
+            <inheritdoc />
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientDisconnected">
+            <inheritdoc />
+        </member>
+        <member name="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientMessage">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.StartAsync(BeyondImmersion.Bannou.Transport.GameTransportConfig,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.StopAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.BroadcastAsync(BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.SendAsync(System.Int64,BeyondImmersion.Bannou.Protocol.GameMessageType,System.Byte[],System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnPeerConnected(LiteNetLib.NetPeer)">
+            <summary>
+            Called when a peer connects. Raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientConnected"/>.
+            </summary>
+            <param name="peer">The connected peer.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnPeerDisconnected(LiteNetLib.NetPeer,LiteNetLib.DisconnectInfo)">
+            <summary>
+            Called when a peer disconnects. Raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientDisconnected"/>.
+            </summary>
+            <param name="peer">The disconnected peer.</param>
+            <param name="disconnectInfo">Details about the disconnection.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnNetworkReceive(LiteNetLib.NetPeer,LiteNetLib.NetPacketReader,System.Byte,LiteNetLib.DeliveryMethod)">
+            <summary>
+            Called when data is received from a peer. Parses envelope and raises <see cref="E:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnClientMessage"/>.
+            </summary>
+            <param name="peer">The peer that sent the data.</param>
+            <param name="reader">Packet reader containing the data.</param>
+            <param name="channelNumber">Channel number the data was received on.</param>
+            <param name="deliveryMethod">Delivery method used.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnNetworkError(System.Net.IPEndPoint,System.Net.Sockets.SocketError)">
+            <summary>Called when a network error occurs. Currently unused.</summary>
+            <param name="endPoint">The endpoint where the error occurred.</param>
+            <param name="socketError">The socket error code.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnNetworkLatencyUpdate(LiteNetLib.NetPeer,System.Int32)">
+            <summary>Called when peer latency is updated. Currently unused.</summary>
+            <param name="peer">The peer whose latency was measured.</param>
+            <param name="latency">The measured latency in milliseconds.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnNetworkReceiveUnconnected(System.Net.IPEndPoint,LiteNetLib.NetPacketReader,LiteNetLib.UnconnectedMessageType)">
+            <summary>Called when an unconnected message is received. Currently unused.</summary>
+            <param name="remoteEndPoint">The sender's endpoint.</param>
+            <param name="reader">Packet reader containing the message.</param>
+            <param name="messageType">The unconnected message type.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.OnConnectionRequest(LiteNetLib.ConnectionRequest)">
+            <summary>
+            Called when a connection request is received. Accepts if key matches "GameTransport".
+            </summary>
+            <param name="request">The connection request.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.LiteNetLibServerTransport.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Transport.TransportFuzzOptions">
+            <summary>
+            Fuzz settings for testing packet loss/reordering/delay.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.TransportFuzzOptions.DropProbability">
+            <summary>Drop probability (0-1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.TransportFuzzOptions.DelayProbability">
+            <summary>Delay probability (0-1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Transport.TransportFuzzOptions.MaxDelayMs">
+            <summary>Maximum artificial delay in milliseconds.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.TransportFuzzOptions.ShouldDrop(System.Random)">
+            <summary>
+            Determines whether to drop a packet based on configured probability.
+            </summary>
+            <param name="random">Random number generator instance.</param>
+            <returns>True if the packet should be dropped.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Transport.TransportFuzzOptions.ShouldDelay(System.Int32@,System.Random)">
+            <summary>
+            Determines whether to delay a packet and calculates the delay duration.
+            </summary>
+            <param name="delayMs">Output: delay duration in milliseconds if delayed, otherwise 0.</param>
+            <param name="random">Random number generator instance.</param>
+            <returns>True if the packet should be delayed.</returns>
+        </member>
+    </members>
+</doc>

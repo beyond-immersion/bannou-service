@@ -1,8 +1,24 @@
 # NuGet Package Setup for Bannou SDKs
 
-## Dual SDK Architecture
+## SDK Package Architecture
 
-Bannou publishes **two SDK packages** to NuGet for different use cases:
+Bannou publishes **multiple SDK packages** to NuGet for different use cases. For the complete package registry and naming conventions, see [SDK Conventions](../../sdks/CONVENTIONS.md).
+
+### Package Overview
+
+| Package | Purpose |
+|---------|---------|
+| `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
+| `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
+| `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
+| `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline |
+| `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation |
+| `BeyondImmersion.Bannou.AssetBundler.Godot` | Godot engine asset processing |
+| `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing |
+| `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine scene integration |
+| `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot engine scene integration |
+
+### Core Packages
 
 ### **Server SDK** (`BeyondImmersion.Bannou.Server`)
 For **game servers** that need service-to-service calls AND WebSocket support.

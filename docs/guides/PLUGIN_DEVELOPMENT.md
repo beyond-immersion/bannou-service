@@ -129,7 +129,7 @@ public class ExampleService : IExampleService
         ILogger<ExampleService> logger,
         ExampleServiceConfiguration configuration)
     {
-        _stateStore = stateStoreFactory.Create<ExampleModel>("example");
+        _stateStore = stateStoreFactory.GetStore<ExampleModel>(StateStoreDefinitions.Example);
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
@@ -187,12 +187,12 @@ make test-edge                # WebSocket tests
 Use `lib-state` for data persistence (supports Redis and MySQL backends):
 
 ```csharp
-// In service constructor
+// In service constructor - use StateStoreDefinitions constants (schema-first)
 private readonly IStateStore<MyModel> _stateStore;
 
 public MyService(IStateStoreFactory stateStoreFactory)
 {
-    _stateStore = stateStoreFactory.Create<MyModel>("my-service");
+    _stateStore = stateStoreFactory.GetStore<MyModel>(StateStoreDefinitions.MyService);
 }
 
 // Save

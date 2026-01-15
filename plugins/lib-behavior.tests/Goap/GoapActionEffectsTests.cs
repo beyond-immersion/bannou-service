@@ -121,13 +121,6 @@ public class GoapActionEffectsTests
         Assert.Throws<FormatException>(() => GoapEffect.Parse(""));
     }
 
-    [Fact]
-    public void Parse_ThrowsOnNull()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => GoapEffect.Parse(null!));
-    }
-
     #endregion
 
     #region GoapEffect TryParse

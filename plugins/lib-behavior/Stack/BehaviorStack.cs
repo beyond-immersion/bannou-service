@@ -46,8 +46,8 @@ public sealed class BehaviorStack : IBehaviorStack
         ILogger<BehaviorStack>? logger = null)
     {
         EntityId = entityId;
-        Archetype = archetype ?? throw new ArgumentNullException(nameof(archetype));
-        _merger = merger ?? throw new ArgumentNullException(nameof(merger));
+        Archetype = archetype;
+        _merger = merger;
         _logger = logger;
         _layers = new List<IBehaviorLayer>();
     }
@@ -97,7 +97,6 @@ public sealed class BehaviorStack : IBehaviorStack
     /// <inheritdoc/>
     public void AddLayer(IBehaviorLayer layer)
     {
-        ArgumentNullException.ThrowIfNull(layer);
 
         lock (_lock)
         {
@@ -237,7 +236,6 @@ public sealed class BehaviorStack : IBehaviorStack
         BehaviorEvaluationContext context,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         var output = new BehaviorStackOutput(EntityId);
 

@@ -36,7 +36,6 @@ public sealed class IntentEmitterRegistry : IIntentEmitterRegistry
     /// <inheritdoc/>
     public void Register(IIntentEmitter emitter)
     {
-        ArgumentNullException.ThrowIfNull(emitter);
 
         if (string.IsNullOrEmpty(emitter.ActionName))
         {

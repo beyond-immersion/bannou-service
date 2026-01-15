@@ -1,6 +1,6 @@
 #nullable enable
 
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
@@ -42,8 +42,8 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         ILogger<RabbitMQConnectionManager> logger,
         MessagingServiceConfiguration configuration)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>

@@ -35,9 +35,9 @@ public class SaveUploadWorker : BackgroundService
         SaveLoadServiceConfiguration configuration,
         ILogger<SaveUploadWorker> logger)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _serviceProvider = serviceProvider;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ public partial class GameServiceService : IGameServiceService
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
-    private string StateStoreName => _configuration.StateStoreName ?? "game-service-statestore";
+    private static string StateStoreName => StateStoreDefinitions.GameService;
 
     /// <summary>
     /// List all registered game services, optionally filtered by active status.

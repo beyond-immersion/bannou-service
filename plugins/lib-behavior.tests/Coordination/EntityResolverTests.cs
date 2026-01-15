@@ -458,17 +458,6 @@ public sealed class EntityResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_NullBindingName_Throws()
-    {
-        // Arrange
-        var bindings = CutsceneBindings.Empty;
-
-        // Act & Assert (ArgumentNullException inherits from ArgumentException)
-        await Assert.ThrowsAnyAsync<ArgumentException>(
-            () => _resolver.ResolveAsync(null!, bindings));
-    }
-
-    [Fact]
     public async Task ResolveAsync_EmptyBindingName_Throws()
     {
         // Arrange
@@ -477,14 +466,6 @@ public sealed class EntityResolverTests
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
             () => _resolver.ResolveAsync("", bindings));
-    }
-
-    [Fact]
-    public async Task ResolveAsync_NullBindings_Throws()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _resolver.ResolveAsync("hero", null!));
     }
 
     // =========================================================================
@@ -556,7 +537,7 @@ public sealed class EntityResolverTests
     }
 
     [Fact]
-    public async Task ResolveManyAsync_SkipsNullAndEmpty()
+    public async Task ResolveManyAsync_SkipsEmptyAndWhitespace()
     {
         // Arrange
         var heroId = Guid.NewGuid();
@@ -564,9 +545,9 @@ public sealed class EntityResolverTests
             .AddParticipant("hero", EntityReference.Player(heroId))
             .Build();
 
-        // Act
+        // Act - tests that empty and whitespace-only names are skipped
         var results = await _resolver.ResolveManyAsync(
-            new[] { "hero", null!, "", "  " },
+            new[] { "hero", "", "  " },
             bindings);
 
         // Assert

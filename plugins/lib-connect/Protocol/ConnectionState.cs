@@ -119,7 +119,7 @@ public class ConnectionState
     /// </summary>
     public ConnectionState(string sessionId)
     {
-        SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
+        SessionId = sessionId;
         ConnectedAt = DateTimeOffset.UtcNow;
         LastActivity = ConnectedAt;
         ServiceMappings = new Dictionary<string, Guid>();
@@ -308,9 +308,6 @@ public class ConnectionState
     /// <param name="shortcut">Shortcut data to add or update</param>
     public void AddOrUpdateShortcut(SessionShortcutData shortcut)
     {
-        if (shortcut == null)
-            throw new ArgumentNullException(nameof(shortcut));
-
         // Add to main shortcuts dictionary
         SessionShortcuts[shortcut.RouteGuid] = shortcut;
 

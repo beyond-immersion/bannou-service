@@ -33,9 +33,6 @@ public static class OptionsEvaluator
         IExpressionEvaluator evaluator,
         ILogger? logger = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(evaluator);
 
         var result = new Dictionary<string, EvaluatedOptions>();
 

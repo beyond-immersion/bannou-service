@@ -1,7 +1,7 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -45,9 +45,9 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         ILogger<RabbitMQMessageTap> logger,
         MessagingServiceConfiguration configuration)
     {
-        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _connectionManager = connectionManager;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>
@@ -57,8 +57,6 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         string? sourceExchange = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceTopic);
-        ArgumentNullException.ThrowIfNull(destination);
 
         var tapId = Guid.NewGuid();
         var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange ?? AppConstants.DEFAULT_APP_NAME;

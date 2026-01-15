@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Messaging;
 using Microsoft.Extensions.Logging;
 using System.Reflection;

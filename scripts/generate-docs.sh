@@ -24,9 +24,9 @@ echo "📚 Generating documentation..."
 # Ensure docs directory exists
 mkdir -p "$REPO_ROOT/docs"
 
-# Generate state store documentation
+# Generate state store documentation (from schemas/state-stores.yaml)
 echo "  → Generating state store reference..."
-python3 "$SCRIPT_DIR/generate-state-store-docs.py"
+python3 "$SCRIPT_DIR/generate-state-stores.py"
 
 # Generate events documentation
 echo "  → Generating events reference..."

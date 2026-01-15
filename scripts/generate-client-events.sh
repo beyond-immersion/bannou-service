@@ -40,6 +40,7 @@ if [ -f "$COMMON_CLIENT_EVENTS_SCHEMA" ]; then
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
         "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
+        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
@@ -117,17 +118,14 @@ for schema_file in "${CLIENT_EVENT_SCHEMAS[@]}"; do
         "/generateClientInterfaces:false" \
         "/generateDtoTypes:true" \
         "/excludedTypeNames:ApiException,ApiException\<TResult\>,BaseClientEvent" \
+        "/additionalNamespaceUsages:BeyondImmersion.Bannou.Core,BeyondImmersion.BannouService.ClientEvents" \
         "/jsonLibrary:SystemTextJson" \
         "/generateNullableReferenceTypes:true" \
         "/newLineBehavior:LF" \
         "/templateDirectory:../templates/nswag"
 
     if [ $? -eq 0 ]; then
-        # Add using statement for BaseClientEvent from common client events
-        # This is needed because the generated classes inherit from BaseClientEvent
         output_file="$TARGET_DIR/${pascal_case}ClientEventsModels.cs"
-        sed -i 's/namespace BeyondImmersion\.Bannou\.'${pascal_case}'\.ClientEvents;/using BeyondImmersion.BannouService.ClientEvents;\n\nnamespace BeyondImmersion.Bannou.'${pascal_case}'.ClientEvents;/' "$output_file"
-
         # Post-process: Add [JsonRequired] after each [Required] attribute
         sed -i 's/\(\[System\.ComponentModel\.DataAnnotations\.Required[^]]*\]\)/\1\n    [System.Text.Json.Serialization.JsonRequired]/g' "$output_file"
         # Post-process: Fix EventName shadowing - add 'override' keyword

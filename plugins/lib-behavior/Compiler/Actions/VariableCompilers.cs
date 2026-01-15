@@ -19,7 +19,7 @@ public sealed class SetCompiler : ActionCompilerBase<SetAction>
     /// <summary>Creates a new set compiler.</summary>
     public SetCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -54,7 +54,7 @@ public sealed class LocalCompiler : ActionCompilerBase<LocalAction>
     /// <summary>Creates a new local compiler.</summary>
     public LocalCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -81,7 +81,7 @@ public sealed class GlobalCompiler : ActionCompilerBase<GlobalAction>
     /// <summary>Creates a new global compiler.</summary>
     public GlobalCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>

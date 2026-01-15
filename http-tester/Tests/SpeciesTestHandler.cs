@@ -44,20 +44,6 @@ public class SpeciesTestHandler : BaseHttpTestHandler
         ];
     }
 
-    /// <summary>
-    /// Helper to create a test realm for species tests.
-    /// </summary>
-    private static async Task<RealmResponse> CreateTestRealmAsync(string suffix)
-    {
-        var realmClient = GetServiceClient<IRealmClient>();
-        return await realmClient.CreateRealmAsync(new CreateRealmRequest
-        {
-            Code = $"SPECIES_TEST_{DateTime.Now.Ticks}_{suffix}",
-            Name = $"Species Test Realm {suffix}",
-            Category = "TEST"
-        });
-    }
-
     private static async Task<TestResult> TestCreateSpecies(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
@@ -211,7 +197,7 @@ public class SpeciesTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestAddSpeciesToRealm(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("ADD");
+            var realm = await CreateTestRealmAsync("SPECIES_TEST", "Species", "ADD");
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
             var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
@@ -235,8 +221,8 @@ public class SpeciesTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestRemoveSpeciesFromRealm(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm1 = await CreateTestRealmAsync("REMOVE1");
-            var realm2 = await CreateTestRealmAsync("REMOVE2");
+            var realm1 = await CreateTestRealmAsync("SPECIES_TEST", "Species", "REMOVE1");
+            var realm2 = await CreateTestRealmAsync("SPECIES_TEST", "Species", "REMOVE2");
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
             var species = await speciesClient.CreateSpeciesAsync(new CreateSpeciesRequest
@@ -264,7 +250,7 @@ public class SpeciesTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestListSpeciesByRealm(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("LIST");
+            var realm = await CreateTestRealmAsync("SPECIES_TEST", "Species", "LIST");
             var speciesClient = GetServiceClient<ISpeciesClient>();
 
             for (int i = 0; i < 3; i++)
@@ -362,7 +348,7 @@ public class SpeciesTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCompleteSpeciesLifecycle(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var realm = await CreateTestRealmAsync("LIFECYCLE");
+            var realm = await CreateTestRealmAsync("SPECIES_TEST", "Species", "LIFECYCLE");
             var speciesClient = GetServiceClient<ISpeciesClient>();
             var testId = GenerateTestId("LIFECYCLE_SPECIES");
 

@@ -19,7 +19,7 @@ public sealed class LogCompiler : ActionCompilerBase<LogAction>
     /// <summary>Creates a new log compiler.</summary>
     public LogCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -45,7 +45,7 @@ public sealed class EmitIntentCompiler : ActionCompilerBase<EmitIntentAction>
     /// <summary>Creates a new emit intent compiler.</summary>
     public EmitIntentCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -85,7 +85,7 @@ public sealed class ContinuationPointCompiler : ActionCompilerBase<ContinuationP
     /// <summary>Creates a new continuation point compiler.</summary>
     public ContinuationPointCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -162,7 +162,7 @@ public sealed class DomainActionCompiler : ActionCompilerBase<DomainAction>
     /// <summary>Creates a new domain action compiler.</summary>
     public DomainActionCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>

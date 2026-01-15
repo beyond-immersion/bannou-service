@@ -29,7 +29,6 @@ public sealed class IntentChannelFactory : IIntentChannelFactory
     /// <inheritdoc/>
     public RuntimeChannelSet CreateChannels(Guid entityId, IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(archetype);
 
         var channels = new Dictionary<string, RuntimeChannel>(StringComparer.OrdinalIgnoreCase);
 
@@ -61,9 +60,9 @@ public sealed class RuntimeChannelSet
         IReadOnlyDictionary<string, RuntimeChannel> channels)
     {
         EntityId = entityId;
-        ArchetypeId = archetypeId ?? throw new ArgumentNullException(nameof(archetypeId));
+        ArchetypeId = archetypeId;
         _channels = new Dictionary<string, RuntimeChannel>(
-            channels ?? throw new ArgumentNullException(nameof(channels)),
+            channels,
             StringComparer.OrdinalIgnoreCase);
     }
 
@@ -104,7 +103,6 @@ public sealed class RuntimeChannelSet
     /// <returns>True if the emission was applied, false if channel not found.</returns>
     public bool ApplyEmission(IntentEmission emission)
     {
-        ArgumentNullException.ThrowIfNull(emission);
 
         var channel = GetChannel(emission.Channel);
         if (channel == null)
@@ -140,8 +138,8 @@ public sealed class RuntimeChannel
     /// <param name="definition">The channel definition.</param>
     public RuntimeChannel(string name, ILogicalChannelDefinition definition)
     {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-        Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+        Name = name;
+        Definition = definition;
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -31,10 +32,10 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         BehaviorServiceConfiguration configuration,
         ILogger<BehaviorBundleManager> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _assetClient = assetClient;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>
@@ -56,7 +57,6 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
         ArgumentException.ThrowIfNullOrWhiteSpace(assetId, nameof(assetId));
-        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
 
         _logger.LogDebug(
             "Recording behavior {BehaviorId} with asset {AssetId}, bundle {BundleId}",
@@ -300,7 +300,6 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
-        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
 
         var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(_configuration.StatestoreName);
         var key = $"{_configuration.GoapMetadataKeyPrefix}{behaviorId}";

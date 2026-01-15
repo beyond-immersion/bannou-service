@@ -198,16 +198,6 @@ public class GoapConditionTests
         Assert.False(success);
     }
 
-    [Fact]
-    public void TryParse_ReturnsFalse_ForNull()
-    {
-        // Arrange & Act
-        var success = GoapCondition.TryParse(null!, out _);
-
-        // Assert
-        Assert.False(success);
-    }
-
     #endregion
 
     #region Evaluate - Numeric Comparisons

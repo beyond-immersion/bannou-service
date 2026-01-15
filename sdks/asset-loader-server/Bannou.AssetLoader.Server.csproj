@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.AssetLoader.Server</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Mesh-based asset source for Bannou Asset Loader. Provides URL resolution for game servers and backend services using the generated AssetClient.</Description>
+    <PackageTags>bannou;assets;mesh;server;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.AssetLoader.Server</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.AssetLoader.Server</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference core Asset Loader SDK -->
+    <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
+    <!-- Reference Server SDK for generated service clients (IAssetClient, models) -->
+    <ProjectReference Include="../server/Bannou.Server.csproj" />
+  </ItemGroup>
+
+</Project>

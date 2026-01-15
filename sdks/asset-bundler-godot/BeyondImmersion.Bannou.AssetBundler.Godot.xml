@@ -1,0 +1,342 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.AssetBundler.Godot</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes">
+            <summary>
+            MIME content types for assets that Godot can load at runtime.
+            These are standard formats that Godot's buffer-based APIs support.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.TexturePng">
+            <summary>PNG image format. Loaded via Image.LoadPngFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.TextureJpeg">
+            <summary>JPEG image format. Loaded via Image.LoadJpgFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.TextureWebp">
+            <summary>WebP image format. Loaded via Image.LoadWebpFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.ModelGltfBinary">
+            <summary>glTF binary format (glb). Loaded via GltfDocument.AppendFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.ModelGltfJson">
+            <summary>glTF JSON format. Loaded via GltfDocument.AppendFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.AudioWav">
+            <summary>WAV audio format. Loaded into AudioStreamWav.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.AudioOgg">
+            <summary>OGG Vorbis audio format. Loaded via AudioStreamOggVorbis.LoadFromBuffer().</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.AudioMp3">
+            <summary>MP3 audio format. Loaded into AudioStreamMP3.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.DataJson">
+            <summary>JSON data format for scenes, behaviors, etc.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.DataYaml">
+            <summary>YAML data format for behaviors, configuration.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.Binary">
+            <summary>Binary data (generic).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.FromExtension(System.String)">
+            <summary>
+            Gets the preferred content type from a file extension.
+            </summary>
+            <param name="extension">File extension (with or without leading dot).</param>
+            <returns>The corresponding MIME content type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.ToExtension(System.String)">
+            <summary>
+            Gets the file extension for a content type.
+            </summary>
+            <param name="contentType">MIME content type.</param>
+            <returns>File extension without leading dot, or "bin" for unknown types.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.IsRuntimeLoadable(System.String)">
+            <summary>
+            Checks if a content type can be loaded by Godot at runtime.
+            </summary>
+            <param name="contentType">MIME content type to check.</param>
+            <returns>True if Godot has native runtime loading support.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.RequiresConversion(System.String)">
+            <summary>
+            Checks if the content type requires conversion for Godot runtime loading.
+            </summary>
+            <param name="contentType">MIME content type to check.</param>
+            <returns>True if conversion is needed before runtime loading.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotContentTypes.GetConversionTarget(System.String)">
+            <summary>
+            Gets the target content type for conversion.
+            </summary>
+            <param name="sourceContentType">Original content type.</param>
+            <returns>Target content type for conversion, or original if no conversion needed.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer">
+            <summary>
+            Type inferencer for assets targeting Godot engine.
+            Handles model, texture, animation, and audio files.
+            Filters out engine-specific files that aren't compatible with Godot.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.RuntimeModelExtensions">
+            <summary>
+            Model file extensions that Godot can load at runtime.
+            Godot uses GltfDocument.AppendFromBuffer() for runtime mesh loading.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.ConvertibleModelExtensions">
+            <summary>
+            Model file extensions that require conversion for Godot.
+            These formats need external conversion to glTF before bundling.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.AllModelExtensions">
+            <summary>
+            All model file extensions (both runtime and convertible).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.RuntimeTextureExtensions">
+            <summary>
+            Texture file extensions that Godot can load at runtime.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.ConvertibleTextureExtensions">
+            <summary>
+            Texture file extensions that require conversion.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.AllTextureExtensions">
+            <summary>
+            All texture file extensions.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.RuntimeAudioExtensions">
+            <summary>
+            Audio file extensions that Godot can load at runtime.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.ConvertibleAudioExtensions">
+            <summary>
+            Audio file extensions that require conversion.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.AllAudioExtensions">
+            <summary>
+            All audio file extensions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.InferAssetType(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.InferTextureType(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.ShouldExtract(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.IsRuntimeLoadable(System.String)">
+            <summary>
+            Checks if an extension can be loaded directly by Godot at runtime.
+            </summary>
+            <param name="extension">File extension (with dot).</param>
+            <returns>True if Godot can load this format from a buffer at runtime.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.GodotTypeInferencer.RequiresConversion(System.String)">
+            <summary>
+            Checks if an extension needs conversion before Godot can load it.
+            </summary>
+            <param name="extension">File extension (with dot).</param>
+            <returns>True if conversion is required.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor">
+            <summary>
+            Processes assets for Godot runtime loading.
+            Mostly pass-through for compatible formats, with optional conversion for incompatible ones.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.#ctor(BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor})">
+            <summary>
+            Creates a new Godot asset processor.
+            </summary>
+            <param name="options">Processor options.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.ProcessorId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.OutputContentTypes">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.TypeInferencer">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.ProcessAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotAssetProcessor.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset">
+            <summary>
+            Represents an asset processed for Godot runtime loading.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.AssetId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.Filename">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.ContentType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.Data">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.ContentHash">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.Dependencies">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.Metadata">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.SourceFilename">
+            <summary>
+            Original source filename before any conversion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.OriginalContentType">
+            <summary>
+            Original content type before conversion (if converted).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.WasConverted">
+            <summary>
+            Whether the asset was converted from another format.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.GodotAssetType">
+            <summary>
+            Asset type as determined by Godot type inferencer.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessedAsset.TextureTypeHint">
+            <summary>
+            Texture type hint for texture assets.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException">
+            <summary>
+            Exception thrown when Godot asset processing fails.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.#ctor(System.String)">
+            <summary>
+            Creates a new Godot processing exception.
+            </summary>
+            <param name="message">Error message.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates a new Godot processing exception with inner exception.
+            </summary>
+            <param name="message">Error message.</param>
+            <param name="innerException">Inner exception.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.ConversionFailed(System.String,System.String,System.String,System.String)">
+            <summary>
+            Creates a processing exception for a conversion failure.
+            </summary>
+            <param name="assetId">Asset ID that failed.</param>
+            <param name="sourceFormat">Original format.</param>
+            <param name="targetFormat">Target format.</param>
+            <param name="reason">Reason for failure.</param>
+            <returns>Exception with formatted message.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.ConverterNotFound(System.String,System.String,System.String)">
+            <summary>
+            Creates a processing exception for a missing converter.
+            </summary>
+            <param name="assetId">Asset ID that needs conversion.</param>
+            <param name="format">Format that needs conversion.</param>
+            <param name="converterName">Name of the required converter.</param>
+            <returns>Exception with formatted message.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.AssetId">
+            <summary>
+            Gets the asset ID that failed processing, if available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.SourceFormat">
+            <summary>
+            Gets the original format of the asset, if available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessingException.TargetFormat">
+            <summary>
+            Gets the target format for conversion, if available.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions">
+            <summary>
+            Configuration options for Godot asset processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.EnableConversion">
+            <summary>
+            Whether to enable format conversion for incompatible formats.
+            When true, attempts to convert FBX to glTF, TGA to PNG, etc.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.SkipUnconvertible">
+            <summary>
+            Whether to skip assets that require conversion when conversion is disabled
+            or when the converter is not available.
+            When false, throws an exception for unconvertible assets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.FbxConverterPath">
+            <summary>
+            Path to external FBX to glTF converter (e.g., FBX2glTF).
+            If not specified, FBX files will be skipped or cause an error.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.MaxTextureSize">
+            <summary>
+            Maximum texture dimension. Textures larger than this will be downscaled.
+            Set to 0 to disable downscaling.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.OptimizePng">
+            <summary>
+            Whether to optimize PNG files by stripping metadata.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.JpegQuality">
+            <summary>
+            Target quality for JPEG compression (1-100).
+            Only applies when converting other formats to JPEG.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.GenerateOrmTextures">
+            <summary>
+            Whether to generate ORM (Occlusion/Roughness/Metallic) packed textures
+            from separate texture files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Godot.Processing.GodotProcessorOptions.TrackOriginalFormat">
+            <summary>
+            Whether to include the original format in metadata when converted.
+            </summary>
+        </member>
+    </members>
+</doc>
