@@ -10,12 +10,12 @@ public interface ITokenService
 {
     /// <summary>
     /// Generates a new access token (JWT) for the given account.
-    /// Creates session data in Redis and returns the signed JWT.
+    /// Creates session data in Redis and returns the signed JWT plus sessionId.
     /// </summary>
     /// <param name="account">The account to generate the token for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The signed JWT access token.</returns>
-    Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
+    /// <returns>Tuple of (accessToken, sessionId) for event publishing.</returns>
+    Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates a new refresh token.

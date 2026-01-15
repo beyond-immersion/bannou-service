@@ -182,12 +182,12 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
-            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
+            var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
 
-            var refreshToken = GenerateRefreshToken();
+            var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
                 body.Email, account.AccountId);
@@ -271,11 +271,11 @@ public partial class AuthService : IAuthService
             }
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
-            var (accessToken, sessionId) = await GenerateAccessTokenAsync(accountResult, cancellationToken);
-            var refreshToken = GenerateRefreshToken();
+            var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(accountResult, cancellationToken);
+            var refreshToken = _tokenService.GenerateRefreshToken();
 
             // Store refresh token
-            await StoreRefreshTokenAsync(accountResult.AccountId.ToString(), refreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountResult.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully registered user: {Username} with ID: {AccountId}",
                 body.Username, accountResult.AccountId);
@@ -349,9 +349,9 @@ public partial class AuthService : IAuthService
             }
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
-            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
-            var refreshToken = GenerateRefreshToken();
-            await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("OAuth authentication successful for account {AccountId} via {Provider}",
                 account.AccountId, provider);
@@ -433,9 +433,9 @@ public partial class AuthService : IAuthService
             }
 
             // Generate tokens (returns both accessToken and sessionId for event publishing)
-            var (accessToken, sessionId) = await GenerateAccessTokenAsync(account, cancellationToken);
-            var refreshToken = GenerateRefreshToken();
-            await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+            var (accessToken, sessionId) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+            await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
             _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
@@ -475,7 +475,7 @@ public partial class AuthService : IAuthService
             }
 
             // Validate refresh token
-            var accountId = await ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
+            var accountId = await _tokenService.ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
             if (string.IsNullOrEmpty(accountId))
             {
                 return (StatusCodes.Forbidden, null);
@@ -504,12 +504,12 @@ public partial class AuthService : IAuthService
             }
 
             // Generate new tokens (sessionId not used for refresh - no audit event needed)
-            var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
-            var newRefreshToken = GenerateRefreshToken();
+            var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
 
             // Store new refresh token and remove old one
-            await StoreRefreshTokenAsync(accountId, newRefreshToken, cancellationToken);
-            await RemoveRefreshTokenAsync(body.RefreshToken, cancellationToken);
+            await _tokenService.StoreRefreshTokenAsync(accountId, newRefreshToken, cancellationToken);
+            await _tokenService.RemoveRefreshTokenAsync(body.RefreshToken, cancellationToken);
 
             return (StatusCodes.OK, new AuthResponse
             {
@@ -620,7 +620,7 @@ public partial class AuthService : IAuthService
             }
 
             // Extract session_key from JWT claims to identify which session to logout
-            var sessionKey = await ExtractSessionKeyFromJWT(jwt);
+            var sessionKey = await _tokenService.ExtractSessionKeyFromJwtAsync(jwt);
             if (sessionKey == null)
             {
                 _logger.LogWarning("Could not extract session_key from JWT for logout");
@@ -634,7 +634,7 @@ public partial class AuthService : IAuthService
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
 
                 // Get all sessions for the account using our new efficient method
-                var accountSessions = await GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+                var accountSessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
 
                 if (accountSessions.Count > 0)
                 {
@@ -672,7 +672,7 @@ public partial class AuthService : IAuthService
                 await sessionStore.DeleteAsync($"session:{sessionKey}", cancellationToken);
 
                 // Remove session from account index
-                await RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
 
                 invalidatedSessions.Add(sessionKey);
 
@@ -711,7 +711,7 @@ public partial class AuthService : IAuthService
 
             // Find and remove the session from Redis
             // Since we store sessions with session_key, we need to find sessions by session_id
-            var sessionKey = await FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
+            var sessionKey = await _sessionService.FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
 
             if (sessionKey == null)
             {
@@ -729,11 +729,11 @@ public partial class AuthService : IAuthService
             // Remove session from account index if we found the session data
             if (sessionData != null)
             {
-                await RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
+                await _sessionService.RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
             }
 
             // Remove reverse index entry
-            await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
+            await _sessionService.RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
 
             // Publish SessionInvalidatedEvent to disconnect WebSocket clients (like LogoutAsync does)
             if (sessionData != null)
@@ -962,7 +962,7 @@ public partial class AuthService : IAuthService
             _logger.LogInformation("Getting sessions for account: {AccountId}", validateResponse.AccountId);
 
             // Use efficient account-to-sessions index with bulk state operations
-            var sessions = await GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+            var sessions = await _sessionService.GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
 
             _logger.LogInformation("Returning {SessionCount} session(s) for account: {AccountId}",
                 sessions.Count, validateResponse.AccountId);
@@ -1245,10 +1245,10 @@ public partial class AuthService : IAuthService
             sessionKey, verifyData != null, verifyData?.ExpiresAtUnix ?? -1);
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
-        await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
+        await _sessionService.AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
 
         // Maintain reverse index (session_id -> session_key) for TerminateSession functionality
-        await AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
+        await _sessionService.AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
 
         // JWT contains only opaque session key - no sensitive data
         // jwtConfig already retrieved above; validated at startup in Program.cs
@@ -1660,7 +1660,7 @@ public partial class AuthService : IAuthService
                 // Await the cleanup to avoid potential issues with background tasks
                 foreach (var expiredKey in expiredSessionKeys)
                 {
-                    await RemoveSessionFromAccountIndexAsync(accountId, expiredKey, cancellationToken);
+                    await _sessionService.RemoveSessionFromAccountIndexAsync(accountId, expiredKey, cancellationToken);
                 }
             }
 
@@ -2289,9 +2289,9 @@ public partial class AuthService : IAuthService
         }
 
         // Mock providers don't need audit events - discard sessionId
-        var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
-        var refreshToken = GenerateRefreshToken();
-        await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -2325,9 +2325,9 @@ public partial class AuthService : IAuthService
         }
 
         // Mock providers don't need audit events - discard sessionId
-        var (accessToken, _) = await GenerateAccessTokenAsync(account, cancellationToken);
-        var refreshToken = GenerateRefreshToken();
-        await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+        var (accessToken, _) = await _tokenService.GenerateAccessTokenAsync(account, cancellationToken);
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        await _tokenService.StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
 
         return (StatusCodes.OK, new AuthResponse
         {

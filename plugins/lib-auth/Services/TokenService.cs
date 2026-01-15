@@ -47,7 +47,7 @@ public class TokenService : ITokenService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
+    public async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
         // Use core app configuration for JWT settings (validated at startup in Program.cs)
         var jwtConfig = Program.Configuration;
@@ -141,7 +141,8 @@ public class TokenService : ITokenService
         };
 
         var jwt = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(jwt);
+        var jwtString = tokenHandler.WriteToken(jwt);
+        return (jwtString, sessionId);
     }
 
     /// <inheritdoc/>

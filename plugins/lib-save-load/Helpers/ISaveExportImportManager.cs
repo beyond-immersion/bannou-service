@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.SaveLoad.Generated;
+using BeyondImmersion.BannouService;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
 
