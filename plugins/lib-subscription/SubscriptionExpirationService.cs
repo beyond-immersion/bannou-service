@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
-using static BeyondImmersion.BannouService.State.Services.StateStoreDefinitions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -111,7 +110,7 @@ public class SubscriptionExpirationService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         // Get the subscription index to find all subscription IDs
-        var indexStore = stateStoreFactory.GetStore<List<string>>(Subscription);
+        var indexStore = stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Subscription);
         var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
@@ -123,7 +122,7 @@ public class SubscriptionExpirationService : BackgroundService
         var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var expiredCount = 0;
 
-        var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(Subscription);
+        var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         foreach (var subscriptionId in subscriptionIndex)
         {
             try

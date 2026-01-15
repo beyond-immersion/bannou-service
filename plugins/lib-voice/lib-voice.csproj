@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
   </ItemGroup>
 
   <ItemGroup>
