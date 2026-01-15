@@ -312,8 +312,9 @@ public class TokenServiceTests
         var result = await _service.GenerateAccessTokenAsync(account);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.NotNull(result.accessToken);
+        Assert.NotEmpty(result.accessToken);
+        Assert.NotNull(result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
@@ -339,8 +340,9 @@ public class TokenServiceTests
         var result = await _service.GenerateAccessTokenAsync(account);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.NotNull(result.accessToken);
+        Assert.NotEmpty(result.accessToken);
+        Assert.NotNull(result.sessionId);
 
         // Cleanup - restore valid config for other tests
         TestConfigurationHelper.ConfigureJwt();
@@ -386,10 +388,11 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var token = await _service.GenerateAccessTokenAsync(account);
+        var (token, sessionId) = await _service.GenerateAccessTokenAsync(account);
 
         // Assert
         Assert.False(string.IsNullOrWhiteSpace(token));
+        Assert.NotNull(sessionId);
         // JWT has 3 parts separated by dots
         Assert.Equal(3, token.Split('.').Length);
     }
@@ -426,10 +429,11 @@ public class TokenServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var token = await _service.GenerateAccessTokenAsync(account);
+        var (token, sessionId) = await _service.GenerateAccessTokenAsync(account);
 
         // Assert - Should still generate a valid JWT
         Assert.False(string.IsNullOrWhiteSpace(token));
+        Assert.NotNull(sessionId);
         Assert.Equal(3, token.Split('.').Length);
     }
 
