@@ -40,12 +40,16 @@ public sealed class BannouBundleWriter : IDisposable
     /// <param name="filename">Original filename.</param>
     /// <param name="contentType">MIME content type.</param>
     /// <param name="data">Asset data to compress and add.</param>
+    /// <param name="externalAssetId">Optional external asset identifier for cross-system references.</param>
+    /// <param name="tags">Optional tags for smart bundling decisions.</param>
     /// <param name="metadata">Optional asset metadata.</param>
     public void AddAsset(
         string assetId,
         string filename,
         string contentType,
         ReadOnlySpan<byte> data,
+        string? externalAssetId = null,
+        IReadOnlyList<string>? tags = null,
         IReadOnlyDictionary<string, object>? metadata = null)
     {
         ThrowIfDisposedOrFinalized();
@@ -78,6 +82,8 @@ public sealed class BannouBundleWriter : IDisposable
             CompressedSize = compressedSize,
             ContentHash = contentHash,
             Index = index,
+            ExternalAssetId = externalAssetId,
+            Tags = tags,
             Metadata = metadata
         };
         _assetEntries.Add(assetEntry);
@@ -103,11 +109,21 @@ public sealed class BannouBundleWriter : IDisposable
     /// <summary>
     /// Adds an asset from a stream.
     /// </summary>
+    /// <param name="assetId">Unique asset identifier.</param>
+    /// <param name="filename">Original filename.</param>
+    /// <param name="contentType">MIME content type.</param>
+    /// <param name="dataStream">Stream containing asset data.</param>
+    /// <param name="externalAssetId">Optional external asset identifier for cross-system references.</param>
+    /// <param name="tags">Optional tags for smart bundling decisions.</param>
+    /// <param name="metadata">Optional asset metadata.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AddAssetAsync(
         string assetId,
         string filename,
         string contentType,
         Stream dataStream,
+        string? externalAssetId = null,
+        IReadOnlyList<string>? tags = null,
         IReadOnlyDictionary<string, object>? metadata = null,
         CancellationToken cancellationToken = default)
     {
@@ -118,7 +134,7 @@ public sealed class BannouBundleWriter : IDisposable
         await dataStream.CopyToAsync(memoryStream, cancellationToken);
         var data = memoryStream.ToArray();
 
-        AddAsset(assetId, filename, contentType, data, metadata);
+        AddAsset(assetId, filename, contentType, data, externalAssetId, tags, metadata);
     }
 
     /// <summary>

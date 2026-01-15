@@ -1991,6 +1991,21 @@ components:
           type: integer
           format: int64
           description: Asset size in bytes (uncompressed)
+        externalAssetId:
+          type: string
+          nullable: true
+          description: |
+            External asset identifier for cross-system references.
+            Used to map platform-internal IDs to external catalogs or asset databases.
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Tags associated with this asset within the bundle.
+            Used for smart bundling decisions (e.g., group all "furniture" assets together).
+            Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
 
     AssetConflict:
       type: object

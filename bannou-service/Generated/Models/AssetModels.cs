@@ -1209,6 +1209,23 @@ public partial class BundleAssetEntry
     [System.Text.Json.Serialization.JsonPropertyName("size")]
     public long Size { get; set; } = default!;
 
+    /// <summary>
+    /// External asset identifier for cross-system references.
+    /// <br/>Used to map platform-internal IDs to external catalogs or asset databases.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("externalAssetId")]
+    public string? ExternalAssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Tags associated with this asset within the bundle.
+    /// <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
+    /// <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
 }
 
 /// <summary>

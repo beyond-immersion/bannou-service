@@ -5,8 +5,9 @@ using System.Diagnostics;
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
 /// <summary>
-/// Processor for 3D model assets.
-/// Handles mesh optimization, LOD generation, and format conversion.
+/// Pass-through stub processor for 3D model assets.
+/// Currently performs validation and copies assets unchanged to processed location.
+/// Actual processing (mesh optimization, LOD generation, format conversion) not yet implemented.
 /// </summary>
 public sealed class ModelProcessor : IAssetProcessor
 {
@@ -149,8 +150,8 @@ public sealed class ModelProcessor : IAssetProcessor
             var generateLods = GetProcessingOption(context, "generate_lods", true);
             var lodLevels = GetProcessingOption(context, "lod_levels", 3);
 
-            // TODO: Implement actual model processing using Assimp or similar
-            // For now, we do pass-through processing with metadata extraction
+            // Pass-through processing: copy asset unchanged to processed location.
+            // Processing options are recorded in metadata for future implementation.
             var processedKey = $"processed/{context.AssetId}/{context.Filename}";
             var bucket = _configuration.StorageBucket;
 

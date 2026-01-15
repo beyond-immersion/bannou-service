@@ -119,6 +119,16 @@ public sealed class BundleAssetEntry
     public required int Index { get; init; }
 
     /// <summary>
+    /// External asset identifier for cross-system references.
+    /// </summary>
+    public string? ExternalAssetId { get; init; }
+
+    /// <summary>
+    /// Tags associated with this asset for smart bundling decisions.
+    /// </summary>
+    public IReadOnlyList<string>? Tags { get; init; }
+
+    /// <summary>
     /// Optional asset-specific metadata.
     /// </summary>
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }

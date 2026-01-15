@@ -135,6 +135,16 @@ public sealed class StoredBundleAssetEntry
     public required long Size { get; init; }
 
     /// <summary>
+    /// External asset identifier for cross-system references.
+    /// </summary>
+    public string? ExternalAssetId { get; init; }
+
+    /// <summary>
+    /// Tags associated with this asset within the bundle.
+    /// </summary>
+    public List<string>? Tags { get; init; }
+
+    /// <summary>
     /// Converts to API response model.
     /// </summary>
     public BundleAssetEntry ToApiModel()
@@ -145,7 +155,9 @@ public sealed class StoredBundleAssetEntry
             ContentHash = ContentHash,
             Filename = Filename,
             ContentType = ContentType,
-            Size = Size
+            Size = Size,
+            ExternalAssetId = ExternalAssetId,
+            Tags = Tags
         };
     }
 }

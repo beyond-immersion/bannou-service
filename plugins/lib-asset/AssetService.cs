@@ -350,13 +350,16 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.NotFound, null);
             }
 
-            // Get file metadata for hash calculation
-            var objectMeta = await _storageProvider.GetObjectMetadataAsync(
+            // Compute SHA256 content hash by downloading the file
+            string contentHash;
+            using (var objectStream = await _storageProvider.GetObjectAsync(
                 _configuration.StorageBucket,
-                session.StorageKey).ConfigureAwait(false);
+                session.StorageKey).ConfigureAwait(false))
+            {
+                var hashBytes = await SHA256.HashDataAsync(objectStream).ConfigureAwait(false);
+                contentHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+            }
 
-            // Generate asset ID from content hash (ETag is typically MD5, we'll use it as-is for now)
-            var contentHash = objectMeta.ETag.Replace("\"", ""); // Remove quotes from ETag
             var assetId = GenerateAssetId(session.ContentType, contentHash);
 
             // Determine final storage key
@@ -1048,7 +1051,7 @@ public partial class AssetService : IAssetService
                     Key = bundlePath,
                     Size = bundleStream.Length,
                     AssetCount = body.AssetIds.Count,
-                    Compression = null, // TODO: Map compression type when implemented
+                    Compression = BeyondImmersion.BannouService.Events.CompressionTypeEnum.Lz4,
                     Owner = body.Owner
                 }).ConfigureAwait(false);
 
@@ -1577,27 +1580,12 @@ public partial class AssetService : IAssetService
             var standaloneAssetSize = standalonesToInclude.Sum(a => a.Size);
             var totalSize = bundleAssetSize + standaloneAssetSize;
             var totalAssetCount = assetsToInclude.Count + standalonesToInclude.Count;
-            var largeFileThreshold = (long)_configuration.LargeFileThresholdMb * 1024 * 1024;
 
-            // For large metabundles, queue to processing pool
-            if (totalSize > largeFileThreshold)
-            {
-                _logger.LogInformation(
-                    "CreateMetabundle: Large metabundle ({Size} bytes > {Threshold}), queueing to processing pool",
-                    totalSize, largeFileThreshold);
+            _logger.LogInformation(
+                "CreateMetabundle: Creating metabundle {MetabundleId} with {AssetCount} assets ({Size} bytes)",
+                body.MetabundleId, totalAssetCount, totalSize);
 
-                // TODO: Implement async metabundle creation job
-                // For now, return queued status
-                return (StatusCodes.OK, new CreateMetabundleResponse
-                {
-                    MetabundleId = body.MetabundleId,
-                    Status = CreateMetabundleResponseStatus.Queued,
-                    AssetCount = totalAssetCount,
-                    SizeBytes = totalSize
-                });
-            }
-
-            // Create metabundle inline
+            // Create metabundle
             var metabundlePath = $"{_configuration.BundleCurrentPathPrefix}/{body.MetabundleId}.bundle";
 
             using var bundleStream = new MemoryStream();
@@ -1613,9 +1601,7 @@ public partial class AssetService : IAssetService
                 // Get source bundle info
                 var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
 
-                // Download asset data from source bundle
-                // Note: This extracts from the .bannou file - in a full implementation,
-                // we'd use BannouBundleReader to stream assets directly
+                // Download source bundle and extract asset data
                 using var sourceBundleStream = await _storageProvider.GetObjectAsync(
                     sourceBundle.Bucket ?? bucket,
                     sourceBundle.StorageKey).ConfigureAwait(false);
@@ -2138,9 +2124,9 @@ public partial class AssetService : IAssetService
 
                 var metadata = record.ToPublicMetadata();
 
-                // Note: AssetWithDownloadUrl requires DownloadUrl and ExpiresAt fields
-                // We always generate them for response consistency, but IncludeDownloadUrls=false
-                // signals client won't use them (optimization for server can be added later)
+                // Generate download URL (required by AssetWithDownloadUrl schema)
+                // When includeDownloadUrls=false, URLs are still generated for API consistency
+                // but clients can ignore them. Future optimization: use separate response type.
                 var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
                     record.Bucket,
                     record.StorageKey,
