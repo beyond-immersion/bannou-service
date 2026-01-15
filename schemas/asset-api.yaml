@@ -1362,14 +1362,14 @@ paths:
         \            \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n             \
         \       \"description\": \"Filter bundles that do NOT have these tag keys\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
-        #/$defs/BundleStatus\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Filter by bundle status (null for active only by default)\"\n            \
-        \    },\n                \"createdAfter\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Filter bundles created
-        after this time\"\n                },\n                \"createdBefore\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Filter bundles created before this time\"\n                },\n                \"nameContains\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        #/$defs/BundleLifecycle\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by lifecycle status (null for active only by default)\"\n         \
+        \       },\n                \"createdAfter\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Filter bundles
+        created after this time\"\n                },\n                \"createdBefore\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Filter bundles created before this time\"\n                },\n                \"nameContains\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter bundles with name containing this string (case-insensitive)\"\n                },\n                \"owner\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by bundle owner account ID\"\n                },\n                \"realm\": {\n                    \"\
@@ -1390,7 +1390,7 @@ paths:
         \                \"offset\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
         \                    \"description\": \"Pagination offset\"\n                },\n                \"includeDeleted\"\
         : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Include soft-deleted bundles in results\"\n                }\n            }\n        },\n        \"BundleStatus\"\
+        : \"Include soft-deleted bundles in results\"\n                }\n            }\n        },\n        \"BundleLifecycle\"\
         : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
         ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
@@ -1406,16 +1406,16 @@ paths:
         : false,\n            \"description\": \"Bundle query results\",\n            \"required\": [\n                \"\
         bundles\",\n                \"totalCount\",\n                \"limit\",\n                \"offset\"\n            ],\n\
         \            \"properties\": {\n                \"bundles\": {\n                    \"type\": \"array\",\n       \
-        \             \"items\": {\n                        \"$ref\": \"#/$defs/BundleMetadata\"\n                    },\n\
-        \                    \"description\": \"Matching bundles\"\n                },\n                \"totalCount\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Total number of matching bundles
+        \             \"items\": {\n                        \"$ref\": \"#/$defs/BundleInfo\"\n                    },\n   \
+        \                 \"description\": \"Matching bundles\"\n                },\n                \"totalCount\": {\n \
+        \                   \"type\": \"integer\",\n                    \"description\": \"Total number of matching bundles
         (for pagination)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
         \                    \"description\": \"Page size used\"\n                },\n                \"offset\": {\n    \
         \                \"type\": \"integer\",\n                    \"description\": \"Page offset used\"\n             \
-        \   }\n            }\n        },\n        \"BundleMetadata\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Complete metadata for an asset bundle\",\n        \
-        \    \"required\": [\n                \"bundleId\",\n                \"bundleType\",\n                \"version\"\
-        ,\n                \"metadataVersion\",\n                \"owner\",\n                \"realm\",\n                \"\
+        \   }\n            }\n        },\n        \"BundleInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Complete metadata for an asset bundle (API response model)\",\n         \
+        \   \"required\": [\n                \"bundleId\",\n                \"bundleType\",\n                \"version\",\n\
+        \                \"metadataVersion\",\n                \"owner\",\n                \"realm\",\n                \"\
         status\",\n                \"assetCount\",\n                \"createdAt\"\n            ],\n            \"properties\"\
         : {\n                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Unique bundle identifier\"\n                },\n                \"bundleType\": {\n                    \"$ref\"\
@@ -1433,7 +1433,7 @@ paths:
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
         \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
         \   \"description\": \"Key-value tags for categorization and filtering\"\n                },\n                \"status\"\
-        : {\n                    \"$ref\": \"#/$defs/BundleStatus\",\n                    \"description\": \"Bundle lifecycle
+        : {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\": \"Bundle lifecycle
         status\"\n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n    \
         \                \"description\": \"Number of assets in the bundle\"\n                },\n                \"sizeBytes\"\
         : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
@@ -1450,8 +1450,8 @@ paths:
         n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
         n\"\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
         \  \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n         \
-        \   ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleStatus\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
+        \   ],\n            \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleLifecycle\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
         ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
         Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
         is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
@@ -1533,12 +1533,12 @@ paths:
         changes in this version\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Reason provided for the change\"\
         \n                },\n                \"snapshot\": {\n                    \"allOf\": [\n                        {\n\
-        \                            \"$ref\": \"#/$defs/BundleMetadata\"\n                        }\n                   \
-        \ ],\n                    \"nullable\": true,\n                    \"description\": \"Full metadata snapshot at this
-        version (only for current version)\"\n                }\n            }\n        },\n        \"BundleMetadata\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Complete metadata for an asset bundle\",\n            \"required\": [\n                \"bundleId\",\n           \
-        \     \"bundleType\",\n                \"version\",\n                \"metadataVersion\",\n                \"owner\"\
+        \                            \"$ref\": \"#/$defs/BundleInfo\"\n                        }\n                    ],\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Full metadata snapshot at this version
+        (only for current version)\"\n                }\n            }\n        },\n        \"BundleInfo\": {\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Complete metadata
+        for an asset bundle (API response model)\",\n            \"required\": [\n                \"bundleId\",\n        \
+        \        \"bundleType\",\n                \"version\",\n                \"metadataVersion\",\n                \"owner\"\
         ,\n                \"realm\",\n                \"status\",\n                \"assetCount\",\n                \"createdAt\"\
         \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
         string\",\n                    \"description\": \"Unique bundle identifier\"\n                },\n               \
@@ -1556,8 +1556,8 @@ paths:
         to\"\n                },\n                \"tags\": {\n                    \"type\": \"object\",\n               \
         \     \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n        \
         \            \"nullable\": true,\n                    \"description\": \"Key-value tags for categorization and filtering\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BundleStatus\",\n   \
-        \                 \"description\": \"Bundle lifecycle status\"\n                },\n                \"assetCount\"\
+        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n\
+        \                    \"description\": \"Bundle lifecycle status\"\n                },\n                \"assetCount\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of assets in the bundle\"\
         \n                },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n             \
         \       \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Bundle
@@ -1574,9 +1574,9 @@ paths:
         metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"Realm\": {\n            \"type\":
         \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"\
         fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs
-        to\"\n        },\n        \"BundleStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n      \
-        \          \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n           \
-        \ \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle has been
+        to\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\": [\n   \
+        \             \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n        \
+        \    \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle has been
         soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\n\"\n    \
         \    }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List version history for a bundle\",\n    \"description\": \"Get the version
@@ -2925,6 +2925,20 @@ components:
     BundleStatus:
       type: string
       enum:
+      - pending
+      - processing
+      - ready
+      - failed
+      description: |
+        Bundle processing status:
+        - pending: Bundle creation is pending/queued
+        - processing: Bundle is being processed
+        - ready: Bundle is ready for download
+        - failed: Bundle creation failed
+
+    BundleLifecycle:
+      type: string
+      enum:
       - active
       - deleted
       - processing
@@ -2934,10 +2948,10 @@ components:
         - deleted: Bundle has been soft-deleted (within retention period)
         - processing: Bundle is being processed (metabundle creation)
 
-    BundleMetadata:
+    BundleInfo:
       type: object
       additionalProperties: false
-      description: Complete metadata for an asset bundle
+      description: Complete metadata for an asset bundle (API response model)
       required:
       - bundleId
       - bundleType
@@ -2982,7 +2996,7 @@ components:
           nullable: true
           description: Key-value tags for categorization and filtering
         status:
-          $ref: '#/components/schemas/BundleStatus'
+          $ref: '#/components/schemas/BundleLifecycle'
           description: Bundle lifecycle status
         assetCount:
           type: integer
@@ -3188,9 +3202,9 @@ components:
           description: Filter bundles that do NOT have these tag keys
         status:
           allOf:
-          - $ref: '#/components/schemas/BundleStatus'
+          - $ref: '#/components/schemas/BundleLifecycle'
           nullable: true
-          description: Filter by bundle status (null for active only by default)
+          description: Filter by lifecycle status (null for active only by default)
         createdAfter:
           type: string
           format: date-time
@@ -3261,7 +3275,7 @@ components:
         bundles:
           type: array
           items:
-            $ref: '#/components/schemas/BundleMetadata'
+            $ref: '#/components/schemas/BundleInfo'
           description: Matching bundles
         totalCount:
           type: integer
@@ -3348,6 +3362,6 @@ components:
           description: Reason provided for the change
         snapshot:
           allOf:
-          - $ref: '#/components/schemas/BundleMetadata'
+          - $ref: '#/components/schemas/BundleInfo'
           nullable: true
           description: Full metadata snapshot at this version (only for current version)

@@ -211,6 +211,479 @@
             Processor-specific metadata (e.g., Stride GUID, Unity asset path).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient">
+            <summary>
+            Client for managing bundle metadata, lifecycle, and version history.
+            Provides high-level operations for bundle CRUD, soft-delete/restore, and querying.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.#ctor(BeyondImmersion.Bannou.Client.BannouClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient})">
+            <summary>
+            Creates a new bundle client using an existing connected client.
+            </summary>
+            <param name="client">Connected Bannou client.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.FromUploader(BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient})">
+            <summary>
+            Creates a new bundle client from uploader (shares connection).
+            </summary>
+            <param name="uploader">Connected uploader.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.GetAsync(System.String,BeyondImmersion.BannouService.Asset.BundleFormat,System.Threading.CancellationToken)">
+            <summary>
+            Gets bundle metadata and download URL.
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="format">Optional bundle format (default: zip).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Bundle information with download URL.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.UpdateAsync(System.String,BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate,System.Threading.CancellationToken)">
+            <summary>
+            Updates bundle metadata.
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="update">Metadata updates to apply.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Update result with new version.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.DeleteAsync(System.String,System.String,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Soft-deletes a bundle (can be restored within retention period).
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="reason">Optional deletion reason.</param>
+            <param name="permanent">If true, permanently deletes the bundle.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Deletion result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.RestoreAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Restores a soft-deleted bundle.
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="reason">Optional restore reason.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Restore result.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.GetVersionsAsync(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Lists version history for a bundle.
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="limit">Maximum versions to return (default 50).</param>
+            <param name="offset">Pagination offset (default 0).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Version history list.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.QueryAsync(BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery,System.Threading.CancellationToken)">
+            <summary>
+            Queries bundles with filters.
+            </summary>
+            <param name="query">Query parameters.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Query results.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.QueryAllAsync(BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery,System.Threading.CancellationToken)">
+            <summary>
+            Enumerates all bundles matching query (handles pagination automatically).
+            </summary>
+            <param name="query">Query parameters.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Async enumerable of bundle metadata.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult">
+            <summary>
+            Result of getting a bundle with download URL.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.BundleId">
+            <summary>
+            Bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.Version">
+            <summary>
+            Bundle version string.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.DownloadUrl">
+            <summary>
+            Presigned download URL.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.Format">
+            <summary>
+            Format of the downloadable bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.ExpiresAt">
+            <summary>
+            When the download URL expires.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.Size">
+            <summary>
+            Bundle file size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleResult.FromCache">
+            <summary>
+            True if ZIP format was served from cache.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult">
+            <summary>
+            Bundle metadata information.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.BundleId">
+            <summary>
+            Unique bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.BundleType">
+            <summary>
+            Bundle type (source or metabundle).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Version">
+            <summary>
+            Bundle content version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.MetadataVersion">
+            <summary>
+            Metadata version number.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Name">
+            <summary>
+            Human-readable name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Description">
+            <summary>
+            Description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Owner">
+            <summary>
+            Owner identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Realm">
+            <summary>
+            Target realm.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Tags">
+            <summary>
+            Key-value tags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Status">
+            <summary>
+            Lifecycle status.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.AssetCount">
+            <summary>
+            Number of assets in bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.SizeBytes">
+            <summary>
+            Bundle size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.CreatedAt">
+            <summary>
+            When the bundle was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.UpdatedAt">
+            <summary>
+            When the bundle was last updated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.DeletedAt">
+            <summary>
+            When the bundle was deleted.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate">
+            <summary>
+            Metadata update request.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.Name">
+            <summary>
+            New name (null to keep existing).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.Description">
+            <summary>
+            New description (null to keep existing).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.Tags">
+            <summary>
+            Replace all tags with these.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.AddTags">
+            <summary>
+            Add or update these tags.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.RemoveTags">
+            <summary>
+            Remove these tag keys.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate.Reason">
+            <summary>
+            Reason for the update (optional, for audit trail).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult">
+            <summary>
+            Result of updating a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.BundleId">
+            <summary>
+            Bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.Version">
+            <summary>
+            New metadata version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.PreviousVersion">
+            <summary>
+            Previous metadata version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.Changes">
+            <summary>
+            List of changes made.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.UpdatedAt">
+            <summary>
+            When the update was made.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult">
+            <summary>
+            Result of deleting a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.BundleId">
+            <summary>
+            Bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.Status">
+            <summary>
+            Deletion status (deleted or permanently_deleted).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.DeletedAt">
+            <summary>
+            When the bundle was deleted.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.RetentionUntil">
+            <summary>
+            When the bundle will be permanently purged (null if permanent).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult">
+            <summary>
+            Result of restoring a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.BundleId">
+            <summary>
+            Bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.Status">
+            <summary>
+            Current status (should be "active").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.RestoredAt">
+            <summary>
+            When the bundle was restored.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.RestoredFromVersion">
+            <summary>
+            Version the bundle was restored from.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult">
+            <summary>
+            Result of getting version history.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult.BundleId">
+            <summary>
+            Bundle identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult.CurrentVersion">
+            <summary>
+            Current metadata version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult.Versions">
+            <summary>
+            Version records.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult.TotalCount">
+            <summary>
+            Total number of versions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord">
+            <summary>
+            A single version record.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord.Version">
+            <summary>
+            Version number.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord.CreatedAt">
+            <summary>
+            When this version was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord.CreatedBy">
+            <summary>
+            Who created this version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord.Changes">
+            <summary>
+            Changes made in this version.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionRecord.Reason">
+            <summary>
+            Reason for the change (optional).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery">
+            <summary>
+            Query parameters for searching bundles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Owner">
+            <summary>
+            Owner to filter by (required).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Tags">
+            <summary>
+            Filter by exact tag matches.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.TagExists">
+            <summary>
+            Filter by tags that exist (any value).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.TagNotExists">
+            <summary>
+            Filter by tags that don't exist.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Status">
+            <summary>
+            Filter by status (active, deleted, processing).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.CreatedAfter">
+            <summary>
+            Filter bundles created after this time.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.CreatedBefore">
+            <summary>
+            Filter bundles created before this time.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.NameContains">
+            <summary>
+            Filter by name containing this string.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Realm">
+            <summary>
+            Filter by realm.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.BundleType">
+            <summary>
+            Filter by bundle type (source, metabundle).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Limit">
+            <summary>
+            Maximum results to return.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Offset">
+            <summary>
+            Pagination offset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.IncludeDeleted">
+            <summary>
+            Include soft-deleted bundles.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult">
+            <summary>
+            Result of querying bundles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult.Bundles">
+            <summary>
+            Matching bundles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult.TotalCount">
+            <summary>
+            Total count of matching bundles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult.Limit">
+            <summary>
+            Limit used in query.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult.Offset">
+            <summary>
+            Offset used in query.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType">
             <summary>
             General category of an asset.

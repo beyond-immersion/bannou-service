@@ -1841,6 +1841,34 @@ public partial class BulkGetAssetsResponse
 }
 
 /// <summary>
+/// Bundle processing status:
+/// <br/>- pending: Bundle creation is pending/queued
+/// <br/>- processing: Bundle is being processed
+/// <br/>- ready: Bundle is ready for download
+/// <br/>- failed: Bundle creation failed
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BundleStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
+    Pending = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Bundle lifecycle status:
 /// <br/>- active: Bundle is available for use
 /// <br/>- deleted: Bundle has been soft-deleted (within retention period)
@@ -1849,7 +1877,7 @@ public partial class BulkGetAssetsResponse
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BundleStatus
+public enum BundleLifecycle
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"active")]
@@ -1865,10 +1893,10 @@ public enum BundleStatus
 #pragma warning restore CS1591
 
 /// <summary>
-/// Complete metadata for an asset bundle
+/// Complete metadata for an asset bundle (API response model)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleMetadata
+public partial class BundleInfo
 {
 
     /// <summary>
@@ -1944,7 +1972,7 @@ public partial class BundleMetadata
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleStatus Status { get; set; } = default!;
+    public BundleLifecycle Status { get; set; } = default!;
 
     /// <summary>
     /// Number of assets in the bundle
@@ -2233,11 +2261,11 @@ public partial class QueryBundlesRequest
     public System.Collections.Generic.ICollection<string>? TagNotExists { get; set; } = default!;
 
     /// <summary>
-    /// Filter by bundle status (null for active only by default)
+    /// Filter by lifecycle status (null for active only by default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BundleStatus? Status { get; set; } = default!;
+    public BundleLifecycle? Status { get; set; } = default!;
 
     /// <summary>
     /// Filter bundles created after this time
@@ -2324,7 +2352,7 @@ public partial class QueryBundlesResponse
     [System.Text.Json.Serialization.JsonPropertyName("bundles")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<BundleMetadata> Bundles { get; set; } = new System.Collections.ObjectModel.Collection<BundleMetadata>();
+    public System.Collections.Generic.ICollection<BundleInfo> Bundles { get; set; } = new System.Collections.ObjectModel.Collection<BundleInfo>();
 
     /// <summary>
     /// Total number of matching bundles (for pagination)
@@ -2459,7 +2487,7 @@ public partial class BundleVersionRecord
     /// Full metadata snapshot at this version (only for current version)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("snapshot")]
-    public BundleMetadata? Snapshot { get; set; } = default!;
+    public BundleInfo? Snapshot { get; set; } = default!;
 
 }
 

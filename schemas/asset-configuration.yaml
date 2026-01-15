@@ -216,6 +216,13 @@ x-service-configuration:
       env: ASSET_ZIP_CACHE_TTL_HOURS
       default: 24
 
+    DeletedBundleRetentionDays:
+      type: integer
+      nullable: true
+      description: Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
+      env: ASSET_DELETED_BUNDLE_RETENTION_DAYS
+      default: 30
+
     # Webhook Configuration
     MinioWebhookSecret:
       type: string

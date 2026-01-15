@@ -1025,7 +1025,7 @@ public partial class AssetService : IAssetService
                 Bucket = bucket,
                 SizeBytes = bundleStream.Length,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Status = BundleStatus.Ready,
+                Status = Models.BundleStatus.Ready,
                 Owner = body.Owner
             };
 
@@ -1109,7 +1109,7 @@ public partial class AssetService : IAssetService
             }
 
             // Check if bundle is ready
-            if (bundleMetadata.Status != BundleStatus.Ready)
+            if (bundleMetadata.Status != Models.BundleStatus.Ready)
             {
                 _logger.LogWarning("GetBundle: Bundle not ready: {BundleId}, status={Status}",
                     body.BundleId, bundleMetadata.Status);
@@ -1424,7 +1424,7 @@ public partial class AssetService : IAssetService
                         return (StatusCodes.NotFound, null);
                     }
 
-                    if (sourceBundle.Status != BundleStatus.Ready)
+                    if (sourceBundle.Status != Models.BundleStatus.Ready)
                     {
                         _logger.LogWarning("CreateMetabundle: Source bundle {BundleId} not ready (status={Status})",
                             sourceBundleId, sourceBundle.Status);
@@ -1716,7 +1716,7 @@ public partial class AssetService : IAssetService
                 Bucket = bucket,
                 SizeBytes = bundleStream.Length,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Status = BundleStatus.Ready,
+                Status = Models.BundleStatus.Ready,
                 Owner = body.Owner,
                 SourceBundles = sourceBundleRefs,
                 StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
@@ -1837,7 +1837,7 @@ public partial class AssetService : IAssetService
                         }
                     }
 
-                    if (bundleMeta == null || bundleMeta.Status != BundleStatus.Ready)
+                    if (bundleMeta == null || bundleMeta.Status != Models.BundleStatus.Ready)
                     {
                         continue;
                     }
@@ -2590,6 +2590,708 @@ public partial class AssetService : IAssetService
             metadata.ProcessingStatus = ProcessingStatus.Failed;
             await assetStore.SaveAsync($"{_configuration.AssetKeyPrefix}{assetId}", metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    #endregion
+
+    #region Bundle Management
+
+    /// <summary>
+    /// Update bundle metadata (name, description, tags).
+    /// </summary>
+    public async Task<(StatusCodes, UpdateBundleResponse?)> UpdateBundleAsync(UpdateBundleRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("UpdateBundle: bundleId={BundleId}", body.BundleId);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(body.BundleId))
+            {
+                _logger.LogWarning("UpdateBundle: Empty bundleId");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
+
+            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            if (bundle == null)
+            {
+                _logger.LogWarning("UpdateBundle: Bundle {BundleId} not found", body.BundleId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (bundle.LifecycleStatus == Models.BundleLifecycleStatus.Deleted)
+            {
+                _logger.LogWarning("UpdateBundle: Bundle {BundleId} is deleted", body.BundleId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Track changes
+            var changes = new List<string>();
+            var previousVersion = bundle.MetadataVersion;
+
+            // Apply updates
+            if (body.Name != null && body.Name != bundle.Name)
+            {
+                bundle.Name = body.Name;
+                changes.Add("name changed");
+            }
+
+            if (body.Description != null && body.Description != bundle.Description)
+            {
+                bundle.Description = body.Description;
+                changes.Add("description changed");
+            }
+
+            // Handle tag operations
+            bundle.Tags ??= new Dictionary<string, string>();
+
+            if (body.Tags != null)
+            {
+                // Replace all tags
+                bundle.Tags = new Dictionary<string, string>(body.Tags);
+                changes.Add("tags replaced");
+            }
+            else
+            {
+                // Add tags
+                if (body.AddTags != null)
+                {
+                    foreach (var (key, value) in body.AddTags)
+                    {
+                        bundle.Tags[key] = value;
+                        changes.Add($"tag '{key}' added");
+                    }
+                }
+
+                // Remove tags
+                if (body.RemoveTags != null)
+                {
+                    foreach (var key in body.RemoveTags)
+                    {
+                        if (bundle.Tags.Remove(key))
+                        {
+                            changes.Add($"tag '{key}' removed");
+                        }
+                    }
+                }
+            }
+
+            if (changes.Count == 0)
+            {
+                // No changes made
+                return (StatusCodes.OK, new UpdateBundleResponse
+                {
+                    BundleId = body.BundleId,
+                    Version = bundle.MetadataVersion,
+                    PreviousVersion = bundle.MetadataVersion,
+                    Changes = new List<string> { "no changes" },
+                    UpdatedAt = bundle.UpdatedAt ?? bundle.CreatedAt
+                });
+            }
+
+            // Increment version and set updated timestamp
+            bundle.MetadataVersion++;
+            bundle.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save version history record
+            var versionRecord = new Models.StoredBundleVersionRecord
+            {
+                BundleId = body.BundleId,
+                Version = bundle.MetadataVersion,
+                CreatedAt = bundle.UpdatedAt.Value,
+                CreatedBy = bundle.Owner ?? "system",
+                Changes = changes,
+                Reason = body.Reason
+            };
+
+            var versionKey = $"bundle-version:{body.BundleId}:{bundle.MetadataVersion}";
+            await versionStore.SaveAsync(versionKey, versionRecord, cancellationToken: cancellationToken);
+
+            // Add to version index for efficient listing
+            var versionIndexKey = $"bundle-version-index:{body.BundleId}";
+            await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
+
+            // Save updated bundle
+            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+
+            // Publish event
+            await _messageBus.TryPublishAsync("asset.bundle.updated", new BeyondImmersion.BannouService.Events.BundleUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = bundle.UpdatedAt.Value,
+                BundleId = body.BundleId,
+                Version = bundle.MetadataVersion,
+                PreviousVersion = previousVersion,
+                Changes = changes,
+                Reason = body.Reason,
+                UpdatedBy = bundle.Owner ?? "system",
+                Realm = MapRealmToEventEnum(bundle.Realm)
+            });
+
+            _logger.LogInformation("UpdateBundle: Updated bundle {BundleId} from version {PreviousVersion} to {NewVersion}",
+                body.BundleId, previousVersion, bundle.MetadataVersion);
+
+            return (StatusCodes.OK, new UpdateBundleResponse
+            {
+                BundleId = body.BundleId,
+                Version = bundle.MetadataVersion,
+                PreviousVersion = previousVersion,
+                Changes = changes,
+                UpdatedAt = bundle.UpdatedAt.Value
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "UpdateBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/update",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Soft-delete or permanently delete a bundle.
+    /// </summary>
+    public async Task<(StatusCodes, DeleteBundleResponse?)> DeleteBundleAsync(DeleteBundleRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("DeleteBundle: bundleId={BundleId}, permanent={Permanent}", body.BundleId, body.Permanent);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(body.BundleId))
+            {
+                _logger.LogWarning("DeleteBundle: Empty bundleId");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
+
+            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            if (bundle == null)
+            {
+                _logger.LogWarning("DeleteBundle: Bundle {BundleId} not found", body.BundleId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var deletedAt = DateTimeOffset.UtcNow;
+            DateTimeOffset? retentionUntil = null;
+
+            if (body.Permanent == true)
+            {
+                // Permanent delete - remove from storage and state
+                // Delete the actual bundle file
+                if (!string.IsNullOrEmpty(bundle.StorageKey))
+                {
+                    try
+                    {
+                        await _storageProvider.DeleteObjectAsync(
+                            bundle.Bucket ?? _configuration.StorageBucket,
+                            bundle.StorageKey).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "DeleteBundle: Failed to delete storage object for bundle {BundleId}", body.BundleId);
+                        // Continue with metadata deletion even if storage deletion fails
+                    }
+                }
+
+                // Delete metadata
+                await bundleStore.DeleteAsync(bundleKey, cancellationToken);
+
+                // Remove from asset-bundle index
+                await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, cancellationToken);
+
+                _logger.LogInformation("DeleteBundle: Permanently deleted bundle {BundleId}", body.BundleId);
+            }
+            else
+            {
+                // Soft delete - mark as deleted with retention period
+                var retentionDays = _configuration.DeletedBundleRetentionDays > 0 ? _configuration.DeletedBundleRetentionDays : 30;
+                retentionUntil = deletedAt.AddDays(retentionDays);
+
+                bundle.LifecycleStatus = Models.BundleLifecycleStatus.Deleted;
+                bundle.DeletedAt = deletedAt;
+                bundle.MetadataVersion++;
+                bundle.UpdatedAt = deletedAt;
+
+                // Save version history
+                var versionRecord = new Models.StoredBundleVersionRecord
+                {
+                    BundleId = body.BundleId,
+                    Version = bundle.MetadataVersion,
+                    CreatedAt = deletedAt,
+                    CreatedBy = bundle.Owner ?? "system",
+                    Changes = new List<string> { "bundle deleted" },
+                    Reason = body.Reason,
+                    Snapshot = bundle // Save snapshot for potential restore
+                };
+
+                var versionKey = $"bundle-version:{body.BundleId}:{bundle.MetadataVersion}";
+                await versionStore.SaveAsync(versionKey, versionRecord, cancellationToken: cancellationToken);
+
+                // Add to version index for efficient listing
+                var versionIndexKey = $"bundle-version-index:{body.BundleId}";
+                await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
+
+                await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
+                    body.BundleId, retentionUntil);
+            }
+
+            // Publish event
+            await _messageBus.TryPublishAsync("asset.bundle.deleted", new BeyondImmersion.BannouService.Events.BundleDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = deletedAt,
+                BundleId = body.BundleId,
+                Permanent = body.Permanent == true,
+                RetentionUntil = retentionUntil,
+                Reason = body.Reason,
+                DeletedBy = bundle.Owner ?? "system",
+                Realm = MapRealmToEventEnum(bundle.Realm)
+            });
+
+            return (StatusCodes.OK, new DeleteBundleResponse
+            {
+                BundleId = body.BundleId,
+                Status = body.Permanent == true
+                    ? DeleteBundleResponseStatus.Permanently_deleted
+                    : DeleteBundleResponseStatus.Deleted,
+                DeletedAt = deletedAt,
+                RetentionUntil = retentionUntil
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "DeleteBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/delete",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Restore a soft-deleted bundle.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreBundleResponse?)> RestoreBundleAsync(RestoreBundleRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("RestoreBundle: bundleId={BundleId}", body.BundleId);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(body.BundleId))
+            {
+                _logger.LogWarning("RestoreBundle: Empty bundleId");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
+
+            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            if (bundle == null)
+            {
+                _logger.LogWarning("RestoreBundle: Bundle {BundleId} not found", body.BundleId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (bundle.LifecycleStatus != Models.BundleLifecycleStatus.Deleted)
+            {
+                _logger.LogWarning("RestoreBundle: Bundle {BundleId} is not deleted (status={Status})",
+                    body.BundleId, bundle.LifecycleStatus);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var restoredAt = DateTimeOffset.UtcNow;
+            var restoredFromVersion = bundle.MetadataVersion;
+
+            // Restore the bundle
+            bundle.LifecycleStatus = Models.BundleLifecycleStatus.Active;
+            bundle.DeletedAt = null;
+            bundle.MetadataVersion++;
+            bundle.UpdatedAt = restoredAt;
+
+            // Save version history
+            var versionRecord = new Models.StoredBundleVersionRecord
+            {
+                BundleId = body.BundleId,
+                Version = bundle.MetadataVersion,
+                CreatedAt = restoredAt,
+                CreatedBy = bundle.Owner ?? "system",
+                Changes = new List<string> { "bundle restored" },
+                Reason = body.Reason
+            };
+
+            var versionKey = $"bundle-version:{body.BundleId}:{bundle.MetadataVersion}";
+            await versionStore.SaveAsync(versionKey, versionRecord, cancellationToken: cancellationToken);
+
+            // Add to version index for efficient listing
+            var versionIndexKey = $"bundle-version-index:{body.BundleId}";
+            await versionStore.AddToSetAsync(versionIndexKey, bundle.MetadataVersion, cancellationToken: cancellationToken);
+
+            await bundleStore.SaveAsync(bundleKey, bundle, cancellationToken: cancellationToken);
+
+            // Publish event
+            await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = restoredAt,
+                BundleId = body.BundleId,
+                RestoredFromVersion = restoredFromVersion,
+                Reason = body.Reason,
+                RestoredBy = bundle.Owner ?? "system",
+                Realm = MapRealmToEventEnum(bundle.Realm)
+            });
+
+            _logger.LogInformation("RestoreBundle: Restored bundle {BundleId} from version {RestoredFromVersion}",
+                body.BundleId, restoredFromVersion);
+
+            return (StatusCodes.OK, new RestoreBundleResponse
+            {
+                BundleId = body.BundleId,
+                Status = "active",
+                RestoredAt = restoredAt,
+                RestoredFromVersion = restoredFromVersion
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RestoreBundle: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "RestoreBundle",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/restore",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Query bundles with advanced filters.
+    /// Note: This implementation requires the owner filter to be provided for efficient querying.
+    /// Without owner filter, returns an empty result (full scan not supported).
+    /// </summary>
+    public async Task<(StatusCodes, QueryBundlesResponse?)> QueryBundlesAsync(QueryBundlesRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("QueryBundles: owner={Owner}, tags={TagCount}, nameContains={NameContains}",
+            body.Owner, body.Tags?.Count ?? 0, body.NameContains);
+
+        try
+        {
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+
+            // For now, require owner filter for efficient querying
+            // A full bundle registry would be needed for arbitrary queries
+            if (string.IsNullOrWhiteSpace(body.Owner))
+            {
+                _logger.LogWarning("QueryBundles: Owner filter required for bundle queries");
+                return (StatusCodes.OK, new QueryBundlesResponse
+                {
+                    Bundles = new List<BundleInfo>(),
+                    TotalCount = 0,
+                    Limit = body.Limit,
+                    Offset = body.Offset
+                });
+            }
+
+            // Get bundle IDs from owner index
+            var ownerIndexKey = $"bundle-owner-index:{body.Owner}";
+            var bundleIds = await bundleStore.GetSetAsync<string>(ownerIndexKey, cancellationToken);
+
+            if (bundleIds.Count == 0)
+            {
+                return (StatusCodes.OK, new QueryBundlesResponse
+                {
+                    Bundles = new List<BundleInfo>(),
+                    TotalCount = 0,
+                    Limit = body.Limit,
+                    Offset = body.Offset
+                });
+            }
+
+            // Bulk load bundles
+            var bundleKeys = bundleIds.Select(id => $"{_configuration.BundleKeyPrefix}{id}");
+            var bundleDict = await bundleStore.GetBulkAsync(bundleKeys, cancellationToken);
+            var bundles = bundleDict.Values.AsEnumerable();
+
+            // Apply filters
+            if (body.IncludeDeleted != true)
+            {
+                bundles = bundles.Where(b => b.LifecycleStatus != Models.BundleLifecycleStatus.Deleted);
+            }
+
+            if (body.Status.HasValue)
+            {
+                var targetStatus = body.Status.Value switch
+                {
+                    BundleLifecycle.Active => Models.BundleLifecycleStatus.Active,
+                    BundleLifecycle.Deleted => Models.BundleLifecycleStatus.Deleted,
+                    BundleLifecycle.Processing => Models.BundleLifecycleStatus.Processing,
+                    _ => Models.BundleLifecycleStatus.Active
+                };
+                bundles = bundles.Where(b => b.LifecycleStatus == targetStatus);
+            }
+
+            if (body.Realm.HasValue)
+            {
+                bundles = bundles.Where(b => b.Realm == body.Realm.Value);
+            }
+
+            if (body.BundleType.HasValue)
+            {
+                bundles = bundles.Where(b => b.BundleType == body.BundleType.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(body.NameContains))
+            {
+                bundles = bundles.Where(b =>
+                    b.Name != null && b.Name.Contains(body.NameContains, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (body.CreatedAfter.HasValue)
+            {
+                bundles = bundles.Where(b => b.CreatedAt >= body.CreatedAfter.Value);
+            }
+
+            if (body.CreatedBefore.HasValue)
+            {
+                bundles = bundles.Where(b => b.CreatedAt <= body.CreatedBefore.Value);
+            }
+
+            if (body.Tags != null && body.Tags.Count > 0)
+            {
+                bundles = bundles.Where(b =>
+                    b.Tags != null && body.Tags.All(t =>
+                        b.Tags.TryGetValue(t.Key, out var value) && value == t.Value));
+            }
+
+            if (body.TagExists != null && body.TagExists.Count > 0)
+            {
+                bundles = bundles.Where(b =>
+                    b.Tags != null && body.TagExists.All(key => b.Tags.ContainsKey(key)));
+            }
+
+            if (body.TagNotExists != null && body.TagNotExists.Count > 0)
+            {
+                bundles = bundles.Where(b =>
+                    b.Tags == null || !body.TagNotExists.Any(key => b.Tags.ContainsKey(key)));
+            }
+
+            var bundleList = bundles.ToList();
+            var totalCount = bundleList.Count;
+
+            // Apply sorting
+            var sortField = body.SortField ?? QueryBundlesRequestSortField.Created_at;
+            var sortDesc = body.SortOrder != QueryBundlesRequestSortOrder.Asc;
+
+            bundleList = sortField switch
+            {
+                QueryBundlesRequestSortField.Name => sortDesc
+                    ? bundleList.OrderByDescending(b => b.Name).ToList()
+                    : bundleList.OrderBy(b => b.Name).ToList(),
+                QueryBundlesRequestSortField.Updated_at => sortDesc
+                    ? bundleList.OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt).ToList()
+                    : bundleList.OrderBy(b => b.UpdatedAt ?? b.CreatedAt).ToList(),
+                QueryBundlesRequestSortField.Size => sortDesc
+                    ? bundleList.OrderByDescending(b => b.SizeBytes).ToList()
+                    : bundleList.OrderBy(b => b.SizeBytes).ToList(),
+                _ => sortDesc
+                    ? bundleList.OrderByDescending(b => b.CreatedAt).ToList()
+                    : bundleList.OrderBy(b => b.CreatedAt).ToList()
+            };
+
+            // Apply pagination
+            var limit = Math.Min(body.Limit, 1000);
+            var offset = body.Offset;
+
+            var pagedBundles = bundleList
+                .Skip(offset)
+                .Take(limit)
+                .Select(b => b.ToApiMetadata())
+                .ToList();
+
+            _logger.LogInformation("QueryBundles: Found {TotalCount} bundles for owner {Owner}, returning {Count}",
+                totalCount, body.Owner, pagedBundles.Count);
+
+            return (StatusCodes.OK, new QueryBundlesResponse
+            {
+                Bundles = pagedBundles,
+                TotalCount = totalCount,
+                Limit = limit,
+                Offset = offset
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QueryBundles: Unexpected error");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "QueryBundles",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/query",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// List version history for a bundle.
+    /// </summary>
+    public async Task<(StatusCodes, ListBundleVersionsResponse?)> ListBundleVersionsAsync(ListBundleVersionsRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("ListBundleVersions: bundleId={BundleId}", body.BundleId);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(body.BundleId))
+            {
+                _logger.LogWarning("ListBundleVersions: Empty bundleId");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var bundleStore = _stateStoreFactory.GetStore<Models.BundleMetadata>(_configuration.StatestoreName);
+            var versionStore = _stateStoreFactory.GetStore<Models.StoredBundleVersionRecord>(_configuration.StatestoreName);
+            var bundleKey = $"{_configuration.BundleKeyPrefix}{body.BundleId}";
+
+            var bundle = await bundleStore.GetAsync(bundleKey, cancellationToken);
+            if (bundle == null)
+            {
+                _logger.LogWarning("ListBundleVersions: Bundle {BundleId} not found", body.BundleId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get version numbers from index
+            var versionIndexKey = $"bundle-version-index:{body.BundleId}";
+            var versionNumbers = await versionStore.GetSetAsync<int>(versionIndexKey, cancellationToken);
+
+            // Sort by version number descending (newest first)
+            var sortedVersionNumbers = versionNumbers
+                .OrderByDescending(v => v)
+                .ToList();
+
+            var totalCount = sortedVersionNumbers.Count;
+            var limit = body.Limit > 0 ? body.Limit : 50;
+            var offset = body.Offset;
+
+            // Apply pagination to version numbers first
+            var pagedVersionNumbers = sortedVersionNumbers
+                .Skip(offset)
+                .Take(limit)
+                .ToList();
+
+            // Bulk load version records for paginated set
+            var versionKeys = pagedVersionNumbers.Select(v => $"bundle-version:{body.BundleId}:{v}");
+            var versionDict = await versionStore.GetBulkAsync(versionKeys, cancellationToken);
+
+            // Build result list, preserving order
+            var pagedVersions = new List<BundleVersionRecord>();
+            for (var i = 0; i < pagedVersionNumbers.Count; i++)
+            {
+                var versionNum = pagedVersionNumbers[i];
+                var versionKey = $"bundle-version:{body.BundleId}:{versionNum}";
+                if (versionDict.TryGetValue(versionKey, out var versionRecord) && versionRecord != null)
+                {
+                    // Include snapshot only for first item when viewing from start
+                    pagedVersions.Add(versionRecord.ToApiModel(includeSnapshot: i == 0 && offset == 0));
+                }
+            }
+
+            _logger.LogInformation("ListBundleVersions: Found {TotalCount} versions for bundle {BundleId}",
+                totalCount, body.BundleId);
+
+            return (StatusCodes.OK, new ListBundleVersionsResponse
+            {
+                BundleId = body.BundleId,
+                CurrentVersion = bundle.MetadataVersion,
+                Versions = pagedVersions,
+                TotalCount = totalCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ListBundleVersions: Unexpected error for bundle {BundleId}", body.BundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "ListBundleVersions",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/list-versions",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Helper to remove bundle from asset-bundle reverse index.
+    /// </summary>
+    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(_configuration.StatestoreName);
+
+        foreach (var assetId in assetIds)
+        {
+            var indexKey = $"asset-bundle:{assetId}";
+            var index = await indexStore.GetAsync(indexKey, cancellationToken);
+
+            if (index != null && index.BundleIds.Contains(bundleId))
+            {
+                index.BundleIds.Remove(bundleId);
+
+                if (index.BundleIds.Count == 0)
+                {
+                    await indexStore.DeleteAsync(indexKey, cancellationToken);
+                }
+                else
+                {
+                    await indexStore.SaveAsync(indexKey, index, cancellationToken: cancellationToken);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper to map Realm enum to event RealmEnum.
+    /// </summary>
+    private static BeyondImmersion.BannouService.Events.RealmEnum? MapRealmToEventEnum(Realm realm)
+    {
+        return realm switch
+        {
+            Realm.Omega => BeyondImmersion.BannouService.Events.RealmEnum.Omega,
+            Realm.Arcadia => BeyondImmersion.BannouService.Events.RealmEnum.Arcadia,
+            Realm.Fantasia => BeyondImmersion.BannouService.Events.RealmEnum.Fantasia,
+            Realm.Shared => BeyondImmersion.BannouService.Events.RealmEnum.Shared,
+            _ => null
+        };
     }
 
     #endregion

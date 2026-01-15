@@ -1083,7 +1083,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = Models.BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1256,7 +1256,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Processing // Not ready
+            Status = Models.BundleStatus.Processing // Not ready
         };
 
         _mockBundleStore
@@ -1558,7 +1558,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = Models.BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1668,7 +1668,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/existing-metabundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = Models.BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1773,7 +1773,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Processing // Not ready
+            Status = Models.BundleStatus.Processing // Not ready
         };
 
         _mockBundleStore
@@ -1863,7 +1863,7 @@ public class AssetServiceTests
             StorageKey = "bundles/current/wrong-realm-bundle.bundle",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = Models.BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1920,7 +1920,7 @@ public class AssetServiceTests
             Bucket = "test-bucket",
             SizeBytes = 1024,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = BundleStatus.Ready
+            Status = Models.BundleStatus.Ready
         };
 
         _mockBundleStore
@@ -1986,7 +1986,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 100,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2012,7 +2012,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "shared-asset" },
             SizeBytes = 150,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2071,7 +2071,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2178,7 +2178,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2196,7 +2196,7 @@ public class AssetServiceTests
             BundleType = BundleType.Metabundle, // This is a metabundle
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2264,7 +2264,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1", "asset-2", "asset-3" },
             SizeBytes = 300,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2285,7 +2285,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-1" },
             SizeBytes = 100,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2303,7 +2303,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "asset-3" },
             SizeBytes = 100,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             Assets = new List<StoredBundleAssetEntry>
             {
@@ -2401,7 +2401,7 @@ public class AssetServiceTests
             BundleType = BundleType.Source,
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 500,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -2415,7 +2415,7 @@ public class AssetServiceTests
             BundleType = BundleType.Metabundle,
             AssetIds = new List<string> { "test-asset" },
             SizeBytes = 300,
-            Status = BundleStatus.Ready,
+            Status = Models.BundleStatus.Ready,
             Realm = Realm.Arcadia,
             CreatedAt = DateTimeOffset.UtcNow
         };

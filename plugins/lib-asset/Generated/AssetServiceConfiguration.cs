@@ -240,6 +240,12 @@ public class AssetServiceConfiguration : IServiceConfiguration
     public int ZipCacheTtlHours { get; set; } = 24;
 
     /// <summary>
+    /// Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
+    /// Environment variable: ASSET_DELETED_BUNDLE_RETENTION_DAYS
+    /// </summary>
+    public int DeletedBundleRetentionDays { get; set; } = 30;
+
+    /// <summary>
     /// Secret for validating MinIO webhook requests
     /// Environment variable: ASSET_MINIO_WEBHOOK_SECRET
     /// </summary>

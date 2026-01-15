@@ -139,11 +139,11 @@ public sealed class BundleMetadata
     }
 
     /// <summary>
-    /// Converts this internal metadata to the full API BundleMetadata response.
+    /// Converts this internal metadata to the full API BundleInfo response.
     /// </summary>
-    public Asset.BundleMetadata ToApiMetadata()
+    public Asset.BundleInfo ToApiMetadata()
     {
-        return new Asset.BundleMetadata
+        return new Asset.BundleInfo
         {
             BundleId = BundleId,
             BundleType = BundleType,
@@ -156,10 +156,10 @@ public sealed class BundleMetadata
             Tags = Tags,
             Status = LifecycleStatus switch
             {
-                BundleLifecycleStatus.Active => Asset.BundleStatus.Active,
-                BundleLifecycleStatus.Deleted => Asset.BundleStatus.Deleted,
-                BundleLifecycleStatus.Processing => Asset.BundleStatus.Processing,
-                _ => Asset.BundleStatus.Active
+                BundleLifecycleStatus.Active => Asset.BundleLifecycle.Active,
+                BundleLifecycleStatus.Deleted => Asset.BundleLifecycle.Deleted,
+                BundleLifecycleStatus.Processing => Asset.BundleLifecycle.Processing,
+                _ => Asset.BundleLifecycle.Active
             },
             AssetCount = AssetIds.Count,
             SizeBytes = SizeBytes,

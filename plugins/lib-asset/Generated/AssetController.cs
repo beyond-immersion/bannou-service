@@ -3802,11 +3802,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "status": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/BundleStatus"
+                            "$ref": "#/$defs/BundleLifecycle"
                         }
                     ],
                     "nullable": true,
-                    "description": "Filter by bundle status (null for active only by default)"
+                    "description": "Filter by lifecycle status (null for active only by default)"
                 },
                 "createdAfter": {
                     "type": "string",
@@ -3885,7 +3885,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 }
             }
         },
-        "BundleStatus": {
+        "BundleLifecycle": {
             "type": "string",
             "enum": [
                 "active",
@@ -3935,7 +3935,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "bundles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/BundleMetadata"
+                        "$ref": "#/$defs/BundleInfo"
                     },
                     "description": "Matching bundles"
                 },
@@ -3953,10 +3953,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 }
             }
         },
-        "BundleMetadata": {
+        "BundleInfo": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Complete metadata for an asset bundle",
+            "description": "Complete metadata for an asset bundle (API response model)",
             "required": [
                 "bundleId",
                 "bundleType",
@@ -4012,7 +4012,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Key-value tags for categorization and filtering"
                 },
                 "status": {
-                    "$ref": "#/$defs/BundleStatus",
+                    "$ref": "#/$defs/BundleLifecycle",
                     "description": "Bundle lifecycle status"
                 },
                 "assetCount": {
@@ -4062,7 +4062,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             ],
             "description": "Game realm the asset belongs to"
         },
-        "BundleStatus": {
+        "BundleLifecycle": {
             "type": "string",
             "enum": [
                 "active",
@@ -4240,7 +4240,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "snapshot": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/BundleMetadata"
+                            "$ref": "#/$defs/BundleInfo"
                         }
                     ],
                     "nullable": true,
@@ -4248,10 +4248,10 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 }
             }
         },
-        "BundleMetadata": {
+        "BundleInfo": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Complete metadata for an asset bundle",
+            "description": "Complete metadata for an asset bundle (API response model)",
             "required": [
                 "bundleId",
                 "bundleType",
@@ -4307,7 +4307,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Key-value tags for categorization and filtering"
                 },
                 "status": {
-                    "$ref": "#/$defs/BundleStatus",
+                    "$ref": "#/$defs/BundleLifecycle",
                     "description": "Bundle lifecycle status"
                 },
                 "assetCount": {
@@ -4357,7 +4357,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             ],
             "description": "Game realm the asset belongs to"
         },
-        "BundleStatus": {
+        "BundleLifecycle": {
             "type": "string",
             "enum": [
                 "active",
