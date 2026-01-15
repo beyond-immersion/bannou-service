@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.ClientEvents;
 

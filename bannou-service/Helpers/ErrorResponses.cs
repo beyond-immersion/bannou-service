@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Helpers;

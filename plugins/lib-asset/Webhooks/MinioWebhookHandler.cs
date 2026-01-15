@@ -1,5 +1,5 @@
-using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;

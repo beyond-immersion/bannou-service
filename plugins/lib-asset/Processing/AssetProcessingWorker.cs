@@ -4,9 +4,9 @@
 // Self-registers, emits heartbeats, and self-terminates after idle timeout.
 // =============================================================================
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Asset.Pool;
-using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;

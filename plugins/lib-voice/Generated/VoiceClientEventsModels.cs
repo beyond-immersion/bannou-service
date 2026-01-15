@@ -17,8 +17,9 @@
 
 #nullable enable
 
-
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+
 
 namespace BeyondImmersion.Bannou.Voice.ClientEvents;
 
