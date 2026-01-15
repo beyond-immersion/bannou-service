@@ -4,19 +4,100 @@ using BeyondImmersion.Bannou.AssetBundler.Extraction;
 namespace BeyondImmersion.Bannou.AssetBundler.Sources;
 
 /// <summary>
-/// Default type inferencer with basic file extension matching.
+/// Default type inferencer with configurable file extension and pattern matching.
+/// Provides sensible defaults while allowing customization for vendor-specific conventions.
 /// </summary>
-public sealed class DefaultTypeInferencer : IAssetTypeInferencer
+public class DefaultTypeInferencer : IAssetTypeInferencer
 {
     /// <summary>
-    /// Singleton instance.
+    /// Singleton instance with default configuration.
     /// </summary>
     public static readonly DefaultTypeInferencer Instance = new();
 
-    private DefaultTypeInferencer() { }
+    private readonly HashSet<string> _excludedExtensions;
+    private readonly HashSet<string> _excludedDirectories;
+    private readonly Dictionary<string, Func<string, bool>> _categoryFilters;
+
+    /// <summary>
+    /// Creates a new DefaultTypeInferencer with default configuration.
+    /// </summary>
+    public DefaultTypeInferencer()
+    {
+        _excludedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Unity-specific
+            ".meta", ".prefab", ".unity", ".asset",
+            // Unreal-specific
+            ".uasset", ".umap",
+            // DCC tool formats
+            ".ma", ".mb", ".max", ".blend", ".blend1",
+            // Documentation
+            ".pdf", ".txt", ".md"
+        };
+
+        _excludedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "unity", "unreal", "unity_version", "unreal_version",
+            ".mayaswatches", "__macosx"
+        };
+
+        _categoryFilters = new Dictionary<string, Func<string, bool>>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Creates a copy of this inferencer that can be customized.
+    /// </summary>
+    /// <returns>A new mutable DefaultTypeInferencer.</returns>
+    public DefaultTypeInferencer Clone()
+    {
+        var clone = new DefaultTypeInferencer();
+        foreach (var ext in _excludedExtensions)
+            clone._excludedExtensions.Add(ext);
+        foreach (var dir in _excludedDirectories)
+            clone._excludedDirectories.Add(dir);
+        foreach (var (category, filter) in _categoryFilters)
+            clone._categoryFilters[category] = filter;
+        return clone;
+    }
+
+    /// <summary>
+    /// Adds an extension to exclude from extraction.
+    /// </summary>
+    /// <param name="extension">Extension including dot (e.g., ".meta").</param>
+    /// <returns>This instance for fluent chaining.</returns>
+    public DefaultTypeInferencer ExcludeExtension(string extension)
+    {
+        _excludedExtensions.Add(extension);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a directory name to exclude from extraction.
+    /// Files in paths containing this directory name will be excluded.
+    /// </summary>
+    /// <param name="directoryName">Directory name to exclude (e.g., "unity").</param>
+    /// <returns>This instance for fluent chaining.</returns>
+    public DefaultTypeInferencer ExcludeDirectory(string directoryName)
+    {
+        _excludedDirectories.Add(directoryName);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a category-specific extraction filter.
+    /// When a category is specified, this filter is applied in addition to default rules.
+    /// </summary>
+    /// <param name="category">Category name (e.g., "polygon", "interface").</param>
+    /// <param name="filter">Filter function that returns true if the path should be extracted.</param>
+    /// <returns>This instance for fluent chaining.</returns>
+    public DefaultTypeInferencer RegisterCategoryFilter(string category, Func<string, bool> filter)
+    {
+        _categoryFilters[category] = filter;
+        return this;
+    }
 
     /// <inheritdoc />
-    public AssetType InferAssetType(string filename, string? mimeType = null)
+    public virtual AssetType InferAssetType(string filename, string? mimeType = null)
     {
         var ext = Path.GetExtension(filename).ToLowerInvariant();
         return ext switch
@@ -33,50 +114,111 @@ public sealed class DefaultTypeInferencer : IAssetTypeInferencer
     }
 
     /// <inheritdoc />
-    public TextureType InferTextureType(string filename)
+    public virtual TextureType InferTextureType(string filename)
     {
         var lower = filename.ToLowerInvariant();
 
-        if (lower.Contains("_normal") || lower.Contains("_nml") || lower.Contains("_n."))
+        // Check full path for directory hints first
+        if (ContainsDirectoryPattern(lower, "ui", "hud", "sprites", "interface"))
+            return TextureType.UI;
+
+        // Then check filename patterns
+        var filenameOnly = Path.GetFileName(lower);
+
+        // Normal maps
+        if (HasSuffix(filenameOnly, "_normal", "_nml", "_n") ||
+            filenameOnly.Contains("_normal"))
             return TextureType.NormalMap;
-        if (lower.Contains("_emissive") || lower.Contains("_emit") || lower.Contains("_e."))
+
+        // Emissive
+        if (HasSuffix(filenameOnly, "_emissive", "_emission", "_emit", "_e") ||
+            filenameOnly.Contains("_emissive"))
             return TextureType.Emissive;
-        if (lower.Contains("_mask") || lower.Contains("_metallic") || lower.Contains("_roughness") ||
-            lower.Contains("_ao") || lower.Contains("_occlusion"))
+
+        // Mask textures (PBR channels)
+        if (HasSuffix(filenameOnly, "_mask", "_metallic", "_metalness", "_roughness",
+            "_ao", "_occlusion", "_m", "_r"))
             return TextureType.Mask;
-        if (lower.Contains("_height") || lower.Contains("_displacement") || lower.Contains("_h."))
+
+        // Height maps
+        if (HasSuffix(filenameOnly, "_height", "_displacement", "_h"))
             return TextureType.HeightMap;
-        if (lower.Contains("spr_") || lower.Contains("ui_") || lower.Contains("hud_") ||
-            lower.Contains("_icon") || lower.Contains("_button"))
+
+        // UI from prefix/infix patterns
+        if (HasPrefix(filenameOnly, "spr_", "ui_", "hud_") ||
+            filenameOnly.Contains("_icon") || filenameOnly.Contains("_button") ||
+            filenameOnly.Contains("_bar") || filenameOnly.Contains("_panel") ||
+            filenameOnly.Contains("_frame"))
             return TextureType.UI;
 
         return TextureType.Color;
     }
 
     /// <inheritdoc />
-    public bool ShouldExtract(string relativePath, string? category = null)
+    public virtual bool ShouldExtract(string relativePath, string? category = null)
     {
-        var lower = relativePath.ToLowerInvariant();
+        var lower = relativePath.Replace('\\', '/').ToLowerInvariant();
 
-        // Skip Unity-specific files
-        if (lower.EndsWith(".meta") || lower.EndsWith(".prefab") || lower.EndsWith(".unity") ||
-            lower.EndsWith(".asset") || lower.Contains("/unity/") || lower.Contains("\\unity\\"))
+        // Check excluded extensions
+        var ext = Path.GetExtension(lower);
+        if (_excludedExtensions.Contains(ext))
             return false;
 
-        // Skip Unreal-specific files
-        if (lower.EndsWith(".uasset") || lower.EndsWith(".umap") ||
-            lower.Contains("/unreal/") || lower.Contains("\\unreal\\"))
-            return false;
+        // Check excluded directories
+        var pathParts = lower.Split('/');
+        foreach (var part in pathParts)
+        {
+            if (_excludedDirectories.Contains(part))
+                return false;
+        }
 
-        // Skip Maya/Max/Blender-specific files
-        if (lower.EndsWith(".ma") || lower.EndsWith(".mb") || lower.EndsWith(".max") ||
-            lower.EndsWith(".blend") || lower.EndsWith(".blend1"))
-            return false;
-
-        // Skip documentation and misc
-        if (lower.EndsWith(".pdf") || lower.EndsWith(".txt") || lower.EndsWith(".md"))
-            return false;
+        // Apply category-specific filter if registered
+        if (category != null && _categoryFilters.TryGetValue(category, out var filter))
+        {
+            return filter(lower);
+        }
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks if the path contains any of the specified directory patterns.
+    /// </summary>
+    protected static bool ContainsDirectoryPattern(string path, params string[] patterns)
+    {
+        foreach (var pattern in patterns)
+        {
+            if (path.Contains($"/{pattern}/") || path.Contains($"\\{pattern}\\") ||
+                path.StartsWith($"{pattern}/") || path.StartsWith($"{pattern}\\"))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the filename ends with any of the specified suffixes (before extension).
+    /// </summary>
+    protected static bool HasSuffix(string filename, params string[] suffixes)
+    {
+        var nameWithoutExt = Path.GetFileNameWithoutExtension(filename);
+        foreach (var suffix in suffixes)
+        {
+            if (nameWithoutExt.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the filename starts with any of the specified prefixes.
+    /// </summary>
+    protected static bool HasPrefix(string filename, params string[] prefixes)
+    {
+        foreach (var prefix in prefixes)
+        {
+            if (filename.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 }

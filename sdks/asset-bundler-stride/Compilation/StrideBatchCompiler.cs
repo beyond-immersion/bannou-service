@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using BeyondImmersion.Bannou.AssetBundler.Abstractions;
 using BeyondImmersion.Bannou.AssetBundler.Extraction;
+using BeyondImmersion.Bannou.AssetBundler.Stride.Platform;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.AssetBundler.Stride.Compilation;
@@ -119,19 +121,41 @@ public sealed class StrideBatchCompiler : IAssetProcessor, IDisposable
     private async Task<BuildResult> RunBuildAsync(string projectPath, CancellationToken ct)
     {
         var projectDir = Path.GetDirectoryName(projectPath)!;
+        var projectFileName = Path.GetFileName(projectPath);
 
-        var startInfo = new ProcessStartInfo
+        ProcessStartInfo startInfo;
+
+        // Check if we need WSL path conversion (running in WSL but targeting Windows tools)
+        if (_options.AutoDetectWsl && WslPathConverter.IsWsl)
         {
-            FileName = _options.DotnetPath,
-            Arguments = $"build \"{projectPath}\" -c {_options.Configuration}",
-            WorkingDirectory = projectDir,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            // Convert paths for Windows and use cmd.exe
+            var windowsDir = WslPathConverter.ToWindowsPath(projectDir);
+            var buildCommand = $"dotnet build \"{projectFileName}\" -c {_options.Configuration}";
+            startInfo = WslPathConverter.CreateWindowsProcessStartInfo(projectDir, buildCommand);
 
-        _logger?.LogDebug("Running: {FileName} {Arguments}", startInfo.FileName, startInfo.Arguments);
+            _logger?.LogDebug(
+                "WSL detected, running via cmd.exe: pushd \"{WindowsDir}\" && {Command}",
+                windowsDir,
+                buildCommand);
+        }
+        else
+        {
+            // Standard non-WSL build
+            startInfo = new ProcessStartInfo
+            {
+                FileName = _options.DotnetPath,
+                Arguments = $"build \"{projectPath}\" -c {_options.Configuration}",
+                WorkingDirectory = projectDir,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+
+            _logger?.LogDebug("Running: {FileName} {Arguments}", startInfo.FileName, startInfo.Arguments);
+        }
 
         using var process = new Process { StartInfo = startInfo };
         var stdout = new List<string>();

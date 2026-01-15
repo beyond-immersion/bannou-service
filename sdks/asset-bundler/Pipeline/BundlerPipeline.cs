@@ -107,7 +107,7 @@ public sealed class BundlerPipeline
             if (uploader != null)
             {
                 _logger?.LogInformation("Uploading bundle to Bannou...");
-                var uploadResult = await uploader.UploadAsync(bundlePath, source.SourceId, ct);
+                var uploadResult = await uploader.UploadAsync(bundlePath, source.SourceId, ct: ct);
                 record.UploadedAt = DateTimeOffset.UtcNow;
                 record.UploadedBundleId = uploadResult.BundleId;
             }

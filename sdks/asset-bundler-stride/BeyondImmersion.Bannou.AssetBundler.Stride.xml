@@ -153,6 +153,12 @@
             Texture compression format.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.AutoDetectWsl">
+            <summary>
+            Whether to automatically detect and handle WSL environment.
+            When true (default), paths will be converted for Windows tools when running in WSL.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform">
             <summary>
             Target platforms for Stride compilation.
@@ -328,6 +334,48 @@
             <summary>
             Asset type as determined by Stride.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter">
+            <summary>
+            Converts paths between WSL (Linux) and Windows formats.
+            Required when running in WSL but invoking Windows tools (like Stride compiler).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter.IsWsl">
+            <summary>
+            Gets whether the current environment is WSL.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter.ToWindowsPath(System.String)">
+            <summary>
+            Converts a Unix/WSL path to a Windows path.
+            </summary>
+            <param name="path">The Unix path to convert.</param>
+            <returns>The Windows-formatted path, or the original path if conversion is not needed/possible.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter.ToUnixPath(System.String)">
+            <summary>
+            Converts a Windows path to a Unix/WSL path.
+            </summary>
+            <param name="path">The Windows path to convert.</param>
+            <returns>The Unix-formatted path, or the original path if conversion is not needed/possible.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter.CreateWindowsCommand(System.String,System.String)">
+            <summary>
+            Creates a command string for running a Windows command from WSL.
+            Uses cmd.exe /c with pushd/popd for directory context.
+            </summary>
+            <param name="workingDirectory">The working directory (Unix path).</param>
+            <param name="command">The command to run.</param>
+            <returns>A tuple of (executable, arguments) for Process.Start.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Platform.WslPathConverter.CreateWindowsProcessStartInfo(System.String,System.String)">
+            <summary>
+            Creates ProcessStartInfo configured for running Windows commands from WSL.
+            </summary>
+            <param name="workingDirectory">The working directory (Unix path).</param>
+            <param name="command">The command to run.</param>
+            <returns>A configured ProcessStartInfo.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes">
             <summary>

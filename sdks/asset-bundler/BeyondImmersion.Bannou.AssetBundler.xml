@@ -759,13 +759,49 @@
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer">
             <summary>
-            Default type inferencer with basic file extension matching.
+            Default type inferencer with configurable file extension and pattern matching.
+            Provides sensible defaults while allowing customization for vendor-specific conventions.
             </summary>
         </member>
         <member name="F:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.Instance">
             <summary>
-            Singleton instance.
+            Singleton instance with default configuration.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.#ctor">
+            <summary>
+            Creates a new DefaultTypeInferencer with default configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.Clone">
+            <summary>
+            Creates a copy of this inferencer that can be customized.
+            </summary>
+            <returns>A new mutable DefaultTypeInferencer.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.ExcludeExtension(System.String)">
+            <summary>
+            Adds an extension to exclude from extraction.
+            </summary>
+            <param name="extension">Extension including dot (e.g., ".meta").</param>
+            <returns>This instance for fluent chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.ExcludeDirectory(System.String)">
+            <summary>
+            Adds a directory name to exclude from extraction.
+            Files in paths containing this directory name will be excluded.
+            </summary>
+            <param name="directoryName">Directory name to exclude (e.g., "unity").</param>
+            <returns>This instance for fluent chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.RegisterCategoryFilter(System.String,System.Func{System.String,System.Boolean})">
+            <summary>
+            Registers a category-specific extraction filter.
+            When a category is specified, this filter is applied in addition to default rules.
+            </summary>
+            <param name="category">Category name (e.g., "polygon", "interface").</param>
+            <param name="filter">Filter function that returns true if the path should be extracted.</param>
+            <returns>This instance for fluent chaining.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.InferAssetType(System.String,System.String)">
             <inheritdoc />
@@ -775,6 +811,21 @@
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.ShouldExtract(System.String,System.String)">
             <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.ContainsDirectoryPattern(System.String,System.String[])">
+            <summary>
+            Checks if the path contains any of the specified directory patterns.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.HasSuffix(System.String,System.String[])">
+            <summary>
+            Checks if the filename ends with any of the specified suffixes (before extension).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.HasPrefix(System.String,System.String[])">
+            <summary>
+            Checks if the filename starts with any of the specified prefixes.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource">
             <summary>
@@ -950,6 +1001,8 @@
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader">
             <summary>
             Uploads bundles to Bannou Asset Service.
+            Supports single-part and multipart uploads, RequiredHeaders for MinIO pre-signed URLs,
+            and manual HTTP login for environments without auto-redirect.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.#ctor(BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader})">
@@ -976,17 +1029,43 @@
             <param name="ct">Cancellation token.</param>
             <returns>True if connection succeeded.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.UploadAsync(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.UploadAsync(System.String,System.String,System.IProgress{BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress},System.Threading.CancellationToken)">
             <summary>
             Uploads a bundle file to Bannou Asset Service.
             </summary>
             <param name="bundlePath">Path to the bundle file.</param>
             <param name="bundleId">Bundle identifier.</param>
+            <param name="progress">Optional progress callback for multipart uploads.</param>
             <param name="ct">Cancellation token.</param>
             <returns>Upload result with assigned IDs.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.DisposeAsync">
             <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.LoginResult">
+            <summary>
+            Response from /auth/login endpoint.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress">
+            <summary>
+            Progress information for multipart uploads.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.CompletedParts">
+            <summary>Number of completed parts.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.TotalParts">
+            <summary>Total number of parts.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.BytesUploaded">
+            <summary>Bytes uploaded so far.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.TotalBytes">
+            <summary>Total bytes to upload.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.PercentComplete">
+            <summary>Upload progress percentage (0-100).</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions">
             <summary>
@@ -995,7 +1074,8 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.ServerUrl">
             <summary>
-            Bannou service URL (e.g., "wss://bannou.example.com").
+            Bannou service URL (e.g., "wss://bannou.example.com" or "https://bannou.example.com").
+            For email/password auth, HTTP(S) URLs are converted to WS(S) for WebSocket connections.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.ServiceToken">
@@ -1016,6 +1096,24 @@
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.Owner">
             <summary>
             Owner identifier for uploaded assets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.UseManualLogin">
+            <summary>
+            Whether to use manual HTTP login (POST /auth/login) before WebSocket connection.
+            Useful when the server doesn't support auto-redirect or for debugging.
+            Default is false (use BannouClient's built-in auth).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.UploadTimeoutMs">
+            <summary>
+            HTTP timeout for upload operations in milliseconds.
+            Default is 5 minutes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.VerboseLogging">
+            <summary>
+            Whether to enable verbose logging for uploads.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult">

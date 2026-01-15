@@ -56,6 +56,12 @@ public sealed class StrideCompilerOptions
     /// Texture compression format.
     /// </summary>
     public StrideTextureCompression TextureCompression { get; init; } = StrideTextureCompression.BC7;
+
+    /// <summary>
+    /// Whether to automatically detect and handle WSL environment.
+    /// When true (default), paths will be converted for Windows tools when running in WSL.
+    /// </summary>
+    public bool AutoDetectWsl { get; init; } = true;
 }
 
 /// <summary>
