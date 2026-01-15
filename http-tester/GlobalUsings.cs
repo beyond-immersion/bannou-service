@@ -1,3 +1,4 @@
+global using BeyondImmersion.Bannou.Core;
 global using BeyondImmersion.BannouService.HttpTester.Tests;
 global using Microsoft.Extensions.Configuration;
 global using System.Collections.Generic;

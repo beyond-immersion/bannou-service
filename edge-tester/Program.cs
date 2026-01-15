@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Client;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.EdgeTester.Application;
 using System.Net.WebSockets;

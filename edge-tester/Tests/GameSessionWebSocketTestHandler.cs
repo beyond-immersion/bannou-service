@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Client;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.GameSession;
 using System.Text;
 using System.Text.Json;
