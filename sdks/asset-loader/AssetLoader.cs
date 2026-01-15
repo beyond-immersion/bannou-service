@@ -57,7 +57,7 @@ public sealed class AssetLoader : IAsyncDisposable
         _options = options ?? new AssetLoaderOptions();
         _logger = logger;
         _registry = new BundleRegistry();
-        _downloader = new AssetDownloader(_options.DownloadOptions, logger != null ? null : null);
+        _downloader = new AssetDownloader(_options.DownloadOptions, logger);
         _downloadSemaphore = new SemaphoreSlim(_options.MaxConcurrentDownloads);
     }
 

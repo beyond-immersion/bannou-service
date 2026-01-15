@@ -23,6 +23,14 @@ sdks/
 ├── asset-bundler.tests/         # AssetBundler tests
 ├── asset-bundler-stride/        # Stride engine asset compilation
 ├── asset-bundler-stride.tests/  # Stride AssetBundler tests
+├── asset-loader/                # Engine-agnostic asset loading and caching
+├── asset-loader.tests/          # AssetLoader tests
+├── asset-loader-client/         # WebSocket-based asset source (game clients)
+├── asset-loader-client.tests/   # AssetLoader Client tests
+├── asset-loader-server/         # Mesh-based asset source (game servers)
+├── asset-loader-server.tests/   # AssetLoader Server tests
+├── asset-loader-stride/         # Stride engine type loaders
+├── asset-loader-stride.tests/   # Stride AssetLoader tests
 ├── scene-composer/              # Engine-agnostic scene composition
 ├── scene-composer.tests/        # SceneComposer tests
 ├── scene-composer-stride/       # Stride engine integration
@@ -56,6 +64,10 @@ examples/
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
 | `asset-bundler/` | `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline |
 | `asset-bundler-stride/` | `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation |
+| `asset-loader/` | `BeyondImmersion.Bannou.AssetLoader` | Engine-agnostic asset loading and caching |
+| `asset-loader-client/` | `BeyondImmersion.Bannou.AssetLoader.Client` | WebSocket-based asset source for game clients |
+| `asset-loader-server/` | `BeyondImmersion.Bannou.AssetLoader.Server` | Mesh-based asset source for game servers |
+| `asset-loader-stride/` | `BeyondImmersion.Bannou.AssetLoader.Stride` | Stride engine type loaders |
 | `scene-composer/` | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing |
 | `scene-composer-stride/` | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration |
 | `scene-composer-godot/` | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot engine integration |
@@ -72,6 +84,10 @@ Examples:
 - `BeyondImmersion.Bannou.Client.Voice`
 - `BeyondImmersion.Bannou.AssetBundler`
 - `BeyondImmersion.Bannou.AssetBundler.Stride`
+- `BeyondImmersion.Bannou.AssetLoader`
+- `BeyondImmersion.Bannou.AssetLoader.Client`
+- `BeyondImmersion.Bannou.AssetLoader.Server`
+- `BeyondImmersion.Bannou.AssetLoader.Stride`
 - `BeyondImmersion.Bannou.SceneComposer`
 - `BeyondImmersion.Bannou.SceneComposer.Stride`
 - `BeyondImmersion.Bannou.SceneComposer.Godot`

@@ -11,13 +11,13 @@ public sealed class AssetDownloader : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly DownloadOptions _options;
-    private readonly ILogger<AssetDownloader>? _logger;
+    private readonly ILogger? _logger;
     private readonly bool _ownsHttpClient;
 
     /// <summary>
     /// Creates a new asset downloader with default HTTP client.
     /// </summary>
-    public AssetDownloader(DownloadOptions? options = null, ILogger<AssetDownloader>? logger = null)
+    public AssetDownloader(DownloadOptions? options = null, ILogger? logger = null)
         : this(new HttpClient(), options, logger)
     {
         _ownsHttpClient = true;
@@ -26,7 +26,7 @@ public sealed class AssetDownloader : IDisposable
     /// <summary>
     /// Creates a new asset downloader with custom HTTP client.
     /// </summary>
-    public AssetDownloader(HttpClient httpClient, DownloadOptions? options = null, ILogger<AssetDownloader>? logger = null)
+    public AssetDownloader(HttpClient httpClient, DownloadOptions? options = null, ILogger? logger = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = options ?? new DownloadOptions();

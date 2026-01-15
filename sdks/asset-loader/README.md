@@ -28,7 +28,7 @@ dotnet add package BeyondImmersion.Bannou.AssetLoader.Server
 For engine support:
 ```bash
 dotnet add package BeyondImmersion.Bannou.AssetLoader.Stride
-dotnet add package BeyondImmersion.Bannou.AssetLoader.Godot
+# Godot support planned for future release
 ```
 
 ## Usage
@@ -82,9 +82,13 @@ var result = await loader.EnsureAssetsAvailableAsync(new[]
     "polygon-adventure/hero-texture"
 });
 
-// Get typed assets (with engine extension)
-loader.UseStride(services);
-var model = await loader.LoadAssetAsync<Model>("polygon-adventure/hero-model");
+// Get typed assets (with Stride engine extension)
+loader.UseStride(services, graphicsDevice);
+var modelResult = await loader.LoadAssetAsync<Model>("polygon-adventure/hero-model");
+if (modelResult.Success)
+{
+    var model = modelResult.Value;
+}
 ```
 
 ### Local Files (Offline Mode)
@@ -116,10 +120,10 @@ AssetLoader (orchestrator)
     ├── BundleRegistry (loaded bundle tracking)
     │
     └── IAssetTypeLoader<T> (engine-specific)
-        ├── StrideModelLoader
-        ├── StrideTextureLoader
-        ├── GodotMeshLoader
-        └── ...
+        ├── StrideModelTypeLoader
+        ├── StrideTextureTypeLoader
+        ├── StrideAnimationTypeLoader
+        └── (more to come for Godot, Unity)
 ```
 
 ## Key Features

@@ -236,8 +236,10 @@ public sealed class AssetSourceException : Exception
     public AssetSourceException(string message, Exception innerException) : base(message, innerException) { }
 }
 
-// Request/Response DTOs - these mirror the generated models but are defined here
-// to avoid tight coupling to the generated code
+// TODO: These DTOs duplicate the generated models from the asset-api schema.
+// This duplication is technical debt - changes to the schema won't propagate here.
+// Proper fix: Create a shared BeyondImmersion.Bannou.AssetService.Models package
+// containing these types, generated from the schema, that both client and server SDKs consume.
 
 internal sealed class ResolveBundlesRequest
 {

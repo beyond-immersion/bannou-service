@@ -62,17 +62,18 @@ public sealed class BannouMeshAssetSource : IAssetSource
             DownloadUrl = b.DownloadUrl,
             SizeBytes = b.Size,
             ExpiresAt = b.ExpiresAt,
-            IncludedAssetIds = b.AssetIds?.ToList() ?? new List<string>(),
+            IncludedAssetIds = b.AssetsProvided?.ToList() ?? new List<string>(),
             IsMetabundle = b.BundleType == BundleType.Metabundle
         }).ToList();
 
+        // Note: ResolvedAsset from the API doesn't include ContentType - use default
         var standaloneAssets = response.StandaloneAssets.Select(a => new ResolvedAssetInfo
         {
             AssetId = a.AssetId,
-            DownloadUrl = a.DownloadUrl ?? throw new InvalidOperationException($"Standalone asset {a.AssetId} missing download URL"),
+            DownloadUrl = a.DownloadUrl,
             SizeBytes = a.Size,
-            ExpiresAt = a.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
-            ContentType = a.ContentType ?? "application/octet-stream"
+            ExpiresAt = a.ExpiresAt,
+            ContentType = "application/octet-stream"
         }).ToList();
 
         _logger?.LogDebug("Resolved {BundleCount} bundles and {AssetCount} standalone assets",
@@ -103,13 +104,14 @@ public sealed class BannouMeshAssetSource : IAssetSource
 
             var response = await _assetClient.GetBundleAsync(request, ct).ConfigureAwait(false);
 
+            // Note: BundleWithDownloadUrl doesn't include AssetIds list, only AssetCount
             return new BundleDownloadInfo
             {
                 BundleId = response.BundleId,
                 DownloadUrl = response.DownloadUrl,
                 SizeBytes = response.Size,
                 ExpiresAt = response.ExpiresAt,
-                AssetIds = response.AssetIds?.ToList() ?? new List<string>()
+                AssetIds = new List<string>() // Asset list not available from this endpoint
             };
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex) when (ex.StatusCode == 404)
@@ -148,7 +150,7 @@ public sealed class BannouMeshAssetSource : IAssetSource
                 DownloadUrl = response.DownloadUrl,
                 SizeBytes = response.Size,
                 ExpiresAt = response.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
-                ContentType = response.ContentType ?? "application/octet-stream",
+                ContentType = response.ContentType,
                 ContentHash = response.ContentHash
             };
         }

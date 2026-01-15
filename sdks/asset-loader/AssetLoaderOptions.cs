@@ -22,6 +22,10 @@ public sealed class AssetLoaderOptions
     /// Whether to validate bundle integrity after download.
     /// Default: true
     /// </summary>
+    /// <remarks>
+    /// TODO: This option is defined but not yet implemented. Bundle validation
+    /// (hash verification, manifest integrity checks) needs to be added to LoadBundleInternalAsync.
+    /// </remarks>
     public bool ValidateBundles { get; init; } = true;
 
     /// <summary>
