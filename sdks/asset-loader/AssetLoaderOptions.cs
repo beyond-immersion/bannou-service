@@ -20,11 +20,13 @@ public sealed class AssetLoaderOptions
 
     /// <summary>
     /// Whether to validate bundle integrity after download.
+    /// When enabled, verifies each asset's content hash matches the manifest declaration.
     /// Default: true
     /// </summary>
     /// <remarks>
-    /// TODO: This option is defined but not yet implemented. Bundle validation
-    /// (hash verification, manifest integrity checks) needs to be added to LoadBundleInternalAsync.
+    /// Validation reads all assets to compute hashes, which adds overhead proportional
+    /// to bundle size. For trusted sources or performance-critical scenarios, consider
+    /// disabling validation and relying on transport-level integrity (HTTPS) instead.
     /// </remarks>
     public bool ValidateBundles { get; init; } = true;
 

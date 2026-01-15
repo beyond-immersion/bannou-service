@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using BeyondImmersion.Bannou.AssetLoader.Abstractions;
 using BeyondImmersion.Bannou.AssetLoader.Download;
 using BeyondImmersion.Bannou.AssetLoader.Models;
@@ -222,6 +223,21 @@ public sealed class AssetLoader : IAsyncDisposable
                 return BundleLoadResult.Failed(bundleId, "Failed to parse bundle manifest");
             }
 
+            // Validate bundle integrity if enabled
+            if (_options.ValidateBundles)
+            {
+                var validationErrors = await ValidateBundleIntegrityAsync(reader, ct).ConfigureAwait(false);
+                if (validationErrors.Count > 0)
+                {
+                    reader.Dispose();
+                    bundleStream.Dispose();
+                    var errorMessage = string.Join("; ", validationErrors);
+                    _logger?.LogError("Bundle {BundleId} failed integrity validation: {Errors}", bundleId, errorMessage);
+                    return BundleLoadResult.Failed(bundleId, $"Bundle integrity validation failed: {errorMessage}");
+                }
+                _logger?.LogDebug("Bundle {BundleId} passed integrity validation", bundleId);
+            }
+
             var loadedBundle = new LoadedBundle
             {
                 BundleId = bundleId,
@@ -377,6 +393,58 @@ public sealed class AssetLoader : IAsyncDisposable
     {
         _registry.Clear();
         _logger?.LogInformation("Unloaded all bundles");
+    }
+
+    /// <summary>
+    /// Validates bundle integrity by verifying asset content hashes against manifest declarations.
+    /// </summary>
+    /// <param name="reader">Bundle reader with parsed manifest.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of validation error messages (empty if valid).</returns>
+    private async Task<List<string>> ValidateBundleIntegrityAsync(BannouBundleReader reader, CancellationToken ct)
+    {
+        var errors = new List<string>();
+        var manifest = reader.Manifest;
+
+        _logger?.LogDebug("Validating integrity of {AssetCount} assets in bundle {BundleId}",
+            manifest.AssetCount, manifest.BundleId);
+
+        foreach (var assetEntry in manifest.Assets)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                var assetData = await reader.ReadAssetAsync(assetEntry.AssetId, ct).ConfigureAwait(false);
+                if (assetData == null)
+                {
+                    errors.Add($"Asset '{assetEntry.AssetId}' declared in manifest but not found in bundle data");
+                    continue;
+                }
+
+                // Compute actual hash and compare with manifest
+                var actualHash = ComputeSha256Hash(assetData);
+                if (!string.Equals(actualHash, assetEntry.ContentHash, StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Asset '{assetEntry.AssetId}' hash mismatch: expected {assetEntry.ContentHash}, got {actualHash}");
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                errors.Add($"Asset '{assetEntry.AssetId}' failed to read: {ex.Message}");
+            }
+        }
+
+        return errors;
+    }
+
+    /// <summary>
+    /// Computes SHA256 hash of data and returns it as lowercase hex string.
+    /// </summary>
+    private static string ComputeSha256Hash(byte[] data)
+    {
+        var hashBytes = SHA256.HashData(data);
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     /// <inheritdoc />

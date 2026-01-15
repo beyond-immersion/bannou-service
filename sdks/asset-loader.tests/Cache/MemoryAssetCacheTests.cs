@@ -254,7 +254,8 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         Assert.NotNull(stream2);
 
         // Reading from one should not affect the other
-        await stream1!.ReadAsync(new byte[50]);
+        var buffer = new byte[50];
+        _ = await stream1!.ReadAsync(buffer);
         Assert.Equal(0, stream2!.Position);
 
         stream1.Dispose();

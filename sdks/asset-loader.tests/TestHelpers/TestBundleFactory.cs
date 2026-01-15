@@ -29,7 +29,11 @@ internal static class TestBundleFactory
                     data: content);
             }
 
-            writer.Finalize(bundleId: bundleId, version: "1.0.0");
+            writer.Finalize(
+                bundleId: bundleId,
+                name: bundleId,
+                version: "1.0.0",
+                createdBy: "TestBundleFactory");
         }
 
         // Reset stream position for reading
