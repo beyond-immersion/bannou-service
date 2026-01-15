@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Scene.Helpers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
@@ -10,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -37,6 +37,7 @@ public partial class SceneService : ISceneService
     private readonly SceneServiceConfiguration _configuration;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IEventConsumer _eventConsumer;
+    private readonly ISceneValidationService _validationService;
 
     // State store key prefixes
     private const string SCENE_INDEX_PREFIX = "scene:index:";
@@ -75,9 +76,6 @@ public partial class SceneService : ISceneService
         .IgnoreUnmatchedProperties()
         .Build();
 
-    // refId validation pattern
-    private static readonly Regex RefIdPattern = new("^[a-z][a-z0-9_]*$", RegexOptions.Compiled);
-
     /// <summary>
     /// Creates a new instance of the SceneService.
     /// </summary>
@@ -87,7 +85,8 @@ public partial class SceneService : ISceneService
         ILogger<SceneService> logger,
         SceneServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ISceneValidationService validationService)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -95,6 +94,7 @@ public partial class SceneService : ISceneService
         _configuration = configuration;
         _lockProvider = lockProvider;
         _eventConsumer = eventConsumer;
+        _validationService = validationService;
 
         // Register event consumers via partial class
         RegisterEventConsumers(_eventConsumer);
@@ -127,7 +127,7 @@ public partial class SceneService : ISceneService
             var sceneIdStr = scene.SceneId.ToString();
 
             // Validate scene structure
-            var validationResult = ValidateSceneStructure(scene);
+            var validationResult = _validationService.ValidateStructure(scene, _configuration.MaxNodeCount);
             if (!validationResult.Valid)
             {
                 _logger.LogWarning("CreateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
@@ -409,7 +409,7 @@ public partial class SceneService : ISceneService
             }
 
             // Validate scene structure
-            var validationResult = ValidateSceneStructure(scene);
+            var validationResult = _validationService.ValidateStructure(scene, _configuration.MaxNodeCount);
             if (!validationResult.Valid)
             {
                 _logger.LogWarning("UpdateScene failed validation: {Errors}", string.Join(", ", validationResult.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
@@ -534,13 +534,18 @@ public partial class SceneService : ISceneService
         try
         {
             // Structural validation
-            var result = ValidateSceneStructure(body.Scene);
+            var result = _validationService.ValidateStructure(body.Scene, _configuration.MaxNodeCount);
 
             // Apply game-specific rules if requested
             if (body.ApplyGameRules)
             {
-                var gameRulesResult = await ApplyGameValidationRulesAsync(body.Scene, cancellationToken);
-                MergeValidationResults(result, gameRulesResult);
+                // Fetch game validation rules from state store
+                var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
+                var key = $"{VALIDATION_RULES_PREFIX}{body.Scene.GameId}:{body.Scene.SceneType}";
+                var rules = await rulesStore.GetAsync(key, cancellationToken);
+
+                var gameRulesResult = _validationService.ApplyGameValidationRules(body.Scene, rules);
+                _validationService.MergeResults(result, gameRulesResult);
             }
 
             return (StatusCodes.OK, result);
@@ -1455,279 +1460,6 @@ public partial class SceneService : ISceneService
         await historyStore.DeleteAsync(historyKey, cancellationToken);
     }
 
-    private ValidationResult ValidateSceneStructure(Scene scene)
-    {
-        var errors = new List<ValidationError>();
-        var warnings = new List<ValidationError>();
-
-        // Validate sceneId is not empty Guid
-        if (scene.SceneId == Guid.Empty)
-        {
-            errors.Add(new ValidationError
-            {
-                RuleId = "valid-uuid",
-                Message = "sceneId must be a valid non-empty UUID",
-                Severity = ValidationSeverity.Error
-            });
-        }
-
-        // Validate version pattern
-        if (!string.IsNullOrEmpty(scene.Version) && !Regex.IsMatch(scene.Version, @"^\d+\.\d+\.\d+$"))
-        {
-            errors.Add(new ValidationError
-            {
-                RuleId = "valid-version",
-                Message = "version must match MAJOR.MINOR.PATCH pattern",
-                Severity = ValidationSeverity.Error
-            });
-        }
-
-        // Validate root node exists
-        if (scene.Root == null)
-        {
-            errors.Add(new ValidationError
-            {
-                RuleId = "single-root",
-                Message = "Scene must have a root node",
-                Severity = ValidationSeverity.Error
-            });
-        }
-        else
-        {
-            // Validate root has no parent
-            if (scene.Root.ParentNodeId != null)
-            {
-                errors.Add(new ValidationError
-                {
-                    RuleId = "root-no-parent",
-                    Message = "Root node must have null parentNodeId",
-                    Severity = ValidationSeverity.Error,
-                    NodeId = scene.Root.NodeId
-                });
-            }
-
-            // Validate all nodes
-            var allNodes = new List<SceneNode>();
-            CollectNodes(scene.Root, allNodes);
-
-            // Check node count limit
-            if (allNodes.Count > _configuration.MaxNodeCount)
-            {
-                errors.Add(new ValidationError
-                {
-                    RuleId = "node-count-limit",
-                    Message = $"Scene exceeds maximum node count of {_configuration.MaxNodeCount}",
-                    Severity = ValidationSeverity.Error
-                });
-            }
-
-            // Check refId uniqueness
-            var refIds = new HashSet<string>();
-            foreach (var node in allNodes)
-            {
-                if (string.IsNullOrEmpty(node.RefId))
-                {
-                    errors.Add(new ValidationError
-                    {
-                        RuleId = "unique-refid",
-                        Message = "Node must have a refId",
-                        Severity = ValidationSeverity.Error,
-                        NodeId = node.NodeId
-                    });
-                }
-                else if (!RefIdPattern.IsMatch(node.RefId))
-                {
-                    errors.Add(new ValidationError
-                    {
-                        RuleId = "refid-pattern",
-                        Message = $"refId '{node.RefId}' must match pattern ^[a-z][a-z0-9_]*$",
-                        Severity = ValidationSeverity.Error,
-                        NodeId = node.NodeId
-                    });
-                }
-                else if (!refIds.Add(node.RefId))
-                {
-                    errors.Add(new ValidationError
-                    {
-                        RuleId = "unique-refid",
-                        Message = $"Duplicate refId '{node.RefId}'",
-                        Severity = ValidationSeverity.Error,
-                        NodeId = node.NodeId
-                    });
-                }
-
-                // Validate nodeId is not empty
-                if (node.NodeId == Guid.Empty)
-                {
-                    errors.Add(new ValidationError
-                    {
-                        RuleId = "valid-uuid",
-                        Message = "nodeId must be a valid non-empty UUID",
-                        Severity = ValidationSeverity.Error
-                    });
-                }
-
-                // Validate transform
-                if (node.LocalTransform == null)
-                {
-                    errors.Add(new ValidationError
-                    {
-                        RuleId = "valid-transform",
-                        Message = "Node must have a localTransform",
-                        Severity = ValidationSeverity.Error,
-                        NodeId = node.NodeId
-                    });
-                }
-            }
-        }
-
-        return new ValidationResult
-        {
-            Valid = errors.Count == 0,
-            Errors = errors.Count > 0 ? errors : null,
-            Warnings = warnings.Count > 0 ? warnings : null
-        };
-    }
-
-    private async Task<ValidationResult> ApplyGameValidationRulesAsync(Scene scene, CancellationToken cancellationToken)
-    {
-        var errors = new List<ValidationError>();
-        var warnings = new List<ValidationError>();
-
-        // Get rules for this gameId+sceneType
-        var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
-        var key = $"{VALIDATION_RULES_PREFIX}{scene.GameId}:{scene.SceneType}";
-        var rules = await rulesStore.GetAsync(key, cancellationToken);
-
-        if (rules == null || rules.Count == 0)
-        {
-            return new ValidationResult { Valid = true };
-        }
-
-        var allNodes = new List<SceneNode>();
-        CollectNodes(scene.Root, allNodes);
-
-        foreach (var rule in rules)
-        {
-            var ruleErrors = ApplyValidationRule(rule, scene, allNodes);
-            foreach (var error in ruleErrors)
-            {
-                if (rule.Severity == ValidationSeverity.Error)
-                {
-                    errors.Add(error);
-                }
-                else
-                {
-                    warnings.Add(error);
-                }
-            }
-        }
-
-        return new ValidationResult
-        {
-            Valid = errors.Count == 0,
-            Errors = errors.Count > 0 ? errors : null,
-            Warnings = warnings.Count > 0 ? warnings : null
-        };
-    }
-
-    private List<ValidationError> ApplyValidationRule(ValidationRule rule, Scene scene, List<SceneNode> allNodes)
-    {
-        var errors = new List<ValidationError>();
-        var config = rule.Config;
-
-        switch (rule.RuleType)
-        {
-            case ValidationRuleType.Require_tag:
-                if (!string.IsNullOrEmpty(config?.Tag))
-                {
-                    var matchingNodes = allNodes.Where(n =>
-                        (string.IsNullOrEmpty(config.NodeType) || n.NodeType.ToString() == config.NodeType) &&
-                        n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
-
-                    var minCount = config.MinCount ?? 1;
-                    if (matchingNodes.Count < minCount)
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            RuleId = rule.RuleId,
-                            Message = $"Scene requires at least {minCount} nodes with tag '{config.Tag}'",
-                            Severity = rule.Severity
-                        });
-                    }
-
-                    if (config.MaxCount.HasValue && matchingNodes.Count > config.MaxCount.Value)
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            RuleId = rule.RuleId,
-                            Message = $"Scene has too many nodes with tag '{config.Tag}' (max: {config.MaxCount.Value})",
-                            Severity = rule.Severity
-                        });
-                    }
-                }
-                break;
-
-            case ValidationRuleType.Forbid_tag:
-                if (!string.IsNullOrEmpty(config?.Tag))
-                {
-                    var forbiddenNodes = allNodes.Where(n => n.Tags != null && n.Tags.Contains(config.Tag)).ToList();
-                    foreach (var node in forbiddenNodes)
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            RuleId = rule.RuleId,
-                            Message = $"Tag '{config.Tag}' is forbidden",
-                            Severity = rule.Severity,
-                            NodeId = node.NodeId
-                        });
-                    }
-                }
-                break;
-
-            case ValidationRuleType.Require_node_type:
-                if (!string.IsNullOrEmpty(config?.NodeType))
-                {
-                    var matchingNodes = allNodes.Where(n => n.NodeType.ToString() == config.NodeType).ToList();
-                    var minCount = config.MinCount ?? 1;
-                    if (matchingNodes.Count < minCount)
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            RuleId = rule.RuleId,
-                            Message = $"Scene requires at least {minCount} nodes of type '{config.NodeType}'",
-                            Severity = rule.Severity
-                        });
-                    }
-                }
-                break;
-        }
-
-        return errors;
-    }
-
-    private void MergeValidationResults(ValidationResult target, ValidationResult source)
-    {
-        if (source.Errors != null)
-        {
-            if (target.Errors == null)
-            {
-                target.Errors = new List<ValidationError>();
-            }
-            ((List<ValidationError>)target.Errors).AddRange(source.Errors);
-            target.Valid = false;
-        }
-
-        if (source.Warnings != null)
-        {
-            if (target.Warnings == null)
-            {
-                target.Warnings = new List<ValidationError>();
-            }
-            ((List<ValidationError>)target.Warnings).AddRange(source.Warnings);
-        }
-    }
-
     private async Task UpdateSceneIndexesAsync(Scene newScene, Scene? oldScene, CancellationToken cancellationToken)
     {
         var sceneIdStr = newScene.SceneId.ToString();
@@ -2065,18 +1797,6 @@ public partial class SceneService : ISceneService
             foreach (var child in node.Children)
             {
                 FindAssetNodesRecursive(child, targetAssetId, nodes);
-            }
-        }
-    }
-
-    private void CollectNodes(SceneNode node, List<SceneNode> nodes)
-    {
-        nodes.Add(node);
-        if (node.Children != null)
-        {
-            foreach (var child in node.Children)
-            {
-                CollectNodes(child, nodes);
             }
         }
     }

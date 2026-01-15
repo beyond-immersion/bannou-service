@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Scene.Helpers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,10 @@ public class SceneServicePlugin : BaseBannouPlugin
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
+
+        // Register helper services for improved testability
+        services.AddScoped<ISceneValidationService, SceneValidationService>();
+        Logger?.LogDebug("Registered SceneValidationService");
 
         Logger?.LogDebug("Service dependencies configured");
     }
