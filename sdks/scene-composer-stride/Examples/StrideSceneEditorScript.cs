@@ -77,7 +77,6 @@ public class StrideSceneEditorScript : SyncScript
     public float CameraSprintMultiplier { get; set; } = 3f;
 
     // SDK components
-    private StrideContentManager? _contentManager;
     private StrideBannouAssetLoader? _assetLoader;
     private StrideSceneComposerBridge? _bridge;
     private StrideGizmoRenderer? _gizmoRenderer;
@@ -101,11 +100,6 @@ public class StrideSceneEditorScript : SyncScript
     /// Gets the SceneComposer instance for external access.
     /// </summary>
     public ISceneComposer? Composer => _composer;
-
-    /// <summary>
-    /// Gets the content manager for bundle loading.
-    /// </summary>
-    public StrideContentManager? ContentManager => _contentManager;
 
     /// <summary>
     /// Gets the asset loader for loading assets.
@@ -155,9 +149,8 @@ public class StrideSceneEditorScript : SyncScript
     /// </summary>
     protected virtual void InitializeEditor()
     {
-        // Initialize content manager
-        _contentManager = new StrideContentManager(Services, GraphicsDevice);
-        _assetLoader = new StrideBannouAssetLoader(_contentManager);
+        // Initialize asset loader (uses AssetLoader SDK with Stride type loaders)
+        _assetLoader = new StrideBannouAssetLoader(Services, GraphicsDevice);
 
         // Initialize gizmo renderer
         _gizmoRenderer = new StrideGizmoRenderer(GraphicsDevice);
@@ -678,7 +671,11 @@ public class StrideSceneEditorScript : SyncScript
     /// </summary>
     public override void Cancel()
     {
-        _contentManager?.Dispose();
+        // Dispose asset loader asynchronously (fire and forget since Cancel is sync)
+        if (_assetLoader != null)
+        {
+            _ = _assetLoader.DisposeAsync();
+        }
         base.Cancel();
     }
 }

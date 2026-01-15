@@ -1,6 +1,5 @@
 using BeyondImmersion.Bannou.AssetLoader.Abstractions;
 using BeyondImmersion.Bannou.Bundle.Format;
-using BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 using Stride.Core;
 using Stride.Graphics;
 
@@ -8,7 +7,7 @@ namespace BeyondImmersion.Bannou.AssetLoader.Stride.Loaders;
 
 /// <summary>
 /// IAssetTypeLoader adapter for Stride Texture assets.
-/// Wraps the scene-composer-stride TextureLoader.
+/// Wraps the TextureLoader for use with the AssetLoader SDK.
 /// </summary>
 public sealed class StrideTextureTypeLoader : IAssetTypeLoader<Texture>
 {

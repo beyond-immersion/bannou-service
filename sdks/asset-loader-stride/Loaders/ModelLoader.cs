@@ -12,7 +12,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
+namespace BeyondImmersion.Bannou.AssetLoader.Stride.Loaders;
 
 /// <summary>
 /// Delegate for resolving model dependencies from bundles.

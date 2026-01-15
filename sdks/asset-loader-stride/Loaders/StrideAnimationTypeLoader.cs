@@ -1,6 +1,5 @@
 using BeyondImmersion.Bannou.AssetLoader.Abstractions;
 using BeyondImmersion.Bannou.Bundle.Format;
-using BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
 using Stride.Animations;
 using Stride.Core;
 
@@ -8,7 +7,7 @@ namespace BeyondImmersion.Bannou.AssetLoader.Stride.Loaders;
 
 /// <summary>
 /// IAssetTypeLoader adapter for Stride AnimationClip assets.
-/// Wraps the scene-composer-stride AnimationClipLoader.
+/// Wraps the AnimationClipLoader for use with the AssetLoader SDK.
 /// </summary>
 public sealed class StrideAnimationTypeLoader : IAssetTypeLoader<AnimationClip>
 {

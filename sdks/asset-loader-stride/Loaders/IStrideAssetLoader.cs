@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
+namespace BeyondImmersion.Bannou.AssetLoader.Stride.Loaders;
 
 /// <summary>
 /// Interface for loading specific Stride asset types from bundle data.

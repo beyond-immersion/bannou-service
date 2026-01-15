@@ -48,8 +48,6 @@
   <ItemGroup>
     <!-- Reference core Asset Loader SDK -->
     <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
-    <!-- Reference SceneComposer Stride for existing loaders -->
-    <ProjectReference Include="../scene-composer-stride/Bannou.Stride.SceneComposer.csproj" />
   </ItemGroup>
 
 </Project>
