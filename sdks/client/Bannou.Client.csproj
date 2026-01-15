@@ -80,17 +80,12 @@
     <Compile Include="../../plugins/lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../../plugins/lib-connect/Protocol/ConnectionState.cs')" />
   </ItemGroup>
 
-  <!-- Game transport protocol primitives -->
+  <!-- Shared SDK Libraries -->
   <ItemGroup>
-    <Compile Include="../protocol/*.cs" />
-    <Compile Include="../protocol/messages/*.cs" />
-    <Compile Include="../transport/*.cs" />
-  </ItemGroup>
-
-  <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
-  <!-- Uses shared bundle-format code from SDKs directory -->
-  <ItemGroup>
-    <Compile Include="../bundle-format/*.cs" LinkBase="Bundles" />
+    <!-- Transport includes Protocol transitively -->
+    <ProjectReference Include="../transport/BeyondImmersion.Bannou.Transport.csproj" />
+    <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
+    <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->

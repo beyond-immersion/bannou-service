@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.Transport</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.Transport</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.Transport</AssemblyName>
+
+    <!-- Not published to NuGet yet - internal shared code -->
+    <IsPackable>false</IsPackable>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LiteNetLib for UDP transport -->
+    <PackageReference Include="LiteNetLib" Version="1.2.0" />
+  </ItemGroup>
+
+  <!-- Transport depends on Protocol for message types and envelope -->
+  <ItemGroup>
+    <ProjectReference Include="../protocol/BeyondImmersion.Bannou.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>

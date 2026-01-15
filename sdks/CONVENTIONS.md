@@ -17,14 +17,19 @@ sdks/
 ├── client-voice.tests/          # Voice SDK tests
 ├── server/                      # Server SDK (includes service clients)
 ├── server.tests/                # Server SDK tests
+├── asset-bundler/               # Engine-agnostic asset bundling pipeline
+├── asset-bundler.tests/         # AssetBundler tests
+├── asset-bundler-stride/        # Stride engine asset compilation
+├── asset-bundler-stride.tests/  # Stride AssetBundler tests
 ├── scene-composer/              # Engine-agnostic scene composition
 ├── scene-composer.tests/        # SceneComposer tests
 ├── scene-composer-stride/       # Stride engine integration
 ├── scene-composer-stride.tests/ # Stride integration tests
 ├── scene-composer-godot/        # Godot engine integration
 ├── scene-composer-godot.tests/  # Godot integration tests
-├── protocol/                    # Shared protocol definitions (not a NuGet package)
-└── transport/                   # Shared transport code (not a NuGet package)
+├── bundle-format/               # Shared .bannou bundle format (internal library)
+├── protocol/                    # Shared protocol definitions (internal library)
+└── transport/                   # Shared transport code (internal library)
 
 examples/
 └── godot-scene-composer/        # Demo project for Godot SceneComposer
@@ -46,6 +51,8 @@ examples/
 | `client/` | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
 | `client-voice/` | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
+| `asset-bundler/` | `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline |
+| `asset-bundler-stride/` | `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation |
 | `scene-composer/` | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing |
 | `scene-composer-stride/` | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration |
 | `scene-composer-godot/` | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot engine integration |
@@ -59,6 +66,8 @@ BeyondImmersion.Bannou.{Feature}[.{SubFeature}]
 Examples:
 - `BeyondImmersion.Bannou.Client`
 - `BeyondImmersion.Bannou.Client.Voice`
+- `BeyondImmersion.Bannou.AssetBundler`
+- `BeyondImmersion.Bannou.AssetBundler.Stride`
 - `BeyondImmersion.Bannou.SceneComposer`
 - `BeyondImmersion.Bannou.SceneComposer.Stride`
 - `BeyondImmersion.Bannou.SceneComposer.Godot`
@@ -142,14 +151,46 @@ For engine integrations (Stride, Godot, Unity, Unreal, etc.):
 
 The engine name comes AFTER `SceneComposer` to maintain logical grouping in NuGet search results and IDE autocomplete.
 
-## Shared Code (Non-Package)
+## Shared Internal Libraries
 
-The `protocol/` and `transport/` directories contain shared code that is NOT published as separate NuGet packages. These are:
+The following directories contain shared code that is compiled as proper projects but NOT published as separate NuGet packages. They are referenced via `<ProjectReference>` from consuming SDKs:
 
-- **protocol/** - Game protocol definitions (MessagePack DTOs, envelope format)
-- **transport/** - LiteNetLib transport implementations
+| Directory | PackageId | Description |
+|-----------|-----------|-------------|
+| `bundle-format/` | `BeyondImmersion.Bannou.Bundle.Format` | .bannou bundle file read/write |
+| `protocol/` | `BeyondImmersion.Bannou.Protocol` | Game protocol definitions (MessagePack DTOs, envelope format) |
+| `transport/` | `BeyondImmersion.Bannou.Transport` | LiteNetLib transport implementations |
 
-These are referenced directly by other SDK projects via `<Compile Include="...">` or project references.
+These are proper .NET projects with `.csproj` files, included in `bannou-sdks.sln`, and follow all SDK naming conventions. They have `<IsPackable>false</IsPackable>` to prevent NuGet publishing.
+
+### Why Projects Instead of Compile Include?
+
+1. **Compile-time validation** - Each shared library builds independently, catching errors early
+2. **IDE support** - Full IntelliSense, navigation, and refactoring support
+3. **NuGet-ready** - Can be published later by setting `<IsPackable>true</IsPackable>`
+4. **Clean dependency graph** - Explicit project references instead of hidden file includes
+5. **Consistent namespace** - All consumers use the same namespace
+
+### Usage Pattern
+
+```xml
+<!-- In consuming SDK .csproj -->
+<ItemGroup>
+  <ProjectReference Include="../transport/BeyondImmersion.Bannou.Transport.csproj" />
+  <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
+</ItemGroup>
+```
+
+### Server Plugin Usage
+
+Server-side plugins can also reference these shared libraries:
+
+```xml
+<!-- In plugins/lib-asset/lib-asset.csproj -->
+<ItemGroup>
+  <ProjectReference Include="../../sdks/bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
+</ItemGroup>
+```
 
 ## Version Management
 

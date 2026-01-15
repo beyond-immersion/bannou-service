@@ -26,9 +26,9 @@
     <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 
-  <!-- Shared bundle format code (like protocol/transport pattern) -->
+  <!-- Shared bundle format library -->
   <ItemGroup>
-    <Compile Include="../../sdks/bundle-format/*.cs" LinkBase="Bundles" />
+    <ProjectReference Include="../../sdks/bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
   </ItemGroup>
 
 </Project>

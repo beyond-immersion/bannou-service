@@ -1,0 +1,565 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.Bundle.Format</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader">
+            <summary>
+            Reads assets from the .bannou bundle format.
+            Supports random access to individual assets via the binary index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.#ctor(System.IO.Stream,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader},System.Boolean)">
+            <summary>
+            Creates a new bundle reader.
+            </summary>
+            <param name="inputStream">The stream containing the bundle.</param>
+            <param name="logger">Optional logger.</param>
+            <param name="leaveOpen">Whether to leave the stream open when disposed.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.Manifest">
+            <summary>
+            Gets the bundle manifest.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.Index">
+            <summary>
+            Gets the bundle index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadHeader">
+            <summary>
+            Reads and parses the bundle header (manifest and index).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadHeaderAsync(System.Threading.CancellationToken)">
+            <summary>
+            Reads and parses the bundle header asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.GetAssetEntry(System.String)">
+            <summary>
+            Gets an asset entry by ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.GetAssetEntryByIndex(System.Int32)">
+            <summary>
+            Gets an asset entry by index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAsset(System.String)">
+            <summary>
+            Reads and decompresses an asset by its ID.
+            </summary>
+            <returns>The decompressed asset data, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAssetByIndex(System.Int32)">
+            <summary>
+            Reads and decompresses an asset by its index.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAssetAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads and decompresses an asset by ID asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAssetByIndexAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Reads and decompresses an asset by index asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAssetToStreamAsync(System.String,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Reads an asset and writes it to a destination stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAllAssets">
+            <summary>
+            Enumerates all assets in the bundle.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.ReadAllAssetsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Enumerates all assets in the bundle asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleReader.Dispose">
+            <summary>
+            Disposes the reader.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter">
+            <summary>
+            Writes assets into the .bannou bundle format.
+            Bundle structure:
+            1. manifest.json (uncompressed, JSON)
+            2. index.bin (binary offset index)
+            3. assets/*.chunk (LZ4-compressed asset data)
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.#ctor(System.IO.Stream,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter})">
+            <summary>
+            Creates a new bundle writer.
+            </summary>
+            <param name="outputStream">The stream to write the bundle to.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.AddAsset(System.String,System.String,System.String,System.ReadOnlySpan{System.Byte},System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object})">
+            <summary>
+            Adds an asset to the bundle.
+            </summary>
+            <param name="assetId">Unique asset identifier.</param>
+            <param name="filename">Original filename.</param>
+            <param name="contentType">MIME content type.</param>
+            <param name="data">Asset data to compress and add.</param>
+            <param name="externalAssetId">Optional external asset identifier for cross-system references.</param>
+            <param name="tags">Optional tags for smart bundling decisions.</param>
+            <param name="metadata">Optional asset metadata.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.AddAssetAsync(System.String,System.String,System.String,System.IO.Stream,System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Adds an asset from a stream.
+            </summary>
+            <param name="assetId">Unique asset identifier.</param>
+            <param name="filename">Original filename.</param>
+            <param name="contentType">MIME content type.</param>
+            <param name="dataStream">Stream containing asset data.</param>
+            <param name="externalAssetId">Optional external asset identifier for cross-system references.</param>
+            <param name="tags">Optional tags for smart bundling decisions.</param>
+            <param name="metadata">Optional asset metadata.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Finalize(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Finalizes the bundle and writes it to the output stream.
+            </summary>
+            <param name="bundleId">Unique bundle identifier.</param>
+            <param name="name">Bundle name.</param>
+            <param name="version">Bundle version.</param>
+            <param name="createdBy">Account ID of creator.</param>
+            <param name="description">Optional description.</param>
+            <param name="tags">Optional metadata tags.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.FinalizeAsync(System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Threading.CancellationToken)">
+            <summary>
+            Finalizes the bundle asynchronously.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BannouBundleWriter.Dispose">
+            <summary>
+            Disposes the writer and releases resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleIndex">
+            <summary>
+            Binary index format for fast random access to bundle assets.
+            Stored as index.bin after the manifest.
+            Each entry is 48 bytes in big-endian format.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.EntrySize">
+            <summary>
+            Size of each index entry in bytes.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.MagicBytes">
+            <summary>
+            Magic bytes at the start of the index file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.Entries">
+            <summary>
+            Index entries for each asset.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.WriteTo(System.IO.Stream)">
+            <summary>
+            Writes the index to a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.ReadFrom(System.IO.Stream)">
+            <summary>
+            Reads an index from a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleIndex.GetEntry(System.Int32)">
+            <summary>
+            Gets the entry at the specified index.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry">
+            <summary>
+            Single entry in the bundle index.
+            48 bytes total:
+            - 8 bytes: Offset in the bundle file
+            - 8 bytes: Compressed size
+            - 8 bytes: Uncompressed size
+            - 24 bytes: Content hash (first 24 bytes of SHA256)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.Offset">
+            <summary>
+            Offset of the compressed chunk in the bundle file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.CompressedSize">
+            <summary>
+            Compressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.UncompressedSize">
+            <summary>
+            Uncompressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.ContentHashPrefix">
+            <summary>
+            First 24 bytes of the SHA256 content hash.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.WriteTo(System.IO.Stream)">
+            <summary>
+            Writes this entry to a stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleIndexEntry.ReadFrom(System.IO.Stream)">
+            <summary>
+            Reads an entry from a stream.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleJson">
+            <summary>
+            JSON serialization helper for bundle format code.
+            This provides consistent JSON serialization settings compatible with
+            Bannou's service-side serialization (BannouJson).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Options">
+            <summary>
+            Standard JSON serializer options for bundle format.
+            Matches the configuration used by Bannou services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Deserialize``1(System.String)">
+            <summary>
+            Deserialize JSON string to object.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Serialize``1(``0)">
+            <summary>
+            Serialize object to JSON string.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleManifest">
+            <summary>
+            Manifest describing the contents of a .bannou bundle.
+            Stored as manifest.json at the start of the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.FormatVersion">
+            <summary>
+            Bundle format version for compatibility checking.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.BundleId">
+            <summary>
+            Unique identifier for this bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Name">
+            <summary>
+            Human-readable name for the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Description">
+            <summary>
+            Optional description of the bundle contents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Version">
+            <summary>
+            Version string for the bundle contents.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.CreatedAt">
+            <summary>
+            Timestamp when the bundle was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.CreatedBy">
+            <summary>
+            Account ID of the bundle creator.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.TotalUncompressedSize">
+            <summary>
+            Total uncompressed size of all assets in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.TotalCompressedSize">
+            <summary>
+            Total compressed size of all assets in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.CompressionAlgorithm">
+            <summary>
+            Compression algorithm used (e.g., "lz4").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Assets">
+            <summary>
+            List of asset entries in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.Tags">
+            <summary>
+            Optional metadata tags for the bundle.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.BundleManifest.CurrentFormatVersion">
+            <summary>
+            Current format version constant.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry">
+            <summary>
+            Entry describing a single asset within a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.AssetId">
+            <summary>
+            Asset ID (unique within the bundle).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.Filename">
+            <summary>
+            Original filename of the asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.ContentType">
+            <summary>
+            Content type (MIME type) of the asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.UncompressedSize">
+            <summary>
+            Uncompressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.CompressedSize">
+            <summary>
+            Compressed size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.ContentHash">
+            <summary>
+            SHA256 hash of the uncompressed content.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.Index">
+            <summary>
+            Index of this asset in the bundle (0-based).
+            Used to look up offset in index.bin.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.ExternalAssetId">
+            <summary>
+            External asset identifier for cross-system references.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.Tags">
+            <summary>
+            Tags associated with this asset for smart bundling decisions.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleAssetEntry.Metadata">
+            <summary>
+            Optional asset-specific metadata.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleValidator">
+            <summary>
+            Validates uploaded bundles for structure, manifest, and content integrity.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.Bundle.Format.BundleValidator},BeyondImmersion.Bannou.Bundle.Format.BundleValidatorOptions)">
+            <summary>
+            Creates a new bundle validator.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleValidator.ValidateAsync(System.IO.Stream,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Validates a bundle stream and returns the validation result.
+            </summary>
+            <param name="bundleStream">The bundle stream to validate.</param>
+            <param name="expectedBundleId">Expected bundle ID for verification.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Validation result with details.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleValidatorOptions">
+            <summary>
+            Options for bundle validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidatorOptions.MaxAssetCount">
+            <summary>
+            Maximum number of assets allowed in a bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidatorOptions.MaxAssetSizeBytes">
+            <summary>
+            Maximum size of a single asset in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidatorOptions.ForbiddenContentTypes">
+            <summary>
+            Forbidden content types.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult">
+            <summary>
+            Result of bundle validation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.BundleId">
+            <summary>
+            Bundle ID that was validated.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.IsValid">
+            <summary>
+            Whether validation passed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.Stage">
+            <summary>
+            Stage at which validation stopped.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.Manifest">
+            <summary>
+            Parsed manifest from the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.Errors">
+            <summary>
+            List of validation errors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.Warnings">
+            <summary>
+            List of validation warnings.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.ExtractedAssets">
+            <summary>
+            Extracted asset information (for registration).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleValidationResult.ValidatedAt">
+            <summary>
+            When validation was performed.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ValidationStage">
+            <summary>
+            Validation stages.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Pending">
+            <summary>Validation has not started.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Structure">
+            <summary>Validating bundle structure.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Manifest">
+            <summary>Validating bundle manifest.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Content">
+            <summary>Validating bundle content.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Complete">
+            <summary>Validation completed successfully.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationStage.Failed">
+            <summary>Validation failed.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ValidationError">
+            <summary>
+            A validation error or warning.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ValidationError.Code">
+            <summary>
+            Error code.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ValidationError.Message">
+            <summary>
+            Error message.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ValidationError.Severity">
+            <summary>
+            Error severity.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ValidationSeverity">
+            <summary>
+            Validation error severity.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationSeverity.Warning">
+            <summary>Non-fatal warning.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Bundle.Format.ValidationSeverity.Error">
+            <summary>Fatal error.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo">
+            <summary>
+            Information about an extracted asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo.AssetId">
+            <summary>Asset identifier.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo.Filename">
+            <summary>Original filename.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo.ContentType">
+            <summary>MIME content type.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo.ContentHash">
+            <summary>SHA256 hash of uncompressed content.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.ExtractedAssetInfo.Size">
+            <summary>Uncompressed size in bytes.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.StructureValidationResult">
+            <summary>
+            Internal result for structure validation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ManifestValidationResult">
+            <summary>
+            Internal result for manifest validation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Bundle.Format.ContentValidationResult">
+            <summary>
+            Internal result for content validation.
+            </summary>
+        </member>
+    </members>
+</doc>
