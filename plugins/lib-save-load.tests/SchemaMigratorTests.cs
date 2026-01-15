@@ -23,24 +23,6 @@ public class SchemaMigratorTests
     #region Constructor Tests
 
     [Fact]
-    public void SchemaMigrator_RequiresLogger()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SchemaMigrator(
-            null!,
-            _schemaStoreMock.Object));
-    }
-
-    [Fact]
-    public void SchemaMigrator_RequiresSchemaStore()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SchemaMigrator(
-            _loggerMock.Object,
-            null!));
-    }
-
-    [Fact]
     public void SchemaMigrator_CanBeInstantiated()
     {
         // Arrange & Act

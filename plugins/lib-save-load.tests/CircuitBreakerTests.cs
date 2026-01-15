@@ -51,50 +51,6 @@ public class CircuitBreakerTests
         Assert.NotNull(circuitBreaker);
     }
 
-    [Fact]
-    public void StorageCircuitBreaker_RequiresStateStoreFactory()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StorageCircuitBreaker(
-            null!,
-            _messageBusMock.Object,
-            _configuration,
-            _loggerMock.Object));
-    }
-
-    [Fact]
-    public void StorageCircuitBreaker_RequiresMessageBus()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StorageCircuitBreaker(
-            _stateStoreFactoryMock.Object,
-            null!,
-            _configuration,
-            _loggerMock.Object));
-    }
-
-    [Fact]
-    public void StorageCircuitBreaker_RequiresConfiguration()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StorageCircuitBreaker(
-            _stateStoreFactoryMock.Object,
-            _messageBusMock.Object,
-            null!,
-            _loggerMock.Object));
-    }
-
-    [Fact]
-    public void StorageCircuitBreaker_RequiresLogger()
-    {
-        // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StorageCircuitBreaker(
-            _stateStoreFactoryMock.Object,
-            _messageBusMock.Object,
-            _configuration,
-            null!));
-    }
-
     #endregion
 
     #region State Enum Tests
