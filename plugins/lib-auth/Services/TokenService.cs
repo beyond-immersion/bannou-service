@@ -49,9 +49,6 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        if (account == null)
-            throw new ArgumentNullException(nameof(account));
-
         // Use core app configuration for JWT settings (validated at startup in Program.cs)
         var jwtConfig = Program.Configuration;
 

@@ -1162,13 +1162,6 @@ public partial class AuthService : IAuthService
     /// </summary>
     private async Task<(string accessToken, string sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        // Validate inputs
-        if (account == null)
-            throw new ArgumentNullException(nameof(account));
-
-        if (_configuration == null)
-            throw new InvalidOperationException("AuthServiceConfiguration is null");
-
         // Use core app configuration for JWT settings (validated at startup in Program.cs)
         var jwtConfig = Program.Configuration;
 
