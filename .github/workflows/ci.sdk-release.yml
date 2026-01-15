@@ -215,6 +215,7 @@ jobs:
             "sdks/scene-composer-godot"
             "sdks/asset-bundler"
             "sdks/asset-bundler-stride"
+            "sdks/asset-bundler-godot"
             "sdks/asset-loader"
             "sdks/asset-loader-client"
             "sdks/asset-loader-server"

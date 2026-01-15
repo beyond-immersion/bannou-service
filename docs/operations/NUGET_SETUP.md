@@ -13,6 +13,7 @@ Bannou publishes **multiple SDK packages** to NuGet for different use cases. For
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline |
 | `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation |
+| `BeyondImmersion.Bannou.AssetBundler.Godot` | Godot engine asset processing |
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing |
 | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine scene integration |
 | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot engine scene integration |

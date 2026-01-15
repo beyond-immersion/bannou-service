@@ -391,6 +391,93 @@ var result = await pipeline.ExecuteAsync(source, compiler, state, null, options)
 
 ---
 
+## Godot AssetBundler
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler.Godot`
+
+Godot 4.x engine asset processing for the AssetBundler SDK. Processes assets for Godot's runtime loading capabilities (GLB models, PNG/JPG/WebP textures, WAV/OGG/MP3 audio).
+
+### Features
+
+- **GodotAssetProcessor**: Full `IAssetProcessor` implementation for Godot-compatible formats
+- **Pass-through processing**: Godot-compatible formats pass through unchanged
+- **Format conversion**: Converts FBX→glTF, TGA/DDS/BMP→PNG, FLAC→OGG (extensible)
+- **Type inference**: `GodotTypeInferencer` determines asset types from filenames
+- **Content types**: MIME type helpers for Godot runtime loading
+
+### Requirements
+
+- .NET 9.0+
+- Optional: External converters for format conversion (FBX2glTF, ImageMagick, FFmpeg)
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler.Godot
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Godot;
+using BeyondImmersion.Bannou.AssetBundler.Godot.Processing;
+
+// Create Godot processor
+var processorOptions = new GodotProcessorOptions
+{
+    EnableConversion = true,
+    SkipUnconvertible = true,
+    MaxTextureSize = 4096,
+    OptimizePng = false
+};
+
+var processor = new GodotAssetProcessor(processorOptions);
+
+// Use with pipeline
+var result = await pipeline.ExecuteAsync(source, processor, state, null, options);
+```
+
+### Type Inference
+
+The `GodotTypeInferencer` determines asset types from filenames:
+
+| Pattern | Detected Type |
+|---------|---------------|
+| `*.glb`, `*.gltf`, `*.fbx`, `*.obj` | Model |
+| `*.png`, `*.jpg`, `*.webp`, `*.tga` | Texture |
+| `*.wav`, `*.ogg`, `*.mp3`, `*.flac` | Audio |
+| `*_normal.png`, `*_n.png` | Normal Map |
+| `*_emissive.png`, `*_e.png` | Emissive |
+| `spr_*.png`, `ui_*.png` | UI Texture |
+
+### Content Type Mapping
+
+| Source Extension | Godot Output | Content Type |
+|-----------------|--------------|--------------|
+| `.glb` | glTF Binary | `model/gltf-binary` |
+| `.gltf` | glTF JSON | `model/gltf+json` |
+| `.png` | PNG | `image/png` |
+| `.jpg`, `.jpeg` | JPEG | `image/jpeg` |
+| `.webp` | WebP | `image/webp` |
+| `.wav` | WAV | `audio/wav` |
+| `.ogg` | OGG Vorbis | `audio/ogg` |
+| `.mp3` | MP3 | `audio/mpeg` |
+
+### Processing Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `EnableConversion` | `true` | Enable format conversion |
+| `SkipUnconvertible` | `true` | Skip assets that can't be converted |
+| `FbxConverterPath` | `null` | Path to FBX2glTF converter |
+| `MaxTextureSize` | `4096` | Maximum texture dimension (0 = unlimited) |
+| `OptimizePng` | `false` | Apply PNG optimization |
+| `JpegQuality` | `90` | JPEG compression quality (1-100) |
+| `GenerateOrmTextures` | `false` | Generate ORM packed textures |
+| `TrackOriginalFormat` | `true` | Track original format in metadata |
+
+---
+
 ## SceneComposer SDK (Core)
 
 **Package**: `BeyondImmersion.Bannou.SceneComposer`
