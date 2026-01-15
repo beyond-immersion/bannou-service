@@ -70,7 +70,8 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
     }
 
     /// <summary>
-    /// Build StateStoreFactoryConfiguration from StateServiceConfiguration (IMPLEMENTATION TENETS compliant).
+    /// Build StateStoreFactoryConfiguration from StateServiceConfiguration.
+    /// Uses generated StateStoreDefinitions from schemas/state-stores.yaml.
     /// </summary>
     private static StateStoreFactoryConfiguration BuildFactoryConfiguration(StateServiceConfiguration stateConfig)
     {
@@ -83,86 +84,11 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             MySqlConnectionString = stateConfig.MySqlConnectionString
         };
 
-        // Add default store mappings based on service naming conventions
-        // Store names use "{service}-statestore" pattern to match service requests
-        var defaultStores = new Dictionary<string, (StateBackend backend, string? prefix, bool enableSearch)>
+        // Load store configurations from generated definitions (schema-first approach)
+        // Source of truth: schemas/state-stores.yaml
+        foreach (var (storeName, storeConfig) in StateStoreDefinitions.Configurations)
         {
-            // Redis stores (ephemeral/session data)
-            ["auth-statestore"] = (StateBackend.Redis, "auth", false),
-            ["connect-statestore"] = (StateBackend.Redis, "connect", false),
-            ["permission-statestore"] = (StateBackend.Redis, "permission", false),
-            ["voice-statestore"] = (StateBackend.Redis, "voice", false),
-            ["asset-statestore"] = (StateBackend.Redis, "asset", false),
-
-            // Orchestrator stores (heartbeats, routings, configuration)
-            ["orchestrator-heartbeats"] = (StateBackend.Redis, "orch:hb", false),
-            ["orchestrator-routings"] = (StateBackend.Redis, "orch:rt", false),
-            ["orchestrator-config"] = (StateBackend.Redis, "orch:cfg", false),
-
-            // Messaging stores (external subscription recovery)
-            ["messaging-external-subs"] = (StateBackend.Redis, "msg:subs", false),
-
-            // Actor/Behavior stores (agent cognition data)
-            ["agent-memories"] = (StateBackend.Redis, "agent:mem", false),
-            ["actor-state"] = (StateBackend.Redis, "actor:state", false),
-            ["actor-templates"] = (StateBackend.Redis, "actor:tpl", false),
-            ["actor-instances"] = (StateBackend.Redis, "actor:inst", false),
-            ["actor-pool-nodes"] = (StateBackend.Redis, "actor:pool", false),
-            ["actor-assignments"] = (StateBackend.Redis, "actor:assign", false),
-
-            // Redis store for documentation (uses internal indexes via DocumentationService, not State API)
-            ["documentation-statestore"] = (StateBackend.Redis, "doc", false),
-
-            // Redis store with full-text search enabled (auto-creates index on startup)
-            ["test-search-statestore"] = (StateBackend.Redis, "test-search", true),
-
-            // Matchmaking stores (transient queue/ticket data)
-            ["matchmaking-statestore"] = (StateBackend.Redis, "mm", false),
-
-            // MySQL stores (durable data)
-            ["account-statestore"] = (StateBackend.MySql, null, false),
-            ["character-statestore"] = (StateBackend.MySql, null, false),
-            ["game-session-statestore"] = (StateBackend.MySql, null, false),
-            ["location-statestore"] = (StateBackend.MySql, null, false),
-            ["realm-statestore"] = (StateBackend.MySql, null, false),
-            ["relationship-statestore"] = (StateBackend.MySql, null, false),
-            ["relationship-type-statestore"] = (StateBackend.MySql, null, false),
-            ["game-service-statestore"] = (StateBackend.MySql, null, false),
-            ["species-statestore"] = (StateBackend.MySql, null, false),
-            ["subscription-statestore"] = (StateBackend.MySql, null, false),
-
-            // Analytics service stores
-            ["analytics-summary"] = (StateBackend.Redis, "analytics:sum", false),
-            ["analytics-rating"] = (StateBackend.Redis, "analytics:rating", false),
-            ["analytics-history"] = (StateBackend.Redis, "analytics:hist", false),
-
-            // Leaderboard service stores
-            ["leaderboard-definition"] = (StateBackend.Redis, "lb:def", false),
-            ["leaderboard-ranking"] = (StateBackend.Redis, "lb:rank", false),
-            ["leaderboard-season"] = (StateBackend.MySql, null, false),
-
-            // Achievement service stores
-            ["achievement-definition"] = (StateBackend.Redis, "ach:def", false),
-            ["achievement-progress"] = (StateBackend.Redis, "ach:prog", false),
-            ["achievement-unlock"] = (StateBackend.Redis, "ach:unlock", false),
-
-            // Save-Load service stores
-            ["save-load-slots"] = (StateBackend.MySql, null, false),
-            ["save-load-versions"] = (StateBackend.MySql, null, false),
-            ["save-load-schemas"] = (StateBackend.MySql, null, false),
-            ["save-load-cache"] = (StateBackend.Redis, "saveload:cache", false),
-            ["save-load-pending"] = (StateBackend.Redis, "saveload:pending", false),
-        };
-
-        foreach (var (storeName, (backend, prefix, enableSearch)) in defaultStores)
-        {
-            config.Stores[storeName] = new StoreConfiguration
-            {
-                Backend = backend,
-                KeyPrefix = prefix,
-                TableName = backend == StateBackend.MySql ? storeName.Replace("-", "_") : null,
-                EnableSearch = enableSearch
-            };
+            config.Stores[storeName] = storeConfig;
         }
 
         return config;

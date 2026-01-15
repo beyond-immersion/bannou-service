@@ -95,7 +95,7 @@ plugins/lib-behavior/Runtime/    # ABML bytecode interpreter (canonical location
 
 ## Tenet 2: Code Generation System (FOUNDATIONAL)
 
-**Rule**: All service code is generated from OpenAPI schemas via a defined 8-component pipeline. Understanding what is generated vs. manual is essential.
+**Rule**: All service code is generated from schemas via a defined 9-component pipeline. Understanding what is generated vs. manual is essential.
 
 ### Generation Pipeline
 
@@ -103,16 +103,17 @@ Run `make generate` to execute the full pipeline in order:
 
 | Step | Source | Generated Output |
 |------|--------|------------------|
-| 1. Lifecycle Events | `x-lifecycle` in `{service}-events.yaml` | `schemas/Generated/{service}-lifecycle-events.yaml` |
-| 2. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
-| 3. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
-| 4. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
-| 5. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
-| 6. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
-| 7. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
-| 8. Event Subscriptions | `x-event-subscriptions` in events.yaml | `{Service}EventsController.cs` + `{Service}ServiceEvents.cs` |
+| 1. State Stores | `schemas/state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
+| 2. Lifecycle Events | `x-lifecycle` in `{service}-events.yaml` | `schemas/Generated/{service}-lifecycle-events.yaml` |
+| 3. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
+| 4. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| 5. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
+| 6. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
+| 7. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
+| 8. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
+| 9. Event Subscriptions | `x-event-subscriptions` in events.yaml | `{Service}EventsController.cs` + `{Service}ServiceEvents.cs` |
 
-**Order Matters**: Events must be generated before service APIs because services may reference event types.
+**Order Matters**: State stores and events must be generated before service APIs because services may reference these types.
 
 ### What Is Safe to Edit
 
@@ -130,6 +131,7 @@ Run `make generate` to execute the full pipeline in order:
 
 | File Pattern | Purpose |
 |--------------|---------|
+| `state-stores.yaml` | State store definitions (backend, prefix, service owner) |
 | `{service}-api.yaml` | API endpoints with `x-permissions` |
 | `{service}-events.yaml` | Service events with `x-lifecycle`, `x-event-subscriptions` |
 | `{service}-configuration.yaml` | Service configuration with `x-service-configuration` |
@@ -228,7 +230,8 @@ plugins/lib-behavior/Runtime/    # Execution (handwritten interpreter)
 
 ```csharp
 // lib-state: Use IStateStore<T> for state operations
-_stateStore = stateStoreFactory.Create<MyModel>("my-service");
+// ALWAYS use StateStoreDefinitions constants for store names (schema-first)
+_stateStore = stateStoreFactory.GetStore<MyModel>(StateStoreDefinitions.MyService);
 await _stateStore.SaveAsync(key, value, cancellationToken: ct);
 await _stateStore.SaveAsync(key, value, new StateOptions { Ttl = TimeSpan.FromMinutes(30) }); // TTL
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct); // Optimistic concurrency
@@ -265,14 +268,29 @@ Generated clients are auto-registered as Singletons and use mesh service resolut
 4. **Portability**: Backend can change without service code changes
 5. **Performance**: Optimized implementations with connection pooling and caching
 
-### State Store Naming Convention
+### State Store Schema-First Pattern
 
-| Pattern | Backend | Purpose |
-|---------|---------|---------|
-| `{service}` prefix | Redis | Service-specific ephemeral state (sessions, cache) |
-| `{service}` prefix | MySQL | Persistent queryable data (accounts, entities) |
+**All state stores are defined in `schemas/state-stores.yaml`** - the single source of truth. Code generation produces:
+- `plugins/lib-state/Generated/StateStoreDefinitions.cs` - Type-safe constants and configurations
+- `docs/GENERATED-STATE-STORES.md` - Documentation
 
-Backend selection is handled by `IStateStoreFactory` based on service configuration.
+**ALWAYS use `StateStoreDefinitions` constants** instead of hardcoded store names:
+
+```csharp
+// CORRECT: Use generated constants
+_stateStore = stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+_cacheStore = stateStoreFactory.GetStore<SessionData>(StateStoreDefinitions.Auth);
+
+// FORBIDDEN: Hardcoded store names
+_stateStore = stateStoreFactory.GetStore<AccountModel>("account-statestore"); // NO!
+```
+
+| Backend | Purpose | Example Stores |
+|---------|---------|----------------|
+| Redis | Ephemeral state, caches, rankings | `auth-statestore`, `connect-statestore` |
+| MySQL | Persistent queryable data | `account-statestore`, `character-statestore` |
+
+Backend selection is handled by `IStateStoreFactory` based on configurations defined in `schemas/state-stores.yaml`.
 
 ### Allowed Exceptions
 
@@ -535,7 +553,7 @@ public partial class ServiceNameService : IServiceNameService
         IEventConsumer eventConsumer,
         IAuthClient authClient)
     {
-        _stateStore = stateStoreFactory.Create<ServiceModel>("service-name");
+        _stateStore = stateStoreFactory.GetStore<ServiceModel>(StateStoreDefinitions.ServiceName);
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

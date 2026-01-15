@@ -53,7 +53,7 @@ Tenets are organized into three categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T1** | Schema-First Development | All APIs, models, events, and configs defined in OpenAPI YAML before code |
-| **T2** | Code Generation System | 8-component pipeline generates code from schemas; never edit Generated/ |
+| **T2** | Code Generation System | 9-component pipeline generates code from schemas; never edit Generated/ |
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |

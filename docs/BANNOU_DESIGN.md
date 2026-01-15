@@ -127,15 +127,15 @@ Bannou uses three infrastructure libraries to abstract infrastructure concerns, 
 ### State Management (lib-state)
 Services don't know if they're using Redis, MySQL, or any other store:
 ```csharp
-// In constructor
-_stateStore = stateStoreFactory.Create<AccountModel>("account");
+// In constructor - use StateStoreDefinitions constants (schema-first)
+_stateStore = stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
 
 // Usage
 await _stateStore.SaveAsync(key, data);
 var data = await _stateStore.GetAsync(key);
 ```
 
-The actual database is configured via service configuration - change the config, not the code.
+State stores are defined in `schemas/state-stores.yaml` and code is generated to `StateStoreDefinitions.cs` - change the schema, not the code.
 
 ### Pub/Sub Messaging (lib-messaging)
 Services publish and subscribe to events without knowing the message broker details:

@@ -409,14 +409,14 @@ Inconsistent serialization options caused significant debugging issues:
 - Case sensitivity failures between services
 - Missing converters causing deserialization exceptions
 
-`BannouJson` provides the single source of truth for all serialization settings.
+`BannouJson` (located in `sdks/core`, namespace `BeyondImmersion.Bannou.Core`) provides the single source of truth for all serialization settings. This is part of the Core SDK shared across server and client code.
 
 ### Required Pattern
 
 ```csharp
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.Bannou.Core;
 
-// CORRECT: Use BannouJson helper
+// CORRECT: Use BannouJson helper (from Core SDK)
 var model = BannouJson.Deserialize<MyModel>(jsonString);
 var json = BannouJson.Serialize(model);
 
