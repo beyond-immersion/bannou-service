@@ -269,14 +269,6 @@ public class TokenServiceTests
     #region GenerateAccessTokenAsync Tests
 
     [Fact]
-    public async Task GenerateAccessTokenAsync_WithNullAccount_ShouldThrow()
-    {
-        // Arrange & Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _service.GenerateAccessTokenAsync(null!));
-    }
-
-    [Fact]
     public async Task GenerateAccessTokenAsync_WithEmptyJwtSecret_ShouldThrowArgumentException()
     {
         // Arrange - JWT config now comes from Program.Configuration

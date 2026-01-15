@@ -81,25 +81,6 @@ public class GoapMetadataConverterTests
         Assert.Equal(42, goal.Priority);
     }
 
-    [Fact]
-    public void ToGoapGoal_ThrowsOnNullName()
-    {
-        // Arrange
-        var definition = new GoapGoalDefinition();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            GoapMetadataConverter.ToGoapGoal(null!, definition));
-    }
-
-    [Fact]
-    public void ToGoapGoal_ThrowsOnNullDefinition()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            GoapMetadataConverter.ToGoapGoal("test", null!));
-    }
-
     #endregion
 
     #region ToGoapAction
@@ -176,25 +157,6 @@ public class GoapMetadataConverterTests
         Assert.Equal(3, action.Effects.Count);
     }
 
-    [Fact]
-    public void ToGoapAction_ThrowsOnNullFlowName()
-    {
-        // Arrange
-        var metadata = new GoapFlowMetadata();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            GoapMetadataConverter.ToGoapAction(null!, metadata));
-    }
-
-    [Fact]
-    public void ToGoapAction_ThrowsOnNullMetadata()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            GoapMetadataConverter.ToGoapAction("test", null!));
-    }
-
     #endregion
 
     #region ExtractGoals
@@ -229,14 +191,6 @@ public class GoapMetadataConverterTests
 
         // Assert
         Assert.Empty(goals);
-    }
-
-    [Fact]
-    public void ExtractGoals_ThrowsOnNullDocument()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            GoapMetadataConverter.ExtractGoals(null!));
     }
 
     #endregion

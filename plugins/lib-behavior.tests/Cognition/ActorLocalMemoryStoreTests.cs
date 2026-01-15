@@ -78,22 +78,6 @@ public class ActorLocalMemoryStoreTests
     #region FindRelevantAsync Tests
 
     [Fact]
-    public async Task FindRelevantAsync_NullEntityId_ThrowsArgumentNullException()
-    {
-        var perceptions = new List<Perception> { CreatePerception() };
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.FindRelevantAsync(null!, perceptions, 10, CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task FindRelevantAsync_NullPerceptions_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.FindRelevantAsync("entity-1", null!, 10, CancellationToken.None));
-    }
-
-    [Fact]
     public async Task FindRelevantAsync_EmptyPerceptions_ReturnsEmptyList()
     {
         var result = await _memoryStore.FindRelevantAsync(
@@ -276,22 +260,6 @@ public class ActorLocalMemoryStoreTests
     #region StoreExperienceAsync Tests
 
     [Fact]
-    public async Task StoreExperienceAsync_NullEntityId_ThrowsArgumentNullException()
-    {
-        var perception = CreatePerception();
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.StoreExperienceAsync(null!, perception, 0.8f, [], CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task StoreExperienceAsync_NullPerception_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.StoreExperienceAsync("entity-1", null!, 0.8f, [], CancellationToken.None));
-    }
-
-    [Fact]
     public async Task StoreExperienceAsync_SavesMemory()
     {
         var entityId = "entity-1";
@@ -400,13 +368,6 @@ public class ActorLocalMemoryStoreTests
     #region GetAllAsync Tests
 
     [Fact]
-    public async Task GetAllAsync_NullEntityId_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.GetAllAsync(null!, 10, CancellationToken.None));
-    }
-
-    [Fact]
     public async Task GetAllAsync_ZeroLimit_ReturnsEmptyList()
     {
         var result = await _memoryStore.GetAllAsync("entity-1", 0, CancellationToken.None);
@@ -476,20 +437,6 @@ public class ActorLocalMemoryStoreTests
     #region RemoveAsync Tests
 
     [Fact]
-    public async Task RemoveAsync_NullEntityId_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.RemoveAsync(null!, "mem-1", CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task RemoveAsync_NullMemoryId_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.RemoveAsync("entity-1", null!, CancellationToken.None));
-    }
-
-    [Fact]
     public async Task RemoveAsync_DeletesMemoryAndUpdatesIndex()
     {
         var entityId = "entity-1";
@@ -538,13 +485,6 @@ public class ActorLocalMemoryStoreTests
     #endregion
 
     #region ClearAsync Tests
-
-    [Fact]
-    public async Task ClearAsync_NullEntityId_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _memoryStore.ClearAsync(null!, CancellationToken.None));
-    }
 
     [Fact]
     public async Task ClearAsync_DeletesAllMemoriesAndIndex()

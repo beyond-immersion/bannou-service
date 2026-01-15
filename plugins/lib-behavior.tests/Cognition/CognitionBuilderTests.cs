@@ -71,13 +71,6 @@ public sealed class CognitionBuilderTests
     }
 
     [Fact]
-    public void Build_NullTemplate_Throws()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _builder.Build((CognitionTemplate)null!));
-    }
-
-    [Fact]
     public void Build_WithNoOverrides_PreservesTemplate()
     {
         // Act

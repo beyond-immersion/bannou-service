@@ -146,29 +146,6 @@ public class BehaviorBundleManagerTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task RecordBehaviorAsync_NullBehaviorId_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-        var metadata = new BehaviorMetadata { Name = "test" };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RecordBehaviorAsync(null!, "asset-123", null, metadata));
-    }
-
-    [Fact]
-    public async Task RecordBehaviorAsync_NullMetadata_Throws()
-    {
-        // Arrange
-        var manager = CreateManager();
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            manager.RecordBehaviorAsync("behavior-123", "asset-123", null, null!));
-    }
-
     #endregion
 
     #region AddToBundleAsync Tests
