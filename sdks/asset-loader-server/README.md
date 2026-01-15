@@ -78,15 +78,6 @@ var levelData = await loader.GetAssetBytesAsync("polygon-adventure/level-1");
 | Use case | Game clients, dev tools | Game servers, backend |
 | Connection | Long-lived | Per-request |
 
-## Known Limitations
-
-**Current Architecture**: This package currently references `bannou-service` directly to access the generated `IAssetClient` interface and related types. This means:
-
-- External consumers cannot use this package without the full Bannou server codebase
-- The package cannot be published to NuGet in its current form
-
-**Planned Fix**: Extract asset service types into a standalone `BeyondImmersion.Bannou.AssetService.Client` package that can be consumed independently.
-
 ## License
 
 MIT

@@ -13,6 +13,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
 {
     private readonly BannouClient _client;
     private readonly ILogger<BannouWebSocketAssetSource>? _logger;
+    private readonly Realm _defaultRealm;
     private bool _ownsClient;
 
     /// <inheritdoc />
@@ -25,10 +26,15 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// Creates an asset source using an existing client connection.
     /// </summary>
     /// <param name="client">Connected BannouClient instance.</param>
+    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
-    public BannouWebSocketAssetSource(BannouClient client, ILogger<BannouWebSocketAssetSource>? logger = null)
+    public BannouWebSocketAssetSource(
+        BannouClient client,
+        Realm defaultRealm = Realm.Shared,
+        ILogger<BannouWebSocketAssetSource>? logger = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _defaultRealm = defaultRealm;
         _logger = logger;
         _ownsClient = false;
     }
@@ -39,6 +45,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// <param name="serverUrl">WebSocket server URL.</param>
     /// <param name="email">Account email.</param>
     /// <param name="password">Account password.</param>
+    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Connected asset source.</returns>
@@ -46,6 +53,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         string serverUrl,
         string email,
         string password,
+        Realm defaultRealm = Realm.Shared,
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {
@@ -55,7 +63,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         if (!connected)
             throw new InvalidOperationException("Failed to connect to Bannou server");
 
-        return new BannouWebSocketAssetSource(client, logger) { _ownsClient = true };
+        return new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
     }
 
     /// <summary>
@@ -63,12 +71,14 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// </summary>
     /// <param name="serverUrl">WebSocket server URL.</param>
     /// <param name="serviceToken">Service authentication token.</param>
+    /// <param name="defaultRealm">Default realm for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Connected asset source.</returns>
     public static async Task<BannouWebSocketAssetSource> ConnectWithTokenAsync(
         string serverUrl,
         string serviceToken,
+        Realm defaultRealm = Realm.Shared,
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {
@@ -78,7 +88,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         if (!connected)
             throw new InvalidOperationException("Failed to connect to Bannou server");
 
-        return new BannouWebSocketAssetSource(client, logger) { _ownsClient = true };
+        return new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
     }
 
     /// <inheritdoc />
@@ -94,10 +104,13 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
 
         _logger?.LogDebug("Resolving bundles for {Count} assets", assetIds.Count);
 
+        // Note: excludeBundleIds is not supported by the API schema - parameter ignored
         var request = new ResolveBundlesRequest
         {
             AssetIds = assetIds.ToList(),
-            ExcludeBundleIds = excludeBundleIds?.ToList()
+            Realm = _defaultRealm,
+            PreferMetabundles = true,
+            IncludeStandalone = true
         };
 
         var apiResponse = await _client.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
@@ -111,24 +124,25 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         }
 
         var response = apiResponse.Result;
-        var bundles = response.Bundles?.Select(b => new ResolvedBundleInfo
+        var bundles = response.Bundles.Select(b => new ResolvedBundleInfo
         {
             BundleId = b.BundleId,
             DownloadUrl = b.DownloadUrl,
-            SizeBytes = 0, // Not provided in response
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1), // Default expiry
-            IncludedAssetIds = b.IncludedAssetIds?.ToList() ?? new List<string>(),
+            SizeBytes = b.Size,
+            ExpiresAt = b.ExpiresAt,
+            IncludedAssetIds = b.AssetsProvided?.ToList() ?? new List<string>(),
             IsMetabundle = b.BundleType == BundleType.Metabundle
-        }).ToList() ?? new List<ResolvedBundleInfo>();
+        }).ToList();
 
-        var standaloneAssets = response.StandaloneAssets?.Select(a => new ResolvedAssetInfo
+        // Note: ResolvedAsset from the API doesn't include ContentType - use default
+        var standaloneAssets = response.StandaloneAssets.Select(a => new ResolvedAssetInfo
         {
             AssetId = a.AssetId,
             DownloadUrl = a.DownloadUrl,
             SizeBytes = a.Size,
             ExpiresAt = a.ExpiresAt,
-            ContentType = a.ContentType
-        }).ToList() ?? new List<ResolvedAssetInfo>();
+            ContentType = "application/octet-stream"
+        }).ToList();
 
         _logger?.LogDebug("Resolved {BundleCount} bundles and {AssetCount} standalone assets",
             bundles.Count, standaloneAssets.Count);
@@ -137,7 +151,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         {
             Bundles = bundles,
             StandaloneAssets = standaloneAssets,
-            UnresolvedAssetIds = null // Server returns only resolved items
+            UnresolvedAssetIds = response.Unresolved?.ToList()
         };
     }
 
@@ -187,7 +201,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         var request = new GetAssetRequest
         {
             AssetId = assetId,
-            IncludeDownloadUrl = true
+            Version = "latest"
         };
 
         var apiResponse = await _client.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
@@ -204,12 +218,18 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         if (response == null)
             return null;
 
+        if (response.DownloadUrl == null)
+        {
+            _logger?.LogWarning("Asset {AssetId} found but no download URL provided", assetId);
+            return null;
+        }
+
         return new AssetDownloadInfo
         {
             AssetId = response.AssetId,
             DownloadUrl = response.DownloadUrl,
             SizeBytes = response.Size,
-            ExpiresAt = response.ExpiresAt,
+            ExpiresAt = response.ExpiresAt ?? DateTimeOffset.UtcNow.AddHours(1),
             ContentType = response.ContentType,
             ContentHash = response.ContentHash
         };
@@ -235,64 +255,4 @@ public sealed class AssetSourceException : Exception
 
     /// <summary>Creates a new asset source exception with inner exception.</summary>
     public AssetSourceException(string message, Exception innerException) : base(message, innerException) { }
-}
-
-// TODO: These DTOs duplicate the generated models from the asset-api schema.
-// This duplication is technical debt - changes to the schema won't propagate here.
-// Proper fix: Create a shared BeyondImmersion.Bannou.AssetService.Models package
-// containing these types, generated from the schema, that both client and server SDKs consume.
-
-internal sealed class ResolveBundlesRequest
-{
-    public List<string> AssetIds { get; set; } = new();
-    public List<string>? ExcludeBundleIds { get; set; }
-}
-
-internal sealed class ResolveBundlesResponse
-{
-    public List<ResolvedBundle>? Bundles { get; set; }
-    public List<AssetWithDownloadUrl>? StandaloneAssets { get; set; }
-}
-
-internal sealed class ResolvedBundle
-{
-    public string BundleId { get; set; } = string.Empty;
-    public Uri DownloadUrl { get; set; } = null!;
-    public List<string>? IncludedAssetIds { get; set; }
-    public BundleType BundleType { get; set; }
-}
-
-internal enum BundleType
-{
-    Source,
-    Metabundle
-}
-
-internal sealed class GetBundleRequest
-{
-    public string BundleId { get; set; } = string.Empty;
-}
-
-internal sealed class BundleWithDownloadUrl
-{
-    public string BundleId { get; set; } = string.Empty;
-    public Uri DownloadUrl { get; set; } = null!;
-    public long Size { get; set; }
-    public DateTimeOffset ExpiresAt { get; set; }
-}
-
-internal sealed class GetAssetRequest
-{
-    public string AssetId { get; set; } = string.Empty;
-    public bool IncludeDownloadUrl { get; set; }
-}
-
-internal sealed class AssetWithDownloadUrl
-{
-    public string AssetId { get; set; } = string.Empty;
-    public Uri DownloadUrl { get; set; } = null!;
-    public long Size { get; set; }
-    public DateTimeOffset ExpiresAt { get; set; }
-    public string ContentType { get; set; } = string.Empty;
-    public string? ContentHash { get; set; }
 }

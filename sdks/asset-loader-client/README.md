@@ -24,12 +24,20 @@ dotnet add package BeyondImmersion.Bannou.AssetLoader.Client
 using BeyondImmersion.Bannou.AssetLoader;
 using BeyondImmersion.Bannou.AssetLoader.Client;
 using BeyondImmersion.Bannou.AssetLoader.Cache;
+using BeyondImmersion.BannouService.Asset;
 
-// Connect and create asset source
+// Connect and create asset source (defaults to Realm.Shared)
 var source = await BannouWebSocketAssetSource.ConnectAsync(
     "wss://bannou.example.com",
     "user@example.com",
     "password");
+
+// Or specify a realm for bundle resolution
+var arcadiaSource = await BannouWebSocketAssetSource.ConnectAsync(
+    "wss://bannou.example.com",
+    "user@example.com",
+    "password",
+    defaultRealm: Realm.Arcadia);
 
 // Create loader with the source
 var cache = new FileAssetCache("./cache");
