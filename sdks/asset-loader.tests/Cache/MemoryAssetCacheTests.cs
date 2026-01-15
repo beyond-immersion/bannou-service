@@ -95,13 +95,13 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Verifies that storing with null bundleId throws.
+    /// Verifies that storing with null bundleId throws ArgumentNullException.
     /// </summary>
     [Fact]
     public async Task StoreBundleAsync_NullBundleId_Throws()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             _cache.StoreBundleAsync(null!, new MemoryStream(), "hash"));
     }
 
@@ -382,23 +382,25 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         // Arrange
         _cache = new MemoryAssetCache(maxSizeBytes: 1000);
 
-        // Add three bundles
+        // Add three bundles with different timestamps
         await _cache.StoreBundleAsync("old", new MemoryStream(CreateTestData(100)), "hash1");
         await Task.Delay(10); // Ensure different timestamps
         await _cache.StoreBundleAsync("middle", new MemoryStream(CreateTestData(100)), "hash2");
         await Task.Delay(10);
         await _cache.StoreBundleAsync("new", new MemoryStream(CreateTestData(100)), "hash3");
 
-        // Access "old" to make it recently used
+        // Access "old" to make it recently used (updates LastAccessedAt)
+        // Order after access: middle (oldest), new (middle), old (newest)
         (await _cache.GetBundleStreamAsync("old"))?.Dispose();
 
-        // Act - evict to make room
-        await _cache.EvictToSizeAsync(150);
+        // Act - evict to 200 bytes (need to remove 100 bytes from 300 total)
+        // Only "middle" should be evicted as it has the oldest LastAccessedAt
+        await _cache.EvictToSizeAsync(200);
 
         // Assert - "middle" should be evicted (least recently accessed)
         Assert.True(await _cache.HasBundleAsync("old"), "Old bundle should remain (recently accessed)");
         Assert.False(await _cache.HasBundleAsync("middle"), "Middle bundle should be evicted (least recently accessed)");
-        Assert.True(await _cache.HasBundleAsync("new"), "New bundle should remain (recently created)");
+        Assert.True(await _cache.HasBundleAsync("new"), "New bundle should remain (more recently created than middle)");
     }
 
     /// <summary>

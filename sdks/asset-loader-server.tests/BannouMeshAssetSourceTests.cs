@@ -241,10 +241,10 @@ public class BannouMeshAssetSourceTests
     /// Verifies that GetBundleDownloadInfoAsync validates null input.
     /// </summary>
     [Fact]
-    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentException()
+    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentNullException()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             _source.GetBundleDownloadInfoAsync(null!));
     }
 
@@ -323,10 +323,10 @@ public class BannouMeshAssetSourceTests
     /// Verifies that GetAssetDownloadInfoAsync validates null input.
     /// </summary>
     [Fact]
-    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentException()
+    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentNullException()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             _source.GetAssetDownloadInfoAsync(null!));
     }
 

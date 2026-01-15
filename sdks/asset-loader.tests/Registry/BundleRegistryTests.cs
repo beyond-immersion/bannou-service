@@ -164,15 +164,23 @@ public class BundleRegistryTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that unregistering with null/empty throws.
+    /// Verifies that unregistering with null throws ArgumentNullException.
     /// </summary>
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void Unregister_NullOrEmpty_ThrowsArgumentException(string? bundleId)
+    [Fact]
+    public void Unregister_Null_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _registry.Unregister(bundleId!));
+        Assert.Throws<ArgumentNullException>(() => _registry.Unregister(null!));
+    }
+
+    /// <summary>
+    /// Verifies that unregistering with empty throws ArgumentException.
+    /// </summary>
+    [Fact]
+    public void Unregister_Empty_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _registry.Unregister(""));
     }
 
     #endregion
@@ -214,15 +222,23 @@ public class BundleRegistryTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that FindBundleForAsset with null/empty throws.
+    /// Verifies that FindBundleForAsset with null throws ArgumentNullException.
     /// </summary>
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void FindBundleForAsset_NullOrEmpty_ThrowsArgumentException(string? assetId)
+    [Fact]
+    public void FindBundleForAsset_Null_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _registry.FindBundleForAsset(assetId!));
+        Assert.Throws<ArgumentNullException>(() => _registry.FindBundleForAsset(null!));
+    }
+
+    /// <summary>
+    /// Verifies that FindBundleForAsset with empty throws ArgumentException.
+    /// </summary>
+    [Fact]
+    public void FindBundleForAsset_Empty_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _registry.FindBundleForAsset(""));
     }
 
     #endregion

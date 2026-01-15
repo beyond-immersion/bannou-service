@@ -145,13 +145,13 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that GetBundleDownloadInfoAsync validates null input.
     /// </summary>
     [Fact]
-    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentException()
+    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentNullException()
     {
         // Arrange
         var source = new BannouWebSocketAssetSource(_client!);
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             source.GetBundleDownloadInfoAsync(null!));
     }
 
@@ -187,13 +187,13 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that GetAssetDownloadInfoAsync validates null input.
     /// </summary>
     [Fact]
-    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentException()
+    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentNullException()
     {
         // Arrange
         var source = new BannouWebSocketAssetSource(_client!);
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             source.GetAssetDownloadInfoAsync(null!));
     }
 
