@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Godot 4.3 uses .NET 8.0 -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Version -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.AssetLoader.Godot</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Godot 4.x engine extension for Bannou Asset Loader. Provides type-specific loaders for Godot Texture2D, Mesh, and AudioStream assets from Bannou bundles.</Description>
+    <PackageTags>bannou;assets;godot;loading;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Assembly info -->
+    <RootNamespace>BeyondImmersion.Bannou.AssetLoader.Godot</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.AssetLoader.Godot</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Godot 4.3 C# bindings -->
+    <PackageReference Include="GodotSharp" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference core Asset Loader SDK -->
+    <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
+  </ItemGroup>
+
+</Project>
