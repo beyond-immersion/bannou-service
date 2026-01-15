@@ -8574,6 +8574,16 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.BundleStatus">
             <summary>
+            Bundle processing status:
+            <br/>- pending: Bundle creation is pending/queued
+            <br/>- processing: Bundle is being processed
+            <br/>- ready: Bundle is ready for download
+            <br/>- failed: Bundle creation failed
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleLifecycle">
+            <summary>
             Bundle lifecycle status:
             <br/>- active: Bundle is available for use
             <br/>- deleted: Bundle has been soft-deleted (within retention period)
@@ -8581,82 +8591,82 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleMetadata">
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleInfo">
             <summary>
-            Complete metadata for an asset bundle
+            Complete metadata for an asset bundle (API response model)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.BundleId">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.BundleId">
             <summary>
             Unique bundle identifier
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.BundleType">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.BundleType">
             <summary>
             Whether source or metabundle
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Version">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Version">
             <summary>
             Bundle content version string
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.MetadataVersion">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.MetadataVersion">
             <summary>
             Metadata version number (increments on metadata changes)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Name">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Name">
             <summary>
             Human-readable bundle name
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Description">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Description">
             <summary>
             Bundle description
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Owner">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Owner">
             <summary>
             Owner account ID or service name
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Realm">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Realm">
             <summary>
             Game realm this bundle belongs to
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Tags">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Tags">
             <summary>
             Key-value tags for categorization and filtering
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Status">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Status">
             <summary>
             Bundle lifecycle status
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.AssetCount">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.AssetCount">
             <summary>
             Number of assets in the bundle
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.SizeBytes">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.SizeBytes">
             <summary>
             Bundle file size in bytes (null if not yet calculated)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.CreatedAt">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.CreatedAt">
             <summary>
             When the bundle was created
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.UpdatedAt">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.UpdatedAt">
             <summary>
             When the bundle metadata was last updated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.DeletedAt">
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.DeletedAt">
             <summary>
             When the bundle was soft-deleted (null if active)
             </summary>
@@ -8838,7 +8848,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Status">
             <summary>
-            Filter by bundle status (null for active only by default)
+            Filter by lifecycle status (null for active only by default)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.CreatedAfter">
