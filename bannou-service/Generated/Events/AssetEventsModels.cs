@@ -413,6 +413,93 @@ public partial class BundleCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Event published when a metabundle is successfully created from source bundles
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MetabundleCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Metabundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle version string
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm for this metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RealmEnum? Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Number of source bundles composed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleCount")]
+    public int SourceBundleCount { get; set; } = default!;
+
+    /// <summary>
+    /// List of source bundle IDs that were composed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
+    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
+
+    /// <summary>
+    /// Number of unique assets in the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included directly (not from bundles)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Storage bucket name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bucket")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Bucket { get; set; } = default!;
+
+    /// <summary>
+    /// Storage object key
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Owner of this metabundle. NOT a session ID.
+    /// <br/>For user-initiated: the accountId (UUID format).
+    /// <br/>For service-initiated: the service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string? Owner { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Category of asset in the system
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation

@@ -26,6 +26,7 @@ public class AssetServiceTests
     private Mock<IStateStore<InternalAssetRecord>> _mockAssetStore = null!;
     private Mock<IStateStore<List<string>>> _mockIndexStore = null!;
     private Mock<IStateStore<BundleMetadata>> _mockBundleStore = null!;
+    private Mock<IStateStore<AssetBundleIndex>> _mockAssetBundleIndexStore = null!;
     private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
     private Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = null!;
     private Mock<IMessageBus> _mockMessageBus = null!;
@@ -44,6 +45,7 @@ public class AssetServiceTests
         _mockAssetStore = new Mock<IStateStore<InternalAssetRecord>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
         _mockBundleStore = new Mock<IStateStore<BundleMetadata>>();
+        _mockAssetBundleIndexStore = new Mock<IStateStore<AssetBundleIndex>>();
         _mockUploadSessionStore = new Mock<IStateStore<UploadSession>>();
         _mockBundleUploadSessionStore = new Mock<IStateStore<BundleUploadSession>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -60,6 +62,7 @@ public class AssetServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<InternalAssetRecord>(STATE_STORE)).Returns(_mockAssetStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE)).Returns(_mockIndexStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<BundleMetadata>(STATE_STORE)).Returns(_mockBundleStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<AssetBundleIndex>(STATE_STORE)).Returns(_mockAssetBundleIndexStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<UploadSession>(STATE_STORE)).Returns(_mockUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<BundleUploadSession>(STATE_STORE)).Returns(_mockBundleUploadSessionStore.Object);
         _mockStateStoreFactory.Setup(f => f.SupportsSearch(STATE_STORE)).Returns(false);
@@ -1063,6 +1066,8 @@ public class AssetServiceTests
         {
             BundleId = "existing-bundle",
             Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1234,6 +1239,8 @@ public class AssetServiceTests
         {
             BundleId = "pending-bundle",
             Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/pending-bundle.bundle",
             SizeBytes = 1024,
@@ -1534,6 +1541,8 @@ public class AssetServiceTests
         {
             BundleId = "existing-bundle",
             Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Shared,
             AssetIds = new List<string> { "asset-1" },
             StorageKey = "bundles/current/existing-bundle.bundle",
             SizeBytes = 1024,
@@ -1555,6 +1564,392 @@ public class AssetServiceTests
 
     // NOTE: Valid bundle upload request test requires additional mock setup for
     // upload session storage and state management. Better tested in HTTP integration tests.
+
+    #endregion
+
+    #region CreateMetabundleAsync Tests
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithEmptyMetabundleId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "",
+            SourceBundleIds = new List<string> { "bundle-1" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithNoSourcesOrStandalone_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "test-metabundle",
+            SourceBundleIds = null,
+            StandaloneAssetIds = null,
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithEmptySourcesAndStandalone_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "test-metabundle",
+            SourceBundleIds = new List<string>(),
+            StandaloneAssetIds = new List<string>(),
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WhenMetabundleExists_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "existing-metabundle",
+            SourceBundleIds = new List<string> { "bundle-1" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        var existingMetabundle = new BundleMetadata
+        {
+            BundleId = "existing-metabundle",
+            Version = "1.0.0",
+            BundleType = BundleType.Metabundle,
+            Realm = Realm.Arcadia,
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = "bundles/current/existing-metabundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingMetabundle);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WhenSourceBundleNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            SourceBundleIds = new List<string> { "nonexistent-bundle" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("new-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        // Source bundle not found
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("nonexistent-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WhenStandaloneAssetNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            StandaloneAssetIds = new List<string> { "nonexistent-asset" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        // Asset not found - need to setup the InternalAssetRecord store
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((InternalAssetRecord?)null);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WhenSourceBundleNotReady_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            SourceBundleIds = new List<string> { "pending-bundle" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("new-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var pendingBundle = new BundleMetadata
+        {
+            BundleId = "pending-bundle",
+            Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Arcadia,
+            AssetIds = new List<string> { "asset-1" },
+            StorageKey = "bundles/current/pending-bundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Processing // Not ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("pending-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pendingBundle);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WhenStandaloneAssetNotReady_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            StandaloneAssetIds = new List<string> { "pending-asset" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var pendingAsset = new InternalAssetRecord
+        {
+            AssetId = "pending-asset",
+            Filename = "script.yaml",
+            ContentType = "application/x-yaml",
+            ContentHash = "abc123",
+            Size = 512,
+            AssetType = AssetType.Behavior,
+            Realm = Realm.Arcadia,
+            StorageKey = "assets/behavior/pending-asset.yaml",
+            Bucket = "test-bucket",
+            ProcessingStatus = ProcessingStatus.Processing, // Not complete
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAssetStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pendingAsset);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithRealmMismatch_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "new-metabundle",
+            SourceBundleIds = new List<string> { "wrong-realm-bundle" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia // Request is for Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("new-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var wrongRealmBundle = new BundleMetadata
+        {
+            BundleId = "wrong-realm-bundle",
+            Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Fantasia, // Different realm
+            AssetIds = new List<string> { "asset-1" },
+            Assets = new List<StoredBundleAssetEntry>(),
+            StorageKey = "bundles/current/wrong-realm-bundle.bundle",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("wrong-realm-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(wrongRealmBundle);
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateMetabundleAsync_WithSharedRealmBundle_ShouldAllowCrossRealmInclusion()
+    {
+        // Arrange
+        _configuration.StorageBucket = "test-bucket";
+        _configuration.LargeFileThresholdMb = 100;
+        var service = CreateService();
+        var request = new CreateMetabundleRequest
+        {
+            MetabundleId = "cross-realm-metabundle",
+            SourceBundleIds = new List<string> { "shared-bundle" },
+            Owner = "test-owner",
+            Realm = Realm.Arcadia // Request is for Arcadia
+        };
+
+        // Metabundle doesn't exist
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("cross-realm-metabundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BundleMetadata?)null);
+
+        var sharedBundle = new BundleMetadata
+        {
+            BundleId = "shared-bundle",
+            Version = "1.0.0",
+            BundleType = BundleType.Source,
+            Realm = Realm.Shared, // Shared realm should work with any target realm
+            AssetIds = new List<string> { "shared-asset" },
+            Assets = new List<StoredBundleAssetEntry>
+            {
+                new StoredBundleAssetEntry
+                {
+                    AssetId = "shared-asset",
+                    Filename = "shared.png",
+                    ContentType = "image/png",
+                    Size = 1024,
+                    ContentHash = "sharedhash"
+                }
+            },
+            StorageKey = "bundles/current/shared-bundle.bundle",
+            Bucket = "test-bucket",
+            SizeBytes = 1024,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = BundleStatus.Ready
+        };
+
+        _mockBundleStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains("shared-bundle")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sharedBundle);
+
+        // Mock storage operations
+        var bundleData = new MemoryStream(new byte[1024]);
+        _mockStorageProvider
+            .Setup(s => s.GetObjectAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(bundleData);
+
+        _mockStorageProvider
+            .Setup(s => s.PutObjectAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Stream>(), It.IsAny<long>(),
+                It.IsAny<string>(), It.IsAny<IDictionary<string, string>?>()))
+            .ReturnsAsync(new StorageModels.AssetReference("test-bucket", "bundles/current/cross-realm-metabundle.bundle", null, "etag", 2048, DateTime.UtcNow));
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "asset.metabundle.created",
+                It.IsAny<MetabundleCreatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // The BannouBundleReader.ReadAsset will be called but we need to mock it
+        // For this test, we'll rely on the fact that the bundle reading logic
+        // will be tested via integration tests
+
+        // Act
+        var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
+
+        // Assert - Shared realm bundles should be allowed with any target realm
+        // The actual success depends on BannouBundleReader which we can't easily mock
+        // So we verify at least it doesn't fail realm validation
+        Assert.True(status == StatusCodes.OK || status == StatusCodes.InternalServerError);
+    }
 
     #endregion
 

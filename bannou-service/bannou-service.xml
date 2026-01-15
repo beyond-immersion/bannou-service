@@ -12487,6 +12487,69 @@
             <br/>
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent">
+            <summary>
+            Event published when a metabundle is successfully created from source bundles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.MetabundleId">
+            <summary>
+            Metabundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Version">
+            <summary>
+            Metabundle version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Realm">
+            <summary>
+            Game realm for this metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.SourceBundleCount">
+            <summary>
+            Number of source bundles composed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.SourceBundleIds">
+            <summary>
+            List of source bundle IDs that were composed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.AssetCount">
+            <summary>
+            Number of unique assets in the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included directly (not from bundles)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Bucket">
+            <summary>
+            Storage bucket name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Key">
+            <summary>
+            Storage object key
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.SizeBytes">
+            <summary>
+            Metabundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.MetabundleCreatedEvent.Owner">
+            <summary>
+            Owner of this metabundle. NOT a session ID.
+            <br/>For user-initiated: the accountId (UUID format).
+            <br/>For service-initiated: the service name.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.AssetTypeEnum">
             <summary>
             Category of asset in the system
@@ -23465,6 +23528,73 @@
             <returns>Upload URL generated</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.CreateMetabundleAsync(BeyondImmersion.BannouService.Asset.CreateMetabundleRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create metabundle from source bundles
+            </summary>
+            <remarks>
+            Compose a metabundle by extracting and repackaging assets from multiple
+            <br/>source bundles. The resulting metabundle is a complete physical copy with
+            <br/>provenance metadata tracking the source bundles.
+            <br/>
+            <br/>Assets are deduplicated by content hash. If the same asset ID exists in
+            <br/>multiple source bundles with different content hashes, the request fails
+            <br/>with conflict details.
+            </remarks>
+            <returns>Metabundle created or queued for creation</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compute optimal bundles for requested assets
+            </summary>
+            <remarks>
+            Given a list of asset IDs, compute the optimal set of bundles to download
+            <br/>to obtain all requested assets with minimal transfers.
+            <br/>
+            <br/>The algorithm uses greedy set-cover optimization:
+            <br/>1. Find all bundles containing requested assets
+            <br/>2. Select bundles that cover the most uncovered assets
+            <br/>3. Prefer metabundles when coverage is equal (tie-breaker)
+            <br/>4. Include standalone assets for any remaining unresolved IDs
+            <br/>
+            <br/>Returns pre-signed download URLs for all selected bundles and assets.
+            </remarks>
+            <returns>Resolution complete with download URLs</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.QueryBundlesByAssetAsync(BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find all bundles containing a specific asset
+            </summary>
+            <remarks>
+            Query the reverse index to find all bundles (source and metabundle)
+            <br/>that contain a specific asset ID. Useful for understanding asset
+            <br/>distribution and debugging resolution issues.
+            </remarks>
+            <returns>Bundles containing the asset</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.BulkGetAssetsAsync(BeyondImmersion.BannouService.Asset.BulkGetAssetsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Batch asset metadata lookup
+            </summary>
+            <remarks>
+            Retrieve metadata for multiple assets in a single request.
+            <br/>Optionally includes pre-signed download URLs.
+            <br/>Maximum 100 asset IDs per request.
+            </remarks>
+            <returns>Asset metadata retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetClient">
             <summary>
             Client implementation for the Asset service.
@@ -23657,6 +23787,73 @@
             <returns>Upload URL generated</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.CreateMetabundleAsync(BeyondImmersion.BannouService.Asset.CreateMetabundleRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create metabundle from source bundles
+            </summary>
+            <remarks>
+            Compose a metabundle by extracting and repackaging assets from multiple
+            <br/>source bundles. The resulting metabundle is a complete physical copy with
+            <br/>provenance metadata tracking the source bundles.
+            <br/>
+            <br/>Assets are deduplicated by content hash. If the same asset ID exists in
+            <br/>multiple source bundles with different content hashes, the request fails
+            <br/>with conflict details.
+            </remarks>
+            <returns>Metabundle created or queued for creation</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Compute optimal bundles for requested assets
+            </summary>
+            <remarks>
+            Given a list of asset IDs, compute the optimal set of bundles to download
+            <br/>to obtain all requested assets with minimal transfers.
+            <br/>
+            <br/>The algorithm uses greedy set-cover optimization:
+            <br/>1. Find all bundles containing requested assets
+            <br/>2. Select bundles that cover the most uncovered assets
+            <br/>3. Prefer metabundles when coverage is equal (tie-breaker)
+            <br/>4. Include standalone assets for any remaining unresolved IDs
+            <br/>
+            <br/>Returns pre-signed download URLs for all selected bundles and assets.
+            </remarks>
+            <returns>Resolution complete with download URLs</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.QueryBundlesByAssetAsync(BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Find all bundles containing a specific asset
+            </summary>
+            <remarks>
+            Query the reverse index to find all bundles (source and metabundle)
+            <br/>that contain a specific asset ID. Useful for understanding asset
+            <br/>distribution and debugging resolution issues.
+            </remarks>
+            <returns>Bundles containing the asset</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.BulkGetAssetsAsync(BeyondImmersion.BannouService.Asset.BulkGetAssetsRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Batch asset metadata lookup
+            </summary>
+            <remarks>
+            Retrieve metadata for multiple assets in a single request.
+            <br/>Optionally includes pre-signed download URLs.
+            <br/>Maximum 100 asset IDs per request.
+            </remarks>
+            <returns>Asset metadata retrieved</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetClient.ObjectResponseResult`1">
             <summary>
             Represents the result of deserializing an HTTP response into an object.
@@ -23719,6 +23916,25 @@
         <member name="T:BeyondImmersion.BannouService.Asset.BundleFormat">
             <summary>
             Bundle file format
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleType">
+            <summary>
+            Bundle category:
+            <br/>- source: Original bundle (uploaded or server-created from assets)
+            <br/>- metabundle: Composed from other bundles server-side
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetIdStyle">
+            <summary>
+            Asset ID validation style presets:
+            <br/>- any: No style enforcement (just max length and basic characters)
+            <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
+            <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
+            <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
+            <br/>- custom: Use custom regex pattern from configuration
+            <br/>
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
@@ -24198,6 +24414,13 @@
             Bundle version string
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.Realm">
+            <summary>
+            Game realm this bundle belongs to.
+            <br/>Defaults to 'shared' if not specified.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateBundleRequest.AssetIds">
             <summary>
             List of asset IDs to include in the bundle
@@ -24339,6 +24562,480 @@
         <member name="P:BeyondImmersion.BannouService.Asset.BundleManifestPreview.AssetCount">
             <summary>
             Number of assets declared in the manifest
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.SourceBundleReference">
+            <summary>
+            Provenance reference to a source bundle used in metabundle creation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.SourceBundleReference.BundleId">
+            <summary>
+            Source bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.SourceBundleReference.Version">
+            <summary>
+            Version of source bundle at composition time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.SourceBundleReference.AssetIds">
+            <summary>
+            Asset IDs contributed from this source bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.SourceBundleReference.ContentHash">
+            <summary>
+            Hash of source bundle at composition time (for integrity verification)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleAssetEntry">
+            <summary>
+            Asset entry within a bundle (supports platform-specific IDs)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.AssetId">
+            <summary>
+            Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentHash">
+            <summary>
+            SHA256 hash of asset content
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Filename">
+            <summary>
+            Original filename
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentType">
+            <summary>
+            MIME content type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Size">
+            <summary>
+            Asset size in bytes (uncompressed)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.AssetConflict">
+            <summary>
+            Describes a conflict when the same asset ID has different content hashes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetConflict.AssetId">
+            <summary>
+            The conflicting asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.AssetConflict.ConflictingBundles">
+            <summary>
+            Bundles with conflicting versions of this asset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ConflictingBundleEntry">
+            <summary>
+            A bundle entry in an asset conflict
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ConflictingBundleEntry.BundleId">
+            <summary>
+            Bundle containing this version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ConflictingBundleEntry.ContentHash">
+            <summary>
+            Content hash of asset in this bundle
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest">
+            <summary>
+            Request to create a metabundle from source bundles and/or standalone assets.
+            <br/>At least one of sourceBundleIds or standaloneAssetIds must be provided.
+            <br/>This enables packaging behaviors/scripts with 3D assets as a complete unit.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.MetabundleId">
+            <summary>
+            Unique identifier for the new metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.SourceBundleIds">
+            <summary>
+            Source bundle IDs to pull assets from. Can cherry-pick specific
+            <br/>assets using assetFilter, or include all if assetFilter is null.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.StandaloneAssetIds">
+            <summary>
+            Individual asset IDs (not in bundles) to include directly.
+            <br/>Useful for including behaviors, scripts, or metadata files
+            <br/>alongside bundled 3D assets.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.Version">
+            <summary>
+            Metabundle version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.Owner">
+            <summary>
+            Owner of this metabundle. NOT a session ID.
+            <br/>For user-initiated: the accountId (UUID format).
+            <br/>For service-initiated: the service name.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.Realm">
+            <summary>
+            Game realm for this metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.AssetFilter">
+            <summary>
+            Optional subset of asset IDs to include FROM SOURCE BUNDLES.
+            <br/>If null, all assets from source bundles are included.
+            <br/>Standalone assets are always included regardless of this filter.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleRequest.Metadata">
+            <summary>
+            Custom metadata for the metabundle
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse">
+            <summary>
+            Response from metabundle creation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
+            <summary>
+            Metabundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Status">
+            <summary>
+            Creation status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.AssetCount">
+            <summary>
+            Number of assets in the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included directly (not from bundles)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.SizeBytes">
+            <summary>
+            Total size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.SourceBundles">
+            <summary>
+            Provenance data for the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Conflicts">
+            <summary>
+            Present if creation failed due to asset conflicts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">
+            <summary>
+            Request to resolve optimal bundle downloads for requested assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest.AssetIds">
+            <summary>
+            Platform asset IDs to resolve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest.Realm">
+            <summary>
+            Game realm to search within
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest.PreferMetabundles">
+            <summary>
+            Prefer metabundles when coverage is equal
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest.IncludeStandalone">
+            <summary>
+            Include standalone assets not in any bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest.MaxBundles">
+            <summary>
+            Maximum number of bundles to return (optimization limit)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesResponse">
+            <summary>
+            Optimal bundle set for requested assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesResponse.Bundles">
+            <summary>
+            Bundles to download
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesResponse.StandaloneAssets">
+            <summary>
+            Individual assets to download
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesResponse.Coverage">
+            <summary>
+            Coverage statistics
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolveBundlesResponse.Unresolved">
+            <summary>
+            Asset IDs that couldn't be found (null if all resolved)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ResolvedBundle">
+            <summary>
+            A bundle selected for download in resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.BundleType">
+            <summary>
+            Whether source or metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.Version">
+            <summary>
+            Bundle version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.DownloadUrl">
+            <summary>
+            Pre-signed download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.ExpiresAt">
+            <summary>
+            When the download URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.Size">
+            <summary>
+            Bundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedBundle.AssetsProvided">
+            <summary>
+            Which of the requested assets this bundle provides
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ResolvedAsset">
+            <summary>
+            A standalone asset selected for download
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedAsset.AssetId">
+            <summary>
+            Asset identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedAsset.DownloadUrl">
+            <summary>
+            Pre-signed download URL
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedAsset.ExpiresAt">
+            <summary>
+            When the download URL expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedAsset.Size">
+            <summary>
+            Asset file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ResolvedAsset.ContentHash">
+            <summary>
+            SHA256 hash of asset content
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CoverageAnalysis">
+            <summary>
+            Statistics about asset resolution coverage
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CoverageAnalysis.TotalRequested">
+            <summary>
+            Total number of assets requested
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CoverageAnalysis.ResolvedViaBundles">
+            <summary>
+            Assets resolved through bundle downloads
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CoverageAnalysis.ResolvedStandalone">
+            <summary>
+            Assets resolved as standalone downloads
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CoverageAnalysis.UnresolvedCount">
+            <summary>
+            Assets that could not be found
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CoverageAnalysis.BundleEfficiency">
+            <summary>
+            Ratio of assets provided to bundle downloads (higher is better)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest">
+            <summary>
+            Request to find bundles containing a specific asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest.AssetId">
+            <summary>
+            Platform asset ID to search for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest.Realm">
+            <summary>
+            Game realm to search within
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest.BundleType">
+            <summary>
+            Filter by bundle type (optional, null for all types)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest.Limit">
+            <summary>
+            Maximum results to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse">
+            <summary>
+            Bundles containing the requested asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse.AssetId">
+            <summary>
+            The queried asset ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse.Bundles">
+            <summary>
+            Bundles containing this asset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse.Total">
+            <summary>
+            Total matching bundles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse.Limit">
+            <summary>
+            Page size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesByAssetResponse.Offset">
+            <summary>
+            Page offset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleSummary">
+            <summary>
+            Summary information about a bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.BundleType">
+            <summary>
+            Source or metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.Version">
+            <summary>
+            Bundle version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.AssetCount">
+            <summary>
+            Number of assets in bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.SizeBytes">
+            <summary>
+            Bundle file size
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.Realm">
+            <summary>
+            Game realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleSummary.CreatedAt">
+            <summary>
+            When the bundle was created
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BulkGetAssetsRequest">
+            <summary>
+            Request to retrieve metadata for multiple assets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BulkGetAssetsRequest.AssetIds">
+            <summary>
+            Asset IDs to retrieve (max 100)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BulkGetAssetsRequest.IncludeDownloadUrls">
+            <summary>
+            Whether to generate pre-signed download URLs
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BulkGetAssetsResponse">
+            <summary>
+            Batch asset metadata response
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BulkGetAssetsResponse.Assets">
+            <summary>
+            Found assets with metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BulkGetAssetsResponse.NotFound">
+            <summary>
+            Asset IDs that weren't found
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.IAuthClient">

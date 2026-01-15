@@ -74,4 +74,24 @@ public partial interface IAssetService : IBannouService
         /// </summary>
         Task<(StatusCodes, UploadResponse?)> RequestBundleUploadAsync(BundleUploadRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CreateMetabundle operation
+        /// </summary>
+        Task<(StatusCodes, CreateMetabundleResponse?)> CreateMetabundleAsync(CreateMetabundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ResolveBundles operation
+        /// </summary>
+        Task<(StatusCodes, ResolveBundlesResponse?)> ResolveBundlesAsync(ResolveBundlesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// QueryBundlesByAsset operation
+        /// </summary>
+        Task<(StatusCodes, QueryBundlesByAssetResponse?)> QueryBundlesByAssetAsync(QueryBundlesByAssetRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// BulkGetAssets operation
+        /// </summary>
+        Task<(StatusCodes, BulkGetAssetsResponse?)> BulkGetAssetsAsync(BulkGetAssetsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

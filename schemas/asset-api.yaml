@@ -582,16 +582,22 @@ paths:
         \              },\n                \"bundleId\": {\n                    \"type\": \"string\",\n                  \
         \  \"description\": \"Unique bundle identifier\"\n                },\n                \"version\": {\n           \
         \         \"type\": \"string\",\n                    \"default\": \"1.0.0\",\n                    \"description\"\
-        : \"Bundle version string\"\n                },\n                \"assetIds\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"List of asset IDs to include in the bundle\"\n                },\n       \
-        \         \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\"\
-        : \"Compression algorithm to use for the bundle\"\n                },\n                \"metadata\": {\n         \
-        \           \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Custom metadata for the bundle (null if none)\"\n                }\n\
-        \            }\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n            \"\
-        description\": \"Compression algorithm for bundles\"\n        }\n    }\n}"
+        : \"Bundle version string\"\n                },\n                \"realm\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"$ref\": \"#/$defs/Realm\"\n                        }\n \
+        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm
+        this bundle belongs to.\\nDefaults to 'shared' if not specified.\\n\"\n                },\n                \"assetIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"List of asset IDs to include in the bundle\"\
+        \n                },\n                \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\"\
+        ,\n                    \"description\": \"Compression algorithm to use for the bundle\"\n                },\n    \
+        \            \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata for the bundle
+        (null if none)\"\n                }\n            }\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
+        \        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
+        \        \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n            \"description\"\
+        : \"Compression algorithm for bundles\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
         status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -763,6 +769,452 @@ paths:
         a pre-built bundle (.bannou or .zip format).\\nAfter upload, the bundle undergoes validation before registration.\\\
         n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"requestBundleUpload\"\
         \n}"
+
+  # ==========================================================================
+  # Metabundle Operations
+  # ==========================================================================
+
+  /bundles/metabundle/create:
+    post:
+      summary: Create metabundle from source bundles
+      description: |
+        Compose a metabundle by extracting and repackaging assets from multiple
+        source bundles. The resulting metabundle is a complete physical copy with
+        provenance metadata tracking the source bundles.
+
+        Assets are deduplicated by content hash. If the same asset ID exists in
+        multiple source bundles with different content hashes, the request fails
+        with conflict details.
+      operationId: createMetabundle
+      tags:
+      - Bundles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMetabundleRequest'
+      responses:
+        '200':
+          description: Metabundle created or queued for creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateMetabundleResponse'
+        '400':
+          description: Invalid request or asset conflicts detected
+        '404':
+          description: One or more source bundles not found
+        '409':
+          description: Metabundle ID already exists
+
+  # ==========================================================================
+  # Bundle Resolution
+  # ==========================================================================
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateMetabundleRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to create a metabundle from source bundles and/or standalone assets.\\
+        nAt least one of sourceBundleIds or standaloneAssetIds must be provided.\\nThis enables packaging behaviors/scripts
+        with 3D assets as a complete unit.\\n\",\n            \"required\": [\n                \"metabundleId\",\n       \
+        \         \"owner\",\n                \"realm\"\n            ],\n            \"properties\": {\n                \"\
+        metabundleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique identifier
+        for the new metabundle\"\n                },\n                \"sourceBundleIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Source bundle IDs to pull assets
+        from. Can cherry-pick specific\\nassets using assetFilter, or include all if assetFilter is null.\\n\"\n         \
+        \       },\n                \"standaloneAssetIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Individual asset IDs (not in bundles) to include directly.\\nUseful
+        for including behaviors, scripts, or metadata files\\nalongside bundled 3D assets.\\n\"\n                },\n    \
+        \            \"version\": {\n                    \"type\": \"string\",\n                    \"default\": \"1.0.0\"\
+        ,\n                    \"description\": \"Metabundle version string\"\n                },\n                \"owner\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Owner of this metabundle. NOT
+        a session ID.\\nFor user-initiated: the accountId (UUID format).\\nFor service-initiated: the service name.\\n\"\n\
+        \                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n            \
+        \        \"description\": \"Game realm for this metabundle\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description\"\n                },\n                \"assetFilter\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Optional subset of asset IDs to
+        include FROM SOURCE BUNDLES.\\nIf null, all assets from source bundles are included.\\nStandalone assets are always
+        included regardless of this filter.\\n\"\n                },\n                \"metadata\": {\n                  \
+        \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Custom metadata for the metabundle\"\n                }\n            }\n \
+        \       },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\"\
+        ,\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n     \
+        \       \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
+        ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response from metabundle creation\",\n            \"required\": [\n     \
+        \           \"metabundleId\",\n                \"status\",\n                \"assetCount\",\n                \"sizeBytes\"\
+        \n            ],\n            \"properties\": {\n                \"metabundleId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Metabundle identifier\"\n                },\n              \
+        \  \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                   \
+        \     \"queued\",\n                        \"processing\",\n                        \"ready\",\n                 \
+        \       \"failed\"\n                    ],\n                    \"description\": \"Creation status\"\n           \
+        \     },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of assets in the metabundle\"\n                },\n                \"standaloneAssetCount\": {\n      \
+        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Number of standalone assets included directly (not from bundles)\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Total size in bytes\"\n                },\n                \"sourceBundles\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SourceBundleReference\"\
+        \n                    },\n                    \"description\": \"Provenance data for the metabundle\"\n          \
+        \      },\n                \"conflicts\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetConflict\"\n         \
+        \           },\n                    \"description\": \"Present if creation failed due to asset conflicts\"\n     \
+        \           }\n            }\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Provenance reference to a source bundle
+        used in metabundle creation\",\n            \"required\": [\n                \"bundleId\",\n                \"version\"\
+        ,\n                \"assetIds\",\n                \"contentHash\"\n            ],\n            \"properties\": {\n\
+        \                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Source bundle identifier\"\n                },\n                \"version\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Version of source bundle at composition time\"\n               \
+        \ },\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Asset
+        IDs contributed from this source bundle\"\n                },\n                \"contentHash\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Hash of source bundle at composition time (for
+        integrity verification)\"\n                }\n            }\n        },\n        \"AssetConflict\": {\n          \
+        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Describes a
+        conflict when the same asset ID has different content hashes\",\n            \"required\": [\n                \"assetId\"\
+        ,\n                \"conflictingBundles\"\n            ],\n            \"properties\": {\n                \"assetId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"The conflicting asset identifier\"\
+        \n                },\n                \"conflictingBundles\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/ConflictingBundleEntry\"\n              \
+        \      },\n                    \"description\": \"Bundles with conflicting versions of this asset\"\n            \
+        \    }\n            }\n        },\n        \"ConflictingBundleEntry\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": false,\n            \"description\": \"A bundle entry in an asset conflict\",\n\
+        \            \"required\": [\n                \"bundleId\",\n                \"contentHash\"\n            ],\n   \
+        \         \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Bundle containing this version\"\n                },\n                \"contentHash\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Content hash of asset in this
+        bundle\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create metabundle from source bundles\",\n    \"description\": \"Compose
+        a metabundle by extracting and repackaging assets from multiple\\nsource bundles. The resulting metabundle is a complete
+        physical copy with\\nprovenance metadata tracking the source bundles.\\n\\nAssets are deduplicated by content hash.
+        If the same asset ID exists in\\nmultiple source bundles with different content hashes, the request fails\\nwith conflict
+        details.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        createMetabundle\"\n}"
+  /bundles/resolve:
+    post:
+      summary: Compute optimal bundles for requested assets
+      description: |
+        Given a list of asset IDs, compute the optimal set of bundles to download
+        to obtain all requested assets with minimal transfers.
+
+        The algorithm uses greedy set-cover optimization:
+        1. Find all bundles containing requested assets
+        2. Select bundles that cover the most uncovered assets
+        3. Prefer metabundles when coverage is equal (tie-breaker)
+        4. Include standalone assets for any remaining unresolved IDs
+
+        Returns pre-signed download URLs for all selected bundles and assets.
+      operationId: resolveBundles
+      tags:
+      - Bundles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveBundlesRequest'
+      responses:
+        '200':
+          description: Resolution complete with download URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveBundlesResponse'
+        '400':
+          description: Invalid request
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveBundlesRequest\"\
+        ,\n    \"$defs\": {\n        \"ResolveBundlesRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to resolve optimal bundle downloads for requested assets\",\n   \
+        \         \"required\": [\n                \"assetIds\",\n                \"realm\"\n            ],\n            \"\
+        properties\": {\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Platform asset IDs to resolve\"\n                },\n                \"realm\": {\n                    \"$ref\"\
+        : \"#/$defs/Realm\",\n                    \"description\": \"Game realm to search within\"\n                },\n \
+        \               \"preferMetabundles\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : true,\n                    \"description\": \"Prefer metabundles when coverage is equal\"\n                },\n\
+        \                \"includeStandalone\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : true,\n                    \"description\": \"Include standalone assets not in any bundle\"\n                },\n\
+        \                \"maxBundles\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Maximum number of bundles to return (optimization limit)\"\n       \
+        \         }\n            }\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\
+        \n            ],\n            \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveBundlesResponse\"\
+        ,\n    \"$defs\": {\n        \"ResolveBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Optimal bundle set for requested assets\",\n            \"required\": [\n\
+        \                \"bundles\",\n                \"standaloneAssets\",\n                \"coverage\"\n            ],\n\
+        \            \"properties\": {\n                \"bundles\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"$ref\": \"#/$defs/ResolvedBundle\"\n                    },\n\
+        \                    \"description\": \"Bundles to download\"\n                },\n                \"standaloneAssets\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/ResolvedAsset\"\n                    },\n                    \"description\": \"Individual assets to download\"\
+        \n                },\n                \"coverage\": {\n                    \"$ref\": \"#/$defs/CoverageAnalysis\"\
+        ,\n                    \"description\": \"Coverage statistics\"\n                },\n                \"unresolved\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Asset IDs that couldn't be found (null if all resolved)\"\n                }\n            }\n        },\n    \
+        \    \"ResolvedBundle\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"description\": \"A bundle selected for download in resolution\",\n            \"required\": [\n       \
+        \         \"bundleId\",\n                \"bundleType\",\n                \"downloadUrl\",\n                \"expiresAt\"\
+        ,\n                \"size\",\n                \"assetsProvided\"\n            ],\n            \"properties\": {\n\
+        \                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Bundle identifier\"\n                },\n                \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\"\
+        ,\n                    \"description\": \"Whether source or metabundle\"\n                },\n                \"version\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Bundle version\"\n                },\n                \"downloadUrl\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"description\": \"Pre-signed download URL\"\n  \
+        \              },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n         \
+        \       },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Bundle file size in bytes\"\n                },\n           \
+        \     \"assetsProvided\": {\n                    \"type\": \"array\",\n                    \"items\": {\n        \
+        \                \"type\": \"string\"\n                    },\n                    \"description\": \"Which of the
+        requested assets this bundle provides\"\n                }\n            }\n        },\n        \"BundleType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\
+        \n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
+        from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"ResolvedAsset\":
+        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        A standalone asset selected for download\",\n            \"required\": [\n                \"assetId\",\n         \
+        \       \"downloadUrl\",\n                \"expiresAt\",\n                \"size\"\n            ],\n            \"\
+        properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Asset identifier\"\n                },\n                \"downloadUrl\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\": \"Pre-signed download
+        URL\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n \
+        \               },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"\
+        format\": \"int64\",\n                    \"description\": \"Asset file size in bytes\"\n                },\n    \
+        \            \"contentHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"SHA256 hash of asset content\"\n                }\n            }\n       \
+        \ },\n        \"CoverageAnalysis\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Statistics about asset resolution coverage\",\n            \"required\": [\n     \
+        \           \"totalRequested\",\n                \"resolvedViaBundles\",\n                \"resolvedStandalone\",\n\
+        \                \"unresolvedCount\"\n            ],\n            \"properties\": {\n                \"totalRequested\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of assets requested\"\
+        \n                },\n                \"resolvedViaBundles\": {\n                    \"type\": \"integer\",\n    \
+        \                \"description\": \"Assets resolved through bundle downloads\"\n                },\n             \
+        \   \"resolvedStandalone\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Assets resolved as standalone downloads\"\n                },\n                \"unresolvedCount\": {\n          \
+        \          \"type\": \"integer\",\n                    \"description\": \"Assets that could not be found\"\n     \
+        \           },\n                \"bundleEfficiency\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"Ratio
+        of assets provided to bundle downloads (higher is better)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Compute optimal bundles for requested assets\",\n    \"description\": \"\
+        Given a list of asset IDs, compute the optimal set of bundles to download\\nto obtain all requested assets with minimal
+        transfers.\\n\\nThe algorithm uses greedy set-cover optimization:\\n1. Find all bundles containing requested assets\\
+        n2. Select bundles that cover the most uncovered assets\\n3. Prefer metabundles when coverage is equal (tie-breaker)\\
+        n4. Include standalone assets for any remaining unresolved IDs\\n\\nReturns pre-signed download URLs for all selected
+        bundles and assets.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"resolveBundles\"\n}"
+  /bundles/query/by-asset:
+    post:
+      summary: Find all bundles containing a specific asset
+      description: |
+        Query the reverse index to find all bundles (source and metabundle)
+        that contain a specific asset ID. Useful for understanding asset
+        distribution and debugging resolution issues.
+      operationId: queryBundlesByAsset
+      tags:
+      - Bundles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryBundlesByAssetRequest'
+      responses:
+        '200':
+          description: Bundles containing the asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryBundlesByAssetResponse'
+        '400':
+          description: Invalid request
+
+  # ==========================================================================
+  # Bulk Asset Operations
+  # ==========================================================================
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryBundlesByAssetRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to find bundles containing a specific asset\"\
+        ,\n            \"required\": [\n                \"assetId\",\n                \"realm\"\n            ],\n        \
+        \    \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Platform asset ID to search for\"\n                },\n                \"realm\": {\n  \
+        \                  \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm to search within\"\
+        \n                },\n                \"bundleType\": {\n                    \"allOf\": [\n                      \
+        \  {\n                            \"$ref\": \"#/$defs/BundleType\"\n                        }\n                  \
+        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by bundle type (optional,
+        null for all types)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 50,\n                    \"description\": \"Maximum results to return\"\n    \
+        \            },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"\
+        default\": 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n    \
+        \    },\n        \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\"\
+        ,\n                \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n     \
+        \       \"description\": \"Game realm the asset belongs to\"\n        },\n        \"BundleType\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n      \
+        \      ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
+        from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryBundlesByAssetResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Bundles containing the requested asset\",\n       \
+        \     \"required\": [\n                \"assetId\",\n                \"bundles\",\n                \"total\",\n  \
+        \              \"limit\",\n                \"offset\"\n            ],\n            \"properties\": {\n           \
+        \     \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"The queried
+        asset ID\"\n                },\n                \"bundles\": {\n                    \"type\": \"array\",\n       \
+        \             \"items\": {\n                        \"$ref\": \"#/$defs/BundleSummary\"\n                    },\n\
+        \                    \"description\": \"Bundles containing this asset\"\n                },\n                \"total\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total matching bundles\"\n\
+        \                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Page size\"\n                },\n                \"offset\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Page offset\"\n                }\n            }\n        },\n\
+        \        \"BundleSummary\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
+        \           \"description\": \"Summary information about a bundle\",\n            \"required\": [\n              \
+        \  \"bundleId\",\n                \"bundleType\",\n                \"version\",\n                \"assetCount\",\n\
+        \                \"realm\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n     \
+        \               \"type\": \"string\",\n                    \"description\": \"Bundle identifier\"\n              \
+        \  },\n                \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\",\n                \
+        \    \"description\": \"Source or metabundle\"\n                },\n                \"version\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Bundle version\"\n                },\n     \
+        \           \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Number of assets in bundle\"\n                },\n                \"sizeBytes\": {\n                    \"type\":
+        \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Bundle file size\"\n                },\n                \"realm\": {\n                 \
+        \   \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm\"\n                },\n      \
+        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When the bundle was created\"\n\
+        \                }\n            }\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"\
+        description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle:
+        Composed from other bundles server-side\\n\"\n        },\n        \"Realm\": {\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\",\n\
+        \                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n  \
+        \      }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Find all bundles containing a specific asset\",\n    \"description\": \"\
+        Query the reverse index to find all bundles (source and metabundle)\\nthat contain a specific asset ID. Useful for
+        understanding asset\\ndistribution and debugging resolution issues.\\n\",\n    \"tags\": [\n        \"Bundles\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryBundlesByAsset\"\n}"
+  /assets/bulk-get:
+    post:
+      summary: Batch asset metadata lookup
+      description: |
+        Retrieve metadata for multiple assets in a single request.
+        Optionally includes pre-signed download URLs.
+        Maximum 100 asset IDs per request.
+      operationId: bulkGetAssets
+      tags:
+      - Assets
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkGetAssetsRequest'
+      responses:
+        '200':
+          description: Asset metadata retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkGetAssetsResponse'
+        '400':
+          description: Invalid request or too many asset IDs
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkGetAssetsRequest\"\
+        ,\n    \"$defs\": {\n        \"BulkGetAssetsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to retrieve metadata for multiple assets\",\n            \"required\"\
+        : [\n                \"assetIds\"\n            ],\n            \"properties\": {\n                \"assetIds\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"description\": \"Asset IDs to retrieve (max 100)\"\n     \
+        \           },\n                \"includeDownloadUrls\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"default\": false,\n                    \"description\": \"Whether to generate pre-signed download URLs\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkGetAssetsResponse\"\
+        ,\n    \"$defs\": {\n        \"BulkGetAssetsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Batch asset metadata response\",\n            \"required\": [\n         \
+        \       \"assets\",\n                \"notFound\"\n            ],\n            \"properties\": {\n               \
+        \ \"assets\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                    \
+        \    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\n                    },\n                    \"description\": \"Found
+        assets with metadata\"\n                },\n                \"notFound\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"description\": \"Asset IDs that weren't found\"\n                }\n            }\n        },\n \
+        \       \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata combined with a pre-signed download
+        URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"assetId\",\n                \"versionId\",\n                \"downloadUrl\",\n            \
+        \    \"expiresAt\",\n                \"size\",\n                \"contentHash\",\n                \"contentType\"\
+        ,\n                \"metadata\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n    \
+        \            },\n                \"versionId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Version identifier for this specific asset version\"\n                },\n                \"\
+        downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n          \
+        \          \"description\": \"Pre-signed download URL\"\n                },\n                \"expiresAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the download URL expires\"\n                },\n                \"size\": {\n                    \"type\"\
+        : \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\
+        \n                },\n                \"contentHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"SHA256 hash of file contents\"\n                },\n                \"contentType\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n         \
+        \       },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n          \
+        \          \"description\": \"Complete asset metadata\"\n                }\n            }\n        },\n        \"\
+        AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        description\": \"Complete asset metadata including system-generated fields\",\n            \"required\": [\n     \
+        \           \"assetId\",\n                \"contentHash\",\n                \"filename\",\n                \"contentType\"\
+        ,\n                \"size\",\n                \"assetType\",\n                \"realm\",\n                \"tags\"\
+        ,\n                \"processingStatus\",\n                \"isArchived\",\n                \"createdAt\",\n      \
+        \          \"updatedAt\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n           \
+        \     },\n                \"contentHash\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"SHA256 hash of file contents\"\n                },\n                \"filename\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Original filename\"\n                },\n                \"\
+        contentType\": {\n                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\
+        \n                },\n                \"size\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n     \
+        \           \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\"\
+        : \"Type classification for the asset\"\n                },\n                \"realm\": {\n                    \"\
+        $ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm the asset belongs to\"\n           \
+        \     },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Searchable
+        tags for the asset\"\n                },\n                \"processingStatus\": {\n                    \"$ref\": \"\
+        #/$defs/ProcessingStatus\",\n                    \"description\": \"Current status of asset processing pipeline\"\n\
+        \                },\n                \"isArchived\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether the asset is in cold/archival storage\",\n                    \"default\": false\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
+        \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
+        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
+        \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\"\
+        ,\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game
+        realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
+        for multiple assets in a single request.\\nOptionally includes pre-signed download URLs.\\nMaximum 100 asset IDs per
+        request.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetAssets\"\
+        \n}"
 components:
   schemas:
     # ==========================================================================
@@ -813,6 +1265,32 @@ components:
       - bannou
       - zip
       description: Bundle file format
+
+    BundleType:
+      type: string
+      enum:
+      - source
+      - metabundle
+      description: |
+        Bundle category:
+        - source: Original bundle (uploaded or server-created from assets)
+        - metabundle: Composed from other bundles server-side
+
+    AssetIdStyle:
+      type: string
+      enum:
+      - any
+      - dot_notation
+      - reverse_dns
+      - path_style
+      - custom
+      description: |
+        Asset ID validation style presets:
+        - any: No style enforcement (just max length and basic characters)
+        - dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
+        - reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
+        - path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
+        - custom: Use custom regex pattern from configuration
 
     # ==========================================================================
     # Upload Request/Response
@@ -1305,6 +1783,13 @@ components:
           type: string
           default: 1.0.0
           description: Bundle version string
+        realm:
+          allOf:
+          - $ref: '#/components/schemas/Realm'
+          nullable: true
+          description: |
+            Game realm this bundle belongs to.
+            Defaults to 'shared' if not specified.
         assetIds:
           type: array
           items:
@@ -1449,3 +1934,498 @@ components:
         assetCount:
           type: integer
           description: Number of assets declared in the manifest
+
+    # ==========================================================================
+    # Metabundle Operations
+    # ==========================================================================
+
+    SourceBundleReference:
+      type: object
+      additionalProperties: false
+      description: Provenance reference to a source bundle used in metabundle creation
+      required:
+      - bundleId
+      - version
+      - assetIds
+      - contentHash
+      properties:
+        bundleId:
+          type: string
+          description: Source bundle identifier
+        version:
+          type: string
+          description: Version of source bundle at composition time
+        assetIds:
+          type: array
+          items:
+            type: string
+          description: Asset IDs contributed from this source bundle
+        contentHash:
+          type: string
+          description: Hash of source bundle at composition time (for integrity verification)
+
+    BundleAssetEntry:
+      type: object
+      additionalProperties: false
+      description: Asset entry within a bundle (supports platform-specific IDs)
+      required:
+      - assetId
+      - contentHash
+      - size
+      properties:
+        assetId:
+          type: string
+          description: Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
+        contentHash:
+          type: string
+          description: SHA256 hash of asset content
+        filename:
+          type: string
+          nullable: true
+          description: Original filename
+        contentType:
+          type: string
+          nullable: true
+          description: MIME content type
+        size:
+          type: integer
+          format: int64
+          description: Asset size in bytes (uncompressed)
+
+    AssetConflict:
+      type: object
+      additionalProperties: false
+      description: Describes a conflict when the same asset ID has different content hashes
+      required:
+      - assetId
+      - conflictingBundles
+      properties:
+        assetId:
+          type: string
+          description: The conflicting asset identifier
+        conflictingBundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictingBundleEntry'
+          description: Bundles with conflicting versions of this asset
+
+    ConflictingBundleEntry:
+      type: object
+      additionalProperties: false
+      description: A bundle entry in an asset conflict
+      required:
+      - bundleId
+      - contentHash
+      properties:
+        bundleId:
+          type: string
+          description: Bundle containing this version
+        contentHash:
+          type: string
+          description: Content hash of asset in this bundle
+
+    CreateMetabundleRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Request to create a metabundle from source bundles and/or standalone assets.
+        At least one of sourceBundleIds or standaloneAssetIds must be provided.
+        This enables packaging behaviors/scripts with 3D assets as a complete unit.
+      required:
+      - metabundleId
+      - owner
+      - realm
+      properties:
+        metabundleId:
+          type: string
+          description: Unique identifier for the new metabundle
+        sourceBundleIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Source bundle IDs to pull assets from. Can cherry-pick specific
+            assets using assetFilter, or include all if assetFilter is null.
+        standaloneAssetIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Individual asset IDs (not in bundles) to include directly.
+            Useful for including behaviors, scripts, or metadata files
+            alongside bundled 3D assets.
+        version:
+          type: string
+          default: "1.0.0"
+          description: Metabundle version string
+        owner:
+          type: string
+          description: |
+            Owner of this metabundle. NOT a session ID.
+            For user-initiated: the accountId (UUID format).
+            For service-initiated: the service name.
+        realm:
+          $ref: '#/components/schemas/Realm'
+          description: Game realm for this metabundle
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        assetFilter:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: |
+            Optional subset of asset IDs to include FROM SOURCE BUNDLES.
+            If null, all assets from source bundles are included.
+            Standalone assets are always included regardless of this filter.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Custom metadata for the metabundle
+
+    CreateMetabundleResponse:
+      type: object
+      additionalProperties: false
+      description: Response from metabundle creation
+      required:
+      - metabundleId
+      - status
+      - assetCount
+      - sizeBytes
+      properties:
+        metabundleId:
+          type: string
+          description: Metabundle identifier
+        status:
+          type: string
+          enum:
+          - queued
+          - processing
+          - ready
+          - failed
+          description: Creation status
+        assetCount:
+          type: integer
+          description: Number of assets in the metabundle
+        standaloneAssetCount:
+          type: integer
+          nullable: true
+          description: Number of standalone assets included directly (not from bundles)
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Total size in bytes
+        sourceBundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceBundleReference'
+          description: Provenance data for the metabundle
+        conflicts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/AssetConflict'
+          description: Present if creation failed due to asset conflicts
+
+    # ==========================================================================
+    # Bundle Resolution
+    # ==========================================================================
+
+    ResolveBundlesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to resolve optimal bundle downloads for requested assets
+      required:
+      - assetIds
+      - realm
+      properties:
+        assetIds:
+          type: array
+          items:
+            type: string
+          description: Platform asset IDs to resolve
+        realm:
+          $ref: '#/components/schemas/Realm'
+          description: Game realm to search within
+        preferMetabundles:
+          type: boolean
+          default: true
+          description: Prefer metabundles when coverage is equal
+        includeStandalone:
+          type: boolean
+          default: true
+          description: Include standalone assets not in any bundle
+        maxBundles:
+          type: integer
+          nullable: true
+          description: Maximum number of bundles to return (optimization limit)
+
+    ResolveBundlesResponse:
+      type: object
+      additionalProperties: false
+      description: Optimal bundle set for requested assets
+      required:
+      - bundles
+      - standaloneAssets
+      - coverage
+      properties:
+        bundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResolvedBundle'
+          description: Bundles to download
+        standaloneAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResolvedAsset'
+          description: Individual assets to download
+        coverage:
+          $ref: '#/components/schemas/CoverageAnalysis'
+          description: Coverage statistics
+        unresolved:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Asset IDs that couldn't be found (null if all resolved)
+
+    ResolvedBundle:
+      type: object
+      additionalProperties: false
+      description: A bundle selected for download in resolution
+      required:
+      - bundleId
+      - bundleType
+      - downloadUrl
+      - expiresAt
+      - size
+      - assetsProvided
+      properties:
+        bundleId:
+          type: string
+          description: Bundle identifier
+        bundleType:
+          $ref: '#/components/schemas/BundleType'
+          description: Whether source or metabundle
+        version:
+          type: string
+          nullable: true
+          description: Bundle version
+        downloadUrl:
+          type: string
+          format: uri
+          description: Pre-signed download URL
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the download URL expires
+        size:
+          type: integer
+          format: int64
+          description: Bundle file size in bytes
+        assetsProvided:
+          type: array
+          items:
+            type: string
+          description: Which of the requested assets this bundle provides
+
+    ResolvedAsset:
+      type: object
+      additionalProperties: false
+      description: A standalone asset selected for download
+      required:
+      - assetId
+      - downloadUrl
+      - expiresAt
+      - size
+      properties:
+        assetId:
+          type: string
+          description: Asset identifier
+        downloadUrl:
+          type: string
+          format: uri
+          description: Pre-signed download URL
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the download URL expires
+        size:
+          type: integer
+          format: int64
+          description: Asset file size in bytes
+        contentHash:
+          type: string
+          nullable: true
+          description: SHA256 hash of asset content
+
+    CoverageAnalysis:
+      type: object
+      additionalProperties: false
+      description: Statistics about asset resolution coverage
+      required:
+      - totalRequested
+      - resolvedViaBundles
+      - resolvedStandalone
+      - unresolvedCount
+      properties:
+        totalRequested:
+          type: integer
+          description: Total number of assets requested
+        resolvedViaBundles:
+          type: integer
+          description: Assets resolved through bundle downloads
+        resolvedStandalone:
+          type: integer
+          description: Assets resolved as standalone downloads
+        unresolvedCount:
+          type: integer
+          description: Assets that could not be found
+        bundleEfficiency:
+          type: number
+          format: float
+          nullable: true
+          description: Ratio of assets provided to bundle downloads (higher is better)
+
+    # ==========================================================================
+    # Bundle Query
+    # ==========================================================================
+
+    QueryBundlesByAssetRequest:
+      type: object
+      additionalProperties: false
+      description: Request to find bundles containing a specific asset
+      required:
+      - assetId
+      - realm
+      properties:
+        assetId:
+          type: string
+          description: Platform asset ID to search for
+        realm:
+          $ref: '#/components/schemas/Realm'
+          description: Game realm to search within
+        bundleType:
+          allOf:
+          - $ref: '#/components/schemas/BundleType'
+          nullable: true
+          description: Filter by bundle type (optional, null for all types)
+        limit:
+          type: integer
+          default: 50
+          description: Maximum results to return
+        offset:
+          type: integer
+          default: 0
+          description: Pagination offset
+
+    QueryBundlesByAssetResponse:
+      type: object
+      additionalProperties: false
+      description: Bundles containing the requested asset
+      required:
+      - assetId
+      - bundles
+      - total
+      - limit
+      - offset
+      properties:
+        assetId:
+          type: string
+          description: The queried asset ID
+        bundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleSummary'
+          description: Bundles containing this asset
+        total:
+          type: integer
+          description: Total matching bundles
+        limit:
+          type: integer
+          description: Page size
+        offset:
+          type: integer
+          description: Page offset
+
+    BundleSummary:
+      type: object
+      additionalProperties: false
+      description: Summary information about a bundle
+      required:
+      - bundleId
+      - bundleType
+      - version
+      - assetCount
+      - realm
+      properties:
+        bundleId:
+          type: string
+          description: Bundle identifier
+        bundleType:
+          $ref: '#/components/schemas/BundleType'
+          description: Source or metabundle
+        version:
+          type: string
+          description: Bundle version
+        assetCount:
+          type: integer
+          description: Number of assets in bundle
+        sizeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Bundle file size
+        realm:
+          $ref: '#/components/schemas/Realm'
+          description: Game realm
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the bundle was created
+
+    # ==========================================================================
+    # Bulk Asset Operations
+    # ==========================================================================
+
+    BulkGetAssetsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve metadata for multiple assets
+      required:
+      - assetIds
+      properties:
+        assetIds:
+          type: array
+          items:
+            type: string
+          description: Asset IDs to retrieve (max 100)
+        includeDownloadUrls:
+          type: boolean
+          default: false
+          description: Whether to generate pre-signed download URLs
+
+    BulkGetAssetsResponse:
+      type: object
+      additionalProperties: false
+      description: Batch asset metadata response
+      required:
+      - assets
+      - notFound
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetWithDownloadUrl'
+          description: Found assets with metadata
+        notFound:
+          type: array
+          items:
+            type: string
+          description: Asset IDs that weren't found

@@ -48,6 +48,12 @@ public class AssetTestHandler : BaseHttpTestHandler
 
         // Complete lifecycle test
         new ServiceTest(TestCompleteAssetLifecycle, "CompleteAssetLifecycle", "Asset", "Test complete asset lifecycle: upload → search → bundle → download"),
+
+        // Metabundle tests
+        new ServiceTest(TestCreateMetabundleFromBundles, "CreateMetabundleFromBundles", "Asset", "Test creating metabundle from source bundles"),
+        new ServiceTest(TestCreateMetabundleWithStandaloneAssets, "CreateMetabundleWithStandaloneAssets", "Asset", "Test creating metabundle with standalone assets"),
+        new ServiceTest(TestCreateMetabundleWithBothSources, "CreateMetabundleWithBothSources", "Asset", "Test creating metabundle combining bundles and standalone assets"),
+        new ServiceTest(TestCreateMetabundleNonExistentBundle, "CreateMetabundleNonExistentBundle", "Asset", "Test 404 for metabundle with non-existent source bundle"),
     ];
 
     /// <summary>
@@ -641,4 +647,218 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Complete lifecycle test passed: 3 assets uploaded, bundled, and retrieved");
         }, "Complete asset lifecycle");
+
+    /// <summary>
+    /// Test creating a metabundle from source bundles.
+    /// </summary>
+    private static async Task<TestResult> TestCreateMetabundleFromBundles(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var assetClient = GetServiceClient<IAssetClient>();
+
+            // Step 1: Upload assets and create source bundles
+            Console.WriteLine("  Step 1: Creating source bundles...");
+            var asset1 = await UploadTestAsset(assetClient, "metabundle-source-1");
+            var asset2 = await UploadTestAsset(assetClient, "metabundle-source-2");
+            if (asset1 == null || asset2 == null)
+                return TestResult.Failed("Failed to upload test assets");
+
+            var bundle1Id = $"source-bundle-1-{DateTime.Now.Ticks}";
+            var bundle1 = await assetClient.CreateBundleAsync(new CreateBundleRequest
+            {
+                Owner = "http-tester",
+                BundleId = bundle1Id,
+                Version = "1.0.0",
+                AssetIds = new List<string> { asset1.AssetId },
+                Compression = CompressionType.None
+            });
+            if (bundle1.Status == CreateBundleResponseStatus.Failed)
+                return TestResult.Failed("Failed to create source bundle 1");
+
+            var bundle2Id = $"source-bundle-2-{DateTime.Now.Ticks}";
+            var bundle2 = await assetClient.CreateBundleAsync(new CreateBundleRequest
+            {
+                Owner = "http-tester",
+                BundleId = bundle2Id,
+                Version = "1.0.0",
+                AssetIds = new List<string> { asset2.AssetId },
+                Compression = CompressionType.None
+            });
+            if (bundle2.Status == CreateBundleResponseStatus.Failed)
+                return TestResult.Failed("Failed to create source bundle 2");
+
+            Console.WriteLine($"  Created source bundles: {bundle1Id}, {bundle2Id}");
+
+            // Step 2: Create metabundle from source bundles
+            Console.WriteLine("  Step 2: Creating metabundle from source bundles...");
+            var metabundleId = $"metabundle-from-bundles-{DateTime.Now.Ticks}";
+            var metabundle = await assetClient.CreateMetabundleAsync(new CreateMetabundleRequest
+            {
+                MetabundleId = metabundleId,
+                SourceBundleIds = new List<string> { bundle1Id, bundle2Id },
+                Owner = "http-tester",
+                Version = "1.0.0",
+                Realm = Asset.Realm.Arcadia
+            });
+
+            if (metabundle.MetabundleId != metabundleId)
+                return TestResult.Failed($"Metabundle ID mismatch: expected '{metabundleId}', got '{metabundle.MetabundleId}'");
+
+            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+                return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
+
+            if (metabundle.AssetCount != 2)
+                return TestResult.Failed($"Expected 2 assets in metabundle, got {metabundle.AssetCount}");
+
+            Console.WriteLine($"  Metabundle created: ID={metabundle.MetabundleId}, Status={metabundle.Status}, Assets={metabundle.AssetCount}");
+
+            // Step 3: Retrieve the metabundle
+            Console.WriteLine("  Step 3: Retrieving metabundle...");
+            var retrieved = await assetClient.GetBundleAsync(new GetBundleRequest
+            {
+                BundleId = metabundleId,
+                Format = BundleFormat.Bannou
+            });
+
+            if (retrieved.DownloadUrl == null)
+                return TestResult.Failed("Metabundle download URL is null");
+
+            return TestResult.Successful($"Metabundle from bundles: ID={metabundle.MetabundleId}, Assets={metabundle.AssetCount}, Size={metabundle.SizeBytes}");
+        }, "Create metabundle from bundles");
+
+    /// <summary>
+    /// Test creating a metabundle with standalone assets (not in bundles).
+    /// This enables packaging behaviors/scripts with 3D assets as a complete unit.
+    /// </summary>
+    private static async Task<TestResult> TestCreateMetabundleWithStandaloneAssets(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var assetClient = GetServiceClient<IAssetClient>();
+
+            // Step 1: Upload standalone assets (not bundled)
+            Console.WriteLine("  Step 1: Uploading standalone assets...");
+            var standaloneAsset1 = await UploadTestAsset(assetClient, "standalone-behavior-1", AssetType.Behavior);
+            var standaloneAsset2 = await UploadTestAsset(assetClient, "standalone-config-2", AssetType.Other);
+            if (standaloneAsset1 == null || standaloneAsset2 == null)
+                return TestResult.Failed("Failed to upload standalone assets");
+
+            Console.WriteLine($"  Uploaded standalone assets: {standaloneAsset1.AssetId}, {standaloneAsset2.AssetId}");
+
+            // Step 2: Create metabundle from standalone assets only
+            Console.WriteLine("  Step 2: Creating metabundle from standalone assets...");
+            var metabundleId = $"metabundle-standalone-{DateTime.Now.Ticks}";
+            var metabundle = await assetClient.CreateMetabundleAsync(new CreateMetabundleRequest
+            {
+                MetabundleId = metabundleId,
+                StandaloneAssetIds = new List<string> { standaloneAsset1.AssetId, standaloneAsset2.AssetId },
+                Owner = "http-tester",
+                Version = "1.0.0",
+                Realm = Asset.Realm.Arcadia
+            });
+
+            if (metabundle.MetabundleId != metabundleId)
+                return TestResult.Failed($"Metabundle ID mismatch");
+
+            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+                return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
+
+            if (metabundle.AssetCount != 2)
+                return TestResult.Failed($"Expected 2 assets in metabundle, got {metabundle.AssetCount}");
+
+            // Verify standalone asset count is tracked
+            if (metabundle.StandaloneAssetCount != 2)
+                return TestResult.Failed($"Expected StandaloneAssetCount=2, got {metabundle.StandaloneAssetCount}");
+
+            Console.WriteLine($"  Metabundle created: ID={metabundle.MetabundleId}, Assets={metabundle.AssetCount}, Standalone={metabundle.StandaloneAssetCount}");
+
+            return TestResult.Successful($"Metabundle from standalone assets: ID={metabundle.MetabundleId}, Standalone={metabundle.StandaloneAssetCount}");
+        }, "Create metabundle with standalone assets");
+
+    /// <summary>
+    /// Test creating a metabundle combining both source bundles and standalone assets.
+    /// This is the primary use case: packaging behaviors/scripts with bundled 3D assets.
+    /// </summary>
+    private static async Task<TestResult> TestCreateMetabundleWithBothSources(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var assetClient = GetServiceClient<IAssetClient>();
+
+            // Step 1: Create a source bundle with 3D assets
+            Console.WriteLine("  Step 1: Creating source bundle...");
+            var bundledAsset = await UploadTestAsset(assetClient, "bundled-3d-asset", AssetType.Model);
+            if (bundledAsset == null)
+                return TestResult.Failed("Failed to upload bundled asset");
+
+            var sourceBundleId = $"3d-assets-bundle-{DateTime.Now.Ticks}";
+            var sourceBundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
+            {
+                Owner = "http-tester",
+                BundleId = sourceBundleId,
+                Version = "1.0.0",
+                AssetIds = new List<string> { bundledAsset.AssetId },
+                Compression = CompressionType.None
+            });
+            if (sourceBundle.Status == CreateBundleResponseStatus.Failed)
+                return TestResult.Failed("Failed to create source bundle");
+
+            Console.WriteLine($"  Created source bundle: {sourceBundleId}");
+
+            // Step 2: Upload standalone behavior/script assets
+            Console.WriteLine("  Step 2: Uploading standalone behavior assets...");
+            var behaviorAsset = await UploadTestAsset(assetClient, "character-behavior", AssetType.Behavior);
+            if (behaviorAsset == null)
+                return TestResult.Failed("Failed to upload behavior asset");
+
+            Console.WriteLine($"  Uploaded behavior asset: {behaviorAsset.AssetId}");
+
+            // Step 3: Create metabundle combining both
+            Console.WriteLine("  Step 3: Creating combined metabundle...");
+            var metabundleId = $"combined-metabundle-{DateTime.Now.Ticks}";
+            var metabundle = await assetClient.CreateMetabundleAsync(new CreateMetabundleRequest
+            {
+                MetabundleId = metabundleId,
+                SourceBundleIds = new List<string> { sourceBundleId },
+                StandaloneAssetIds = new List<string> { behaviorAsset.AssetId },
+                Owner = "http-tester",
+                Version = "1.0.0",
+                Realm = Asset.Realm.Arcadia
+            });
+
+            if (metabundle.MetabundleId != metabundleId)
+                return TestResult.Failed($"Metabundle ID mismatch");
+
+            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+                return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
+
+            // Should have 2 total assets (1 from bundle + 1 standalone)
+            if (metabundle.AssetCount != 2)
+                return TestResult.Failed($"Expected 2 assets in metabundle, got {metabundle.AssetCount}");
+
+            if (metabundle.StandaloneAssetCount != 1)
+                return TestResult.Failed($"Expected StandaloneAssetCount=1, got {metabundle.StandaloneAssetCount}");
+
+            Console.WriteLine($"  Combined metabundle created: ID={metabundle.MetabundleId}, Total={metabundle.AssetCount}, Standalone={metabundle.StandaloneAssetCount}");
+
+            return TestResult.Successful($"Combined metabundle: ID={metabundle.MetabundleId}, Assets={metabundle.AssetCount}, Standalone={metabundle.StandaloneAssetCount}");
+        }, "Create metabundle with both sources");
+
+    /// <summary>
+    /// Test 404 error when creating metabundle with non-existent source bundle.
+    /// </summary>
+    private static async Task<TestResult> TestCreateMetabundleNonExistentBundle(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.CreateMetabundleAsync(new CreateMetabundleRequest
+                {
+                    MetabundleId = $"metabundle-nonexistent-{DateTime.Now.Ticks}",
+                    SourceBundleIds = new List<string> { $"nonexistent-bundle-{Guid.NewGuid()}" },
+                    Owner = "http-tester",
+                    Version = "1.0.0",
+                    Realm = Asset.Realm.Arcadia
+                });
+            },
+            404,
+            "Create metabundle with non-existent bundle");
 }

@@ -141,6 +141,58 @@ public enum BundleFormat
 #pragma warning restore CS1591
 
 /// <summary>
+/// Bundle category:
+/// <br/>- source: Original bundle (uploaded or server-created from assets)
+/// <br/>- metabundle: Composed from other bundles server-side
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BundleType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"source")]
+    Source = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"metabundle")]
+    Metabundle = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Asset ID validation style presets:
+/// <br/>- any: No style enforcement (just max length and basic characters)
+/// <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
+/// <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
+/// <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
+/// <br/>- custom: Use custom regex pattern from configuration
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AssetIdStyle
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"any")]
+    Any = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"dot_notation")]
+    Dot_notation = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"reverse_dns")]
+    Reverse_dns = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"path_style")]
+    Path_style = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    Custom = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to initiate an asset upload and receive a pre-signed URL
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -849,6 +901,15 @@ public partial class CreateBundleRequest
     public string Version { get; set; } = "1.0.0";
 
     /// <summary>
+    /// Game realm this bundle belongs to.
+    /// <br/>Defaults to 'shared' if not specified.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm? Realm { get; set; } = default!;
+
+    /// <summary>
     /// List of asset IDs to include in the bundle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
@@ -1066,9 +1127,729 @@ public partial class BundleManifestPreview
 
 }
 
+/// <summary>
+/// Provenance reference to a source bundle used in metabundle creation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SourceBundleReference
+{
+
+    /// <summary>
+    /// Source bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Version of source bundle at composition time
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Asset IDs contributed from this source bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Hash of source bundle at composition time (for integrity verification)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentHash { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Asset entry within a bundle (supports platform-specific IDs)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleAssetEntry
+{
+
+    /// <summary>
+    /// Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// SHA256 hash of asset content
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentHash { get; set; } = default!;
+
+    /// <summary>
+    /// Original filename
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("filename")]
+    public string? Filename { get; set; } = default!;
+
+    /// <summary>
+    /// MIME content type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    public string? ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Asset size in bytes (uncompressed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("size")]
+    public long Size { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Describes a conflict when the same asset ID has different content hashes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AssetConflict
+{
+
+    /// <summary>
+    /// The conflicting asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Bundles with conflicting versions of this asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("conflictingBundles")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ConflictingBundleEntry> ConflictingBundles { get; set; } = new System.Collections.ObjectModel.Collection<ConflictingBundleEntry>();
+
+}
+
+/// <summary>
+/// A bundle entry in an asset conflict
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConflictingBundleEntry
+{
+
+    /// <summary>
+    /// Bundle containing this version
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Content hash of asset in this bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentHash { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to create a metabundle from source bundles and/or standalone assets.
+/// <br/>At least one of sourceBundleIds or standaloneAssetIds must be provided.
+/// <br/>This enables packaging behaviors/scripts with 3D assets as a complete unit.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CreateMetabundleRequest
+{
+
+    /// <summary>
+    /// Unique identifier for the new metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Source bundle IDs to pull assets from. Can cherry-pick specific
+    /// <br/>assets using assetFilter, or include all if assetFilter is null.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleIds")]
+    public System.Collections.Generic.ICollection<string>? SourceBundleIds { get; set; } = default!;
+
+    /// <summary>
+    /// Individual asset IDs (not in bundles) to include directly.
+    /// <br/>Useful for including behaviors, scripts, or metadata files
+    /// <br/>alongside bundled 3D assets.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetIds")]
+    public System.Collections.Generic.ICollection<string>? StandaloneAssetIds { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle version string
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public string Version { get; set; } = "1.0.0";
+
+    /// <summary>
+    /// Owner of this metabundle. NOT a session ID.
+    /// <br/>For user-initiated: the accountId (UUID format).
+    /// <br/>For service-initiated: the service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm for this metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Optional subset of asset IDs to include FROM SOURCE BUNDLES.
+    /// <br/>If null, all assets from source bundles are included.
+    /// <br/>Standalone assets are always included regardless of this filter.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetFilter")]
+    public System.Collections.Generic.ICollection<string>? AssetFilter { get; set; } = default!;
+
+    /// <summary>
+    /// Custom metadata for the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from metabundle creation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CreateMetabundleResponse
+{
+
+    /// <summary>
+    /// Metabundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Creation status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CreateMetabundleResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of assets in the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included directly (not from bundles)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Provenance data for the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundles")]
+    public System.Collections.Generic.ICollection<SourceBundleReference> SourceBundles { get; set; } = default!;
+
+    /// <summary>
+    /// Present if creation failed due to asset conflicts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("conflicts")]
+    public System.Collections.Generic.ICollection<AssetConflict>? Conflicts { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to resolve optimal bundle downloads for requested assets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolveBundlesRequest
+{
+
+    /// <summary>
+    /// Platform asset IDs to resolve
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Game realm to search within
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Prefer metabundles when coverage is equal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("preferMetabundles")]
+    public bool PreferMetabundles { get; set; } = true;
+
+    /// <summary>
+    /// Include standalone assets not in any bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeStandalone")]
+    public bool IncludeStandalone { get; set; } = true;
+
+    /// <summary>
+    /// Maximum number of bundles to return (optimization limit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxBundles")]
+    public int? MaxBundles { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Optimal bundle set for requested assets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolveBundlesResponse
+{
+
+    /// <summary>
+    /// Bundles to download
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundles")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ResolvedBundle> Bundles { get; set; } = new System.Collections.ObjectModel.Collection<ResolvedBundle>();
+
+    /// <summary>
+    /// Individual assets to download
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssets")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ResolvedAsset> StandaloneAssets { get; set; } = new System.Collections.ObjectModel.Collection<ResolvedAsset>();
+
+    /// <summary>
+    /// Coverage statistics
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coverage")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public CoverageAnalysis Coverage { get; set; } = new CoverageAnalysis();
+
+    /// <summary>
+    /// Asset IDs that couldn't be found (null if all resolved)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unresolved")]
+    public System.Collections.Generic.ICollection<string>? Unresolved { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A bundle selected for download in resolution
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolvedBundle
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether source or metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleType BundleType { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle version
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public string? Version { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Uri DownloadUrl { get; set; } = default!;
+
+    /// <summary>
+    /// When the download URL expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("size")]
+    public long Size { get; set; } = default!;
+
+    /// <summary>
+    /// Which of the requested assets this bundle provides
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetsProvided")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AssetsProvided { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// A standalone asset selected for download
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolvedAsset
+{
+
+    /// <summary>
+    /// Asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Uri DownloadUrl { get; set; } = default!;
+
+    /// <summary>
+    /// When the download URL expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Asset file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("size")]
+    public long Size { get; set; } = default!;
+
+    /// <summary>
+    /// SHA256 hash of asset content
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
+    public string? ContentHash { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Statistics about asset resolution coverage
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CoverageAnalysis
+{
+
+    /// <summary>
+    /// Total number of assets requested
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalRequested")]
+    public int TotalRequested { get; set; } = default!;
+
+    /// <summary>
+    /// Assets resolved through bundle downloads
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resolvedViaBundles")]
+    public int ResolvedViaBundles { get; set; } = default!;
+
+    /// <summary>
+    /// Assets resolved as standalone downloads
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resolvedStandalone")]
+    public int ResolvedStandalone { get; set; } = default!;
+
+    /// <summary>
+    /// Assets that could not be found
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unresolvedCount")]
+    public int UnresolvedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Ratio of assets provided to bundle downloads (higher is better)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleEfficiency")]
+    public float? BundleEfficiency { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to find bundles containing a specific asset
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryBundlesByAssetRequest
+{
+
+    /// <summary>
+    /// Platform asset ID to search for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm to search within
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm Realm { get; set; } = default!;
+
+    /// <summary>
+    /// Filter by bundle type (optional, null for all types)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleType? BundleType { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum results to return
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = 50;
+
+    /// <summary>
+    /// Pagination offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = 0;
+
+}
+
+/// <summary>
+/// Bundles containing the requested asset
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryBundlesByAssetResponse
+{
+
+    /// <summary>
+    /// The queried asset ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Bundles containing this asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundles")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BundleSummary> Bundles { get; set; } = new System.Collections.ObjectModel.Collection<BundleSummary>();
+
+    /// <summary>
+    /// Total matching bundles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("total")]
+    public int Total { get; set; } = default!;
+
+    /// <summary>
+    /// Page size
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    public int Limit { get; set; } = default!;
+
+    /// <summary>
+    /// Page offset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    public int Offset { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Summary information about a bundle
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleSummary
+{
+
+    /// <summary>
+    /// Bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Source or metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleType BundleType { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle version
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Number of assets in bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle file size
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public Realm Realm { get; set; } = default!;
+
+    /// <summary>
+    /// When the bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to retrieve metadata for multiple assets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkGetAssetsRequest
+{
+
+    /// <summary>
+    /// Asset IDs to retrieve (max 100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Whether to generate pre-signed download URLs
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDownloadUrls")]
+    public bool IncludeDownloadUrls { get; set; } = false;
+
+}
+
+/// <summary>
+/// Batch asset metadata response
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkGetAssetsResponse
+{
+
+    /// <summary>
+    /// Found assets with metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assets")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AssetWithDownloadUrl> Assets { get; set; } = new System.Collections.ObjectModel.Collection<AssetWithDownloadUrl>();
+
+    /// <summary>
+    /// Asset IDs that weren't found
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notFound")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> NotFound { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum CreateBundleResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CreateMetabundleResponseStatus
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"queued")]

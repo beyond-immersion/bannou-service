@@ -13,7 +13,7 @@ This document provides a compact reference of all Bannou services and their API 
 | [Achievement](#achievement) | 1.0.0 | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor](#actor) | 1.0.0 | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Analytics](#analytics) | 1.0.0 | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
-| [Asset](#asset) | 1.0.0 | 9 | Asset management service for storage, versioning, and distri... |
+| [Asset](#asset) | 1.0.0 | 13 | Asset management service for storage, versioning, and distri... |
 | [Auth](#auth) | 4.0.0 | 12 | Authentication and session management service (Internet-faci... |
 | [Behavior](#behavior) | 3.0.0 | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Character](#character) | 1.0.0 | 10 | Character management service for Arcadia game world. |
@@ -199,6 +199,7 @@ Asset management service for storage, versioning, and distribution of large bina
 
 | Method | Path | Summary | Access |
 |--------|------|---------|--------|
+| `POST` | `/assets/bulk-get` | Batch asset metadata lookup | user |
 | `POST` | `/assets/delete` | Delete an asset | admin |
 | `POST` | `/assets/get` | Get asset metadata and download URL | user |
 | `POST` | `/assets/list-versions` | List all versions of an asset | user |
@@ -212,6 +213,9 @@ Asset management service for storage, versioning, and distribution of large bina
 |--------|------|---------|--------|
 | `POST` | `/bundles/create` | Create asset bundle from multiple assets | user |
 | `POST` | `/bundles/get` | Get bundle manifest and download URL | user |
+| `POST` | `/bundles/metabundle/create` | Create metabundle from source bundles | user |
+| `POST` | `/bundles/query/by-asset` | Find all bundles containing a specific asset | user |
+| `POST` | `/bundles/resolve` | Compute optimal bundles for requested assets | user |
 | `POST` | `/bundles/upload/request` | Request upload URL for a pre-made bundle | user |
 
 ---
@@ -1240,7 +1244,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 33
-- **Total endpoints**: 386
+- **Total endpoints**: 390
 
 ---
 

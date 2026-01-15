@@ -998,6 +998,11 @@ public class Program
         foreach (ServiceTest serviceTest in characterTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load asset websocket tests
+        var assetTestHandler = new AssetWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in assetTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load relationship websocket tests
         var relationshipTestHandler = new RelationshipWebSocketTestHandler();
         foreach (ServiceTest serviceTest in relationshipTestHandler.GetServiceTests())

@@ -36,6 +36,9 @@ info:
     - topic: asset.bundle.created
       event: BundleCreatedEvent
       description: Published when a bundle is successfully created
+    - topic: asset.metabundle.created
+      event: MetabundleCreatedEvent
+      description: Published when a metabundle is successfully composed from source bundles
 
 paths: {}  # Events don't have HTTP paths
 
@@ -324,6 +327,65 @@ components:
             Owner of this bundle. NOT a session ID.
             For user-initiated bundles: the accountId (UUID format).
             For service-initiated bundles: the service name (e.g., "orchestrator").
+
+    MetabundleCreatedEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a metabundle is successfully created from source bundles
+      required:
+        - metabundleId
+        - version
+        - realm
+        - sourceBundleCount
+        - assetCount
+        - bucket
+        - key
+      properties:
+        metabundleId:
+          type: string
+          description: Metabundle identifier
+        version:
+          type: string
+          description: Metabundle version string
+        realm:
+          $ref: '#/components/schemas/RealmEnum'
+          description: Game realm for this metabundle
+        sourceBundleCount:
+          type: integer
+          description: Number of source bundles composed
+        sourceBundleIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: List of source bundle IDs that were composed
+        assetCount:
+          type: integer
+          description: Number of unique assets in the metabundle
+        standaloneAssetCount:
+          type: integer
+          nullable: true
+          description: Number of standalone assets included directly (not from bundles)
+        bucket:
+          type: string
+          description: Storage bucket name
+        key:
+          type: string
+          description: Storage object key
+        sizeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Metabundle file size in bytes
+        owner:
+          type: string
+          nullable: true
+          description: |
+            Owner of this metabundle. NOT a session ID.
+            For user-initiated: the accountId (UUID format).
+            For service-initiated: the service name.
 
     # ==========================================================================
     # Supporting Types

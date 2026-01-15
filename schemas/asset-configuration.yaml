@@ -99,6 +99,19 @@ x-service-configuration:
       env: ASSET_MULTIPART_PART_SIZE_MB
       default: 16
 
+    # API Limits
+    MaxResolutionAssets:
+      type: integer
+      description: Maximum number of asset IDs allowed in a single bundle resolution request
+      env: ASSET_MAX_RESOLUTION_ASSETS
+      default: 500
+
+    MaxBulkGetAssets:
+      type: integer
+      description: Maximum number of asset IDs allowed in a single bulk get request
+      env: ASSET_MAX_BULK_GET_ASSETS
+      default: 100
+
     # Processing Configuration
     LargeFileThresholdMb:
       type: integer

@@ -68,6 +68,7 @@ This document lists all events defined in Bannou's event schemas.
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
 | `BaseServiceEvent` | Custom | `base-service` |  |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
+| `MetabundleCreatedEvent` | Lifecycle (Created) | `metabundle.created` | Event published when a metabundle is successfully ... |
 
 ### Asset (client)
 

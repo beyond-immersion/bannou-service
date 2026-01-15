@@ -107,6 +107,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_INDEX_KEY_PREFIX` | string | `asset-index:` | Key prefix for asset index entries in state store |
 | `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
+| `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
+| `ASSET_MAX_RESOLUTION_ASSETS` | int | `500` | Maximum number of asset IDs allowed in a single bundle resol... |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
 | `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
@@ -545,9 +547,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 416
+- **Total properties**: 418
 - **Required (no default)**: 40
-- **Optional (has default)**: 376
+- **Optional (has default)**: 378
 
 ## Environment Variable Naming Convention
 
