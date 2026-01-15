@@ -26,4 +26,9 @@
     <PackageReference Include="FFMpegCore" Version="5.1.0" />
   </ItemGroup>
 
+  <!-- Shared bundle format code (like protocol/transport pattern) -->
+  <ItemGroup>
+    <Compile Include="../../sdks/bundle-format/*.cs" LinkBase="Bundles" />
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace BeyondImmersion.BannouService.Asset.Bundles;
+namespace BeyondImmersion.Bannou.Bundle.Format;
 
 /// <summary>
 /// Binary index format for fast random access to bundle assets.

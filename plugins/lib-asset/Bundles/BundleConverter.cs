@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Bundle.Format;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 

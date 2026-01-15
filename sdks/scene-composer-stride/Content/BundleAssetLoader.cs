@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Asset.Bundles;
+using BeyondImmersion.Bannou.Bundle.Format;
 using System;
 using System.Collections.Generic;
 using System.IO;

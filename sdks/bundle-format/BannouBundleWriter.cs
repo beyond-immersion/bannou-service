@@ -1,9 +1,8 @@
-using BeyondImmersion.BannouService.Configuration;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 
-namespace BeyondImmersion.BannouService.Asset.Bundles;
+namespace BeyondImmersion.Bannou.Bundle.Format;
 
 /// <summary>
 /// Writes assets into the .bannou bundle format.
@@ -179,8 +178,8 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
-        var manifestJson = BannouJson.Serialize(manifest);
+        // Write manifest using consistent JSON serialization
+        var manifestJson = BundleJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 
         // Write manifest length (4 bytes, big-endian)
@@ -192,8 +191,8 @@ public sealed class BannouBundleWriter : IDisposable
         _outputStream.Write(manifestBytes);
 
         // Create and write index
-        var index = new BundleIndex { Entries = _indexEntries };
-        index.WriteTo(_outputStream);
+        var bundleIndex = new BundleIndex { Entries = _indexEntries };
+        bundleIndex.WriteTo(_outputStream);
 
         // Write asset data
         _dataStream.Position = 0;
@@ -241,8 +240,8 @@ public sealed class BannouBundleWriter : IDisposable
             Tags = tags
         };
 
-        // Write manifest using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
-        var manifestJson = BannouJson.Serialize(manifest);
+        // Write manifest using consistent JSON serialization
+        var manifestJson = BundleJson.Serialize(manifest);
         var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
 
         var lengthBuffer = new byte[4];
@@ -251,8 +250,8 @@ public sealed class BannouBundleWriter : IDisposable
         await _outputStream.WriteAsync(manifestBytes, cancellationToken);
 
         using var indexStream = new MemoryStream();
-        var index = new BundleIndex { Entries = _indexEntries };
-        index.WriteTo(indexStream);
+        var bundleIndex = new BundleIndex { Entries = _indexEntries };
+        bundleIndex.WriteTo(indexStream);
         indexStream.Position = 0;
         await indexStream.CopyToAsync(_outputStream, cancellationToken);
 

@@ -1,0 +1,397 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.AssetBundler.Stride</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler">
+            <summary>
+            Compiles assets through Stride's asset pipeline via batch project generation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.#ctor(BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler})">
+            <summary>
+            Creates a new Stride batch compiler.
+            </summary>
+            <param name="options">Compiler options.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.ProcessorId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.OutputContentTypes">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.TypeInferencer">
+            <summary>
+            Gets the type inferencer for Stride asset types.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.ProcessAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchProjectGenerator">
+            <summary>
+            Generates Stride projects for batch asset compilation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchProjectGenerator.#ctor(BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchProjectGenerator})">
+            <summary>
+            Creates a new project generator.
+            </summary>
+            <param name="options">Compiler options.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchProjectGenerator.GenerateAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,System.Threading.CancellationToken)">
+            <summary>
+            Generates a Stride project for compiling the specified assets.
+            </summary>
+            <param name="assets">Assets to include in the project.</param>
+            <param name="outputDirectory">Directory for generated project.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Path to the generated .csproj file.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException">
+            <summary>
+            Exception thrown when Stride asset compilation fails.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.#ctor(System.String)">
+            <summary>
+            Creates a new Stride build exception.
+            </summary>
+            <param name="message">Error message.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates a new Stride build exception with inner exception.
+            </summary>
+            <param name="message">Error message.</param>
+            <param name="innerException">Inner exception.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.FromBuildOutput(System.Int32,System.String,System.String)">
+            <summary>
+            Creates a build exception from build output.
+            </summary>
+            <param name="exitCode">Process exit code.</param>
+            <param name="errorOutput">Standard error output.</param>
+            <param name="standardOutput">Standard output (may contain errors).</param>
+            <returns>Exception with formatted message.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.ExitCode">
+            <summary>
+            Gets the exit code from the build process, if available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.ErrorOutput">
+            <summary>
+            Gets the error output from the build process.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBuildException.FailedAssets">
+            <summary>
+            Gets the list of assets that failed to compile.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions">
+            <summary>
+            Configuration options for Stride asset compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.StrideVersion">
+            <summary>
+            Stride version to use for compilation (e.g., "4.2.0.2188").
+            If not specified, uses the latest available.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.DotnetPath">
+            <summary>
+            Path to dotnet executable. Defaults to "dotnet" (using PATH).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.Configuration">
+            <summary>
+            Build configuration (Debug or Release).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.Platform">
+            <summary>
+            Target platform for asset compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.GraphicsBackend">
+            <summary>
+            Graphics backend for compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.BuildTimeoutMs">
+            <summary>
+            Timeout for build operations in milliseconds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.VerboseOutput">
+            <summary>
+            Whether to capture detailed build output for logging.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.MaxTextureSize">
+            <summary>
+            Maximum texture dimension for compilation.
+            Larger textures will be downscaled.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.GenerateMipmaps">
+            <summary>
+            Whether to generate mipmaps for textures.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideCompilerOptions.TextureCompression">
+            <summary>
+            Texture compression format.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform">
+            <summary>
+            Target platforms for Stride compilation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform.Windows">
+            <summary>Windows desktop (x64).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform.Linux">
+            <summary>Linux desktop (x64).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform.MacOS">
+            <summary>macOS (Apple Silicon or Intel).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform.Android">
+            <summary>Android mobile.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StridePlatform.iOS">
+            <summary>iOS mobile.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend">
+            <summary>
+            Graphics backends supported by Stride.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend.Direct3D11">
+            <summary>DirectX 11.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend.Direct3D12">
+            <summary>DirectX 12.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend.Vulkan">
+            <summary>Vulkan.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend.OpenGL">
+            <summary>OpenGL (Linux/macOS).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideGraphicsBackend.OpenGLES">
+            <summary>OpenGL ES (mobile).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression">
+            <summary>
+            Texture compression formats for Stride.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.None">
+            <summary>No compression (RGBA8).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.BC1">
+            <summary>BC1 (DXT1) - RGB, no alpha, 4:1 compression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.BC3">
+            <summary>BC3 (DXT5) - RGBA with interpolated alpha, 4:1 compression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.BC7">
+            <summary>BC7 - High quality RGBA, 3:1 compression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.ETC2">
+            <summary>ETC2 - Mobile-friendly compression.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideTextureCompression.ASTC">
+            <summary>ASTC - Adaptive scalable texture compression.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser">
+            <summary>
+            Parses Stride's asset index to locate compiled assets.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.#ctor(System.IO.DirectoryInfo,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser})">
+            <summary>
+            Creates a new index parser.
+            </summary>
+            <param name="outputDirectory">Stride build output directory.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndex">
+            <summary>
+            Parses the Stride index and returns compiled asset entries.
+            </summary>
+            <returns>Dictionary of asset URL to index entry.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndexBinary(System.Byte[])">
+            <summary>
+            Parses the Stride binary index format.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndexJson(System.Byte[])">
+            <summary>
+            Parses JSON-based index (used in some Stride versions).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.FindDatabaseFiles">
+            <summary>
+            Finds all database files containing compiled assets.
+            </summary>
+            <returns>List of database file paths.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ReadAssetData(BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry)">
+            <summary>
+            Reads compiled asset data from database file.
+            </summary>
+            <param name="entry">Index entry for the asset.</param>
+            <returns>Asset data bytes.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry">
+            <summary>
+            Entry in the Stride asset index.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.Url">
+            <summary>Asset URL (e.g., "Models/MyModel").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.ObjectId">
+            <summary>Stride ObjectId hash.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.DataPath">
+            <summary>Path to the database file containing this asset.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.Offset">
+            <summary>Offset within the database file.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.Size">
+            <summary>Size of the asset data in bytes.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.Guid">
+            <summary>Asset GUID assigned by Stride.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry.Extension">
+            <summary>Asset type extension.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset">
+            <summary>
+            Represents an asset compiled through Stride's pipeline.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.AssetId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.Filename">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.ContentType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.Data">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.ContentHash">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.Dependencies">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.Metadata">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.StrideGuid">
+            <summary>
+            Stride GUID assigned during compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.ObjectId">
+            <summary>
+            Stride ObjectId from the compiled output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.SourceFilename">
+            <summary>
+            Original source filename before compilation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideProcessedAsset.StrideAssetType">
+            <summary>
+            Asset type as determined by Stride.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes">
+            <summary>
+            MIME content types for Stride-compiled assets.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.Model">
+            <summary>Content type for compiled Stride model assets.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.Texture">
+            <summary>Content type for compiled Stride texture assets.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.Animation">
+            <summary>Content type for compiled Stride animation assets.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.Material">
+            <summary>Content type for compiled Stride material assets.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.Binary">
+            <summary>Content type for Stride binary data (buffers, etc.).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.FromExtension(System.String)">
+            <summary>
+            Gets the content type from a Stride asset extension.
+            </summary>
+            <param name="extension">File extension (with or without leading dot).</param>
+            <returns>The corresponding MIME content type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.StrideContentTypes.ToExtension(System.String)">
+            <summary>
+            Gets the file extension for a content type.
+            </summary>
+            <param name="contentType">MIME content type.</param>
+            <returns>File extension without leading dot, or "bin" for unknown types.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer">
+            <summary>
+            Type inferencer for assets targeting Stride engine compilation.
+            Handles model, texture, animation, and audio files.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.ModelExtensions">
+            <summary>
+            Model file extensions supported by Stride.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.TextureExtensions">
+            <summary>
+            Texture file extensions supported by Stride.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.AudioExtensions">
+            <summary>
+            Audio file extensions supported by Stride.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.InferAssetType(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.InferTextureType(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.StrideTypeInferencer.ShouldExtract(System.String,System.String)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

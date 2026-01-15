@@ -1,4 +1,4 @@
-namespace BeyondImmersion.BannouService.Asset.Bundles;
+namespace BeyondImmersion.Bannou.Bundle.Format;
 
 /// <summary>
 /// Manifest describing the contents of a .bannou bundle.

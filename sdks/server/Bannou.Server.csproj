@@ -90,15 +90,9 @@
     <Compile Include="../transport/*.cs" />
   </ItemGroup>
 
-  <!-- Asset Bundle Infrastructure -->
+  <!-- Asset Bundle Infrastructure (shared from sdks/bundle-format/) -->
   <ItemGroup>
-    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleWriter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleWriter.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleManifest.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleIndex.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleValidator.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleConverter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleConverter.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/IBundleConverter.cs" Condition="Exists('../../plugins/lib-asset/Bundles/IBundleConverter.cs')" />
+    <Compile Include="../bundle-format/*.cs" LinkBase="Bundles" />
   </ItemGroup>
 
   <!-- SDK Source Files (shared with Client SDK) -->

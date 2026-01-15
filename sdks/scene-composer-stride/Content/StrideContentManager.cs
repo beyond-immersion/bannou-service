@@ -1,6 +1,6 @@
 using BeyondImmersion.Bannou.SceneComposer.Stride.Caching;
 using BeyondImmersion.Bannou.SceneComposer.Stride.Loaders;
-using BeyondImmersion.BannouService.Asset.Bundles;
+using BeyondImmersion.Bannou.Bundle.Format;
 using Stride.Core;
 using Stride.Core.Serialization.Contents;
 using Stride.Graphics;

@@ -1,9 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 
-namespace BeyondImmersion.BannouService.Asset.Bundles;
+namespace BeyondImmersion.Bannou.Bundle.Format;
 
 /// <summary>
 /// Validates uploaded bundles for structure, manifest, and content integrity.
@@ -312,18 +310,6 @@ public sealed class BundleValidator
             using var reader = new BannouBundleReader(bundleStream, leaveOpen: true);
             var manifest = reader.Manifest;
 
-            if (manifest == null)
-            {
-                result.IsValid = false;
-                result.Errors.Add(new ValidationError
-                {
-                    Code = "NO_MANIFEST",
-                    Message = "Cannot validate content without manifest",
-                    Severity = ValidationSeverity.Error
-                });
-                return result;
-            }
-
             foreach (var assetEntry in manifest.Assets)
             {
                 var assetData = reader.ReadAsset(assetEntry.AssetId);
@@ -417,7 +403,10 @@ public sealed class BundleValidator
             "application/xml",  // XML data
             "text/plain",       // Plain text
             "text/csv",         // CSV data
-            "application/x-bannou-bundle" // Nested bundles
+            "application/x-bannou-bundle", // Nested bundles
+            "application/x-stride-",       // Stride compiled assets
+            "application/x-yaml",          // YAML data
+            "application/octet-stream"     // Generic binary
         };
 
         var forbidden = _options.ForbiddenContentTypes;
@@ -456,8 +445,7 @@ public sealed class BundleValidator
 
     private static string ComputeSha256Hash(byte[] data)
     {
-        using var sha256 = SHA256.Create();
-        var hashBytes = sha256.ComputeHash(data);
+        var hashBytes = SHA256.HashData(data);
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 }

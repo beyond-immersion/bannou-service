@@ -1,9 +1,8 @@
-using BeyondImmersion.BannouService.Configuration;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Buffers.Binary;
 
-namespace BeyondImmersion.BannouService.Asset.Bundles;
+namespace BeyondImmersion.Bannou.Bundle.Format;
 
 /// <summary>
 /// Reads assets from the .bannou bundle format.
@@ -91,9 +90,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        // Deserialize using consistent JSON serialization
         var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
-        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
+        _manifest = BundleJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         // Read index
@@ -139,9 +138,9 @@ public sealed class BannouBundleReader : IDisposable
             throw new InvalidDataException("Failed to read complete manifest");
         }
 
-        // Deserialize using BannouJson for consistent serialization (IMPLEMENTATION TENETS)
+        // Deserialize using consistent JSON serialization
         var manifestJson = System.Text.Encoding.UTF8.GetString(manifestBytes);
-        _manifest = BannouJson.Deserialize<BundleManifest>(manifestJson)
+        _manifest = BundleJson.Deserialize<BundleManifest>(manifestJson)
             ?? throw new InvalidDataException("Failed to deserialize manifest");
 
         _index = BundleIndex.ReadFrom(_inputStream);
@@ -285,7 +284,8 @@ public sealed class BannouBundleReader : IDisposable
         Stream destination,
         CancellationToken cancellationToken = default)
     {
-        var data = await ReadAssetAsync(assetId, cancellationToken) ?? throw new KeyNotFoundException($"Asset not found: {assetId}");
+        var data = await ReadAssetAsync(assetId, cancellationToken)
+            ?? throw new KeyNotFoundException($"Asset not found: {assetId}");
         await destination.WriteAsync(data, cancellationToken);
     }
 

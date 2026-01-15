@@ -88,11 +88,9 @@
   </ItemGroup>
 
   <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
+  <!-- Uses shared bundle-format code from SDKs directory -->
   <ItemGroup>
-    <Compile Include="../../plugins/lib-asset/Bundles/BannouBundleReader.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BannouBundleReader.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleManifest.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleManifest.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleIndex.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleIndex.cs')" />
-    <Compile Include="../../plugins/lib-asset/Bundles/BundleValidator.cs" Condition="Exists('../../plugins/lib-asset/Bundles/BundleValidator.cs')" />
+    <Compile Include="../bundle-format/*.cs" LinkBase="Bundles" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->

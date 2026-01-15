@@ -1,0 +1,1037 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.AssetBundler</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor">
+            <summary>
+            Processes extracted assets into engine-specific format.
+            Implementations: StrideBatchCompiler, GodotAssetProcessor, RawAssetProcessor (pass-through).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor.ProcessorId">
+            <summary>
+            Processor identifier (e.g., "stride", "godot", "raw").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor.OutputContentTypes">
+            <summary>
+            Content types this processor outputs (e.g., "application/x-stride-model").
+            Empty for pass-through processors that preserve original types.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor.TypeInferencer">
+            <summary>
+            Gets the type inferencer appropriate for this processor's assets.
+            May return null if the processor has no specific type inference needs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor.ProcessAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions,System.Threading.CancellationToken)">
+            <summary>
+            Processes extracted assets into engine-ready format.
+            </summary>
+            <param name="assets">Assets to process.</param>
+            <param name="workingDir">Working directory for intermediate files.</param>
+            <param name="options">Processor-specific options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Dictionary of asset ID to processed result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions">
+            <summary>
+            Base options for asset processors.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions.FailFast">
+            <summary>
+            Whether to fail on first error or continue processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions.MaxParallelism">
+            <summary>
+            Maximum parallel processing operations.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource">
+            <summary>
+            Represents a source of raw assets that can be extracted for bundling.
+            Examples: a Synty pack ZIP, a directory of FBX files, a Unity asset export.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.SourceId">
+            <summary>
+            Unique identifier for this source (e.g., "synty/polygon-adventure").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.Name">
+            <summary>
+            Human-readable name (e.g., "POLYGON - Adventure Pack").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.Version">
+            <summary>
+            Version string (e.g., "v4", "1.0.0").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.ContentHash">
+            <summary>
+            Content hash for change detection (SHA256 of source file/directory).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.Tags">
+            <summary>
+            Tags for categorization and smart bundling.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource.ExtractAsync(System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer,System.Threading.CancellationToken)">
+            <summary>
+            Extracts raw assets from this source to a working directory.
+            </summary>
+            <param name="workingDir">Directory to extract assets into.</param>
+            <param name="typeInferencer">Optional type inferencer for asset classification.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Extraction result with list of extracted assets.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSourceProvider">
+            <summary>
+            Discovers and creates asset sources from a root location.
+            Vendor-specific implementations (e.g., SyntyPackSourceProvider) scan
+            for their expected directory/file patterns.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSourceProvider.ProviderId">
+            <summary>
+            Provider identifier (e.g., "synty", "unity-export", "raw").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSourceProvider.TypeInferencer">
+            <summary>
+            Gets the type inferencer appropriate for this provider's assets.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSourceProvider.DiscoverSourcesAsync(System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.DiscoveryOptions,System.Threading.CancellationToken)">
+            <summary>
+            Discovers all asset sources in the given root directory.
+            </summary>
+            <param name="root">Root directory to scan.</param>
+            <param name="options">Optional discovery options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Enumerable of discovered asset sources.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.DiscoveryOptions">
+            <summary>
+            Options for source discovery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.DiscoveryOptions.SourceIdFilter">
+            <summary>
+            Filter to specific source IDs (null = all).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.DiscoveryOptions.IncludeUnchanged">
+            <summary>
+            Include sources that appear unchanged since last processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.DiscoveryOptions.MaxSources">
+            <summary>
+            Maximum sources to discover (0 = unlimited).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer">
+            <summary>
+            Infers asset types and texture types from filenames and content.
+            Vendor-specific implementations handle naming conventions
+            (e.g., Synty uses "_normal", "_nml" for normal maps).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer.InferAssetType(System.String,System.String)">
+            <summary>
+            Infers the general asset type from a filename.
+            </summary>
+            <param name="filename">The filename to analyze.</param>
+            <param name="mimeType">Optional MIME type hint.</param>
+            <returns>The inferred asset type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer.InferTextureType(System.String)">
+            <summary>
+            For texture assets, infers the specific texture type.
+            </summary>
+            <param name="filename">The filename to analyze.</param>
+            <returns>The inferred texture type.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer.ShouldExtract(System.String,System.String)">
+            <summary>
+            Determines if a file should be extracted based on its path.
+            Allows filtering out engine-specific files (Unity, Unreal, Maya, etc.).
+            </summary>
+            <param name="relativePath">The relative path within the source.</param>
+            <param name="category">Optional category hint.</param>
+            <returns>True if the file should be extracted.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset">
+            <summary>
+            Result of processing a single asset through an IAssetProcessor.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.AssetId">
+            <summary>
+            Original asset ID from extraction.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.Filename">
+            <summary>
+            Filename for the processed asset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.ContentType">
+            <summary>
+            MIME content type of processed output.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.Data">
+            <summary>
+            Processed asset data.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.ContentHash">
+            <summary>
+            Content hash of processed data (SHA256).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.Dependencies">
+            <summary>
+            Additional dependencies generated during processing.
+            Key: dependency ID, Value: dependency data.
+            Example: Stride generates buffer files alongside models.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Abstractions.IProcessedAsset.Metadata">
+            <summary>
+            Processor-specific metadata (e.g., Stride GUID, Unity asset path).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType">
+            <summary>
+            General category of an asset.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Model">
+            <summary>
+            3D model (FBX, GLB, GLTF, OBJ, etc.).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Texture">
+            <summary>
+            Texture/image (PNG, JPG, TGA, DDS, etc.).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Audio">
+            <summary>
+            Audio file (WAV, OGG, MP3, etc.).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Animation">
+            <summary>
+            Animation data.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Material">
+            <summary>
+            Material definition.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Behavior">
+            <summary>
+            Behavior definition (YAML, JSON).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.AssetType.Other">
+            <summary>
+            Other/unknown asset type.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset">
+            <summary>
+            Represents a single asset extracted from a source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.AssetId">
+            <summary>
+            Unique asset identifier within the source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.Filename">
+            <summary>
+            Original filename.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.FilePath">
+            <summary>
+            Full path to the extracted file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.RelativePath">
+            <summary>
+            Relative path within the source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.ContentType">
+            <summary>
+            MIME content type (may be null if unknown).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.AssetType">
+            <summary>
+            General asset type.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.TextureType">
+            <summary>
+            Texture type hint (only relevant for texture assets).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.SizeBytes">
+            <summary>
+            File size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.Category">
+            <summary>
+            Optional category from source (e.g., "characters", "props").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.Tags">
+            <summary>
+            Optional tags for categorization.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset.Metadata">
+            <summary>
+            Optional metadata from source.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult">
+            <summary>
+            Result of extracting assets from a source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.SourceId">
+            <summary>
+            Source identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.Assets">
+            <summary>
+            List of extracted assets.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.WorkingDirectory">
+            <summary>
+            Working directory containing extracted files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.TotalSizeBytes">
+            <summary>
+            Total extracted size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.SkippedCount">
+            <summary>
+            Number of files skipped during extraction.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.SkipReasons">
+            <summary>
+            Reasons for skipped files.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractionResult.Duration">
+            <summary>
+            Extraction duration.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType">
+            <summary>
+            Specific texture type hints for processing.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.Color">
+            <summary>
+            Color/diffuse/albedo texture.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.NormalMap">
+            <summary>
+            Normal map.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.Emissive">
+            <summary>
+            Emissive/glow texture.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.Mask">
+            <summary>
+            Mask texture (metallic, roughness, AO, etc.).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.HeightMap">
+            <summary>
+            Height/displacement map.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Extraction.TextureType.UI">
+            <summary>
+            UI/sprite texture.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient">
+            <summary>
+            Client for requesting server-side metabundle creation.
+            Use when combining already-uploaded bundles on the server.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient.#ctor(BeyondImmersion.Bannou.Client.BannouClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient})">
+            <summary>
+            Creates a new metabundle client using an existing connected client.
+            </summary>
+            <param name="client">Connected Bannou client.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient.FromUploader(BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient})">
+            <summary>
+            Creates a new metabundle client from uploader (shares connection).
+            </summary>
+            <param name="uploader">Connected uploader.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient.CreateAsync(BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest,System.Threading.CancellationToken)">
+            <summary>
+            Requests the server create a metabundle from existing bundles.
+            </summary>
+            <param name="request">The metabundle request.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The created metabundle result.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest">
+            <summary>
+            Request to create a metabundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.MetabundleId">
+            <summary>
+            Unique identifier for the metabundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.SourceBundleIds">
+            <summary>
+            Source bundle IDs to include.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.StandaloneAssetIds">
+            <summary>
+            Standalone asset IDs to include (optional).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.AssetFilter">
+            <summary>
+            Filter to specific asset IDs (optional).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Version">
+            <summary>
+            Version string for the metabundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Owner">
+            <summary>
+            Owner identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Realm">
+            <summary>
+            Target realm for the metabundle.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult">
+            <summary>
+            Result of creating a metabundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult.MetabundleId">
+            <summary>
+            The created metabundle ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult.AssetCount">
+            <summary>
+            Number of assets in the metabundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult.TotalSizeBytes">
+            <summary>
+            Total size in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult.CreatedAt">
+            <summary>
+            When the metabundle was created.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder">
+            <summary>
+            Fluent builder for metabundle requests.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.WithId(System.String)">
+            <summary>
+            Sets the metabundle ID.
+            </summary>
+            <param name="metabundleId">Unique metabundle identifier.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.AddSourceBundle(System.String)">
+            <summary>
+            Adds a source bundle to include.
+            </summary>
+            <param name="bundleId">Bundle identifier.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.AddSourceBundles(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Adds multiple source bundles.
+            </summary>
+            <param name="bundleIds">Bundle identifiers.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.AddStandaloneAsset(System.String)">
+            <summary>
+            Adds a standalone asset to include.
+            </summary>
+            <param name="assetId">Asset identifier.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.WithAssetFilter(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Sets an asset filter to include only specific assets.
+            </summary>
+            <param name="assetIds">Asset identifiers to include.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.WithVersion(System.String)">
+            <summary>
+            Sets the version string.
+            </summary>
+            <param name="version">Version string.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.WithOwner(System.String)">
+            <summary>
+            Sets the owner identifier.
+            </summary>
+            <param name="owner">Owner identifier.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.WithRealm(System.String)">
+            <summary>
+            Sets the target realm.
+            </summary>
+            <param name="realm">Realm identifier.</param>
+            <returns>This builder for chaining.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequestBuilder.Build">
+            <summary>
+            Builds the metabundle request.
+            </summary>
+            <returns>The constructed request.</returns>
+            <exception cref="T:System.InvalidOperationException">If required fields are missing.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions">
+            <summary>
+            Pipeline configuration options.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.WorkingDirectory">
+            <summary>
+            Working directory for extraction and processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.OutputDirectory">
+            <summary>
+            Output directory for generated bundles.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.ForceRebuild">
+            <summary>
+            Force rebuild even if source unchanged.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.CleanupWorkingDirectory">
+            <summary>
+            Delete working directory after bundling.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.MaxParallelSources">
+            <summary>
+            Maximum sources to process in parallel.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.CreatedBy">
+            <summary>
+            Creator identifier for bundle metadata.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions.ProcessorOptions">
+            <summary>
+            Options passed to the asset processor.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult">
+            <summary>
+            Result of bundling a single source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.SourceId">
+            <summary>
+            Source identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.Status">
+            <summary>
+            Result status.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.BundlePath">
+            <summary>
+            Path to the generated bundle (if successful).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.UploadedBundleId">
+            <summary>
+            Bundle ID assigned by server after upload (if applicable).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.ErrorMessage">
+            <summary>
+            Error message (if failed).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.Skipped(System.String)">
+            <summary>
+            Creates a skipped result.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.Empty(System.String)">
+            <summary>
+            Creates an empty result (no assets extracted).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResult.Failed(System.String,System.String)">
+            <summary>
+            Creates a failed result.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResultStatus">
+            <summary>
+            Status of a bundle operation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResultStatus.Success">
+            <summary>
+            Bundle created successfully.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResultStatus.Skipped">
+            <summary>
+            Source unchanged, skipped processing.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResultStatus.Empty">
+            <summary>
+            No assets extracted from source.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundleResultStatus.Failed">
+            <summary>
+            Processing failed with error.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline">
+            <summary>
+            Orchestrates the complete bundling pipeline:
+            Source → Extract → Process → Bundle → Upload
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline})">
+            <summary>
+            Creates a new bundler pipeline.
+            </summary>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteAsync(BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
+            <summary>
+            Executes the complete bundling pipeline for a single source.
+            </summary>
+            <param name="source">Asset source to process.</param>
+            <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
+            <param name="state">State manager for incremental builds.</param>
+            <param name="uploader">Uploader for Bannou service (null = local only).</param>
+            <param name="options">Pipeline options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Bundle result with path and upload status.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteBatchAsync(System.Collections.Generic.IAsyncEnumerable{BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource},BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
+            <summary>
+            Executes the pipeline for multiple sources with parallel processing.
+            </summary>
+            <param name="sources">Asset sources to process.</param>
+            <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
+            <param name="state">State manager for incremental builds.</param>
+            <param name="uploader">Uploader for Bannou service (null = local only).</param>
+            <param name="options">Pipeline options.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Results for all sources.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset">
+            <summary>
+            Default implementation of IProcessedAsset.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.AssetId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.Filename">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.ContentType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.Data">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.ContentHash">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.Dependencies">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.ProcessedAsset.Metadata">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor">
+            <summary>
+            Pass-through processor that packages assets as-is without transformation.
+            Use for audio files, pre-converted content, behavior definitions, etc.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor.Instance">
+            <summary>
+            Singleton instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor.ProcessorId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor.OutputContentTypes">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor.TypeInferencer">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Processing.RawAssetProcessor.ProcessAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer">
+            <summary>
+            Default type inferencer with basic file extension matching.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.Instance">
+            <summary>
+            Singleton instance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.InferAssetType(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.InferTextureType(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DefaultTypeInferencer.ShouldExtract(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource">
+            <summary>
+            Asset source that reads from a directory of files.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.#ctor(System.IO.DirectoryInfo,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates a new directory asset source.
+            </summary>
+            <param name="sourceDirectory">The directory containing assets.</param>
+            <param name="sourceId">Unique source identifier.</param>
+            <param name="name">Human-readable name.</param>
+            <param name="version">Version string.</param>
+            <param name="tags">Optional tags.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.Version">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.ContentHash">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.Tags">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.DirectoryAssetSource.ExtractAsync(System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource">
+            <summary>
+            Asset source that reads from a ZIP archive.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.#ctor(System.IO.FileInfo,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Creates a new ZIP archive asset source.
+            </summary>
+            <param name="zipFile">The ZIP file containing assets.</param>
+            <param name="sourceId">Unique source identifier.</param>
+            <param name="name">Human-readable name.</param>
+            <param name="version">Version string.</param>
+            <param name="tags">Optional tags.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.Version">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.ContentHash">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.Tags">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Sources.ZipArchiveAssetSource.ExtractAsync(System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetTypeInferencer,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager">
+            <summary>
+            Manages bundler state for incremental builds.
+            Tracks which sources have been processed and their content hashes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.#ctor(System.IO.DirectoryInfo,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager})">
+            <summary>
+            Creates a new state manager.
+            </summary>
+            <param name="stateDirectory">Directory to store state file.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.NeedsProcessing(BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource)">
+            <summary>
+            Checks if a source needs processing based on content hash.
+            </summary>
+            <param name="source">The asset source to check.</param>
+            <returns>True if the source needs processing.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.RecordProcessed(BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord)">
+            <summary>
+            Records that a source has been successfully processed.
+            </summary>
+            <param name="record">The processing record.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.GetRecord(System.String)">
+            <summary>
+            Gets the processing record for a source, if it exists.
+            </summary>
+            <param name="sourceId">The source identifier.</param>
+            <returns>The record, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.GetAllRecords">
+            <summary>
+            Gets all processing records.
+            </summary>
+            <returns>All recorded sources.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.RemoveRecord(System.String)">
+            <summary>
+            Removes a processing record.
+            </summary>
+            <param name="sourceId">The source identifier.</param>
+            <returns>True if the record was removed.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.ComputeHash(System.IO.FileInfo)">
+            <summary>
+            Computes SHA256 hash of a file for change detection.
+            </summary>
+            <param name="file">The file to hash.</param>
+            <returns>Lowercase hex-encoded hash.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager.ComputeDirectoryHash(System.IO.DirectoryInfo)">
+            <summary>
+            Computes SHA256 hash of a directory (based on file contents and paths).
+            </summary>
+            <param name="directory">The directory to hash.</param>
+            <returns>Lowercase hex-encoded hash.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord">
+            <summary>
+            Record of a successfully processed source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.SourceId">
+            <summary>
+            Source identifier.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.ContentHash">
+            <summary>
+            Content hash at time of processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.Version">
+            <summary>
+            Source version at time of processing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.ProcessedAt">
+            <summary>
+            When processing completed.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.BundlePath">
+            <summary>
+            Path to the generated bundle file.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.AssetCount">
+            <summary>
+            Number of assets in the bundle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.UploadedAt">
+            <summary>
+            When the bundle was uploaded (if applicable).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.State.SourceProcessingRecord.UploadedBundleId">
+            <summary>
+            Bundle ID assigned by server after upload (if applicable).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader">
+            <summary>
+            Uploads bundles to Bannou Asset Service.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.#ctor(BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader})">
+            <summary>
+            Creates a new Bannou uploader.
+            </summary>
+            <param name="options">Uploader configuration.</param>
+            <param name="logger">Optional logger.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.IsConnected">
+            <summary>
+            Gets whether the uploader is connected.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.Client">
+            <summary>
+            Gets the underlying BannouClient for advanced operations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.ConnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to Bannou service.
+            </summary>
+            <param name="ct">Cancellation token.</param>
+            <returns>True if connection succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.UploadAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Uploads a bundle file to Bannou Asset Service.
+            </summary>
+            <param name="bundlePath">Path to the bundle file.</param>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Upload result with assigned IDs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions">
+            <summary>
+            Configuration options for the Bannou uploader.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.ServerUrl">
+            <summary>
+            Bannou service URL (e.g., "wss://bannou.example.com").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.ServiceToken">
+            <summary>
+            Service token for authentication (preferred for automation).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.Email">
+            <summary>
+            Email for password-based authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.Password">
+            <summary>
+            Password for password-based authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions.Owner">
+            <summary>
+            Owner identifier for uploaded assets.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult">
+            <summary>
+            Result of uploading a bundle to Bannou.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult.BundleId">
+            <summary>
+            Bundle ID assigned by the service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult.UploadId">
+            <summary>
+            Upload ID from the upload request.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult.SizeBytes">
+            <summary>
+            Size of the uploaded bundle in bytes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadResult.CompletedAt">
+            <summary>
+            When the upload completed.
+            </summary>
+        </member>
+    </members>
+</doc>
