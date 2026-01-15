@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mapping;
+using BeyondImmersion.BannouService.Mapping.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -25,6 +26,7 @@ public class MappingServiceTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IAssetClient> _mockAssetClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<IAffordanceScorer> _mockAffordanceScorer;
 
     // Typed state stores for specific record types
     private readonly Mock<IStateStore<MappingService.ChannelRecord>> _mockChannelStore;
@@ -46,6 +48,20 @@ public class MappingServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockAssetClient = new Mock<IAssetClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockAffordanceScorer = new Mock<IAffordanceScorer>();
+
+        // Default affordance scorer behaviors
+        _mockAffordanceScorer.Setup(s => s.GetKindsForAffordanceType(It.IsAny<AffordanceType>()))
+            .Returns((AffordanceType type) => type switch
+            {
+                AffordanceType.Shelter => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects },
+                AffordanceType.Ambush => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects, MapKind.Navigation },
+                _ => Enum.GetValues<MapKind>().ToList()
+            });
+        _mockAffordanceScorer.Setup(s => s.ScoreAffordance(It.IsAny<MapObject>(), It.IsAny<AffordanceType>(), It.IsAny<CustomAffordance?>(), It.IsAny<ActorCapabilities?>()))
+            .Returns(0.5);
+        _mockAffordanceScorer.Setup(s => s.ExtractFeatures(It.IsAny<MapObject>(), It.IsAny<AffordanceType>()))
+            .Returns((object?)null);
 
         _configuration = new MappingServiceConfiguration
         {
@@ -131,7 +147,8 @@ public class MappingServiceTests
             _configuration,
             _mockEventConsumer.Object,
             _mockAssetClient.Object,
-            _mockHttpClientFactory.Object);
+            _mockHttpClientFactory.Object,
+            _mockAffordanceScorer.Object);
     }
 
     #region Constructor Validation

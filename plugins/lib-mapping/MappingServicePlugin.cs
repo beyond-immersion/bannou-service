@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Mapping.Helpers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -33,6 +34,10 @@ public class MappingServicePlugin : BaseBannouPlugin
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
+
+        // Register helper services for improved testability
+        services.AddScoped<IAffordanceScorer, AffordanceScorer>();
+        Logger?.LogDebug("Registered AffordanceScorer");
 
         Logger?.LogDebug("Service dependencies configured");
     }

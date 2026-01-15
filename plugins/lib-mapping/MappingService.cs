@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Mapping.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -48,6 +49,7 @@ public partial class MappingService : IMappingService
     private readonly MappingServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IAffordanceScorer _affordanceScorer;
 
     // Track active ingest subscriptions per channel
     private static readonly ConcurrentDictionary<Guid, IAsyncDisposable> IngestSubscriptions = new();
@@ -83,6 +85,7 @@ public partial class MappingService : IMappingService
     /// <param name="eventConsumer">Event consumer for registering handlers.</param>
     /// <param name="assetClient">Asset client for large payload storage.</param>
     /// <param name="httpClientFactory">HTTP client factory for uploading to presigned URLs.</param>
+    /// <param name="affordanceScorer">Affordance scoring helper for affordance queries.</param>
     public MappingService(
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
@@ -91,7 +94,8 @@ public partial class MappingService : IMappingService
         MappingServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         IAssetClient assetClient,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IAffordanceScorer affordanceScorer)
     {
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
@@ -100,6 +104,7 @@ public partial class MappingService : IMappingService
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
+        _affordanceScorer = affordanceScorer;
 
         // Register event handlers via partial class (MappingServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -1039,7 +1044,7 @@ public partial class MappingService : IMappingService
             }
 
             // Determine which map kinds to search based on affordance type
-            var kindsToSearch = GetKindsForAffordanceType(body.AffordanceType);
+            var kindsToSearch = _affordanceScorer.GetKindsForAffordanceType(body.AffordanceType);
             var objectsEvaluated = 0;
             var candidatesGenerated = 0;
 
@@ -1073,7 +1078,7 @@ public partial class MappingService : IMappingService
                     }
                 }
 
-                var score = ScoreAffordance(candidate, body.AffordanceType, body.CustomAffordance, body.ActorCapabilities);
+                var score = _affordanceScorer.ScoreAffordance(candidate, body.AffordanceType, body.CustomAffordance, body.ActorCapabilities);
 
                 if (score >= body.MinScore)
                 {
@@ -1082,7 +1087,7 @@ public partial class MappingService : IMappingService
                         Position = candidate.Position ?? new Position3D { X = 0, Y = 0, Z = 0 },
                         Bounds = candidate.Bounds,
                         Score = score,
-                        Features = ExtractFeatures(candidate, body.AffordanceType),
+                        Features = _affordanceScorer.ExtractFeatures(candidate, body.AffordanceType),
                         ObjectIds = new List<Guid> { candidate.ObjectId }
                     });
                 }
@@ -2199,248 +2204,7 @@ public partial class MappingService : IMappingService
 
     #endregion
 
-    #region Affordance Helpers
-
-    private static List<MapKind> GetKindsForAffordanceType(AffordanceType type)
-    {
-        return type switch
-        {
-            AffordanceType.Ambush => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects, MapKind.Navigation },
-            AffordanceType.Shelter => new List<MapKind> { MapKind.Static_geometry, MapKind.Dynamic_objects },
-            AffordanceType.Vista => new List<MapKind> { MapKind.Terrain, MapKind.Static_geometry, MapKind.Points_of_interest },
-            AffordanceType.Choke_point => new List<MapKind> { MapKind.Navigation, MapKind.Static_geometry },
-            AffordanceType.Gathering_spot => new List<MapKind> { MapKind.Points_of_interest, MapKind.Static_geometry },
-            AffordanceType.Dramatic_reveal => new List<MapKind> { MapKind.Points_of_interest, MapKind.Terrain },
-            AffordanceType.Hidden_path => new List<MapKind> { MapKind.Navigation, MapKind.Static_geometry },
-            AffordanceType.Defensible_position => new List<MapKind> { MapKind.Static_geometry, MapKind.Terrain, MapKind.Navigation },
-            AffordanceType.Custom => Enum.GetValues<MapKind>().ToList(),
-            _ => Enum.GetValues<MapKind>().ToList()
-        };
-    }
-
-    private double ScoreAffordance(MapObject candidate, AffordanceType type, CustomAffordance? custom, ActorCapabilities? actor)
-    {
-        // Base score from object data
-        var score = 0.5;
-
-        if (candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            // Check for common affordance-related properties
-            if (TryGetJsonDouble(data, "cover_rating", out var cr))
-            {
-                if (type == AffordanceType.Ambush || type == AffordanceType.Shelter || type == AffordanceType.Defensible_position)
-                {
-                    score += cr * 0.3;
-                }
-            }
-
-            if (TryGetJsonDouble(data, "elevation", out var el))
-            {
-                if (type == AffordanceType.Vista || type == AffordanceType.Dramatic_reveal)
-                {
-                    score += Math.Min(el / 100.0, 0.3);
-                }
-            }
-
-            if (TryGetJsonInt(data, "sightlines", out var sl))
-            {
-                if (type == AffordanceType.Ambush || type == AffordanceType.Vista)
-                {
-                    score += Math.Min(sl * 0.05, 0.2);
-                }
-            }
-        }
-
-        // Apply actor capability modifiers
-        if (actor != null)
-        {
-            // Size affects cover requirements
-            if (type == AffordanceType.Shelter || type == AffordanceType.Ambush)
-            {
-                score *= actor.Size switch
-                {
-                    ActorSize.Tiny => 1.2,
-                    ActorSize.Small => 1.1,
-                    ActorSize.Medium => 1.0,
-                    ActorSize.Large => 0.9,
-                    ActorSize.Huge => 0.8,
-                    _ => 1.0
-                };
-            }
-
-            // Stealth rating affects ambush scoring
-            if (type == AffordanceType.Ambush && actor.StealthRating.HasValue)
-            {
-                score *= 1.0 + actor.StealthRating.Value * 0.2;
-            }
-        }
-
-        // Handle custom affordance
-        if (type == AffordanceType.Custom && custom != null)
-        {
-            score = ScoreCustomAffordance(candidate, custom);
-        }
-
-        return Math.Clamp(score, 0.0, 1.0);
-    }
-
-    private static bool TryGetJsonDouble(System.Text.Json.JsonElement element, string propertyName, out double value)
-    {
-        value = 0;
-        if (element.TryGetProperty(propertyName, out var prop))
-        {
-            if (prop.ValueKind == System.Text.Json.JsonValueKind.Number && prop.TryGetDouble(out value))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static bool TryGetJsonInt(System.Text.Json.JsonElement element, string propertyName, out int value)
-    {
-        value = 0;
-        if (element.TryGetProperty(propertyName, out var prop))
-        {
-            if (prop.ValueKind == System.Text.Json.JsonValueKind.Number && prop.TryGetInt32(out value))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static bool TryGetJsonString(System.Text.Json.JsonElement element, string propertyName, out string? value)
-    {
-        value = null;
-        if (element.TryGetProperty(propertyName, out var prop))
-        {
-            if (prop.ValueKind == System.Text.Json.JsonValueKind.String)
-            {
-                value = prop.GetString();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private double ScoreCustomAffordance(MapObject candidate, CustomAffordance custom)
-    {
-        var score = 0.5;
-
-        var hasData = candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object;
-
-        // Check required criteria
-        if (custom.Requires is System.Text.Json.JsonElement requires && requires.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            foreach (var req in requires.EnumerateObject())
-            {
-                if (req.Name == "objectTypes" && req.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
-                {
-                    var matchesType = false;
-                    foreach (var typeVal in req.Value.EnumerateArray())
-                    {
-                        if (typeVal.ValueKind == System.Text.Json.JsonValueKind.String &&
-                            typeVal.GetString() == candidate.ObjectType)
-                        {
-                            matchesType = true;
-                            break;
-                        }
-                    }
-                    if (!matchesType) return 0.0;
-                }
-                else if (hasData)
-                {
-                    var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
-                    if (dataElement.TryGetProperty(req.Name, out var candidateValue))
-                    {
-                        if (req.Value.ValueKind == System.Text.Json.JsonValueKind.Object &&
-                            req.Value.TryGetProperty("min", out var minProp) &&
-                            minProp.TryGetDouble(out var minVal))
-                        {
-                            if (candidateValue.TryGetDouble(out var candVal) && candVal < minVal)
-                            {
-                                return 0.0;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Apply preferences (boost but don't require)
-        if (hasData && custom.Prefers is System.Text.Json.JsonElement prefers && prefers.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
-            foreach (var pref in prefers.EnumerateObject())
-            {
-                if (dataElement.TryGetProperty(pref.Name, out _))
-                {
-                    score += 0.1;
-                }
-            }
-        }
-
-        // Apply exclusions
-        if (hasData && custom.Excludes is System.Text.Json.JsonElement excludes && excludes.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            var dataElement = (System.Text.Json.JsonElement)candidate.Data!;
-            foreach (var excl in excludes.EnumerateObject())
-            {
-                if (dataElement.TryGetProperty(excl.Name, out _))
-                {
-                    return 0.0;
-                }
-            }
-        }
-
-        return Math.Clamp(score, 0.0, 1.0);
-    }
-
-    private static object? ExtractFeatures(MapObject candidate, AffordanceType type)
-    {
-        var features = new Dictionary<string, object>();
-
-        if (candidate.Data is System.Text.Json.JsonElement data && data.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            // Extract relevant features based on affordance type
-            var relevantKeys = type switch
-            {
-                AffordanceType.Ambush => new[] { "cover_rating", "sightlines", "concealment" },
-                AffordanceType.Shelter => new[] { "cover_rating", "protection", "capacity" },
-                AffordanceType.Vista => new[] { "elevation", "visibility_range", "sightlines" },
-                AffordanceType.Choke_point => new[] { "width", "defensibility", "exit_count" },
-                AffordanceType.Gathering_spot => new[] { "capacity", "comfort", "accessibility" },
-                AffordanceType.Dramatic_reveal => new[] { "elevation", "view_target", "approach_direction" },
-                AffordanceType.Hidden_path => new[] { "concealment", "width", "traversability" },
-                AffordanceType.Defensible_position => new[] { "cover_rating", "sightlines", "exit_count", "elevation" },
-                _ => Array.Empty<string>()
-            };
-
-            foreach (var key in relevantKeys)
-            {
-                if (data.TryGetProperty(key, out var value))
-                {
-                    // Extract the actual value from JsonElement
-                    object? extractedValue = value.ValueKind switch
-                    {
-                        System.Text.Json.JsonValueKind.Number when value.TryGetDouble(out var d) => d,
-                        System.Text.Json.JsonValueKind.String => value.GetString(),
-                        System.Text.Json.JsonValueKind.True => true,
-                        System.Text.Json.JsonValueKind.False => false,
-                        _ => value.ToString()
-                    };
-                    if (extractedValue != null)
-                    {
-                        features[key] = extractedValue;
-                    }
-                }
-            }
-        }
-
-        features["objectType"] = candidate.ObjectType;
-        return features.Count > 1 ? features : null;
-    }
+    #region Affordance Caching
 
     private async Task<AffordanceQueryResponse?> TryGetCachedAffordanceAsync(AffordanceQueryRequest body, CancellationToken cancellationToken)
     {
