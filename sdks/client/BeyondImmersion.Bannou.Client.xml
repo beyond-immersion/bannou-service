@@ -10832,6 +10832,435 @@
             Asset IDs that weren't found
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleStatus">
+            <summary>
+            Bundle lifecycle status:
+            <br/>- active: Bundle is available for use
+            <br/>- deleted: Bundle has been soft-deleted (within retention period)
+            <br/>- processing: Bundle is being processed (metabundle creation)
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleMetadata">
+            <summary>
+            Complete metadata for an asset bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.BundleId">
+            <summary>
+            Unique bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.BundleType">
+            <summary>
+            Whether source or metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Version">
+            <summary>
+            Bundle content version string
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.MetadataVersion">
+            <summary>
+            Metadata version number (increments on metadata changes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Name">
+            <summary>
+            Human-readable bundle name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Description">
+            <summary>
+            Bundle description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Owner">
+            <summary>
+            Owner account ID or service name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Realm">
+            <summary>
+            Game realm this bundle belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Tags">
+            <summary>
+            Key-value tags for categorization and filtering
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.Status">
+            <summary>
+            Bundle lifecycle status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.AssetCount">
+            <summary>
+            Number of assets in the bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.SizeBytes">
+            <summary>
+            Bundle file size in bytes (null if not yet calculated)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.CreatedAt">
+            <summary>
+            When the bundle was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.UpdatedAt">
+            <summary>
+            When the bundle metadata was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleMetadata.DeletedAt">
+            <summary>
+            When the bundle was soft-deleted (null if active)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UpdateBundleRequest">
+            <summary>
+            Request to update bundle metadata
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.BundleId">
+            <summary>
+            Bundle identifier to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.Name">
+            <summary>
+            New bundle name (null to leave unchanged)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.Description">
+            <summary>
+            New bundle description (null to leave unchanged)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.Tags">
+            <summary>
+            Replace all tags with these (null to leave unchanged)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.AddTags">
+            <summary>
+            Tags to add (merged with existing)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.RemoveTags">
+            <summary>
+            Tag keys to remove
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleRequest.Reason">
+            <summary>
+            Optional reason for the update (recorded in version history)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.UpdateBundleResponse">
+            <summary>
+            Result of bundle update operation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.BundleId">
+            <summary>
+            Updated bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.Version">
+            <summary>
+            New version number after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.PreviousVersion">
+            <summary>
+            Version number before update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.Changes">
+            <summary>
+            List of changes made (e.g., "name changed", "tag 'env' added")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.UpdateBundleResponse.UpdatedAt">
+            <summary>
+            When the update occurred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.DeleteBundleRequest">
+            <summary>
+            Request to delete a bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleRequest.BundleId">
+            <summary>
+            Bundle identifier to delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleRequest.Permanent">
+            <summary>
+            If true, permanently delete (admin only). If false, soft-delete.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleRequest.Reason">
+            <summary>
+            Optional reason for deletion (recorded in version history)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.DeleteBundleResponse">
+            <summary>
+            Result of bundle deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.BundleId">
+            <summary>
+            Deleted bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.Status">
+            <summary>
+            Deletion status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.DeletedAt">
+            <summary>
+            When the bundle was deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.DeleteBundleResponse.RetentionUntil">
+            <summary>
+            When soft-deleted bundle will be permanently removed (null for permanent deletes)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.RestoreBundleRequest">
+            <summary>
+            Request to restore a soft-deleted bundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleRequest.BundleId">
+            <summary>
+            Bundle identifier to restore
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleRequest.Reason">
+            <summary>
+            Optional reason for restoration (recorded in version history)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.RestoreBundleResponse">
+            <summary>
+            Result of bundle restoration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.BundleId">
+            <summary>
+            Restored bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.Status">
+            <summary>
+            Current bundle status (should be "active")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.RestoredAt">
+            <summary>
+            When the bundle was restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.RestoreBundleResponse.RestoredFromVersion">
+            <summary>
+            Version number the bundle was restored from
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.QueryBundlesRequest">
+            <summary>
+            Advanced bundle query with filters
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Tags">
+            <summary>
+            Filter by exact tag key-value matches
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.TagExists">
+            <summary>
+            Filter bundles that have these tag keys (any value)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.TagNotExists">
+            <summary>
+            Filter bundles that do NOT have these tag keys
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Status">
+            <summary>
+            Filter by bundle status (null for active only by default)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.CreatedAfter">
+            <summary>
+            Filter bundles created after this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.CreatedBefore">
+            <summary>
+            Filter bundles created before this time
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.NameContains">
+            <summary>
+            Filter bundles with name containing this string (case-insensitive)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Owner">
+            <summary>
+            Filter by bundle owner account ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Realm">
+            <summary>
+            Filter by realm
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.BundleType">
+            <summary>
+            Filter by bundle type (source or metabundle)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.SortField">
+            <summary>
+            Field to sort by (default created_at)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.SortOrder">
+            <summary>
+            Sort order (default desc)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Limit">
+            <summary>
+            Maximum results to return (max 1000)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesRequest.IncludeDeleted">
+            <summary>
+            Include soft-deleted bundles in results
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.QueryBundlesResponse">
+            <summary>
+            Bundle query results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesResponse.Bundles">
+            <summary>
+            Matching bundles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesResponse.TotalCount">
+            <summary>
+            Total number of matching bundles (for pagination)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesResponse.Limit">
+            <summary>
+            Page size used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.QueryBundlesResponse.Offset">
+            <summary>
+            Page offset used
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest">
+            <summary>
+            Request to list bundle version history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest.BundleId">
+            <summary>
+            Bundle identifier to get history for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest.Limit">
+            <summary>
+            Maximum versions to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse">
+            <summary>
+            Bundle version history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.CurrentVersion">
+            <summary>
+            Current version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.Versions">
+            <summary>
+            Version history records (newest first)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.ListBundleVersionsResponse.TotalCount">
+            <summary>
+            Total number of versions
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.BundleVersionRecord">
+            <summary>
+            A single version record in bundle history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.Version">
+            <summary>
+            Version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.CreatedAt">
+            <summary>
+            When this version was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.CreatedBy">
+            <summary>
+            Account ID that made the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.Changes">
+            <summary>
+            List of changes in this version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.Reason">
+            <summary>
+            Reason provided for the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.BundleVersionRecord.Snapshot">
+            <summary>
+            Full metadata snapshot at this version (only for current version)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.Provider">
             <summary>
             OAuth provider type
@@ -31358,6 +31787,111 @@
             <br/>For user-initiated: the accountId (UUID format).
             <br/>For service-initiated: the service name.
             <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BundleUpdatedEvent">
+            <summary>
+            Event published when bundle metadata is updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.Version">
+            <summary>
+            New metadata version number after update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.PreviousVersion">
+            <summary>
+            Previous metadata version number
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.Changes">
+            <summary>
+            List of changes made (e.g., "name changed", "tag 'env' added")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.Reason">
+            <summary>
+            Reason provided for the update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.UpdatedBy">
+            <summary>
+            Account ID or service name that performed the update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleUpdatedEvent.Realm">
+            <summary>
+            Game realm of the bundle
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BundleDeletedEvent">
+            <summary>
+            Event published when a bundle is soft-deleted or permanently deleted
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.Permanent">
+            <summary>
+            True if permanently deleted, false for soft-delete
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.RetentionUntil">
+            <summary>
+            When soft-deleted bundle will be permanently removed (null for permanent deletes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.Reason">
+            <summary>
+            Reason provided for the deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.DeletedBy">
+            <summary>
+            Account ID or service name that performed the deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleDeletedEvent.Realm">
+            <summary>
+            Game realm of the bundle
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.BundleRestoredEvent">
+            <summary>
+            Event published when a soft-deleted bundle is restored
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.BundleId">
+            <summary>
+            Bundle identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.RestoredFromVersion">
+            <summary>
+            Metadata version the bundle was restored from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.Reason">
+            <summary>
+            Reason provided for the restoration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.RestoredBy">
+            <summary>
+            Account ID or service name that performed the restoration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.BundleRestoredEvent.Realm">
+            <summary>
+            Game realm of the bundle
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.AssetTypeEnum">

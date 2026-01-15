@@ -13,9 +13,14 @@ public sealed class BundleMetadata
     public required string BundleId { get; init; }
 
     /// <summary>
-    /// Bundle version string.
+    /// Bundle content version string.
     /// </summary>
     public required string Version { get; init; }
+
+    /// <summary>
+    /// Metadata version number (increments on metadata changes).
+    /// </summary>
+    public int MetadataVersion { get; set; } = 1;
 
     /// <summary>
     /// Bundle type: source (uploaded/server-created) or metabundle (composed from source bundles).
@@ -26,6 +31,21 @@ public sealed class BundleMetadata
     /// Game realm this bundle belongs to.
     /// </summary>
     public required Realm Realm { get; init; }
+
+    /// <summary>
+    /// Human-readable bundle name.
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Bundle description.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Key-value tags for categorization and filtering.
+    /// </summary>
+    public Dictionary<string, string>? Tags { get; set; }
 
     /// <summary>
     /// List of asset IDs included in the bundle (platform asset IDs).
@@ -58,7 +78,22 @@ public sealed class BundleMetadata
     public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
-    /// Current bundle status.
+    /// When the bundle metadata was last updated.
+    /// </summary>
+    public DateTimeOffset? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// When the bundle was soft-deleted (null if active).
+    /// </summary>
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    /// <summary>
+    /// Bundle lifecycle status (active, deleted, processing).
+    /// </summary>
+    public BundleLifecycleStatus LifecycleStatus { get; set; } = BundleLifecycleStatus.Active;
+
+    /// <summary>
+    /// Current bundle processing status.
     /// </summary>
     public required BundleStatus Status { get; init; }
 
@@ -82,7 +117,7 @@ public sealed class BundleMetadata
     public List<string>? StandaloneAssetIds { get; init; }
 
     /// <summary>
-    /// Optional custom metadata.
+    /// Optional custom metadata (legacy field, use Tags for new code).
     /// </summary>
     public Dictionary<string, object>? Metadata { get; init; }
 
@@ -102,6 +137,58 @@ public sealed class BundleMetadata
             CreatedAt = CreatedAt
         };
     }
+
+    /// <summary>
+    /// Converts this internal metadata to the full API BundleMetadata response.
+    /// </summary>
+    public Asset.BundleMetadata ToApiMetadata()
+    {
+        return new Asset.BundleMetadata
+        {
+            BundleId = BundleId,
+            BundleType = BundleType,
+            Version = Version,
+            MetadataVersion = MetadataVersion,
+            Name = Name,
+            Description = Description,
+            Owner = Owner ?? string.Empty,
+            Realm = Realm,
+            Tags = Tags,
+            Status = LifecycleStatus switch
+            {
+                BundleLifecycleStatus.Active => Asset.BundleStatus.Active,
+                BundleLifecycleStatus.Deleted => Asset.BundleStatus.Deleted,
+                BundleLifecycleStatus.Processing => Asset.BundleStatus.Processing,
+                _ => Asset.BundleStatus.Active
+            },
+            AssetCount = AssetIds.Count,
+            SizeBytes = SizeBytes,
+            CreatedAt = CreatedAt,
+            UpdatedAt = UpdatedAt,
+            DeletedAt = DeletedAt
+        };
+    }
+}
+
+/// <summary>
+/// Bundle lifecycle status (different from processing status).
+/// </summary>
+public enum BundleLifecycleStatus
+{
+    /// <summary>
+    /// Bundle is active and available.
+    /// </summary>
+    Active,
+
+    /// <summary>
+    /// Bundle has been soft-deleted.
+    /// </summary>
+    Deleted,
+
+    /// <summary>
+    /// Bundle is being processed (metabundle creation).
+    /// </summary>
+    Processing
 }
 
 /// <summary>
@@ -371,4 +458,61 @@ public sealed class BundleUploadSession
     /// When the session expires.
     /// </summary>
     public required DateTimeOffset ExpiresAt { get; init; }
+}
+
+/// <summary>
+/// Internal model for bundle version history records.
+/// </summary>
+public sealed class StoredBundleVersionRecord
+{
+    /// <summary>
+    /// Bundle identifier.
+    /// </summary>
+    public required string BundleId { get; init; }
+
+    /// <summary>
+    /// Metadata version number.
+    /// </summary>
+    public required int Version { get; init; }
+
+    /// <summary>
+    /// When this version was created.
+    /// </summary>
+    public required DateTimeOffset CreatedAt { get; init; }
+
+    /// <summary>
+    /// Account ID or service name that made the change.
+    /// </summary>
+    public required string CreatedBy { get; init; }
+
+    /// <summary>
+    /// List of changes made in this version.
+    /// </summary>
+    public required List<string> Changes { get; init; }
+
+    /// <summary>
+    /// Optional reason for the change.
+    /// </summary>
+    public string? Reason { get; init; }
+
+    /// <summary>
+    /// Full metadata snapshot at this version (for restore operations).
+    /// </summary>
+    public BundleMetadata? Snapshot { get; init; }
+
+    /// <summary>
+    /// Converts to API response model.
+    /// </summary>
+    public Asset.BundleVersionRecord ToApiModel(bool includeSnapshot = false)
+    {
+        return new Asset.BundleVersionRecord
+        {
+            Version = Version,
+            CreatedAt = CreatedAt,
+            CreatedBy = CreatedBy,
+            Changes = Changes,
+            Reason = Reason,
+            Snapshot = includeSnapshot ? Snapshot?.ToApiMetadata() : null
+        };
+    }
 }
