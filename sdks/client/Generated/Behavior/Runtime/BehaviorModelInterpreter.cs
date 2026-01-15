@@ -70,7 +70,7 @@ public sealed class BehaviorModelInterpreter : IBehaviorModelInterpreter
     /// <param name="model">The compiled behavior model to interpret.</param>
     public BehaviorModelInterpreter(BehaviorModel model)
     {
-        _model = model ?? throw new ArgumentNullException(nameof(model));
+        _model = model;
         _bytecode = model.Bytecode;
         _constants = model.ConstantPool;
         _strings = model.StringTable;

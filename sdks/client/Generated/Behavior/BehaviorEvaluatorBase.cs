@@ -78,7 +78,7 @@ public abstract class BehaviorEvaluatorBase : IBehaviorEvaluator
     /// <param name="cache">The model cache to use.</param>
     protected BehaviorEvaluatorBase(BehaviorModelCache cache)
     {
-        ModelCache = cache ?? throw new ArgumentNullException(nameof(cache));
+        ModelCache = cache;
     }
 
     /// <inheritdoc />

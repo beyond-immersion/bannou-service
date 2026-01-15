@@ -144,7 +144,7 @@ public sealed class ContinuationPointTable
     /// </summary>
     public ContinuationPointTable(IReadOnlyList<ContinuationPoint> points)
     {
-        Points = points ?? throw new ArgumentNullException(nameof(points));
+        Points = points;
 
         _hashToIndex = new Dictionary<uint, int>(points.Count);
         for (var i = 0; i < points.Count; i++)

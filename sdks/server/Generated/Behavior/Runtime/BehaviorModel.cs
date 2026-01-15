@@ -111,11 +111,11 @@ public sealed class BehaviorModel
     {
         Header = header;
         ExtensionHeader = extensionHeader;
-        Schema = schema ?? throw new ArgumentNullException(nameof(schema));
+        Schema = schema;
         ContinuationPoints = continuationPoints ?? ContinuationPointTable.Empty;
-        ConstantPool = constantPool ?? throw new ArgumentNullException(nameof(constantPool));
-        StringTable = stringTable ?? throw new ArgumentNullException(nameof(stringTable));
-        Bytecode = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
+        ConstantPool = constantPool;
+        StringTable = stringTable;
+        Bytecode = bytecode;
         DebugInfo = debugInfo;
 
         // Analyze bytecode to determine stack and local requirements

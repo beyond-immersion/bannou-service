@@ -42,8 +42,8 @@ public sealed class StateSchema
     /// <param name="outputs">Output variable definitions.</param>
     public StateSchema(IReadOnlyList<VariableDefinition> inputs, IReadOnlyList<VariableDefinition> outputs)
     {
-        Inputs = inputs ?? throw new ArgumentNullException(nameof(inputs));
-        Outputs = outputs ?? throw new ArgumentNullException(nameof(outputs));
+        Inputs = inputs;
+        Outputs = outputs;
 
         _inputHashToIndex = new Dictionary<uint, int>(inputs.Count);
         for (var i = 0; i < inputs.Count; i++)
