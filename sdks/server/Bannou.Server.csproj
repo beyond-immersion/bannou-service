@@ -89,6 +89,7 @@
   <!-- SDK Source Files (shared with Client SDK) -->
   <!-- These files live in sdks/client and are referenced here -->
   <ItemGroup>
+    <Compile Include="../client/IBannouClient.cs" />
     <Compile Include="../client/BannouClient.cs" />
     <Compile Include="../client/BannouConnectionManager.cs" />
     <Compile Include="../client/RemoteAssetCache.cs" />

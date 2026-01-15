@@ -11,7 +11,7 @@ namespace BeyondImmersion.Bannou.AssetLoader.Client;
 /// </summary>
 public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
 {
-    private readonly BannouClient _client;
+    private readonly IBannouClient _client;
     private readonly ILogger<BannouWebSocketAssetSource>? _logger;
     private readonly Realm _defaultRealm;
     private bool _ownsClient;
@@ -29,7 +29,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
     /// <param name="defaultRealm">Default realm for bundle resolution.</param>
     /// <param name="logger">Optional logger.</param>
     public BannouWebSocketAssetSource(
-        BannouClient client,
+        IBannouClient client,
         Realm defaultRealm = Realm.Shared,
         ILogger<BannouWebSocketAssetSource>? logger = null)
     {

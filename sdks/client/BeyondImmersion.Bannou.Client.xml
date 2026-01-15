@@ -3405,6 +3405,134 @@
             FNV-1a hash for variable name lookup.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.IBannouClient">
+            <summary>
+            Interface for Bannou WebSocket clients.
+            Enables mocking for unit tests of code that depends on BannouClient.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.IsConnected">
+            <summary>
+            Whether the WebSocket connection is currently open.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.SessionId">
+            <summary>
+            Session ID assigned by the server after connection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.AvailableApis">
+            <summary>
+            All available API endpoints with their client-salted GUIDs.
+            Key format: "METHOD:/path" (e.g., "POST:/species/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.AccessToken">
+            <summary>
+            Current access token (JWT).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.RefreshToken">
+            <summary>
+            Current refresh token for re-authentication.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IBannouClient.LastError">
+            <summary>
+            Last error message from a failed operation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.ConnectAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects to a Bannou server using username/password authentication.
+            </summary>
+            <param name="serverUrl">Base URL (e.g., "http://localhost:8080" or "https://game.example.com")</param>
+            <param name="email">Account email</param>
+            <param name="password">Account password</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if connection successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.ConnectWithTokenAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects using an existing JWT token.
+            </summary>
+            <param name="serverUrl">Base URL (e.g., "http://localhost:8080")</param>
+            <param name="accessToken">Valid JWT access token</param>
+            <param name="refreshToken">Optional refresh token for re-authentication</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if connection successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.ConnectInternalAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects in internal mode using a service token (or network-trust if token is null) without JWT login.
+            </summary>
+            <param name="connectUrl">Full WebSocket URL to the Connect service (internal node).</param>
+            <param name="serviceToken">Optional X-Service-Token for internal auth mode.</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if connection successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.RegisterAndConnectAsync(System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Registers a new account and connects.
+            </summary>
+            <param name="serverUrl">Base URL</param>
+            <param name="username">Desired username</param>
+            <param name="email">Email address</param>
+            <param name="password">Password</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if registration and connection successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.GetServiceGuid(System.String,System.String)">
+            <summary>
+            Gets the service GUID for a specific API endpoint.
+            </summary>
+            <param name="method">HTTP method (GET, POST, etc.)</param>
+            <param name="path">API path (e.g., "/account/profile")</param>
+            <returns>The client-salted GUID, or null if not found</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.InvokeAsync``2(System.String,System.String,``0,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Invokes a service method by specifying the HTTP method and path.
+            </summary>
+            <typeparam name="TRequest">Request model type</typeparam>
+            <typeparam name="TResponse">Response model type</typeparam>
+            <param name="method">HTTP method (GET, POST, PUT, DELETE)</param>
+            <param name="path">API path (e.g., "/account/profile")</param>
+            <param name="request">Request payload</param>
+            <param name="channel">Message channel for ordering (default 0)</param>
+            <param name="timeout">Request timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>ApiResponse containing either the success result or error details</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.SendEventAsync``1(System.String,System.String,``0,System.UInt16,System.Threading.CancellationToken)">
+            <summary>
+            Sends a fire-and-forget event (no response expected).
+            </summary>
+            <typeparam name="TRequest">Request model type</typeparam>
+            <param name="method">HTTP method</param>
+            <param name="path">API path</param>
+            <param name="request">Request payload</param>
+            <param name="channel">Message channel for ordering</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.OnEvent(System.String,System.Action{System.String})">
+            <summary>
+            Registers a handler for server-pushed events.
+            </summary>
+            <param name="eventType">Event type to handle (e.g., "capability_manifest")</param>
+            <param name="handler">Handler function receiving the JSON payload</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.RemoveEventHandler(System.String)">
+            <summary>
+            Removes an event handler.
+            </summary>
+            <param name="eventType">Event type to unregister</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.DisconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Disconnects from the server.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.MetaType">
             <summary>
             Meta endpoint types for requesting endpoint metadata instead of executing.
