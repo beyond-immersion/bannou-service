@@ -129,7 +129,6 @@ public sealed class BehaviorModel
     /// <returns>Deserialized model.</returns>
     public static BehaviorModel Deserialize(byte[] data)
     {
-        ArgumentNullException.ThrowIfNull(data);
 
         using var stream = new MemoryStream(data);
         using var reader = new BinaryReader(stream);
@@ -142,7 +141,6 @@ public sealed class BehaviorModel
     /// </summary>
     public static BehaviorModel Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         // Header
         var header = BehaviorModelHeader.Deserialize(reader);
@@ -232,7 +230,6 @@ public sealed class BehaviorModel
     /// </summary>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         // Header
         Header.Serialize(writer);
@@ -473,7 +470,6 @@ public sealed class DebugInfo
     /// </summary>
     public static DebugInfo Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var pathLength = reader.ReadUInt16();
         var pathBytes = reader.ReadBytes(pathLength);
@@ -496,7 +492,6 @@ public sealed class DebugInfo
     /// </summary>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         var pathBytes = System.Text.Encoding.UTF8.GetBytes(SourcePath);
         writer.Write((ushort)pathBytes.Length);

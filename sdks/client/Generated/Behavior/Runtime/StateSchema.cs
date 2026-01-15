@@ -128,7 +128,6 @@ public sealed class StateSchema
     /// <returns>Deserialized schema.</returns>
     public static StateSchema Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var inputCount = reader.ReadUInt16();
         var inputs = new VariableDefinition[inputCount];
@@ -153,7 +152,6 @@ public sealed class StateSchema
     /// <param name="writer">Binary writer.</param>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write((ushort)Inputs.Count);
         foreach (var input in Inputs)

@@ -25,7 +25,6 @@ public sealed class BehaviorModelInterpreterFactory : IBehaviorModelInterpreterF
     /// <inheritdoc/>
     public IBehaviorModelInterpreter Create(BehaviorModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
         return new BehaviorModelInterpreter(model);
     }
 }

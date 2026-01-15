@@ -121,7 +121,7 @@ public class SubscriptionExpirationServiceTests
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
-            .Returns(null!);
+            .Returns((object?)null);
 
         var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
@@ -137,7 +137,7 @@ public class SubscriptionExpirationServiceTests
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IMessageBus)))
-            .Returns(null!);
+            .Returns((object?)null);
 
         var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,

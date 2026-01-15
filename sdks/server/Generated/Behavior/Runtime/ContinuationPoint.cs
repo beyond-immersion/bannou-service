@@ -73,7 +73,6 @@ public readonly struct ContinuationPoint
     /// </summary>
     public static ContinuationPoint Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var nameHash = reader.ReadUInt32();
         var nameStringIndex = reader.ReadInt32();
@@ -89,7 +88,6 @@ public readonly struct ContinuationPoint
     /// </summary>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write(NameHash);
         writer.Write(NameStringIndex);
@@ -192,7 +190,6 @@ public sealed class ContinuationPointTable
     /// </summary>
     public static ContinuationPointTable Deserialize(BinaryReader reader)
     {
-        ArgumentNullException.ThrowIfNull(reader);
 
         var count = reader.ReadUInt16();
         var points = new ContinuationPoint[count];
@@ -209,7 +206,6 @@ public sealed class ContinuationPointTable
     /// </summary>
     public void Serialize(BinaryWriter writer)
     {
-        ArgumentNullException.ThrowIfNull(writer);
 
         writer.Write((ushort)Points.Count);
         foreach (var point in Points)
