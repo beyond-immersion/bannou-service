@@ -43,7 +43,7 @@ public partial interface ISubscriptionClient
     /// Returns all subscriptions for a given account, with optional filtering.
     /// </remarks>
     /// <returns>Subscriptions retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionListResponse> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -60,7 +60,7 @@ public partial interface ISubscriptionClient
     /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
     /// <returns>Subscriptions retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QuerySubscriptionsResponse> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -69,7 +69,7 @@ public partial interface ISubscriptionClient
     /// Get a specific subscription by ID
     /// </summary>
     /// <returns>Subscription retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> GetSubscriptionAsync(GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -81,7 +81,7 @@ public partial interface ISubscriptionClient
     /// Admin-only endpoint to create a new subscription for an account.
     /// </remarks>
     /// <returns>Subscription created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> CreateSubscriptionAsync(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -93,7 +93,7 @@ public partial interface ISubscriptionClient
     /// Admin-only endpoint to update an existing subscription.
     /// </remarks>
     /// <returns>Subscription updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> UpdateSubscriptionAsync(UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -106,7 +106,7 @@ public partial interface ISubscriptionClient
     /// <br/>admins can cancel any subscription.
     /// </remarks>
     /// <returns>Subscription cancelled successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> CancelSubscriptionAsync(CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -118,7 +118,7 @@ public partial interface ISubscriptionClient
     /// Admin-only endpoint to renew or extend an existing subscription.
     /// </remarks>
     /// <returns>Subscription renewed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SubscriptionInfo> RenewSubscriptionAsync(RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
@@ -130,7 +130,7 @@ public partial interface ISubscriptionClient
 public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<SubscriptionClient>
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -269,7 +269,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// Returns all subscriptions for a given account, with optional filtering.
     /// </remarks>
     /// <returns>Subscriptions retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionListResponse> GetAccountSubscriptionsAsync(GetAccountSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -289,7 +289,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -319,14 +319,14 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -357,7 +357,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// <br/>Used by Auth service during session creation and GameSession service for subscriber discovery.
     /// </remarks>
     /// <returns>Subscriptions retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<QuerySubscriptionsResponse> QueryCurrentSubscriptionsAsync(QueryCurrentSubscriptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -377,7 +377,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -407,7 +407,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<QuerySubscriptionsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -415,12 +415,12 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Neither accountId nor stubName provided", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Neither accountId nor stubName provided", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -443,7 +443,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// Get a specific subscription by ID
     /// </summary>
     /// <returns>Subscription retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionInfo> GetSubscriptionAsync(GetSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -463,7 +463,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -493,7 +493,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -501,12 +501,12 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Subscription not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -532,7 +532,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// Admin-only endpoint to create a new subscription for an account.
     /// </remarks>
     /// <returns>Subscription created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionInfo> CreateSubscriptionAsync(CreateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -552,7 +552,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -582,7 +582,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -590,24 +590,24 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid subscription data", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid subscription data", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Account or service not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Account or service not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Subscription already exists for this account and service", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription already exists for this account and service", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -633,7 +633,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// Admin-only endpoint to update an existing subscription.
     /// </remarks>
     /// <returns>Subscription updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionInfo> UpdateSubscriptionAsync(UpdateSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -653,7 +653,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -683,7 +683,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -691,12 +691,12 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Subscription not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -723,7 +723,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// <br/>admins can cancel any subscription.
     /// </remarks>
     /// <returns>Subscription cancelled successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionInfo> CancelSubscriptionAsync(CancelSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -743,7 +743,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -773,7 +773,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -781,18 +781,18 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Not authorized to cancel this subscription", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not authorized to cancel this subscription", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Subscription not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -818,7 +818,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
     /// Admin-only endpoint to renew or extend an existing subscription.
     /// </remarks>
     /// <returns>Subscription renewed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionInfo> RenewSubscriptionAsync(RenewSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -838,7 +838,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -868,7 +868,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                         var objectResponse_ = await ReadObjectResponseAsync<SubscriptionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -876,12 +876,12 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Subscription not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -969,7 +969,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
 
             if (response.Content == null)
             {
-                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
+                throw new BeyondImmersion.Bannou.Core.ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -977,17 +977,17 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                 var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
                     if (typedBody == null)
                     {
-                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
                     }
                     return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
             else
@@ -996,10 +996,10 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                 {
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
-                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                         if (typedBody == null)
                         {
-                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
                         }
                         return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
@@ -1007,7 +1007,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
                 }
             }
         }
@@ -1027,7 +1027,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1039,7 +1039,7 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -1066,7 +1066,6 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         return result == null ? "" : result;
     }
 }
-
 
 
 

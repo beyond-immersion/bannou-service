@@ -40,7 +40,7 @@ public partial interface ICharacterClient
     /// Create new character
     /// </summary>
     /// <returns>Character created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterResponse> CreateCharacterAsync(CreateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -49,7 +49,7 @@ public partial interface ICharacterClient
     /// Get character by ID
     /// </summary>
     /// <returns>Character retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterResponse> GetCharacterAsync(GetCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -58,7 +58,7 @@ public partial interface ICharacterClient
     /// Update character
     /// </summary>
     /// <returns>Character updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterResponse> UpdateCharacterAsync(UpdateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -67,7 +67,7 @@ public partial interface ICharacterClient
     /// Delete character (permanent removal)
     /// </summary>
     /// <returns>Character deleted successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task DeleteCharacterAsync(DeleteCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -76,7 +76,7 @@ public partial interface ICharacterClient
     /// List characters with filtering
     /// </summary>
     /// <returns>Characters retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterListResponse> ListCharactersAsync(ListCharactersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -90,7 +90,7 @@ public partial interface ICharacterClient
     /// <br/>Each included dataset is fetched from its respective service.
     /// </remarks>
     /// <returns>Character retrieved with requested includes</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<EnrichedCharacterResponse> GetEnrichedCharacterAsync(GetEnrichedCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -105,7 +105,7 @@ public partial interface ICharacterClient
     /// <br/>Only works on characters with status 'dead'.
     /// </remarks>
     /// <returns>Character compressed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterArchive> CompressCharacterAsync(CompressCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -114,7 +114,7 @@ public partial interface ICharacterClient
     /// Get compressed archive data for a character
     /// </summary>
     /// <returns>Archive retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterArchive> GetCharacterArchiveAsync(GetCharacterArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -128,7 +128,7 @@ public partial interface ICharacterClient
     /// <br/>References include: family relationships, past lives, historical events, memories.
     /// </remarks>
     /// <returns>Reference count retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterRefCount> CheckCharacterReferencesAsync(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -137,7 +137,7 @@ public partial interface ICharacterClient
     /// Get all characters in a realm (primary query pattern)
     /// </summary>
     /// <returns>Characters retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<CharacterListResponse> GetCharactersByRealmAsync(GetCharactersByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
@@ -149,7 +149,7 @@ public partial interface ICharacterClient
 public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<CharacterClient>
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -285,7 +285,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Create new character
     /// </summary>
     /// <returns>Character created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterResponse> CreateCharacterAsync(CreateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -305,7 +305,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -335,7 +335,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -343,18 +343,18 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid character data", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid character data", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character already exists", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character already exists", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -377,7 +377,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Get character by ID
     /// </summary>
     /// <returns>Character retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterResponse> GetCharacterAsync(GetCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -397,7 +397,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -427,7 +427,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -435,12 +435,12 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -463,7 +463,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Update character
     /// </summary>
     /// <returns>Character updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterResponse> UpdateCharacterAsync(UpdateCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -483,7 +483,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -513,7 +513,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -521,18 +521,18 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid update data", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid update data", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -555,7 +555,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Delete character (permanent removal)
     /// </summary>
     /// <returns>Character deleted successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task DeleteCharacterAsync(DeleteCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -575,7 +575,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -607,12 +607,12 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -635,7 +635,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// List characters with filtering
     /// </summary>
     /// <returns>Characters retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterListResponse> ListCharactersAsync(ListCharactersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -655,7 +655,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -685,14 +685,14 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -720,7 +720,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// <br/>Each included dataset is fetched from its respective service.
     /// </remarks>
     /// <returns>Character retrieved with requested includes</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<EnrichedCharacterResponse> GetEnrichedCharacterAsync(GetEnrichedCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -740,7 +740,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -770,7 +770,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<EnrichedCharacterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -778,12 +778,12 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -812,7 +812,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// <br/>Only works on characters with status 'dead'.
     /// </remarks>
     /// <returns>Character compressed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterArchive> CompressCharacterAsync(CompressCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -832,7 +832,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -862,7 +862,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterArchive>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -870,18 +870,18 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character is not dead (cannot compress alive characters)", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character is not dead (cannot compress alive characters)", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -904,7 +904,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Get compressed archive data for a character
     /// </summary>
     /// <returns>Archive retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterArchive> GetCharacterArchiveAsync(GetCharacterArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -924,7 +924,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -954,7 +954,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterArchive>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -962,12 +962,12 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Archive not found (character may not be compressed yet)", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Archive not found (character may not be compressed yet)", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -995,7 +995,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// <br/>References include: family relationships, past lives, historical events, memories.
     /// </remarks>
     /// <returns>Reference count retrieved</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterRefCount> CheckCharacterReferencesAsync(CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1015,7 +1015,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1045,7 +1045,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterRefCount>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1053,12 +1053,12 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Character not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Character not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1081,7 +1081,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
     /// Get all characters in a realm (primary query pattern)
     /// </summary>
     /// <returns>Characters retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterListResponse> GetCharactersByRealmAsync(GetCharactersByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1101,7 +1101,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1131,14 +1131,14 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                         var objectResponse_ = await ReadObjectResponseAsync<CharacterListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1226,7 +1226,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
 
             if (response.Content == null)
             {
-                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
+                throw new BeyondImmersion.Bannou.Core.ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -1234,17 +1234,17 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                 var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
                     if (typedBody == null)
                     {
-                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
                     }
                     return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
             else
@@ -1253,10 +1253,10 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                 {
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
-                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                         if (typedBody == null)
                         {
-                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
                         }
                         return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
@@ -1264,7 +1264,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
                 }
             }
         }
@@ -1284,7 +1284,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1296,7 +1296,7 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -1323,7 +1323,6 @@ public partial class CharacterClient : ICharacterClient, BeyondImmersion.BannouS
         return result == null ? "" : result;
     }
 }
-
 
 
 

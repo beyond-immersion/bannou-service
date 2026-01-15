@@ -40,7 +40,7 @@ public partial interface IActorClient
     /// Create an actor template (category definition)
     /// </summary>
     /// <returns>Template created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ActorTemplateResponse> CreateActorTemplateAsync(CreateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -49,7 +49,7 @@ public partial interface IActorClient
     /// Get an actor template by ID or category
     /// </summary>
     /// <returns>Template retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ActorTemplateResponse> GetActorTemplateAsync(GetActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -58,7 +58,7 @@ public partial interface IActorClient
     /// List all actor templates
     /// </summary>
     /// <returns>Templates listed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListActorTemplatesResponse> ListActorTemplatesAsync(ListActorTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -67,7 +67,7 @@ public partial interface IActorClient
     /// Update an actor template
     /// </summary>
     /// <returns>Template updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ActorTemplateResponse> UpdateActorTemplateAsync(UpdateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -76,7 +76,7 @@ public partial interface IActorClient
     /// Delete an actor template
     /// </summary>
     /// <returns>Template deleted successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<DeleteActorTemplateResponse> DeleteActorTemplateAsync(DeleteActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -85,7 +85,7 @@ public partial interface IActorClient
     /// Spawn a new actor from a template
     /// </summary>
     /// <returns>Actor spawned successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ActorInstanceResponse> SpawnActorAsync(SpawnActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -99,7 +99,7 @@ public partial interface IActorClient
     /// <br/>instantiates the actor and returns it.
     /// </remarks>
     /// <returns>Actor retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ActorInstanceResponse> GetActorAsync(GetActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -108,7 +108,7 @@ public partial interface IActorClient
     /// Stop a running actor
     /// </summary>
     /// <returns>Actor stopped successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<StopActorResponse> StopActorAsync(StopActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -117,7 +117,7 @@ public partial interface IActorClient
     /// List actors with optional filters
     /// </summary>
     /// <returns>Actors listed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListActorsResponse> ListActorsAsync(ListActorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -131,7 +131,7 @@ public partial interface IActorClient
     /// <br/>full game server setup.
     /// </remarks>
     /// <returns>Perception injected successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<InjectPerceptionResponse> InjectPerceptionAsync(InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -151,7 +151,7 @@ public partial interface IActorClient
     /// <br/>- stale_ok: Return cached options regardless of age
     /// </remarks>
     /// <returns>Options retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryOptionsResponse> QueryOptionsAsync(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -165,7 +165,7 @@ public partial interface IActorClient
     /// <br/>via their character perception channels.
     /// </remarks>
     /// <returns>Encounter started successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -178,7 +178,7 @@ public partial interface IActorClient
     /// <br/>Phase changes are logged and can trigger behavior changes in participant actors.
     /// </remarks>
     /// <returns>Encounter phase updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<UpdateEncounterPhaseResponse> UpdateEncounterPhaseAsync(UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -191,7 +191,7 @@ public partial interface IActorClient
     /// <br/>encounter state and allows the actor to manage a new encounter.
     /// </remarks>
     /// <returns>Encounter ended successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<EndEncounterResponse> EndEncounterAsync(EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -204,7 +204,7 @@ public partial interface IActorClient
     /// <br/>null encounter data if the actor is not managing an encounter.
     /// </remarks>
     /// <returns>Encounter state retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<GetEncounterResponse> GetEncounterAsync(GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
@@ -216,7 +216,7 @@ public partial interface IActorClient
 public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<ActorClient>
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -352,7 +352,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Create an actor template (category definition)
     /// </summary>
     /// <returns>Template created successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ActorTemplateResponse> CreateActorTemplateAsync(CreateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -372,7 +372,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -402,14 +402,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ActorTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -432,7 +432,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Get an actor template by ID or category
     /// </summary>
     /// <returns>Template retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ActorTemplateResponse> GetActorTemplateAsync(GetActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -452,7 +452,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -482,14 +482,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ActorTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -512,7 +512,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// List all actor templates
     /// </summary>
     /// <returns>Templates listed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ListActorTemplatesResponse> ListActorTemplatesAsync(ListActorTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -532,7 +532,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -562,14 +562,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ListActorTemplatesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -592,7 +592,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Update an actor template
     /// </summary>
     /// <returns>Template updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ActorTemplateResponse> UpdateActorTemplateAsync(UpdateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -612,7 +612,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -642,14 +642,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ActorTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -672,7 +672,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Delete an actor template
     /// </summary>
     /// <returns>Template deleted successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<DeleteActorTemplateResponse> DeleteActorTemplateAsync(DeleteActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -692,7 +692,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -722,14 +722,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<DeleteActorTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -752,7 +752,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Spawn a new actor from a template
     /// </summary>
     /// <returns>Actor spawned successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ActorInstanceResponse> SpawnActorAsync(SpawnActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -772,7 +772,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -802,14 +802,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ActorInstanceResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -837,7 +837,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>instantiates the actor and returns it.
     /// </remarks>
     /// <returns>Actor retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ActorInstanceResponse> GetActorAsync(GetActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -857,7 +857,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -887,14 +887,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ActorInstanceResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -917,7 +917,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Stop a running actor
     /// </summary>
     /// <returns>Actor stopped successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<StopActorResponse> StopActorAsync(StopActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -937,7 +937,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -967,14 +967,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<StopActorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -997,7 +997,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// List actors with optional filters
     /// </summary>
     /// <returns>Actors listed successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ListActorsResponse> ListActorsAsync(ListActorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1017,7 +1017,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1047,14 +1047,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<ListActorsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1082,7 +1082,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>full game server setup.
     /// </remarks>
     /// <returns>Perception injected successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<InjectPerceptionResponse> InjectPerceptionAsync(InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1102,7 +1102,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1132,14 +1132,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<InjectPerceptionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1173,7 +1173,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>- stale_ok: Return cached options regardless of age
     /// </remarks>
     /// <returns>Options retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<QueryOptionsResponse> QueryOptionsAsync(QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1193,7 +1193,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1223,14 +1223,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<QueryOptionsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1258,7 +1258,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>via their character perception channels.
     /// </remarks>
     /// <returns>Encounter started successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1278,7 +1278,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1309,7 +1309,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1336,7 +1336,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>Phase changes are logged and can trigger behavior changes in participant actors.
     /// </remarks>
     /// <returns>Encounter phase updated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<UpdateEncounterPhaseResponse> UpdateEncounterPhaseAsync(UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1356,7 +1356,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1386,14 +1386,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<UpdateEncounterPhaseResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1420,7 +1420,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>encounter state and allows the actor to manage a new encounter.
     /// </remarks>
     /// <returns>Encounter ended successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<EndEncounterResponse> EndEncounterAsync(EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1440,7 +1440,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1470,14 +1470,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<EndEncounterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1504,7 +1504,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// <br/>null encounter data if the actor is not managing an encounter.
     /// </remarks>
     /// <returns>Encounter state retrieved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<GetEncounterResponse> GetEncounterAsync(GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1524,7 +1524,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1554,14 +1554,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                         var objectResponse_ = await ReadObjectResponseAsync<GetEncounterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1649,7 +1649,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
 
             if (response.Content == null)
             {
-                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
+                throw new BeyondImmersion.Bannou.Core.ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -1657,17 +1657,17 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                 var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
                     if (typedBody == null)
                     {
-                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
                     }
                     return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
             else
@@ -1676,10 +1676,10 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                 {
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
-                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                         if (typedBody == null)
                         {
-                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
                         }
                         return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
@@ -1687,7 +1687,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
                 }
             }
         }
@@ -1707,7 +1707,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1719,7 +1719,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -1746,7 +1746,6 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
         return result == null ? "" : result;
     }
 }
-
 
 
 

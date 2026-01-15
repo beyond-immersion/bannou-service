@@ -45,7 +45,7 @@ public partial interface IMappingClient
     /// <br/>If channel already exists with active authority, returns Conflict.
     /// </remarks>
     /// <returns>Channel created, authority granted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthorityGrant> CreateChannelAsync(CreateChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -58,7 +58,7 @@ public partial interface IMappingClient
     /// <br/>Only the current authority can release.
     /// </remarks>
     /// <returns>Authority released successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ReleaseAuthorityResponse> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -71,7 +71,7 @@ public partial interface IMappingClient
     /// <br/>Failure to heartbeat results in authority expiration.
     /// </remarks>
     /// <returns>Heartbeat acknowledged</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthorityHeartbeatResponse> AuthorityHeartbeatAsync(AuthorityHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -85,7 +85,7 @@ public partial interface IMappingClient
     /// <br/>For high-throughput scenarios, use event publishing via ingestTopic instead.
     /// </remarks>
     /// <returns>Update published successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PublishMapUpdateResponse> PublishMapUpdateAsync(PublishMapUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -99,7 +99,7 @@ public partial interface IMappingClient
     /// <br/>Max 100 changes per request.
     /// </remarks>
     /// <returns>Object changes published</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<PublishObjectChangesResponse> PublishObjectChangesAsync(PublishObjectChangesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -113,7 +113,7 @@ public partial interface IMappingClient
     /// <br/>For very large maps, payloadRef points to lib-asset storage.
     /// </remarks>
     /// <returns>Snapshot returned</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RequestSnapshotResponse> RequestSnapshotAsync(RequestSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -127,7 +127,7 @@ public partial interface IMappingClient
     /// <br/>Optionally includes objects within radius.
     /// </remarks>
     /// <returns>Query results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryPointResponse> QueryPointAsync(QueryPointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -141,7 +141,7 @@ public partial interface IMappingClient
     /// <br/>Limited to maxObjects per kind.
     /// </remarks>
     /// <returns>Query results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryBoundsResponse> QueryBoundsAsync(QueryBoundsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -154,7 +154,7 @@ public partial interface IMappingClient
     /// <br/>For event actors asking "where are all the boulder clusters?"
     /// </remarks>
     /// <returns>Matching objects</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryObjectsByTypeResponse> QueryObjectsByTypeAsync(QueryObjectsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -175,7 +175,7 @@ public partial interface IMappingClient
     /// <br/>with customAffordance for novel scenarios.
     /// </remarks>
     /// <returns>Scored locations</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AffordanceQueryResponse> QueryAffordanceAsync(AffordanceQueryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -189,7 +189,7 @@ public partial interface IMappingClient
     /// <br/>Returns authority token for publishing edits.
     /// </remarks>
     /// <returns>Checkout successful</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthoringCheckoutResponse> CheckoutForAuthoringAsync(AuthoringCheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -202,7 +202,7 @@ public partial interface IMappingClient
     /// <br/>Optionally includes a commit message for history.
     /// </remarks>
     /// <returns>Changes committed</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthoringCommitResponse> CommitAuthoringAsync(AuthoringCommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -215,7 +215,7 @@ public partial interface IMappingClient
     /// <br/>Use when abandoning edits.
     /// </remarks>
     /// <returns>Checkout released</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthoringReleaseResponse> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -229,7 +229,7 @@ public partial interface IMappingClient
     /// <br/>channels with predefined layer configurations.
     /// </remarks>
     /// <returns>Definition created</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<MapDefinition> CreateDefinitionAsync(CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -241,7 +241,7 @@ public partial interface IMappingClient
     /// Returns the full map definition including all layer configurations.
     /// </remarks>
     /// <returns>Definition found</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<MapDefinition> GetDefinitionAsync(GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -253,7 +253,7 @@ public partial interface IMappingClient
     /// Returns a paginated list of map definitions.
     /// </remarks>
     /// <returns>Definitions list</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ListDefinitionsResponse> ListDefinitionsAsync(ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -266,7 +266,7 @@ public partial interface IMappingClient
     /// <br/>Layer configurations can be modified.
     /// </remarks>
     /// <returns>Definition updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<MapDefinition> UpdateDefinitionAsync(UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
@@ -278,7 +278,7 @@ public partial interface IMappingClient
     /// Deletes a map definition. Cannot delete if active channels reference it.
     /// </remarks>
     /// <returns>Definition deleted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<DeleteDefinitionResponse> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
@@ -290,7 +290,7 @@ public partial interface IMappingClient
 public partial class MappingClient : IMappingClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<MappingClient>
 {
     // Use centralized BannouJson serialization helper
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.BannouService.Configuration.BannouJson.Options;
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = BeyondImmersion.Bannou.Core.BannouJson.Options;
 
     private readonly BeyondImmersion.BannouService.Services.IMeshInvocationClient _meshClient;
     private readonly BeyondImmersion.BannouService.Services.IServiceAppMappingResolver _resolver;
@@ -431,7 +431,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>If channel already exists with active authority, returns Conflict.
     /// </remarks>
     /// <returns>Channel created, authority granted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthorityGrant> CreateChannelAsync(CreateChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -451,7 +451,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -481,7 +481,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AuthorityGrant>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -489,12 +489,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Channel already exists with active authority", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Channel already exists with active authority", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -521,7 +521,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Only the current authority can release.
     /// </remarks>
     /// <returns>Authority released successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ReleaseAuthorityResponse> ReleaseAuthorityAsync(ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -541,7 +541,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -571,7 +571,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ReleaseAuthorityResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -579,12 +579,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Not the current authority", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not the current authority", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -611,7 +611,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Failure to heartbeat results in authority expiration.
     /// </remarks>
     /// <returns>Heartbeat acknowledged</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthorityHeartbeatResponse> AuthorityHeartbeatAsync(AuthorityHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -631,7 +631,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -661,7 +661,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AuthorityHeartbeatResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -669,12 +669,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid or expired authority token", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid or expired authority token", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -702,7 +702,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>For high-throughput scenarios, use event publishing via ingestTopic instead.
     /// </remarks>
     /// <returns>Update published successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<PublishMapUpdateResponse> PublishMapUpdateAsync(PublishMapUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -722,7 +722,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -752,7 +752,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<PublishMapUpdateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -760,12 +760,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Not authority for this channel", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not authority for this channel", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -793,7 +793,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Max 100 changes per request.
     /// </remarks>
     /// <returns>Object changes published</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<PublishObjectChangesResponse> PublishObjectChangesAsync(PublishObjectChangesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -813,7 +813,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -843,7 +843,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<PublishObjectChangesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -851,12 +851,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Not authority for this channel", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not authority for this channel", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -884,7 +884,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>For very large maps, payloadRef points to lib-asset storage.
     /// </remarks>
     /// <returns>Snapshot returned</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<RequestSnapshotResponse> RequestSnapshotAsync(RequestSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -904,7 +904,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -934,7 +934,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<RequestSnapshotResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -942,12 +942,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Region not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Region not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -975,7 +975,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Optionally includes objects within radius.
     /// </remarks>
     /// <returns>Query results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<QueryPointResponse> QueryPointAsync(QueryPointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -995,7 +995,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1025,14 +1025,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<QueryPointResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1060,7 +1060,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Limited to maxObjects per kind.
     /// </remarks>
     /// <returns>Query results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<QueryBoundsResponse> QueryBoundsAsync(QueryBoundsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1080,7 +1080,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1110,14 +1110,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<QueryBoundsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1144,7 +1144,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>For event actors asking "where are all the boulder clusters?"
     /// </remarks>
     /// <returns>Matching objects</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<QueryObjectsByTypeResponse> QueryObjectsByTypeAsync(QueryObjectsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1164,7 +1164,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1194,14 +1194,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<QueryObjectsByTypeResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1236,7 +1236,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>with customAffordance for novel scenarios.
     /// </remarks>
     /// <returns>Scored locations</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AffordanceQueryResponse> QueryAffordanceAsync(AffordanceQueryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1256,7 +1256,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1286,14 +1286,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AffordanceQueryResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1321,7 +1321,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Returns authority token for publishing edits.
     /// </remarks>
     /// <returns>Checkout successful</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthoringCheckoutResponse> CheckoutForAuthoringAsync(AuthoringCheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1341,7 +1341,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1371,7 +1371,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AuthoringCheckoutResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1379,12 +1379,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Already checked out by another editor", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Already checked out by another editor", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1411,7 +1411,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Optionally includes a commit message for history.
     /// </remarks>
     /// <returns>Changes committed</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthoringCommitResponse> CommitAuthoringAsync(AuthoringCommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1431,7 +1431,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1461,7 +1461,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AuthoringCommitResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1469,12 +1469,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 403)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid checkout token", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid checkout token", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1501,7 +1501,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Use when abandoning edits.
     /// </remarks>
     /// <returns>Checkout released</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthoringReleaseResponse> ReleaseAuthoringAsync(AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1521,7 +1521,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1551,14 +1551,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<AuthoringReleaseResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1586,7 +1586,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>channels with predefined layer configurations.
     /// </remarks>
     /// <returns>Definition created</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<MapDefinition> CreateDefinitionAsync(CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1606,7 +1606,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1636,7 +1636,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<MapDefinition>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1644,12 +1644,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Definition with this name already exists", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Definition with this name already exists", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1675,7 +1675,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// Returns the full map definition including all layer configurations.
     /// </remarks>
     /// <returns>Definition found</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<MapDefinition> GetDefinitionAsync(GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1695,7 +1695,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1725,7 +1725,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<MapDefinition>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1733,12 +1733,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Definition not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1764,7 +1764,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// Returns a paginated list of map definitions.
     /// </remarks>
     /// <returns>Definitions list</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ListDefinitionsResponse> ListDefinitionsAsync(ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1784,7 +1784,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1814,14 +1814,14 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<ListDefinitionsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1848,7 +1848,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// <br/>Layer configurations can be modified.
     /// </remarks>
     /// <returns>Definition updated</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<MapDefinition> UpdateDefinitionAsync(UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1868,7 +1868,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1898,7 +1898,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<MapDefinition>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1906,12 +1906,12 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Definition not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -1937,7 +1937,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
     /// Deletes a map definition. Cannot delete if active channels reference it.
     /// </remarks>
     /// <returns>Definition deleted</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<DeleteDefinitionResponse> DeleteDefinitionAsync(DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
@@ -1957,7 +1957,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
             appId_,
             methodPath_))
         {
-            var json_ = BeyondImmersion.BannouService.Configuration.BannouJson.SerializeToUtf8Bytes(body);
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
@@ -1987,7 +1987,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                         var objectResponse_ = await ReadObjectResponseAsync<DeleteDefinitionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
                     }
@@ -1995,18 +1995,18 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Definition not found", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Definition not found", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Definition in use by active channels", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Definition in use by active channels", status_, responseText_, headers_, null);
                     }
                     else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                     }
                 }
                 finally
@@ -2094,7 +2094,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
 
             if (response.Content == null)
             {
-                throw new ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
+                throw new BeyondImmersion.Bannou.Core.ApiException("Response has no content to deserialize", (int)response.StatusCode, string.Empty, headers, null);
             }
 
             if (ReadResponseAsString)
@@ -2102,17 +2102,17 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                 var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    var typedBody = BeyondImmersion.BannouService.Configuration.BannouJson.Deserialize<T>(responseText);
+                    var typedBody = BeyondImmersion.Bannou.Core.BannouJson.Deserialize<T>(responseText);
                     if (typedBody == null)
                     {
-                        throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, responseText, headers, null);
                     }
                     return new ObjectResponseResult<T>(typedBody, responseText);
                 }
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, responseText, headers, exception);
                 }
             }
             else
@@ -2121,10 +2121,10 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                 {
                     using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
                     {
-                        var typedBody = await BeyondImmersion.BannouService.Configuration.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
+                        var typedBody = await BeyondImmersion.Bannou.Core.BannouJson.DeserializeAsync<T>(responseStream, cancellationToken).ConfigureAwait(false);
                         if (typedBody == null)
                         {
-                            throw new ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response body deserialized to null for type " + typeof(T).FullName, (int)response.StatusCode, string.Empty, headers, null);
                         }
                         return new ObjectResponseResult<T>(typedBody, string.Empty);
                     }
@@ -2132,7 +2132,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                 catch (System.Text.Json.JsonException exception)
                 {
                     var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+                    throw new BeyondImmersion.Bannou.Core.ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
                 }
             }
         }
@@ -2152,7 +2152,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2164,7 +2164,7 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -2191,7 +2191,6 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         return result == null ? "" : result;
     }
 }
-
 
 
 

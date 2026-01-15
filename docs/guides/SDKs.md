@@ -9,6 +9,8 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients | Game clients |
 | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients | Game servers, internal services |
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling | Game clients with voice |
+| `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline | Asset tooling |
+| `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation | Stride asset pipelines |
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing | Scene editor tools |
 | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration | Stride-based editors |
 | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot 4.x engine integration | Godot-based editors |
@@ -22,6 +24,12 @@ Are you building a game client?
 │
 └─ No, building a game server or internal service
    └─ Use BeyondImmersion.Bannou.Server (includes everything from Client)
+
+Are you building asset bundling tools?
+├─ Yes → Start with BeyondImmersion.Bannou.AssetBundler (engine-agnostic core)
+│        └─ Compiling for Stride? → Add BeyondImmersion.Bannou.AssetBundler.Stride
+│
+└─ No → You don't need the AssetBundler packages
 
 Are you building a scene editor?
 ├─ Yes → Start with BeyondImmersion.Bannou.SceneComposer (engine-agnostic core)
@@ -202,6 +210,130 @@ if (voiceManager.IsInRoom && !voiceManager.IsMuted)
 | Scaled | 6+ | Via SIP/RTP server | 1 connection per client |
 
 The transition is automatic - your code doesn't need to change.
+
+---
+
+## AssetBundler SDK (Core)
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler`
+
+Engine-agnostic asset bundling SDK for creating `.bannou` bundle files. Use this as the foundation, then add an engine-specific package for asset compilation.
+
+### Features
+
+- **Asset sources**: Extract assets from directories or ZIP archives
+- **Type inference**: Automatic asset type detection (models, textures, audio, etc.)
+- **Processing pipeline**: Pluggable asset processors for engine-specific compilation
+- **State management**: Incremental builds with content hash tracking
+- **Bundle creation**: Write `.bannou` bundles with LZ4 compression
+- **Upload integration**: Upload bundles to Bannou Asset Service
+- **Metabundle requests**: Request server-side metabundle creation
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    BundlerPipeline                       │
+│  Source → Extract → Process → Bundle → Upload            │
+└─────────────────────────────────────────────────────────┘
+         │              │
+         v              v
+┌─────────────┐  ┌──────────────────┐
+│ IAssetSource│  │ IAssetProcessor  │
+│ - Directory │  │ - Raw (passthru) │
+│ - ZIP       │  │ - Stride         │
+└─────────────┘  │ - (Godot, etc.)  │
+                 └──────────────────┘
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Sources;
+using BeyondImmersion.Bannou.AssetBundler.Processing;
+using BeyondImmersion.Bannou.AssetBundler.Pipeline;
+
+// Create a source from a directory
+var source = new DirectoryAssetSource(
+    new DirectoryInfo("/path/to/assets"),
+    sourceId: "my-assets",
+    name: "My Asset Pack",
+    version: "1.0.0");
+
+// Create pipeline
+var pipeline = new BundlerPipeline();
+var state = new BundlerStateManager(new DirectoryInfo("/path/to/state"));
+
+var options = new BundlerOptions
+{
+    WorkingDirectory = "/tmp/bundler-work",
+    OutputDirectory = "/output/bundles"
+};
+
+// Execute (uses RawAssetProcessor by default for pass-through)
+var result = await pipeline.ExecuteAsync(source, null, state, null, options);
+Console.WriteLine($"Created bundle: {result.BundlePath}");
+```
+
+---
+
+## Stride AssetBundler
+
+**Package**: `BeyondImmersion.Bannou.AssetBundler.Stride`
+
+Stride engine asset compilation for the AssetBundler SDK. Compiles FBX models and textures through Stride's asset pipeline.
+
+### Features
+
+- **StrideBatchCompiler**: Full `IAssetProcessor` implementation
+- **Project generation**: Creates temporary Stride projects for batch compilation
+- **Index parsing**: Extracts compiled assets from Stride's output
+- **Texture compression**: BC1/BC3/BC7/ETC2/ASTC options
+- **Dependency collection**: Handles buffer files for models
+
+### Requirements
+
+- .NET 8.0+
+- Stride 4.3.x (invoked via `dotnet build`, no NuGet dependency)
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.AssetBundler.Stride
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.AssetBundler.Stride.Compilation;
+
+// Create Stride compiler
+var compilerOptions = new StrideCompilerOptions
+{
+    StrideVersion = "4.3.0.2507",
+    TextureCompression = StrideTextureCompression.BC7,
+    GenerateMipmaps = true
+};
+
+var compiler = new StrideBatchCompiler(compilerOptions);
+
+// Use with pipeline
+var result = await pipeline.ExecuteAsync(source, compiler, state, null, options);
+```
+
+### Asset Type Mapping
+
+| Source Extension | Stride Output | Content Type |
+|-----------------|---------------|--------------|
+| `.fbx`, `.obj`, `.gltf` | Model | `application/x-stride-model` |
+| `.png`, `.jpg`, `.tga` | Texture | `application/x-stride-texture` |
+| `.anim` | Animation | `application/x-stride-animation` |
 
 ---
 
@@ -410,11 +542,21 @@ All SDKs share the same version number and are released together. The version is
 
 ---
 
+## For SDK Developers
+
+If you're **developing or extending** the Bannou SDKs themselves (not just consuming them), see:
+
+- [SDK Conventions](../../sdks/CONVENTIONS.md) - **Definitive guide** for SDK naming, structure, versioning, and development patterns
+
+---
+
 ## Further Reading
 
 - [Client SDK README](../../sdks/client/README.md) - Full client SDK documentation
 - [Server SDK README](../../sdks/server/README.md) - Full server SDK documentation
 - [Voice SDK README](../../sdks/client-voice/README.md) - Voice SDK documentation
+- [AssetBundler README](../../sdks/asset-bundler/README.md) - Core AssetBundler docs
+- [Stride AssetBundler README](../../sdks/asset-bundler-stride/README.md) - Stride compilation
 - [SceneComposer README](../../sdks/scene-composer/README.md) - Core SceneComposer docs
 - [Stride SceneComposer README](../../sdks/scene-composer-stride/README.md) - Stride integration
 - [Godot SceneComposer README](../../sdks/scene-composer-godot/README.md) - Godot integration

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BeyondImmersion.BannouService.Configuration;
+namespace BeyondImmersion.Bannou.Core;
 
 /// <summary>
 /// Static helper for JSON serialization/deserialization that always uses Bannou's

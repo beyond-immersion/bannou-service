@@ -57,18 +57,9 @@
     </ItemGroup>
   </Target>
 
-  <!-- Shared Infrastructure -->
+  <!-- Shared Infrastructure from bannou-service (AppConstants only - core types moved to sdks/core) -->
   <ItemGroup>
-    <Compile Include="../../bannou-service/ApiException.cs" Condition="Exists('../../bannou-service/ApiException.cs')" />
     <Compile Include="../../bannou-service/AppConstants.cs" Condition="Exists('../../bannou-service/AppConstants.cs')" />
-    <Compile Include="../../bannou-service/Configuration/BannouJson.cs" Condition="Exists('../../bannou-service/Configuration/BannouJson.cs')" />
-  </ItemGroup>
-
-  <!-- Base Event Classes (required by generated event models) -->
-  <ItemGroup>
-    <Compile Include="../../bannou-service/Events/IBannouEvent.cs" Condition="Exists('../../bannou-service/Events/IBannouEvent.cs')" />
-    <Compile Include="../../bannou-service/Events/BaseServiceEvent.cs" Condition="Exists('../../bannou-service/Events/BaseServiceEvent.cs')" />
-    <Compile Include="../../bannou-service/ClientEvents/BaseClientEvent.cs" Condition="Exists('../../bannou-service/ClientEvents/BaseClientEvent.cs')" />
   </ItemGroup>
 
   <!-- WebSocket Binary Protocol -->
@@ -82,6 +73,8 @@
 
   <!-- Shared SDK Libraries -->
   <ItemGroup>
+    <!-- Core types: events, JSON, exceptions -->
+    <ProjectReference Include="../core/BeyondImmersion.Bannou.Core.csproj" />
     <!-- Transport includes Protocol transitively -->
     <ProjectReference Include="../transport/BeyondImmersion.Bannou.Transport.csproj" />
     <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->

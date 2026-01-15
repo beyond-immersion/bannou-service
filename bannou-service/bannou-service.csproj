@@ -61,6 +61,11 @@
     <AdditionalFiles Include="../schemas/*.yaml" />
   </ItemGroup>
 
+  <!-- Shared core types (events, JSON, exceptions) -->
+  <ItemGroup>
+    <ProjectReference Include="../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
+  </ItemGroup>
+
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="dotnet format --no-restore" />

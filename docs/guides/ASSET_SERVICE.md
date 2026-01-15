@@ -382,6 +382,7 @@ var data = await client.GetByteArrayAsync(asset.DownloadUrl);
 
 ### Creating Bundles
 
+**Server-side bundle creation** (from assets already uploaded to Bannou):
 ```csharp
 // Create bundle from multiple assets
 var bundle = await bannou.Bundles.CreateBundleAsync(new CreateBundleRequest {
@@ -395,3 +396,12 @@ var download = await bannou.Bundles.GetBundleAsync(new GetBundleRequest {
     Format = "bannou"  // or "zip" for ZIP conversion
 });
 ```
+
+**Client-side bundle creation** (using the AssetBundler SDK):
+
+For creating `.bannou` bundles locally before uploading (e.g., content pipelines, asset tooling), use the `BeyondImmersion.Bannou.AssetBundler` SDK. See [SDK Guide - AssetBundler](SDKs.md#assetbundler-sdk-core) for installation and usage.
+
+## Further Reading
+
+- [SDK Guide - AssetBundler](SDKs.md#assetbundler-sdk-core) - Client-side bundle creation SDK
+- [SDK Conventions](../../sdks/CONVENTIONS.md) - SDK development standards and package registry

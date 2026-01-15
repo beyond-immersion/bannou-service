@@ -179,7 +179,7 @@ public static class Program
                 .AddJsonOptions(jsonOptions =>
                 {
                     // Apply BannouJson standard settings as base configuration
-                    BeyondImmersion.BannouService.Configuration.BannouJson.ApplyBannouSettings(jsonOptions.JsonSerializerOptions);
+                    BeyondImmersion.Bannou.Core.BannouJson.ApplyBannouSettings(jsonOptions.JsonSerializerOptions);
 
                     // Web API-specific overrides for client compatibility:
                     // - CamelCase for JavaScript clients expecting camelCase JSON

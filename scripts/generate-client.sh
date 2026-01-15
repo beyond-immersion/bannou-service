@@ -90,6 +90,8 @@ echo -e "${YELLOW}🔄 Running NSwag client generation...${NC}"
     "/generateClientInterfaces:true" \
     "/generateDtoTypes:false" \
     "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+    "/exceptionClass:BeyondImmersion.Bannou.Core.ApiException" \
+    "/generateExceptionClasses:false" \
     "/injectHttpClient:false" \
     "/disposeHttpClient:true" \
     "/jsonLibrary:SystemTextJson" \

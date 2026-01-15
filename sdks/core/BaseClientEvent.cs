@@ -1,13 +1,6 @@
-// =============================================================================
-// Base Client Event
-// Single source of truth for all server-to-client push events.
-// Excluded from NSwag generation - derived events inherit from this manually.
-// =============================================================================
-
-using BeyondImmersion.BannouService.Events;
 using System.Text.Json.Serialization;
 
-namespace BeyondImmersion.BannouService.ClientEvents;
+namespace BeyondImmersion.Bannou.Core;
 
 /// <summary>
 /// Base class for all server-to-client push events delivered via WebSocket.
@@ -17,8 +10,7 @@ namespace BeyondImmersion.BannouService.ClientEvents;
 /// <remarks>
 /// <para>
 /// This class is the single source of truth for base client event properties.
-/// It is excluded from NSwag generation (like ApiException) to avoid duplicate
-/// definitions. All derived events generated via NSwag will inherit from this class.
+/// All derived events generated via NSwag will inherit from this class.
 /// </para>
 /// <para>
 /// Implements IBannouEvent for uniform event handling in message taps.

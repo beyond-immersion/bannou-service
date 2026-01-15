@@ -1,12 +1,6 @@
-// =============================================================================
-// Base Service Event
-// Single source of truth for all service-to-service events.
-// Excluded from NSwag generation - derived events inherit from this manually.
-// =============================================================================
-
 using System.Text.Json.Serialization;
 
-namespace BeyondImmersion.BannouService.Events;
+namespace BeyondImmersion.Bannou.Core;
 
 /// <summary>
 /// Base class for all service-to-service events via RabbitMQ pub/sub.
@@ -15,8 +9,7 @@ namespace BeyondImmersion.BannouService.Events;
 /// <remarks>
 /// <para>
 /// This class is the single source of truth for base service event properties.
-/// It is excluded from NSwag generation (like ApiException) to avoid duplicate
-/// definitions. All derived events generated via NSwag will inherit from this class.
+/// All derived events generated via NSwag will inherit from this class.
 /// </para>
 /// <para>
 /// Implements IBannouEvent for uniform event handling in message taps.

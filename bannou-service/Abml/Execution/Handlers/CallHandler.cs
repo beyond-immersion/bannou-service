@@ -127,7 +127,7 @@ public sealed class CallHandler : IActionHandler
         var baseFlowName = dotIndex >= 0 ? flowName[(dotIndex + 1)..] : flowName;
 
         // Find path from root to target document
-        var path = FindImportPath(root, target, []);
+        var path = FindImportPath((LoadedDocument)root, (LoadedDocument)target, []);
         if (path == null)
         {
             // Target not reachable from root - return as-is and let it fail
