@@ -152,28 +152,32 @@ public sealed class StrideBannouAssetLoader : IAssetLoader, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public Task<Material?> LoadMaterialAsync(
+    public async Task<Material?> LoadMaterialAsync(
         string bundleId,
         string assetId,
         string? variantId = null,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Placeholder for future async implementation
+
         // Materials are typically embedded in models, not loaded separately
         // Return null for now - could be extended if needed
-        return Task.FromResult<Material?>(null);
+        return null;
     }
 
     /// <inheritdoc/>
-    public Task<byte[]?> GetThumbnailAsync(
+    public async Task<byte[]?> GetThumbnailAsync(
         string bundleId,
         string assetId,
         int width,
         int height,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Placeholder for future async implementation
+
         // Thumbnail generation not implemented yet
         // Would require off-screen rendering of the asset
-        return Task.FromResult<byte[]?>(null);
+        return null;
     }
 
     /// <inheritdoc/>

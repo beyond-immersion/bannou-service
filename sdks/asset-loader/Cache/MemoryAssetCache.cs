@@ -28,28 +28,32 @@ public sealed class MemoryAssetCache : IAssetCache
     }
 
     /// <inheritdoc />
-    public Task<bool> HasBundleAsync(string bundleId, string? contentHash = null, CancellationToken ct = default)
+    public async Task<bool> HasBundleAsync(string bundleId, string? contentHash = null, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
 
         if (!_entries.TryGetValue(bundleId, out var entry))
-            return Task.FromResult(false);
+            return false;
 
         if (contentHash != null && !string.Equals(entry.ContentHash, contentHash, StringComparison.OrdinalIgnoreCase))
-            return Task.FromResult(false);
+            return false;
 
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc />
-    public Task<Stream?> GetBundleStreamAsync(string bundleId, CancellationToken ct = default)
+    public async Task<Stream?> GetBundleStreamAsync(string bundleId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
 
         if (!_entries.TryGetValue(bundleId, out var entry))
         {
             Interlocked.Increment(ref _missCount);
-            return Task.FromResult<Stream?>(null);
+            return null;
         }
 
         // Update access time for LRU
@@ -57,7 +61,7 @@ public sealed class MemoryAssetCache : IAssetCache
         Interlocked.Increment(ref _hitCount);
 
         // Return a copy so the caller can dispose it independently
-        return Task.FromResult<Stream?>(new MemoryStream(entry.Data, writable: false));
+        return new MemoryStream(entry.Data, writable: false);
     }
 
     /// <inheritdoc />

@@ -37,11 +37,13 @@ public sealed class GodotAudioStreamTypeLoader : IAssetTypeLoader<AudioStream>
     }
 
     /// <inheritdoc />
-    public Task<AudioStream> LoadAsync(
+    public async Task<AudioStream> LoadAsync(
         ReadOnlyMemory<byte> data,
         BundleAssetEntry metadata,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous Godot API - placeholder for future async implementation
+
         ct.ThrowIfCancellationRequested();
 
         AudioStream stream = metadata.ContentType switch
@@ -53,7 +55,7 @@ public sealed class GodotAudioStreamTypeLoader : IAssetTypeLoader<AudioStream>
         };
 
         _debugLog?.Invoke($"Loaded AudioStream: {metadata.AssetId} ({metadata.ContentType})");
-        return Task.FromResult(stream);
+        return stream;
     }
 
     private static AudioStreamWav LoadWav(ReadOnlyMemory<byte> data, string assetId)

@@ -21,12 +21,16 @@ sdks/
 ├── server.tests/                # Server SDK tests
 ├── asset-bundler/               # Engine-agnostic asset bundling pipeline
 ├── asset-bundler.tests/         # AssetBundler tests
+├── asset-bundler-godot/         # Godot engine asset processing
+├── asset-bundler-godot.tests/   # Godot AssetBundler tests
 ├── asset-bundler-stride/        # Stride engine asset compilation
 ├── asset-bundler-stride.tests/  # Stride AssetBundler tests
 ├── asset-loader/                # Engine-agnostic asset loading and caching
 ├── asset-loader.tests/          # AssetLoader tests
 ├── asset-loader-client/         # WebSocket-based asset source (game clients)
 ├── asset-loader-client.tests/   # AssetLoader Client tests
+├── asset-loader-godot/          # Godot engine type loaders
+├── asset-loader-godot.tests/    # Godot AssetLoader tests
 ├── asset-loader-server/         # Mesh-based asset source (game servers)
 ├── asset-loader-server.tests/   # AssetLoader Server tests
 ├── asset-loader-stride/         # Stride engine type loaders
@@ -63,9 +67,11 @@ examples/
 | `client-voice/` | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
 | `asset-bundler/` | `BeyondImmersion.Bannou.AssetBundler` | Engine-agnostic asset bundling pipeline |
+| `asset-bundler-godot/` | `BeyondImmersion.Bannou.AssetBundler.Godot` | Godot engine asset processing |
 | `asset-bundler-stride/` | `BeyondImmersion.Bannou.AssetBundler.Stride` | Stride engine asset compilation |
 | `asset-loader/` | `BeyondImmersion.Bannou.AssetLoader` | Engine-agnostic asset loading and caching |
 | `asset-loader-client/` | `BeyondImmersion.Bannou.AssetLoader.Client` | WebSocket-based asset source for game clients |
+| `asset-loader-godot/` | `BeyondImmersion.Bannou.AssetLoader.Godot` | Godot engine type loaders |
 | `asset-loader-server/` | `BeyondImmersion.Bannou.AssetLoader.Server` | Mesh-based asset source for game servers |
 | `asset-loader-stride/` | `BeyondImmersion.Bannou.AssetLoader.Stride` | Stride engine type loaders |
 | `scene-composer/` | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing |
@@ -83,9 +89,11 @@ Examples:
 - `BeyondImmersion.Bannou.Client`
 - `BeyondImmersion.Bannou.Client.Voice`
 - `BeyondImmersion.Bannou.AssetBundler`
+- `BeyondImmersion.Bannou.AssetBundler.Godot`
 - `BeyondImmersion.Bannou.AssetBundler.Stride`
 - `BeyondImmersion.Bannou.AssetLoader`
 - `BeyondImmersion.Bannou.AssetLoader.Client`
+- `BeyondImmersion.Bannou.AssetLoader.Godot`
 - `BeyondImmersion.Bannou.AssetLoader.Server`
 - `BeyondImmersion.Bannou.AssetLoader.Stride`
 - `BeyondImmersion.Bannou.SceneComposer`

@@ -45,31 +45,35 @@ public sealed class FileAssetCache : IAssetCache, IDisposable
     }
 
     /// <inheritdoc />
-    public Task<bool> HasBundleAsync(string bundleId, string? contentHash = null, CancellationToken ct = default)
+    public async Task<bool> HasBundleAsync(string bundleId, string? contentHash = null, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous file check - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
 
         if (!_entries.TryGetValue(bundleId, out var entry))
-            return Task.FromResult(false);
+            return false;
 
         // If hash provided, verify it matches
         if (contentHash != null && !string.Equals(entry.ContentHash, contentHash, StringComparison.OrdinalIgnoreCase))
-            return Task.FromResult(false);
+            return false;
 
         // Verify file still exists
         var filePath = GetBundlePath(bundleId);
-        return Task.FromResult(File.Exists(filePath));
+        return File.Exists(filePath);
     }
 
     /// <inheritdoc />
-    public Task<Stream?> GetBundleStreamAsync(string bundleId, CancellationToken ct = default)
+    public async Task<Stream?> GetBundleStreamAsync(string bundleId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous file access - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
 
         if (!_entries.TryGetValue(bundleId, out var entry))
         {
             Interlocked.Increment(ref _missCount);
-            return Task.FromResult<Stream?>(null);
+            return null;
         }
 
         var filePath = GetBundlePath(bundleId);
@@ -77,7 +81,7 @@ public sealed class FileAssetCache : IAssetCache, IDisposable
         {
             _entries.TryRemove(bundleId, out _);
             Interlocked.Increment(ref _missCount);
-            return Task.FromResult<Stream?>(null);
+            return null;
         }
 
         // Update access time for LRU
@@ -86,7 +90,7 @@ public sealed class FileAssetCache : IAssetCache, IDisposable
 
         _logger?.LogDebug("Cache hit for bundle {BundleId}", bundleId);
 
-        return Task.FromResult<Stream?>(File.OpenRead(filePath));
+        return File.OpenRead(filePath);
     }
 
     /// <inheritdoc />

@@ -33,11 +33,13 @@ public sealed class GodotTexture2DTypeLoader : IAssetTypeLoader<Texture2D>
     }
 
     /// <inheritdoc />
-    public Task<Texture2D> LoadAsync(
+    public async Task<Texture2D> LoadAsync(
         ReadOnlyMemory<byte> data,
         BundleAssetEntry metadata,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous Godot API - placeholder for future async implementation
+
         ct.ThrowIfCancellationRequested();
 
         var image = new Image();
@@ -66,7 +68,7 @@ public sealed class GodotTexture2DTypeLoader : IAssetTypeLoader<Texture2D>
         var texture = ImageTexture.CreateFromImage(image);
         _debugLog?.Invoke($"Loaded Texture2D: {metadata.AssetId} ({image.GetWidth()}x{image.GetHeight()})");
 
-        return Task.FromResult<Texture2D>(texture);
+        return texture;
     }
 
     /// <inheritdoc />

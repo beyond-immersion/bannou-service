@@ -55,11 +55,13 @@ public sealed class DirectoryAssetSource : IAssetSource
     public IReadOnlyDictionary<string, string> Tags => _tags;
 
     /// <inheritdoc />
-    public Task<ExtractionResult> ExtractAsync(
+    public async Task<ExtractionResult> ExtractAsync(
         DirectoryInfo workingDir,
         IAssetTypeInferencer? typeInferencer = null,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous file operations - placeholder for future async implementation
+
         var stopwatch = Stopwatch.StartNew();
         var assets = new List<ExtractedAsset>();
         var skippedReasons = new List<string>();
@@ -118,7 +120,7 @@ public sealed class DirectoryAssetSource : IAssetSource
 
         stopwatch.Stop();
 
-        return Task.FromResult(new ExtractionResult
+        return new ExtractionResult
         {
             SourceId = _sourceId,
             Assets = assets,
@@ -127,7 +129,7 @@ public sealed class DirectoryAssetSource : IAssetSource
             SkippedCount = skippedCount,
             SkipReasons = skippedReasons.Count > 0 ? skippedReasons : null,
             Duration = stopwatch.Elapsed
-        });
+        };
     }
 
     private string ComputeDirectoryHash()

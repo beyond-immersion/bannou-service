@@ -111,11 +111,13 @@ public sealed class FileSystemAssetSource : IAssetSource
     }
 
     /// <inheritdoc />
-    public Task<BundleResolutionResult> ResolveBundlesAsync(
+    public async Task<BundleResolutionResult> ResolveBundlesAsync(
         IReadOnlyList<string> assetIds,
         IReadOnlyList<string>? excludeBundleIds = null,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         var excludeSet = excludeBundleIds?.ToHashSet() ?? new HashSet<string>();
         var resolvedBundles = new List<ResolvedBundleInfo>();
         var unresolvedAssets = new List<string>();
@@ -159,37 +161,41 @@ public sealed class FileSystemAssetSource : IAssetSource
             }
         }
 
-        return Task.FromResult(new BundleResolutionResult
+        return new BundleResolutionResult
         {
             Bundles = resolvedBundles,
             StandaloneAssets = Array.Empty<ResolvedAssetInfo>(), // Local source doesn't support standalone assets
             UnresolvedAssetIds = unresolvedAssets.Count > 0 ? unresolvedAssets : null
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<BundleDownloadInfo?> GetBundleDownloadInfoAsync(string bundleId, CancellationToken ct = default)
+    public async Task<BundleDownloadInfo?> GetBundleDownloadInfoAsync(string bundleId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
 
         if (!_bundleInfos.TryGetValue(bundleId, out var info))
-            return Task.FromResult<BundleDownloadInfo?>(null);
+            return null;
 
-        return Task.FromResult<BundleDownloadInfo?>(new BundleDownloadInfo
+        return new BundleDownloadInfo
         {
             BundleId = bundleId,
             DownloadUrl = new Uri($"file://{info.FilePath}"),
             SizeBytes = info.SizeBytes,
             AssetIds = info.AssetIds,
             ExpiresAt = DateTimeOffset.MaxValue
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<AssetDownloadInfo?> GetAssetDownloadInfoAsync(string assetId, CancellationToken ct = default)
+    public async Task<AssetDownloadInfo?> GetAssetDownloadInfoAsync(string assetId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Placeholder for future async implementation
+
         // FileSystemAssetSource doesn't support standalone assets
-        return Task.FromResult<AssetDownloadInfo?>(null);
+        return null;
     }
 
     /// <summary>

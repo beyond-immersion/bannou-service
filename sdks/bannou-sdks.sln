@@ -111,6 +111,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.AssetLoader.Godot", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.AssetLoader.Godot.Tests", "asset-loader-godot.tests\Bannou.AssetLoader.Godot.Tests.csproj", "{8AA4FB5D-AAA0-4B97-B781-7FCD5A21428B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "asset-bundler-godot", "asset-bundler-godot", "{01CC78F3-84F0-C1E2-D2FA-7A85DB6CBE83}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.AssetBundler.Godot", "asset-bundler-godot\Bannou.AssetBundler.Godot.csproj", "{91152B72-26DF-4788-9201-7E06D9F833E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -493,6 +497,18 @@ Global
 		{8AA4FB5D-AAA0-4B97-B781-7FCD5A21428B}.Release|x64.Build.0 = Release|Any CPU
 		{8AA4FB5D-AAA0-4B97-B781-7FCD5A21428B}.Release|x86.ActiveCfg = Release|Any CPU
 		{8AA4FB5D-AAA0-4B97-B781-7FCD5A21428B}.Release|x86.Build.0 = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|x64.Build.0 = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Debug|x86.Build.0 = Debug|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|x64.ActiveCfg = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|x64.Build.0 = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|x86.ActiveCfg = Release|Any CPU
+		{91152B72-26DF-4788-9201-7E06D9F833E6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -542,5 +558,6 @@ Global
 		{C6C094DE-09E3-4A02-A183-DE3C483B0080} = {B05B5CE2-2322-CFEB-4E9B-3AC78EFB5261}
 		{6A3E1CBA-EF23-41B7-AC7A-0A6493EEA500} = {B8FC2A8E-9D17-52CC-67D4-B83ACF9E402E}
 		{8AA4FB5D-AAA0-4B97-B781-7FCD5A21428B} = {B8FC2A8E-9D17-52CC-67D4-B83ACF9E402E}
+		{91152B72-26DF-4788-9201-7E06D9F833E6} = {01CC78F3-84F0-C1E2-D2FA-7A85DB6CBE83}
 	EndGlobalSection
 EndGlobal

@@ -83,11 +83,13 @@ public sealed class HttpAssetSource : IAssetSource
     }
 
     /// <inheritdoc />
-    public Task<BundleResolutionResult> ResolveBundlesAsync(
+    public async Task<BundleResolutionResult> ResolveBundlesAsync(
         IReadOnlyList<string> assetIds,
         IReadOnlyList<string>? excludeBundleIds = null,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         var excludeSet = excludeBundleIds?.ToHashSet() ?? new HashSet<string>();
         var resolvedBundles = new List<ResolvedBundleInfo>();
         var standaloneAssets = new List<ResolvedAssetInfo>();
@@ -147,25 +149,29 @@ public sealed class HttpAssetSource : IAssetSource
             }
         }
 
-        return Task.FromResult(new BundleResolutionResult
+        return new BundleResolutionResult
         {
             Bundles = resolvedBundles,
             StandaloneAssets = standaloneAssets,
             UnresolvedAssetIds = unresolvedAssets.Count > 0 ? unresolvedAssets : null
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<BundleDownloadInfo?> GetBundleDownloadInfoAsync(string bundleId, CancellationToken ct = default)
+    public async Task<BundleDownloadInfo?> GetBundleDownloadInfoAsync(string bundleId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(bundleId);
-        return Task.FromResult(_bundleInfos.TryGetValue(bundleId, out var info) ? info : null);
+        return _bundleInfos.TryGetValue(bundleId, out var info) ? info : null;
     }
 
     /// <inheritdoc />
-    public Task<AssetDownloadInfo?> GetAssetDownloadInfoAsync(string assetId, CancellationToken ct = default)
+    public async Task<AssetDownloadInfo?> GetAssetDownloadInfoAsync(string assetId, CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous in-memory lookup - placeholder for future async implementation
+
         ArgumentException.ThrowIfNullOrEmpty(assetId);
-        return Task.FromResult(_assetInfos.TryGetValue(assetId, out var info) ? info : null);
+        return _assetInfos.TryGetValue(assetId, out var info) ? info : null;
     }
 }

@@ -33,11 +33,13 @@ public sealed class GodotMeshTypeLoader : IAssetTypeLoader<Mesh>
     }
 
     /// <inheritdoc />
-    public Task<Mesh> LoadAsync(
+    public async Task<Mesh> LoadAsync(
         ReadOnlyMemory<byte> data,
         BundleAssetEntry metadata,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Synchronous Godot API - placeholder for future async implementation
+
         ct.ThrowIfCancellationRequested();
 
         var gltfDoc = new GltfDocument();
@@ -63,7 +65,7 @@ public sealed class GodotMeshTypeLoader : IAssetTypeLoader<Mesh>
             throw new InvalidOperationException($"No mesh found in glTF '{metadata.AssetId}'");
 
         _debugLog?.Invoke($"Loaded Mesh: {metadata.AssetId}");
-        return Task.FromResult(mesh);
+        return mesh;
     }
 
     private static Mesh? ExtractFirstMesh(Node node)

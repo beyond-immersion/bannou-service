@@ -166,16 +166,18 @@ public sealed class GodotBannouAssetLoader : Loaders.IAssetLoader, IAsyncDisposa
     }
 
     /// <inheritdoc/>
-    public Task<byte[]?> GetThumbnailAsync(
+    public async Task<byte[]?> GetThumbnailAsync(
         string bundleId,
         string assetId,
         int width,
         int height,
         CancellationToken ct = default)
     {
+        await Task.CompletedTask; // Placeholder for future async implementation
+
         // Thumbnail generation not implemented yet
         // Would require off-screen rendering of the asset
-        return Task.FromResult<byte[]?>(null);
+        return null;
     }
 
     /// <inheritdoc/>
