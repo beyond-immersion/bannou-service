@@ -6,6 +6,7 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 
 | Package | Purpose | Target |
 |---------|---------|--------|
+| `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) | All SDKs, server plugins |
 | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients | Game clients |
 | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients | Game servers, internal services |
 | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling | Game clients with voice |
@@ -38,6 +39,59 @@ Are you building a scene editor?
 │
 └─ No → You don't need the SceneComposer packages
 ```
+
+---
+
+## Core SDK
+
+**Package**: `BeyondImmersion.Bannou.Core`
+
+Foundation library providing shared types used across all Bannou SDKs and server plugins.
+
+### Features
+
+- **BannouJson**: Centralized JSON serialization with consistent settings (case-insensitive properties, enum string serialization, null value omission)
+- **ApiException**: Typed exception classes for API error handling with status codes, headers, and response bodies
+- **Base Event Types**: `BaseClientEvent` and `BaseServiceEvent` for event-driven communication
+- **IBannouEvent**: Common interface for all Bannou events
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.Core
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.Core;
+
+// JSON serialization with Bannou conventions
+var json = BannouJson.Serialize(myObject);
+var obj = BannouJson.Deserialize<MyType>(json);
+
+// Extension methods
+var json = myObject.ToJson();
+var obj = jsonString.FromJson<MyType>();
+
+// Apply Bannou settings to existing options
+var options = new JsonSerializerOptions();
+BannouJson.ApplyBannouSettings(options);
+```
+
+### JSON Serialization Settings
+
+BannouJson provides these consistent settings:
+- **Case-insensitive properties**: Accepts `firstName`, `FirstName`, or `FIRSTNAME`
+- **Enum string serialization**: Enums serialize as strings, not integers
+- **Null value omission**: Null properties are omitted from JSON output
+
+### When to Use
+
+The Core SDK is automatically included as a dependency of Client and Server SDKs. You typically don't need to reference it directly unless you're:
+- Building a custom SDK that needs Bannou's shared types
+- Working on server plugins that need BannouJson or ApiException
+- Creating custom event types that extend BaseClientEvent or BaseServiceEvent
 
 ---
 
@@ -552,6 +606,7 @@ If you're **developing or extending** the Bannou SDKs themselves (not just consu
 
 ## Further Reading
 
+- [Core SDK README](../../sdks/core/README.md) - Shared types documentation
 - [Client SDK README](../../sdks/client/README.md) - Full client SDK documentation
 - [Server SDK README](../../sdks/server/README.md) - Full server SDK documentation
 - [Voice SDK README](../../sdks/client-voice/README.md) - Voice SDK documentation

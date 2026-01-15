@@ -11,6 +11,8 @@ sdks/
 ├── bannou-sdks.sln              # SDK solution file (separate from server)
 ├── SDK_VERSION                  # Shared version number for all SDK packages
 ├── CONVENTIONS.md               # This file - SDK naming conventions
+├── core/                        # Shared types (BannouJson, ApiException, base events)
+├── core.tests/                  # Core library tests
 ├── client/                      # Core client SDK
 ├── client.tests/                # Client SDK tests
 ├── client-voice/                # Voice chat extension
@@ -48,6 +50,7 @@ examples/
 
 | Directory | PackageId | Description |
 |-----------|-----------|-------------|
+| `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) |
 | `client/` | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
 | `client-voice/` | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
@@ -64,6 +67,7 @@ BeyondImmersion.Bannou.{Feature}[.{SubFeature}]
 ```
 
 Examples:
+- `BeyondImmersion.Bannou.Core`
 - `BeyondImmersion.Bannou.Client`
 - `BeyondImmersion.Bannou.Client.Voice`
 - `BeyondImmersion.Bannou.AssetBundler`
