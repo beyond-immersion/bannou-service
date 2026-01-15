@@ -36,13 +36,13 @@ public class StrideCompilerOptionsTests
     }
 
     [Fact]
-    public void TextureCompression_DefaultsToNone()
+    public void TextureCompression_DefaultsToBC7()
     {
         // Arrange
         var options = new StrideCompilerOptions();
 
-        // Assert
-        Assert.Equal(StrideTextureCompression.None, options.TextureCompression);
+        // Assert - BC7 provides good quality/compression trade-off for desktop platforms
+        Assert.Equal(StrideTextureCompression.BC7, options.TextureCompression);
     }
 
     [Theory]

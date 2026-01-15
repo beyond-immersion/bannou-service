@@ -28,7 +28,7 @@ public class RawAssetProcessorTests : IDisposable
             Directory.Delete(_tempDir, recursive: true);
     }
 
-    private ExtractedAsset CreateExtractedAsset(string filename, byte[] content, AssetType assetType = AssetType.Other)
+    private ExtractedAsset CreateExtractedAsset(string filename, byte[] content, AssetType assetType = AssetType.Other, string? contentType = null)
     {
         var filePath = Path.Combine(_tempDir, filename);
         var dir = Path.GetDirectoryName(filePath);
@@ -44,7 +44,7 @@ public class RawAssetProcessorTests : IDisposable
             RelativePath = filename,
             AssetType = assetType,
             SizeBytes = content.Length,
-            ContentType = "application/octet-stream"
+            ContentType = contentType // null allows inference
         };
     }
 
@@ -74,7 +74,7 @@ public class RawAssetProcessorTests : IDisposable
         // Arrange
         var processor = RawAssetProcessor.Instance;
         var content = Encoding.UTF8.GetBytes("Hello, World!");
-        var asset = CreateExtractedAsset("hello.txt", content);
+        var asset = CreateExtractedAsset("hello.json", content);
 
         // Act
         var result = await processor.ProcessAsync(
@@ -87,7 +87,7 @@ public class RawAssetProcessorTests : IDisposable
 
         var processed = result[asset.AssetId];
         Assert.Equal(asset.AssetId, processed.AssetId);
-        Assert.Equal("hello.txt", processed.Filename);
+        Assert.Equal("hello.json", processed.Filename);
         Assert.Equal(content, processed.Data.ToArray());
     }
 
@@ -97,7 +97,7 @@ public class RawAssetProcessorTests : IDisposable
         // Arrange
         var processor = RawAssetProcessor.Instance;
         var content = Encoding.UTF8.GetBytes("Hash test content");
-        var asset = CreateExtractedAsset("hash.txt", content);
+        var asset = CreateExtractedAsset("hash.json", content);
         var expectedHash = Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
 
         // Act
@@ -177,7 +177,7 @@ public class RawAssetProcessorTests : IDisposable
     {
         // Arrange
         var processor = RawAssetProcessor.Instance;
-        var asset = CreateExtractedAsset("simple.txt", new byte[] { 1 });
+        var asset = CreateExtractedAsset("simple.bin", new byte[] { 1 });
 
         // Act
         var result = await processor.ProcessAsync(
@@ -193,7 +193,7 @@ public class RawAssetProcessorTests : IDisposable
     {
         // Arrange
         var processor = RawAssetProcessor.Instance;
-        var asset = CreateExtractedAsset("simple.txt", new byte[] { 1 });
+        var asset = CreateExtractedAsset("simple.bin", new byte[] { 1 });
 
         // Act
         var result = await processor.ProcessAsync(
@@ -209,7 +209,7 @@ public class RawAssetProcessorTests : IDisposable
     {
         // Arrange
         var processor = RawAssetProcessor.Instance;
-        var asset = CreateExtractedAsset("cancel.txt", new byte[] { 1, 2, 3 });
+        var asset = CreateExtractedAsset("cancel.bin", new byte[] { 1, 2, 3 });
 
         var cts = new CancellationTokenSource();
         cts.Cancel();

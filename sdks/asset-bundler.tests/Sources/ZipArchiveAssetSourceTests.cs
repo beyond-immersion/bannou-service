@@ -43,8 +43,8 @@ public class ZipArchiveAssetSourceTests : IDisposable
     [Fact]
     public void Constructor_ValidZip_SetsProperties()
     {
-        // Arrange
-        var zipPath = CreateZip("test", ("file.txt", "content"u8.ToArray()));
+        // Arrange (use .json which passes the filter)
+        var zipPath = CreateZip("test", ("file.json", "content"u8.ToArray()));
         var zipFile = new FileInfo(zipPath);
 
         // Act
@@ -64,9 +64,9 @@ public class ZipArchiveAssetSourceTests : IDisposable
     [Fact]
     public async Task ExtractAsync_SingleFile_ExtractsCorrectly()
     {
-        // Arrange
-        var content = Encoding.UTF8.GetBytes("Hello from ZIP!");
-        var zipPath = CreateZip("single", ("hello.txt", content));
+        // Arrange (use .json which passes the filter)
+        var content = Encoding.UTF8.GetBytes("{\"message\": \"Hello from ZIP!\"}");
+        var zipPath = CreateZip("single", ("hello.json", content));
 
         var source = new ZipArchiveAssetSource(
             new FileInfo(zipPath),
@@ -76,9 +76,8 @@ public class ZipArchiveAssetSourceTests : IDisposable
         var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
 
         // Assert
-        Assert.True(result.Success);
         Assert.Single(result.Assets);
-        Assert.Equal("hello.txt", result.Assets[0].Filename);
+        Assert.Equal("hello.json", result.Assets[0].Filename);
         Assert.True(File.Exists(result.Assets[0].FilePath));
         Assert.Equal(content, File.ReadAllBytes(result.Assets[0].FilePath));
     }
@@ -138,7 +137,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task ExtractAsync_EmptyZip_ReturnsEmptyResult()
+    public async Task ExtractAsync_EmptyZip_ReturnsEmptyAssets()
     {
         // Arrange
         var zipPath = Path.Combine(_tempDir, "empty.zip");
@@ -155,21 +154,20 @@ public class ZipArchiveAssetSourceTests : IDisposable
         var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
 
         // Assert
-        Assert.True(result.Success);
         Assert.Empty(result.Assets);
     }
 
     [Fact]
     public async Task ExtractAsync_SkipsDirectoryEntries()
     {
-        // Arrange
+        // Arrange (use .json which passes the filter)
         var zipPath = Path.Combine(_tempDir, "withdirs.zip");
         using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
         {
             // Directory entry (ends with /)
             archive.CreateEntry("folder/");
             // Actual file
-            var entry = archive.CreateEntry("folder/file.txt");
+            var entry = archive.CreateEntry("folder/file.json");
             using var stream = entry.Open();
             stream.Write("content"u8);
         }
@@ -188,9 +186,9 @@ public class ZipArchiveAssetSourceTests : IDisposable
     [Fact]
     public void ContentHash_ComputedFromFileContent()
     {
-        // Arrange
-        var zipPath1 = CreateZip("zip1", ("file.txt", "content1"u8.ToArray()));
-        var zipPath2 = CreateZip("zip2", ("file.txt", "content2"u8.ToArray()));
+        // Arrange (use .json which passes the filter)
+        var zipPath1 = CreateZip("zip1", ("file.json", "content1"u8.ToArray()));
+        var zipPath2 = CreateZip("zip2", ("file.json", "content2"u8.ToArray()));
 
         var source1 = new ZipArchiveAssetSource(new FileInfo(zipPath1), "s1", "S1", "1.0");
         var source2 = new ZipArchiveAssetSource(new FileInfo(zipPath2), "s2", "S2", "1.0");
@@ -223,8 +221,8 @@ public class ZipArchiveAssetSourceTests : IDisposable
     [Fact]
     public async Task ExtractAsync_CancellationRequested_ThrowsOperationCanceled()
     {
-        // Arrange
-        var zipPath = CreateZip("cancel", ("file.txt", "content"u8.ToArray()));
+        // Arrange (use .json which passes the filter)
+        var zipPath = CreateZip("cancel", ("file.json", "content"u8.ToArray()));
         var source = new ZipArchiveAssetSource(
             new FileInfo(zipPath),
             "cancel", "Cancel", "1.0");
@@ -240,8 +238,8 @@ public class ZipArchiveAssetSourceTests : IDisposable
     [Fact]
     public void Tags_CanBeProvided()
     {
-        // Arrange
-        var zipPath = CreateZip("tagged", ("file.txt", "content"u8.ToArray()));
+        // Arrange (use .json which passes the filter)
+        var zipPath = CreateZip("tagged", ("file.json", "content"u8.ToArray()));
         var tags = new Dictionary<string, string>
         {
             ["vendor"] = "synty",

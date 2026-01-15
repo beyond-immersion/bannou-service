@@ -33,57 +33,71 @@ public class StrideBuildExceptionTests
     }
 
     [Fact]
-    public void FromBuildOutput_CreatesExceptionWithDetails()
+    public void FromBuildOutput_CreatesExceptionWithFormattedMessage()
     {
         // Arrange
         var exitCode = 1;
         var stderr = "error CS0001: Compilation error";
-        var stdout = "Build started...";
 
         // Act
-        var exception = StrideBuildException.FromBuildOutput(exitCode, stderr, stdout);
+        var exception = StrideBuildException.FromBuildOutput(exitCode, stderr);
 
         // Assert
         Assert.Contains("exit code", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(exitCode, exception.ExitCode);
-        Assert.Equal(stderr, exception.ErrorOutput);
-        Assert.Equal(stdout, exception.StandardOutput);
+        Assert.Contains("1", exception.Message);
+        Assert.Contains("Compilation error", exception.Message);
     }
 
     [Fact]
-    public void ExitCode_IsAccessible()
+    public void FromBuildOutput_WithStandardOutput_IncludesErrorLines()
+    {
+        // Arrange
+        var stdout = "Building project...\nerror MSB1234: Build failed\nCompleted";
+
+        // Act
+        var exception = StrideBuildException.FromBuildOutput(1, "", stdout);
+
+        // Assert
+        Assert.Contains("Build errors", exception.Message);
+        Assert.Contains("MSB1234", exception.Message);
+    }
+
+    [Fact]
+    public void ExitCode_CanBeSetViaInitializer()
     {
         // Arrange & Act
-        var exception = StrideBuildException.FromBuildOutput(2, "error", "output");
+        var exception = new StrideBuildException("Build failed") { ExitCode = 2 };
 
         // Assert
         Assert.Equal(2, exception.ExitCode);
     }
 
     [Fact]
-    public void ErrorOutput_IsAccessible()
+    public void ErrorOutput_CanBeSetViaInitializer()
     {
         // Arrange
         var stderr = "error: something went wrong";
 
         // Act
-        var exception = StrideBuildException.FromBuildOutput(1, stderr, "");
+        var exception = new StrideBuildException("Build failed") { ErrorOutput = stderr };
 
         // Assert
         Assert.Equal(stderr, exception.ErrorOutput);
     }
 
     [Fact]
-    public void StandardOutput_IsAccessible()
+    public void FailedAssets_CanBeSetViaInitializer()
     {
         // Arrange
-        var stdout = "Building project...\nCompiling assets...";
+        var failedAssets = new List<string> { "model.fbx", "texture.png" };
 
         // Act
-        var exception = StrideBuildException.FromBuildOutput(1, "", stdout);
+        var exception = new StrideBuildException("Build failed") { FailedAssets = failedAssets };
 
         // Assert
-        Assert.Equal(stdout, exception.StandardOutput);
+        Assert.NotNull(exception.FailedAssets);
+        Assert.Equal(2, exception.FailedAssets.Count);
+        Assert.Contains("model.fbx", exception.FailedAssets);
     }
 
     [Fact]

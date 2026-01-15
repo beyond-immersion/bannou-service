@@ -33,7 +33,7 @@ public class DirectoryAssetSourceTests : IDisposable
     public void Constructor_ValidDirectory_SetsProperties()
     {
         // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "test.txt"), "content");
+        File.WriteAllBytes(Path.Combine(_sourceDir, "test.png"), new byte[] { 1, 2, 3 });
         var dir = new DirectoryInfo(_sourceDir);
 
         // Act
@@ -53,9 +53,9 @@ public class DirectoryAssetSourceTests : IDisposable
     [Fact]
     public async Task ExtractAsync_SingleFile_ExtractsCorrectly()
     {
-        // Arrange
-        var content = "Hello, World!";
-        File.WriteAllText(Path.Combine(_sourceDir, "hello.txt"), content);
+        // Arrange (use .json which passes the filter, unlike .txt)
+        var content = "{\"hello\": \"world\"}";
+        File.WriteAllText(Path.Combine(_sourceDir, "hello.json"), content);
 
         var source = new DirectoryAssetSource(
             new DirectoryInfo(_sourceDir),
@@ -65,9 +65,8 @@ public class DirectoryAssetSourceTests : IDisposable
         var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
 
         // Assert
-        Assert.True(result.Success);
         Assert.Single(result.Assets);
-        Assert.Equal("hello.txt", result.Assets[0].Filename);
+        Assert.Equal("hello.json", result.Assets[0].Filename);
         Assert.True(File.Exists(result.Assets[0].FilePath));
         Assert.Equal(content, File.ReadAllText(result.Assets[0].FilePath));
     }
@@ -121,7 +120,7 @@ public class DirectoryAssetSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task ExtractAsync_EmptyDirectory_ReturnsEmptyResult()
+    public async Task ExtractAsync_EmptyDirectory_ReturnsEmptyAssets()
     {
         // Arrange
         var source = new DirectoryAssetSource(
@@ -132,22 +131,21 @@ public class DirectoryAssetSourceTests : IDisposable
         var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
 
         // Assert
-        Assert.True(result.Success);
         Assert.Empty(result.Assets);
     }
 
     [Fact]
     public void ContentHash_ChangesWhenFileChanges()
     {
-        // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "file.txt"), "original");
+        // Arrange (use .json which passes the filter)
+        File.WriteAllText(Path.Combine(_sourceDir, "file.json"), "original");
         var dir = new DirectoryInfo(_sourceDir);
 
         var source1 = new DirectoryAssetSource(dir, "test", "Test", "1.0");
         var hash1 = source1.ContentHash;
 
         // Modify file
-        File.WriteAllText(Path.Combine(_sourceDir, "file.txt"), "modified");
+        File.WriteAllText(Path.Combine(_sourceDir, "file.json"), "modified");
         var source2 = new DirectoryAssetSource(dir, "test", "Test", "1.0");
         var hash2 = source2.ContentHash;
 
@@ -159,7 +157,7 @@ public class DirectoryAssetSourceTests : IDisposable
     public void Tags_EmptyByDefault()
     {
         // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "file.txt"), "content");
+        File.WriteAllBytes(Path.Combine(_sourceDir, "file.png"), new byte[] { 1 });
 
         // Act
         var source = new DirectoryAssetSource(
@@ -175,7 +173,7 @@ public class DirectoryAssetSourceTests : IDisposable
     public void Tags_CanBeProvided()
     {
         // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "file.txt"), "content");
+        File.WriteAllBytes(Path.Combine(_sourceDir, "file.png"), new byte[] { 1 });
         var tags = new Dictionary<string, string>
         {
             ["vendor"] = "synty",
@@ -197,7 +195,7 @@ public class DirectoryAssetSourceTests : IDisposable
     public async Task ExtractAsync_CancellationRequested_ThrowsOperationCanceled()
     {
         // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "file.txt"), "content");
+        File.WriteAllBytes(Path.Combine(_sourceDir, "file.png"), new byte[] { 1 });
         var source = new DirectoryAssetSource(
             new DirectoryInfo(_sourceDir),
             "test", "Test", "1.0");
@@ -213,9 +211,9 @@ public class DirectoryAssetSourceTests : IDisposable
     [Fact]
     public async Task ExtractAsync_GeneratesUniqueAssetIds()
     {
-        // Arrange
-        File.WriteAllText(Path.Combine(_sourceDir, "file1.txt"), "a");
-        File.WriteAllText(Path.Combine(_sourceDir, "file2.txt"), "b");
+        // Arrange (use .json which passes the filter)
+        File.WriteAllText(Path.Combine(_sourceDir, "file1.json"), "a");
+        File.WriteAllText(Path.Combine(_sourceDir, "file2.json"), "b");
 
         var source = new DirectoryAssetSource(
             new DirectoryInfo(_sourceDir),

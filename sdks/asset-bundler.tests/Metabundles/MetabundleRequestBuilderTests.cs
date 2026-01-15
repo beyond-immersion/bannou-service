@@ -127,17 +127,17 @@ public class MetabundleRequestBuilderTests
         var builder = new MetabundleRequestBuilder()
             .WithId("realmed")
             .AddSourceBundle("bundle-1")
-            .WithRealm(Realm.Private);
+            .WithRealm("private");
 
         // Act
         var request = builder.Build();
 
         // Assert
-        Assert.Equal(Realm.Private, request.Realm);
+        Assert.Equal("private", request.Realm);
     }
 
     [Fact]
-    public void Build_DefaultRealm_IsShared()
+    public void Build_DefaultRealm_IsNull()
     {
         // Arrange
         var builder = new MetabundleRequestBuilder()
@@ -148,7 +148,7 @@ public class MetabundleRequestBuilderTests
         var request = builder.Build();
 
         // Assert
-        Assert.Equal(Realm.Shared, request.Realm);
+        Assert.Null(request.Realm);
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class MetabundleRequestBuilderTests
             .AddStandaloneAsset("a1")
             .WithVersion("1.0.0")
             .WithOwner("owner")
-            .WithRealm(Realm.Private)
+            .WithRealm("private")
             .WithAssetFilter(new[] { "filter1" })
             .Build();
 
@@ -213,7 +213,7 @@ public class MetabundleRequestBuilderTests
         Assert.Single(request.StandaloneAssetIds);
         Assert.Equal("1.0.0", request.Version);
         Assert.Equal("owner", request.Owner);
-        Assert.Equal(Realm.Private, request.Realm);
+        Assert.Equal("private", request.Realm);
         Assert.NotNull(request.AssetFilter);
         Assert.Single(request.AssetFilter);
     }
