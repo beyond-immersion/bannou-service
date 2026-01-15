@@ -454,7 +454,7 @@ public class Serialization : IClassFixture<CollectionFixture>
     {
         // Test deserialization when JSON doesn't contain Roles property
         // (simulates data from external sources or older serialized formats)
-        var json = """{"AccountId":"test-account","SessionId":"test-session"}""";
+        var json = """{"AccountId":"00000000-0000-0000-0000-000000000001","SessionId":"00000000-0000-0000-0000-000000000002"}""";
 
         var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.BannouSerializerConfig);
         Assert.NotNull(deserialized);
