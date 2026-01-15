@@ -61,7 +61,7 @@ public sealed class BannouUploader : IAsyncDisposable
         if (!string.IsNullOrEmpty(_options.ServiceToken))
         {
             // Service token auth - direct WebSocket connection
-            var wsUrl = ToWebSocketUrl(_options.ServerUrl);
+            var wsUrl = UrlConverter.ToWebSocketUrl(_options.ServerUrl);
             result = await _client.ConnectWithTokenAsync(wsUrl, _options.ServiceToken, cancellationToken: ct);
         }
         else if (!string.IsNullOrEmpty(_options.Email) && !string.IsNullOrEmpty(_options.Password))
@@ -217,7 +217,7 @@ public sealed class BannouUploader : IAsyncDisposable
         if (_client == null)
             throw new InvalidOperationException("Client not initialized");
 
-        var httpUrl = ToHttpUrl(_options.ServerUrl);
+        var httpUrl = UrlConverter.ToHttpUrl(_options.ServerUrl);
         var loginUrl = httpUrl.TrimEnd('/') + "/auth/login";
 
         _logger?.LogDebug("Performing manual HTTP login at {LoginUrl}", loginUrl);
@@ -245,7 +245,7 @@ public sealed class BannouUploader : IAsyncDisposable
             _logger?.LogDebug("Manual login successful, connecting WebSocket with token");
 
             // Convert HTTP URL to WebSocket URL and connect
-            var wsUrl = ToWebSocketUrl(_options.ServerUrl);
+            var wsUrl = UrlConverter.ToWebSocketUrl(_options.ServerUrl);
 
             return await _client.ConnectWithTokenAsync(
                 wsUrl,
@@ -366,20 +366,6 @@ public sealed class BannouUploader : IAsyncDisposable
                 _logger?.LogDebug("Applied header: {HeaderKey}={HeaderValue}", header.Key, header.Value);
             }
         }
-    }
-
-    private static string ToWebSocketUrl(string url)
-    {
-        return url
-            .Replace("https://", "wss://", StringComparison.OrdinalIgnoreCase)
-            .Replace("http://", "ws://", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string ToHttpUrl(string url)
-    {
-        return url
-            .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
-            .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

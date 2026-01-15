@@ -216,4 +216,265 @@ public class DefaultTypeInferencerTests
     }
 
     #endregion
+
+    #region Clone Tests
+
+    [Fact]
+    public void Clone_CreatesIndependentCopy()
+    {
+        var original = new DefaultTypeInferencer();
+        var clone = original.Clone();
+
+        Assert.NotSame(original, clone);
+    }
+
+    [Fact]
+    public void Clone_PreservesExcludedExtensions()
+    {
+        var original = new DefaultTypeInferencer();
+        original.ExcludeExtension(".custom");
+
+        var clone = original.Clone();
+
+        // Both should exclude .custom
+        Assert.False(original.ShouldExtract("file.custom"));
+        Assert.False(clone.ShouldExtract("file.custom"));
+    }
+
+    [Fact]
+    public void Clone_ModificationsAreIndependent()
+    {
+        var original = new DefaultTypeInferencer();
+        var clone = original.Clone();
+
+        // Modify clone only
+        clone.ExcludeExtension(".cloneonly");
+
+        // Original should not be affected
+        Assert.True(original.ShouldExtract("file.cloneonly"));
+        Assert.False(clone.ShouldExtract("file.cloneonly"));
+    }
+
+    #endregion
+
+    #region ExcludeExtension Tests
+
+    [Fact]
+    public void ExcludeExtension_AddsNewExclusion()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        // By default, .xyz should be allowed
+        Assert.True(inferencer.ShouldExtract("file.xyz"));
+
+        // Exclude it
+        inferencer.ExcludeExtension(".xyz");
+
+        Assert.False(inferencer.ShouldExtract("file.xyz"));
+    }
+
+    [Fact]
+    public void ExcludeExtension_CaseInsensitive()
+    {
+        var inferencer = new DefaultTypeInferencer();
+        inferencer.ExcludeExtension(".XYZ");
+
+        Assert.False(inferencer.ShouldExtract("file.xyz"));
+        Assert.False(inferencer.ShouldExtract("file.XYZ"));
+        Assert.False(inferencer.ShouldExtract("FILE.Xyz"));
+    }
+
+    [Fact]
+    public void ExcludeExtension_ReturnsThisForChaining()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        var result = inferencer
+            .ExcludeExtension(".a")
+            .ExcludeExtension(".b")
+            .ExcludeExtension(".c");
+
+        Assert.Same(inferencer, result);
+        Assert.False(inferencer.ShouldExtract("file.a"));
+        Assert.False(inferencer.ShouldExtract("file.b"));
+        Assert.False(inferencer.ShouldExtract("file.c"));
+    }
+
+    #endregion
+
+    #region ExcludeDirectory Tests
+
+    [Fact]
+    public void ExcludeDirectory_AddsNewExclusion()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        // By default, /custom/ should be allowed
+        Assert.True(inferencer.ShouldExtract("custom/file.fbx"));
+
+        // Exclude it
+        inferencer.ExcludeDirectory("custom");
+
+        Assert.False(inferencer.ShouldExtract("custom/file.fbx"));
+    }
+
+    [Fact]
+    public void ExcludeDirectory_MatchesAnywhereInPath()
+    {
+        var inferencer = new DefaultTypeInferencer();
+        inferencer.ExcludeDirectory("excluded");
+
+        Assert.False(inferencer.ShouldExtract("excluded/file.fbx"));
+        Assert.False(inferencer.ShouldExtract("root/excluded/file.fbx"));
+        Assert.False(inferencer.ShouldExtract("a/b/excluded/c/file.fbx"));
+    }
+
+    [Fact]
+    public void ExcludeDirectory_CaseInsensitive()
+    {
+        var inferencer = new DefaultTypeInferencer();
+        inferencer.ExcludeDirectory("EXCLUDED");
+
+        Assert.False(inferencer.ShouldExtract("excluded/file.fbx"));
+        Assert.False(inferencer.ShouldExtract("EXCLUDED/file.fbx"));
+        Assert.False(inferencer.ShouldExtract("Excluded/file.fbx"));
+    }
+
+    [Fact]
+    public void ExcludeDirectory_ReturnsThisForChaining()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        var result = inferencer
+            .ExcludeDirectory("dir1")
+            .ExcludeDirectory("dir2");
+
+        Assert.Same(inferencer, result);
+        Assert.False(inferencer.ShouldExtract("dir1/file.fbx"));
+        Assert.False(inferencer.ShouldExtract("dir2/file.fbx"));
+    }
+
+    #endregion
+
+    #region RegisterCategoryFilter Tests
+
+    [Fact]
+    public void RegisterCategoryFilter_AppliesFilterForCategory()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        // Register filter that only allows .png files for "textures" category
+        inferencer.RegisterCategoryFilter("textures", path => path.EndsWith(".png"));
+
+        // Without category, both are allowed
+        Assert.True(inferencer.ShouldExtract("file.png"));
+        Assert.True(inferencer.ShouldExtract("file.fbx"));
+
+        // With category, filter applies
+        Assert.True(inferencer.ShouldExtract("file.png", "textures"));
+        Assert.False(inferencer.ShouldExtract("file.fbx", "textures"));
+    }
+
+    [Fact]
+    public void RegisterCategoryFilter_CaseInsensitiveCategoryName()
+    {
+        var inferencer = new DefaultTypeInferencer();
+        inferencer.RegisterCategoryFilter("MODELS", path => path.EndsWith(".fbx"));
+
+        Assert.True(inferencer.ShouldExtract("file.fbx", "models"));
+        Assert.True(inferencer.ShouldExtract("file.fbx", "MODELS"));
+        Assert.True(inferencer.ShouldExtract("file.fbx", "Models"));
+    }
+
+    [Fact]
+    public void RegisterCategoryFilter_StillAppliesDefaultExclusions()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        // Register permissive filter
+        inferencer.RegisterCategoryFilter("all", _ => true);
+
+        // Default exclusions still apply first (Unity .meta files)
+        Assert.False(inferencer.ShouldExtract("file.meta", "all"));
+    }
+
+    [Fact]
+    public void RegisterCategoryFilter_MultipleCategories()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        // Predicates match directory segments (with or without leading slash)
+        inferencer.RegisterCategoryFilter("models", path => path.Contains("fbx/") || path.StartsWith("fbx/"));
+        inferencer.RegisterCategoryFilter("textures", path => path.Contains("textures/") || path.StartsWith("textures/"));
+
+        Assert.True(inferencer.ShouldExtract("fbx/model.fbx", "models"));
+        Assert.False(inferencer.ShouldExtract("textures/diffuse.png", "models"));
+
+        Assert.True(inferencer.ShouldExtract("textures/diffuse.png", "textures"));
+        Assert.False(inferencer.ShouldExtract("fbx/model.fbx", "textures"));
+    }
+
+    [Fact]
+    public void RegisterCategoryFilter_ReturnsThisForChaining()
+    {
+        var inferencer = new DefaultTypeInferencer();
+
+        var result = inferencer
+            .RegisterCategoryFilter("a", _ => true)
+            .RegisterCategoryFilter("b", _ => false);
+
+        Assert.Same(inferencer, result);
+    }
+
+    #endregion
+
+    #region InferTextureType Directory Pattern Tests
+
+    [Theory]
+    [InlineData("ui/button.png", TextureType.UI)]
+    [InlineData("assets/ui/panel.png", TextureType.UI)]
+    [InlineData("hud/health_bar.png", TextureType.UI)]
+    [InlineData("sprites/icon.png", TextureType.UI)]
+    [InlineData("interface/menu.png", TextureType.UI)]
+    public void InferTextureType_DirectoryPatterns_ReturnsUI(string path, TextureType expected)
+    {
+        Assert.Equal(expected, _inferencer.InferTextureType(path));
+    }
+
+    [Theory]
+    [InlineData("textures/wall.png", TextureType.Color)]
+    [InlineData("models/character/skin.png", TextureType.Color)]
+    public void InferTextureType_NonUIDirectories_ReturnsColor(string path, TextureType expected)
+    {
+        Assert.Equal(expected, _inferencer.InferTextureType(path));
+    }
+
+    #endregion
+
+    #region Combined Customization Tests
+
+    [Fact]
+    public void CombinedCustomization_WorksTogether()
+    {
+        var inferencer = new DefaultTypeInferencer()
+            .ExcludeExtension(".custom")
+            .ExcludeDirectory("excluded")
+            .RegisterCategoryFilter("polygon", path =>
+                path.Contains("fbx/") || path.Contains("textures/"));
+
+        // Extension exclusion
+        Assert.False(inferencer.ShouldExtract("file.custom"));
+
+        // Directory exclusion
+        Assert.False(inferencer.ShouldExtract("excluded/file.fbx"));
+
+        // Category filter (without category)
+        Assert.True(inferencer.ShouldExtract("random/file.fbx"));
+
+        // Category filter (with category)
+        Assert.True(inferencer.ShouldExtract("fbx/file.fbx", "polygon"));
+        Assert.False(inferencer.ShouldExtract("random/file.fbx", "polygon"));
+    }
+
+    #endregion
 }
