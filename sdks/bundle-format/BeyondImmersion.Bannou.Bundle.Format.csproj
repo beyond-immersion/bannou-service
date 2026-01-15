@@ -28,4 +28,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Core SDK for shared JSON serialization settings -->
+    <ProjectReference Include="../core/BeyondImmersion.Bannou.Core.csproj" />
+  </ItemGroup>
+
 </Project>

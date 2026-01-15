@@ -231,14 +231,13 @@
         <member name="T:BeyondImmersion.Bannou.Bundle.Format.BundleJson">
             <summary>
             JSON serialization helper for bundle format code.
-            This provides consistent JSON serialization settings compatible with
-            Bannou's service-side serialization (BannouJson).
+            Delegates to BannouJson for consistent serialization settings.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Options">
+        <member name="P:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Options">
             <summary>
             Standard JSON serializer options for bundle format.
-            Matches the configuration used by Bannou services.
+            Uses BannouJson.Options as the single source of truth.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.Bundle.Format.BundleJson.Deserialize``1(System.String)">
