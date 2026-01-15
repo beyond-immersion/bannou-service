@@ -904,7 +904,8 @@ public class AssetTestHandler : BaseHttpTestHandler
                 BundleId = bundleAId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
-                Compression = CompressionType.None
+                Compression = CompressionType.None,
+                Realm = Asset.Realm.Arcadia
             });
             if (bundleA.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle A");
@@ -916,7 +917,8 @@ public class AssetTestHandler : BaseHttpTestHandler
                 BundleId = bundleBId,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset2.AssetId, asset3.AssetId },
-                Compression = CompressionType.None
+                Compression = CompressionType.None,
+                Realm = Asset.Realm.Arcadia
             });
             if (bundleB.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle B");
@@ -1052,7 +1054,8 @@ public class AssetTestHandler : BaseHttpTestHandler
                 BundleId = bundle1Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
-                Compression = CompressionType.None
+                Compression = CompressionType.None,
+                Realm = Asset.Realm.Arcadia
             });
             if (bundle1.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 1");
@@ -1064,7 +1067,8 @@ public class AssetTestHandler : BaseHttpTestHandler
                 BundleId = bundle2Id,
                 Version = "1.0.0",
                 AssetIds = new List<string> { asset.AssetId },
-                Compression = CompressionType.None
+                Compression = CompressionType.None,
+                Realm = Asset.Realm.Arcadia
             });
             if (bundle2.Status == CreateBundleResponseStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 2");
