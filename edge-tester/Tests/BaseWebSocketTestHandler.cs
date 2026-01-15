@@ -223,9 +223,17 @@ public abstract class BaseWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Parses a JsonElement response into a JsonObject.
+    /// Handles empty success responses (default JsonElement) gracefully.
     /// </summary>
     protected static JsonObject? ParseResponse(JsonElement response)
     {
+        // Handle empty success responses (200 OK with no body)
+        // default(JsonElement) has ValueKind = Undefined
+        if (response.ValueKind == JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
         return JsonNode.Parse(response.GetRawText())?.AsObject();
     }
 
