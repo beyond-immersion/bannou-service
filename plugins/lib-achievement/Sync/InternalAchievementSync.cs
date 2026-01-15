@@ -22,7 +22,7 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// </summary>
     public InternalAchievementSync(ILogger<InternalAchievementSync> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     /// <inheritdoc />

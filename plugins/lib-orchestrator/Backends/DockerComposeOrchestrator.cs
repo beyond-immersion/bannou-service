@@ -66,7 +66,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
     public DockerComposeOrchestrator(OrchestratorServiceConfiguration config, ILogger<DockerComposeOrchestrator> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
 
         // Create Docker client using default configuration
         // Linux: unix:///var/run/docker.sock

@@ -119,7 +119,7 @@ public class ConnectionState
     /// </summary>
     public ConnectionState(string sessionId)
     {
-        SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
+        SessionId = sessionId;
         ConnectedAt = DateTimeOffset.UtcNow;
         LastActivity = ConnectedAt;
         ServiceMappings = new Dictionary<string, Guid>();

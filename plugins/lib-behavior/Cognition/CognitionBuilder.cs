@@ -43,7 +43,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
         IActionHandlerRegistry? handlerRegistry = null,
         ILogger<CognitionBuilder>? logger = null)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _registry = registry;
         _handlerRegistry = handlerRegistry;
         _logger = logger;
     }

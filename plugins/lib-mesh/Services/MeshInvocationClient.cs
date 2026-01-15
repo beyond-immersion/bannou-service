@@ -35,8 +35,8 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         IMeshRedisManager redisManager,
         ILogger<MeshInvocationClient> logger)
     {
-        _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _redisManager = redisManager;
+        _logger = logger;
 
         // Create HTTP client for outbound requests
         var handler = new SocketsHttpHandler

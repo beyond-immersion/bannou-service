@@ -21,7 +21,7 @@ public sealed class DeltaProcessor
     /// </summary>
     public DeltaProcessor(ILogger<DeltaProcessor> logger, int maxPatchOperations = 1000)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _maxPatchOperations = maxPatchOperations;
     }
 

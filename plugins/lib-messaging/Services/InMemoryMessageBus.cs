@@ -24,7 +24,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
     public InMemoryMessageBus(ILogger<InMemoryMessageBus> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _logger.LogWarning("InMemoryMessageBus initialized - messages will NOT be persisted or delivered across processes");
     }
 

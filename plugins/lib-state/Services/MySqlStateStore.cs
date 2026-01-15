@@ -37,9 +37,9 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         string storeName,
         ILogger<MySqlStateStore<TValue>> logger)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _storeName = storeName ?? throw new ArgumentNullException(nameof(storeName));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _options = options;
+        _storeName = storeName;
+        _logger = logger;
     }
 
     /// <summary>

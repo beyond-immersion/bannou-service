@@ -45,9 +45,9 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         ILogger<RabbitMQMessageSubscriber> logger,
         MessagingServiceConfiguration configuration)
     {
-        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _connectionManager = connectionManager;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>

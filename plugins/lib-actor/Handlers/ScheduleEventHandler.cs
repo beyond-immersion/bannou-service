@@ -60,8 +60,8 @@ public sealed class ScheduleEventHandler : IActionHandler
         IScheduledEventManager scheduledEventManager,
         ILogger<ScheduleEventHandler> logger)
     {
-        _scheduledEventManager = scheduledEventManager ?? throw new ArgumentNullException(nameof(scheduledEventManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _scheduledEventManager = scheduledEventManager;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -262,8 +262,8 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
         IMessageBus messageBus,
         ILogger<ScheduledEventManager> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
 
         // Check for events to fire every 100ms
         _timer = new Timer(CheckEvents, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));

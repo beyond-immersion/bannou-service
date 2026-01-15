@@ -37,7 +37,7 @@ public sealed class QueryMemoryHandler : IActionHandler
     /// <param name="memoryStore">Memory store for querying memories.</param>
     public QueryMemoryHandler(IMemoryStore memoryStore)
     {
-        _memoryStore = memoryStore ?? throw new ArgumentNullException(nameof(memoryStore));
+        _memoryStore = memoryStore;
     }
 
     /// <inheritdoc/>

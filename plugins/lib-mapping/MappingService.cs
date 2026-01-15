@@ -93,13 +93,13 @@ public partial class MappingService : IMappingService
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _assetClient = assetClient;
+        _httpClientFactory = httpClientFactory;
 
         // Register event handlers via partial class (MappingServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);

@@ -28,7 +28,7 @@ public sealed class DocumentExecutorFactory : IDocumentExecutorFactory
     /// <param name="serviceProvider">Service provider for resolving handlers.</param>
     public DocumentExecutorFactory(IServiceProvider serviceProvider)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _serviceProvider = serviceProvider;
     }
 
     /// <inheritdoc/>

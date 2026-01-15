@@ -25,8 +25,8 @@ public class SteamAchievementSync : IPlatformAchievementSync
         AchievementServiceConfiguration configuration,
         ILogger<SteamAchievementSync> logger)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc />

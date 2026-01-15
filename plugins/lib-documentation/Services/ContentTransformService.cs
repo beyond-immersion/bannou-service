@@ -32,7 +32,7 @@ public partial class ContentTransformService : IContentTransformService
     /// </summary>
     public ContentTransformService(ILogger<ContentTransformService> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
 
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)

@@ -29,10 +29,10 @@ public class SessionService : ISessionService
         AuthServiceConfiguration configuration,
         ILogger<SessionService> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _messageBus = messageBus;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

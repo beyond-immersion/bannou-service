@@ -32,10 +32,10 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         BehaviorServiceConfiguration configuration,
         ILogger<BehaviorBundleManager> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _assetClient = assetClient;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>

@@ -53,9 +53,9 @@ public sealed class RabbitMQMessageBus : IMessageBus
         MessageRetryBuffer retryBuffer,
         ILogger<RabbitMQMessageBus> logger)
     {
-        _connectionManager = connectionManager ?? throw new ArgumentNullException(nameof(connectionManager));
-        _retryBuffer = retryBuffer ?? throw new ArgumentNullException(nameof(retryBuffer));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _connectionManager = connectionManager;
+        _retryBuffer = retryBuffer;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

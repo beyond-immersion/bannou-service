@@ -22,8 +22,8 @@ public class MinioHealthCheck : IHealthCheck
     /// <param name="logger">The logger.</param>
     public MinioHealthCheck(IAssetStorageProvider storageProvider, ILogger<MinioHealthCheck> logger)
     {
-        _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _storageProvider = storageProvider;
+        _logger = logger;
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public class RedisHealthCheck : IHealthCheck
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<object>(StateStoreDefinitions.Asset);
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     /// <summary>
@@ -124,9 +124,9 @@ public class ProcessingPoolHealthCheck : IHealthCheck
         AssetServiceConfiguration configuration,
         ILogger<ProcessingPoolHealthCheck> logger)
     {
-        _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _orchestratorClient = orchestratorClient;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>

@@ -109,8 +109,8 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         StateStoreFactoryConfiguration configuration,
         ILoggerFactory loggerFactory)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _configuration = configuration;
+        _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<StateStoreFactory>();
     }
 

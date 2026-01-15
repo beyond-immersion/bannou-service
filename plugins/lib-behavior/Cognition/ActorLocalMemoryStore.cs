@@ -51,9 +51,9 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration configuration,
         ILogger<ActorLocalMemoryStore> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

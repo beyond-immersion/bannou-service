@@ -38,7 +38,7 @@ public sealed class DialogueResolver : IDialogueResolver
         IExternalDialogueLoader loader,
         ILogger<DialogueResolver>? logger = null)
     {
-        _loader = loader ?? throw new ArgumentNullException(nameof(loader));
+        _loader = loader;
         _logger = logger;
     }
 

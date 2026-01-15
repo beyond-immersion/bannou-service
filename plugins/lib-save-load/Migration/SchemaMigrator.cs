@@ -26,8 +26,8 @@ public sealed class SchemaMigrator
         IQueryableStateStore<SaveSchemaDefinition> schemaStore,
         int maxMigrationSteps = 10)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _schemaStore = schemaStore ?? throw new ArgumentNullException(nameof(schemaStore));
+        _logger = logger;
+        _schemaStore = schemaStore;
         _maxMigrationSteps = maxMigrationSteps;
     }
 

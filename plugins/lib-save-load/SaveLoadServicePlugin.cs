@@ -38,6 +38,7 @@ public class SaveLoadServicePlugin : BaseBannouPlugin
 
         // Register helper services for improved testability
         services.AddScoped<IVersionDataLoader, VersionDataLoader>();
+        services.AddScoped<IVersionCleanupManager, VersionCleanupManager>();
 
         // Register background workers
         services.AddHostedService<SaveUploadWorker>();

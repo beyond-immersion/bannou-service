@@ -46,10 +46,10 @@ public sealed class PoolHealthMonitor : BackgroundService
         ILogger<PoolHealthMonitor> logger,
         ActorServiceConfiguration configuration)
     {
-        _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _poolManager = poolManager;
+        _messageBus = messageBus;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc/>

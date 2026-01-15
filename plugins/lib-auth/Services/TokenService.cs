@@ -38,12 +38,12 @@ public class TokenService : ITokenService
         IMessageBus messageBus,
         ILogger<TokenService> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _subscriptionClient = subscriptionClient ?? throw new ArgumentNullException(nameof(subscriptionClient));
-        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _subscriptionClient = subscriptionClient;
+        _sessionService = sessionService;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

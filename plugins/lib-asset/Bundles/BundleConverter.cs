@@ -25,7 +25,7 @@ public sealed class BundleConverter : IBundleConverter
         string? cacheDirectory = null,
         TimeSpan? cacheTtl = null)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _cacheDirectory = cacheDirectory ?? Path.Combine(Path.GetTempPath(), "bannou-zip-cache");
         _cacheTtl = cacheTtl ?? TimeSpan.FromHours(24);
 

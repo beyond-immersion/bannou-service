@@ -49,10 +49,10 @@ public partial class RealmHistoryService : IRealmHistoryService
         RealmHistoryServiceConfiguration configuration,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }

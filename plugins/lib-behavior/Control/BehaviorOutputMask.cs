@@ -37,7 +37,7 @@ public sealed class BehaviorOutputMask : IBehaviorOutputMask
     /// <param name="gates">The control gate registry.</param>
     public BehaviorOutputMask(IControlGateRegistry gates)
     {
-        _gates = gates ?? throw new ArgumentNullException(nameof(gates));
+        _gates = gates;
     }
 
     /// <inheritdoc/>

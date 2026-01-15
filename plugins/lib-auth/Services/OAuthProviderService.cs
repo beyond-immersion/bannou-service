@@ -45,12 +45,12 @@ public class OAuthProviderService : IOAuthProviderService
         IMessageBus messageBus,
         ILogger<OAuthProviderService> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _accountClient = accountClient;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

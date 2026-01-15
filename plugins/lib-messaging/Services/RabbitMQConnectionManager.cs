@@ -42,8 +42,8 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         ILogger<RabbitMQConnectionManager> logger,
         MessagingServiceConfiguration configuration)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>

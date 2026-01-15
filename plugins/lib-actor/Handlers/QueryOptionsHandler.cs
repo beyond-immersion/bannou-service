@@ -47,8 +47,8 @@ public sealed class QueryOptionsHandler : IActionHandler
         IActorClient actorClient,
         ILogger<QueryOptionsHandler> logger)
     {
-        _actorClient = actorClient ?? throw new ArgumentNullException(nameof(actorClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _actorClient = actorClient;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

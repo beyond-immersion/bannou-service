@@ -84,11 +84,11 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
         ILogger<MinioStorageProvider> logger,
         IMessageBus messageBus)
     {
-        _minioClient = minioClient ?? throw new ArgumentNullException(nameof(minioClient));
-        _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _minioClient = minioClient;
+        _s3Client = s3Client;
+        _options = options.Value;
+        _logger = logger;
+        _messageBus = messageBus;
     }
 
     /// <inheritdoc />

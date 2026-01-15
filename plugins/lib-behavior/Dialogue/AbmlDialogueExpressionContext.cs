@@ -34,7 +34,7 @@ public sealed class AbmlDialogueExpressionContext : IDialogueExpressionContext
         IVariableScope scope,
         IExpressionEvaluator? evaluator = null)
     {
-        _scope = scope ?? throw new ArgumentNullException(nameof(scope));
+        _scope = scope;
         _evaluator = evaluator;
     }
 

@@ -34,10 +34,10 @@ public sealed class RedisStateStore<TValue> : IStateStore<TValue>
         TimeSpan? defaultTtl,
         ILogger<RedisStateStore<TValue>> logger)
     {
-        _database = database ?? throw new ArgumentNullException(nameof(database));
-        _keyPrefix = keyPrefix ?? throw new ArgumentNullException(nameof(keyPrefix));
+        _database = database;
+        _keyPrefix = keyPrefix;
         _defaultTtl = defaultTtl;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     private string GetFullKey(string key) => $"{_keyPrefix}:{key}";

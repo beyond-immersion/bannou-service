@@ -46,10 +46,10 @@ public sealed class NativeEventConsumerBackend : IHostedService
         IServiceProvider serviceProvider,
         ILogger<NativeEventConsumerBackend> logger)
     {
-        _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-        _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _subscriber = subscriber;
+        _eventConsumer = eventConsumer;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

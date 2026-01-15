@@ -49,7 +49,7 @@ public sealed class StateUpdateHandler : IActionHandler
     /// <param name="logger">Logger instance.</param>
     public StateUpdateHandler(ILogger<StateUpdateHandler> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
 
     /// <inheritdoc/>

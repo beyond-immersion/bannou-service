@@ -45,8 +45,8 @@ public sealed class EndEncounterHandler : IActionHandler
         IActorRegistry actorRegistry,
         ILogger<EndEncounterHandler> logger)
     {
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _actorRegistry = actorRegistry;
+        _logger = logger;
     }
 
     /// <inheritdoc/>

@@ -27,8 +27,8 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
         StateStoreFactoryConfiguration configuration,
         ILogger<RedisDistributedLockProvider> logger)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration;
+        _logger = logger;
     }
 
     private async Task<IDatabase> EnsureInitializedAsync()

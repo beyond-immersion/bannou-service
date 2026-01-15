@@ -29,9 +29,9 @@ public class RepositorySyncSchedulerService : BackgroundService
         ILogger<RepositorySyncSchedulerService> logger,
         DocumentationServiceConfiguration configuration)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>

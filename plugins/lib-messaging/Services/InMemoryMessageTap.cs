@@ -34,8 +34,8 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         InMemoryMessageBus messageBus,
         ILogger<InMemoryMessageTap> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
         _logger.LogWarning("InMemoryMessageTap initialized - taps will only work in-process");
     }
 

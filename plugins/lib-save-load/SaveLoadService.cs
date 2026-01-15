@@ -48,6 +48,7 @@ public partial class SaveLoadService : ISaveLoadService
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IVersionDataLoader _versionDataLoader;
+    private readonly IVersionCleanupManager _versionCleanupManager;
 
     public SaveLoadService(
         IMessageBus messageBus,
@@ -56,15 +57,17 @@ public partial class SaveLoadService : ISaveLoadService
         SaveLoadServiceConfiguration configuration,
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory,
-        IVersionDataLoader versionDataLoader)
+        IVersionDataLoader versionDataLoader,
+        IVersionCleanupManager versionCleanupManager)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _versionDataLoader = versionDataLoader ?? throw new ArgumentNullException(nameof(versionDataLoader));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _assetClient = assetClient;
+        _httpClientFactory = httpClientFactory;
+        _versionDataLoader = versionDataLoader;
+        _versionCleanupManager = versionCleanupManager;
     }
 
     /// <summary>
@@ -599,7 +602,7 @@ public partial class SaveLoadService : ISaveLoadService
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
             // Rolling cleanup if needed
-            var versionsCleanedUp = await PerformRollingCleanupAsync(slot, versionStore, hotCacheStore, cancellationToken);
+            var versionsCleanedUp = await _versionCleanupManager.PerformRollingCleanupAsync(slot, versionStore, hotCacheStore, cancellationToken);
 
             _logger.LogInformation(
                 "Saved version {Version} to slot {SlotId}, size {Size} bytes (compressed {CompressedSize}), upload pending: {Pending}",
@@ -653,55 +656,6 @@ public partial class SaveLoadService : ISaveLoadService
             SaveCategory.STATE_SNAPSHOT => 4,  // Lowest priority
             _ => 2
         };
-    }
-
-    /// <summary>
-    /// Performs rolling cleanup of old versions based on slot's max version count.
-    /// </summary>
-    private async Task<int> PerformRollingCleanupAsync(
-        SaveSlotMetadata slot,
-        IStateStore<SaveVersionManifest> versionStore,
-        IStateStore<HotSaveEntry> hotCacheStore,
-        CancellationToken cancellationToken)
-    {
-        if (slot.VersionCount <= slot.MaxVersions)
-        {
-            return 0;
-        }
-
-        var cleanedUp = 0;
-        var targetCleanup = slot.VersionCount - slot.MaxVersions;
-
-        // Start from oldest version (1) and clean up non-pinned versions
-        for (var v = 1; v <= (slot.LatestVersion ?? 0) && cleanedUp < targetCleanup; v++)
-        {
-            var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, v);
-            var manifest = await versionStore.GetAsync(versionKey, cancellationToken);
-
-            if (manifest == null)
-            {
-                continue;
-            }
-
-            if (manifest.IsPinned)
-            {
-                // Skip pinned versions
-                continue;
-            }
-
-            // Delete version and hot cache entry
-            await versionStore.DeleteAsync(versionKey, cancellationToken);
-            var hotKey = HotSaveEntry.GetStateKey(slot.SlotId, v);
-            await hotCacheStore.DeleteAsync(hotKey, cancellationToken);
-
-            cleanedUp++;
-            slot.VersionCount--;
-            slot.TotalSizeBytes -= manifest.CompressedSizeBytes ?? manifest.SizeBytes;
-
-            _logger.LogDebug("Cleaned up version {Version} from slot {SlotId}", v, slot.SlotId);
-        }
-
-        return cleanedUp;
     }
 
     /// <summary>
@@ -2818,7 +2772,7 @@ public partial class SaveLoadService : ISaveLoadService
             await slotStore.SaveAsync(slotKey, slot, cancellationToken: cancellationToken);
 
             // Run rolling cleanup
-            await CleanupOldVersionsAsync(slot, cancellationToken);
+            await _versionCleanupManager.CleanupOldVersionsAsync(slot, cancellationToken);
 
             _logger.LogInformation(
                 "Promoted version {SourceVersion} to version {NewVersion} in slot {SlotId}",
@@ -3211,101 +3165,6 @@ public partial class SaveLoadService : ISaveLoadService
             cancellationToken);
 
         return matchingSlots.FirstOrDefault();
-    }
-
-    /// <summary>
-    /// Performs rolling cleanup of old versions based on slot configuration.
-    /// Pinned versions are excluded from cleanup.
-    /// </summary>
-    private async Task CleanupOldVersionsAsync(SaveSlotMetadata slot, CancellationToken cancellationToken)
-    {
-        if (slot.VersionCount <= slot.MaxVersions)
-        {
-            return;
-        }
-
-        var versionQueryStore = _stateStoreFactory.GetQueryableStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-        var versions = await versionQueryStore.QueryAsync(
-            v => v.SlotId == slot.SlotId,
-            cancellationToken);
-
-        // Get unpinned versions sorted by version number (oldest first)
-        var unpinnedVersions = versions
-            .Where(v => !v.IsPinned)
-            .OrderBy(v => v.VersionNumber)
-            .ToList();
-
-        var pinnedCount = versions.Count(v => v.IsPinned);
-        var targetUnpinnedCount = Math.Max(0, slot.MaxVersions - pinnedCount);
-        var versionsToDelete = unpinnedVersions.Take(unpinnedVersions.Count - targetUnpinnedCount).ToList();
-
-        if (versionsToDelete.Count == 0)
-        {
-            return;
-        }
-
-        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(_configuration.VersionManifestStoreName);
-        var hotStore = _stateStoreFactory.GetStore<HotSaveEntry>(_configuration.HotCacheStoreName);
-        long bytesFreed = 0;
-
-        foreach (var version in versionsToDelete)
-        {
-            try
-            {
-                // Delete asset if exists
-                if (!string.IsNullOrEmpty(version.AssetId) && Guid.TryParse(version.AssetId, out var assetGuid))
-                {
-                    try
-                    {
-                        await _assetClient.DeleteAssetAsync(new DeleteAssetRequest { AssetId = assetGuid.ToString() }, cancellationToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete asset {AssetId} during cleanup", version.AssetId);
-                    }
-                }
-
-                // Delete version manifest
-                var versionKey = SaveVersionManifest.GetStateKey(slot.SlotId, version.VersionNumber);
-                await versionStore.DeleteAsync(versionKey, cancellationToken);
-
-                // Delete from hot cache
-                var hotCacheKey = HotSaveEntry.GetStateKey(slot.SlotId, version.VersionNumber);
-                await hotStore.DeleteAsync(hotCacheKey, cancellationToken);
-
-                bytesFreed += version.CompressedSizeBytes ?? version.SizeBytes;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to cleanup version {Version} in slot {SlotId}",
-                    version.VersionNumber, slot.SlotId);
-            }
-        }
-
-        // Update slot metadata
-        var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
-        slot.VersionCount -= versionsToDelete.Count;
-        slot.TotalSizeBytes -= bytesFreed;
-        slot.UpdatedAt = DateTimeOffset.UtcNow;
-        await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);
-
-        _logger.LogInformation(
-            "Rolling cleanup deleted {Count} versions from slot {SlotId}, freed {BytesFreed} bytes",
-            versionsToDelete.Count, slot.SlotId, bytesFreed);
-
-        // Publish cleanup event
-        var cleanupEvent = new CleanupCompletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            VersionsDeleted = versionsToDelete.Count,
-            SlotsDeleted = 0,
-            BytesFreed = bytesFreed
-        };
-        await _messageBus.TryPublishAsync(
-            "save-load.cleanup.completed",
-            cleanupEvent,
-            cancellationToken: cancellationToken);
     }
 
     #endregion

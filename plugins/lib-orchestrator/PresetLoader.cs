@@ -22,8 +22,8 @@ public class PresetLoader
     /// <param name="presetsDirectory">Directory containing preset YAML files. Required - from OrchestratorServiceConfiguration.</param>
     public PresetLoader(ILogger<PresetLoader> logger, string presetsDirectory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _presetsDirectory = presetsDirectory ?? throw new ArgumentNullException(nameof(presetsDirectory));
+        _logger = logger;
+        _presetsDirectory = presetsDirectory;
         _deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()

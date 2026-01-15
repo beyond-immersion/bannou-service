@@ -76,13 +76,13 @@ public partial class MatchmakingService : IMatchmakingService
         IGameSessionClient gameSessionClient,
         IPermissionClient permissionClient)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
-        _gameSessionClient = gameSessionClient ?? throw new ArgumentNullException(nameof(gameSessionClient));
-        _permissionClient = permissionClient ?? throw new ArgumentNullException(nameof(permissionClient));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _clientEventPublisher = clientEventPublisher;
+        _gameSessionClient = gameSessionClient;
+        _permissionClient = permissionClient;
 
         // Server salt from configuration - REQUIRED
         if (string.IsNullOrEmpty(configuration.ServerSalt))

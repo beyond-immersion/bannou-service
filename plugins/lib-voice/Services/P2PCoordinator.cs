@@ -23,9 +23,9 @@ public class P2PCoordinator : IP2PCoordinator
         ILogger<P2PCoordinator> logger,
         VoiceServiceConfiguration configuration)
     {
-        _endpointRegistry = endpointRegistry ?? throw new ArgumentNullException(nameof(endpointRegistry));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _endpointRegistry = endpointRegistry;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />

@@ -89,12 +89,12 @@ public partial class SceneService : ISceneService
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
-        _eventConsumer = eventConsumer ?? throw new ArgumentNullException(nameof(eventConsumer));
+        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
+        _lockProvider = lockProvider;
+        _eventConsumer = eventConsumer;
 
         // Register event consumers via partial class
         RegisterEventConsumers(_eventConsumer);

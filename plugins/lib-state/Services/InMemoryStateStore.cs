@@ -60,8 +60,8 @@ public sealed class InMemoryStateStore<TValue> : IStateStore<TValue>
         string storeName,
         ILogger<InMemoryStateStore<TValue>> logger)
     {
-        _storeName = storeName ?? throw new ArgumentNullException(nameof(storeName));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _storeName = storeName;
+        _logger = logger;
 
         // Get or create the store for this name
         _store = _allStores.GetOrAdd(storeName, _ => new ConcurrentDictionary<string, StoreEntry>());

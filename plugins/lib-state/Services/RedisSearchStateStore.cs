@@ -41,10 +41,10 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         TimeSpan? defaultTtl,
         ILogger<RedisSearchStateStore<TValue>> logger)
     {
-        _database = database ?? throw new ArgumentNullException(nameof(database));
-        _keyPrefix = keyPrefix ?? throw new ArgumentNullException(nameof(keyPrefix));
+        _database = database;
+        _keyPrefix = keyPrefix;
         _defaultTtl = defaultTtl;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
         _searchCommands = _database.FT();
         _jsonCommands = _database.JSON();
     }

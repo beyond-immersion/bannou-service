@@ -20,8 +20,8 @@ public sealed class CondCompiler : ActionCompilerBase<CondAction>
     /// <summary>Creates a new conditional compiler.</summary>
     public CondCompiler(ActionCompilerRegistry registry, StackExpressionCompiler exprCompiler)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _registry = registry;
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -89,8 +89,8 @@ public sealed class ForEachCompiler : ActionCompilerBase<ForEachAction>
     /// <summary>Creates a new for-each compiler.</summary>
     public ForEachCompiler(ActionCompilerRegistry registry, StackExpressionCompiler exprCompiler)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _registry = registry;
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>
@@ -112,7 +112,7 @@ public sealed class RepeatCompiler : ActionCompilerBase<RepeatAction>
     /// <summary>Creates a new repeat compiler.</summary>
     public RepeatCompiler(ActionCompilerRegistry registry)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _registry = registry;
     }
 
     /// <inheritdoc/>
@@ -232,7 +232,7 @@ public sealed class ReturnCompiler : ActionCompilerBase<ReturnAction>
     /// <summary>Creates a new return compiler.</summary>
     public ReturnCompiler(StackExpressionCompiler exprCompiler)
     {
-        _exprCompiler = exprCompiler ?? throw new ArgumentNullException(nameof(exprCompiler));
+        _exprCompiler = exprCompiler;
     }
 
     /// <inheritdoc/>

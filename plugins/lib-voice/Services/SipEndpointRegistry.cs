@@ -38,8 +38,8 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>(StateStoreDefinitions.Voice);
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />

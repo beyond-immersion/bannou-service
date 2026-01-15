@@ -41,9 +41,9 @@ public class KamailioClient : IKamailioClient
         ILogger<KamailioClient> logger,
         IMessageBus messageBus)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _httpClient = httpClient;
+        _logger = logger;
+        _messageBus = messageBus;
         _rpcEndpoint = $"http://{host}:{port}/RPC";
     }
 

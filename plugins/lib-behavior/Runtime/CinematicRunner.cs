@@ -53,9 +53,9 @@ public sealed class CinematicRunner : IDisposable
         IStateSync stateSync,
         ILogger<CinematicRunner>? logger = null)
     {
-        _interpreter = interpreter ?? throw new ArgumentNullException(nameof(interpreter));
-        _controlGates = controlGates ?? throw new ArgumentNullException(nameof(controlGates));
-        _stateSync = stateSync ?? throw new ArgumentNullException(nameof(stateSync));
+        _interpreter = interpreter;
+        _controlGates = controlGates;
+        _stateSync = stateSync;
         _logger = logger;
         _state = CinematicRunnerState.Idle;
     }
@@ -419,8 +419,8 @@ public sealed class CinematicStartedEventArgs : EventArgs
         IReadOnlyList<Guid> entities,
         IReadOnlySet<string>? allowBehaviorChannels)
     {
-        CinematicId = cinematicId ?? throw new ArgumentNullException(nameof(cinematicId));
-        Entities = entities ?? throw new ArgumentNullException(nameof(entities));
+        CinematicId = cinematicId;
+        Entities = entities;
         AllowBehaviorChannels = allowBehaviorChannels;
         StartedAt = DateTime.UtcNow;
     }
@@ -456,9 +456,9 @@ public sealed class CinematicCompletedEventArgs : EventArgs
         ControlHandoff handoff,
         bool wasAborted = false)
     {
-        CinematicId = cinematicId ?? throw new ArgumentNullException(nameof(cinematicId));
-        Entities = entities ?? throw new ArgumentNullException(nameof(entities));
-        Handoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
+        CinematicId = cinematicId;
+        Entities = entities;
+        Handoff = handoff;
         WasAborted = wasAborted;
         CompletedAt = DateTime.UtcNow;
     }
@@ -496,8 +496,8 @@ public sealed class ControlReturnedEventArgs : EventArgs
         ControlHandoff handoff)
     {
         EntityId = entityId;
-        CinematicId = cinematicId ?? throw new ArgumentNullException(nameof(cinematicId));
-        Handoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
+        CinematicId = cinematicId;
+        Handoff = handoff;
         ReturnedAt = DateTime.UtcNow;
     }
 

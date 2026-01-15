@@ -55,8 +55,8 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         IStateStoreFactory stateStoreFactory,
         ILogger<OrchestratorStateManager> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
     }
 
     /// <summary>

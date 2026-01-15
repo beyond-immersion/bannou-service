@@ -43,10 +43,10 @@ public sealed class HeartbeatEmitter : IDisposable
         ActorServiceConfiguration configuration,
         ILogger<HeartbeatEmitter> logger)
     {
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _actorRegistry = actorRegistry;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>

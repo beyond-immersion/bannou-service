@@ -32,8 +32,8 @@ public class MinioWebhookHandler
         ArgumentNullException.ThrowIfNull(configuration);
         _configuration = configuration;
         _stateStore = stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _messageBus = messageBus;
+        _logger = logger;
     }
 
     /// <summary>

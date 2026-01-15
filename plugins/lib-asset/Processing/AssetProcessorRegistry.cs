@@ -19,8 +19,8 @@ public sealed class AssetProcessorRegistry
         IEnumerable<IAssetProcessor> processors,
         ILogger<AssetProcessorRegistry> logger)
     {
-        _processors = processors?.ToList() ?? throw new ArgumentNullException(nameof(processors));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _processors = processors.ToList();
+        _logger = logger;
 
         _processorsByPoolType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);
         _processorsByContentType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);

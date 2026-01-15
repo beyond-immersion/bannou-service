@@ -29,11 +29,11 @@ public sealed class VersionDataLoader : IVersionDataLoader
         IHttpClientFactory httpClientFactory,
         ILogger<VersionDataLoader> logger)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _assetClient = assetClient ?? throw new ArgumentNullException(nameof(assetClient));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _stateStoreFactory = stateStoreFactory;
+        _configuration = configuration;
+        _assetClient = assetClient;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     /// <inheritdoc />

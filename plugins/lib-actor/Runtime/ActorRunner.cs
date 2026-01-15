@@ -141,19 +141,19 @@ public class ActorRunner : IActorRunner
         ILogger<ActorRunner> logger,
         object? initialState)
     {
-        ActorId = actorId ?? throw new ArgumentNullException(nameof(actorId));
-        _template = template ?? throw new ArgumentNullException(nameof(template));
+        ActorId = actorId;
+        _template = template;
         CharacterId = characterId;
-        _config = config ?? throw new ArgumentNullException(nameof(config));
-        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
-        _messageSubscriber = messageSubscriber ?? throw new ArgumentNullException(nameof(messageSubscriber));
-        _meshClient = meshClient ?? throw new ArgumentNullException(nameof(meshClient));
-        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
-        _behaviorCache = behaviorCache ?? throw new ArgumentNullException(nameof(behaviorCache));
-        _personalityCache = personalityCache ?? throw new ArgumentNullException(nameof(personalityCache));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _expressionEvaluator = expressionEvaluator ?? throw new ArgumentNullException(nameof(expressionEvaluator));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _config = config;
+        _messageBus = messageBus;
+        _messageSubscriber = messageSubscriber;
+        _meshClient = meshClient;
+        _stateStore = stateStore;
+        _behaviorCache = behaviorCache;
+        _personalityCache = personalityCache;
+        _executor = executor;
+        _expressionEvaluator = expressionEvaluator;
+        _logger = logger;
 
         // Create bounded perception queue with DropOldest behavior
         _perceptionQueue = Channel.CreateBounded<PerceptionData>(

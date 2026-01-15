@@ -39,9 +39,9 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         ILogger<AssetProcessorPoolManager> logger,
         AssetServiceConfiguration configuration)
     {
-        _stateStoreFactory = stateStoreFactory ?? throw new ArgumentNullException(nameof(stateStoreFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;
     }
 
     #region Node Registration
