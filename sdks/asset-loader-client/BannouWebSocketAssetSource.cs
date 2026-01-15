@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.AssetLoader.Abstractions;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.Asset;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.AssetLoader.Client;

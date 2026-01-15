@@ -40,8 +40,8 @@
   <ItemGroup>
     <!-- Reference core Asset Loader SDK -->
     <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
-    <!-- Reference bannou-service for generated AssetClient -->
-    <ProjectReference Include="../../bannou-service/bannou-service.csproj" />
+    <!-- Reference Server SDK for generated service clients (IAssetClient, models) -->
+    <ProjectReference Include="../server/Bannou.Server.csproj" />
   </ItemGroup>
 
 </Project>
