@@ -30,7 +30,7 @@ public sealed class BundlerPipeline
     /// <param name="source">Asset source to process.</param>
     /// <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
     /// <param name="state">State manager for incremental builds.</param>
-    /// <param name="uploader">Uploader for Bannou service (null = local only).</param>
+    /// <param name="uploader">Uploader for asset service (null = local only).</param>
     /// <param name="options">Pipeline options.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Bundle result with path and upload status.</returns>
@@ -38,7 +38,7 @@ public sealed class BundlerPipeline
         IAssetSource source,
         IAssetProcessor? processor,
         BundlerStateManager state,
-        BannouUploader? uploader,
+        IAssetUploader? uploader,
         BundlerOptions options,
         CancellationToken ct = default)
     {
@@ -156,7 +156,7 @@ public sealed class BundlerPipeline
     /// <param name="sources">Asset sources to process.</param>
     /// <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
     /// <param name="state">State manager for incremental builds.</param>
-    /// <param name="uploader">Uploader for Bannou service (null = local only).</param>
+    /// <param name="uploader">Uploader for asset service (null = local only).</param>
     /// <param name="options">Pipeline options.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Results for all sources.</returns>
@@ -164,7 +164,7 @@ public sealed class BundlerPipeline
         IAsyncEnumerable<IAssetSource> sources,
         IAssetProcessor? processor,
         BundlerStateManager state,
-        BannouUploader? uploader,
+        IAssetUploader? uploader,
         BundlerOptions options,
         CancellationToken ct = default)
     {

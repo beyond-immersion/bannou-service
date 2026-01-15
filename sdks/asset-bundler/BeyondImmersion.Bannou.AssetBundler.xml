@@ -684,26 +684,26 @@
             </summary>
             <param name="logger">Optional logger.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteAsync(BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteAsync(BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource,BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
             <summary>
             Executes the complete bundling pipeline for a single source.
             </summary>
             <param name="source">Asset source to process.</param>
             <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
             <param name="state">State manager for incremental builds.</param>
-            <param name="uploader">Uploader for Bannou service (null = local only).</param>
+            <param name="uploader">Uploader for asset service (null = local only).</param>
             <param name="options">Pipeline options.</param>
             <param name="ct">Cancellation token.</param>
             <returns>Bundle result with path and upload status.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteBatchAsync(System.Collections.Generic.IAsyncEnumerable{BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource},BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.BannouUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerPipeline.ExecuteBatchAsync(System.Collections.Generic.IAsyncEnumerable{BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetSource},BeyondImmersion.Bannou.AssetBundler.Abstractions.IAssetProcessor,BeyondImmersion.Bannou.AssetBundler.State.BundlerStateManager,BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader,BeyondImmersion.Bannou.AssetBundler.Pipeline.BundlerOptions,System.Threading.CancellationToken)">
             <summary>
             Executes the pipeline for multiple sources with parallel processing.
             </summary>
             <param name="sources">Asset sources to process.</param>
             <param name="processor">Asset processor (null = use RawAssetProcessor).</param>
             <param name="state">State manager for incremental builds.</param>
-            <param name="uploader">Uploader for Bannou service (null = local only).</param>
+            <param name="uploader">Uploader for asset service (null = local only).</param>
             <param name="options">Pipeline options.</param>
             <param name="ct">Cancellation token.</param>
             <returns>Results for all sources.</returns>
@@ -1066,6 +1066,33 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress.PercentComplete">
             <summary>Upload progress percentage (0-100).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader">
+            <summary>
+            Interface for uploading bundles to a remote asset service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader.IsConnected">
+            <summary>
+            Gets whether the uploader is connected.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader.ConnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to the asset service.
+            </summary>
+            <param name="ct">Cancellation token.</param>
+            <returns>True if connection succeeded.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Upload.IAssetUploader.UploadAsync(System.String,System.String,System.IProgress{BeyondImmersion.Bannou.AssetBundler.Upload.UploadProgress},System.Threading.CancellationToken)">
+            <summary>
+            Uploads a bundle file to the asset service.
+            </summary>
+            <param name="bundlePath">Path to the bundle file.</param>
+            <param name="bundleId">Bundle identifier.</param>
+            <param name="progress">Optional progress callback for multipart uploads.</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>Upload result with assigned IDs.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Upload.UploaderOptions">
             <summary>

@@ -12,7 +12,7 @@ namespace BeyondImmersion.Bannou.AssetBundler.Upload;
 /// Supports single-part and multipart uploads, RequiredHeaders for MinIO pre-signed URLs,
 /// and manual HTTP login for environments without auto-redirect.
 /// </summary>
-public sealed class BannouUploader : IAsyncDisposable
+public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
 {
     private readonly UploaderOptions _options;
     private readonly ILogger<BannouUploader>? _logger;
