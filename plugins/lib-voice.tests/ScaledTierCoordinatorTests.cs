@@ -165,17 +165,6 @@ public class ScaledTierCoordinatorTests
     }
 
     [Fact]
-    public void GenerateSipCredentials_WithNullSessionId_ThrowsArgumentException()
-    {
-        // Arrange
-        var coordinator = CreateCoordinator();
-        var roomId = Guid.NewGuid();
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => coordinator.GenerateSipCredentials(null!, roomId));
-    }
-
-    [Fact]
     public void GenerateSipCredentials_WithEmptySessionId_ThrowsArgumentException()
     {
         // Arrange

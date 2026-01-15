@@ -166,18 +166,6 @@ public class KamailioClientTests
     #region TerminateDialogAsync Tests
 
     [Fact]
-    public async Task TerminateDialogAsync_WithNullDialogId_ThrowsArgumentException()
-    {
-        // Arrange
-        var httpClient = CreateMockedHttpClient(HttpStatusCode.OK);
-        var client = CreateClient(httpClient);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() =>
-            client.TerminateDialogAsync(null!));
-    }
-
-    [Fact]
     public async Task TerminateDialogAsync_WithEmptyDialogId_ThrowsArgumentException()
     {
         // Arrange

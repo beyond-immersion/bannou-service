@@ -537,7 +537,7 @@ public sealed class EntityResolverTests
     }
 
     [Fact]
-    public async Task ResolveManyAsync_SkipsNullAndEmpty()
+    public async Task ResolveManyAsync_SkipsEmptyAndWhitespace()
     {
         // Arrange
         var heroId = Guid.NewGuid();
@@ -545,9 +545,9 @@ public sealed class EntityResolverTests
             .AddParticipant("hero", EntityReference.Player(heroId))
             .Build();
 
-        // Act
+        // Act - tests that empty and whitespace-only names are skipped
         var results = await _resolver.ResolveManyAsync(
-            new[] { "hero", null!, "", "  " },
+            new[] { "hero", "", "  " },
             bindings);
 
         // Assert

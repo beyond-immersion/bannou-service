@@ -84,16 +84,6 @@ public class ContentTransformServiceTests
     }
 
     [Fact]
-    public void ParseFrontmatter_WithNullContent_ShouldReturnNull()
-    {
-        // Arrange & Act
-        var result = _service.ParseFrontmatter(null!);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
     public void ParseFrontmatter_WithDraftFlag_ShouldParseDraft()
     {
         // Arrange

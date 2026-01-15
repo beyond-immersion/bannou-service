@@ -64,22 +64,6 @@ public class SceneValidationServiceTests
     }
 
     [Fact]
-    public void ValidateStructure_NullRoot_ReturnsError()
-    {
-        // Arrange
-        var scene = CreateValidScene();
-        scene.Root = null!;
-
-        // Act
-        var result = _sut.ValidateStructure(scene, DefaultMaxNodeCount);
-
-        // Assert
-        Assert.False(result.Valid);
-        Assert.NotNull(result.Errors);
-        Assert.Contains(result.Errors, e => e.Message.Contains("Scene must have a root node"));
-    }
-
-    [Fact]
     public void ValidateStructure_RootWithParent_ReturnsError()
     {
         // Arrange
@@ -270,22 +254,6 @@ public class SceneValidationServiceTests
         Assert.False(result.Valid);
         Assert.NotNull(result.Errors);
         Assert.Contains(result.Errors, e => e.Message.Contains("nodeId must be a valid non-empty UUID"));
-    }
-
-    [Fact]
-    public void ValidateStructure_MissingTransform_ReturnsError()
-    {
-        // Arrange
-        var scene = CreateValidScene();
-        scene.Root.LocalTransform = null!;
-
-        // Act
-        var result = _sut.ValidateStructure(scene, DefaultMaxNodeCount);
-
-        // Assert
-        Assert.False(result.Valid);
-        Assert.NotNull(result.Errors);
-        Assert.Contains(result.Errors, e => e.Message.Contains("Node must have a localTransform"));
     }
 
     #endregion

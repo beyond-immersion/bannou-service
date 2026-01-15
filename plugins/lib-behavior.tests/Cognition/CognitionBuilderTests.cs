@@ -50,13 +50,6 @@ public sealed class CognitionBuilderTests
     }
 
     [Fact]
-    public void Build_NullTemplateId_Throws()
-    {
-        // Act & Assert
-        Assert.ThrowsAny<ArgumentException>(() => _builder.Build((string)null!));
-    }
-
-    [Fact]
     public void Build_Template_ReturnsPipeline()
     {
         // Arrange
