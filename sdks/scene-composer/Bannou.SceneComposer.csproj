@@ -54,9 +54,4 @@
     <PackageReference Include="YamlDotNet" Version="15.1.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Reference Bannou Client SDK for shared types (Scene, SceneNode, etc.) -->
-    <ProjectReference Include="../client/Bannou.Client.csproj" />
-  </ItemGroup>
-
 </Project>

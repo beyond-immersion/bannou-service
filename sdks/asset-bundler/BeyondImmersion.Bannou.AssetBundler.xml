@@ -414,6 +414,11 @@
             <param name="ct">Cancellation token.</param>
             <returns>The created metabundle result.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleClient.ParseRealm(System.String)">
+            <summary>
+            Parses a realm string to the Realm enum.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest">
             <summary>
             Request to create a metabundle.
@@ -451,7 +456,12 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Realm">
             <summary>
-            Target realm for the metabundle.
+            Target realm for the metabundle (omega, arcadia, fantasia, shared).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.AssetBundler.Metabundles.MetabundleRequest.Description">
+            <summary>
+            Human-readable description (optional).
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Metabundles.CreateMetabundleResult">

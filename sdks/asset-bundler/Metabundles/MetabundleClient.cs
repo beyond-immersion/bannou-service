@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.AssetBundler.Upload;
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.Asset;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.AssetBundler.Metabundles;
@@ -51,8 +52,21 @@ public sealed class MetabundleClient
             request.MetabundleId,
             request.SourceBundleIds.Count);
 
-        var apiResponse = await _client.InvokeAsync<MetabundleRequest, CreateMetabundleResponse>(
-            "POST", "/bundles/metabundle/create", request, cancellationToken: ct);
+        // Convert SDK request type to generated API request type
+        var apiRequest = new CreateMetabundleRequest
+        {
+            MetabundleId = request.MetabundleId,
+            SourceBundleIds = request.SourceBundleIds.ToList(),
+            StandaloneAssetIds = request.StandaloneAssetIds?.ToList(),
+            AssetFilter = request.AssetFilter?.ToList(),
+            Version = request.Version ?? "1.0.0",
+            Owner = request.Owner ?? throw new ArgumentNullException(nameof(request), "Owner is required"),
+            Realm = ParseRealm(request.Realm),
+            Description = request.Description
+        };
+
+        var apiResponse = await _client.InvokeAsync<CreateMetabundleRequest, CreateMetabundleResponse>(
+            "POST", "/bundles/metabundle/create", apiRequest, cancellationToken: ct);
 
         if (!apiResponse.IsSuccess || apiResponse.Result == null)
         {
@@ -72,8 +86,26 @@ public sealed class MetabundleClient
         {
             MetabundleId = response.MetabundleId,
             AssetCount = response.AssetCount,
-            TotalSizeBytes = response.TotalSizeBytes,
+            TotalSizeBytes = response.SizeBytes,
             CreatedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Parses a realm string to the Realm enum.
+    /// </summary>
+    private static Realm ParseRealm(string? realm)
+    {
+        if (string.IsNullOrEmpty(realm))
+            return Realm.Omega;
+
+        return realm.ToLowerInvariant() switch
+        {
+            "omega" => Realm.Omega,
+            "arcadia" => Realm.Arcadia,
+            "fantasia" => Realm.Fantasia,
+            "shared" => Realm.Shared,
+            _ => throw new ArgumentException($"Unknown realm: {realm}", nameof(realm))
         };
     }
 }
@@ -114,9 +146,14 @@ public sealed class MetabundleRequest
     public string? Owner { get; init; }
 
     /// <summary>
-    /// Target realm for the metabundle.
+    /// Target realm for the metabundle (omega, arcadia, fantasia, shared).
     /// </summary>
     public string? Realm { get; init; }
+
+    /// <summary>
+    /// Human-readable description (optional).
+    /// </summary>
+    public string? Description { get; init; }
 }
 
 /// <summary>
@@ -143,12 +180,4 @@ public sealed class CreateMetabundleResult
     /// When the metabundle was created.
     /// </summary>
     public required DateTimeOffset CreatedAt { get; init; }
-}
-
-// Internal DTO for API response
-internal sealed class CreateMetabundleResponse
-{
-    public required string MetabundleId { get; init; }
-    public required int AssetCount { get; init; }
-    public required long TotalSizeBytes { get; init; }
 }

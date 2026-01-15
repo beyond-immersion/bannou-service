@@ -13,7 +13,7 @@ public sealed class UploadResult
     /// <summary>
     /// Upload ID from the upload request.
     /// </summary>
-    public required string UploadId { get; init; }
+    public required Guid UploadId { get; init; }
 
     /// <summary>
     /// Size of the uploaded bundle in bytes.

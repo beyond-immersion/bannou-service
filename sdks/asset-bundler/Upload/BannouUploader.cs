@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService.Asset;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.AssetBundler.Upload;
@@ -98,13 +99,12 @@ public sealed class BannouUploader : IAsyncDisposable
         // Request upload URL via WebSocket
         var uploadRequest = new BundleUploadRequest
         {
-            BundleId = bundleId,
             Filename = fileInfo.Name,
-            SizeBytes = fileInfo.Length,
+            Size = fileInfo.Length,
             Owner = _options.Owner
         };
 
-        var uploadApiResponse = await _client.InvokeAsync<BundleUploadRequest, BundleUploadResponse>(
+        var uploadApiResponse = await _client.InvokeAsync<BundleUploadRequest, UploadResponse>(
             "POST", "/bundles/upload/request", uploadRequest, cancellationToken: ct);
 
         if (!uploadApiResponse.IsSuccess || uploadApiResponse.Result == null)
@@ -129,7 +129,7 @@ public sealed class BannouUploader : IAsyncDisposable
 
         _logger?.LogDebug("Upload complete, marking upload {UploadId} as complete...", uploadResponse.UploadId);
 
-        // Complete upload via WebSocket
+        // Complete upload via WebSocket (using generated type from BeyondImmersion.BannouService.Asset)
         var completeRequest = new CompleteUploadRequest
         {
             UploadId = uploadResponse.UploadId
@@ -168,24 +168,4 @@ public sealed class BannouUploader : IAsyncDisposable
         }
         _connected = false;
     }
-}
-
-// Internal DTOs for API calls - these match the Asset service API
-internal sealed class BundleUploadRequest
-{
-    public required string BundleId { get; init; }
-    public required string Filename { get; init; }
-    public required long SizeBytes { get; init; }
-    public required string Owner { get; init; }
-}
-
-internal sealed class BundleUploadResponse
-{
-    public required string UploadId { get; init; }
-    public required string UploadUrl { get; init; }
-}
-
-internal sealed class CompleteUploadRequest
-{
-    public required string UploadId { get; init; }
 }
