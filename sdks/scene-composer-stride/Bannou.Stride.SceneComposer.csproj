@@ -56,9 +56,7 @@
   <ItemGroup>
     <!-- Reference the engine-agnostic SceneComposer SDK -->
     <ProjectReference Include="../scene-composer/Bannou.SceneComposer.csproj" />
-    <!-- Asset loader SDK for bundle downloading, caching, and loading -->
-    <ProjectReference Include="../asset-loader/Bannou.AssetLoader.csproj" />
-    <!-- Stride-specific asset type loaders -->
+    <!-- Stride-specific asset type loaders (includes asset-loader transitively) -->
     <ProjectReference Include="../asset-loader-stride/Bannou.AssetLoader.Stride.csproj" />
   </ItemGroup>
 

@@ -52,6 +52,8 @@
   <ItemGroup>
     <!-- Reference the engine-agnostic SceneComposer SDK -->
     <ProjectReference Include="../scene-composer/Bannou.SceneComposer.csproj" />
+    <!-- Reference the asset loader Godot extension for bundle-based asset loading -->
+    <ProjectReference Include="../asset-loader-godot/Bannou.AssetLoader.Godot.csproj" />
   </ItemGroup>
 
 </Project>
