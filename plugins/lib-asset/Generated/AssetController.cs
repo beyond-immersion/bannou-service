@@ -1010,14 +1010,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     "$ref": "#/$defs/AssetWithDownloadUrl",
     "$defs": {
         "AssetWithDownloadUrl": {
-            "description": "Asset metadata combined with a pre-signed download URL",
+            "description": "Asset metadata with optional pre-signed download URL",
             "type": "object",
             "additionalProperties": false,
             "required": [
                 "assetId",
                 "versionId",
-                "downloadUrl",
-                "expiresAt",
                 "size",
                 "contentHash",
                 "contentType",
@@ -1035,12 +1033,14 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "downloadUrl": {
                     "type": "string",
                     "format": "uri",
-                    "description": "Pre-signed download URL"
+                    "nullable": true,
+                    "description": "Pre-signed download URL (only populated when requested)"
                 },
                 "expiresAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the download URL expires"
+                    "nullable": true,
+                    "description": "When the download URL expires (only populated when requested)"
                 },
                 "size": {
                     "type": "integer",
@@ -3209,14 +3209,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "AssetWithDownloadUrl": {
-            "description": "Asset metadata combined with a pre-signed download URL",
+            "description": "Asset metadata with optional pre-signed download URL",
             "type": "object",
             "additionalProperties": false,
             "required": [
                 "assetId",
                 "versionId",
-                "downloadUrl",
-                "expiresAt",
                 "size",
                 "contentHash",
                 "contentType",
@@ -3234,12 +3232,14 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "downloadUrl": {
                     "type": "string",
                     "format": "uri",
-                    "description": "Pre-signed download URL"
+                    "nullable": true,
+                    "description": "Pre-signed download URL (only populated when requested)"
                 },
                 "expiresAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the download URL expires"
+                    "nullable": true,
+                    "description": "When the download URL expires (only populated when requested)"
                 },
                 "size": {
                     "type": "integer",

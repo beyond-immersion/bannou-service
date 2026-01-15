@@ -556,7 +556,7 @@ public partial class GetAssetRequest
 }
 
 /// <summary>
-/// Asset metadata combined with a pre-signed download URL
+/// Asset metadata with optional pre-signed download URL
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetWithDownloadUrl
@@ -579,20 +579,16 @@ public partial class AssetWithDownloadUrl
     public string VersionId { get; set; } = default!;
 
     /// <summary>
-    /// Pre-signed download URL
+    /// Pre-signed download URL (only populated when requested)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Uri DownloadUrl { get; set; } = default!;
+    public System.Uri? DownloadUrl { get; set; } = default!;
 
     /// <summary>
-    /// When the download URL expires
+    /// When the download URL expires (only populated when requested)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
     /// <summary>
     /// File size in bytes

@@ -2124,20 +2124,25 @@ public partial class AssetService : IAssetService
 
                 var metadata = record.ToPublicMetadata();
 
-                // Generate download URL (required by AssetWithDownloadUrl schema)
-                // When includeDownloadUrls=false, URLs are still generated for API consistency
-                // but clients can ignore them. Future optimization: use separate response type.
-                var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
-                    record.Bucket,
-                    record.StorageKey,
-                    expiration: tokenTtl).ConfigureAwait(false);
+                Uri? downloadUrl = null;
+                DateTimeOffset? expiresAt = null;
+
+                if (body.IncludeDownloadUrls == true)
+                {
+                    var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
+                        record.Bucket,
+                        record.StorageKey,
+                        expiration: tokenTtl).ConfigureAwait(false);
+                    downloadUrl = new Uri(downloadResult.DownloadUrl);
+                    expiresAt = downloadResult.ExpiresAt;
+                }
 
                 assets.Add(new AssetWithDownloadUrl
                 {
                     AssetId = record.AssetId,
                     VersionId = "latest",
-                    DownloadUrl = new Uri(downloadResult.DownloadUrl),
-                    ExpiresAt = downloadResult.ExpiresAt,
+                    DownloadUrl = downloadUrl,
+                    ExpiresAt = expiresAt,
                     Size = record.Size,
                     ContentHash = record.ContentHash,
                     ContentType = record.ContentType,

@@ -24182,7 +24182,7 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl">
             <summary>
-            Asset metadata combined with a pre-signed download URL
+            Asset metadata with optional pre-signed download URL
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.AssetId">
@@ -24197,12 +24197,12 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.DownloadUrl">
             <summary>
-            Pre-signed download URL
+            Pre-signed download URL (only populated when requested)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.ExpiresAt">
             <summary>
-            When the download URL expires
+            When the download URL expires (only populated when requested)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.AssetWithDownloadUrl.Size">

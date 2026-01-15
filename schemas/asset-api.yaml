@@ -261,60 +261,60 @@ paths:
         \    \"default\": \"latest\",\n                    \"description\": \"Version ID or 'latest'\"\n                }\n\
         \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
-        ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata combined with
-        a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"assetId\",\n                \"versionId\",\n                \"downloadUrl\"\
-        ,\n                \"expiresAt\",\n                \"size\",\n                \"contentHash\",\n                \"\
-        contentType\",\n                \"metadata\"\n            ],\n            \"properties\": {\n                \"assetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n\
-        \                },\n                \"versionId\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Version identifier for this specific asset version\"\n                },\n              \
-        \  \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n     \
-        \               \"description\": \"Pre-signed download URL\"\n                },\n                \"expiresAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the download URL expires\"\n                },\n                \"size\": {\n              \
-        \      \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
-        File size in bytes\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"contentType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n     \
-        \           },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n      \
-        \              \"description\": \"Complete asset metadata\"\n                }\n            }\n        },\n      \
-        \  \"AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
-        \     \"description\": \"Complete asset metadata including system-generated fields\",\n            \"required\": [\n\
-        \                \"assetId\",\n                \"contentHash\",\n                \"filename\",\n                \"\
-        contentType\",\n                \"size\",\n                \"assetType\",\n                \"realm\",\n          \
-        \      \"tags\",\n                \"processingStatus\",\n                \"isArchived\",\n                \"createdAt\"\
-        ,\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n   \
-        \             },\n                \"contentHash\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"SHA256 hash of file contents\"\n                },\n                \"filename\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"Original filename\"\n             \
-        \   },\n                \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"MIME content type\"\n                },\n                \"size\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n     \
-        \           },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n         \
-        \           \"description\": \"Type classification for the asset\"\n                },\n                \"realm\"\
-        : {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm the asset
-        belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n        \
-        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
-        \    \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
-        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
-        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
-        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
-        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
-        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
-        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
-        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
-        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
-        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
-        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
-        ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
-        \        }\n    }\n}"
+        ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata with optional
+        pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"assetId\",\n                \"versionId\",\n                \"size\",\n\
+        \                \"contentHash\",\n                \"contentType\",\n                \"metadata\"\n            ],\n\
+        \            \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Unique asset identifier\"\n                },\n                \"versionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Version identifier for this specific
+        asset version\"\n                },\n                \"downloadUrl\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Pre-signed download URL (only populated when requested)\"\n                },\n                \"expiresAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"When the download URL expires (only populated when requested)\"\
+        \n                },\n                \"size\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n     \
+        \           \"contentHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        SHA256 hash of file contents\"\n                },\n                \"contentType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"MIME content type\"\n                },\n                \"\
+        metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n                    \"description\": \"Complete
+        asset metadata\"\n                }\n            }\n        },\n        \"AssetMetadata\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Complete asset metadata
+        including system-generated fields\",\n            \"required\": [\n                \"assetId\",\n                \"\
+        contentHash\",\n                \"filename\",\n                \"contentType\",\n                \"size\",\n     \
+        \           \"assetType\",\n                \"realm\",\n                \"tags\",\n                \"processingStatus\"\
+        ,\n                \"isArchived\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"assetId\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Unique asset identifier\"\n                },\n                \"contentHash\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\
+        \n                },\n                \"filename\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Original filename\"\n                },\n                \"contentType\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n                },\n\
+        \                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
+        : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
+        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\"\
+        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
+        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
+        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
+        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
+        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
+        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
+        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
+        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
+        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
+        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
+        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
+        description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"omega\",\n                \"arcadia\",\n                \"fantasia\"\
+        ,\n                \"shared\"\n            ],\n            \"description\": \"Game realm the asset belongs to\"\n\
+        \        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
+        \         \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\
+        \n            ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
         latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
@@ -1157,58 +1157,58 @@ paths:
         assets with metadata\"\n                },\n                \"notFound\": {\n                    \"type\": \"array\"\
         ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
         \              \"description\": \"Asset IDs that weren't found\"\n                }\n            }\n        },\n \
-        \       \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata combined with a pre-signed download
+        \       \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata with optional pre-signed download
         URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"assetId\",\n                \"versionId\",\n                \"downloadUrl\",\n            \
-        \    \"expiresAt\",\n                \"size\",\n                \"contentHash\",\n                \"contentType\"\
-        ,\n                \"metadata\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n \
-        \                   \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n    \
-        \            },\n                \"versionId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Version identifier for this specific asset version\"\n                },\n                \"\
-        downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n          \
-        \          \"description\": \"Pre-signed download URL\"\n                },\n                \"expiresAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the download URL expires\"\n                },\n                \"size\": {\n                    \"type\"\
-        : \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\
-        \n                },\n                \"contentHash\": {\n                    \"type\": \"string\",\n            \
-        \        \"description\": \"SHA256 hash of file contents\"\n                },\n                \"contentType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\n         \
-        \       },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/AssetMetadata\",\n          \
-        \          \"description\": \"Complete asset metadata\"\n                }\n            }\n        },\n        \"\
-        AssetMetadata\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
-        description\": \"Complete asset metadata including system-generated fields\",\n            \"required\": [\n     \
-        \           \"assetId\",\n                \"contentHash\",\n                \"filename\",\n                \"contentType\"\
-        ,\n                \"size\",\n                \"assetType\",\n                \"realm\",\n                \"tags\"\
-        ,\n                \"processingStatus\",\n                \"isArchived\",\n                \"createdAt\",\n      \
-        \          \"updatedAt\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Unique asset identifier\"\n           \
-        \     },\n                \"contentHash\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"SHA256 hash of file contents\"\n                },\n                \"filename\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Original filename\"\n                },\n                \"\
-        contentType\": {\n                    \"type\": \"string\",\n                    \"description\": \"MIME content type\"\
-        \n                },\n                \"size\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n     \
-        \           \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\"\
-        : \"Type classification for the asset\"\n                },\n                \"realm\": {\n                    \"\
-        $ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm the asset belongs to\"\n           \
-        \     },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Searchable
-        tags for the asset\"\n                },\n                \"processingStatus\": {\n                    \"$ref\": \"\
-        #/$defs/ProcessingStatus\",\n                    \"description\": \"Current status of asset processing pipeline\"\n\
-        \                },\n                \"isArchived\": {\n                    \"type\": \"boolean\",\n             \
-        \       \"description\": \"Whether the asset is in cold/archival storage\",\n                    \"default\": false\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was created\"\n\
-        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
-        \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
-        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
-        \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"Realm\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n                \"arcadia\"\
-        ,\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\": \"Game
-        realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n   \
-        \         \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
+        : [\n                \"assetId\",\n                \"versionId\",\n                \"size\",\n                \"contentHash\"\
+        ,\n                \"contentType\",\n                \"metadata\"\n            ],\n            \"properties\": {\n\
+        \                \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Unique asset identifier\"\n                },\n                \"versionId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Version identifier for this specific asset version\"\n         \
+        \       },\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed download
+        URL (only populated when requested)\"\n                },\n                \"expiresAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"When the download URL expires (only populated when requested)\"\n           \
+        \     },\n                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n                \"\
+        contentHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"SHA256 hash of
+        file contents\"\n                },\n                \"contentType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"MIME content type\"\n                },\n                \"metadata\": {\n\
+        \                    \"$ref\": \"#/$defs/AssetMetadata\",\n                    \"description\": \"Complete asset metadata\"\
+        \n                }\n            }\n        },\n        \"AssetMetadata\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Complete asset metadata including system-generated
+        fields\",\n            \"required\": [\n                \"assetId\",\n                \"contentHash\",\n         \
+        \       \"filename\",\n                \"contentType\",\n                \"size\",\n                \"assetType\"\
+        ,\n                \"realm\",\n                \"tags\",\n                \"processingStatus\",\n                \"\
+        isArchived\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique asset identifier\"\n                },\n                \"contentHash\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"SHA256 hash of file contents\"\n                },\n       \
+        \         \"filename\": {\n                    \"type\": \"string\",\n                    \"description\": \"Original
+        filename\"\n                },\n                \"contentType\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"MIME content type\"\n                },\n                \"size\": {\n     \
+        \               \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"File size in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
+        ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
+        \  \"realm\": {\n                    \"$ref\": \"#/$defs/Realm\",\n                    \"description\": \"Game realm
+        the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
+        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
+        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
+        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
+        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
+        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
+        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
+        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
+        \  \"Realm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"omega\",\n        \
+        \        \"arcadia\",\n                \"fantasia\",\n                \"shared\"\n            ],\n            \"description\"\
+        : \"Game realm the asset belongs to\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\"\
         ,\n                \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n\
         \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
@@ -1538,15 +1538,12 @@ components:
           description: Version ID or 'latest'
 
     AssetWithDownloadUrl:
-      description: Asset metadata combined with a pre-signed download URL
+      description: Asset metadata with optional pre-signed download URL
       type: object
       additionalProperties: false
-      # NRT: Response properties server always sets (Rule 4)
       required:
       - assetId
       - versionId
-      - downloadUrl
-      - expiresAt
       - size
       - contentHash
       - contentType
@@ -1561,11 +1558,13 @@ components:
         downloadUrl:
           type: string
           format: uri
-          description: Pre-signed download URL
+          nullable: true
+          description: Pre-signed download URL (only populated when requested)
         expiresAt:
           type: string
           format: date-time
-          description: When the download URL expires
+          nullable: true
+          description: When the download URL expires (only populated when requested)
         size:
           type: integer
           format: int64
