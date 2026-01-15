@@ -29,7 +29,6 @@ public partial class SpeciesService : ISpeciesService
     private readonly ICharacterClient _characterClient;
     private readonly IRealmClient _realmClient;
 
-    private const string STATE_STORE = "species-statestore";
     private const string SPECIES_KEY_PREFIX = "species:";
     private const string CODE_INDEX_PREFIX = "code-index:";
     private const string REALM_INDEX_PREFIX = "realm-index:";
@@ -128,7 +127,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Getting species by ID: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -158,7 +157,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Getting species by code: {Code}", body.Code);
 
             var codeIndexKey = BuildCodeIndexKey(body.Code);
-            var speciesId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+            var speciesId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(speciesId))
             {
@@ -167,7 +166,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var speciesKey = BuildSpeciesKey(speciesId);
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -197,7 +196,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
                 body.Category, body.IsPlayable);
 
-            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
+            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
 
             if (allSpeciesIds == null || allSpeciesIds.Count == 0)
             {
@@ -279,7 +278,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
-            var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken);
+            var speciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken);
 
             if (speciesIds == null || speciesIds.Count == 0)
             {
@@ -349,7 +348,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Check if code already exists
             var codeIndexKey = BuildCodeIndexKey(code);
-            var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
             if (!string.IsNullOrEmpty(existingId))
             {
@@ -399,13 +398,13 @@ public partial class SpeciesService : ISpeciesService
 
             // Save the model
             var speciesKey = BuildSpeciesKey(speciesId.ToString());
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Update code index
-            await _stateStoreFactory.GetStore<string>(STATE_STORE).SaveAsync(codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).SaveAsync(codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
 
             // Update all-species list
-            var allSpeciesStore = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+            var allSpeciesStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species);
             var allSpeciesIds = await allSpeciesStore.GetAsync(ALL_SPECIES_KEY, cancellationToken) ?? new List<string>();
             if (!allSpeciesIds.Contains(speciesId.ToString()))
             {
@@ -445,7 +444,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Updating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -500,7 +499,7 @@ public partial class SpeciesService : ISpeciesService
             if (changedFields.Count > 0)
             {
                 model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
                 // Publish species updated event
                 await PublishSpeciesUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -529,7 +528,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Deleting species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -559,17 +558,17 @@ public partial class SpeciesService : ISpeciesService
             }
 
             // Delete the model
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).DeleteAsync(speciesKey, cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).DeleteAsync(speciesKey, cancellationToken);
 
             // Delete code index
             var codeIndexKey = BuildCodeIndexKey(model.Code);
-            await _stateStoreFactory.GetStore<string>(STATE_STORE).DeleteAsync(codeIndexKey, cancellationToken);
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).DeleteAsync(codeIndexKey, cancellationToken);
 
             // Remove from all-species list
-            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<string>();
+            var allSpeciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<string>();
             if (allSpeciesIds.Remove(body.SpeciesId.ToString()))
             {
-                await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
+                await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
             }
 
             // Remove from realm indexes
@@ -622,7 +621,7 @@ public partial class SpeciesService : ISpeciesService
             }
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -640,7 +639,7 @@ public partial class SpeciesService : ISpeciesService
             model.RealmIds.Add(realmIdStr);
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
             await AddToRealmIndexAsync(body.SpeciesId.ToString(), realmIdStr, cancellationToken);
 
             await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -668,7 +667,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -714,7 +713,7 @@ public partial class SpeciesService : ISpeciesService
             model.RealmIds.Remove(realmIdStr);
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
             await RemoveFromRealmIndexAsync(body.SpeciesId.ToString(), realmIdStr, cancellationToken);
 
             await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -757,7 +756,7 @@ public partial class SpeciesService : ISpeciesService
                 {
                     var code = seedSpecies.Code.ToUpperInvariant();
                     var codeIndexKey = BuildCodeIndexKey(code);
-                    var existingId = await _stateStoreFactory.GetStore<string>(STATE_STORE).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+                    var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
                     if (!string.IsNullOrEmpty(existingId))
                     {
@@ -765,7 +764,7 @@ public partial class SpeciesService : ISpeciesService
                         {
                             // Update existing
                             var speciesKey = BuildSpeciesKey(existingId);
-                            var existingModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+                            var existingModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
                             if (existingModel != null)
                             {
@@ -816,7 +815,7 @@ public partial class SpeciesService : ISpeciesService
                                 if (changedFields.Count > 0)
                                 {
                                     existingModel.UpdatedAt = DateTimeOffset.UtcNow;
-                                    await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
+                                    await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
 
                                     // Publish updated event for changed species
                                     await PublishSpeciesUpdatedEventAsync(existingModel, changedFields, cancellationToken);
@@ -908,7 +907,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Deprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -927,7 +926,7 @@ public partial class SpeciesService : ISpeciesService
             model.DeprecationReason = body.Reason;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Publish species updated event with deprecation fields
             await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -955,7 +954,7 @@ public partial class SpeciesService : ISpeciesService
             _logger.LogInformation("Undeprecating species: {SpeciesId}", body.SpeciesId);
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
-            var model = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(speciesKey, cancellationToken: cancellationToken);
+            var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
 
             if (model == null)
             {
@@ -974,7 +973,7 @@ public partial class SpeciesService : ISpeciesService
             model.DeprecationReason = null;
             model.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Publish species updated event with deprecation fields cleared
             await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -1003,7 +1002,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Verify source exists and is deprecated
             var sourceKey = BuildSpeciesKey(body.SourceSpeciesId.ToString());
-            var sourceModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(sourceKey, cancellationToken: cancellationToken);
+            var sourceModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(sourceKey, cancellationToken: cancellationToken);
 
             if (sourceModel == null)
             {
@@ -1019,7 +1018,7 @@ public partial class SpeciesService : ISpeciesService
 
             // Verify target exists
             var targetKey = BuildSpeciesKey(body.TargetSpeciesId.ToString());
-            var targetModel = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetAsync(targetKey, cancellationToken: cancellationToken);
+            var targetModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(targetKey, cancellationToken: cancellationToken);
 
             if (targetModel == null)
             {
@@ -1122,7 +1121,7 @@ public partial class SpeciesService : ISpeciesService
         }
 
         var keys = speciesIds.Select(BuildSpeciesKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<SpeciesModel>(STATE_STORE).GetBulkAsync(keys, cancellationToken);
+        var bulkResults = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetBulkAsync(keys, cancellationToken);
 
         var speciesList = new List<SpeciesModel>();
         foreach (var (key, model) in bulkResults)
@@ -1139,23 +1138,23 @@ public partial class SpeciesService : ISpeciesService
     private async Task AddToRealmIndexAsync(string speciesId, string realmId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
 
         if (!speciesIds.Contains(speciesId))
         {
             speciesIds.Add(speciesId);
-            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromRealmIndexAsync(string speciesId, string realmId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
+        var speciesIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<string>();
 
         if (speciesIds.Remove(speciesId))
         {
-            await _stateStoreFactory.GetStore<List<string>>(STATE_STORE).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Species).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -69,7 +70,7 @@ public class RedisHealthCheck : IHealthCheck
     public RedisHealthCheck(IStateStoreFactory stateStoreFactory, ILogger<RedisHealthCheck> logger)
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        _stateStore = stateStoreFactory.GetStore<object>("asset-statestore");
+        _stateStore = stateStoreFactory.GetStore<object>(StateStoreDefinitions.Asset);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 

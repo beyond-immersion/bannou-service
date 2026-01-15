@@ -15,7 +15,6 @@ public class RedisSearchIndexService : ISearchIndexService
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
 
-    private const string STATE_STORE = "documentation-statestore";
     private const string INDEX_PREFIX = "doc-idx:";
 
     // Track which namespace indexes have been created
@@ -73,13 +72,13 @@ public class RedisSearchIndexService : ISearchIndexService
 
         try
         {
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
-                _logger.LogWarning("Store '{Store}' does not support search - falling back to in-memory indexing", STATE_STORE);
+                _logger.LogWarning("Store '{Store}' does not support search - falling back to in-memory indexing", StateStoreDefinitions.Documentation);
                 return;
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
+            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
 
             // Check if index exists
             var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
@@ -139,13 +138,13 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             var indexName = GetIndexName(namespaceId);
 
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
-                _logger.LogWarning("Store '{Store}' does not support search", STATE_STORE);
+                _logger.LogWarning("Store '{Store}' does not support search", StateStoreDefinitions.Documentation);
                 return 0;
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
+            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
 
             // Drop existing index if it exists
             await searchStore.DropIndexAsync(indexName, deleteDocuments: false, cancellationToken);
@@ -219,13 +218,13 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 _logger.LogWarning("Search not supported, returning empty results");
                 return Array.Empty<SearchResult>();
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
+            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
             // Build Redis Search query
@@ -301,7 +300,7 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 return Array.Empty<Guid>();
             }
@@ -325,12 +324,12 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 return Array.Empty<Guid>();
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
+            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
             // Query for all documents in namespace, optionally filtered by category
@@ -373,12 +372,12 @@ public class RedisSearchIndexService : ISearchIndexService
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
 
-            if (!_stateStoreFactory.SupportsSearch(STATE_STORE))
+            if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 return new NamespaceStats(0, new Dictionary<string, int>(), 0);
             }
 
-            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(STATE_STORE);
+            var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
             var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);

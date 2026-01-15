@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
@@ -16,8 +17,6 @@ public class BannouSessionManager : ISessionManager
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ILogger<BannouSessionManager> _logger;
 
-    // State store name (must match Redis configuration)
-    private const string STATE_STORE = "connect-statestore";
     private const string SESSION_EVENTS_TOPIC = "connect.session-events";
 
     // Key prefixes - MUST be unique across all services to avoid key collisions
@@ -58,7 +57,7 @@ public class BannouSessionManager : ISessionManager
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
             var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
 
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
             await store.SaveAsync(key, serviceMappings, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
 
             _logger.LogDebug("Stored service mappings for session {SessionId}", sessionId);
@@ -83,7 +82,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
             var mappings = await store.GetAsync(key);
 
             if (mappings == null)
@@ -123,7 +122,7 @@ public class BannouSessionManager : ISessionManager
             var key = SESSION_KEY_PREFIX + sessionId;
             var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
 
-            var store = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<ConnectionStateData>(StateStoreDefinitions.Connect);
             await store.SaveAsync(key, stateData, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
 
             _logger.LogDebug("Stored connection state for session {SessionId}", sessionId);
@@ -148,7 +147,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var store = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<ConnectionStateData>(StateStoreDefinitions.Connect);
             var stateData = await store.GetAsync(key);
 
             if (stateData == null)
@@ -191,7 +190,7 @@ public class BannouSessionManager : ISessionManager
                 ConnectionCount = 1
             };
 
-            var store = _stateStoreFactory.GetStore<SessionHeartbeat>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
             await store.SaveAsync(key, heartbeatData, new StateOptions { Ttl = _configuration.HeartbeatTtlSeconds });
 
             _logger.LogDebug("Updated heartbeat for session {SessionId} on instance {InstanceId}",
@@ -227,7 +226,7 @@ public class BannouSessionManager : ISessionManager
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
 
-            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Connect);
             await store.SaveAsync(key, sessionId, new StateOptions { Ttl = (int)reconnectionWindow.TotalSeconds });
 
             _logger.LogDebug("Stored reconnection token for session {SessionId} (window: {Window})",
@@ -253,7 +252,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Connect);
             var sessionId = await store.GetAsync(key);
 
             if (string.IsNullOrEmpty(sessionId))
@@ -284,7 +283,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            var store = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Connect);
             await store.DeleteAsync(key);
 
             _logger.LogDebug("Removed reconnection token");
@@ -423,9 +422,9 @@ public class BannouSessionManager : ISessionManager
             var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
 
             // Get stores for each type
-            var connectionStore = _stateStoreFactory.GetStore<ConnectionStateData>(STATE_STORE);
-            var mappingsStore = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(STATE_STORE);
-            var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(STATE_STORE);
+            var connectionStore = _stateStoreFactory.GetStore<ConnectionStateData>(StateStoreDefinitions.Connect);
+            var mappingsStore = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
+            var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
 
             var deleteTasks = new[]
             {
@@ -503,7 +502,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
 
             // Get existing sessions or create new set
             var existingSessions = await store.GetAsync(key) ?? new HashSet<string>();
@@ -538,7 +537,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
 
             var existingSessions = await store.GetAsync(key);
             if (existingSessions == null || existingSessions.Count == 0)
@@ -584,7 +583,7 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
 
             var sessions = await store.GetAsync(key);
             return sessions ?? new HashSet<string>();

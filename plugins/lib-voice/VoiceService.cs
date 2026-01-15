@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +34,6 @@ public partial class VoiceService : IVoiceService
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IPermissionClient _permissionClient;
 
-    private const string STATE_STORE = "voice-statestore";
     private const string ROOM_KEY_PREFIX = "voice:room:";
     private const string SESSION_ROOM_KEY_PREFIX = "voice:session-room:";
 
@@ -86,7 +86,7 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Check if room already exists for this session
-            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
             var existingRoomIdStr = await stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
 
             if (!string.IsNullOrEmpty(existingRoomIdStr) && Guid.TryParse(existingRoomIdStr, out _))
@@ -111,7 +111,7 @@ public partial class VoiceService : IVoiceService
             };
 
             // Save room data
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
             // Save session -> room mapping (store Guid as string since IStateStore requires reference types)
@@ -157,7 +157,7 @@ public partial class VoiceService : IVoiceService
 
         try
         {
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
@@ -209,7 +209,7 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Get room data
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
@@ -447,7 +447,7 @@ public partial class VoiceService : IVoiceService
         try
         {
             // Get room data
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             if (roomData == null)
@@ -474,7 +474,7 @@ public partial class VoiceService : IVoiceService
             await roomStore.DeleteAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
             // Delete session -> room mapping
-            var stringStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
             await stringStore.DeleteAsync($"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken);
 
             // Notify all participants that room is closed
@@ -883,7 +883,7 @@ public partial class VoiceService : IVoiceService
                 RtpServerUri = rtpServerUri
             };
 
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(STATE_STORE);
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
             await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", updatedRoomData, cancellationToken: cancellationToken);
 
             // Notify all current participants about the tier upgrade

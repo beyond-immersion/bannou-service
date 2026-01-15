@@ -51,9 +51,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
-  <!-- Include shared bundle format code -->
+  <!-- Reference bundle format library -->
   <ItemGroup>
-    <Compile Include="../bundle-format/*.cs" LinkBase="Bundle" />
+    <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
   </ItemGroup>
 
 </Project>

@@ -51,7 +51,7 @@ public partial class SubscriptionService : ISubscriptionService
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
-    private string StateStoreName => _configuration.StateStoreName ?? "subscription-statestore";
+    private static string StateStoreName => StateStoreDefinitions.Subscription;
     private string AuthorizationSuffix => _configuration.AuthorizationSuffix ?? "authorized";
 
     /// <summary>

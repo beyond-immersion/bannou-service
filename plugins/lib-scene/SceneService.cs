@@ -38,8 +38,6 @@ public partial class SceneService : ISceneService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IEventConsumer _eventConsumer;
 
-    private const string STATE_STORE = "scene-statestore";
-
     // State store key prefixes
     private const string SCENE_INDEX_PREFIX = "scene:index:";
     private const string SCENE_CONTENT_PREFIX = "scene:content:";
@@ -137,7 +135,7 @@ public partial class SceneService : ISceneService
             }
 
             // Check if scene already exists
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             if (existingIndex != null)
             {
@@ -214,7 +212,7 @@ public partial class SceneService : ISceneService
             var sceneIdStr = body.SceneId.ToString();
 
             // Get index entry to find asset
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
             if (indexEntry == null)
             {
@@ -262,8 +260,8 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
 
             // Get candidate scene IDs based on filters
             HashSet<string>? candidateIds = null;
@@ -378,7 +376,7 @@ public partial class SceneService : ISceneService
         {
             var scene = body.Scene;
             var sceneIdStr = scene.SceneId.ToString();
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Get existing index entry
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -399,7 +397,7 @@ public partial class SceneService : ISceneService
                     return (StatusCodes.Conflict, null);
                 }
 
-                var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+                var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
                 var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
                 if (checkout == null || checkout.Token != body.CheckoutToken)
                 {
@@ -472,8 +470,8 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
 
             // Get existing index entry
             var existingIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -569,7 +567,7 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
             var sceneAssetIdStr = body.SceneAssetId.ToString();
 
             // Validate scene exists
@@ -686,8 +684,8 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
-            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
 
             // Get scene index
             var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -782,8 +780,8 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Validate checkout token
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
@@ -866,8 +864,8 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Validate checkout token
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
@@ -922,7 +920,7 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(STATE_STORE);
+            var checkoutStore = _stateStoreFactory.GetStore<CheckoutState>(StateStoreDefinitions.Scene);
 
             // Validate checkout token
             var checkout = await checkoutStore.GetAsync($"{SCENE_CHECKOUT_PREFIX}{sceneIdStr}", cancellationToken);
@@ -987,7 +985,7 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Get index entry
             var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sceneIdStr}", cancellationToken);
@@ -1028,7 +1026,7 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
             var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
 
             await rulesStore.SaveAsync(key, body.Rules.ToList(), cancellationToken: cancellationToken);
@@ -1068,7 +1066,7 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+            var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
             var key = $"{VALIDATION_RULES_PREFIX}{body.GameId}:{body.SceneType}";
 
             var rules = await rulesStore.GetAsync(key, cancellationToken);
@@ -1101,7 +1099,7 @@ public partial class SceneService : ISceneService
 
         try
         {
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Get all scene IDs (with optional game/type filter)
             var candidateIds = await GetAllSceneIdsAsync(cancellationToken);
@@ -1184,8 +1182,8 @@ public partial class SceneService : ISceneService
         try
         {
             var sceneIdStr = body.SceneId.ToString();
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             var referencingSceneIds = await stringSetStore.GetAsync($"{SCENE_REFERENCES_PREFIX}{sceneIdStr}", cancellationToken);
             var references = new List<ReferenceInfo>();
@@ -1239,8 +1237,8 @@ public partial class SceneService : ISceneService
         try
         {
             var assetIdStr = body.AssetId.ToString();
-            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             var usingSceneIds = await stringSetStore.GetAsync($"{SCENE_ASSETS_PREFIX}{assetIdStr}", cancellationToken);
             var usages = new List<AssetUsageInfo>();
@@ -1298,7 +1296,7 @@ public partial class SceneService : ISceneService
         try
         {
             var sourceSceneIdStr = body.SourceSceneId.ToString();
-            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+            var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
 
             // Get source scene
             var sourceIndex = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{sourceSceneIdStr}", cancellationToken);
@@ -1350,7 +1348,7 @@ public partial class SceneService : ISceneService
         var contentKey = $"{SCENE_CONTENT_PREFIX}{sceneIdStr}";
 
         // Store the YAML content directly in state store
-        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(STATE_STORE);
+        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
         var contentEntry = new SceneContentEntry
         {
             SceneId = sceneIdStr,
@@ -1374,7 +1372,7 @@ public partial class SceneService : ISceneService
     private async Task<Scene?> LoadSceneAssetAsync(string assetId, string? version, CancellationToken cancellationToken)
     {
         var contentKey = $"{SCENE_CONTENT_PREFIX}{assetId}";
-        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(STATE_STORE);
+        var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
 
         var contentEntry = await contentStore.GetAsync(contentKey, cancellationToken);
         if (contentEntry == null || string.IsNullOrEmpty(contentEntry.Content))
@@ -1395,7 +1393,7 @@ public partial class SceneService : ISceneService
     /// <returns>List of version info entries, newest first.</returns>
     private async Task<List<VersionInfo>> GetAssetVersionHistoryAsync(string sceneId, int limit, CancellationToken cancellationToken)
     {
-        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
 
         var historyEntries = await historyStore.GetAsync(historyKey, cancellationToken);
@@ -1422,7 +1420,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task AddVersionHistoryEntryAsync(string sceneId, string version, string? editorId, CancellationToken cancellationToken)
     {
-        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
 
         var historyEntries = await historyStore.GetAsync(historyKey, cancellationToken) ?? new List<VersionHistoryEntry>();
@@ -1452,7 +1450,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task DeleteVersionHistoryAsync(string sceneId, CancellationToken cancellationToken)
     {
-        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(STATE_STORE);
+        var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
         await historyStore.DeleteAsync(historyKey, cancellationToken);
     }
@@ -1597,7 +1595,7 @@ public partial class SceneService : ISceneService
         var warnings = new List<ValidationError>();
 
         // Get rules for this gameId+sceneType
-        var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(STATE_STORE);
+        var rulesStore = _stateStoreFactory.GetStore<List<ValidationRule>>(StateStoreDefinitions.Scene);
         var key = $"{VALIDATION_RULES_PREFIX}{scene.GameId}:{scene.SceneType}";
         var rules = await rulesStore.GetAsync(key, cancellationToken);
 
@@ -1733,7 +1731,7 @@ public partial class SceneService : ISceneService
     private async Task UpdateSceneIndexesAsync(Scene newScene, Scene? oldScene, CancellationToken cancellationToken)
     {
         var sceneIdStr = newScene.SceneId.ToString();
-        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
 
         // Update game index
         var gameKey = $"{SCENE_BY_GAME_PREFIX}{newScene.GameId}";
@@ -1798,7 +1796,7 @@ public partial class SceneService : ISceneService
 
     private async Task RemoveFromIndexesAsync(SceneIndexEntry indexEntry, CancellationToken cancellationToken)
     {
-        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var stringSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
 
         // Remove from game index
         var gameKey = $"{SCENE_BY_GAME_PREFIX}{indexEntry.GameId}";
@@ -1826,7 +1824,7 @@ public partial class SceneService : ISceneService
     /// <returns>Set of all scene IDs.</returns>
     private async Task<HashSet<string>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
         return globalIndex ?? new HashSet<string>();
     }
@@ -1836,7 +1834,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task AddToGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken) ?? new HashSet<string>();
         globalIndex.Add(sceneId);
         await globalIndexStore.SaveAsync(SCENE_GLOBAL_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
@@ -1847,7 +1845,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task RemoveFromGlobalSceneIndexAsync(string sceneId, CancellationToken cancellationToken)
     {
-        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var globalIndexStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
         if (globalIndex != null)
         {
@@ -1910,7 +1908,7 @@ public partial class SceneService : ISceneService
                     }
                     else
                     {
-                        var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(STATE_STORE);
+                        var indexStore = _stateStoreFactory.GetStore<SceneIndexEntry>(StateStoreDefinitions.Scene);
                         var indexEntry = await indexStore.GetAsync($"{SCENE_INDEX_PREFIX}{referencedSceneId}", cancellationToken);
 
                         if (indexEntry == null)

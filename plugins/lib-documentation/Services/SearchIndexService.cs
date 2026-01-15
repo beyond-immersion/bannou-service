@@ -17,8 +17,6 @@ public partial class SearchIndexService : ISearchIndexService
     private readonly ILogger<SearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "documentation-statestore";
-
     /// <summary>
     /// Thread-safe index storage per namespace.
     /// Key: namespace ID, Value: namespace index
@@ -62,7 +60,7 @@ public partial class SearchIndexService : ISearchIndexService
 
         // Load document list from state store
         var docListKey = $"ns-docs:{namespaceId}";
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var documentIds = await listStore.GetAsync(docListKey, cancellationToken);
 
         if (documentIds == null || documentIds.Count == 0)
@@ -72,7 +70,7 @@ public partial class SearchIndexService : ISearchIndexService
         }
 
         var indexedCount = 0;
-        var docStore = _stateStoreFactory.GetStore<DocumentIndexData>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
         foreach (var docId in documentIds)
         {
             try

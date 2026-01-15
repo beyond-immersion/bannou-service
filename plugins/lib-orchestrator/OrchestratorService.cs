@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,7 +48,6 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private DeploymentConfiguration? _lastKnownDeployment;
 
-    private const string STATE_STORE = "orchestrator-statestore";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
     /// <summary>

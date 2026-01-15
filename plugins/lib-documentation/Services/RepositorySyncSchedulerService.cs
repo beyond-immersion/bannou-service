@@ -18,7 +18,6 @@ public class RepositorySyncSchedulerService : BackgroundService
     private readonly ILogger<RepositorySyncSchedulerService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "documentation-statestore";
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string BINDING_KEY_PREFIX = "repo-binding:";
 
@@ -103,7 +102,7 @@ public class RepositorySyncSchedulerService : BackgroundService
         var documentationService = scope.ServiceProvider.GetRequiredService<IDocumentationService>();
 
         // Get all binding namespace IDs from registry
-        var registryStore = stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var registryStore = stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
         var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken);
 
         if (bindingNamespaces == null || bindingNamespaces.Count == 0)
@@ -112,7 +111,7 @@ public class RepositorySyncSchedulerService : BackgroundService
             return;
         }
 
-        var bindingStore = stateStoreFactory.GetStore<RepositoryBinding>(STATE_STORE);
+        var bindingStore = stateStoreFactory.GetStore<RepositoryBinding>(StateStoreDefinitions.Documentation);
         var now = DateTimeOffset.UtcNow;
         var syncCount = 0;
         var maxConcurrent = _configuration.MaxConcurrentSyncs;

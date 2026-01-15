@@ -36,8 +36,6 @@ public partial class DocumentationService : IDocumentationService
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    private const string STATE_STORE = "documentation-statestore";
-
     // Event topics following QUALITY TENETS: {entity}.{action} pattern
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
     private const string DOCUMENT_UPDATED_TOPIC = "document.updated";
@@ -110,7 +108,7 @@ public partial class DocumentationService : IDocumentationService
         {
             // Look up document ID from slug index
             var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
             var documentIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
             if (string.IsNullOrEmpty(documentIdStr) || !Guid.TryParse(documentIdStr, out var documentId))
             {
@@ -120,7 +118,7 @@ public partial class DocumentationService : IDocumentationService
 
             // Fetch document content
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             var storedDoc = await docStore.GetAsync(docKey, cancellationToken);
             if (storedDoc == null)
             {
@@ -221,7 +219,7 @@ public partial class DocumentationService : IDocumentationService
 
             // Build response with document results
             var results = new List<DocumentResult>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             foreach (var result in searchResults)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
@@ -287,8 +285,8 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             Guid documentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             // Resolve document ID from slug if provided
             if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
@@ -417,7 +415,7 @@ public partial class DocumentationService : IDocumentationService
 
             // Build response with document results
             var results = new List<DocumentResult>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             foreach (var result in searchResults)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{result.DocumentId}";
@@ -493,7 +491,7 @@ public partial class DocumentationService : IDocumentationService
 
             // Fetch document summaries
             var documents = new List<DocumentSummary>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             foreach (var docId in docIds)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
@@ -562,7 +560,7 @@ public partial class DocumentationService : IDocumentationService
 
             // Fetch document summaries and build topic suggestions
             var suggestions = new List<TopicSuggestion>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             foreach (var docId in relatedIds)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
@@ -633,8 +631,8 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             var slug = body.Slug;
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             // Check if slug already exists in this namespace
             var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
@@ -734,8 +732,8 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.Forbidden, null);
             }
 
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             // Fetch existing document
             var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
@@ -891,9 +889,9 @@ public partial class DocumentationService : IDocumentationService
 
             var namespaceId = body.Namespace;
             Guid documentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Resolve document ID from slug if provided
             if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
@@ -982,9 +980,9 @@ public partial class DocumentationService : IDocumentationService
         {
             var namespaceId = body.Namespace;
             var documentId = body.DocumentId;
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Fetch from trashcan
             var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{documentId}";
@@ -1072,7 +1070,7 @@ public partial class DocumentationService : IDocumentationService
             var succeeded = new List<Guid>();
             var failed = new List<BulkOperationFailure>();
             var now = DateTimeOffset.UtcNow;
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             foreach (var documentId in body.DocumentIds)
             {
@@ -1172,9 +1170,9 @@ public partial class DocumentationService : IDocumentationService
             var now = DateTimeOffset.UtcNow;
             var trashcanTtl = TimeSpan.FromDays(_configuration.TrashcanTtlDays);
             var expiresAt = now.Add(trashcanTtl);
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             foreach (var documentId in body.DocumentIds)
             {
@@ -1264,8 +1262,8 @@ public partial class DocumentationService : IDocumentationService
                 return (StatusCodes.BadRequest, null);
             }
 
-            var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             foreach (var importDoc in body.Documents)
             {
@@ -1379,8 +1377,8 @@ public partial class DocumentationService : IDocumentationService
             var namespaceId = body.Namespace;
             var page = body.Page;
             var pageSize = body.PageSize;
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Get trashcan items from namespace trashcan list
             var trashListKey = $"ns-trash:{namespaceId}";
@@ -1459,8 +1457,8 @@ public partial class DocumentationService : IDocumentationService
         {
             var namespaceId = body.Namespace;
             var purgedCount = 0;
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
-            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(STATE_STORE);
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+            var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
             // Get trashcan list
             var trashListKey = $"ns-trash:{namespaceId}";
@@ -1523,8 +1521,8 @@ public partial class DocumentationService : IDocumentationService
         try
         {
             var namespaceId = body.Namespace;
-            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+            var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
             // Get stats from search index
             var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
@@ -1589,7 +1587,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docIds = await guidListStore.GetAsync(indexKey, cancellationToken) ?? [];
 
@@ -1605,7 +1603,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docIds = await guidListStore.GetAsync(indexKey, cancellationToken);
 
@@ -1620,7 +1618,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
         var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken) ?? [];
 
@@ -1636,7 +1634,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
-        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
         var trashedDocIds = await guidListStore.GetAsync(trashListKey, cancellationToken);
 
@@ -1746,7 +1744,7 @@ public partial class DocumentationService : IDocumentationService
     {
         var summaries = new List<DocumentSummary>();
         var maxRelated = depth == RelatedDepth.Extended ? 10 : 5;
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         foreach (var relatedId in relatedIds.Take(maxRelated))
         {
@@ -2037,11 +2035,11 @@ public partial class DocumentationService : IDocumentationService
 
             // Delete binding
             var bindingKey = $"{BINDING_KEY_PREFIX}{body.Namespace}";
-            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
             await bindingStore.DeleteAsync(bindingKey, cancellationToken);
 
             // Remove from bindings registry
-            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
             var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken);
             if (registry != null && registry.Remove(body.Namespace))
             {
@@ -2166,10 +2164,10 @@ public partial class DocumentationService : IDocumentationService
 
         try
         {
-            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+            var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
 
             // Get all binding namespace IDs from registry
-            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+            var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
             var bindingNamespaces = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
 
             var allBindings = new List<Models.RepositoryBinding>();
@@ -2539,7 +2537,7 @@ public partial class DocumentationService : IDocumentationService
     internal async Task<Models.RepositoryBinding?> GetBindingForNamespaceAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
-        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         return await bindingStore.GetAsync(bindingKey, cancellationToken);
     }
 
@@ -2549,11 +2547,11 @@ public partial class DocumentationService : IDocumentationService
     private async Task SaveBindingAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken = default)
     {
         var bindingKey = $"{BINDING_KEY_PREFIX}{binding.Namespace}";
-        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(STATE_STORE);
+        var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         await bindingStore.SaveAsync(bindingKey, binding, cancellationToken: cancellationToken);
 
         // Update bindings registry
-        var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(STATE_STORE);
+        var registryStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Documentation);
         var registry = await registryStore.GetAsync(BINDINGS_REGISTRY_KEY, cancellationToken) ?? [];
         if (registry.Add(binding.Namespace))
         {
@@ -2575,7 +2573,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<int> DeleteAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
 
         if (docIds == null || docIds.Count == 0)
@@ -2583,8 +2581,8 @@ public partial class DocumentationService : IDocumentationService
             return 0;
         }
 
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         var deletedCount = 0;
 
         foreach (var docId in docIds)
@@ -2626,7 +2624,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Acquire distributed lock to prevent concurrent syncs (IMPLEMENTATION TENETS: Multi-Instance Safety)
         await using var lockResponse = await _lockProvider.LockAsync(
-            STATE_STORE,
+            StateStoreDefinitions.Documentation,
             lockResourceId,
             lockOwner,
             1800, // 30 minutes max sync time
@@ -2789,7 +2787,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<Guid?> GetDocumentIdBySlugAsync(string namespaceId, string slug, CancellationToken cancellationToken = default)
     {
         var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
-        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         var docIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
 
         if (string.IsNullOrEmpty(docIdStr) || !Guid.TryParse(docIdStr, out var docId))
@@ -2830,17 +2828,17 @@ public partial class DocumentationService : IDocumentationService
 
         // Store document
         var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
 
         // Store slug index
         var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{transformed.Slug}";
-        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         await slugStore.SaveAsync(slugKey, documentId.ToString(), cancellationToken: cancellationToken);
 
         // Add to namespace document list
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken) ?? [];
         docIds.Add(documentId);
         await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
@@ -2866,7 +2864,7 @@ public partial class DocumentationService : IDocumentationService
         CancellationToken cancellationToken = default)
     {
         var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var existingDoc = await docStore.GetAsync(docKey, cancellationToken);
 
         if (existingDoc == null)
@@ -2902,7 +2900,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<int> GetNamespaceDocumentCountAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
         return docIds?.Count ?? 0;
     }
@@ -2917,7 +2915,7 @@ public partial class DocumentationService : IDocumentationService
         CancellationToken cancellationToken = default)
     {
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
 
         if (docIds == null || docIds.Count == 0)
@@ -2925,8 +2923,8 @@ public partial class DocumentationService : IDocumentationService
             return 0;
         }
 
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         var deletedCount = 0;
         var orphanIds = new List<Guid>();
 
@@ -3150,7 +3148,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<List<StoredDocument>> GetAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
 
         if (docIds == null || docIds.Count == 0)
@@ -3158,7 +3156,7 @@ public partial class DocumentationService : IDocumentationService
             return [];
         }
 
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var documents = new List<StoredDocument>();
 
         foreach (var docId in docIds)
@@ -3249,12 +3247,12 @@ public partial class DocumentationService : IDocumentationService
     private async Task SaveArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
-        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
 
         // Also update the namespace archive list
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var archiveIds = await listStore.GetAsync(listKey, cancellationToken) ?? [];
         if (!archiveIds.Contains(archive.ArchiveId))
         {
@@ -3269,7 +3267,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<List<Models.DocumentationArchive>> GetArchivesForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
     {
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{namespaceId}";
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
 
         if (archiveIds == null || archiveIds.Count == 0)
@@ -3277,7 +3275,7 @@ public partial class DocumentationService : IDocumentationService
             return [];
         }
 
-        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         var archives = new List<Models.DocumentationArchive>();
 
         foreach (var archiveId in archiveIds)
@@ -3299,7 +3297,7 @@ public partial class DocumentationService : IDocumentationService
     private async Task<Models.DocumentationArchive?> GetArchiveByIdAsync(Guid archiveId, CancellationToken cancellationToken)
     {
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archiveId}";
-        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         return await archiveStore.GetAsync(archiveKey, cancellationToken);
     }
 
@@ -3325,9 +3323,9 @@ public partial class DocumentationService : IDocumentationService
         await DeleteAllNamespaceDocumentsAsync(namespaceId, cancellationToken);
 
         // Import all documents from bundle
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(STATE_STORE);
-        var slugStore = _stateStoreFactory.GetStore<string>(STATE_STORE);
-        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(STATE_STORE);
+        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+        var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docIds = new HashSet<Guid>();
 
@@ -3379,12 +3377,12 @@ public partial class DocumentationService : IDocumentationService
     private async Task DeleteArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
-        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(STATE_STORE);
+        var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.DeleteAsync(archiveKey, cancellationToken);
 
         // Remove from namespace archive list
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{archive.Namespace}";
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
         if (archiveIds != null)
         {

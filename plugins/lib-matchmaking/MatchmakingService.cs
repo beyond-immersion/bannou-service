@@ -46,7 +46,6 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IPermissionClient _permissionClient;
 
-    private const string STATE_STORE = "matchmaking-statestore";
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
     private const string TICKET_KEY_PREFIX = "ticket:";
@@ -369,7 +368,7 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Delete queue
-            await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+            await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
                 .DeleteAsync(QUEUE_KEY_PREFIX + body.QueueId, cancellationToken);
 
             // Remove from queue list
@@ -1607,13 +1606,13 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<string>> GetQueueIdsAsync(CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<string>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
     }
 
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (!list.Contains(queueId))
         {
@@ -1624,7 +1623,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<string>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
         if (list.Remove(queueId))
         {
@@ -1634,61 +1633,61 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<QueueModel?> LoadQueueAsync(string queueId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_KEY_PREFIX + queueId, cancellationToken);
     }
 
     private async Task SaveQueueAsync(QueueModel queue, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<QueueModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(QUEUE_KEY_PREFIX + queue.QueueId, queue, cancellationToken: cancellationToken);
     }
 
     private async Task<TicketModel?> LoadTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task SaveTicketAsync(TicketModel ticket, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(TICKET_KEY_PREFIX + ticket.TicketId, ticket, cancellationToken: cancellationToken);
     }
 
     private async Task DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task<MatchModel?> LoadMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task SaveMatchAsync(MatchModel match, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(MATCH_KEY_PREFIX + match.MatchId, match, cancellationToken: cancellationToken);
     }
 
     private async Task DeleteMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<MatchModel>(STATE_STORE)
+        await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task<List<Guid>> GetPlayerTicketsAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
     }
 
     private async Task AddToPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
@@ -1699,7 +1698,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
@@ -1709,7 +1708,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<Guid>> GetQueueTicketIdsAsync(string queueId, CancellationToken cancellationToken)
     {
-        return await _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE)
+        return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
     }
 
@@ -1721,7 +1720,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task AddToQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
         if (!list.Contains(ticketId))
         {
@@ -1732,7 +1731,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
-        var store = _stateStoreFactory.GetStore<List<Guid>>(STATE_STORE);
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking);
         var list = await store.GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
         if (list.Remove(ticketId))
         {
@@ -1744,20 +1743,20 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var wrapper = new PendingMatchWrapper { MatchId = matchId };
         var options = new StateOptions { Ttl = _configuration.PendingMatchRedisKeyTtlSeconds };
-        await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(PENDING_MATCH_PREFIX + accountId, wrapper, options, cancellationToken);
     }
 
     private async Task<Guid?> GetPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        var wrapper = await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        var wrapper = await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
         return wrapper?.MatchId;
     }
 
     private async Task ClearPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<PendingMatchWrapper>(STATE_STORE)
+        await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
     }
 

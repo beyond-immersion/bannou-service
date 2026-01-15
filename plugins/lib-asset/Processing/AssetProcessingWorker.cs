@@ -12,6 +12,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -71,7 +72,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     {
         _processorRegistry = processorRegistry ?? throw new ArgumentNullException(nameof(processorRegistry));
         ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        _stateStore = stateStoreFactory.GetStore<AssetMetadata>("asset-statestore");
+        _stateStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
         _orchestratorClient = orchestratorClient ?? throw new ArgumentNullException(nameof(orchestratorClient));
         _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
