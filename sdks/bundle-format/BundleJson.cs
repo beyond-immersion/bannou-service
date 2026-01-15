@@ -1,5 +1,5 @@
-using System.Text.Json;
 using BeyondImmersion.Bannou.Core;
+using System.Text.Json;
 
 namespace BeyondImmersion.Bannou.Bundle.Format;
 
