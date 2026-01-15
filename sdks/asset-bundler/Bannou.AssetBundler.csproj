@@ -17,8 +17,8 @@
     <Description>Engine-agnostic asset bundling SDK for Bannou. Provides source adapters, processing pipeline, state tracking, and upload integration.</Description>
     <PackageTags>bannou;assets;bundles;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

@@ -15,8 +15,8 @@
     <Description>WebSocket-based asset source for Bannou Asset Loader. Provides URL resolution for game clients and developer tools using the Bannou Client SDK.</Description>
     <PackageTags>bannou;assets;websocket;client;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

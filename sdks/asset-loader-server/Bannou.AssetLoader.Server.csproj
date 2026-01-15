@@ -15,8 +15,8 @@
     <Description>Mesh-based asset source for Bannou Asset Loader. Provides URL resolution for game servers and backend services using the generated AssetClient.</Description>
     <PackageTags>bannou;assets;mesh;server;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

@@ -17,8 +17,8 @@
     <Description>Voice/Audio helper for Bannou Client SDK. Provides P2P WebRTC voice chat using SIPSorcery. For game clients using Stride, Unity, or other C#/.NET game engines.</Description>
     <PackageTags>bannou;voice;webrtc;p2p;audio;sipsorcery;stride;game-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

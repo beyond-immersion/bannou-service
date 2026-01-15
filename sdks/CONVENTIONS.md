@@ -276,4 +276,4 @@ Releases are triggered manually via the `ci.sdk-release.yml` workflow:
 - [Azure SDK .NET Design Guidelines](https://azure.github.io/azure-sdk/dotnet_introduction.html)
 - [Microsoft Namespace Naming Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/names-of-namespaces)
 - [NuGet Package Authoring Best Practices](https://learn.microsoft.com/en-us/nuget/create-packages/package-authoring-best-practices)
-- [GitHub Issue #107](https://github.com/BeyondImmersion/bannou/issues/107) - Original restructuring proposal
+- [GitHub Issue #107](https://github.com/beyond-immersion/bannou-service/issues/107) - Original restructuring proposal

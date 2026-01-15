@@ -17,8 +17,8 @@
     <Description>Stride engine extension for the Bannou SceneComposer SDK. Provides ISceneComposerBridge implementation, asset loaders, and gizmo rendering for Stride-based games. Note: Full functionality requires Windows.</Description>
     <PackageTags>bannou;stride;scene;editor;composition;gamedev</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>

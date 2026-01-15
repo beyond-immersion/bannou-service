@@ -14,7 +14,7 @@ This guide walks you through deploying Bannou on a fresh server (e.g., DigitalOc
 Clone the repository and run the install script:
 
 ```bash
-git clone https://github.com/BeyondImmersion/bannou-service.git
+git clone https://github.com/beyond-immersion/bannou-service.git
 cd bannou-service
 chmod +x scripts/install-dev-tools.sh
 sudo ./scripts/install-dev-tools.sh --docker-only
