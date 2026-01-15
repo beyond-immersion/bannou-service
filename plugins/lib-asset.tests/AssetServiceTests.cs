@@ -2031,14 +2031,9 @@ public class AssetServiceTests
         // Act
         var (status, result) = await service.CreateMetabundleAsync(request, CancellationToken.None);
 
-        // Assert - Should return BadRequest with conflicts in response (not Conflict status code)
-        // The service returns BadRequest when the same asset ID has different content hashes
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.NotNull(result);
-        Assert.NotNull(result.Conflicts);
-        Assert.Single(result.Conflicts);
-        Assert.Equal("shared-asset", result.Conflicts.First().AssetId);
-        Assert.Equal(2, result.Conflicts.First().ConflictingBundles!.Count);
+        // Assert - Should return Conflict with null result per T8 (error responses return null)
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
     }
 
     [Fact]

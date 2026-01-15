@@ -1550,15 +1550,17 @@ public partial class AssetService : IAssetService
 
             if (conflicts.Count > 0)
             {
-                _logger.LogWarning("CreateMetabundle: {ConflictCount} asset conflicts detected", conflicts.Count);
-                return (StatusCodes.BadRequest, new CreateMetabundleResponse
+                // Log conflict details server-side for debugging (per T8, error responses return null)
+                foreach (var conflict in conflicts)
                 {
-                    MetabundleId = body.MetabundleId,
-                    Status = CreateMetabundleResponseStatus.Failed,
-                    AssetCount = 0,
-                    SizeBytes = 0,
-                    Conflicts = conflicts
-                });
+                    var bundleHashes = conflict.ConflictingBundles?
+                        .Select(b => $"{b.BundleId}={b.ContentHash}")
+                        .ToList() ?? new List<string>();
+                    _logger.LogWarning(
+                        "CreateMetabundle: Asset {AssetId} has conflicting hashes across bundles: {BundleHashes}",
+                        conflict.AssetId, string.Join(", ", bundleHashes));
+                }
+                return (StatusCodes.Conflict, null);
             }
 
             // Apply asset filter if provided (to both bundle assets and standalone assets)
