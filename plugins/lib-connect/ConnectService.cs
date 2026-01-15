@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -48,6 +49,7 @@ public partial class ConnectService : IConnectService
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager _sessionManager;
     private readonly ConnectServiceConfiguration _configuration;
+    private readonly ICapabilityManifestBuilder _manifestBuilder;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -93,7 +95,8 @@ public partial class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IEventConsumer eventConsumer,
-        ISessionManager sessionManager)
+        ISessionManager sessionManager,
+        ICapabilityManifestBuilder manifestBuilder)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -105,6 +108,7 @@ public partial class ConnectService : IConnectService
         _logger = logger;
         _loggerFactory = loggerFactory;
         _sessionManager = sessionManager;
+        _manifestBuilder = manifestBuilder;
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -317,81 +321,30 @@ public partial class ConnectService : IConnectService
             }
 
             var connectionState = connection.ConnectionState;
-            var capabilities = new List<ClientCapability>();
-            var shortcuts = new List<ClientShortcut>();
 
-            // Build capabilities from service mappings
-            foreach (var mapping in connectionState.ServiceMappings)
+            // Build capabilities using helper
+            var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings, body.ServiceFilter);
+            var capabilities = apiEntries.Select(api => new ClientCapability
             {
-                var endpointKey = mapping.Key;
-                var guid = mapping.Value;
+                Guid = api.ServiceGuid,
+                Service = api.ServiceName,
+                Endpoint = api.Path,
+                Method = ClientCapabilityMethod.POST
+            }).ToList();
 
-                var firstColon = endpointKey.IndexOf(':');
-                if (firstColon <= 0) continue;
+            // Build shortcuts using helper, removing expired/invalid ones
+            var shortcutEntries = _manifestBuilder.BuildShortcutList(
+                connectionState.GetAllShortcuts(),
+                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-                var serviceName = endpointKey[..firstColon];
-                var methodAndPath = endpointKey[(firstColon + 1)..];
-
-                // Apply service filter if provided
-                if (!string.IsNullOrEmpty(body.ServiceFilter) &&
-                    !serviceName.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var methodPathColon = methodAndPath.IndexOf(':');
-                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
-
-                // Skip template endpoints (zero-copy routing requirement)
-                if (path.Contains('{')) continue;
-
-                // Only expose POST endpoints to WebSocket clients
-                if (method != "POST") continue;
-
-                capabilities.Add(new ClientCapability
-                {
-                    Guid = guid,
-                    Service = serviceName,
-                    Endpoint = path,
-                    Method = ClientCapabilityMethod.POST
-                });
-            }
-
-            // Build shortcuts from connection state
-            foreach (var shortcut in connectionState.GetAllShortcuts())
+            var shortcuts = shortcutEntries.Select(s => new ClientShortcut
             {
-                // Skip expired shortcuts
-                if (shortcut.IsExpired)
-                {
-                    connectionState.RemoveShortcut(shortcut.RouteGuid);
-                    continue;
-                }
-
-                // Validate required fields - these should never be null after validation during creation
-                if (string.IsNullOrEmpty(shortcut.TargetService) || string.IsNullOrEmpty(shortcut.TargetEndpoint))
-                {
-                    _logger.LogError(
-                        "Invalid shortcut {RouteGuid} has null/empty required fields: TargetService={TargetService}, TargetEndpoint={TargetEndpoint}",
-                        shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint);
-                    await PublishErrorEventAsync(
-                        "GetClientCapabilities",
-                        "invalid_shortcut_data",
-                        $"Shortcut {shortcut.RouteGuid} has null/empty required fields",
-                        details: new { shortcut.RouteGuid, shortcut.TargetService, shortcut.TargetEndpoint });
-                    connectionState.RemoveShortcut(shortcut.RouteGuid);
-                    continue;
-                }
-
-                shortcuts.Add(new ClientShortcut
-                {
-                    Guid = shortcut.RouteGuid,
-                    TargetService = shortcut.TargetService,
-                    TargetEndpoint = shortcut.TargetEndpoint,
-                    Name = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    Description = shortcut.Description
-                });
-            }
+                Guid = s.RouteGuid,
+                TargetService = s.TargetService,
+                TargetEndpoint = s.TargetEndpoint,
+                Name = s.Name,
+                Description = s.Description
+            }).ToList();
 
             var response = new ClientCapabilitiesResponse
             {
@@ -2306,74 +2259,38 @@ public partial class ConnectService : IConnectService
         try
         {
             // Build the capability manifest with available APIs and their GUIDs
-            // INTERNAL format: "serviceName:METHOD:/path" - used for server-side routing
-            // CLIENT format: "METHOD:/path" - exposed in capability manifest (no service name leak)
+            // Uses helper for parsing and filtering logic
+            var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
+            var shortcutEntries = _manifestBuilder.BuildShortcutList(
+                connectionState.GetAllShortcuts(),
+                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
+
+            // Transform to WebSocket JSON format
             var availableApis = new List<object>();
 
-            foreach (var mapping in connectionState.ServiceMappings)
+            foreach (var api in apiEntries)
             {
-                // Parse the internal endpoint key format: "serviceName:METHOD:/path"
-                var endpointKey = mapping.Key;
-                var guid = mapping.Value;
-
-                // Split into service name and method:path
-                var firstColon = endpointKey.IndexOf(':');
-                if (firstColon <= 0) continue;
-
-                var serviceName = endpointKey[..firstColon];
-                var methodAndPath = endpointKey[(firstColon + 1)..];
-
-                // Split method and path (format: "GET:/some/path")
-                var methodPathColon = methodAndPath.IndexOf(':');
-                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
-
-                // CRITICAL: Skip endpoints with path templates (e.g., /account/{accountId})
-                // WebSocket binary protocol requires POST endpoints with JSON body parameters
-                // Template paths would require Connect to parse the payload, breaking zero-copy routing
-                if (path.Contains('{'))
-                {
-                    _logger.LogDebug("Skipping template endpoint from capability manifest: {EndpointKey}", endpointKey);
-                    continue;
-                }
-
-                // Only expose POST endpoints to WebSocket clients
-                // GET and other HTTP methods are not supported through WebSocket binary protocol
-                // Services can still publish GET endpoints in their registration events for other uses
-                if (method != "POST")
-                {
-                    _logger.LogDebug("Skipping non-POST endpoint from capability manifest: {EndpointKey}", endpointKey);
-                    continue;
-                }
-
                 availableApis.Add(new
                 {
-                    serviceGuid = guid.ToString(),
-                    method = method,
-                    path = path,
-                    endpointKey = $"{method}:{path}",
+                    serviceGuid = api.ServiceGuid.ToString(),
+                    method = api.Method,
+                    path = api.Path,
+                    endpointKey = api.EndpointKey,
                     // Informational only - not used for routing (routing uses serviceGuid)
-                    serviceName = serviceName
+                    serviceName = api.ServiceName
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
-            foreach (var shortcut in connectionState.GetAllShortcuts())
+            foreach (var shortcut in shortcutEntries)
             {
-                // Skip expired shortcuts
-                if (shortcut.IsExpired)
-                {
-                    connectionState.RemoveShortcut(shortcut.RouteGuid);
-                    continue;
-                }
-
                 // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
                 availableApis.Add(new
                 {
                     serviceGuid = shortcut.RouteGuid.ToString(),
                     method = "SHORTCUT",
-                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    path = shortcut.Name,
+                    endpointKey = $"SHORTCUT:{shortcut.Name}",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
@@ -2935,57 +2852,37 @@ public partial class ConnectService : IConnectService
     {
         try
         {
-            // Build the capability manifest with available APIs
+            // Build the capability manifest with available APIs using helper
+            var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
+            var shortcutEntries = _manifestBuilder.BuildShortcutList(
+                connectionState.GetAllShortcuts(),
+                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
+
+            // Transform to WebSocket JSON format
             var availableApis = new List<object>();
 
-            foreach (var mapping in connectionState.ServiceMappings)
+            foreach (var api in apiEntries)
             {
-                var endpointKey = mapping.Key;
-                var guid = mapping.Value;
-
-                var firstColon = endpointKey.IndexOf(':');
-                if (firstColon <= 0) continue;
-
-                var serviceName = endpointKey[..firstColon];
-                var methodAndPath = endpointKey[(firstColon + 1)..];
-
-                var methodPathColon = methodAndPath.IndexOf(':');
-                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
-                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
-
-                // Skip template endpoints (zero-copy routing requirement)
-                if (path.Contains('{')) continue;
-
-                // Only expose POST endpoints to WebSocket clients
-                if (method != "POST") continue;
-
                 availableApis.Add(new
                 {
-                    serviceGuid = guid.ToString(),
-                    method = method,
-                    path = path,
-                    endpointKey = $"{method}:{path}",
-                    serviceName = serviceName
+                    serviceGuid = api.ServiceGuid.ToString(),
+                    method = api.Method,
+                    path = api.Path,
+                    endpointKey = api.EndpointKey,
+                    serviceName = api.ServiceName
                 });
             }
 
             // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
-            foreach (var shortcut in connectionState.GetAllShortcuts())
+            foreach (var shortcut in shortcutEntries)
             {
-                // Skip expired shortcuts
-                if (shortcut.IsExpired)
-                {
-                    connectionState.RemoveShortcut(shortcut.RouteGuid);
-                    continue;
-                }
-
                 // Shortcuts appear as regular APIs with "SHORTCUT:" prefix in endpointKey
                 availableApis.Add(new
                 {
                     serviceGuid = shortcut.RouteGuid.ToString(),
                     method = "SHORTCUT",
-                    path = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    endpointKey = $"SHORTCUT:{shortcut.Name ?? shortcut.RouteGuid.ToString()}",
+                    path = shortcut.Name,
+                    endpointKey = $"SHORTCUT:{shortcut.Name}",
                     description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
