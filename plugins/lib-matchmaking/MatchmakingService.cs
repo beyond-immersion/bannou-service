@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Matchmaking.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
@@ -45,6 +46,7 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IPermissionClient _permissionClient;
+    private readonly IMatchmakingAlgorithm _algorithm;
 
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
@@ -83,6 +85,9 @@ public partial class MatchmakingService : IMatchmakingService
         _clientEventPublisher = clientEventPublisher;
         _gameSessionClient = gameSessionClient;
         _permissionClient = permissionClient;
+        // Instantiate directly since internal types are used
+        // Tests can access via InternalsVisibleTo
+        _algorithm = new MatchmakingAlgorithm();
 
         // Server salt from configuration - REQUIRED
         if (string.IsNullOrEmpty(configuration.ServerSalt))
@@ -670,7 +675,7 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             var queue = await LoadQueueAsync(ticket.QueueId, cancellationToken);
-            var currentSkillRange = GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
+            var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
 
             return (StatusCodes.OK, new MatchmakingStatusResponse
             {
@@ -915,8 +920,8 @@ public partial class MatchmakingService : IMatchmakingService
             }
 
             // Try to form a match with current skill window (no expansion)
-            var currentSkillRange = GetCurrentSkillRange(queue, 0);
-            var matchedTickets = TryMatchTickets(tickets, queue, currentSkillRange);
+            var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, 0);
+            var matchedTickets = _algorithm.TryMatchTickets(tickets, queue, currentSkillRange);
 
             if (matchedTickets != null && matchedTickets.Count >= queue.MinCount)
             {
@@ -926,133 +931,6 @@ public partial class MatchmakingService : IMatchmakingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during immediate match check for ticket {TicketId}", ticket.TicketId);
-        }
-    }
-
-    /// <summary>
-    /// Tries to match tickets based on queue rules.
-    /// </summary>
-    private List<TicketModel>? TryMatchTickets(List<TicketModel> tickets, QueueModel queue, int? skillRange)
-    {
-        if (tickets.Count < queue.MinCount)
-            return null;
-
-        // Sort by creation time (FIFO)
-        var sortedTickets = tickets.OrderBy(t => t.CreatedAt).ToList();
-
-        // Simple matching: take first N that fit within skill range
-        var matched = new List<TicketModel>();
-        TicketModel? anchor = null;
-
-        foreach (var ticket in sortedTickets)
-        {
-            if (anchor == null)
-            {
-                anchor = ticket;
-                matched.Add(ticket);
-                continue;
-            }
-
-            // Check skill range
-            if (skillRange.HasValue && queue.UseSkillRating &&
-                anchor.SkillRating.HasValue && ticket.SkillRating.HasValue)
-            {
-                var diff = Math.Abs(anchor.SkillRating.Value - ticket.SkillRating.Value);
-                if (diff > skillRange.Value)
-                    continue;
-            }
-
-            // Check query match (simplified - full Lucene would need a parser library)
-            if (!string.IsNullOrEmpty(anchor.Query))
-            {
-                if (!MatchesQuery(ticket, anchor.Query))
-                    continue;
-            }
-
-            if (!string.IsNullOrEmpty(ticket.Query))
-            {
-                if (!MatchesQuery(anchor, ticket.Query))
-                    continue;
-            }
-
-            matched.Add(ticket);
-
-            // Check if we have enough
-            if (matched.Count >= queue.MaxCount)
-                break;
-
-            // Check count multiple
-            if (matched.Count >= queue.MinCount && matched.Count % queue.CountMultiple == 0)
-            {
-                // We have a valid match size
-                break;
-            }
-        }
-
-        // Final validation
-        if (matched.Count >= queue.MinCount && matched.Count % queue.CountMultiple == 0)
-        {
-            return matched;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Simplified query matching (checks if ticket properties match query constraints).
-    /// For full Lucene support, integrate a query parser library.
-    /// </summary>
-    private bool MatchesQuery(TicketModel ticket, string query)
-    {
-        // Simple key:value matching
-        // e.g., "region:na" matches if StringProperties["region"] == "na"
-        // e.g., "skill:>1000" matches if NumericProperties["skill"] > 1000
-
-        try
-        {
-            var parts = query.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var part in parts)
-            {
-                var colonIdx = part.IndexOf(':');
-                if (colonIdx <= 0) continue;
-
-                var key = part.Substring(0, colonIdx);
-                var value = part.Substring(colonIdx + 1);
-
-                // Check string property
-                if (ticket.StringProperties.TryGetValue(key, out var strVal))
-                {
-                    if (!strVal.Equals(value, StringComparison.OrdinalIgnoreCase))
-                        return false;
-                }
-                // Check numeric property
-                else if (ticket.NumericProperties.TryGetValue(key, out var numVal))
-                {
-                    if (value.StartsWith(">"))
-                    {
-                        if (double.TryParse(value.Substring(1), out var threshold))
-                        {
-                            if (numVal <= threshold) return false;
-                        }
-                    }
-                    else if (value.StartsWith("<"))
-                    {
-                        if (double.TryParse(value.Substring(1), out var threshold))
-                        {
-                            if (numVal >= threshold) return false;
-                        }
-                    }
-                    else if (double.TryParse(value, out var exact))
-                    {
-                        if (Math.Abs(numVal - exact) > 0.001) return false;
-                    }
-                }
-            }
-            return true;
-        }
-        catch
-        {
-            return true; // On parse error, allow the match
         }
     }
 
@@ -1800,20 +1678,6 @@ public partial class MatchmakingService : IMatchmakingService
         };
     }
 
-    private static int? GetCurrentSkillRange(QueueModel? queue, int intervalsElapsed)
-    {
-        if (queue?.SkillExpansion == null || queue.SkillExpansion.Count == 0)
-            return null;
-
-        // Find the applicable expansion step
-        var applicableStep = queue.SkillExpansion
-            .Where(s => s.Intervals <= intervalsElapsed)
-            .OrderByDescending(s => s.Intervals)
-            .FirstOrDefault();
-
-        return applicableStep?.Range;
-    }
-
     #endregion
 
     #region Background Processing
@@ -1920,7 +1784,7 @@ public partial class MatchmakingService : IMatchmakingService
             foreach (var group in groups)
             {
                 var groupTickets = group.ToList();
-                var skillRange = GetCurrentSkillRange(queue, group.Key);
+                var skillRange = _algorithm.GetCurrentSkillRange(queue, group.Key);
 
                 _logger.LogDebug("Processing {Count} tickets at interval {Interval} with skill range {Range}",
                     groupTickets.Count, group.Key, skillRange?.ToString() ?? "unlimited");
@@ -1928,7 +1792,7 @@ public partial class MatchmakingService : IMatchmakingService
                 // Try to match tickets in this interval group
                 while (groupTickets.Count >= queue.MinCount)
                 {
-                    var matched = TryMatchTickets(groupTickets, queue, skillRange);
+                    var matched = _algorithm.TryMatchTickets(groupTickets, queue, skillRange);
                     if (matched != null && matched.Count >= queue.MinCount)
                     {
                         await FormMatchAsync(matched, queue, cancellationToken);

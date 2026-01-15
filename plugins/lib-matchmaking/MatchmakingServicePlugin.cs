@@ -37,6 +37,9 @@ public class MatchmakingServicePlugin : BaseBannouPlugin
         // Register background service for interval-based match processing
         services.AddHostedService<MatchmakingBackgroundService>();
 
+        // Note: MatchmakingAlgorithm is instantiated directly in the service
+        // because it uses internal types (TicketModel, QueueModel)
+
         Logger?.LogDebug("Service dependencies configured");
     }
 
