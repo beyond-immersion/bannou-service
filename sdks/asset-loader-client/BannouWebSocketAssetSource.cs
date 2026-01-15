@@ -72,7 +72,7 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         CancellationToken ct = default)
     {
         var client = new BannouClient();
-        var connected = await client.ConnectWithTokenAsync(serverUrl, serviceToken, ct).ConfigureAwait(false);
+        var connected = await client.ConnectWithTokenAsync(serverUrl, serviceToken, refreshToken: null, ct).ConfigureAwait(false);
 
         if (!connected)
             throw new InvalidOperationException("Failed to connect to Bannou server");
@@ -99,15 +99,17 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
             ExcludeBundleIds = excludeBundleIds?.ToList()
         };
 
-        var (status, response) = await _client.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
-            "POST", "/bundles/resolve", request, ct: ct).ConfigureAwait(false);
+        var apiResponse = await _client.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
+            "POST", "/bundles/resolve", request, cancellationToken: ct).ConfigureAwait(false);
 
-        if (status != 200 || response == null)
+        if (!apiResponse.IsSuccess || apiResponse.Result == null)
         {
-            _logger?.LogError("Failed to resolve bundles: status {Status}", status);
-            throw new AssetSourceException($"Failed to resolve bundles: status {status}");
+            var errorMessage = apiResponse.Error?.Message ?? "Unknown error";
+            _logger?.LogError("Failed to resolve bundles: {Error}", errorMessage);
+            throw new AssetSourceException($"Failed to resolve bundles: {errorMessage}");
         }
 
+        var response = apiResponse.Result;
         var bundles = response.Bundles?.Select(b => new ResolvedBundleInfo
         {
             BundleId = b.BundleId,
@@ -148,14 +150,20 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
 
         var request = new GetBundleRequest { BundleId = bundleId };
 
-        var (status, response) = await _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
-            "POST", "/bundles/get", request, ct: ct).ConfigureAwait(false);
+        var apiResponse = await _client.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
+            "POST", "/bundles/get", request, cancellationToken: ct).ConfigureAwait(false);
 
-        if (status == 404 || response == null)
+        if (!apiResponse.IsSuccess)
+        {
+            // Treat any failure as "not found" for simplicity
+            _logger?.LogDebug("Bundle {BundleId} not found or error: {Error}",
+                bundleId, apiResponse.Error?.Message ?? "Unknown");
             return null;
+        }
 
-        if (status != 200)
-            throw new AssetSourceException($"Failed to get bundle info: status {status}");
+        var response = apiResponse.Result;
+        if (response == null)
+            return null;
 
         return new BundleDownloadInfo
         {
@@ -181,14 +189,19 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
             IncludeDownloadUrl = true
         };
 
-        var (status, response) = await _client.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
-            "POST", "/assets/get", request, ct: ct).ConfigureAwait(false);
+        var apiResponse = await _client.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
+            "POST", "/assets/get", request, cancellationToken: ct).ConfigureAwait(false);
 
-        if (status == 404 || response == null)
+        if (!apiResponse.IsSuccess)
+        {
+            _logger?.LogDebug("Asset {AssetId} not found or error: {Error}",
+                assetId, apiResponse.Error?.Message ?? "Unknown");
             return null;
+        }
 
-        if (status != 200)
-            throw new AssetSourceException($"Failed to get asset info: status {status}");
+        var response = apiResponse.Result;
+        if (response == null)
+            return null;
 
         return new AssetDownloadInfo
         {
