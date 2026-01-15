@@ -62,9 +62,9 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
         services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
         services.AddSingleton<IBackendDetector, BackendDetector>();
 
-        // Register the service implementation
-        services.AddScoped<IOrchestratorService, OrchestratorService>();
-        services.AddScoped<OrchestratorService>();
+        // NOTE: Main service type (IOrchestratorService -> OrchestratorService) is registered
+        // centrally by PluginLoader based on [BannouService] attribute. Plugins must NOT
+        // re-register their main service types - it overrides the central registration.
 
         Logger?.LogInformation("Orchestrator service dependencies configured");
     }

@@ -32,7 +32,8 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
         Logger?.LogDebug("Registered BannouSessionManager for session state management");
 
         // Register helper services for improved testability
-        services.AddScoped<ICapabilityManifestBuilder, CapabilityManifestBuilder>();
+        // Must be Singleton because ConnectService is Singleton and cannot consume scoped services
+        services.AddSingleton<ICapabilityManifestBuilder, CapabilityManifestBuilder>();
         Logger?.LogDebug("Registered CapabilityManifestBuilder");
 
         Logger?.LogDebug("Service dependencies configured");
