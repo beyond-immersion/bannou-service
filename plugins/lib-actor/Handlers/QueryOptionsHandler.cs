@@ -3,6 +3,7 @@
 // ABML action handler for querying actor options (Event Brain support).
 // =============================================================================
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Abml.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;

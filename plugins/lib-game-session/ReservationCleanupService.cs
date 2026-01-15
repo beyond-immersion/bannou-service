@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -253,7 +254,7 @@ internal class CleanupPlayerModel
 /// <summary>
 /// Client event for session cancellation.
 /// </summary>
-internal class SessionCancelledClientEvent : BeyondImmersion.BannouService.ClientEvents.BaseClientEvent
+internal class SessionCancelledClientEvent : BaseClientEvent
 {
     public override string EventName => "game-session.session_cancelled";
     public string SessionId { get; set; } = string.Empty;

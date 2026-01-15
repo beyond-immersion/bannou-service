@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Bundle.Format;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset.Bundles;
 using BeyondImmersion.BannouService.Asset.Events;
