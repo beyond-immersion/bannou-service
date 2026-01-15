@@ -29,7 +29,6 @@ public sealed class IntentChannelFactory : IIntentChannelFactory
     /// <inheritdoc/>
     public RuntimeChannelSet CreateChannels(Guid entityId, IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(archetype);
 
         var channels = new Dictionary<string, RuntimeChannel>(StringComparer.OrdinalIgnoreCase);
 
@@ -104,7 +103,6 @@ public sealed class RuntimeChannelSet
     /// <returns>True if the emission was applied, false if channel not found.</returns>
     public bool ApplyEmission(IntentEmission emission)
     {
-        ArgumentNullException.ThrowIfNull(emission);
 
         var channel = GetChannel(emission.Channel);
         if (channel == null)

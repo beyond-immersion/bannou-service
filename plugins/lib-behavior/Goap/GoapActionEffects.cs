@@ -55,7 +55,6 @@ public sealed class GoapEffect
     /// <returns>Parsed effect.</returns>
     public static GoapEffect Parse(string effectString)
     {
-        ArgumentNullException.ThrowIfNull(effectString);
 
         var trimmed = effectString.Trim();
         if (string.IsNullOrEmpty(trimmed))

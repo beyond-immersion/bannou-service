@@ -2484,7 +2484,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(body);
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -2564,7 +2563,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(body);
 
             if (body.LeaseId == Guid.Empty)
             {
@@ -2651,7 +2649,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(body);
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -2718,7 +2715,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(body);
 
             if (string.IsNullOrEmpty(body.PoolType))
             {
@@ -2949,7 +2945,6 @@ public partial class OrchestratorService : IOrchestratorService
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(body);
 
             if (string.IsNullOrEmpty(body.PoolType))
             {

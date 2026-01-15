@@ -124,7 +124,6 @@ public sealed class CinematicRunner : IDisposable
             throw new ArgumentException("Cinematic ID cannot be null or empty", nameof(cinematicId));
         }
 
-        ArgumentNullException.ThrowIfNull(entities);
 
         if (_state != CinematicRunnerState.Idle)
         {
@@ -229,7 +228,6 @@ public sealed class CinematicRunner : IDisposable
     public void SetEntityFinalState(Guid entityId, EntityState state)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(state);
 
         _entityFinalStates[entityId] = state;
     }

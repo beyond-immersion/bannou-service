@@ -217,7 +217,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public async Task<IStateStore<TValue>> GetStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
         where TValue : class
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!HasStore(storeName))
         {
@@ -237,7 +236,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!HasStore(storeName))
         {
@@ -330,7 +328,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public IQueryableStateStore<TValue> GetQueryableStore<TValue>(string storeName)
         where TValue : class
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!HasStore(storeName))
         {
@@ -353,7 +350,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public IJsonQueryableStateStore<TValue> GetJsonQueryableStore<TValue>(string storeName)
         where TValue : class
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!HasStore(storeName))
         {
@@ -376,7 +372,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     public ISearchableStateStore<TValue> GetSearchableStore<TValue>(string storeName)
         where TValue : class
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!HasStore(storeName))
         {
@@ -405,7 +400,6 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     /// <inheritdoc/>
     public bool SupportsSearch(string storeName)
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         if (!_configuration.Stores.TryGetValue(storeName, out var config))
         {
@@ -418,14 +412,12 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     /// <inheritdoc/>
     public bool HasStore(string storeName)
     {
-        ArgumentNullException.ThrowIfNull(storeName);
         return _configuration.Stores.ContainsKey(storeName);
     }
 
     /// <inheritdoc/>
     public StateBackend GetBackendType(string storeName)
     {
-        ArgumentNullException.ThrowIfNull(storeName);
 
         // In-memory mode overrides all backends
         if (_configuration.UseInMemory)

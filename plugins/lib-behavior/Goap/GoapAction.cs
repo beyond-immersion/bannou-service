@@ -51,10 +51,6 @@ public sealed class GoapAction
         GoapActionEffects effects,
         float cost = 1.0f)
     {
-        ArgumentNullException.ThrowIfNull(id);
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(preconditions);
-        ArgumentNullException.ThrowIfNull(effects);
 
         if (cost < 0)
         {

@@ -49,9 +49,6 @@ public sealed class DialogueResolver : IDialogueResolver
         IDialogueExpressionContext context,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(reference);
-        ArgumentNullException.ThrowIfNull(locale);
-        ArgumentNullException.ThrowIfNull(context);
 
         // If no external reference, use inline directly
         if (string.IsNullOrEmpty(reference.ExternalRef))
@@ -105,9 +102,6 @@ public sealed class DialogueResolver : IDialogueResolver
         IDialogueExpressionContext context,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(locale);
-        ArgumentNullException.ThrowIfNull(context);
 
         var results = new List<ResolvedDialogueOption>(options.Count);
 

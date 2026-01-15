@@ -46,7 +46,6 @@ public sealed class AbmlDialogueExpressionContext : IDialogueExpressionContext
     public static AbmlDialogueExpressionContext FromExecutionContext(
         BeyondImmersion.BannouService.Abml.Execution.ExecutionContext context)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
         return new AbmlDialogueExpressionContext(scope, context.Evaluator);

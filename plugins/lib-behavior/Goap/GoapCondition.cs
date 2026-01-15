@@ -80,7 +80,6 @@ public sealed class GoapCondition
     /// <exception cref="FormatException">If the condition string is invalid.</exception>
     public static GoapCondition Parse(string conditionString)
     {
-        ArgumentNullException.ThrowIfNull(conditionString);
 
         var trimmed = conditionString.Trim();
         if (string.IsNullOrEmpty(trimmed))

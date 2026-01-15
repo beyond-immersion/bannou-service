@@ -27,7 +27,6 @@ public sealed class SemanticAnalyzer
     /// <returns>The analysis result.</returns>
     public SemanticAnalysisResult Analyze(AbmlDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         _errors.Clear();
         _warnings.Clear();

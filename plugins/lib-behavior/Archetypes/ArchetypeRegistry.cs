@@ -90,7 +90,6 @@ public sealed class ArchetypeRegistry : IArchetypeRegistry
     /// <inheritdoc/>
     public void RegisterArchetype(IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(archetype);
 
         if (string.IsNullOrEmpty(archetype.Id))
         {

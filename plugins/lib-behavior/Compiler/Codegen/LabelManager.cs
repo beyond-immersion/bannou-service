@@ -42,7 +42,6 @@ public sealed class LabelManager
     /// <param name="bytecodeOffset">The bytecode offset where the flow starts.</param>
     public void RegisterFlowOffset(string flowName, int bytecodeOffset)
     {
-        ArgumentNullException.ThrowIfNull(flowName);
         _flowOffsets[flowName] = bytecodeOffset;
     }
 
@@ -65,7 +64,6 @@ public sealed class LabelManager
     /// <returns>The label ID for this flow.</returns>
     public int GetOrAllocateFlowLabel(string flowName)
     {
-        ArgumentNullException.ThrowIfNull(flowName);
 
         if (_flowLabels.TryGetValue(flowName, out var labelId))
         {

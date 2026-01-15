@@ -36,7 +36,6 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         ILogger<SipEndpointRegistry> logger,
         VoiceServiceConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>(StateStoreDefinitions.Voice);
         _logger = logger;
         _configuration = configuration;

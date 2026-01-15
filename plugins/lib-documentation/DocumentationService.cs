@@ -1937,7 +1937,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, BindRepositoryResponse?)> BindRepositoryAsync(BindRepositoryRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (string.IsNullOrWhiteSpace(body.Namespace))
         {
@@ -2012,7 +2011,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, UnbindRepositoryResponse?)> UnbindRepositoryAsync(UnbindRepositoryRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         _logger.LogInformation("Unbinding repository from namespace {Namespace}", body.Namespace);
 
@@ -2072,7 +2070,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, SyncRepositoryResponse?)> SyncRepositoryAsync(SyncRepositoryRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (string.IsNullOrWhiteSpace(body.Namespace))
         {
@@ -2117,7 +2114,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, RepositoryStatusResponse?)> GetRepositoryStatusAsync(RepositoryStatusRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         try
         {
@@ -2160,7 +2156,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, ListRepositoryBindingsResponse?)> ListRepositoryBindingsAsync(ListRepositoryBindingsRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         try
         {
@@ -2213,7 +2208,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, UpdateRepositoryBindingResponse?)> UpdateRepositoryBindingAsync(UpdateRepositoryBindingRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         try
         {
@@ -2270,7 +2264,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, CreateArchiveResponse?)> CreateDocumentationArchiveAsync(CreateArchiveRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (string.IsNullOrWhiteSpace(body.Namespace))
         {
@@ -2366,7 +2359,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, ListArchivesResponse?)> ListDocumentationArchivesAsync(ListArchivesRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (string.IsNullOrWhiteSpace(body.Namespace))
         {
@@ -2414,7 +2406,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, RestoreArchiveResponse?)> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (body.ArchiveId == Guid.Empty)
         {
@@ -2490,7 +2481,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, DeleteArchiveResponse?)> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(body);
 
         if (body.ArchiveId == Guid.Empty)
         {

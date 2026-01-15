@@ -48,7 +48,6 @@ public sealed class BehaviorCompiler
     /// <returns>The compilation result.</returns>
     public CompilationResult Compile(AbmlDocument document, CompilationOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(document);
 
         var context = new CompilationContext(options);
 

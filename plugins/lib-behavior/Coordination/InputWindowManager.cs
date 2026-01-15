@@ -72,7 +72,6 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
         CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(options);
 
         var windowId = options.WindowId ?? GenerateWindowId();
         var timeout = options.Timeout ?? _defaultTimeout;

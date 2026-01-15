@@ -37,7 +37,6 @@ public sealed class BehaviorStackRegistry : IBehaviorStackRegistry
     /// <inheritdoc/>
     public IBehaviorStack GetOrCreate(Guid entityId, IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(archetype);
 
         return _stacks.GetOrAdd(entityId, id =>
         {

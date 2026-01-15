@@ -50,7 +50,6 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<bool> RegisterNodeAsync(PoolNodeRegisteredEvent registration, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(registration);
 
         var nodeId = registration.NodeId;
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -89,7 +88,6 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateNodeHeartbeatAsync(PoolNodeHeartbeatEvent heartbeat, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(heartbeat);
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
         var state = await store.GetAsync(heartbeat.NodeId, ct);
@@ -276,7 +274,6 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task RecordActorAssignmentAsync(ActorAssignment assignment, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(assignment);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
         assignment.AssignedAt = DateTimeOffset.UtcNow;

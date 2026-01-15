@@ -280,7 +280,6 @@ public class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public bool InjectPerception(PerceptionData perception)
     {
-        ArgumentNullException.ThrowIfNull(perception);
 
         if (_disposed || Status != ActorStatus.Running)
             return false;

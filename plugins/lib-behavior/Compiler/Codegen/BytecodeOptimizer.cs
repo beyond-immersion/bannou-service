@@ -20,8 +20,6 @@ public sealed class BytecodeOptimizer
     /// <returns>The optimized bytecode.</returns>
     public byte[] Optimize(byte[] bytecode, ConstantPoolBuilder constants)
     {
-        ArgumentNullException.ThrowIfNull(bytecode);
-        ArgumentNullException.ThrowIfNull(constants);
 
         if (bytecode.Length == 0)
         {

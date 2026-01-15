@@ -334,17 +334,6 @@ public class ActorRunnerTests
     }
 
     [Fact]
-    public async Task InjectPerception_NullPerception_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var (runner, _) = CreateRunner();
-        await runner.StartAsync();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => runner.InjectPerception(null!));
-    }
-
-    [Fact]
     public async Task InjectPerception_QueueFull_DropsOldestAndReturnsTrue()
     {
         // Arrange

@@ -142,8 +142,6 @@ public sealed class StateSync : IStateSync
         ControlHandoff handoff,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(finalCinematicState);
-        ArgumentNullException.ThrowIfNull(handoff);
 
         // Skip sync if not requested
         if (!handoff.SyncState)

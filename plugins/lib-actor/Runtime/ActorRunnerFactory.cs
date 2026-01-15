@@ -68,8 +68,6 @@ public class ActorRunnerFactory : IActorRunnerFactory
         object? configurationOverrides = null,
         object? initialState = null)
     {
-        ArgumentNullException.ThrowIfNull(actorId);
-        ArgumentNullException.ThrowIfNull(template);
 
         // Apply configuration overrides if provided
         var effectiveTemplate = template;

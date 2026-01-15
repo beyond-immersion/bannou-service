@@ -67,9 +67,6 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
         int expiryInSeconds,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(storeName);
-        ArgumentNullException.ThrowIfNull(resourceId);
-        ArgumentNullException.ThrowIfNull(lockOwner);
 
         var database = await EnsureInitializedAsync();
         var lockKey = $"{storeName}:lock:{resourceId}";

@@ -97,7 +97,6 @@ public sealed class BehaviorStack : IBehaviorStack
     /// <inheritdoc/>
     public void AddLayer(IBehaviorLayer layer)
     {
-        ArgumentNullException.ThrowIfNull(layer);
 
         lock (_lock)
         {
@@ -237,7 +236,6 @@ public sealed class BehaviorStack : IBehaviorStack
         BehaviorEvaluationContext context,
         CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(context);
 
         var output = new BehaviorStackOutput(EntityId);
 

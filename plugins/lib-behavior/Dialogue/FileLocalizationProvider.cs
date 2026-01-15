@@ -111,7 +111,6 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     public LocalizedText? GetTextWithFallback(string key, LocalizationContext context)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
-        ArgumentNullException.ThrowIfNull(context);
 
         // Try primary locale
         var text = GetTextFromSources(key, context.Locale, out var sourceName);
@@ -175,7 +174,6 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     /// <inheritdoc/>
     public void RegisterSource(ILocalizationSource source)
     {
-        ArgumentNullException.ThrowIfNull(source);
 
         _sources[source.Name] = source;
         _logger?.LogDebug(

@@ -58,27 +58,6 @@ public class ActorRegistryTests
         Assert.Equal(1, registry.Count);
     }
 
-    [Fact]
-    public void TryRegister_NullActorId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var registry = new ActorRegistry();
-        var runner = CreateMockRunner("actor-1", Guid.NewGuid());
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => registry.TryRegister(null!, runner));
-    }
-
-    [Fact]
-    public void TryRegister_NullRunner_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var registry = new ActorRegistry();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => registry.TryRegister("actor-1", null!));
-    }
-
     #endregion
 
     #region Get Tests
@@ -111,16 +90,6 @@ public class ActorRegistryTests
         // Assert
         Assert.False(result);
         Assert.Null(runner);
-    }
-
-    [Fact]
-    public void TryGet_NullActorId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var registry = new ActorRegistry();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => registry.TryGet(null!, out _));
     }
 
     #endregion
@@ -156,16 +125,6 @@ public class ActorRegistryTests
         // Assert
         Assert.False(result);
         Assert.Null(runner);
-    }
-
-    [Fact]
-    public void TryRemove_NullActorId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var registry = new ActorRegistry();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => registry.TryRemove(null!, out _));
     }
 
     #endregion

@@ -72,8 +72,6 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
-            ArgumentNullException.ThrowIfNull(eventData);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
@@ -190,8 +188,6 @@ public sealed class RabbitMQMessageBus : IMessageBus
 
         try
         {
-            ArgumentNullException.ThrowIfNull(topic);
-            ArgumentNullException.ThrowIfNull(contentType);
 
             var exchange = options?.Exchange ?? _connectionManager.DefaultExchange;
             var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;

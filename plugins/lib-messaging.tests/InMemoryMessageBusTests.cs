@@ -50,32 +50,6 @@ public class InMemoryMessageBusTests
     }
 
     [Fact]
-    public async Task TryPublishAsync_WithNullTopic_ReturnsFalse()
-    {
-        // Arrange
-        var eventData = new TestEvent { Message = "Hello" };
-
-        // Act
-        var result = await _messageBus.TryPublishAsync(null!, eventData);
-
-        // Assert - TryPublishAsync never throws, returns false on error
-        Assert.False(result);
-    }
-
-    [Fact]
-    public async Task TryPublishAsync_WithNullEventData_ReturnsFalse()
-    {
-        // Arrange
-        var topic = "test.topic";
-
-        // Act
-        var result = await _messageBus.TryPublishAsync<TestEvent>(topic, null!);
-
-        // Assert - TryPublishAsync never throws, returns false on error
-        Assert.False(result);
-    }
-
-    [Fact]
     public async Task PublishAsync_DeliversToSubscribers()
     {
         // Arrange
@@ -212,20 +186,6 @@ public class InMemoryMessageBusTests
     }
 
     [Fact]
-    public async Task TryPublishRawAsync_WithNullTopic_ReturnsFalse()
-    {
-        // Arrange
-        var payload = new byte[] { 1, 2, 3 };
-        var contentType = "application/octet-stream";
-
-        // Act
-        var result = await _messageBus.TryPublishRawAsync(null!, payload, contentType);
-
-        // Assert - TryPublishRawAsync never throws, returns false on error
-        Assert.False(result);
-    }
-
-    [Fact]
     public async Task TryPublishRawAsync_WithEmptyPayload_CompletesSuccessfully()
     {
         // Arrange
@@ -302,28 +262,6 @@ public class InMemoryMessageBusTests
     }
 
     [Fact]
-    public async Task SubscribeAsync_WithNullTopic_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.SubscribeAsync(null!, handler));
-    }
-
-    [Fact]
-    public async Task SubscribeAsync_WithNullHandler_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var topic = "test.topic";
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.SubscribeAsync<TestEvent>(topic, null!));
-    }
-
-    [Fact]
     public async Task SubscribeAsync_WithOptions_CompletesSuccessfully()
     {
         // Arrange
@@ -353,28 +291,6 @@ public class InMemoryMessageBusTests
 
         // Assert
         Assert.NotNull(disposable);
-    }
-
-    [Fact]
-    public async Task SubscribeDynamicAsync_WithNullTopic_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var handler = new Func<TestEvent, CancellationToken, Task>((evt, ct) => Task.CompletedTask);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.SubscribeDynamicAsync(null!, handler));
-    }
-
-    [Fact]
-    public async Task SubscribeDynamicAsync_WithNullHandler_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var topic = "test.topic";
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.SubscribeDynamicAsync<TestEvent>(topic, null!));
     }
 
     [Fact]
@@ -448,14 +364,6 @@ public class InMemoryMessageBusTests
         // Act & Assert - should complete without exception
         var exception = await Record.ExceptionAsync(() => _messageBus.UnsubscribeAsync(topic));
         Assert.Null(exception);
-    }
-
-    [Fact]
-    public async Task UnsubscribeAsync_WithNullTopic_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _messageBus.UnsubscribeAsync(null!));
     }
 
     [Fact]

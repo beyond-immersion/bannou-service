@@ -57,8 +57,6 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         string? sourceExchange = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(sourceTopic);
-        ArgumentNullException.ThrowIfNull(destination);
 
         var tapId = Guid.NewGuid();
         var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange ?? AppConstants.DEFAULT_APP_NAME;

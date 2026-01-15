@@ -69,7 +69,6 @@ public class RedisHealthCheck : IHealthCheck
     /// <param name="logger">The logger.</param>
     public RedisHealthCheck(IStateStoreFactory stateStoreFactory, ILogger<RedisHealthCheck> logger)
     {
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<object>(StateStoreDefinitions.Asset);
         _logger = logger;
     }

@@ -71,7 +71,6 @@ public sealed class AssetProcessingWorker : BackgroundService
         ILogger<AssetProcessingWorker> logger)
     {
         _processorRegistry = processorRegistry;
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
         _stateStore = stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
         _storageProvider = storageProvider;
         _orchestratorClient = orchestratorClient;

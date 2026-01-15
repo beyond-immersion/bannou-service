@@ -46,9 +46,6 @@ public sealed class IntentStackMerger : IIntentStackMerger
         IReadOnlyList<IntentContribution> contributions,
         ILogicalChannelDefinition channelDef)
     {
-        ArgumentNullException.ThrowIfNull(channelName);
-        ArgumentNullException.ThrowIfNull(contributions);
-        ArgumentNullException.ThrowIfNull(channelDef);
 
         // Filter to only contributions above threshold
         var validContributions = contributions
@@ -74,8 +71,6 @@ public sealed class IntentStackMerger : IIntentStackMerger
         IReadOnlyList<IntentContribution> contributions,
         IArchetypeDefinition archetype)
     {
-        ArgumentNullException.ThrowIfNull(contributions);
-        ArgumentNullException.ThrowIfNull(archetype);
 
         var result = new Dictionary<string, IntentEmission>(StringComparer.OrdinalIgnoreCase);
 

@@ -66,8 +66,6 @@ public sealed class CutsceneCoordinator : ICutsceneCoordinator, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrEmpty(sessionId);
         ArgumentException.ThrowIfNullOrEmpty(cinematicId);
-        ArgumentNullException.ThrowIfNull(participants);
-        ArgumentNullException.ThrowIfNull(options);
 
         if (participants.Count == 0)
         {
@@ -214,7 +212,6 @@ public static class CutsceneCoordinatorExtensions
         CutsceneSessionOptions? options = null,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(controller);
 
         var effectiveOptions = options ?? CutsceneSessionOptions.Default;
 

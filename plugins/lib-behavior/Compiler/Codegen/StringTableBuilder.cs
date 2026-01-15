@@ -35,10 +35,8 @@ public sealed class StringTableBuilder
     /// <param name="value">The string value.</param>
     /// <returns>The string table index.</returns>
     /// <exception cref="InvalidOperationException">If string table is full.</exception>
-    /// <exception cref="ArgumentNullException">If value is null.</exception>
     public ushort GetOrAdd(string value)
     {
-        ArgumentNullException.ThrowIfNull(value);
 
         if (_stringLookup.TryGetValue(value, out var existingIndex))
         {

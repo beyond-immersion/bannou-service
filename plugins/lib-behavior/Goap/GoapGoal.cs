@@ -41,8 +41,6 @@ public sealed class GoapGoal
     /// <param name="priority">Goal priority.</param>
     public GoapGoal(string id, string name, int priority = 50)
     {
-        ArgumentNullException.ThrowIfNull(id);
-        ArgumentNullException.ThrowIfNull(name);
 
         Id = id;
         Name = name;

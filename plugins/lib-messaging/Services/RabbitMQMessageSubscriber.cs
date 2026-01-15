@@ -59,8 +59,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         // Check if already subscribed
         if (_staticSubscriptions.ContainsKey(topic))
@@ -170,8 +168,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
@@ -290,8 +286,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(topic);
-        ArgumentNullException.ThrowIfNull(handler);
 
         var subscriptionId = Guid.NewGuid();
         // Use provided queue name for deterministic naming (reconnection support), or generate one
@@ -411,7 +405,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <inheritdoc/>
     public async Task UnsubscribeAsync(string topic)
     {
-        ArgumentNullException.ThrowIfNull(topic);
 
         if (_staticSubscriptions.TryRemove(topic, out var subscription))
         {

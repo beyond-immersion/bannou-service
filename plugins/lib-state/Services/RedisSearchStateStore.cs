@@ -57,7 +57,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     /// <inheritdoc/>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
 
@@ -89,7 +88,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -135,8 +133,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -178,9 +174,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string etag,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(etag);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -219,7 +212,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
@@ -236,7 +228,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     /// <inheritdoc/>
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var fullKey = GetFullKey(key);
         return await _database.KeyExistsAsync(fullKey);
@@ -247,7 +238,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(keys);
 
         var keyList = keys.ToList();
         if (keyList.Count == 0)
@@ -310,8 +300,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         SearchIndexOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(indexName);
-        ArgumentNullException.ThrowIfNull(schema);
 
         if (schema.Count == 0)
         {
@@ -398,7 +386,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         bool deleteDocuments = false,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(indexName);
 
         try
         {
@@ -421,8 +408,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         SearchQueryOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(indexName);
-        ArgumentNullException.ThrowIfNull(query);
 
         options ??= new SearchQueryOptions();
 
@@ -515,8 +500,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         bool fuzzy = false,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(indexName);
-        ArgumentNullException.ThrowIfNull(prefix);
 
         try
         {
@@ -552,7 +535,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string indexName,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(indexName);
 
         try
         {
@@ -622,8 +604,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -649,8 +629,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(items);
 
         var itemList = items.ToList();
         if (itemList.Count == 0)
@@ -681,8 +659,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         TItem item,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -699,7 +675,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var members = await _database.SetMembersAsync(setKey);
@@ -735,8 +710,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         TItem item,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentNullException.ThrowIfNull(item);
 
         var setKey = GetSetKey(key);
         var json = BannouJson.Serialize(item);
@@ -748,7 +721,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         return await _database.SetLengthAsync(setKey);
@@ -759,7 +731,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var deleted = await _database.KeyDeleteAsync(setKey);
@@ -776,7 +747,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         int ttlSeconds,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(key);
 
         var setKey = GetSetKey(key);
         var ttl = TimeSpan.FromSeconds(ttlSeconds);

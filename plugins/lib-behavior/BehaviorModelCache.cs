@@ -54,7 +54,6 @@ public sealed class BehaviorModelCache
     /// <param name="model">The compiled behavior model.</param>
     public void RegisterModel(BehaviorModelType type, string variant, BehaviorModel model)
     {
-        ArgumentNullException.ThrowIfNull(model);
         variant ??= DefaultVariant;
 
         var key = new ModelRegistrationKey(type, variant);
@@ -107,7 +106,6 @@ public sealed class BehaviorModelCache
     /// </remarks>
     public void SetFallbackChain(BehaviorModelType type, string[] variants)
     {
-        ArgumentNullException.ThrowIfNull(variants);
         _fallbackChains[type] = variants;
     }
 

@@ -28,8 +28,6 @@ public class MinioWebhookHandler
         ILogger<MinioWebhookHandler> logger,
         AssetServiceConfiguration configuration)
     {
-        ArgumentNullException.ThrowIfNull(stateStoreFactory);
-        ArgumentNullException.ThrowIfNull(configuration);
         _configuration = configuration;
         _stateStore = stateStoreFactory.GetStore<UploadSession>(_configuration.StatestoreName);
         _messageBus = messageBus;

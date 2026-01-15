@@ -46,7 +46,6 @@ public static class CognitionConstants
         if (_isInitialized)
             return;
 
-        ArgumentNullException.ThrowIfNull(config);
 
         // Urgency thresholds
         _lowUrgencyThreshold = (float)config.LowUrgencyThreshold;
