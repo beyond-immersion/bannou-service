@@ -139,14 +139,16 @@ jobs:
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
           echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
 
-          # Build and pack Server SDK
-          echo "📦 Building Server SDK..."
-          dotnet build sdks/server --configuration Release --no-dependencies
+          # Build SDK dependencies first (internal packages not in main solution)
+          echo "📦 Building SDK dependencies..."
+          dotnet build sdks/bannou-sdks.sln --configuration Release
+
+          # Pack Server SDK
+          echo "📦 Packing Server SDK..."
           dotnet pack sdks/server --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
 
-          # Build and pack Client SDK
-          echo "📦 Building Client SDK..."
-          dotnet build sdks/client --configuration Release --no-dependencies
+          # Pack Client SDK
+          echo "📦 Packing Client SDK..."
           dotnet pack sdks/client --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
 
       - name: Publish Previews to NuGet
