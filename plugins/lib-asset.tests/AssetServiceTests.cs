@@ -23,22 +23,22 @@ public class AssetServiceTests
 {
     private const string STATE_STORE = "asset-statestore";
 
-    private Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
-    private Mock<IStateStore<InternalAssetRecord>> _mockAssetStore = null!;
-    private Mock<IStateStore<List<string>>> _mockIndexStore = null!;
-    private Mock<IStateStore<BundleMetadata>> _mockBundleStore = null!;
-    private Mock<IStateStore<AssetBundleIndex>> _mockAssetBundleIndexStore = null!;
-    private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
-    private Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = null!;
-    private Mock<IMessageBus> _mockMessageBus = null!;
-    private Mock<ILogger<AssetService>> _mockLogger = null!;
-    private AssetServiceConfiguration _configuration = null!;
-    private Mock<IAssetEventEmitter> _mockAssetEventEmitter = null!;
-    private Mock<IAssetStorageProvider> _mockStorageProvider = null!;
-    private Mock<IOrchestratorClient> _mockOrchestratorClient = null!;
-    private Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = null!;
-    private Mock<IBundleConverter> _mockBundleConverter = null!;
-    private Mock<IEventConsumer> _mockEventConsumer = null!;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
+    private readonly Mock<IStateStore<InternalAssetRecord>> _mockAssetStore = null!;
+    private readonly Mock<IStateStore<List<string>>> _mockIndexStore = null!;
+    private readonly Mock<IStateStore<BundleMetadata>> _mockBundleStore = null!;
+    private readonly Mock<IStateStore<AssetBundleIndex>> _mockAssetBundleIndexStore = null!;
+    private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
+    private readonly Mock<IStateStore<BundleUploadSession>> _mockBundleUploadSessionStore = null!;
+    private readonly Mock<IMessageBus> _mockMessageBus = null!;
+    private readonly Mock<ILogger<AssetService>> _mockLogger = null!;
+    private readonly AssetServiceConfiguration _configuration = null!;
+    private readonly Mock<IAssetEventEmitter> _mockAssetEventEmitter = null!;
+    private readonly Mock<IAssetStorageProvider> _mockStorageProvider = null!;
+    private readonly Mock<IOrchestratorClient> _mockOrchestratorClient = null!;
+    private readonly Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = null!;
+    private readonly Mock<IBundleConverter> _mockBundleConverter = null!;
+    private readonly Mock<IEventConsumer> _mockEventConsumer = null!;
 
     public AssetServiceTests()
     {
@@ -2614,11 +2614,11 @@ public class AssetConfigurationTests
 
 public class MinioWebhookHandlerTests
 {
-    private Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
-    private Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
-    private Mock<IMessageBus> _mockMessageBus = null!;
-    private Mock<ILogger<MinioWebhookHandler>> _mockLogger = null!;
-    private AssetServiceConfiguration _configuration = null!;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
+    private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = null!;
+    private readonly Mock<IMessageBus> _mockMessageBus = null!;
+    private readonly Mock<ILogger<MinioWebhookHandler>> _mockLogger = null!;
+    private readonly AssetServiceConfiguration _configuration = null!;
 
     public MinioWebhookHandlerTests()
     {
@@ -2870,8 +2870,8 @@ public class MinioWebhookHandlerTests
 
 public class AssetEventEmitterTests
 {
-    private Mock<IClientEventPublisher> _mockClientEventPublisher = null!;
-    private Mock<ILogger<AssetEventEmitter>> _mockLogger = null!;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher = null!;
+    private readonly Mock<ILogger<AssetEventEmitter>> _mockLogger = null!;
 
     public AssetEventEmitterTests()
     {

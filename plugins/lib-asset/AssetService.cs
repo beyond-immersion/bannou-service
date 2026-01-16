@@ -1810,7 +1810,6 @@ public partial class AssetService : IAssetService
             var bundleCoverage = new Dictionary<string, HashSet<string>>();
             var bundleMetadataCache = new Dictionary<string, BundleMetadata>();
             var unresolved = new List<string>();
-            var resolvedAssetIds = new HashSet<string>();
 
             foreach (var assetId in body.AssetIds)
             {
@@ -1920,7 +1919,6 @@ public partial class AssetService : IAssetService
                 foreach (var assetId in providedAssets)
                 {
                     remainingAssets.Remove(assetId);
-                    resolvedAssetIds.Add(assetId);
                 }
             }
 
@@ -1950,7 +1948,6 @@ public partial class AssetService : IAssetService
                         });
 
                         remainingAssets.Remove(assetId);
-                        resolvedAssetIds.Add(assetId);
                     }
                 }
             }
