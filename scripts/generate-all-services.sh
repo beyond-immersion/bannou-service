@@ -330,6 +330,16 @@ else
 fi
 echo ""
 
+# Generate client endpoint metadata (Phase 3: runtime type discovery)
+echo -e "${BLUE}📋 Generating client endpoint metadata...${NC}"
+if python3 "$SCRIPT_DIR/generate-client-endpoint-metadata.py"; then
+    echo -e "${GREEN}✅ Client endpoint metadata generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate client endpoint metadata${NC}"
+    exit 1
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="

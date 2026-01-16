@@ -3640,6 +3640,83 @@
             Unsubscribes from the event. Safe to call multiple times.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.ClientEndpointMetadata">
+            <summary>
+            Static registry mapping API endpoints to their request/response types.
+            Enables runtime type discovery without compile-time knowledge.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo">
+            <summary>
+            Endpoint information including request and response types.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.Method">
+            <summary>HTTP method (e.g., POST, GET).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.Path">
+            <summary>API path (e.g., /auth/login).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.Service">
+            <summary>Service name (e.g., Auth, Character).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.RequestType">
+            <summary>Request body type, or null if no request body.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.ResponseType">
+            <summary>Response body type, or null if no response body.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.EndpointInfo.Summary">
+            <summary>Endpoint summary from OpenAPI schema.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.GetRequestType(System.String,System.String)">
+            <summary>
+            Gets the request type for an endpoint.
+            </summary>
+            <param name="method">HTTP method (e.g., "POST").</param>
+            <param name="path">API path (e.g., "/auth/login").</param>
+            <returns>The request type, or null if not found or no request body.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.GetResponseType(System.String,System.String)">
+            <summary>
+            Gets the response type for an endpoint.
+            </summary>
+            <param name="method">HTTP method (e.g., "POST").</param>
+            <param name="path">API path (e.g., "/auth/login").</param>
+            <returns>The response type, or null if not found or no response body.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.GetEndpointInfo(System.String,System.String)">
+            <summary>
+            Gets complete endpoint information.
+            </summary>
+            <param name="method">HTTP method (e.g., "POST").</param>
+            <param name="path">API path (e.g., "/auth/login").</param>
+            <returns>The endpoint info, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.IsRegistered(System.String,System.String)">
+            <summary>
+            Checks if an endpoint is registered.
+            </summary>
+            <param name="method">HTTP method (e.g., "POST").</param>
+            <param name="path">API path (e.g., "/auth/login").</param>
+            <returns>True if the endpoint is registered.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.GetAllEndpoints">
+            <summary>
+            Gets all registered endpoints.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.GetEndpointsByService(System.String)">
+            <summary>
+            Gets all endpoints for a specific service.
+            </summary>
+            <param name="serviceName">Service name (e.g., "Auth", "Character").</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.ClientEndpointMetadata.Count">
+            <summary>
+            Gets the total number of registered endpoints.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions">
             <summary>
             Event subscriptions for Asset service events.
@@ -3922,30 +3999,6 @@
             <summary>
             Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent"/> events.
             Sent to client before WebSocket connection is closed.
-            </summary>
-            <param name="handler">Handler invoked when the event is received.</param>
-            <returns>Subscription handle. Dispose to unsubscribe.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnSessionCapabilities(System.Action{BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent})">
-            <summary>
-            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent"/> events.
-            Internal event carrying compiled capabilities from Permission to Connect.
-            </summary>
-            <param name="handler">Handler invoked when the event is received.</param>
-            <returns>Subscription handle. Dispose to unsubscribe.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnShortcutPublished(System.Action{BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent})">
-            <summary>
-            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent"/> events.
-            Published by services to create or update a session shortcut.
-            </summary>
-            <param name="handler">Handler invoked when the event is received.</param>
-            <returns>Subscription handle. Dispose to unsubscribe.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnShortcutRevoked(System.Action{BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent})">
-            <summary>
-            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent"/> events.
-            Published by services to remove shortcuts.
             </summary>
             <param name="handler">Handler invoked when the event is received.</param>
             <returns>Subscription handle. Dispose to unsubscribe.</returns>

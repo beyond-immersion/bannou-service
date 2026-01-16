@@ -411,6 +411,9 @@ npm install @beyondimmersion/bannou-client
 The .NET SDK provides:
 - **Typed service proxies** - Compile-time safe API calls (`client.Auth.LoginAsync()`)
 - **Typed event subscriptions** - Strongly-typed event handlers with disposable patterns
+- **Service-grouped events** - IntelliSense-friendly pattern (`client.Events.GameSession.OnChatMessageReceived()`)
+- **ClientEventRegistry** - Bidirectional event type ↔ name mapping
+- **ClientEndpointMetadata** - Runtime type discovery for endpoints
 - **IBannouClient interface** - For dependency injection and mocking in tests
 - Binary header serialization/deserialization
 - Capability manifest management
@@ -463,6 +466,56 @@ using var matchSub = client.OnEvent<MatchFoundEvent>(evt =>
 });
 
 // Subscriptions automatically unsubscribe when disposed
+```
+
+### Service-Grouped Events
+
+For better IntelliSense discoverability, use the service-grouped pattern:
+
+```csharp
+// Organized by service: client.Events.{Service}.On{Event}()
+using var chatSub = client.Events.GameSession.OnChatMessageReceived(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var voiceSub = client.Events.Voice.OnVoicePeerJoined(evt =>
+{
+    Console.WriteLine($"Peer joined: {evt.PeerId}");
+});
+
+using var matchSub = client.Events.Matchmaking.OnMatchFound(evt =>
+{
+    ShowMatchUI(evt.MatchId, evt.PlayerCount);
+});
+```
+
+### Runtime Type Discovery
+
+The `ClientEndpointMetadata` and `ClientEventRegistry` classes provide runtime type information:
+
+```csharp
+using BeyondImmersion.Bannou.Client.Events;
+
+// Get request/response types for an endpoint
+var requestType = ClientEndpointMetadata.GetRequestType("POST", "/auth/login");
+// Returns: typeof(LoginRequest)
+
+var info = ClientEndpointMetadata.GetEndpointInfo("POST", "/character/get");
+// Returns: { Method, Path, Service, RequestType, ResponseType, Summary }
+
+// Filter endpoints by service
+var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
+
+// Event type ↔ name mapping
+string? name = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
+// Returns: "game_session.chat_received"
+
+Type? type = ClientEventRegistry.GetEventType("voice.peer_joined");
+// Returns: typeof(VoicePeerJoinedEvent)
+
+// Check if event is registered
+bool isRegistered = ClientEventRegistry.IsRegistered<VoicePeerJoinedEvent>();
 ```
 
 ### IBannouClient for Testing

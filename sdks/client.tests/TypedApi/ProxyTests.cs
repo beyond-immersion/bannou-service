@@ -116,9 +116,12 @@ public class ProxyTests
     [Fact]
     public void ProxyMethods_ReturnApiResponse()
     {
+        // Get request-response methods (exclude fire-and-forget EventAsync methods)
         var characterMethods = typeof(CharacterProxy)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Where(m => m.Name.EndsWith("Async") && m.DeclaringType == typeof(CharacterProxy));
+            .Where(m => m.Name.EndsWith("Async")
+                && !m.Name.EndsWith("EventAsync")  // Fire-and-forget methods return Task, not Task<ApiResponse<T>>
+                && m.DeclaringType == typeof(CharacterProxy));
 
         foreach (var method in characterMethods)
         {
@@ -129,6 +132,21 @@ public class ProxyTests
             var innerType = returnType.GetGenericArguments()[0];
             Assert.True(innerType.IsGenericType, $"{method.Name} should return Task<ApiResponse<T>>");
             Assert.Equal(typeof(ApiResponse<>), innerType.GetGenericTypeDefinition());
+        }
+    }
+
+    [Fact]
+    public void FireAndForgetMethods_ReturnTask()
+    {
+        // Fire-and-forget methods (EventAsync) return Task without response
+        var eventMethods = typeof(CharacterProxy)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.Name.EndsWith("EventAsync") && m.DeclaringType == typeof(CharacterProxy));
+
+        foreach (var method in eventMethods)
+        {
+            var returnType = method.ReturnType;
+            Assert.Equal(typeof(Task), returnType);
         }
     }
 

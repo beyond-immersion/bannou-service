@@ -109,6 +109,9 @@ Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 - **Capability manifest** for dynamic API discovery
 - **Typed service proxies** for compile-time safe API calls (`client.Auth.LoginAsync()`)
 - **Typed event subscriptions** with disposable handlers (`client.OnEvent<TEvent>(...)`)
+- **Service-grouped events** for IntelliSense discoverability (`client.Events.GameSession.OnChatMessageReceived()`)
+- **ClientEventRegistry** for bidirectional event type ↔ name mapping
+- **ClientEndpointMetadata** for runtime type discovery (`(method, path) → (RequestType, ResponseType)`)
 - **IBannouClient interface** for mocking in tests
 - **Game transport helpers**: MessagePack DTOs + LiteNetLib client transport for UDP gameplay
 
@@ -144,11 +147,45 @@ using var subscription = client.OnEvent<ChatMessageReceivedEvent>(evt =>
     Console.WriteLine($"Chat: {evt.Message}");
 });
 
-// Or use generic event handler
+// Or use service-grouped events for IntelliSense discoverability
+using var chatSub = client.Events.GameSession.OnChatMessageReceived(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var voiceSub = client.Events.Voice.OnVoicePeerJoined(evt =>
+{
+    Console.WriteLine($"Peer joined: {evt.PeerId}");
+});
+
+// Or use generic event handler for all events
 client.OnEvent += (sender, eventData) =>
 {
     Console.WriteLine($"Event: {eventData.EventName}");
 };
+```
+
+### Runtime Type Discovery
+
+```csharp
+using BeyondImmersion.Bannou.Client.Events;
+
+// Get request/response types at runtime
+var requestType = ClientEndpointMetadata.GetRequestType("POST", "/auth/login");
+// Returns: typeof(LoginRequest)
+
+var info = ClientEndpointMetadata.GetEndpointInfo("POST", "/character/get");
+// Returns: { Method, Path, Service, RequestType, ResponseType, Summary }
+
+// Filter endpoints by service
+var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
+
+// Event type ↔ name mapping
+string? name = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
+// Returns: "game_session.chat_received"
+
+Type? type = ClientEventRegistry.GetEventType("voice.peer_joined");
+// Returns: typeof(VoicePeerJoinedEvent)
 ```
 
 ### Game Transport (UDP)

@@ -1,0 +1,610 @@
+# Generated Client Events Reference
+
+> **Source**: `schemas/*-client-events.yaml`
+> **Do not edit manually** - regenerate with `make generate-docs`
+
+This document lists all typed events available for subscription in the Bannou Client SDK.
+
+## Quick Reference
+
+| Event Type | Event Name | Description |
+|------------|------------|-------------|
+| `BundleCreationCompleteEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
+| `BundleValidationCompleteEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
+| `BundleValidationFailedEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
+| `AssetProcessingCompleteEvent` | `asset.processing.complete` | Sent when asset processing (e.g., texture mipmaps, model LOD... |
+| `AssetProcessingFailedEvent` | `asset.processing.failed` | Sent when asset processing fails. Includes retry information... |
+| `AssetReadyEvent` | `asset.ready` | Final notification that an asset is ready for use. |
+| `AssetUploadCompleteEvent` | `asset.upload.complete` | Sent when an asset upload has completed (success or failure)... |
+| `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
+| `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
+| `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
+| `ChatMessageReceivedEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
+| `PlayerJoinedEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
+| `PlayerKickedEvent` | `game_session.player_kicked` | Sent to all session participants when a player is kicked. |
+| `PlayerLeftEvent` | `game_session.player_left` | Sent to all session participants when a player leaves volunt... |
+| `SessionStateChangedEvent` | `game_session.state_changed` | Sent to all session participants when the session state chan... |
+| `GameStateUpdatedEvent` | `game_session.state_updated` | Sent when game state changes that all players should see. |
+| `MatchmakingCancelledEvent` | `matchmaking.cancelled` | Sent when matchmaking is cancelled for any reason. |
+| `MatchConfirmedEvent` | `matchmaking.match_confirmed` | Sent to all match participants when all players have accepte... |
+| `MatchDeclinedEvent` | `matchmaking.match_declined` | Sent to all match participants when someone declines. |
+| `MatchFoundEvent` | `matchmaking.match_found` | Sent to all matched players when a match is formed. |
+| `MatchPlayerAcceptedEvent` | `matchmaking.player_accepted` | Sent to all match participants when a player accepts. |
+| `QueueJoinedEvent` | `matchmaking.queue_joined` | Sent to the player when they successfully join a matchmaking... |
+| `MatchmakingStatusUpdateEvent` | `matchmaking.status_update` | Periodic status update sent to players in queue. |
+| `SystemErrorEvent` | `system.error` | Generic error notification sent to client. |
+| `SystemNotificationEvent` | `system.notification` | Generic notification event for system-level messages. |
+| `VoicePeerJoinedEvent` | `voice.peer_joined` | Sent to existing room participants when a new peer joins. |
+| `VoicePeerLeftEvent` | `voice.peer_left` | Sent to remaining room participants when a peer leaves. |
+| `VoicePeerUpdatedEvent` | `voice.peer_updated` | Sent when a peer updates their SIP endpoint (e.g., ICE candi... |
+| `VoiceRoomClosedEvent` | `voice.room_closed` | Sent to all room participants when the voice room is closed. |
+| `VoiceRoomStateEvent` | `voice.room_state` | Sent to a client when they join a voice room. |
+| `VoiceTierUpgradeEvent` | `voice.tier_upgrade` | Sent to all room participants when the voice tier upgrades. |
+
+---
+
+## Usage Pattern
+
+```csharp
+using BeyondImmersion.Bannou.Client;
+
+var client = new BannouClient();
+await client.ConnectWithTokenAsync(url, token);
+
+// Subscribe to typed events - returns a disposable handle
+using var subscription = client.OnEvent<ChatMessageReceivedEvent>(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+// Or subscribe to multiple event types
+using var matchSub = client.OnEvent<MatchFoundEvent>(evt =>
+{
+    Console.WriteLine($"Match found! Players: {evt.PlayerCount}");
+});
+
+// Use ClientEventRegistry for runtime type discovery
+var eventName = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
+// Returns: "game_session.chat_received"
+```
+
+---
+
+## Asset Client Events API
+
+Server-to-client push events for the Asset service. These events notify clients of upload completions, processing results, bundle validations, and asset availability delivered via WebSocket.
+
+### `BundleCreationCompleteEvent`
+
+**Event Name**: `asset.bundle.creation.complete`
+
+Sent when bundle creation from asset_ids completes.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetCount` | Number of assets in the bundle |
+| `bundleId` | ID of the created bundle |
+| `downloadUrl` | Pre-signed download URL (on success) |
+| `errorCode` | Error code on failure |
+| `errorMessage` | Human-readable error description |
+| `size` | Bundle file size in bytes |
+| `success` | Whether creation completed successfully |
+
+### `BundleValidationCompleteEvent`
+
+**Event Name**: `asset.bundle.validation.complete`
+
+Sent when a bundle upload has been validated and processed.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetsRegistered` | Number of assets extracted and registered |
+| `bundleId` | Assigned bundle ID on success |
+| `duplicatesSkipped` | Assets with matching hash already in storage |
+| `success` | Whether validation passed |
+| `uploadId` | Correlates with the bundle upload request |
+| `warnings` | Non-fatal warnings encountered during validation |
+
+### `BundleValidationFailedEvent`
+
+**Event Name**: `asset.bundle.validation.failed`
+
+Sent when bundle validation fails. Includes detailed error information.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `errors` | List of validation errors that caused the failure |
+| `uploadId` | Correlates with the bundle upload request |
+
+### `AssetProcessingCompleteEvent`
+
+**Event Name**: `asset.processing.complete`
+
+Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetId` | ID of the asset that was processed |
+| `errorCode` | Error code indicating the type of processing failu |
+| `errorMessage` | Human-readable error description |
+| `outputs` | Generated derivative assets (mipmaps, LODs, etc.) |
+| `processingType` | Type of processing that was performed on the asset |
+| `success` | Whether processing completed successfully |
+
+### `AssetProcessingFailedEvent`
+
+**Event Name**: `asset.processing.failed`
+
+Sent when asset processing fails. Includes retry information.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetId` | ID of the asset that failed processing |
+| `errorCode` | Error code indicating the type of processing failu |
+| `errorMessage` | Human-readable error description |
+| `retryAfterMs` | Suggested retry delay in milliseconds |
+| `retryAvailable` | Whether the operation can be retried |
+
+### `AssetReadyEvent`
+
+**Event Name**: `asset.ready`
+
+Final notification that an asset is ready for use.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetId` | ID of the asset that is now ready |
+| `contentHash` | SHA256 hash of the asset |
+| `contentType` | MIME content type |
+| `metadata` | Asset metadata |
+| `size` | File size in bytes |
+| `versionId` | Version ID of this asset |
+
+### `AssetUploadCompleteEvent`
+
+**Event Name**: `asset.upload.complete`
+
+Sent when an asset upload has completed (success or failure).
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetId` | Asset ID assigned on success |
+| `contentHash` | SHA256 hash of uploaded content |
+| `errorCode` | Error code indicating the type of upload failure |
+| `errorMessage` | Human-readable error description |
+| `size` | File size in bytes |
+| `success` | Whether the upload completed successfully |
+| `uploadId` | Correlates with the upload request |
+
+---
+
+## Common Client Events API
+
+Base schemas for server-to-client push events delivered via WebSocket. All client events inherit from BaseClientEvent and are routed through session-specific RabbitMQ channels (CONNECT_SESSION_{ses...
+
+### `CapabilityManifestEvent`
+
+**Event Name**: `connect.capability_manifest`
+
+Sent to client when their available API capabilities change.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `availableApis` | List of available API endpoints with their GUIDs |
+| `peerGuid` | Unique GUID for peer-to-peer routing on this Conne |
+| `reason` | Reason for manifest update (e.g., "initial_connect |
+| `sessionId` | Session ID this manifest applies to |
+| `version` | Manifest version number (incremented on each chang |
+
+### `DisconnectNotificationEvent`
+
+**Event Name**: `connect.disconnect_notification`
+
+Sent to client before WebSocket connection is closed.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `expiresAt` | When the reconnection token expires |
+| `reason` | Reason for disconnection: |
+| `reconnectable` | Whether this session can be reconnected |
+| `reconnectionToken` | Token for reconnecting to the same session (valid  |
+
+### `SystemErrorEvent`
+
+**Event Name**: `system.error`
+
+Generic error notification sent to client.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `details` | Additional error details (service-specific) |
+| `errorCode` | Machine-readable error code (e.g., "SERVICE_UNAVAI |
+| `message` | Human-readable error message |
+| `recoverable` | Whether the client can retry the operation |
+
+### `SystemNotificationEvent`
+
+**Event Name**: `system.notification`
+
+Generic notification event for system-level messages.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `actionUrl` | Optional URL for more information |
+| `expiresAt` | When this notification expires/becomes irrelevant |
+| `message` | Human-readable notification message |
+| `notificationType` | Type of notification |
+| `title` | Optional notification title |
+
+---
+
+## Game Session Client Events API
+
+Server-to-client push events for the Game Session service. These events notify clients of game session state changes, player actions, chat messages, and game state updates delivered via WebSocket.
+
+### `GameActionResultEvent`
+
+**Event Name**: `game_session.action_result`
+
+Sent to relevant players when a game action produces results.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `actionId` | ID of the action that produced this result |
+| `actionType` | Type of action performed |
+| `actorId` | Account ID of player who performed the action |
+| `resultData` | Action-specific result data |
+| `sessionId` | ID of the game session |
+| `success` | Whether the action succeeded |
+| `visibleEffects` | Visual/audio effects other players should see |
+
+### `ChatMessageReceivedEvent`
+
+**Event Name**: `game_session.chat_received`
+
+Sent to recipients when a chat message is posted in the session.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `isWhisperToMe` | True if this is a whisper directed at the receivin |
+| `message` | Chat message content |
+| `messageId` | Unique identifier for this chat message |
+| `messageType` | Type of chat message |
+| `senderId` | Account ID of message sender |
+| `senderName` | Display name of sender |
+| `sessionId` | ID of the game session |
+
+### `PlayerJoinedEvent`
+
+**Event Name**: `game_session.player_joined`
+
+Sent to all session participants when a new player joins.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `currentPlayerCount` | Total players in session after join |
+| `maxPlayers` | Maximum allowed players |
+| `player` | Information about the player who joined the sessio |
+| `sessionId` | ID of the game session |
+
+### `PlayerKickedEvent`
+
+**Event Name**: `game_session.player_kicked`
+
+Sent to all session participants when a player is kicked.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `kickedBy` | Account ID of user who performed the kick |
+| `kickedPlayerId` | Account ID of player who was kicked |
+| `kickedPlayerName` | Display name for UI notification |
+| `reason` | Reason provided for the kick |
+| `sessionId` | ID of the game session |
+
+### `PlayerLeftEvent`
+
+**Event Name**: `game_session.player_left`
+
+Sent to all session participants when a player leaves voluntarily.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `currentPlayerCount` | Total players remaining after departure |
+| `displayName` | Display name for UI notification |
+| `newOwnerId` | New session owner if ownership transferred |
+| `playerId` | Account ID of player who left |
+| `sessionId` | ID of the game session |
+
+### `SessionStateChangedEvent`
+
+**Event Name**: `game_session.state_changed`
+
+Sent to all session participants when the session state changes.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changedBy` | Account ID of user who triggered the change (if ap |
+| `newState` | State after the change |
+| `previousState` | State before the change |
+| `reason` | Reason for state change (e.g., "host_started", "ti |
+| `sessionId` | ID of the game session |
+
+### `GameStateUpdatedEvent`
+
+**Event Name**: `game_session.state_updated`
+
+Sent when game state changes that all players should see.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `sequenceNumber` | Monotonically increasing sequence for ordering sta |
+| `sessionId` | ID of the game session |
+| `stateDelta` | Partial game state changes |
+| `triggeredBy` | Account ID that triggered the state change |
+| `updateType` | Type of update (game-specific, e.g., "turn_changed |
+
+---
+
+## Matchmaking Client Events API
+
+Server-to-client push events for the Matchmaking service. These events notify clients of matchmaking status changes, match formation, and cancellation delivered via WebSocket.
+
+### `MatchmakingCancelledEvent`
+
+**Event Name**: `matchmaking.cancelled`
+
+Sent when matchmaking is cancelled for any reason.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `canRequeue` | Whether the player can immediately requeue |
+| `queueId` | Queue the ticket was in |
+| `reason` | Reason for cancellation |
+| `reasonDetail` | Additional detail about the cancellation |
+| `ticketId` | Ticket that was cancelled |
+| `waitTimeSeconds` | How long the player was waiting before cancellatio |
+
+### `MatchConfirmedEvent`
+
+**Event Name**: `matchmaking.match_confirmed`
+
+Sent to all match participants when all players have accepted.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gameSessionId` | ID of the created game session |
+| `joinDeadlineSeconds` | Seconds to join before reservation expires |
+| `matchId` | Match identifier |
+| `reservationToken` | Token to claim reservation when joining session |
+
+### `MatchDeclinedEvent`
+
+**Event Name**: `matchmaking.match_declined`
+
+Sent to all match participants when someone declines.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `autoRequeued` | Whether you have been automatically requeued |
+| `declinedByOther` | Whether someone else declined (false if you declin |
+| `matchId` | Match that was declined |
+| `newTicketId` | New ticket ID if auto-requeued |
+| `queueId` | Queue the match was from |
+
+### `MatchFoundEvent`
+
+**Event Name**: `matchmaking.match_found`
+
+Sent to all matched players when a match is formed.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `acceptDeadline` | Deadline to accept/decline the match |
+| `acceptTimeoutSeconds` | Seconds remaining to accept |
+| `averageSkillRating` | Average skill rating of matched players (if using  |
+| `matchId` | Unique identifier for this match |
+| `partyMembersMatched` | Account IDs of party members who are also in this  |
+| `playerCount` | Total number of players in the match |
+| `queueDisplayName` | Human-readable queue name |
+| `queueId` | Queue the match was formed from |
+| `teamAssignment` | Team number the player is assigned to (for team ga |
+
+### `MatchPlayerAcceptedEvent`
+
+**Event Name**: `matchmaking.player_accepted`
+
+Sent to all match participants when a player accepts.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `acceptedCount` | Number of players who have accepted |
+| `allAccepted` | Whether all players have accepted |
+| `matchId` | Match identifier |
+| `totalCount` | Total players who need to accept |
+
+### `QueueJoinedEvent`
+
+**Event Name**: `matchmaking.queue_joined`
+
+Sent to the player when they successfully join a matchmaking queue.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `estimatedWaitSeconds` | Estimated wait time in seconds (null if unknown) |
+| `position` | Approximate position in queue (null if not tracked |
+| `queueDisplayName` | Human-readable queue name |
+| `queueId` | ID of the queue joined |
+| `ticketId` | Unique identifier for the matchmaking ticket |
+
+### `MatchmakingStatusUpdateEvent`
+
+**Event Name**: `matchmaking.status_update`
+
+Periodic status update sent to players in queue.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `currentSkillRange` | Current skill matching range |
+| `estimatedWaitSeconds` | Updated wait estimate |
+| `intervalsElapsed` | Number of processing intervals elapsed |
+| `maxIntervals` | Maximum intervals before timeout/relaxation |
+| `position` | Current queue position (if tracked) |
+| `queueId` | Queue identifier |
+| `ticketId` | Ticket identifier |
+
+---
+
+## Voice Client Events API
+
+Server-to-client push events for the Voice service. These events notify clients of voice room state changes, peer connections, and tier upgrades delivered via WebSocket.
+
+### `VoicePeerJoinedEvent`
+
+**Event Name**: `voice.peer_joined`
+
+Sent to existing room participants when a new peer joins.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `currentParticipantCount` | Total participants after join |
+| `peer` | New peer's connection details |
+| `roomId` | Voice room ID |
+
+### `VoicePeerLeftEvent`
+
+**Event Name**: `voice.peer_left`
+
+Sent to remaining room participants when a peer leaves.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `displayName` | Display name for UI notification |
+| `peerSessionId` | WebSocket session ID of the peer who left (ephemer |
+| `remainingParticipantCount` | Participants remaining after departure |
+| `roomId` | Voice room ID |
+
+### `VoicePeerUpdatedEvent`
+
+**Event Name**: `voice.peer_updated`
+
+Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `peer` | Updated peer connection details |
+| `roomId` | Voice room ID |
+
+### `VoiceRoomClosedEvent`
+
+**Event Name**: `voice.room_closed`
+
+Sent to all room participants when the voice room is closed.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `reason` | Reason the room was closed |
+| `roomId` | Voice room ID that was closed |
+
+### `VoiceRoomStateEvent`
+
+**Event Name**: `voice.room_state`
+
+Sent to a client when they join a voice room.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `codec` | Audio codec to use |
+| `peers` | List of peers to connect to (P2P mode) |
+| `roomId` | Voice room ID |
+| `rtpServerUri` | RTP server URI (scaled mode only) |
+| `sessionId` | Associated game session ID |
+| `stunServers` | STUN server URIs for NAT traversal |
+| `tier` | Current voice tier |
+
+### `VoiceTierUpgradeEvent`
+
+**Event Name**: `voice.tier_upgrade`
+
+Sent to all room participants when the voice tier upgrades.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `migrationDeadlineMs` | Milliseconds to complete migration before P2P disc |
+| `newTier` | New tier after upgrade (always scaled for upgrade  |
+| `previousTier` | Previous tier (always p2p for upgrade events) |
+| `roomId` | Voice room ID |
+| `rtpServerUri` | RTP server URI to connect to |
+| `sipCredentials` | Credentials for SIP registration with Kamailio |
+
+---
+
+## Summary
+
+- **Total event types**: 31
+- **Services with events**: 5
+
+---
+
+*This file is auto-generated from event schemas. See [TENETS.md](reference/TENETS.md) for architectural context.*

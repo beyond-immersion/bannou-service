@@ -202,6 +202,7 @@ components:
       type: object
       additionalProperties: false
       x-client-event: true
+      x-internal: true
       description: |
         Internal event carrying compiled capabilities from Permission to Connect.
         NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
@@ -282,6 +283,7 @@ components:
       type: object
       additionalProperties: false
       x-client-event: true
+      x-internal: true
       description: |
         Published by services to create or update a session shortcut.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.
@@ -314,6 +316,7 @@ components:
       type: object
       additionalProperties: false
       x-client-event: true
+      x-internal: true
       description: |
         Published by services to remove shortcuts.
         Sent to CONNECT_SESSION_{sessionId} topic for the specific session.

@@ -201,4 +201,48 @@ public class ServiceGroupedEventTests
         Assert.NotEmpty(constructor);
         Assert.True(constructor[0].IsAssembly, "Constructor should be internal");
     }
+
+    // =========================================================================
+    // INTERNAL EVENT EXCLUSION TESTS
+    // Verifies that internal events (x-internal: true) are NOT exposed to clients
+    // =========================================================================
+
+    [Fact]
+    public void SystemEventSubscriptions_ExcludesSessionCapabilities()
+    {
+        // SessionCapabilitiesEvent is internal - not forwarded to clients
+        var method = typeof(SystemEventSubscriptions).GetMethod("OnSessionCapabilities");
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void SystemEventSubscriptions_ExcludesShortcutPublished()
+    {
+        // ShortcutPublishedEvent is internal - handled by Connect service
+        var method = typeof(SystemEventSubscriptions).GetMethod("OnShortcutPublished");
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void SystemEventSubscriptions_ExcludesShortcutRevoked()
+    {
+        // ShortcutRevokedEvent is internal - handled by Connect service
+        var method = typeof(SystemEventSubscriptions).GetMethod("OnShortcutRevoked");
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void SystemEventSubscriptions_IncludesPublicEvents()
+    {
+        // Verify public events are still present
+        var capabilityManifest = typeof(SystemEventSubscriptions).GetMethod("OnCapabilityManifest");
+        var disconnectNotification = typeof(SystemEventSubscriptions).GetMethod("OnDisconnectNotification");
+        var systemError = typeof(SystemEventSubscriptions).GetMethod("OnSystemError");
+        var systemNotification = typeof(SystemEventSubscriptions).GetMethod("OnSystemNotification");
+
+        Assert.NotNull(capabilityManifest);
+        Assert.NotNull(disconnectNotification);
+        Assert.NotNull(systemError);
+        Assert.NotNull(systemNotification);
+    }
 }

@@ -286,6 +286,28 @@ client.OnEvent += (sender, eventData) =>
 };
 ```
 
+### Service-Grouped Event Subscriptions
+
+For better discoverability via IntelliSense, use service-grouped subscriptions:
+
+```csharp
+// Organized by service - discoverable via client.Events.{Service}.On{Event}()
+using var chatSub = client.Events.GameSession.OnChatMessageReceived(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var voiceSub = client.Events.Voice.OnVoicePeerJoined(evt =>
+{
+    Console.WriteLine($"Peer joined: {evt.PeerId}");
+});
+
+using var matchSub = client.Events.Matchmaking.OnMatchFound(evt =>
+{
+    ShowMatchUI(evt.MatchId, evt.PlayerCount);
+});
+```
+
 ### Event Registry
 
 The `ClientEventRegistry` maps between event types and their string names:
@@ -301,6 +323,30 @@ Type? type = ClientEventRegistry.GetEventType("matchmaking.match_found");
 
 // Check if an event is registered
 bool isRegistered = ClientEventRegistry.IsRegistered<VoicePeerJoinedEvent>();
+```
+
+### Runtime Type Discovery
+
+The `ClientEndpointMetadata` class provides runtime lookup of request/response types:
+
+```csharp
+// Get request type for an endpoint
+var requestType = ClientEndpointMetadata.GetRequestType("POST", "/auth/login");
+// Returns: typeof(LoginRequest)
+
+// Get response type
+var responseType = ClientEndpointMetadata.GetResponseType("POST", "/character/get");
+// Returns: typeof(CharacterResponse)
+
+// Get full endpoint info
+var info = ClientEndpointMetadata.GetEndpointInfo("POST", "/auth/login");
+// Returns: { Method, Path, Service, RequestType, ResponseType, Summary }
+
+// Filter endpoints by service
+var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
+
+// Check if endpoint is registered
+bool exists = ClientEndpointMetadata.IsRegistered("POST", "/account/get");
 ```
 
 ## Meta Requests
@@ -370,6 +416,9 @@ else
 | `IBannouClient` | Interface for mocking in tests |
 | `Generated/Proxies/*` | Typed service proxies (AuthProxy, CharacterProxy, etc.) |
 | `Generated/Events/ClientEventRegistry` | Event type ↔ name mapping |
+| `Generated/Events/ClientEndpointMetadata` | Runtime endpoint type discovery |
+| `Generated/Events/*EventSubscriptions` | Service-grouped event subscriptions |
+| `Generated/Events/BannouClientEvents` | Container for `client.Events.{Service}` access |
 | `IEventSubscription` | Disposable event subscription handle |
 | `BinaryMessage` | Binary protocol message handling |
 | `ResponseCodes` | Error code enumeration |

@@ -127,6 +127,10 @@ def extract_events_from_schema(schema_path: Path) -> ServiceEvents | None:
         if not schema_def.get('x-client-event'):
             continue
 
+        # Skip internal events (not exposed to clients)
+        if schema_def.get('x-internal'):
+            continue
+
         # Get description
         description = schema_def.get('description', '').strip()
         if description:

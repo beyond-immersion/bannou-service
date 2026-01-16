@@ -231,4 +231,44 @@ public class ClientEventRegistryTests
             Assert.Equal(eventName, resolvedName);
         }
     }
+
+    // =========================================================================
+    // INTERNAL EVENT EXCLUSION TESTS
+    // Verifies that internal events (x-internal: true) are NOT in the registry
+    // =========================================================================
+
+    [Fact]
+    public void InternalEvents_NotRegisteredByName_SessionCapabilities()
+    {
+        // SessionCapabilitiesEvent is internal - should not be in registry
+        var eventType = ClientEventRegistry.GetEventType("permission.session_capabilities");
+        Assert.Null(eventType);
+    }
+
+    [Fact]
+    public void InternalEvents_NotRegisteredByName_ShortcutPublished()
+    {
+        // ShortcutPublishedEvent is internal - should not be in registry
+        var eventType = ClientEventRegistry.GetEventType("session.shortcut_published");
+        Assert.Null(eventType);
+    }
+
+    [Fact]
+    public void InternalEvents_NotRegisteredByName_ShortcutRevoked()
+    {
+        // ShortcutRevokedEvent is internal - should not be in registry
+        var eventType = ClientEventRegistry.GetEventType("session.shortcut_revoked");
+        Assert.Null(eventType);
+    }
+
+    [Fact]
+    public void InternalEventNames_NotInAllEventNames()
+    {
+        var names = ClientEventRegistry.GetAllEventNames().ToList();
+
+        // Internal events should NOT be in the list
+        Assert.DoesNotContain("permission.session_capabilities", names);
+        Assert.DoesNotContain("session.shortcut_published", names);
+        Assert.DoesNotContain("session.shortcut_revoked", names);
+    }
 }

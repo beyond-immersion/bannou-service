@@ -46,39 +46,6 @@ public sealed class SystemEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="SessionCapabilitiesEvent"/> events.
-    /// Internal event carrying compiled capabilities from Permission to Connect.
-    /// </summary>
-    /// <param name="handler">Handler invoked when the event is received.</param>
-    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionCapabilities(Action<SessionCapabilitiesEvent> handler)
-    {
-        return _client.OnEvent<SessionCapabilitiesEvent>(handler);
-    }
-
-    /// <summary>
-    /// Subscribe to <see cref="ShortcutPublishedEvent"/> events.
-    /// Published by services to create or update a session shortcut.
-    /// </summary>
-    /// <param name="handler">Handler invoked when the event is received.</param>
-    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnShortcutPublished(Action<ShortcutPublishedEvent> handler)
-    {
-        return _client.OnEvent<ShortcutPublishedEvent>(handler);
-    }
-
-    /// <summary>
-    /// Subscribe to <see cref="ShortcutRevokedEvent"/> events.
-    /// Published by services to remove shortcuts.
-    /// </summary>
-    /// <param name="handler">Handler invoked when the event is received.</param>
-    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnShortcutRevoked(Action<ShortcutRevokedEvent> handler)
-    {
-        return _client.OnEvent<ShortcutRevokedEvent>(handler);
-    }
-
-    /// <summary>
     /// Subscribe to <see cref="SystemErrorEvent"/> events.
     /// Generic error notification sent to client.
     /// </summary>

@@ -88,6 +88,10 @@ def extract_events_from_schema(schema_path: Path) -> List[EventInfo]:
         if not schema_def.get('x-client-event'):
             continue
 
+        # Skip internal events (not exposed to clients)
+        if schema_def.get('x-internal'):
+            continue
+
         # Get eventName from properties
         props = schema_def.get('properties', {})
         event_name_prop = props.get('eventName', {})

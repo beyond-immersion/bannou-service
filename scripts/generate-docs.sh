@@ -40,4 +40,12 @@ python3 "$SCRIPT_DIR/generate-config-docs.py"
 echo "  → Generating service details reference..."
 python3 "$SCRIPT_DIR/generate-service-details-docs.py"
 
+# Generate client API documentation
+echo "  → Generating client API reference..."
+python3 "$SCRIPT_DIR/generate-client-api-docs.py"
+
+# Generate client events documentation
+echo "  → Generating client events reference..."
+python3 "$SCRIPT_DIR/generate-client-events-docs.py"
+
 echo "✅ Documentation generation complete"
