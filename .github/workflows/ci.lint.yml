@@ -16,17 +16,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install editorconfig-checker
+        run: |
+          # Download and install editorconfig-checker
+          EC_VERSION="3.3.0"
+          curl -fsSL "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v${EC_VERSION}/ec-linux-amd64.tar.gz" | tar xz
+          sudo mv bin/ec-linux-amd64 /usr/local/bin/ec
+          ec --version
+
       - name: Run EditorConfig Validation
-        id: super-linter
-        uses: github/super-linter/slim@v5
-        env:
-          DEFAULT_BRANCH: master
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          # Enable ONLY EditorConfig validation - focused, reliable checking without formatter conflicts
-          VALIDATE_EDITORCONFIG: true
-          # Disable C# linting to avoid conflicts with dotnet format
-          VALIDATE_CSHARP: false
+        id: editorconfig-check
+        run: |
+          echo "Running editorconfig-checker..."
+          ec || (echo "::error::EditorConfig validation failed" && exit 1)
+          echo "EditorConfig validation passed"
 
       - name: Get Latest Commit Info
         id: commit_info

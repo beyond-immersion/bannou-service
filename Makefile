@@ -360,19 +360,9 @@ lint-editorconfig:
 		exit 1; \
 	fi
 
-# EditorConfig validation using Super Linter (matches GitHub Actions exactly, optimized for speed)
-check-ci:
-	@echo "🔧 Running EditorConfig validation using Super Linter..."
-	@echo "📋 This matches the exact validation used in GitHub Actions CI"
-	@echo "⚡ Optimized: Only EditorConfig validation enabled for faster execution"
-	@docker run --rm \
-		-e RUN_LOCAL=true \
-		-e USE_FIND_ALGORITHM=true \
-		-e VALIDATE_EDITORCONFIG=true \
-		-v $(PWD):/tmp/lint \
-		ghcr.io/super-linter/super-linter:slim-v5 \
-		|| (echo "❌ EditorConfig validation failed. Run 'make fix-config' to fix." && exit 1)
-	@echo "✅ EditorConfig validation passed"
+# EditorConfig validation matching GitHub Actions CI (uses editorconfig-checker)
+# Note: CI now uses 'ec' directly instead of super-linter for faster execution
+check-ci: lint-editorconfig
 
 # Fix line endings and final newlines for all project files
 fix-endings:
