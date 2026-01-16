@@ -408,12 +408,85 @@ dotnet add package BeyondImmersion.Bannou.Client
 npm install @beyondimmersion/bannou-client
 ```
 
-The SDK provides:
+The .NET SDK provides:
+- **Typed service proxies** - Compile-time safe API calls (`client.Auth.LoginAsync()`)
+- **Typed event subscriptions** - Strongly-typed event handlers with disposable patterns
+- **IBannouClient interface** - For dependency injection and mocking in tests
 - Binary header serialization/deserialization
 - Capability manifest management
 - Connection state management
 - Automatic reconnection
-- TypeScript type definitions
+
+## Using the .NET Client SDK
+
+### Typed Service Proxies (Recommended)
+
+The SDK generates typed proxies for all Bannou services:
+
+```csharp
+using BeyondImmersion.Bannou.Client;
+
+var client = new BannouClient();
+await client.ConnectWithTokenAsync(connectUrl, accessToken);
+
+// Use typed proxies - no manual method/path specification
+var loginResponse = await client.Auth.LoginAsync(new LoginRequest
+{
+    Email = "player@example.com",
+    Password = "password"
+});
+
+if (loginResponse.IsSuccess)
+{
+    var token = loginResponse.Result.Token;
+}
+
+// All services are available as properties:
+// client.Account, client.Auth, client.Character, client.GameSession,
+// client.Matchmaking, client.Voice, client.Asset, etc.
+```
+
+### Typed Event Subscriptions
+
+Subscribe to specific event types with full type safety:
+
+```csharp
+// Returns a disposable subscription handle
+using var chatSub = client.OnEvent<ChatMessageReceivedEvent>(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var matchSub = client.OnEvent<MatchFoundEvent>(evt =>
+{
+    ShowMatchFoundUI(evt.MatchId, evt.PlayerCount);
+});
+
+// Subscriptions automatically unsubscribe when disposed
+```
+
+### IBannouClient for Testing
+
+The `IBannouClient` interface enables dependency injection and mocking:
+
+```csharp
+public class GameManager
+{
+    private readonly IBannouClient _client;
+
+    public GameManager(IBannouClient client)
+    {
+        _client = client;
+    }
+
+    public async Task JoinGameAsync(string sessionId)
+    {
+        var response = await _client.GameSession.JoinSessionAsync(
+            new JoinSessionRequest { SessionId = sessionId });
+        // ...
+    }
+}
+```
 
 ## Example: Complete Client Flow
 

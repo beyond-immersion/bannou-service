@@ -107,6 +107,9 @@ Lightweight SDK for game clients connecting to Bannou services via WebSocket.
 - **Request/response messaging** with typed payloads
 - **Event reception** for real-time updates pushed from services
 - **Capability manifest** for dynamic API discovery
+- **Typed service proxies** for compile-time safe API calls (`client.Auth.LoginAsync()`)
+- **Typed event subscriptions** with disposable handlers (`client.OnEvent<TEvent>(...)`)
+- **IBannouClient interface** for mocking in tests
 - **Game transport helpers**: MessagePack DTOs + LiteNetLib client transport for UDP gameplay
 
 ### Installation
@@ -123,14 +126,25 @@ using BeyondImmersion.Bannou.Client;
 var client = new BannouClient();
 await client.ConnectWithTokenAsync(connectUrl, accessToken);
 
-// Invoke an API endpoint
-var response = await client.InvokeAsync<MyRequest, MyResponse>(
-    "POST",
-    "/character/get",
-    new MyRequest { CharacterId = "abc123" },
-    timeout: TimeSpan.FromSeconds(5));
+// Use typed service proxies (recommended)
+var response = await client.Auth.LoginAsync(new LoginRequest
+{
+    Email = "player@example.com",
+    Password = "password"
+});
 
-// Handle events
+var character = await client.Character.GetAsync(new CharacterGetRequest
+{
+    CharacterId = "abc123"
+});
+
+// Handle typed events with disposable subscriptions
+using var subscription = client.OnEvent<ChatMessageReceivedEvent>(evt =>
+{
+    Console.WriteLine($"Chat: {evt.Message}");
+});
+
+// Or use generic event handler
 client.OnEvent += (sender, eventData) =>
 {
     Console.WriteLine($"Event: {eventData.EventName}");
