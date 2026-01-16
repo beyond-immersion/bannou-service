@@ -1,3 +1,5 @@
+using BeyondImmersion.Bannou.Core;
+
 namespace BeyondImmersion.Bannou.Client;
 
 /// <summary>
@@ -149,6 +151,22 @@ public interface IBannouClient : IAsyncDisposable
     /// </summary>
     /// <param name="eventType">Event type to unregister</param>
     void RemoveEventHandler(string eventType);
+
+    /// <summary>
+    /// Subscribe to a typed event with automatic deserialization.
+    /// The event type must be a generated client event class inheriting from <see cref="BaseClientEvent"/>.
+    /// </summary>
+    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+    /// <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
+    /// <returns>Subscription handle - call <see cref="IDisposable.Dispose"/> to unsubscribe</returns>
+    /// <exception cref="ArgumentException">Thrown if TEvent is not a registered client event type</exception>
+    IEventSubscription OnEvent<TEvent>(Action<TEvent> handler) where TEvent : BaseClientEvent;
+
+    /// <summary>
+    /// Remove all typed handlers for a specific event type.
+    /// </summary>
+    /// <typeparam name="TEvent">Event type to remove all handlers for</typeparam>
+    void RemoveEventHandlers<TEvent>() where TEvent : BaseClientEvent;
 
     /// <summary>
     /// Disconnects from the server.

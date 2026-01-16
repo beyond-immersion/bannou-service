@@ -105,10 +105,7 @@ public sealed class VoiceRoomManager : IDisposable
             }
 
             // Apply to scaled connection
-            if (_scaledConnection != null)
-            {
-                _scaledConnection.IsMuted = value;
-            }
+            _scaledConnection?.IsMuted = value;
         }
     }
     private bool _isMuted;

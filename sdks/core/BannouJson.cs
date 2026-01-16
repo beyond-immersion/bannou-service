@@ -79,6 +79,15 @@ public static class BannouJson
     }
 
     /// <summary>
+    /// Deserialize JSON string to object of a runtime type using Bannou's standard configuration.
+    /// Use this when the type is only known at runtime (e.g., event dispatch).
+    /// </summary>
+    public static object? Deserialize(string json, Type returnType)
+    {
+        return JsonSerializer.Deserialize(json, returnType, Options);
+    }
+
+    /// <summary>
     /// Deserialize from UTF-8 bytes using Bannou's standard configuration.
     /// </summary>
     public static T? Deserialize<T>(ReadOnlySpan<byte> utf8Json)

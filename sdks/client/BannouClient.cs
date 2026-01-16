@@ -24,6 +24,8 @@ public class BannouClient : IBannouClient
     private readonly ConcurrentDictionary<ulong, TaskCompletionSource<BinaryMessage>> _pendingRequests = new();
     private readonly ConcurrentDictionary<string, Guid> _apiMappings = new();
     private readonly ConcurrentDictionary<string, Action<string>> _eventHandlers = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, Delegate>> _typedEventHandlers = new();
+    private readonly ConcurrentDictionary<Type, string> _eventTypeToNameCache = new();
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private CancellationTokenSource? _receiveLoopCts;
@@ -563,6 +565,127 @@ public class BannouClient : IBannouClient
     }
 
     /// <summary>
+    /// Subscribe to a typed event with automatic deserialization.
+    /// The event type must be a generated client event class inheriting from <see cref="BaseClientEvent"/>.
+    /// </summary>
+    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+    /// <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
+    /// <returns>Subscription handle - call <see cref="IDisposable.Dispose"/> to unsubscribe</returns>
+    /// <exception cref="ArgumentException">Thrown if TEvent is not a registered client event type</exception>
+    public IEventSubscription OnEvent<TEvent>(Action<TEvent> handler) where TEvent : BaseClientEvent
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var eventName = GetEventNameForType<TEvent>();
+        if (string.IsNullOrEmpty(eventName))
+        {
+            throw new ArgumentException(
+                $"Unknown event type: {typeof(TEvent).Name}. The event class must have a non-empty EventName property.");
+        }
+
+        var subscriptionId = Guid.NewGuid();
+        var handlers = _typedEventHandlers.GetOrAdd(eventName, _ => new ConcurrentDictionary<Guid, Delegate>());
+        handlers[subscriptionId] = handler;
+
+        return new EventSubscription(eventName, subscriptionId, id =>
+        {
+            if (_typedEventHandlers.TryGetValue(eventName, out var h))
+            {
+                h.TryRemove(id, out _);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Remove all typed handlers for a specific event type.
+    /// </summary>
+    /// <typeparam name="TEvent">Event type to remove all handlers for</typeparam>
+    public void RemoveEventHandlers<TEvent>() where TEvent : BaseClientEvent
+    {
+        var eventName = GetEventNameForType<TEvent>();
+        if (!string.IsNullOrEmpty(eventName))
+        {
+            _typedEventHandlers.TryRemove(eventName, out _);
+        }
+    }
+
+    /// <summary>
+    /// Get the eventName for a typed event class by instantiating and reading its EventName property.
+    /// Results are cached for performance.
+    /// </summary>
+    private string? GetEventNameForType<TEvent>() where TEvent : BaseClientEvent
+    {
+        return _eventTypeToNameCache.GetOrAdd(typeof(TEvent), type =>
+        {
+            try
+            {
+                // Create a default instance to read the EventName property
+                var instance = Activator.CreateInstance<TEvent>();
+                return instance.EventName;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Dispatches an event to all typed handlers registered for the given eventName.
+    /// </summary>
+    private void DispatchTypedEvent(string eventName, string payloadJson)
+    {
+        if (!_typedEventHandlers.TryGetValue(eventName, out var handlers) || handlers.IsEmpty)
+        {
+            return;
+        }
+
+        // Find the type for this eventName by checking our cache
+        Type? eventType = null;
+        foreach (var kvp in _eventTypeToNameCache)
+        {
+            if (string.Equals(kvp.Value, eventName, StringComparison.Ordinal))
+            {
+                eventType = kvp.Key;
+                break;
+            }
+        }
+
+        if (eventType == null)
+        {
+            return;
+        }
+
+        // Deserialize once, invoke all handlers
+        object? evt = null;
+        try
+        {
+            evt = BannouJson.Deserialize(payloadJson, eventType);
+        }
+        catch
+        {
+            return; // Skip if deserialization fails
+        }
+
+        if (evt == null)
+        {
+            return;
+        }
+
+        foreach (var kvp in handlers)
+        {
+            try
+            {
+                kvp.Value.DynamicInvoke(evt);
+            }
+            catch
+            {
+                // Log but don't propagate handler exceptions
+            }
+        }
+    }
+
+    /// <summary>
     /// Disconnects from the server.
     /// </summary>
     public async Task DisconnectAsync(CancellationToken cancellationToken = default)
@@ -872,10 +995,16 @@ public class BannouClient : IBannouClient
                     HandleCapabilityManifest(root);
                 }
 
-                // Dispatch to registered event handlers
+                // Dispatch to registered string-based event handlers (existing behavior)
                 if (eventName != null && _eventHandlers.TryGetValue(eventName, out var handler))
                 {
                     handler(payloadJson);
+                }
+
+                // Dispatch to typed event handlers
+                if (eventName != null)
+                {
+                    DispatchTypedEvent(eventName, payloadJson);
                 }
             }
         }

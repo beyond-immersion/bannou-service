@@ -189,6 +189,33 @@
             </summary>
             <param name="eventType">Event type to unregister</param>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.OnEvent``1(System.Action{``0})">
+            <summary>
+            Subscribe to a typed event with automatic deserialization.
+            The event type must be a generated client event class inheriting from <see cref="T:BeyondImmersion.Bannou.Core.BaseClientEvent"/>.
+            </summary>
+            <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+            <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
+            <returns>Subscription handle - call <see cref="M:System.IDisposable.Dispose"/> to unsubscribe</returns>
+            <exception cref="T:System.ArgumentException">Thrown if TEvent is not a registered client event type</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.RemoveEventHandlers``1">
+            <summary>
+            Remove all typed handlers for a specific event type.
+            </summary>
+            <typeparam name="TEvent">Event type to remove all handlers for</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.GetEventNameForType``1">
+            <summary>
+            Get the eventName for a typed event class by instantiating and reading its EventName property.
+            Results are cached for performance.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.BannouClient.DispatchTypedEvent(System.String,System.String)">
+            <summary>
+            Dispatches an event to all typed handlers registered for the given eventName.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.BannouClient.DisconnectAsync(System.Threading.CancellationToken)">
             <summary>
             Disconnects from the server.
@@ -1654,6 +1681,81 @@
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds to avoid allocation in release.
+            </summary>
+            <remarks>
+            <para>
+            This trace helps understand why a particular action was chosen.
+            For example, if Combat model's "attack" was chosen over Interaction
+            model's "talk", the trace shows both contributions and their urgencies.
+            </para>
+            <para>
+            Usage in game debugger:
+            <code>
+            var merged = evaluator.EvaluateCharacter(characterId, inputs);
+            if (merged.Trace != null)
+            {
+                foreach (var resolution in merged.Trace.Channels)
+                {
+                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
+                    foreach (var contrib in resolution.AllContributions)
+                    {
+                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
+                    }
+                }
+            }
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.Timestamp">
+            <summary>
+            Timestamp when this trace was created.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.Channels">
+            <summary>
+            All channel resolutions in this trace.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.Client.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.Behavior.Intent.ChannelContribution[])">
+            <summary>
+            Adds a channel resolution to the trace.
+            </summary>
+            <param name="channel">The intent channel.</param>
+            <param name="winner">The winning model type (null for blended).</param>
+            <param name="winningUrgency">The winning/combined urgency.</param>
+            <param name="contributions">All contributions to this channel.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.Client.Behavior.Runtime.IntentChannel)">
+            <summary>
+            Gets the resolution for a specific channel.
+            </summary>
+            <param name="channel">The intent channel to look up.</param>
+            <returns>The resolution for that channel, or null if not found.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets whether a specific model contributed to any channel.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>True if the model contributed to at least one channel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType)">
+            <summary>
+            Gets all channels where the specified model won.
+            </summary>
+            <param name="modelType">The behavior model type to check.</param>
+            <returns>Channels won by this model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.ToString">
+            <summary>
+            Formats the trace as a human-readable string.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -1834,6 +1936,21 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
+            <summary>
+            Collects contributions for debugging from all outputs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects locomotion contributions for debugging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[])">
+            <summary>
+            Collects attention contributions for debugging.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -1974,6 +2091,12 @@
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.Trace">
+            <summary>
+            Debug trace showing which model contributed to each channel.
+            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.Empty">
@@ -3309,6 +3432,31 @@
             FNV-1a hash for variable name lookup.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.EventSubscription">
+            <summary>
+            Internal implementation of event subscription handle.
+            Tracks subscription state and invokes unsubscribe callback on disposal.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.EventSubscription.#ctor(System.String,System.Guid,System.Action{System.Guid})">
+            <summary>
+            Creates a new event subscription handle.
+            </summary>
+            <param name="eventName">The eventName being subscribed to.</param>
+            <param name="subscriptionId">Unique ID for this subscription instance.</param>
+            <param name="unsubscribe">Callback to invoke when disposing to remove the handler.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.EventSubscription.EventName">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.EventSubscription.IsActive">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.EventSubscription.Dispose">
+            <summary>
+            Unsubscribes from the event. Safe to call multiple times.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.IBannouClient">
             <summary>
             Interface for Bannou WebSocket clients.
@@ -3432,9 +3580,42 @@
             </summary>
             <param name="eventType">Event type to unregister</param>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.OnEvent``1(System.Action{``0})">
+            <summary>
+            Subscribe to a typed event with automatic deserialization.
+            The event type must be a generated client event class inheriting from <see cref="T:BeyondImmersion.Bannou.Core.BaseClientEvent"/>.
+            </summary>
+            <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+            <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
+            <returns>Subscription handle - call <see cref="M:System.IDisposable.Dispose"/> to unsubscribe</returns>
+            <exception cref="T:System.ArgumentException">Thrown if TEvent is not a registered client event type</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.RemoveEventHandlers``1">
+            <summary>
+            Remove all typed handlers for a specific event type.
+            </summary>
+            <typeparam name="TEvent">Event type to remove all handlers for</typeparam>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.IBannouClient.DisconnectAsync(System.Threading.CancellationToken)">
             <summary>
             Disconnects from the server.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.IEventSubscription">
+            <summary>
+            Represents an active event subscription that can be disposed to unsubscribe.
+            Returned by <see cref="M:BeyondImmersion.Bannou.Client.IBannouClient.OnEvent``1(System.Action{``0})"/> for managing subscription lifecycle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IEventSubscription.EventName">
+            <summary>
+            The eventName this subscription is listening for (e.g., "game_session.chat_received").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.IEventSubscription.IsActive">
+            <summary>
+            Whether this subscription is still active.
+            Returns false after <see cref="M:System.IDisposable.Dispose"/> has been called.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.MetaType">
