@@ -1,17 +1,24 @@
 // =============================================================================
 // Round-Trip Tests
-// Tests that compile YAML → serialize → deserialize → execute correctly.
+// Tests that compile YAML -> serialize -> deserialize -> execute correctly.
+//
+// These tests live in client.integration.tests because they require both:
+// - BehaviorCompiler from lib-behavior (server-side compiler)
+// - BehaviorModel/BehaviorModelInterpreter from client SDK (client-side runtime)
+//
+// Using aliases disambiguate the namespace collision between server and client
+// runtime classes that share identical names.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
-using BeyondImmersion.Bannou.Client.Behavior.Runtime;
+using Compiler = BeyondImmersion.Bannou.Behavior.Compiler;
+using ClientRuntime = BeyondImmersion.Bannou.Client.Behavior.Runtime;
 using Xunit;
 
-namespace BeyondImmersion.Bannou.Client.Tests.Behavior;
+namespace BeyondImmersion.Bannou.Client.Integration.Tests.Behavior;
 
 /// <summary>
 /// Round-trip tests verifying the full pipeline:
-/// YAML → BehaviorCompiler → binary → BehaviorModel.Deserialize → BehaviorModelInterpreter → output.
+/// YAML -> BehaviorCompiler -> binary -> BehaviorModel.Deserialize -> BehaviorModelInterpreter -> output.
 /// </summary>
 public class RoundTripTests
 {
@@ -61,7 +68,7 @@ public class RoundTripTests
         // Variables in context.variables are registered as inputs
         var yaml = TestFixtures.Load("roundtrip_input_variable");
 
-        var output = CompileAndExecute(yaml, inputs: new[] { 50.0 }, outputCount: 1);
+        var output = CompileAndExecute(yaml, inputs: [50.0], outputCount: 1);
 
         Assert.Equal(100.0, output[0]);  // 50 * 2 = 100
     }
@@ -71,7 +78,7 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_multiple_inputs");
 
-        var output = CompileAndExecute(yaml, inputs: new[] { 10.0, 5.0, 3.0 }, outputCount: 1);
+        var output = CompileAndExecute(yaml, inputs: [10.0, 5.0, 3.0], outputCount: 1);
 
         // 10 + 5 * 3 = 10 + 15 = 25
         Assert.Equal(25.0, output[0]);
@@ -86,10 +93,10 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_comparison");
 
-        var outputTrue = CompileAndExecute(yaml, inputs: new[] { 30.0 }, outputCount: 1);
+        var outputTrue = CompileAndExecute(yaml, inputs: [30.0], outputCount: 1);
         Assert.Equal(1.0, outputTrue[0]);  // 30 < 50 is true
 
-        var outputFalse = CompileAndExecute(yaml, inputs: new[] { 70.0 }, outputCount: 1);
+        var outputFalse = CompileAndExecute(yaml, inputs: [70.0], outputCount: 1);
         Assert.Equal(0.0, outputFalse[0]);  // 70 < 50 is false
     }
 
@@ -98,10 +105,10 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_ternary");
 
-        var positive = CompileAndExecute(yaml, inputs: new[] { 5.0 }, outputCount: 1);
+        var positive = CompileAndExecute(yaml, inputs: [5.0], outputCount: 1);
         Assert.Equal(100.0, positive[0]);
 
-        var negative = CompileAndExecute(yaml, inputs: new[] { -5.0 }, outputCount: 1);
+        var negative = CompileAndExecute(yaml, inputs: [-5.0], outputCount: 1);
         Assert.Equal(-100.0, negative[0]);
     }
 
@@ -148,13 +155,13 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_clamp");
 
-        var low = CompileAndExecute(yaml, inputs: new[] { -50.0 }, outputCount: 1);
+        var low = CompileAndExecute(yaml, inputs: [-50.0], outputCount: 1);
         Assert.Equal(0.0, low[0]);
 
-        var mid = CompileAndExecute(yaml, inputs: new[] { 50.0 }, outputCount: 1);
+        var mid = CompileAndExecute(yaml, inputs: [50.0], outputCount: 1);
         Assert.Equal(50.0, mid[0]);
 
-        var high = CompileAndExecute(yaml, inputs: new[] { 150.0 }, outputCount: 1);
+        var high = CompileAndExecute(yaml, inputs: [150.0], outputCount: 1);
         Assert.Equal(100.0, high[0]);
     }
 
@@ -208,13 +215,13 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_logical_and");
 
-        var bothTrue = CompileAndExecute(yaml, inputs: new[] { 5.0, 10.0 }, outputCount: 1);
+        var bothTrue = CompileAndExecute(yaml, inputs: [5.0, 10.0], outputCount: 1);
         Assert.Equal(1.0, bothTrue[0]);
 
-        var firstFalse = CompileAndExecute(yaml, inputs: new[] { -5.0, 10.0 }, outputCount: 1);
+        var firstFalse = CompileAndExecute(yaml, inputs: [-5.0, 10.0], outputCount: 1);
         Assert.Equal(0.0, firstFalse[0]);
 
-        var secondFalse = CompileAndExecute(yaml, inputs: new[] { 5.0, -10.0 }, outputCount: 1);
+        var secondFalse = CompileAndExecute(yaml, inputs: [5.0, -10.0], outputCount: 1);
         Assert.Equal(0.0, secondFalse[0]);
     }
 
@@ -223,13 +230,13 @@ public class RoundTripTests
     {
         var yaml = TestFixtures.Load("roundtrip_logical_or");
 
-        var bothFalse = CompileAndExecute(yaml, inputs: new[] { -5.0, -10.0 }, outputCount: 1);
+        var bothFalse = CompileAndExecute(yaml, inputs: [-5.0, -10.0], outputCount: 1);
         Assert.Equal(0.0, bothFalse[0]);
 
-        var firstTrue = CompileAndExecute(yaml, inputs: new[] { 5.0, -10.0 }, outputCount: 1);
+        var firstTrue = CompileAndExecute(yaml, inputs: [5.0, -10.0], outputCount: 1);
         Assert.Equal(1.0, firstTrue[0]);
 
-        var secondTrue = CompileAndExecute(yaml, inputs: new[] { -5.0, 10.0 }, outputCount: 1);
+        var secondTrue = CompileAndExecute(yaml, inputs: [-5.0, 10.0], outputCount: 1);
         Assert.Equal(1.0, secondTrue[0]);
     }
 
@@ -263,14 +270,18 @@ public class RoundTripTests
     // HELPER METHODS
     // =========================================================================
 
+    /// <summary>
+    /// Compiles YAML using the server-side compiler and executes it using
+    /// the client-side interpreter, verifying full round-trip compatibility.
+    /// </summary>
     private static double[] CompileAndExecute(
         string yaml,
         double[]? inputs = null,
         int inputCount = 0,
         int outputCount = 1)
     {
-        // Step 1: Compile YAML to binary
-        var compiler = new BehaviorCompiler();
+        // Step 1: Compile YAML to binary using server-side compiler
+        var compiler = new Compiler.BehaviorCompiler();
         var result = compiler.CompileYaml(yaml);
 
         if (!result.Success)
@@ -284,11 +295,13 @@ public class RoundTripTests
             throw new InvalidOperationException("Compilation succeeded but bytecode is null");
         }
 
-        // Step 2: Deserialize binary to BehaviorModel
-        var model = BehaviorModel.Deserialize(result.Bytecode);
+        // Step 2: Deserialize binary using CLIENT-SIDE BehaviorModel
+        // This verifies the client SDK can read compiler output
+        var model = ClientRuntime.BehaviorModel.Deserialize(result.Bytecode);
 
-        // Step 3: Create interpreter and execute
-        var interpreter = new BehaviorModelInterpreter(model);
+        // Step 3: Execute using CLIENT-SIDE interpreter
+        // This verifies the client SDK can execute the behavior
+        var interpreter = new ClientRuntime.BehaviorModelInterpreter(model);
 
         var inputState = inputs ?? new double[inputCount];
         var outputState = new double[outputCount];

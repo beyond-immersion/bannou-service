@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.Bannou.Client.Tests</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.Client.Integration.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -24,8 +24,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Reference Client SDK -->
+    <!-- Reference Client SDK for client-side runtime classes -->
     <ProjectReference Include="../client/Bannou.Client.csproj" />
+
+    <!-- Reference lib-behavior for BehaviorCompiler (round-trip testing) -->
+    <ProjectReference Include="../../plugins/lib-behavior/lib-behavior.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Copy YAML test fixtures to output directory -->
+    <None Include="Behavior\fixtures\**\*.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -338,9 +338,27 @@ generate-docs:
 # Fast EditorConfig checking (recommended for development)
 check:
 	@echo "🔧 Running lightweight EditorConfig checks..."
-	@echo "💡 For comprehensive validation, use 'make check-ci'"
+	@echo "💡 For comprehensive validation, use 'make lint-editorconfig' or 'make check-ci'"
 	@scripts/check-editorconfig.sh
 	@echo "✅ Lightweight EditorConfig checks complete"
+
+# EditorConfig validation using editorconfig-checker (ec)
+# Install: https://github.com/editorconfig-checker/editorconfig-checker
+# Common options:
+#   -dry-run           Show which files would be checked
+#   -exclude REGEX     Exclude files matching regex
+#   -disable-indent-size    Skip indent size checks (useful for generated files)
+#   -f github-actions  Output format for CI (also: gcc, codeclimate)
+#   -verbose           Print debug info
+lint-editorconfig:
+	@echo "🔧 Running editorconfig-checker..."
+	@if command -v ec >/dev/null 2>&1; then \
+		ec && echo "✅ EditorConfig validation passed"; \
+	else \
+		echo "❌ 'ec' not found. Install from: https://github.com/editorconfig-checker/editorconfig-checker"; \
+		echo "   Or use 'make check-ci' for Docker-based validation"; \
+		exit 1; \
+	fi
 
 # EditorConfig validation using Super Linter (matches GitHub Actions exactly, optimized for speed)
 check-ci:
