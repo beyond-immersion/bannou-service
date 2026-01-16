@@ -300,6 +300,26 @@ else
 fi
 echo ""
 
+# Generate client SDK typed proxies (after models are generated)
+echo -e "${BLUE}🔌 Generating client SDK typed proxies...${NC}"
+if python3 "$SCRIPT_DIR/generate-client-proxies.py"; then
+    echo -e "${GREEN}✅ Client proxies generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate client proxies${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate client event registry (for typed event subscriptions)
+echo -e "${BLUE}📡 Generating client event registry...${NC}"
+if python3 "$SCRIPT_DIR/generate-client-event-registry.py"; then
+    echo -e "${GREEN}✅ Client event registry generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate client event registry${NC}"
+    exit 1
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="

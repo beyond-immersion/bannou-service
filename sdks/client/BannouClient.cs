@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Client.Events;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System;
@@ -17,7 +18,7 @@ namespace BeyondImmersion.Bannou.Client;
 /// High-level client for connecting to Bannou services via WebSocket.
 /// Handles authentication, connection lifecycle, capability discovery, and message correlation.
 /// </summary>
-public class BannouClient : IBannouClient
+public partial class BannouClient : IBannouClient
 {
     private ClientWebSocket? _webSocket;
     private ConnectionState? _connectionState;
@@ -610,24 +611,13 @@ public class BannouClient : IBannouClient
     }
 
     /// <summary>
-    /// Get the eventName for a typed event class by instantiating and reading its EventName property.
+    /// Get the eventName for a typed event class from the ClientEventRegistry.
     /// Results are cached for performance.
     /// </summary>
     private string? GetEventNameForType<TEvent>() where TEvent : BaseClientEvent
     {
-        return _eventTypeToNameCache.GetOrAdd(typeof(TEvent), type =>
-        {
-            try
-            {
-                // Create a default instance to read the EventName property
-                var instance = Activator.CreateInstance<TEvent>();
-                return instance.EventName;
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        });
+        return _eventTypeToNameCache.GetOrAdd(typeof(TEvent), _ =>
+            ClientEventRegistry.GetEventName<TEvent>() ?? string.Empty);
     }
 
     /// <summary>
@@ -640,17 +630,8 @@ public class BannouClient : IBannouClient
             return;
         }
 
-        // Find the type for this eventName by checking our cache
-        Type? eventType = null;
-        foreach (var kvp in _eventTypeToNameCache)
-        {
-            if (string.Equals(kvp.Value, eventName, StringComparison.Ordinal))
-            {
-                eventType = kvp.Key;
-                break;
-            }
-        }
-
+        // Look up the type from the registry
+        var eventType = ClientEventRegistry.GetEventType(eventName);
         if (eventType == null)
         {
             return;
