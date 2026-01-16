@@ -24,17 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Reference Client SDK for interpreter testing -->
+    <!-- Reference Client SDK -->
     <ProjectReference Include="../client/Bannou.Client.csproj" />
-    <!-- Reference lib-behavior for round-trip compiler testing -->
-    <ProjectReference Include="../../plugins/lib-behavior/lib-behavior.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Copy YAML test fixtures to output directory -->
-    <None Include="Behavior\fixtures\**\*.yml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

@@ -1,8 +1,6 @@
 name: 'Bannou Integration Pipeline'
 
 on:
-  push:
-    branches: [master]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -124,40 +122,6 @@ jobs:
           commit-author: ${{ steps.setup.outputs.commit-author }}
           run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           repository-url: ${{ github.server_url }}/${{ github.repository }}
-
-      # NuGet Pre-Release Publishing (only on master branch success)
-      # Publishes preview packages for staging/testing
-      # Stable releases are handled by ci.sdk-release.yml workflow
-      - name: Build and Pack SDK Previews
-        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
-        id: pack
-        run: |
-          # Read base version from SDK_VERSION file
-          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
-          PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
-          echo "📦 Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
-          echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
-
-          # Build and pack Server SDK
-          echo "📦 Building Server SDK..."
-          dotnet build sdks/server --configuration Release --no-dependencies
-          dotnet pack sdks/server --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
-
-          # Build and pack Client SDK
-          echo "📦 Building Client SDK..."
-          dotnet build sdks/client --configuration Release --no-dependencies
-          dotnet pack sdks/client --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
-
-      - name: Publish Previews to NuGet
-        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
-        run: |
-          echo "🚀 Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
-          dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-          echo "✅ Preview packages published:"
-          echo "   • BeyondImmersion.Bannou.Server (Server SDK - with ServiceClients)"
-          echo "   • BeyondImmersion.Bannou.Client (Client SDK - WebSocket only)"
-          echo "   Pre-release packages are not installed by default - users must explicitly opt-in"
 
       - name: Notify Pipeline Complete
         if: always() && steps.setup.conclusion == 'success'

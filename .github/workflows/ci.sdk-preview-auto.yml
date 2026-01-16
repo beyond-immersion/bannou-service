@@ -1,0 +1,85 @@
+name: 'SDK Preview Auto-Publish'
+
+# Automatically publishes preview SDK packages when PRs are merged to master.
+# Tests have already passed in the PR (required by branch protection), so this
+# workflow only builds and publishes - no redundant test execution.
+on:
+  push:
+    branches: [master]
+
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  publish-preview:
+    name: Build and Publish SDK Preview
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore NuGet Packages
+        run: dotnet restore
+
+      - name: Build Solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Build and Pack SDK Previews
+        id: pack
+        run: |
+          # Read base version from SDK_VERSION file
+          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
+          PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
+          echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
+
+          # Build SDK dependencies first (internal packages not in main solution)
+          echo "Building SDK dependencies..."
+          dotnet build sdks/bannou-sdks.sln --configuration Release
+
+          # Pack Server SDK
+          echo "Packing Server SDK..."
+          dotnet pack sdks/server --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
+
+          # Pack Client SDK
+          echo "Packing Client SDK..."
+          dotnet pack sdks/client --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
+
+      - name: Publish Previews to NuGet
+        run: |
+          echo "Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
+          dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          echo "Preview packages published:"
+          echo "  - BeyondImmersion.Bannou.Server (Server SDK - with ServiceClients)"
+          echo "  - BeyondImmersion.Bannou.Client (Client SDK - WebSocket only)"
+          echo "Pre-release packages are not installed by default - users must explicitly opt-in"
+
+      - name: Get Commit Info
+        if: always()
+        run: |
+          {
+            echo "COMMIT_MESSAGE<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+
+      - name: Notify Discord
+        if: always() && env.DISCORD_WEBHOOK != ''
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "SDK Preview v${{ steps.pack.outputs.preview_version }}"
+          status: ${{ job.status }}
+          commit-message: ${{ env.COMMIT_MESSAGE }}
+          commit-author: ${{ env.COMMIT_AUTHOR }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}

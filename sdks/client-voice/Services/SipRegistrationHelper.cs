@@ -263,17 +263,11 @@ public class SipRegistrationHelper : IDisposable
 
         StopExpirationWarningTimer();
 
-        if (_registrationAgent != null)
-        {
-            _registrationAgent.Stop();
-            _registrationAgent = null;
-        }
+        _registrationAgent?.Stop();
+        _registrationAgent = null;
 
-        if (_sipTransport != null)
-        {
-            _sipTransport.Shutdown();
-            _sipTransport = null;
-        }
+        _sipTransport?.Shutdown();
+        _sipTransport = null;
 
         State = SipRegistrationState.Unregistered;
         _credentials = null;

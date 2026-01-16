@@ -3,7 +3,7 @@
 // Loads YAML test fixtures from external files to avoid dotnet format corruption.
 // =============================================================================
 
-namespace BeyondImmersion.Bannou.Client.Tests.Behavior;
+namespace BeyondImmersion.Bannou.Client.Integration.Tests.Behavior;
 
 /// <summary>
 /// Loads YAML test fixtures from the fixtures directory.

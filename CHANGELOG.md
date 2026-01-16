@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.0] - 2026-01-16
+
+### Added
+- **SDK Architecture Overhaul**: Complete reorganization under `sdks/` directory
+  - SDK Conventions document (`sdks/CONVENTIONS.md`) following Azure SDK naming guidelines
+  - Separate `bannou-sdks.sln` solution for SDK development
+  - Shared `SDK_VERSION` file for synchronized package versions
+- **Client SDK Typed Proxies**: Generated proxy classes for all 33 services
+  - Type-safe API calls with `client.Account.GetAsync()` pattern
+  - Full IntelliSense support with XML documentation
+  - Automatic request/response serialization
+- **Client Event Registry**: Centralized event type registration and dispatch
+  - Generated `ClientEventRegistry` for all service events
+  - Type-safe event subscription via `client.Events.Subscribe<T>()`
+- **Asset Metabundles**: Compose optimized bundles from multiple source bundles
+  - Provenance metadata tracking source bundle origins
+  - Asset deduplication across source bundles
+- **Asset Bundler SDKs**: Engine-specific asset processing pipelines
+  - `asset-bundler-godot`: Godot 4.x resource processing
+  - `asset-bundler-stride`: Stride engine asset compilation
+  - `asset-loader-godot`: Godot runtime asset loading
+  - `asset-loader-stride`: Stride runtime asset loading
+- **Client Integration Tests**: New `client.integration.tests` project for tests requiring both compiler and client runtime
+
+### Changed
+- **ServiceLib.targets Refactor**: Improved build infrastructure for service plugins
+- **SDK Directory Structure**: All SDKs moved from `Bannou.SDK/` to `sdks/` with consistent naming
+- **Transport Layer**: Extracted to `sdks/transport/` as shared internal library
+- **Bundle Format**: Extracted to `sdks/bundle-format/` as shared internal library
+
+### Fixed
+- MinIO SDK signed header issues resolved by switching to Amazon S3 SDK
+- GUID normalization allowing dashes in Redis keys
+- Asset upload presigned URL generation with correct service domain
+- Namespace collision in client SDK tests (round-trip tests moved to integration project)
+
+---
+
 ## [0.10.0] - 2026-01-13
 
 ### Added
@@ -196,7 +234,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.7.0...v0.8.0

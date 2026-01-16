@@ -338,23 +338,31 @@ generate-docs:
 # Fast EditorConfig checking (recommended for development)
 check:
 	@echo "🔧 Running lightweight EditorConfig checks..."
-	@echo "💡 For comprehensive validation, use 'make check-ci'"
+	@echo "💡 For comprehensive validation, use 'make lint-editorconfig' or 'make check-ci'"
 	@scripts/check-editorconfig.sh
 	@echo "✅ Lightweight EditorConfig checks complete"
 
-# EditorConfig validation using Super Linter (matches GitHub Actions exactly, optimized for speed)
-check-ci:
-	@echo "🔧 Running EditorConfig validation using Super Linter..."
-	@echo "📋 This matches the exact validation used in GitHub Actions CI"
-	@echo "⚡ Optimized: Only EditorConfig validation enabled for faster execution"
-	@docker run --rm \
-		-e RUN_LOCAL=true \
-		-e USE_FIND_ALGORITHM=true \
-		-e VALIDATE_EDITORCONFIG=true \
-		-v $(PWD):/tmp/lint \
-		ghcr.io/super-linter/super-linter:slim-v5 \
-		|| (echo "❌ EditorConfig validation failed. Run 'make fix-config' to fix." && exit 1)
-	@echo "✅ EditorConfig validation passed"
+# EditorConfig validation using editorconfig-checker (ec)
+# Install: https://github.com/editorconfig-checker/editorconfig-checker
+# Common options:
+#   -dry-run           Show which files would be checked
+#   -exclude REGEX     Exclude files matching regex
+#   -disable-indent-size    Skip indent size checks (useful for generated files)
+#   -f github-actions  Output format for CI (also: gcc, codeclimate)
+#   -verbose           Print debug info
+lint-editorconfig:
+	@echo "🔧 Running editorconfig-checker..."
+	@if command -v ec >/dev/null 2>&1; then \
+		ec && echo "✅ EditorConfig validation passed"; \
+	else \
+		echo "❌ 'ec' not found. Install from: https://github.com/editorconfig-checker/editorconfig-checker"; \
+		echo "   Or use 'make check-ci' for Docker-based validation"; \
+		exit 1; \
+	fi
+
+# EditorConfig validation matching GitHub Actions CI (uses editorconfig-checker)
+# Note: CI now uses 'ec' directly instead of super-linter for faster execution
+check-ci: lint-editorconfig
 
 # Fix line endings and final newlines for all project files
 fix-endings:

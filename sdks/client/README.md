@@ -10,7 +10,9 @@ The Client SDK provides everything a game client needs to communicate with Banno
 - **Event reception** for real-time updates pushed from services
 - **Capability manifest** for dynamic API discovery
 - **Shortcuts** for subscription-based access patterns
- - **Game transport helpers**: MessagePack DTOs + LiteNetLib client transport for UDP gameplay state
+- **Typed service proxies** for type-safe API calls (`client.Auth`, `client.Character`, etc.)
+- **Typed event subscriptions** with disposable handlers
+- **Game transport helpers**: MessagePack DTOs + LiteNetLib client transport for UDP gameplay state
 
 ## Quick Start
 
@@ -21,19 +23,32 @@ using BeyondImmersion.Bannou.Client;
 var client = new BannouClient();
 await client.ConnectWithTokenAsync(connectUrl, accessToken);
 
-// Invoke an API endpoint
+// Use typed service proxies (recommended)
+var loginResponse = await client.Auth.LoginAsync(new LoginRequest
+{
+    Email = "player@example.com",
+    Password = "secure-password"
+});
+
+if (loginResponse.IsSuccess)
+{
+    Console.WriteLine($"Logged in as: {loginResponse.Result.AccountId}");
+}
+
+// Or use the generic InvokeAsync for custom endpoints
 var response = await client.InvokeAsync<MyRequest, MyResponse>(
     "POST",
     "/character/get",
     new MyRequest { CharacterId = "abc123" },
     timeout: TimeSpan.FromSeconds(5));
 
-if (response.IsSuccess)
+// Handle typed events with disposable subscriptions
+using var subscription = client.OnEvent<ChatMessageReceivedEvent>(evt =>
 {
-    Console.WriteLine($"Character: {response.Result.Name}");
-}
+    Console.WriteLine($"Chat from {evt.SenderId}: {evt.Message}");
+});
 
-// Handle events pushed from services
+// Or use the generic event handler for all events
 client.OnEvent += (sender, eventData) =>
 {
     Console.WriteLine($"Event received: {eventData.EventName}");
@@ -206,17 +221,62 @@ All responses include a `ResponseCode` indicating success or failure:
 
 See `ResponseCodes.cs` for the complete enumeration.
 
-## Event Handling
+## Typed Service Proxies
 
-Services push events for real-time updates:
+Instead of manually specifying HTTP methods and paths, use the generated typed proxies for compile-time safety:
+
+```csharp
+// All services have typed proxies accessible as properties
+var authResponse = await client.Auth.LoginAsync(new LoginRequest
+{
+    Email = "player@example.com",
+    Password = "password"
+});
+
+var characterResponse = await client.Character.GetAsync(new CharacterGetRequest
+{
+    CharacterId = characterId
+});
+
+// Available proxies include:
+// client.Account, client.Auth, client.Character, client.GameSession,
+// client.Matchmaking, client.Voice, client.Asset, and more...
+```
+
+The proxies handle GUID lookup, binary header construction, and response parsing automatically.
+
+## Typed Event Subscriptions
+
+Subscribe to specific event types with full type safety:
+
+```csharp
+// Subscribe to a specific event type - returns a disposable handle
+using var chatSub = client.OnEvent<ChatMessageReceivedEvent>(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var matchSub = client.OnEvent<MatchFoundEvent>(evt =>
+{
+    Console.WriteLine($"Match found! Players: {evt.PlayerCount}");
+});
+
+// Subscriptions are automatically cleaned up when disposed
+// Or call subscription.Dispose() manually
+```
+
+### Generic Event Handler
+
+For handling all events or custom event routing:
 
 ```csharp
 client.OnEvent += (sender, eventData) =>
 {
     switch (eventData.EventName)
     {
-        case "character.updated":
-            var update = JsonSerializer.Deserialize<CharacterUpdatedEvent>(eventData.Payload);
+        case "game_session.player_joined":
+            var joinEvent = BannouJson.Deserialize<PlayerJoinedEvent>(eventData.Payload);
+            HandlePlayerJoined(joinEvent);
             break;
 
         case "connect.capability_manifest":
@@ -224,6 +284,69 @@ client.OnEvent += (sender, eventData) =>
             break;
     }
 };
+```
+
+### Service-Grouped Event Subscriptions
+
+For better discoverability via IntelliSense, use service-grouped subscriptions:
+
+```csharp
+// Organized by service - discoverable via client.Events.{Service}.On{Event}()
+using var chatSub = client.Events.GameSession.OnChatMessageReceived(evt =>
+{
+    Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
+});
+
+using var voiceSub = client.Events.Voice.OnVoicePeerJoined(evt =>
+{
+    Console.WriteLine($"Peer joined: {evt.PeerId}");
+});
+
+using var matchSub = client.Events.Matchmaking.OnMatchFound(evt =>
+{
+    ShowMatchUI(evt.MatchId, evt.PlayerCount);
+});
+```
+
+### Event Registry
+
+The `ClientEventRegistry` maps between event types and their string names:
+
+```csharp
+// Get the event name for a type
+string? name = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
+// Returns: "game_session.chat_received"
+
+// Get the type for an event name
+Type? type = ClientEventRegistry.GetEventType("matchmaking.match_found");
+// Returns: typeof(MatchFoundEvent)
+
+// Check if an event is registered
+bool isRegistered = ClientEventRegistry.IsRegistered<VoicePeerJoinedEvent>();
+```
+
+### Runtime Type Discovery
+
+The `ClientEndpointMetadata` class provides runtime lookup of request/response types:
+
+```csharp
+// Get request type for an endpoint
+var requestType = ClientEndpointMetadata.GetRequestType("POST", "/auth/login");
+// Returns: typeof(LoginRequest)
+
+// Get response type
+var responseType = ClientEndpointMetadata.GetResponseType("POST", "/character/get");
+// Returns: typeof(CharacterResponse)
+
+// Get full endpoint info
+var info = ClientEndpointMetadata.GetEndpointInfo("POST", "/auth/login");
+// Returns: { Method, Path, Service, RequestType, ResponseType, Summary }
+
+// Filter endpoints by service
+var authEndpoints = ClientEndpointMetadata.GetEndpointsByService("Auth");
+
+// Check if endpoint is registered
+bool exists = ClientEndpointMetadata.IsRegistered("POST", "/account/get");
 ```
 
 ## Meta Requests
@@ -290,12 +413,43 @@ else
 | Component | Description |
 |-----------|-------------|
 | `BannouClient` | WebSocket client with connection management |
+| `IBannouClient` | Interface for mocking in tests |
+| `Generated/Proxies/*` | Typed service proxies (AuthProxy, CharacterProxy, etc.) |
+| `Generated/Events/ClientEventRegistry` | Event type ↔ name mapping |
+| `Generated/Events/ClientEndpointMetadata` | Runtime endpoint type discovery |
+| `Generated/Events/*EventSubscriptions` | Service-grouped event subscriptions |
+| `Generated/Events/BannouClientEvents` | Container for `client.Events.{Service}` access |
+| `IEventSubscription` | Disposable event subscription handle |
 | `BinaryMessage` | Binary protocol message handling |
 | `ResponseCodes` | Error code enumeration |
 | `MetaTypes` | Meta request/response types |
 | `*Models.cs` | Generated request/response models |
 | `*Events.cs` | Generated event types |
 | `Behavior/Runtime/*` | ABML behavior interpreter |
+
+## Testing with IBannouClient
+
+The `IBannouClient` interface enables mocking for unit tests:
+
+```csharp
+// In your game code, depend on the interface
+public class GameManager
+{
+    private readonly IBannouClient _client;
+
+    public GameManager(IBannouClient client)
+    {
+        _client = client;
+    }
+}
+
+// In tests, mock the client
+var mockClient = new Mock<IBannouClient>();
+mockClient.Setup(c => c.Auth.LoginAsync(It.IsAny<LoginRequest>(), ...))
+    .ReturnsAsync(new ApiResponse<AuthResponse> { IsSuccess = true, ... });
+
+var gameManager = new GameManager(mockClient.Object);
+```
 
 ## When NOT to Use This SDK
 

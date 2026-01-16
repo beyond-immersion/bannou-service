@@ -107,6 +107,12 @@
             Serialize object to JSON string using Bannou's standard configuration with explicit type.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Deserialize(System.String,System.Type)">
+            <summary>
+            Deserialize JSON string to object of a runtime type using Bannou's standard configuration.
+            Use this when the type is only known at runtime (e.g., event dispatch).
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Core.BannouJson.Deserialize``1(System.ReadOnlySpan{System.Byte})">
             <summary>
             Deserialize from UTF-8 bytes using Bannou's standard configuration.
