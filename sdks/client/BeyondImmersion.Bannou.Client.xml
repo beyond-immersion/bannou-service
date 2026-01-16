@@ -12,6 +12,9 @@
             <summary>
             Partial class extension providing typed service proxy properties.
             </summary>
+            <summary>
+            Extension adding service-grouped event subscriptions to BannouClient.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.Client.BannouClient.#ctor">
             <summary>
@@ -393,6 +396,18 @@
             <summary>
             Gets the typed proxy for Bannou Website Service API operations.
             </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Events">
+            <summary>
+            Service-grouped event subscriptions.
+            Provides organized access to event subscriptions by service.
+            </summary>
+            <example>
+            <code>
+            client.Events.GameSession.OnChatMessageReceived(evt => Console.WriteLine(evt.Message));
+            client.Events.Voice.OnPeerJoined(evt => HandleNewPeer(evt));
+            </code>
+            </example>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.ErrorResponse">
             <summary>
@@ -3625,6 +3640,99 @@
             Unsubscribes from the event. Safe to call multiple times.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions">
+            <summary>
+            Event subscriptions for Asset service events.
+            Provides strongly-typed subscription methods for each event type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnAssetProcessingComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingCompleteEvent"/> events.
+            Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnAssetProcessingFailed(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetProcessingFailedEvent"/> events.
+            Sent when asset processing fails. Includes retry information.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnAssetReady(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent"/> events.
+            Final notification that an asset is ready for use.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnAssetUploadComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetUploadCompleteEvent"/> events.
+            Sent when an asset upload has completed (success or failure).
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnBundleCreationComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.BundleCreationCompleteEvent"/> events.
+            Sent when bundle creation from asset_ids completes.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnBundleValidationComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationCompleteEvent"/> events.
+            Sent when a bundle upload has been validated and processed.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnBundleValidationFailed(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.BundleValidationFailedEvent"/> events.
+            Sent when bundle validation fails. Includes detailed error information.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.BannouClientEvents">
+            <summary>
+            Container for service-grouped event subscriptions.
+            Access via <c>client.Events.{Service}.On{Event}(handler)</c>.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Events.BannouClientEvents.Asset">
+            <summary>
+            Event subscriptions for Asset service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Events.BannouClientEvents.GameSession">
+            <summary>
+            Event subscriptions for GameSession service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Events.BannouClientEvents.Matchmaking">
+            <summary>
+            Event subscriptions for Matchmaking service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Events.BannouClientEvents.System">
+            <summary>
+            Event subscriptions for System service.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Client.Events.BannouClientEvents.Voice">
+            <summary>
+            Event subscriptions for Voice service.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Events.ClientEventRegistry">
             <summary>
             Registry mapping client event types to their eventName strings.
@@ -3671,6 +3779,246 @@
             <summary>
             Gets all registered event names.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions">
+            <summary>
+            Event subscriptions for GameSession service events.
+            Provides strongly-typed subscription methods for each event type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnChatMessageReceived(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent"/> events.
+            Sent to recipients when a chat message is posted in the session.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnGameActionResult(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent"/> events.
+            Sent to relevant players when a game action produces results.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnGameStateUpdated(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent"/> events.
+            Sent when game state changes that all players should see.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnPlayerJoined(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent"/> events.
+            Sent to all session participants when a new player joins.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnPlayerKicked(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent"/> events.
+            Sent to all session participants when a player is kicked.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnPlayerLeft(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent"/> events.
+            Sent to all session participants when a player leaves voluntarily.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.GameSessionEventSubscriptions.OnSessionStateChanged(System.Action{BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent"/> events.
+            Sent to all session participants when the session state changes.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions">
+            <summary>
+            Event subscriptions for Matchmaking service events.
+            Provides strongly-typed subscription methods for each event type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchConfirmed(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchConfirmedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchConfirmedEvent"/> events.
+            Sent to all match participants when all players have accepted.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchDeclined(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchDeclinedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchDeclinedEvent"/> events.
+            Sent to all match participants when someone declines.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchFound(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchFoundEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchFoundEvent"/> events.
+            Sent to all matched players when a match is formed.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchPlayerAccepted(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchPlayerAcceptedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchPlayerAcceptedEvent"/> events.
+            Sent to all match participants when a player accepts.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchmakingCancelled(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchmakingCancelledEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchmakingCancelledEvent"/> events.
+            Sent when matchmaking is cancelled for any reason.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnMatchmakingStatusUpdate(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchmakingStatusUpdateEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.MatchmakingStatusUpdateEvent"/> events.
+            Periodic status update sent to players in queue.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.MatchmakingEventSubscriptions.OnQueueJoined(System.Action{BeyondImmersion.Bannou.Matchmaking.ClientEvents.QueueJoinedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Matchmaking.ClientEvents.QueueJoinedEvent"/> events.
+            Sent to the player when they successfully join a matchmaking queue.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions">
+            <summary>
+            Event subscriptions for System service events.
+            Provides strongly-typed subscription methods for each event type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnCapabilityManifest(System.Action{BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent"/> events.
+            Sent to client when their available API capabilities change.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnDisconnectNotification(System.Action{BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent"/> events.
+            Sent to client before WebSocket connection is closed.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnSessionCapabilities(System.Action{BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent"/> events.
+            Internal event carrying compiled capabilities from Permission to Connect.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnShortcutPublished(System.Action{BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.ShortcutPublishedEvent"/> events.
+            Published by services to create or update a session shortcut.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnShortcutRevoked(System.Action{BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.ShortcutRevokedEvent"/> events.
+            Published by services to remove shortcuts.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnSystemError(System.Action{BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent"/> events.
+            Generic error notification sent to client.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.SystemEventSubscriptions.OnSystemNotification(System.Action{BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent"/> events.
+            Generic notification event for system-level messages.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions">
+            <summary>
+            Event subscriptions for Voice service events.
+            Provides strongly-typed subscription methods for each event type.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoicePeerJoined(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerJoinedEvent"/> events.
+            Sent to existing room participants when a new peer joins.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoicePeerLeft(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerLeftEvent"/> events.
+            Sent to remaining room participants when a peer leaves.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoicePeerUpdated(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoicePeerUpdatedEvent"/> events.
+            Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoiceRoomClosed(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomClosedEvent"/> events.
+            Sent to all room participants when the voice room is closed.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoiceRoomState(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceRoomStateEvent"/> events.
+            Sent to a client when they join a voice room.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.VoiceEventSubscriptions.OnVoiceTierUpgrade(System.Action{BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Voice.ClientEvents.VoiceTierUpgradeEvent"/> events.
+            Sent to all room participants when the voice tier upgrades.
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.AccountProxy">
             <summary>

@@ -320,6 +320,16 @@ else
 fi
 echo ""
 
+# Generate service-grouped event subscriptions (for discoverability)
+echo -e "${BLUE}🎯 Generating service-grouped event subscriptions...${NC}"
+if python3 "$SCRIPT_DIR/generate-client-event-groups.py"; then
+    echo -e "${GREEN}✅ Service-grouped events generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate service-grouped events${NC}"
+    exit 1
+fi
+echo ""
+
 # Print summary
 echo -e "${BLUE}📊 Generation Summary:${NC}"
 echo "=========================="

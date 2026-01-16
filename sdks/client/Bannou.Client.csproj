@@ -38,6 +38,11 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
+  <!-- Expose internals to test project -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Bannou.Client.Tests" />
+  </ItemGroup>
+
   <!-- Minimal dependencies - this is for game clients only -->
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
