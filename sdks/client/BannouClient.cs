@@ -666,9 +666,10 @@ public partial class BannouClient : IBannouClient
             {
                 kvp.Value.DynamicInvoke(evt);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or ThreadAbortException))
             {
                 // Notify subscribers but don't propagate handler exceptions
+                // Fatal exceptions (OOM, stack overflow, thread abort) are rethrown
                 EventHandlerFailed?.Invoke(ex);
             }
         }
