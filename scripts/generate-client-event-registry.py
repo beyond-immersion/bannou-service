@@ -17,10 +17,9 @@ Usage:
     python3 scripts/generate-client-event-registry.py
 """
 
-import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List
 
 try:
     from ruamel.yaml import YAML

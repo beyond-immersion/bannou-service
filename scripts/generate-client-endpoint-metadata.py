@@ -18,7 +18,7 @@ Usage:
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional
 
 try:
     from ruamel.yaml import YAML

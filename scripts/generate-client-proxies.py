@@ -20,10 +20,9 @@ Usage:
 The script processes all *-api.yaml files in the schemas/ directory.
 """
 
-import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 try:
     from ruamel.yaml import YAML

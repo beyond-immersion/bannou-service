@@ -25,7 +25,7 @@ Usage:
 
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 try:
     from ruamel.yaml import YAML
