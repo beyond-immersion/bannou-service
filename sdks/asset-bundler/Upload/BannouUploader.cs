@@ -333,9 +333,9 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
         if (requiredHeaders == null || requiredHeaders.Count == 0)
         {
             // Default content type if no headers specified
-            if (request.Content != null)
+            if (request.Content is { Headers: { } headers })
             {
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-bannou-bundle");
+                headers.ContentType = new MediaTypeHeaderValue("application/x-bannou-bundle");
             }
             return;
         }

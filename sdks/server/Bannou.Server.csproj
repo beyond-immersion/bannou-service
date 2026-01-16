@@ -95,6 +95,15 @@
     <Compile Include="../client/RemoteAssetCache.cs" />
     <Compile Include="../client/MetaTypes.cs" />
     <Compile Include="../client/ResponseCodes.cs" />
+    <Compile Include="../client/IEventSubscription.cs" />
+    <Compile Include="../client/EventSubscription.cs" />
+  </ItemGroup>
+
+  <!-- Generated Event Infrastructure from Client SDK -->
+  <ItemGroup>
+    <Compile Include="../client/Generated/Events/*.cs" />
+    <Compile Include="../client/Generated/Proxies/*.cs" />
+    <Compile Include="../client/Generated/BannouClientProxyExtensions.cs" />
   </ItemGroup>
 
   <!-- Behavior Runtime (copied from lib-behavior with SDK namespace) -->

@@ -153,7 +153,7 @@ public class EventSubscriptionTests
     // =========================================================================
 
     [Fact]
-    public void Dispose_ConcurrentCalls_OnlyInvokesCallbackOnce()
+    public async Task Dispose_ConcurrentCalls_OnlyInvokesCallbackOnce()
     {
         var callbackCount = 0;
         var subscription = new EventSubscription(
@@ -166,7 +166,7 @@ public class EventSubscriptionTests
             .Select(_ => Task.Run(() => subscription.Dispose()))
             .ToArray();
 
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
 
         // Callback should only be invoked once despite concurrent disposal attempts
         Assert.Equal(1, callbackCount);
