@@ -145,12 +145,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-save-load", "plugins\li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-save-load.tests", "plugins\lib-save-load.tests\lib-save-load.tests.csproj", "{FC06793B-645B-4993-8EFB-7F834B987AAF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sdks", "sdks", "{665A7CC4-0863-C354-E4B4-45BC1E6FE98B}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "client.integration.tests", "client.integration.tests", "{82343E52-7ED8-920D-D102-E6FA0FD13510}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.Client.Integration.Tests", "sdks\client.integration.tests\Bannou.Client.Integration.Tests.csproj", "{1311E660-9329-4D75-910B-925EB3F60D16}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1424,24 +1418,6 @@ Global
 		{FC06793B-645B-4993-8EFB-7F834B987AAF}.Release|x64.Build.0 = Release|Any CPU
 		{FC06793B-645B-4993-8EFB-7F834B987AAF}.Release|x86.ActiveCfg = Release|Any CPU
 		{FC06793B-645B-4993-8EFB-7F834B987AAF}.Release|x86.Build.0 = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|x64.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Debug|x86.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|Any CPU.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|Any CPU.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|x64.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|x64.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|x86.ActiveCfg = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Development|x86.Build.0 = Debug|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|x64.ActiveCfg = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|x64.Build.0 = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|x86.ActiveCfg = Release|Any CPU
-		{1311E660-9329-4D75-910B-925EB3F60D16}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1459,8 +1435,6 @@ Global
 		{70EA89FD-92F4-4A45-B6E4-8086FEC75ACB} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
 		{BC841A27-2717-4FB6-9802-9A2CA21CE27F} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
 		{FC06793B-645B-4993-8EFB-7F834B987AAF} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
-		{82343E52-7ED8-920D-D102-E6FA0FD13510} = {665A7CC4-0863-C354-E4B4-45BC1E6FE98B}
-		{1311E660-9329-4D75-910B-925EB3F60D16} = {82343E52-7ED8-920D-D102-E6FA0FD13510}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

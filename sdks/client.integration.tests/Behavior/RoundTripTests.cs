@@ -10,9 +10,9 @@
 // runtime classes that share identical names.
 // =============================================================================
 
-using Compiler = BeyondImmersion.Bannou.Behavior.Compiler;
-using ClientRuntime = BeyondImmersion.Bannou.Client.Behavior.Runtime;
 using Xunit;
+using ClientRuntime = BeyondImmersion.Bannou.Client.Behavior.Runtime;
+using Compiler = BeyondImmersion.Bannou.Behavior.Compiler;
 
 namespace BeyondImmersion.Bannou.Client.Integration.Tests.Behavior;
 
