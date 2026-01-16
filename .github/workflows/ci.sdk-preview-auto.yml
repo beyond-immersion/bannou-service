@@ -45,6 +45,13 @@ jobs:
           echo "Building SDK dependencies..."
           dotnet build sdks/bannou-sdks.sln --configuration Release
 
+          # Pack foundation packages first (dependencies)
+          for PROJECT in "sdks/core" "sdks/protocol" "sdks/transport" "sdks/bundle-format"; do
+            PROJECT_NAME=$(basename "$PROJECT")
+            echo "Packing ${PROJECT_NAME}..."
+            dotnet pack "$PROJECT" --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
+          done
+
           # Pack Server SDK
           echo "Packing Server SDK..."
           dotnet pack sdks/server --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build

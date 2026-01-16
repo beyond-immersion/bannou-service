@@ -81,9 +81,15 @@ jobs:
           VERSION="${{ steps.version.outputs.preview_version }}"
           echo "📦 Building and packing SDKs v${VERSION}..."
 
-          # Define all packable SDK projects
-          # Note: core, protocol, transport, bundle-format are internal (IsPackable=false)
+          # Define all packable SDK projects (order matters - dependencies first)
           SDK_PROJECTS=(
+            # Foundation packages (no Bannou dependencies)
+            "sdks/core"
+            "sdks/protocol"
+            # Packages with foundation dependencies
+            "sdks/transport"
+            "sdks/bundle-format"
+            # Public SDK packages
             "sdks/server"
             "sdks/client"
             "sdks/client-voice"
