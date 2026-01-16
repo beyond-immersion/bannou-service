@@ -139,13 +139,13 @@ public class ProxyTests
     public void FireAndForgetMethods_ReturnTask()
     {
         // Fire-and-forget methods (EventAsync) return Task without response
-        var eventMethods = typeof(CharacterProxy)
+        var eventMethodReturnTypes = typeof(CharacterProxy)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Where(m => m.Name.EndsWith("EventAsync") && m.DeclaringType == typeof(CharacterProxy));
+            .Where(m => m.Name.EndsWith("EventAsync") && m.DeclaringType == typeof(CharacterProxy))
+            .Select(m => m.ReturnType);
 
-        foreach (var method in eventMethods)
+        foreach (var returnType in eventMethodReturnTypes)
         {
-            var returnType = method.ReturnType;
             Assert.Equal(typeof(Task), returnType);
         }
     }

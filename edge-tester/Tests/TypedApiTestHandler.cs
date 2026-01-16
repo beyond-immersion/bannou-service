@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Realm;
@@ -14,6 +15,20 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 {
     private const string CodePrefix = "TYPE";
     private const string Description = "TypedApi";
+
+    /// <summary>
+    /// Formats an error response object for logging using BannouJson serialization.
+    /// Returns a structured JSON representation instead of relying on default ToString().
+    /// </summary>
+    private static string FormatError(object? error)
+    {
+        if (error == null)
+        {
+            return "<null>";
+        }
+
+        return BannouJson.Serialize(error);
+    }
 
     public override ServiceTest[] GetServiceTests() =>
     [
@@ -48,7 +63,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 
             if (!realmResponse.IsSuccess || realmResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to create realm: {realmResponse.Error}");
+                Console.WriteLine($"   Failed to create realm: {FormatError(realmResponse.Error)}");
                 return false;
             }
 
@@ -66,7 +81,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 
             if (!speciesResponse.IsSuccess || speciesResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to create species: {speciesResponse.Error}");
+                Console.WriteLine($"   Failed to create species: {FormatError(speciesResponse.Error)}");
                 return false;
             }
 
@@ -86,7 +101,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 
             if (!characterResponse.IsSuccess || characterResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to create character: {characterResponse.Error}");
+                Console.WriteLine($"   Failed to create character: {FormatError(characterResponse.Error)}");
                 return false;
             }
 
@@ -102,7 +117,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
 
             if (!getResponse.IsSuccess || getResponse.Result == null)
             {
-                Console.WriteLine($"   Failed to get character: {getResponse.Error}");
+                Console.WriteLine($"   Failed to get character: {FormatError(getResponse.Error)}");
                 return false;
             }
 

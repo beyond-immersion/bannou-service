@@ -100,6 +100,13 @@ public partial class BannouClient : IBannouClient
     public string? LastError => _lastError;
 
     /// <summary>
+    /// Event raised when an event handler throws an exception during invocation.
+    /// This allows consumers to observe and log handler failures without propagating
+    /// exceptions that could disrupt the event dispatch loop.
+    /// </summary>
+    public event Action<Exception>? EventHandlerFailed;
+
+    /// <summary>
     /// Connects to a Bannou server using username/password authentication.
     /// </summary>
     /// <param name="serverUrl">Base URL (e.g., "http://localhost:8080" or "https://game.example.com")</param>
@@ -643,7 +650,7 @@ public partial class BannouClient : IBannouClient
         {
             evt = BannouJson.Deserialize(payloadJson, eventType);
         }
-        catch
+        catch (JsonException)
         {
             return; // Skip if deserialization fails
         }
@@ -659,9 +666,10 @@ public partial class BannouClient : IBannouClient
             {
                 kvp.Value.DynamicInvoke(evt);
             }
-            catch
+            catch (Exception ex)
             {
-                // Log but don't propagate handler exceptions
+                // Notify subscribers but don't propagate handler exceptions
+                EventHandlerFailed?.Invoke(ex);
             }
         }
     }
