@@ -14,7 +14,7 @@ public class PaginationHelperTests : IClassFixture<CollectionFixture>
     public PaginationHelperTests(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<PaginationHelperTests>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<PaginationHelperTests>.Instance;
     }
 
     [Fact]

@@ -57,7 +57,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     public Miscellaneous(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Miscellaneous>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Miscellaneous>.Instance;
     }
 
     [Fact]

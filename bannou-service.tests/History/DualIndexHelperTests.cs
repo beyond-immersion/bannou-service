@@ -22,7 +22,7 @@ public class DualIndexHelperTests : IClassFixture<CollectionFixture>
     public DualIndexHelperTests(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<DualIndexHelperTests>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<DualIndexHelperTests>.Instance;
     }
 
     /// <summary>

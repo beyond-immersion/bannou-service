@@ -18,7 +18,7 @@ public class Serialization : IClassFixture<CollectionFixture>
     public Serialization(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Serialization>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Serialization>.Instance;
     }
 
     #region Test Models (mirroring AuthService.SessionDataModel)

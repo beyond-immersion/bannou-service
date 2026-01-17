@@ -14,7 +14,7 @@ public class TimestampHelperTests : IClassFixture<CollectionFixture>
     public TimestampHelperTests(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<TimestampHelperTests>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<TimestampHelperTests>.Instance;
     }
 
     [Fact]

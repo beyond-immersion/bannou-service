@@ -39,7 +39,7 @@ public class Controllers : IClassFixture<CollectionFixture>
     public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Controllers>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Controllers>.Instance;
     }
 
     [Fact]
