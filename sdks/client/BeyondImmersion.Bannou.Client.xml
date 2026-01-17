@@ -1871,81 +1871,6 @@
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ChannelResolution.AllContributions">
             <summary>All contributions to this channel.</summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds to avoid allocation in release.
-            </summary>
-            <remarks>
-            <para>
-            This trace helps understand why a particular action was chosen.
-            For example, if Combat model's "attack" was chosen over Interaction
-            model's "talk", the trace shows both contributions and their urgencies.
-            </para>
-            <para>
-            Usage in game debugger:
-            <code>
-            var merged = evaluator.EvaluateCharacter(characterId, inputs);
-            if (merged.Trace != null)
-            {
-                foreach (var resolution in merged.Trace.Channels)
-                {
-                    Debug.Log($"{resolution.Channel}: Winner={resolution.Winner}");
-                    foreach (var contrib in resolution.AllContributions)
-                    {
-                        Debug.Log($"  {contrib.Source}: {contrib.Intent} ({contrib.Urgency:F2})");
-                    }
-                }
-            }
-            </code>
-            </para>
-            </remarks>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.Timestamp">
-            <summary>
-            Timestamp when this trace was created.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.Channels">
-            <summary>
-            All channel resolutions in this trace.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.AddResolution(BeyondImmersion.Bannou.Client.Behavior.Runtime.IntentChannel,System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType},System.Single,BeyondImmersion.Bannou.Client.Behavior.Intent.ChannelContribution[])">
-            <summary>
-            Adds a channel resolution to the trace.
-            </summary>
-            <param name="channel">The intent channel.</param>
-            <param name="winner">The winning model type (null for blended).</param>
-            <param name="winningUrgency">The winning/combined urgency.</param>
-            <param name="contributions">All contributions to this channel.</param>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.GetResolution(BeyondImmersion.Bannou.Client.Behavior.Runtime.IntentChannel)">
-            <summary>
-            Gets the resolution for a specific channel.
-            </summary>
-            <param name="channel">The intent channel to look up.</param>
-            <returns>The resolution for that channel, or null if not found.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.HasContributionFrom(BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets whether a specific model contributed to any channel.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>True if the model contributed to at least one channel.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.GetChannelsWonBy(BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType)">
-            <summary>
-            Gets all channels where the specified model won.
-            </summary>
-            <param name="modelType">The behavior model type to check.</param>
-            <returns>Channels won by this model.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.ContributionTrace.ToString">
-            <summary>
-            Formats the trace as a human-readable string.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType">
             <summary>
             The fixed set of behavior model types for multi-model coordination.
@@ -2126,21 +2051,6 @@
             Selects the vocalization with highest urgency.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[],System.Func{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput,System.ValueTuple{System.String,System.Single}})">
-            <summary>
-            Collects contributions for debugging from all outputs.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectLocomotionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects locomotion contributions for debugging.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.Client.Behavior.Intent.IntentMerger.CollectAttentionContributions(System.ValueTuple{System.Nullable{BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorOutput},BeyondImmersion.Bannou.Client.Behavior.Intent.BehaviorModelType}[])">
-            <summary>
-            Collects attention contributions for debugging.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Behavior.Intent.LocomotionIntent">
             <summary>
             Locomotion intent with blendable target position.
@@ -2281,12 +2191,6 @@
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.VocalizationUrgency">
             <summary>
             Urgency of the winning vocalization [0.0 - 1.0].
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.Trace">
-            <summary>
-            Debug trace showing which model contributed to each channel.
-            Only available in DEBUG builds.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.Client.Behavior.Intent.MergedIntent.Empty">
@@ -3786,6 +3690,14 @@
             <param name="handler">Handler invoked when the event is received.</param>
             <returns>Subscription handle. Dispose to unsubscribe.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnMetabundleCreationComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent"/> events.
+            Sent when async metabundle creation job completes (success or failure).
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Events.BannouClientEvents">
             <summary>
             Container for service-grouped event subscriptions.
@@ -4698,6 +4610,26 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing CreateMetabundleResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GetJobStatusResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CancelJobResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Compute optimal bundles for requested assets
@@ -4892,6 +4824,15 @@
             <param name="channel">Message channel for ordering (default 0).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AuthProxy.ListProvidersAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List available authentication providers
+            </summary>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ProvidersResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.BehaviorProxy">
             <summary>
@@ -9045,6 +8986,74 @@
             Human-readable error description
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent">
+            <summary>
+            Sent when async metabundle creation job completes (success or failure).
+            <br/>Clients that initiated metabundle creation with async processing receive
+            <br/>this event when the job finishes, allowing them to retrieve the result.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.EventName">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.JobId">
+            <summary>
+            Job ID from the original async creation request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.MetabundleId">
+            <summary>
+            ID of the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.Success">
+            <summary>
+            Whether creation completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.Status">
+            <summary>
+            Final job status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.DownloadUrl">
+            <summary>
+            Pre-signed download URL (on success)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.SizeBytes">
+            <summary>
+            Metabundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.AssetCount">
+            <summary>
+            Total number of assets in the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ErrorCode">
+            <summary>
+            Error code on failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ErrorMessage">
+            <summary>
+            Human-readable error description
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent">
             <summary>
             Final notification that an asset is ready for use.
@@ -9165,6 +9174,22 @@
         <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationErrorCode">
             <summary>
             Error codes for bundle validation failures
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleJobStatus">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>- queued: Job accepted, waiting for processing resources
+            <br/>- processing: Job is actively being processed
+            <br/>- ready: Job completed successfully
+            <br/>- failed: Job failed (see errorCode/errorMessage)
+            <br/>- cancelled: Job was cancelled before completion
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleErrorCode">
+            <summary>
+            Error codes for metabundle creation failures
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
@@ -11092,13 +11117,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionData">
-            <summary>
-            Connection state data returned for connection service requests.
-            <br/>Currently a placeholder for future connection metadata.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
             <summary>
             Response codes used in the binary protocol for success/error indication.
@@ -11202,75 +11220,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ServiceResponseMessage.Payload">
             <summary>
             Optional response payload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionConfiguration">
-            <summary>
-            Configuration options for the connect service.
-            <br/>These are server-side settings and not directly exposed via API.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ObfuscateNotFoundResponse">
-            <summary>
-            Return Unauthorized instead of NotFound for better security
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientRequestMaxSize">
-            <summary>
-            Maximum size for client requests in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientResponseMaxSize">
-            <summary>
-            Maximum size for client responses in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientReconnectionTime">
-            <summary>
-            Time in seconds to allow client reconnection
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.TokenPublicKey">
-            <summary>
-            Base64-encoded RSA public key for JWT validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent">
-            <summary>
-            Event published when a session's capabilities change (permissions, role changes, etc.).
-            <br/>Triggers real-time WebSocket updates to connected clients.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.SessionId">
-            <summary>
-            Session ID that had capability changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.AddedCapabilities">
-            <summary>
-            New capabilities added to the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.RemovedCapabilities">
-            <summary>
-            Capabilities removed from the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.UpdatedServices">
-            <summary>
-            Services that had permission changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.Version">
-            <summary>
-            New capability version number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.ExpiresAt">
-            <summary>
-            When these capabilities expire and need refresh
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.AuthEvent">
@@ -14741,17 +14690,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetIdStyle">
-            <summary>
-            Asset ID validation style presets:
-            <br/>- any: No style enforcement (just max length and basic characters)
-            <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-            <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-            <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-            <br/>- custom: Use custom regex pattern from configuration
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
             <summary>
             Request to initiate an asset upload and receive a pre-signed URL
@@ -15404,51 +15342,6 @@
             Hash of source bundle at composition time (for integrity verification)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleAssetEntry">
-            <summary>
-            Asset entry within a bundle (supports platform-specific IDs)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.AssetId">
-            <summary>
-            Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentHash">
-            <summary>
-            SHA256 hash of asset content
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Filename">
-            <summary>
-            Original filename
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Size">
-            <summary>
-            Asset size in bytes (uncompressed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ExternalAssetId">
-            <summary>
-            External asset identifier for cross-system references.
-            <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Tags">
-            <summary>
-            Tags associated with this asset within the bundle.
-            <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-            <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetConflict">
             <summary>
             Describes a conflict when the same asset ID has different content hashes
@@ -15545,7 +15438,10 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse">
             <summary>
-            Response from metabundle creation
+            Response from metabundle creation.
+            <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+            <br/>For async creation (large jobs): status=queued with jobId for polling.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
@@ -15553,9 +15449,27 @@
             Metabundle identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.JobId">
+            <summary>
+            Job ID for async processing. Only present when status is 'queued' or 'processing'.
+            <br/>Use /bundles/job/status to poll for completion, or wait for
+            <br/>MetabundleCreationCompleteEvent via WebSocket.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Status">
             <summary>
-            Creation status
+            Creation status.
+            <br/>- queued: Job accepted for async processing (poll with jobId)
+            <br/>- processing: Job is actively running
+            <br/>- ready: Metabundle created and available for download
+            <br/>- failed: Creation failed (see conflicts for details)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only present when status is 'ready')
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.AssetCount">
@@ -15581,6 +15495,134 @@
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Conflicts">
             <summary>
             Present if creation failed due to asset conflicts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusRequest">
+            <summary>
+            Request to get the status of an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusResponse">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>When status is 'ready', the response includes the full metabundle details.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.MetabundleId">
+            <summary>
+            Metabundle identifier being created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Status">
+            <summary>
+            Current job status.
+            <br/>- queued: Waiting for processing resources
+            <br/>- processing: Actively being processed
+            <br/>- ready: Completed successfully
+            <br/>- failed: Creation failed
+            <br/>- cancelled: Job was cancelled
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Progress">
+            <summary>
+            Progress percentage (0-100) when status is 'processing'
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only when status is 'ready')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.AssetCount">
+            <summary>
+            Number of assets in metabundle (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SizeBytes">
+            <summary>
+            Total size in bytes (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SourceBundles">
+            <summary>
+            Provenance data (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorCode">
+            <summary>
+            Error code (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorMessage">
+            <summary>
+            Human-readable error description (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.CreatedAt">
+            <summary>
+            When the job was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.UpdatedAt">
+            <summary>
+            When the job was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds (when complete)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobRequest">
+            <summary>
+            Request to cancel an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobResponse">
+            <summary>
+            Result of job cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Cancelled">
+            <summary>
+            Whether the job was successfully cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Status">
+            <summary>
+            Current job status after cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Message">
+            <summary>
+            Additional context about the cancellation result
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">
@@ -16402,21 +16444,6 @@
             WebSocket endpoint for Connect service
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.LoginResponse">
-            <summary>
-            Response from successful user login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.AccessToken">
-            <summary>
-            JWT access token for authentication
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.RefreshToken">
-            <summary>
-            Refresh token for obtaining new access tokens
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthResponse">
             <summary>
             Successful authentication response containing tokens and session information
@@ -16649,44 +16676,39 @@
             New password to set for the account
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProvidersResponse">
             <summary>
-            List of available OAuth providers
+            List of available authentication providers
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProvidersResponse.Providers">
             <summary>
-            Available OAuth providers for authentication
+            Available authentication providers
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProviderInfo">
             <summary>
-            Response from routing preference update
+            Information about an available authentication provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.Name">
             <summary>
-            The preferred Connect service instance ID
+            Internal identifier for the provider (matches Provider enum for OAuth)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.DisplayName">
             <summary>
-            An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
+            Human-readable name for the provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.Name">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthType">
             <summary>
-            Internal identifier for the OAuth provider
+            Authentication mechanism (oauth = browser redirect, ticket = game client token)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.DisplayName">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
-            Human-readable name for the OAuth provider
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.AuthUrl">
-            <summary>
-            URL to initiate authentication with this provider
+            URL to initiate OAuth authentication (null for ticket-based auth like Steam)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest">
@@ -21213,36 +21235,6 @@
             Type of game session - determines join behavior
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
-            <summary>
-            A slot reservation for an expected player in a matchmade session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
-            <summary>
-            Account ID of the player this slot is reserved for
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
-            <summary>
-            One-time use token for claiming this reservation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
-            <summary>
-            When this reservation was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
-            <summary>
-            Whether this reservation has been claimed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
-            <summary>
-            When this reservation was claimed (null if not yet claimed)
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
             <summary>
             Reservation token returned when creating a matchmade session
@@ -25638,96 +25630,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Metadata">
             <summary>
             Additional service metadata (null if not provided)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest">
-            <summary>
-            Request to execute a specific type of test
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.TestType">
-            <summary>
-            Type of tests to execute
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Plugin">
-            <summary>
-            Specific plugin to test (for http tests)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Configuration">
-            <summary>
-            Additional test configuration parameters
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Timeout">
-            <summary>
-            Test timeout in seconds (default 300)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult">
-            <summary>
-            Result of executing a test suite including overall status and individual test outcomes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Success">
-            <summary>
-            Overall test success status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.TestType">
-            <summary>
-            Type of tests executed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Duration">
-            <summary>
-            Total execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Results">
-            <summary>
-            Individual test results
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Summary">
-            <summary>
-            Human-readable test summary
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Error">
-            <summary>
-            Error message if test execution failed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestResult">
-            <summary>
-            Outcome of a single test case including pass/fail status and optional error details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Name">
-            <summary>
-            Test name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Passed">
-            <summary>
-            Test pass/fail status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Duration">
-            <summary>
-            Test execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Message">
-            <summary>
-            Test result message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.StackTrace">
-            <summary>
-            Stack trace if test failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest">
@@ -33474,26 +33376,10 @@
             Name of the state store (MySQL or Redis with search enabled)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Filter">
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Conditions">
             <summary>
-            Filter expression. Format depends on backend:
-            <br/>
-            <br/>**MySQL JSON queries** - structured conditions:
-            <br/>```json
-            <br/>{
-            <br/>  "conditions": [
-            <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
-            <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
-            <br/>  ]
-            <br/>}
-            <br/>```
-            <br/>
-            <br/>**MySQL simple equality** - flat object format:
-            <br/>```json
-            <br/>{ "$.name": "John", "$.status": "active" }
-            <br/>```
-            <br/>
-            <br/>**Redis search** - use indexName and query properties instead
+            Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+            <br/>For Redis search, use indexName and query properties instead.
             <br/>
             </summary>
         </member>
@@ -33884,26 +33770,6 @@
         <member name="P:BeyondImmersion.BannouService.Subscription.SubscriptionInfo.UpdatedAt">
             <summary>
             When the subscription was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse">
-            <summary>
-            Response containing current active subscriptions and authorization strings
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.AccountId">
-            <summary>
-            ID of the account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Authorizations">
-            <summary>
-            List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Subscriptions">
-            <summary>
-            Full subscription details (optional, for debugging)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse">
