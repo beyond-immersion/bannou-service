@@ -839,8 +839,9 @@ public class DocumentationTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Expected 3 documents, got {ascResponse.Documents?.Count ?? 0}");
 
             // Verify ascending order - first should be Apple
-            if (!ascResponse.Documents[0].Title.StartsWith("Apple"))
-                return TestResult.Failed($"Expected first document to be 'Apple...', got '{ascResponse.Documents[0].Title}'");
+            var ascFirst = ascResponse.Documents.First();
+            if (!ascFirst.Title.StartsWith("Apple"))
+                return TestResult.Failed($"Expected first document to be 'Apple...', got '{ascFirst.Title}'");
 
             // Test sorting by title descending
             var descResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
@@ -851,8 +852,9 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             });
 
             // Verify descending order - first should be Zebra
-            if (!descResponse.Documents[0].Title.StartsWith("Zebra"))
-                return TestResult.Failed($"Expected first document to be 'Zebra...', got '{descResponse.Documents[0].Title}'");
+            var descFirst = descResponse.Documents.First();
+            if (!descFirst.Title.StartsWith("Zebra"))
+                return TestResult.Failed($"Expected first document to be 'Zebra...', got '{descFirst.Title}'");
 
             // Test sorting by created_at
             var createdResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
@@ -865,7 +867,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             if (createdResponse.Documents == null || createdResponse.Documents.Count < 3)
                 return TestResult.Failed("Sort by created_at failed to return documents");
 
-            return TestResult.Successful($"Sorting tests passed: title asc first='{ascResponse.Documents[0].Title}', title desc first='{descResponse.Documents[0].Title}'");
+            return TestResult.Successful($"Sorting tests passed: title asc first='{ascFirst.Title}', title desc first='{descFirst.Title}'");
         }, "List documents with sorting");
 
     private static async Task<TestResult> TestSearchDocumentationWithSorting(ITestClient client, string[] args) =>
