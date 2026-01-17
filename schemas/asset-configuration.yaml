@@ -406,3 +406,34 @@ x-service-configuration:
       description: Maximum time for a metabundle job before marking as failed
       env: ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS
       default: 3600
+
+    # === Streaming Metabundle Configuration (Tier 2) ===
+    StreamingMaxMemoryMb:
+      type: integer
+      description: Maximum memory in MB for streaming operations. Limits total buffer allocation during streaming metabundle assembly.
+      env: ASSET_STREAMING_MAX_MEMORY_MB
+      default: 100
+
+    StreamingPartSizeMb:
+      type: integer
+      description: Size of each part in MB for streaming multipart uploads. S3/MinIO requires minimum 5MB per part except for the last part.
+      env: ASSET_STREAMING_PART_SIZE_MB
+      default: 50
+
+    StreamingMaxConcurrentSourceStreams:
+      type: integer
+      description: Maximum number of source bundles to stream concurrently during metabundle assembly. Higher values use more memory but improve throughput.
+      env: ASSET_STREAMING_MAX_CONCURRENT_SOURCE_STREAMS
+      default: 2
+
+    StreamingCompressionBufferKb:
+      type: integer
+      description: Size of compression buffer in KB for LZ4 streaming compression. Larger buffers improve compression ratio but use more memory.
+      env: ASSET_STREAMING_COMPRESSION_BUFFER_KB
+      default: 16384
+
+    StreamingProgressUpdateIntervalAssets:
+      type: integer
+      description: Number of assets to process before updating job progress. Lower values give more frequent updates but add overhead.
+      env: ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS
+      default: 10

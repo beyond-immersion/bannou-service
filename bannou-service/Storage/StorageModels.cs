@@ -128,3 +128,32 @@ public record ObjectMetadata(
     string ETag,
     DateTime LastModified,
     IDictionary<string, string> Metadata);
+
+/// <summary>
+/// Session information for server-side multipart uploads.
+/// Unlike client-side multipart uploads (which use pre-signed URLs),
+/// server-side uploads stream data directly through the service to storage.
+/// Used for streaming large bundle assembly without buffering in memory.
+/// </summary>
+/// <param name="UploadId">The S3/MinIO upload ID for this multipart session</param>
+/// <param name="Bucket">Target bucket for the upload</param>
+/// <param name="Key">Object key (path) being uploaded</param>
+/// <param name="ContentType">MIME content type of the final object</param>
+/// <param name="InitiatedAt">When this upload session was created</param>
+public record ServerMultipartUploadSession(
+    string UploadId,
+    string Bucket,
+    string Key,
+    string ContentType,
+    DateTime InitiatedAt);
+
+/// <summary>
+/// Information about a server-side uploaded part.
+/// </summary>
+/// <param name="PartNumber">1-based part number</param>
+/// <param name="ETag">ETag returned by storage for this part</param>
+/// <param name="Size">Size of this part in bytes</param>
+public record ServerUploadedPart(
+    int PartNumber,
+    string ETag,
+    long Size);

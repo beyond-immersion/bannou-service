@@ -650,4 +650,352 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
             throw;
         }
     }
+
+    // === Server-Side Multipart Upload Implementation ===
+
+    /// <inheritdoc />
+    public async Task<StorageModels.ServerMultipartUploadSession> InitiateServerMultipartUploadAsync(
+        string bucket,
+        string key,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Initiating server-side multipart upload: {Bucket}/{Key}, contentType={ContentType}",
+            bucket, key, contentType);
+
+        try
+        {
+            var request = new InitiateMultipartUploadRequest
+            {
+                BucketName = bucket,
+                Key = key,
+                ContentType = contentType
+            };
+
+            var response = await _s3Client.InitiateMultipartUploadAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogDebug(
+                "Initiated server-side multipart upload: {Bucket}/{Key}, uploadId={UploadId}",
+                bucket, key, response.UploadId);
+
+            return new StorageModels.ServerMultipartUploadSession(
+                response.UploadId,
+                bucket,
+                key,
+                contentType,
+                DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initiate server-side multipart upload: {Bucket}/{Key}", bucket, key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.InitiateServerMultipartUploadAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"MULTIPART_INIT {bucket}/{key}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.ServerUploadedPart> UploadPartAsync(
+        StorageModels.ServerMultipartUploadSession session,
+        int partNumber,
+        Stream content,
+        long contentLength,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Uploading part {PartNumber} for {Bucket}/{Key}, size={Size}",
+            partNumber, session.Bucket, session.Key, contentLength);
+
+        try
+        {
+            var request = new UploadPartRequest
+            {
+                BucketName = session.Bucket,
+                Key = session.Key,
+                UploadId = session.UploadId,
+                PartNumber = partNumber,
+                InputStream = content,
+                PartSize = contentLength
+            };
+
+            var response = await _s3Client.UploadPartAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogDebug(
+                "Uploaded part {PartNumber} for {Bucket}/{Key}, ETag={ETag}",
+                partNumber, session.Bucket, session.Key, response.ETag);
+
+            return new StorageModels.ServerUploadedPart(
+                partNumber,
+                response.ETag,
+                contentLength);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to upload part {PartNumber} for {Bucket}/{Key}",
+                partNumber, session.Bucket, session.Key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.UploadPartAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"MULTIPART_UPLOAD {session.Bucket}/{session.Key} part {partNumber}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageModels.AssetReference> CompleteServerMultipartUploadAsync(
+        StorageModels.ServerMultipartUploadSession session,
+        IList<StorageModels.ServerUploadedPart> parts,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Completing server-side multipart upload: {Bucket}/{Key}, parts={PartCount}",
+            session.Bucket, session.Key, parts.Count);
+
+        try
+        {
+            var request = new CompleteMultipartUploadRequest
+            {
+                BucketName = session.Bucket,
+                Key = session.Key,
+                UploadId = session.UploadId
+            };
+
+            // Add all parts in order
+            foreach (var part in parts.OrderBy(p => p.PartNumber))
+            {
+                request.AddPartETags(new PartETag(part.PartNumber, part.ETag));
+            }
+
+            var response = await _s3Client.CompleteMultipartUploadAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            // Get final object metadata
+            var stat = await _minioClient.StatObjectAsync(
+                new StatObjectArgs()
+                    .WithBucket(session.Bucket)
+                    .WithObject(session.Key),
+                cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation(
+                "Completed server-side multipart upload: {Bucket}/{Key}, size={Size}",
+                session.Bucket, session.Key, stat.Size);
+
+            return new StorageModels.AssetReference(
+                session.Bucket,
+                session.Key,
+                stat.VersionId,
+                stat.ETag,
+                stat.Size,
+                stat.LastModified);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to complete server-side multipart upload: {Bucket}/{Key}",
+                session.Bucket, session.Key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.CompleteServerMultipartUploadAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"MULTIPART_COMPLETE {session.Bucket}/{session.Key}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task AbortServerMultipartUploadAsync(
+        StorageModels.ServerMultipartUploadSession session,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Aborting server-side multipart upload: {Bucket}/{Key}, uploadId={UploadId}",
+            session.Bucket, session.Key, session.UploadId);
+
+        try
+        {
+            var request = new AbortMultipartUploadRequest
+            {
+                BucketName = session.Bucket,
+                Key = session.Key,
+                UploadId = session.UploadId
+            };
+
+            await _s3Client.AbortMultipartUploadAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogDebug(
+                "Aborted server-side multipart upload: {Bucket}/{Key}",
+                session.Bucket, session.Key);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't throw - abort is best-effort cleanup
+            _logger.LogWarning(ex,
+                "Failed to abort server-side multipart upload: {Bucket}/{Key}",
+                session.Bucket, session.Key);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Stream> GetObjectStreamingAsync(
+        string bucket,
+        string key,
+        string? versionId = null,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Getting object (streaming): {Bucket}/{Key}, versionId={VersionId}",
+            bucket, key, versionId);
+
+        try
+        {
+            // Use AWS S3 SDK which returns a ResponseStream that reads directly from network
+            var request = new GetObjectRequest
+            {
+                BucketName = bucket,
+                Key = key
+            };
+
+            if (!string.IsNullOrEmpty(versionId))
+            {
+                request.VersionId = versionId;
+            }
+
+            var response = await _s3Client.GetObjectAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            // The ResponseStream is the network stream - caller owns disposal
+            // We wrap in a StreamingResponseWrapper to ensure the response is disposed
+            // when the stream is disposed
+            return new StreamingResponseWrapper(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get object (streaming): {Bucket}/{Key}", bucket, key);
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "MinioStorageProvider.GetObjectStreamingAsync",
+                "storage_error",
+                ex.Message,
+                dependency: "minio",
+                endpoint: $"GET_STREAMING {bucket}/{key}",
+                details: null,
+                stack: ex.StackTrace);
+            throw;
+        }
+    }
+}
+
+/// <summary>
+/// Wrapper stream that ensures the S3 GetObjectResponse is disposed when the stream is disposed.
+/// This prevents resource leaks when using streaming downloads.
+/// </summary>
+internal sealed class StreamingResponseWrapper : Stream
+{
+    private readonly GetObjectResponse _response;
+    private readonly Stream _innerStream;
+    private bool _disposed;
+
+    /// <summary>
+    /// Creates a new streaming response wrapper.
+    /// </summary>
+    /// <param name="response">The S3 GetObjectResponse to wrap.</param>
+    public StreamingResponseWrapper(GetObjectResponse response)
+    {
+        _response = response ?? throw new ArgumentNullException(nameof(response));
+        _innerStream = response.ResponseStream;
+    }
+
+    /// <inheritdoc />
+    public override bool CanRead => _innerStream.CanRead;
+
+    /// <inheritdoc />
+    public override bool CanSeek => _innerStream.CanSeek;
+
+    /// <inheritdoc />
+    public override bool CanWrite => _innerStream.CanWrite;
+
+    /// <inheritdoc />
+    public override long Length => _innerStream.Length;
+
+    /// <inheritdoc />
+    public override long Position
+    {
+        get => _innerStream.Position;
+        set => _innerStream.Position = value;
+    }
+
+    /// <inheritdoc />
+    public override void Flush() => _innerStream.Flush();
+
+    /// <inheritdoc />
+    public override int Read(byte[] buffer, int offset, int count) =>
+        _innerStream.Read(buffer, offset, count);
+
+    /// <inheritdoc />
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+        _innerStream.ReadAsync(buffer, offset, count, cancellationToken);
+
+    /// <inheritdoc />
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+        _innerStream.ReadAsync(buffer, cancellationToken);
+
+    /// <inheritdoc />
+    public override long Seek(long offset, SeekOrigin origin) =>
+        _innerStream.Seek(offset, origin);
+
+    /// <inheritdoc />
+    public override void SetLength(long value) =>
+        _innerStream.SetLength(value);
+
+    /// <inheritdoc />
+    public override void Write(byte[] buffer, int offset, int count) =>
+        _innerStream.Write(buffer, offset, count);
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _innerStream.Dispose();
+                _response.Dispose();
+            }
+            _disposed = true;
+        }
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask DisposeAsync()
+    {
+        if (!_disposed)
+        {
+            await _innerStream.DisposeAsync().ConfigureAwait(false);
+            _response.Dispose();
+            _disposed = true;
+        }
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
 }
