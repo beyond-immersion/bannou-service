@@ -119,6 +119,12 @@ public static class StateStoreDefinitions
     /// <summary>External subscription recovery data</summary>
     public const string MessagingExternalSubs = "messaging-external-subs";
 
+    // Music Service
+    /// <summary>Cached generated compositions</summary>
+    public const string MusicCompositions = "music-compositions";
+    /// <summary>Style definitions (celtic, jazz, baroque, etc.)</summary>
+    public const string MusicStyles = "music-styles";
+
     // Orchestrator Service
     /// <summary>Configuration version and metadata</summary>
     public const string OrchestratorConfig = "orchestrator-config";
@@ -224,6 +230,8 @@ public static class StateStoreDefinitions
             [MeshEndpoints] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:endpoint" },
             [MeshGlobalIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:idx" },
             [MessagingExternalSubs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "msg:subs" },
+            [MusicCompositions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "music:comp" },
+            [MusicStyles] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "music_styles" },
             [OrchestratorConfig] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:cfg" },
             [OrchestratorHeartbeats] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:hb" },
             [OrchestratorRoutings] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:rt" },
@@ -287,6 +295,8 @@ public static class StateStoreDefinitions
             [MeshEndpoints] = new StoreMetadata("Mesh", "Service endpoint registration and health status", "redis"),
             [MeshGlobalIndex] = new StoreMetadata("Mesh", "Global endpoint index for discovery", "redis"),
             [MessagingExternalSubs] = new StoreMetadata("Messaging", "External subscription recovery data", "redis"),
+            [MusicCompositions] = new StoreMetadata("Music", "Cached generated compositions", "redis"),
+            [MusicStyles] = new StoreMetadata("Music", "Style definitions (celtic, jazz, baroque, etc.)", "mysql"),
             [OrchestratorConfig] = new StoreMetadata("Orchestrator", "Configuration version and metadata", "redis"),
             [OrchestratorHeartbeats] = new StoreMetadata("Orchestrator", "Service heartbeat tracking", "redis"),
             [OrchestratorRoutings] = new StoreMetadata("Orchestrator", "Service-to-app-id routing tables", "redis"),

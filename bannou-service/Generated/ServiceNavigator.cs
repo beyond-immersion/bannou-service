@@ -27,6 +27,7 @@ using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Realm;
@@ -75,6 +76,7 @@ public sealed class ServiceNavigator : IServiceNavigator
     private readonly IMatchmakingClient _matchmaking;
     private readonly IMeshClient _mesh;
     private readonly IMessagingClient _messaging;
+    private readonly IMusicClient _music;
     private readonly IOrchestratorClient _orchestrator;
     private readonly IPermissionClient _permission;
     private readonly IRealmClient _realm;
@@ -114,6 +116,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         IMatchmakingClient matchmaking,
         IMeshClient mesh,
         IMessagingClient messaging,
+        IMusicClient music,
         IOrchestratorClient orchestrator,
         IPermissionClient permission,
         IRealmClient realm,
@@ -149,6 +152,7 @@ public sealed class ServiceNavigator : IServiceNavigator
         _matchmaking = matchmaking;
         _mesh = mesh;
         _messaging = messaging;
+        _music = music;
         _orchestrator = orchestrator;
         _permission = permission;
         _realm = realm;
@@ -267,6 +271,9 @@ public sealed class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IMessagingClient Messaging => _messaging;
+
+    /// <inheritdoc />
+    public IMusicClient Music => _music;
 
     /// <inheritdoc />
     public IOrchestratorClient Orchestrator => _orchestrator;

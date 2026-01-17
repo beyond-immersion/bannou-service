@@ -41,6 +41,8 @@ This document lists all state store components used in Bannou.
 | `mesh-endpoints` | Redis | Mesh | Service endpoint registration and health status |
 | `mesh-global-index` | Redis | Mesh | Global endpoint index for discovery |
 | `messaging-external-subs` | Redis | Messaging | External subscription recovery data |
+| `music-compositions` | Redis | Music | Cached generated compositions |
+| `music-styles` | MySQL | Music | Style definitions (celtic, jazz, baroque, etc.) |
 | `orchestrator-config` | Redis | Orchestrator | Configuration version and metadata |
 | `orchestrator-heartbeats` | Redis | Orchestrator | Service heartbeat tracking |
 | `orchestrator-routings` | Redis | Orchestrator | Service-to-app-id routing tables |
@@ -61,7 +63,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 51 stores (33 Redis, 18 MySQL)
+**Total**: 53 stores (34 Redis, 19 MySQL)
 
 ## Naming Conventions
 

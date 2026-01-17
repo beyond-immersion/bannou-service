@@ -25,6 +25,7 @@ using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Realm;
@@ -145,6 +146,11 @@ public partial interface IServiceNavigator
     /// Gets the Messaging service client.
     /// </summary>
     IMessagingClient Messaging { get; }
+
+    /// <summary>
+    /// Gets the Music service client.
+    /// </summary>
+    IMusicClient Music { get; }
 
     /// <summary>
     /// Gets the Orchestrator service client.

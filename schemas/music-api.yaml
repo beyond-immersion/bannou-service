@@ -52,6 +52,163 @@ paths:
         '404':
           description: Style not found
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateCompositionRequest\"\
+        ,\n    \"$defs\": {\n        \"GenerateCompositionRequest\": {\n            \"description\": \"Request to generate
+        a complete musical composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"styleId\"\n            ],\n            \"properties\": {\n       \
+        \         \"styleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of
+        the style to use for generation\",\n                    \"example\": \"celtic\"\n                },\n            \
+        \    \"durationBars\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 4,\n      \
+        \              \"maximum\": 256,\n                    \"default\": 32,\n                    \"description\": \"Target
+        duration in bars\"\n                },\n                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Key signature (random if not specified)\"\
+        \n                },\n                \"tempo\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"minimum\": 40,\n                    \"maximum\": 240,\n                    \"description\": \"Tempo in BPM (uses
+        style default if not specified)\"\n                },\n                \"mood\": {\n                    \"type\":
+        \"string\",\n                    \"enum\": [\n                        \"bright\",\n                        \"dark\"\
+        ,\n                        \"neutral\",\n                        \"melancholic\",\n                        \"triumphant\"\
+        \n                    ],\n                    \"nullable\": true,\n                    \"description\": \"Mood constraint
+        for generation\"\n                },\n                \"tuneType\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Style-specific tune type (e.g., \\\
+        \"reel\\\", \\\"jig\\\" for Celtic)\",\n                    \"example\": \"reel\"\n                },\n          \
+        \      \"seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Random seed for reproducible generation\"\n                }\n            }\n    \
+        \    },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic and mode\",\n    \
+        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
+        \          \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n                \"\
+        tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch
+        class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\",\n            \
+        \        \"enum\": [\n                        \"major\",\n                        \"minor\",\n                   \
+        \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
+        \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
+        \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
+        \        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\",\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n            \
+        \    \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n  \
+        \              \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n                \"\
+        B\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateCompositionResponse\"\
+        ,\n    \"$defs\": {\n        \"GenerateCompositionResponse\": {\n            \"description\": \"Response containing
+        the generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"compositionId\",\n                \"midiJson\"\n            ],\n   \
+        \         \"properties\": {\n                \"compositionId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"Unique identifier for the composition\"\n                },\n               \
+        \ \"midiJson\": {\n                    \"$ref\": \"#/$defs/MidiJson\",\n                    \"description\": \"Generated
+        MIDI-JSON output\"\n                },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/CompositionMetadata\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Metadata about the generation\"\
+        \n                },\n                \"generationTimeMs\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Time taken to generate in milliseconds\"\n                }\n            }\n   \
+        \     },\n        \"MidiJson\": {\n            \"description\": \"MIDI-JSON format representation of a musical piece\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"tracks\",\n                \"ticksPerBeat\"\n            ],\n            \"properties\": {\n  \
+        \              \"header\": {\n                    \"$ref\": \"#/$defs/MidiHeader\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"MIDI header information\"\n                },\n                \"\
+        ticksPerBeat\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 24,\n            \
+        \        \"maximum\": 960,\n                    \"default\": 480,\n                    \"description\": \"Ticks per
+        beat (PPQN)\"\n                },\n                \"tracks\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/MidiTrack\"\n                    },\n  \
+        \                  \"description\": \"MIDI tracks\"\n                }\n            }\n        },\n        \"MidiHeader\"\
+        : {\n            \"description\": \"MIDI file header information\",\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"properties\": {\n                \"format\": {\n             \
+        \       \"type\": \"integer\",\n                    \"enum\": [\n                        0,\n                    \
+        \    1,\n                        2\n                    ],\n                    \"default\": 1,\n                \
+        \    \"description\": \"MIDI format type\"\n                },\n                \"name\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Composition name\"\
+        \n                },\n                \"tempos\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Tempo changes\"\n                },\n         \
+        \       \"timeSignatures\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Time signature changes\"\n                },\n                \"keySignatures\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/KeySignatureEvent\"\n                    },\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Key signature changes\"\n                }\n            }\n        },\n        \"TempoEvent\"\
+        : {\n            \"description\": \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n      \
+        \      \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n             \
+        \   \"bpm\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n          \
+        \          \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Tempo in
+        BPM\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"description\"\
+        : \"A time signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\
+        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
+        \                \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n              \
+        \  },\n                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\"\
+        : [\n                        1,\n                        2,\n                        4,\n                        8,\n\
+        \                        16,\n                        32\n                    ],\n                    \"description\"\
+        : \"Beat unit\"\n                }\n            }\n        },\n        \"KeySignatureEvent\": {\n            \"description\"\
+        : \"A key signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tick\",\n                \"key\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Tick position\"\n                },\n                \"key\": {\n        \
+        \            \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\": \"Key signature\"\n       \
+        \         }\n            }\n        },\n        \"KeySignature\": {\n            \"description\": \"A key signature
+        with tonic and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"tonic\",\n                \"mode\"\n            ],\n            \"properties\"\
+        : {\n                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n     \
+        \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
+        \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
+        \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
+        \ }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\"\
+        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n \
+        \               \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"\
+        Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n        \
+        \        \"B\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI
+        track containing events\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"events\"\n            ],\n            \"properties\": {\n            \
+        \    \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Track name\"\n                },\n                \"channel\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 15,\n           \
+        \         \"default\": 0,\n                    \"description\": \"MIDI channel\"\n                },\n           \
+        \     \"instrument\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"\
+        GM instrument number\"\n                },\n                \"events\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                   \
+        \ },\n                    \"description\": \"Track events\"\n                }\n            }\n        },\n      \
+        \  \"MidiEvent\": {\n            \"description\": \"A single MIDI event\",\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n            \
+        \    \"type\"\n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"noteOn\",\n                        \"noteOff\",\n                       \
+        \ \"programChange\",\n                        \"controlChange\"\n                    ],\n                    \"description\"\
+        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
+        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
+        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
+        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
+        \n                }\n            }\n        },\n        \"CompositionMetadata\": {\n            \"description\": \"\
+        Metadata about a generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Style used\"\n                },\n\
+        \                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Key signature\"\n                },\n                \"tempo\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Tempo in BPM\"\n                },\n                \"bars\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Number of bars\"\n              \
+        \  },\n                \"tuneType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Tune type if applicable\"\n                },\n                \"\
+        seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Random seed used\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Generate composition from style and constraints\",\n    \"description\"\
+        : \"Generates a complete musical composition using the specified style definition\\nand compositional constraints.
+        Returns MIDI-JSON format output.\\n\",\n    \"tags\": [\n        \"Generation\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"GenerateComposition\"\n}"
   /music/validate:
     post:
       summary: Validate MIDI-JSON structure
@@ -78,6 +235,133 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateMidiJsonResponse'
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateMidiJsonRequest\"\
+        ,\n    \"$defs\": {\n        \"ValidateMidiJsonRequest\": {\n            \"description\": \"Request to validate MIDI-JSON
+        structure\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"midiJson\"\n            ],\n            \"properties\": {\n                \"midiJson\": {\n\
+        \                    \"$ref\": \"#/$defs/MidiJson\",\n                    \"description\": \"MIDI-JSON structure to
+        validate\"\n                },\n                \"strictMode\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"default\": false,\n                    \"description\": \"Enable strict validation with additional
+        checks\"\n                }\n            }\n        },\n        \"MidiJson\": {\n            \"description\": \"MIDI-JSON
+        format representation of a musical piece\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tracks\",\n                \"ticksPerBeat\"\n           \
+        \ ],\n            \"properties\": {\n                \"header\": {\n                    \"$ref\": \"#/$defs/MidiHeader\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"MIDI header information\"\n   \
+        \             },\n                \"ticksPerBeat\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 24,\n                    \"maximum\": 960,\n                    \"default\": 480,\n          \
+        \          \"description\": \"Ticks per beat (PPQN)\"\n                },\n                \"tracks\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiTrack\"\
+        \n                    },\n                    \"description\": \"MIDI tracks\"\n                }\n            }\n\
+        \        },\n        \"MidiHeader\": {\n            \"description\": \"MIDI file header information\",\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n         \
+        \       \"format\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n             \
+        \           0,\n                        1,\n                        2\n                    ],\n                  \
+        \  \"default\": 1,\n                    \"description\": \"MIDI format type\"\n                },\n              \
+        \  \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Composition name\"\n                },\n                \"tempos\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Tempo changes\"\
+        \n                },\n                \"timeSignatures\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Time signature changes\"\n      \
+        \          },\n                \"keySignatures\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/KeySignatureEvent\"\n                    },\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Key signature changes\"\n              \
+        \  }\n            }\n        },\n        \"TempoEvent\": {\n            \"description\": \"A tempo change event\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"tick\",\n                \"bpm\"\n            ],\n            \"properties\": {\n             \
+        \   \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n               \
+        \     \"description\": \"Tick position\"\n                },\n                \"bpm\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 20,\n                \
+        \    \"maximum\": 400,\n                    \"description\": \"Tempo in BPM\"\n                }\n            }\n\
+        \        },\n        \"TimeSignatureEvent\": {\n            \"description\": \"A time signature change event\",\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
+        \              \"tick\",\n                \"numerator\",\n                \"denominator\"\n            ],\n      \
+        \      \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n             \
+        \   \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n          \
+        \          \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n                },\n    \
+        \            \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n   \
+        \                     1,\n                        2,\n                        4,\n                        8,\n   \
+        \                     16,\n                        32\n                    ],\n                    \"description\"\
+        : \"Beat unit\"\n                }\n            }\n        },\n        \"KeySignatureEvent\": {\n            \"description\"\
+        : \"A key signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tick\",\n                \"key\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Tick position\"\n                },\n                \"key\": {\n        \
+        \            \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\": \"Key signature\"\n       \
+        \         }\n            }\n        },\n        \"KeySignature\": {\n            \"description\": \"A key signature
+        with tonic and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"tonic\",\n                \"mode\"\n            ],\n            \"properties\"\
+        : {\n                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n     \
+        \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
+        \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
+        \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
+        \ }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\"\
+        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n \
+        \               \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"\
+        Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n        \
+        \        \"B\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI
+        track containing events\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"events\"\n            ],\n            \"properties\": {\n            \
+        \    \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Track name\"\n                },\n                \"channel\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 15,\n           \
+        \         \"default\": 0,\n                    \"description\": \"MIDI channel\"\n                },\n           \
+        \     \"instrument\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"\
+        GM instrument number\"\n                },\n                \"events\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                   \
+        \ },\n                    \"description\": \"Track events\"\n                }\n            }\n        },\n      \
+        \  \"MidiEvent\": {\n            \"description\": \"A single MIDI event\",\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n            \
+        \    \"type\"\n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"noteOn\",\n                        \"noteOff\",\n                       \
+        \ \"programChange\",\n                        \"controlChange\"\n                    ],\n                    \"description\"\
+        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
+        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
+        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
+        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateMidiJsonResponse\"\
+        ,\n    \"$defs\": {\n        \"ValidateMidiJsonResponse\": {\n            \"description\": \"Response containing validation
+        results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"isValid\"\n            ],\n            \"properties\": {\n                \"isValid\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether the MIDI-JSON is valid\"\
+        \n                },\n                \"errors\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/ValidationError\"\n                    },\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Validation errors if invalid\"\n         \
+        \       },\n                \"warnings\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Non-fatal warnings\"\n                }\n            }\n        },\n     \
+        \   \"ValidationError\": {\n            \"description\": \"A validation error\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\",\n        \
+        \        \"message\"\n            ],\n            \"properties\": {\n                \"type\": {\n               \
+        \     \"type\": \"string\",\n                    \"enum\": [\n                        \"structure\",\n           \
+        \             \"range\",\n                        \"timing\",\n                        \"format\"\n              \
+        \      ],\n                    \"description\": \"Error type\"\n                },\n                \"message\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Error message\"\n             \
+        \   },\n                \"path\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Path to problematic element\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Validate MIDI-JSON structure\",\n    \"description\": \"Validates a MIDI-JSON
+        structure for correctness including note ranges,\\ntiming, and format compliance.\\n\",\n    \"tags\": [\n       \
+        \ \"Validation\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ValidateMidiJson\"\n}"
   /music/style/get:
     post:
       summary: Get style definition
@@ -106,6 +390,137 @@ paths:
         '404':
           description: Style not found
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetStyleRequest\"\
+        ,\n    \"$defs\": {\n        \"GetStyleRequest\": {\n            \"description\": \"Request to get a style definition\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"styleId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Style ID to retrieve\"\n                },\n                \"styleName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Style name to retrieve (alternative to ID)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StyleDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"StyleDefinitionResponse\": {\n            \"description\": \"Response containing a
+        style definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"styleId\",\n                \"name\",\n                \"category\"\n       \
+        \     ],\n            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique style identifier\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Style name\"\n            \
+        \    },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Style category\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\n\
+        \                },\n                \"modeDistribution\": {\n                    \"$ref\": \"#/$defs/ModeDistribution\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Mode probability distribution\"\
+        \n                },\n                \"intervalPreferences\": {\n                    \"$ref\": \"#/$defs/IntervalPreferences\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Interval preferences\"\n      \
+        \          },\n                \"formTemplates\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/FormTemplate\"\n                    },\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Available forms\"\n                },\n     \
+        \           \"tuneTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"$ref\": \"#/$defs/TuneType\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Style-specific tune types\"\n                },\n                \"defaultTempo\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Default tempo\"\n        \
+        \        },\n                \"harmonyStyle\": {\n                    \"$ref\": \"#/$defs/HarmonyStyle\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Harmony preferences\"\n               \
+        \ }\n            }\n        },\n        \"ModeDistribution\": {\n            \"description\": \"Probability distribution
+        over musical modes\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"properties\": {\n                \"major\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n       \
+        \             \"default\": 0.0,\n                    \"description\": \"Probability of major mode\"\n            \
+        \    },\n                \"minor\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\"\
+        : 0.0,\n                    \"description\": \"Probability of natural minor\"\n                },\n              \
+        \  \"dorian\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n        \
+        \            \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n   \
+        \                 \"description\": \"Probability of dorian mode\"\n                },\n                \"phrygian\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                  \
+        \  \"description\": \"Probability of phrygian mode\"\n                },\n                \"lydian\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\"\
+        : \"Probability of lydian mode\"\n                },\n                \"mixolydian\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability
+        of mixolydian mode\"\n                },\n                \"aeolian\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability of aeolian mode\"\
+        \n                },\n                \"locrian\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"default\": 0.0,\n                    \"description\": \"Probability of locrian mode\"\n         \
+        \       }\n            }\n        },\n        \"IntervalPreferences\": {\n            \"description\": \"Melodic interval
+        preference weights\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"properties\": {\n                \"stepWeight\": {\n                    \"type\": \"number\",\n            \
+        \        \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n  \
+        \                  \"default\": 0.5,\n                    \"description\": \"Weight for stepwise motion (M2, m2)\"\
+        \n                },\n                \"thirdWeight\": {\n                    \"type\": \"number\",\n            \
+        \        \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n  \
+        \                  \"default\": 0.25,\n                    \"description\": \"Weight for thirds (M3, m3)\"\n     \
+        \           },\n                \"leapWeight\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n         \
+        \           \"default\": 0.15,\n                    \"description\": \"Weight for larger leaps (P4, P5)\"\n      \
+        \          },\n                \"largeLeapWeight\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n     \
+        \               \"default\": 0.1,\n                    \"description\": \"Weight for leaps larger than P5\"\n    \
+        \            }\n            }\n        },\n        \"FormTemplate\": {\n            \"description\": \"A musical form
+        structure template\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"name\",\n                \"sections\"\n            ],\n            \"properties\"\
+        : {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Form name (e.g., \\\"AABB\\\", \\\"verse-chorus\\\")\"\n                },\n                \"sections\": {\n  \
+        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Section sequence (e.g., [\\\"A\\\", \\\"A\\\", \\\
+        \"B\\\", \\\"B\\\"])\"\n                },\n                \"barsPerSection\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 64,\n                    \"default\"\
+        : 8,\n                    \"description\": \"Default bars per section\"\n                }\n            }\n      \
+        \  },\n        \"TuneType\": {\n            \"description\": \"A style-specific tune type definition\",\n        \
+        \    \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
+        \      \"name\",\n                \"meter\"\n            ],\n            \"properties\": {\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Tune type name (e.g., \\\"\
+        reel\\\", \\\"jig\\\")\"\n                },\n                \"meter\": {\n                    \"$ref\": \"#/$defs/TimeSignatureEvent\"\
+        ,\n                    \"description\": \"Time signature for this tune type\"\n                },\n              \
+        \  \"tempoRange\": {\n                    \"$ref\": \"#/$defs/TempoRange\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Typical tempo range\"\n                },\n                \"defaultForm\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Default form for this tune type\"\n                },\n                \"rhythmPatterns\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n     \
+        \               },\n                    \"nullable\": true,\n                    \"description\": \"Rhythm pattern
+        names to use\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"description\"\
+        : \"A time signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\
+        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
+        \                \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n              \
+        \  },\n                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\"\
+        : [\n                        1,\n                        2,\n                        4,\n                        8,\n\
+        \                        16,\n                        32\n                    ],\n                    \"description\"\
+        : \"Beat unit\"\n                }\n            }\n        },\n        \"TempoRange\": {\n            \"description\"\
+        : \"A tempo range with min and max BPM\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n       \
+        \     \"properties\": {\n                \"min\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Minimum tempo\"\
+        \n                },\n                \"max\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Maximum tempo\"\n\
+        \                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\": \"Harmonic
+        progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\",\n\
+        \                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n  \
+        \                      \"half\",\n                        \"deceptive\"\n                    ],\n                \
+        \    \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n            \
+        \    },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n   \
+        \                 \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
+        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
+        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
+        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get style definition\",\n    \"description\": \"Retrieves a style definition
+        by ID or name. Styles define mode preferences,\\ninterval rules, form templates, and genre-specific parameters.\\\
+        n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetStyle\"\n\
+        }"
   /music/style/list:
     post:
       summary: List available styles
@@ -131,6 +546,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListStylesResponse'
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListStylesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListStylesRequest\": {\n            \"description\": \"Request to list available styles\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter by category (e.g., \\\"folk\\\", \\\"classical\\\", \\\"jazz\\\")\"\
+        \n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 50,\n               \
+        \     \"description\": \"Maximum number of styles to return\"\n                },\n                \"offset\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"default\"\
+        : 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n        }\n  \
+        \  }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListStylesResponse\"\
+        ,\n    \"$defs\": {\n        \"ListStylesResponse\": {\n            \"description\": \"Response containing a list
+        of styles\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"styles\",\n                \"total\"\n            ],\n            \"properties\": {\n     \
+        \           \"styles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
+        \              \"$ref\": \"#/$defs/StyleSummary\"\n                    },\n                    \"description\": \"\
+        Style summaries\"\n                },\n                \"total\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Total number of styles matching filter\"\n                }\n            }\n\
+        \        },\n        \"StyleSummary\": {\n            \"description\": \"Brief style summary for listing\",\n    \
+        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
+        \          \"styleId\",\n                \"name\",\n                \"category\"\n            ],\n            \"properties\"\
+        : {\n                \"styleId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Style identifier\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Style name\"\n                },\n                \"category\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Style category\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Brief description\"\n                }\n            }\n        }\n \
+        \   }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List available styles\",\n    \"description\": \"Lists all available style
+        definitions with optional filtering by category.\\n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"ListStyles\"\n}"
   /music/style/create:
     post:
       summary: Create new style definition
@@ -160,6 +607,261 @@ paths:
         '409':
           description: Style with this name already exists
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateStyleRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateStyleRequest\": {\n            \"description\": \"Request to create a new style
+        definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"name\",\n                \"category\",\n                \"modeDistribution\"\n            ],\n\
+        \            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Unique style name\",\n                    \"example\": \"celtic\"\n               \
+        \ },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Style category\",\n                    \"example\": \"folk\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable style description\"\n                },\n                \"modeDistribution\": {\n            \
+        \        \"$ref\": \"#/$defs/ModeDistribution\",\n                    \"description\": \"Probability distribution
+        over modes\"\n                },\n                \"intervalPreferences\": {\n                    \"$ref\": \"#/$defs/IntervalPreferences\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Preferred interval patterns\"\n\
+        \                },\n                \"formTemplates\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/FormTemplate\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Available form structures\"\n         \
+        \       },\n                \"rhythmPatterns\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/RhythmPattern\"\n                    },\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Common rhythm patterns\"\n                },\n  \
+        \              \"tuneTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"$ref\": \"#/$defs/TuneType\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Style-specific tune types\"\n                },\n                \"defaultTempo\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 40,\n                    \"maximum\"\
+        : 240,\n                    \"description\": \"Default tempo for this style\"\n                },\n              \
+        \  \"harmonyStyle\": {\n                    \"$ref\": \"#/$defs/HarmonyStyle\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Harmonic progression preferences\"\n                }\n          \
+        \  }\n        },\n        \"ModeDistribution\": {\n            \"description\": \"Probability distribution over musical
+        modes\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"major\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\":
+        0.0,\n                    \"description\": \"Probability of major mode\"\n                },\n                \"minor\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                  \
+        \  \"description\": \"Probability of natural minor\"\n                },\n                \"dorian\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\"\
+        : \"Probability of dorian mode\"\n                },\n                \"phrygian\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability
+        of phrygian mode\"\n                },\n                \"lydian\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability of lydian mode\"\
+        \n                },\n                \"mixolydian\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n   \
+        \                 \"default\": 0.0,\n                    \"description\": \"Probability of mixolydian mode\"\n   \
+        \             },\n                \"aeolian\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n             \
+        \       \"default\": 0.0,\n                    \"description\": \"Probability of aeolian mode\"\n                },\n\
+        \                \"locrian\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\":
+        0.0,\n                    \"description\": \"Probability of locrian mode\"\n                }\n            }\n   \
+        \     },\n        \"IntervalPreferences\": {\n            \"description\": \"Melodic interval preference weights\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"stepWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\"\
+        : 0.5,\n                    \"description\": \"Weight for stepwise motion (M2, m2)\"\n                },\n       \
+        \         \"thirdWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\":
+        0.25,\n                    \"description\": \"Weight for thirds (M3, m3)\"\n                },\n                \"\
+        leapWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n         \
+        \           \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.15,\n   \
+        \                 \"description\": \"Weight for larger leaps (P4, P5)\"\n                },\n                \"largeLeapWeight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.1,\n                  \
+        \  \"description\": \"Weight for leaps larger than P5\"\n                }\n            }\n        },\n        \"\
+        FormTemplate\": {\n            \"description\": \"A musical form structure template\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n        \
+        \        \"sections\"\n            ],\n            \"properties\": {\n                \"name\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Form name (e.g., \\\"AABB\\\", \\\"verse-chorus\\\
+        \")\"\n                },\n                \"sections\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \ \"description\": \"Section sequence (e.g., [\\\"A\\\", \\\"A\\\", \\\"B\\\", \\\"B\\\"])\"\n                },\n\
+        \                \"barsPerSection\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 64,\n                    \"default\": 8,\n                    \"description\"\
+        : \"Default bars per section\"\n                }\n            }\n        },\n        \"RhythmPattern\": {\n     \
+        \       \"description\": \"A rhythmic pattern with note durations\",\n            \"type\": \"object\",\n        \
+        \    \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n                \"\
+        pattern\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Pattern name\"\n                },\n                \"pattern\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"number\",\n                        \"format\": \"float\"\n                    },\n                    \"description\"\
+        : \"Relative durations (1.0 = beat)\"\n                },\n                \"weight\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"default\": 1.0,\n                    \"description\": \"Selection weight\"\
+        \n                }\n            }\n        },\n        \"TuneType\": {\n            \"description\": \"A style-specific
+        tune type definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"name\",\n                \"meter\"\n            ],\n            \"properties\"\
+        : {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Tune type name (e.g., \\\"reel\\\", \\\"jig\\\")\"\n                },\n                \"meter\": {\n         \
+        \           \"$ref\": \"#/$defs/TimeSignatureEvent\",\n                    \"description\": \"Time signature for this
+        tune type\"\n                },\n                \"tempoRange\": {\n                    \"$ref\": \"#/$defs/TempoRange\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Typical tempo range\"\n       \
+        \         },\n                \"defaultForm\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Default form for this tune type\"\n                },\n\
+        \                \"rhythmPatterns\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Rhythm pattern names to use\"\n                }\n            }\n        },\n\
+        \        \"TimeSignatureEvent\": {\n            \"description\": \"A time signature change event\",\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
+        tick\",\n                \"numerator\",\n                \"denominator\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Tick position\"\n                },\n                \"numerator\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n\
+        \                    \"description\": \"Beats per measure\"\n                },\n                \"denominator\":
+        {\n                    \"type\": \"integer\",\n                    \"enum\": [\n                        1,\n     \
+        \                   2,\n                        4,\n                        8,\n                        16,\n    \
+        \                    32\n                    ],\n                    \"description\": \"Beat unit\"\n            \
+        \    }\n            }\n        },\n        \"TempoRange\": {\n            \"description\": \"A tempo range with min
+        and max BPM\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
+        \      \"min\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 20,\n            \
+        \        \"maximum\": 400,\n                    \"description\": \"Minimum tempo\"\n                },\n         \
+        \       \"max\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 20,\n           \
+        \         \"maximum\": 400,\n                    \"description\": \"Maximum tempo\"\n                }\n         \
+        \   }\n        },\n        \"HarmonyStyle\": {\n            \"description\": \"Harmonic progression style preferences\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"primaryCadence\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n\
+        \                        \"authentic\",\n                        \"plagal\",\n                        \"half\",\n\
+        \                        \"deceptive\"\n                    ],\n                    \"default\": \"authentic\",\n\
+        \                    \"description\": \"Most common cadence type\"\n                },\n                \"dominantPrepProbability\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.6,\n                  \
+        \  \"description\": \"Probability of pre-dominant before dominant\"\n                },\n                \"secondaryDominantProbability\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.3,\n                  \
+        \  \"description\": \"Probability of secondary dominants\"\n                },\n                \"modalInterchangeProbability\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.1,\n                  \
+        \  \"description\": \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Common chord progressions as roman numeral strings\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StyleDefinitionResponse\"\
+        ,\n    \"$defs\": {\n        \"StyleDefinitionResponse\": {\n            \"description\": \"Response containing a
+        style definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"styleId\",\n                \"name\",\n                \"category\"\n       \
+        \     ],\n            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique style identifier\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Style name\"\n            \
+        \    },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Style category\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description\"\n\
+        \                },\n                \"modeDistribution\": {\n                    \"$ref\": \"#/$defs/ModeDistribution\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Mode probability distribution\"\
+        \n                },\n                \"intervalPreferences\": {\n                    \"$ref\": \"#/$defs/IntervalPreferences\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Interval preferences\"\n      \
+        \          },\n                \"formTemplates\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"$ref\": \"#/$defs/FormTemplate\"\n                    },\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Available forms\"\n                },\n     \
+        \           \"tuneTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"$ref\": \"#/$defs/TuneType\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Style-specific tune types\"\n                },\n                \"defaultTempo\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Default tempo\"\n        \
+        \        },\n                \"harmonyStyle\": {\n                    \"$ref\": \"#/$defs/HarmonyStyle\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Harmony preferences\"\n               \
+        \ }\n            }\n        },\n        \"ModeDistribution\": {\n            \"description\": \"Probability distribution
+        over musical modes\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"properties\": {\n                \"major\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n       \
+        \             \"default\": 0.0,\n                    \"description\": \"Probability of major mode\"\n            \
+        \    },\n                \"minor\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\"\
+        : 0.0,\n                    \"description\": \"Probability of natural minor\"\n                },\n              \
+        \  \"dorian\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n        \
+        \            \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n   \
+        \                 \"description\": \"Probability of dorian mode\"\n                },\n                \"phrygian\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                  \
+        \  \"description\": \"Probability of phrygian mode\"\n                },\n                \"lydian\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\"\
+        : \"Probability of lydian mode\"\n                },\n                \"mixolydian\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n               \
+        \     \"maximum\": 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability
+        of mixolydian mode\"\n                },\n                \"aeolian\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.0,\n                    \"description\": \"Probability of aeolian mode\"\
+        \n                },\n                \"locrian\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"default\": 0.0,\n                    \"description\": \"Probability of locrian mode\"\n         \
+        \       }\n            }\n        },\n        \"IntervalPreferences\": {\n            \"description\": \"Melodic interval
+        preference weights\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"properties\": {\n                \"stepWeight\": {\n                    \"type\": \"number\",\n            \
+        \        \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n  \
+        \                  \"default\": 0.5,\n                    \"description\": \"Weight for stepwise motion (M2, m2)\"\
+        \n                },\n                \"thirdWeight\": {\n                    \"type\": \"number\",\n            \
+        \        \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n  \
+        \                  \"default\": 0.25,\n                    \"description\": \"Weight for thirds (M3, m3)\"\n     \
+        \           },\n                \"leapWeight\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n         \
+        \           \"default\": 0.15,\n                    \"description\": \"Weight for larger leaps (P4, P5)\"\n      \
+        \          },\n                \"largeLeapWeight\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n     \
+        \               \"default\": 0.1,\n                    \"description\": \"Weight for leaps larger than P5\"\n    \
+        \            }\n            }\n        },\n        \"FormTemplate\": {\n            \"description\": \"A musical form
+        structure template\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"name\",\n                \"sections\"\n            ],\n            \"properties\"\
+        : {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Form name (e.g., \\\"AABB\\\", \\\"verse-chorus\\\")\"\n                },\n                \"sections\": {\n  \
+        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Section sequence (e.g., [\\\"A\\\", \\\"A\\\", \\\
+        \"B\\\", \\\"B\\\"])\"\n                },\n                \"barsPerSection\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 64,\n                    \"default\"\
+        : 8,\n                    \"description\": \"Default bars per section\"\n                }\n            }\n      \
+        \  },\n        \"TuneType\": {\n            \"description\": \"A style-specific tune type definition\",\n        \
+        \    \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
+        \      \"name\",\n                \"meter\"\n            ],\n            \"properties\": {\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Tune type name (e.g., \\\"\
+        reel\\\", \\\"jig\\\")\"\n                },\n                \"meter\": {\n                    \"$ref\": \"#/$defs/TimeSignatureEvent\"\
+        ,\n                    \"description\": \"Time signature for this tune type\"\n                },\n              \
+        \  \"tempoRange\": {\n                    \"$ref\": \"#/$defs/TempoRange\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Typical tempo range\"\n                },\n                \"defaultForm\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Default form for this tune type\"\n                },\n                \"rhythmPatterns\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n     \
+        \               },\n                    \"nullable\": true,\n                    \"description\": \"Rhythm pattern
+        names to use\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"description\"\
+        : \"A time signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\
+        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
+        \                \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n              \
+        \  },\n                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\"\
+        : [\n                        1,\n                        2,\n                        4,\n                        8,\n\
+        \                        16,\n                        32\n                    ],\n                    \"description\"\
+        : \"Beat unit\"\n                }\n            }\n        },\n        \"TempoRange\": {\n            \"description\"\
+        : \"A tempo range with min and max BPM\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n       \
+        \     \"properties\": {\n                \"min\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Minimum tempo\"\
+        \n                },\n                \"max\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Maximum tempo\"\n\
+        \                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\": \"Harmonic
+        progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\",\n\
+        \                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n  \
+        \                      \"half\",\n                        \"deceptive\"\n                    ],\n                \
+        \    \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n            \
+        \    },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n   \
+        \                 \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
+        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
+        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
+        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create new style definition\",\n    \"description\": \"Creates a new style
+        definition. Only accessible to admin users.\\n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"CreateStyle\"\n}"
   /music/theory/progression:
     post:
       summary: Generate chord progression
@@ -189,6 +891,109 @@ paths:
         '400':
           description: Invalid request
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateProgressionRequest\"\
+        ,\n    \"$defs\": {\n        \"GenerateProgressionRequest\": {\n            \"description\": \"Request to generate
+        a chord progression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"key\",\n                \"length\"\n            ],\n            \"properties\"\
+        : {\n                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\"\
+        : \"Key for the progression\"\n                },\n                \"length\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 2,\n                    \"maximum\": 64,\n                    \"description\"\
+        : \"Number of chords in the progression\"\n                },\n                \"styleId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Style to
+        use for harmonic preferences\"\n                },\n                \"startChord\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Starting chord (roman
+        numeral, e.g., \\\"I\\\")\"\n                },\n                \"endChord\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Ending chord (roman numeral,
+        e.g., \\\"I\\\")\"\n                },\n                \"cadenceType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"half\",\n  \
+        \                      \"plagal\",\n                        \"deceptive\"\n                    ],\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Cadence type for ending\"\n                },\n\
+        \                \"allowSecondaryDominants\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": true,\n                    \"description\": \"Allow secondary dominant chords\"\n                },\n \
+        \               \"allowModalInterchange\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Allow borrowed chords from parallel modes\"\n                },\n\
+        \                \"seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Random seed for reproducibility\"\n                }\n            }\n    \
+        \    },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic and mode\",\n    \
+        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
+        \          \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n                \"\
+        tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch
+        class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\",\n            \
+        \        \"enum\": [\n                        \"major\",\n                        \"minor\",\n                   \
+        \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
+        \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
+        \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
+        \        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\",\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n            \
+        \    \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n  \
+        \              \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n                \"\
+        B\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateProgressionResponse\"\
+        ,\n    \"$defs\": {\n        \"GenerateProgressionResponse\": {\n            \"description\": \"Response containing
+        a generated chord progression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"chords\"\n            ],\n            \"properties\": {\n        \
+        \        \"chords\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
+        \           \"$ref\": \"#/$defs/ChordEvent\"\n                    },\n                    \"description\": \"Generated
+        chord events\"\n                },\n                \"analysis\": {\n                    \"$ref\": \"#/$defs/ProgressionAnalysis\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Analysis of the progression\"\n\
+        \                }\n            }\n        },\n        \"ChordEvent\": {\n            \"description\": \"A chord with
+        timing information\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"chord\",\n                \"startTick\",\n                \"durationTicks\"\
+        \n            ],\n            \"properties\": {\n                \"chord\": {\n                    \"$ref\": \"#/$defs/ChordSymbol\"\
+        ,\n                    \"description\": \"Chord symbol\"\n                },\n                \"startTick\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Start position in ticks\"\n                },\n                \"durationTicks\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Duration in ticks\"\n\
+        \                },\n                \"romanNumeral\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Roman numeral analysis (e.g., \\\"IV\\\", \\\"\
+        V7\\\")\"\n                }\n            }\n        },\n        \"ChordSymbol\": {\n            \"description\":
+        \"A chord symbol with root and quality\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n  \
+        \          \"properties\": {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
+        \                    \"description\": \"Chord root\"\n                },\n                \"quality\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n       \
+        \                 \"minor\",\n                        \"diminished\",\n                        \"augmented\",\n  \
+        \                      \"dominant7\",\n                        \"major7\",\n                        \"minor7\",\n\
+        \                        \"diminished7\",\n                        \"halfDiminished7\",\n                        \"\
+        augmented7\",\n                        \"sus2\",\n                        \"sus4\"\n                    ],\n     \
+        \               \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n            \
+        \        \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Bass note (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n           \
+        \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
+        \                   },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions
+        (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\"\
+        : {\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n            \
+        \    \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n  \
+        \              \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n  \
+        \      },\n        \"ProgressionAnalysis\": {\n            \"description\": \"Analysis of a chord progression\",\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"romanNumerals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Roman numeral analysis\"\n                },\n                \"cadences\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/CadenceInfo\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Detected cadences\"\n                },\n                \"functionalAnalysis\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n \
+        \                       \"enum\": [\n                            \"tonic\",\n                            \"subdominant\"\
+        ,\n                            \"dominant\",\n                            \"predominant\"\n                      \
+        \  ]\n                    },\n                    \"nullable\": true,\n                    \"description\": \"Functional
+        analysis per chord\"\n                }\n            }\n        },\n        \"CadenceInfo\": {\n            \"description\"\
+        : \"Information about a cadence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"type\",\n                \"position\"\n            ],\n          \
+        \  \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"authentic\",\n                        \"half\",\n                       \
+        \ \"plagal\",\n                        \"deceptive\"\n                    ],\n                    \"description\"\
+        : \"Cadence type\"\n                },\n                \"position\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Chord index where cadence ends\"\n                },\n                \"\
+        strength\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \
+        \  \"perfect\",\n                        \"imperfect\"\n                    ],\n                    \"nullable\":
+        true,\n                    \"description\": \"Cadence strength\"\n                }\n            }\n        }\n  \
+        \  }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Generate chord progression\",\n    \"description\": \"Generates a chord
+        progression using harmonic function theory.\\nSupports multiple harmonic styles including functional harmony,\\nmodal
+        interchange, and jazz voicings.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n \
+        \   \"operationId\": \"GenerateProgression\"\n}"
   /music/theory/melody:
     post:
       summary: Generate melody over harmony
@@ -217,6 +1022,127 @@ paths:
         '400':
           description: Invalid request
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateMelodyRequest\"\
+        ,\n    \"$defs\": {\n        \"GenerateMelodyRequest\": {\n            \"description\": \"Request to generate a melody
+        over harmony\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"harmony\"\n            ],\n            \"properties\": {\n                \"harmony\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ChordEvent\"\n                    },\n                    \"description\": \"Chord progression to generate
+        melody over\"\n                },\n                \"styleId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Style for melodic preferences\"\n  \
+        \              },\n                \"range\": {\n                    \"$ref\": \"#/$defs/PitchRange\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Pitch range for the melody\"\n           \
+        \     },\n                \"contour\": {\n                    \"type\": \"string\",\n                    \"enum\"\
+        : [\n                        \"arch\",\n                        \"wave\",\n                        \"ascending\",\n\
+        \                        \"descending\",\n                        \"static\"\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Overall melodic contour\"\n                },\n\
+        \                \"rhythmDensity\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Note density (0=sparse, 1=dense)\"\n                },\n         \
+        \       \"syncopation\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
+        \                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Amount of syncopation\"\n                },\n                \"seed\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Random seed for reproducibility\"\n                }\n            }\n        },\n        \"ChordEvent\": {\n \
+        \           \"description\": \"A chord with timing information\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"chord\",\n                \"startTick\"\
+        ,\n                \"durationTicks\"\n            ],\n            \"properties\": {\n                \"chord\": {\n\
+        \                    \"$ref\": \"#/$defs/ChordSymbol\",\n                    \"description\": \"Chord symbol\"\n \
+        \               },\n                \"startTick\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Start position in ticks\"\n                },\n    \
+        \            \"durationTicks\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"description\": \"Duration in ticks\"\n                },\n                \"romanNumeral\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Roman numeral analysis (e.g., \\\"IV\\\", \\\"V7\\\")\"\n                }\n            }\n        },\n      \
+        \  \"ChordSymbol\": {\n            \"description\": \"A chord symbol with root and quality\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"root\"\
+        ,\n                \"quality\"\n            ],\n            \"properties\": {\n                \"root\": {\n     \
+        \               \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Chord root\"\n         \
+        \       },\n                \"quality\": {\n                    \"type\": \"string\",\n                    \"enum\"\
+        : [\n                        \"major\",\n                        \"minor\",\n                        \"diminished\"\
+        ,\n                        \"augmented\",\n                        \"dominant7\",\n                        \"major7\"\
+        ,\n                        \"minor7\",\n                        \"diminished7\",\n                        \"halfDiminished7\"\
+        ,\n                        \"augmented7\",\n                        \"sus2\",\n                        \"sus4\"\n\
+        \                    ],\n                    \"description\": \"Chord quality\"\n                },\n            \
+        \    \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Bass note (for inversions/slash chords)\"\n                },\n          \
+        \      \"extensions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n    \
+        \        }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without
+        octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"\
+        Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n         \
+        \       \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n\
+        \                \"B\"\n            ]\n        },\n        \"PitchRange\": {\n            \"description\": \"A pitch
+        range from low to high\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"low\",\n                \"high\"\n            ],\n            \"properties\"\
+        : {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\"\
+        : \"Lowest pitch (inclusive)\"\n                },\n                \"high\": {\n                    \"$ref\": \"\
+        #/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\n                }\n        \
+        \    }\n        },\n        \"Pitch\": {\n            \"description\": \"A specific pitch with pitch class and octave\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"pitchClass\",\n                \"octave\"\n            ],\n            \"properties\": {\n    \
+        \            \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Pitch class (note name)\"\n                },\n                \"octave\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\"\
+        : \"Octave number (middle C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n               \
+        \     \"description\": \"MIDI note number (computed if not provided)\"\n                }\n            }\n       \
+        \ }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateMelodyResponse\"\
+        ,\n    \"$defs\": {\n        \"GenerateMelodyResponse\": {\n            \"description\": \"Response containing a generated
+        melody\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"notes\"\n            ],\n            \"properties\": {\n                \"notes\": {\n    \
+        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/NoteEvent\"\
+        \n                    },\n                    \"description\": \"Generated note events\"\n                },\n   \
+        \             \"analysis\": {\n                    \"$ref\": \"#/$defs/MelodyAnalysis\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Analysis of the melody\"\n                }\n            }\n     \
+        \   },\n        \"NoteEvent\": {\n            \"description\": \"A musical note event with timing and pitch\",\n \
+        \           \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"pitch\",\n                \"startTick\",\n                \"durationTicks\"\n            ],\n    \
+        \        \"properties\": {\n                \"pitch\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n     \
+        \               \"description\": \"Note pitch\"\n                },\n                \"startTick\": {\n          \
+        \          \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Start
+        position in ticks\"\n                },\n                \"durationTicks\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"Duration in ticks\"\n             \
+        \   },\n                \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 127,\n                    \"default\": 80,\n                    \"description\"\
+        : \"Note velocity\"\n                }\n            }\n        },\n        \"Pitch\": {\n            \"description\"\
+        : \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"pitchClass\",\n                \"octave\"\n            ],\n\
+        \            \"properties\": {\n                \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
+        ,\n                    \"description\": \"Pitch class (note name)\"\n                },\n                \"octave\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
+        \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
+        \                }\n            }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class
+        (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n\
+        \                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n              \
+        \  \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n    \
+        \            \"As\",\n                \"B\"\n            ]\n        },\n        \"MelodyAnalysis\": {\n          \
+        \  \"description\": \"Analysis of a melody\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"range\": {\n                    \"$ref\": \"#/$defs/PitchRange\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Pitch range used\"\n          \
+        \      },\n                \"intervalDistribution\": {\n                    \"type\": \"object\",\n              \
+        \      \"additionalProperties\": {\n                        \"type\": \"number\",\n                        \"format\"\
+        : \"float\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Distribution of interval sizes\"\n                },\n                \"contour\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detected contour shape\"\
+        \n                },\n                \"noteCount\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Total number of notes\"\n                },\n                \"averageNoteDuration\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Average note duration in ticks\"\n                }\n            }\n\
+        \        },\n        \"PitchRange\": {\n            \"description\": \"A pitch range from low to high\",\n       \
+        \     \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n         \
+        \       \"low\",\n                \"high\"\n            ],\n            \"properties\": {\n                \"low\"\
+        : {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Lowest pitch (inclusive)\"\
+        \n                },\n                \"high\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n            \
+        \        \"description\": \"Highest pitch (inclusive)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Generate melody over harmony\",\n    \"description\": \"Generates a melodic
+        line over a chord progression using contour rules,\\ninterval preferences, and rhythmic patterns from the specified
+        style.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GenerateMelody\"\
+        \n}"
   /music/theory/voice-lead:
     post:
       summary: Apply voice leading to chords
@@ -245,6 +1171,126 @@ paths:
         '400':
           description: Invalid request
 
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoiceLeadRequest\"\
+        ,\n    \"$defs\": {\n        \"VoiceLeadRequest\": {\n            \"description\": \"Request to apply voice leading
+        to a chord sequence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"chords\",\n                \"voiceCount\"\n            ],\n            \"\
+        properties\": {\n                \"chords\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/ChordSymbol\"\n                    },\n                    \"description\"\
+        : \"Chord symbols to voice\"\n                },\n                \"voiceCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 2,\n                    \"maximum\": 8,\n                    \"description\"\
+        : \"Number of voices\"\n                },\n                \"ranges\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PitchRange\"\n                  \
+        \  },\n                    \"nullable\": true,\n                    \"description\": \"Pitch range per voice (defaults
+        based on voice count)\"\n                },\n                \"rules\": {\n                    \"$ref\": \"#/$defs/VoiceLeadingRules\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Voice leading rules to apply\"\n\
+        \                }\n            }\n        },\n        \"ChordSymbol\": {\n            \"description\": \"A chord
+        symbol with root and quality\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n           \
+        \ \"properties\": {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n        \
+        \            \"description\": \"Chord root\"\n                },\n                \"quality\": {\n               \
+        \     \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n               \
+        \         \"minor\",\n                        \"diminished\",\n                        \"augmented\",\n          \
+        \              \"dominant7\",\n                        \"major7\",\n                        \"minor7\",\n        \
+        \                \"diminished7\",\n                        \"halfDiminished7\",\n                        \"augmented7\"\
+        ,\n                        \"sus2\",\n                        \"sus4\"\n                    ],\n                 \
+        \   \"description\": \"Chord quality\"\n                },\n                \"bass\": {\n                    \"$ref\"\
+        : \"#/$defs/PitchClass\",\n                    \"nullable\": true,\n                    \"description\": \"Bass note
+        (for inversions/slash chords)\"\n                },\n                \"extensions\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"\
+        9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\": {\n      \
+        \      \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n       \
+        \     \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
+        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
+        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
+        \       \"PitchRange\": {\n            \"description\": \"A pitch range from low to high\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"low\"\
+        ,\n                \"high\"\n            ],\n            \"properties\": {\n                \"low\": {\n         \
+        \           \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Lowest pitch (inclusive)\"\n    \
+        \            },\n                \"high\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                 \
+        \   \"description\": \"Highest pitch (inclusive)\"\n                }\n            }\n        },\n        \"Pitch\"\
+        : {\n            \"description\": \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"pitchClass\",\n  \
+        \              \"octave\"\n            ],\n            \"properties\": {\n                \"pitchClass\": {\n    \
+        \                \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Pitch class (note name)\"\
+        \n                },\n                \"octave\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\": \"Octave number (middle
+        C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"description\": \"\
+        MIDI note number (computed if not provided)\"\n                }\n            }\n        },\n        \"VoiceLeadingRules\"\
+        : {\n            \"description\": \"Rules for voice leading\",\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"properties\": {\n                \"avoidParallelFifths\": {\n      \
+        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        : \"Avoid parallel perfect fifths\"\n                },\n                \"avoidParallelOctaves\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
+        Avoid parallel octaves\"\n                },\n                \"preferStepwiseMotion\": {\n                    \"\
+        type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Prefer stepwise
+        voice motion\"\n                },\n                \"avoidVoiceCrossing\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": true,\n                    \"description\": \"Avoid voice crossing\"\n       \
+        \         },\n                \"maxLeap\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 12,\n                    \"default\": 7,\n                    \"description\"\
+        : \"Maximum leap in semitones\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoiceLeadResponse\"\
+        ,\n    \"$defs\": {\n        \"VoiceLeadResponse\": {\n            \"description\": \"Response containing voiced chords\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"voicings\"\n            ],\n            \"properties\": {\n                \"voicings\": {\n  \
+        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/VoicedChord\"\
+        \n                    },\n                    \"description\": \"Voiced chord realizations\"\n                },\n\
+        \                \"violations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/VoiceLeadingViolation\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Voice leading rule violations (warnings)\"\n           \
+        \     }\n            }\n        },\n        \"VoicedChord\": {\n            \"description\": \"A chord with specific
+        voice pitches\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"symbol\",\n                \"pitches\"\n            ],\n            \"properties\"\
+        : {\n                \"symbol\": {\n                    \"$ref\": \"#/$defs/ChordSymbol\",\n                    \"\
+        description\": \"Original chord symbol\"\n                },\n                \"pitches\": {\n                   \
+        \ \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Pitch\"\n  \
+        \                  },\n                    \"description\": \"Pitches from lowest to highest voice\"\n           \
+        \     }\n            }\n        },\n        \"ChordSymbol\": {\n            \"description\": \"A chord symbol with
+        root and quality\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"root\",\n                \"quality\"\n            ],\n            \"properties\"\
+        : {\n                \"root\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Chord root\"\n                },\n                \"quality\": {\n                    \"type\": \"string\",\n\
+        \                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n       \
+        \                 \"diminished\",\n                        \"augmented\",\n                        \"dominant7\",\n\
+        \                        \"major7\",\n                        \"minor7\",\n                        \"diminished7\"\
+        ,\n                        \"halfDiminished7\",\n                        \"augmented7\",\n                       \
+        \ \"sus2\",\n                        \"sus4\"\n                    ],\n                    \"description\": \"Chord
+        quality\"\n                },\n                \"bass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Bass note (for inversions/slash chords)\"\
+        \n                },\n                \"extensions\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\"\
+        )\"\n                }\n            }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch
+        class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
+        C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n         \
+        \       \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n\
+        \                \"As\",\n                \"B\"\n            ]\n        },\n        \"Pitch\": {\n            \"description\"\
+        : \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"pitchClass\",\n                \"octave\"\n            ],\n\
+        \            \"properties\": {\n                \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
+        ,\n                    \"description\": \"Pitch class (note name)\"\n                },\n                \"octave\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
+        \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
+        \                }\n            }\n        },\n        \"VoiceLeadingViolation\": {\n            \"description\":
+        \"A voice leading rule violation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"rule\",\n                \"position\",\n                \"severity\"\
+        \n            ],\n            \"properties\": {\n                \"rule\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Rule that was violated\"\n                },\n                \"position\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Chord position of violation\"\
+        \n                },\n                \"voices\": {\n                    \"type\": \"array\",\n                  \
+        \  \"items\": {\n                        \"type\": \"integer\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Voice indices involved\"\n                },\n                \"severity\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"warning\"\
+        ,\n                        \"error\"\n                    ],\n                    \"description\": \"Violation severity\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Apply voice leading to chords\",\n    \"description\": \"Applies voice
+        leading rules to a chord sequence, ensuring smooth\\npart-writing according to traditional or style-specific rules.\\\
+        n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ApplyVoiceLeading\"\
+        \n}"
 components:
   schemas:
     # ============================================================================
@@ -893,7 +1939,8 @@ components:
           description: Chord root
         quality:
           type: string
-          enum: [major, minor, diminished, augmented, dominant7, major7, minor7, diminished7, halfDiminished7, augmented7, sus2, sus4]
+          enum: [major, minor, diminished, augmented, dominant7, major7, minor7, diminished7, halfDiminished7, 
+              augmented7, sus2, sus4]
           description: Chord quality
         bass:
           $ref: '#/components/schemas/PitchClass'
