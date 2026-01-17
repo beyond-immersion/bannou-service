@@ -529,6 +529,97 @@ public class StateServiceTests
     }
 
     [Fact]
+    public async Task QueryStateAsync_WithMySqlBackendAndConditions_PassesConditionsToStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.status", Operator = QueryOperator.Equals, Value = "active" },
+            new QueryCondition { Path = "$.name", Operator = QueryOperator.Contains, Value = "test" }
+        };
+        var request = new QueryStateRequest
+        {
+            StoreName = "mysql-store",
+            Conditions = conditions,
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockJsonStore = new Mock<IJsonQueryableStateStore<object>>();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
+        mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
+            It.IsAny<IReadOnlyList<QueryCondition>?>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>((cond, _, _, _, _) => capturedConditions = cond)
+            .ReturnsAsync(new JsonPagedResult<object>(
+                Items: new List<JsonQueryResult<object>>(),
+                TotalCount: 0,
+                Offset: 0,
+                Limit: 10));
+
+        // Act
+        await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(2, capturedConditions.Count);
+        Assert.Equal("$.status", capturedConditions[0].Path);
+        Assert.Equal(QueryOperator.Equals, capturedConditions[0].Operator);
+        Assert.Equal("active", capturedConditions[0].Value?.ToString());
+        Assert.Equal("$.name", capturedConditions[1].Path);
+        Assert.Equal(QueryOperator.Contains, capturedConditions[1].Operator);
+        Assert.Equal("test", capturedConditions[1].Value?.ToString());
+    }
+
+    [Fact]
+    public async Task QueryStateAsync_WithMySqlBackendAndNullConditions_PassesEmptyConditionsToStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new QueryStateRequest
+        {
+            StoreName = "mysql-store",
+            Conditions = null,
+            Page = 0,
+            PageSize = 10
+        };
+
+        var mockJsonStore = new Mock<IJsonQueryableStateStore<object>>();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("mysql-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("mysql-store")).Returns(StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetJsonQueryableStore<object>("mysql-store")).Returns(mockJsonStore.Object);
+        mockJsonStore.Setup(s => s.JsonQueryPagedAsync(
+            It.IsAny<IReadOnlyList<QueryCondition>?>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<JsonSortSpec?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>((cond, _, _, _, _) => capturedConditions = cond)
+            .ReturnsAsync(new JsonPagedResult<object>(
+                Items: new List<JsonQueryResult<object>>(),
+                TotalCount: 0,
+                Offset: 0,
+                Limit: 10));
+
+        // Act
+        await service.QueryStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedConditions);
+        Assert.Empty(capturedConditions);
+    }
+
+    [Fact]
     public async Task QueryStateAsync_WithRedisBackendAndSearchEnabled_ReturnsSearchResults()
     {
         // Arrange

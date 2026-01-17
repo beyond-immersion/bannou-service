@@ -45,6 +45,7 @@ public class StateTestHandler : BaseHttpTestHandler
         new ServiceTest(TestQueryStateRedisWithSearch, "QueryStateRedisSearch", "State", "Test querying state from Redis with search enabled"),
         new ServiceTest(TestQueryStateRedisWithoutSearch, "QueryStateRedisNoSearch", "State", "Test querying state from Redis without search returns 400"),
         new ServiceTest(TestQueryStateWithPagination, "QueryStatePagination", "State", "Test querying state with pagination"),
+        new ServiceTest(TestQueryStateWithConditions, "QueryStateConditions", "State", "Test querying state with QueryCondition filters"),
     ];
 
     private static async Task<TestResult> TestListStores(ITestClient client, string[] args) =>
@@ -567,4 +568,66 @@ public class StateTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"QueryState pagination: page1={page1Count} items, page2={page2Count} items, total={page1Response.TotalCount}");
         }, "Query with pagination");
+
+    private static async Task<TestResult> TestQueryStateWithConditions(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            // Save test data with distinct status values for filtering
+            var testPrefix = $"cond-test-{Guid.NewGuid()}";
+            var testData = new[]
+            {
+                new { key = $"{testPrefix}-1", status = "active", name = "Active Item 1" },
+                new { key = $"{testPrefix}-2", status = "active", name = "Active Item 2" },
+                new { key = $"{testPrefix}-3", status = "inactive", name = "Inactive Item" },
+            };
+
+            foreach (var item in testData)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key,
+                    Value = new { item.status, item.name },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Query with conditions - filter by status = "active"
+            var queryRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.status",
+                        Operator = QueryOperator.Equals,
+                        Value = "active"
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var queryResponse = await stateClient.QueryStateAsync(queryRequest);
+
+            // Clean up test data
+            foreach (var item in testData)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key
+                });
+            }
+
+            if (queryResponse == null)
+                return TestResult.Failed("QueryState with conditions returned null");
+
+            // The query should return results (may include other data in the store too)
+            // The key validation is that the endpoint accepts conditions without errors
+            return TestResult.Successful($"QueryState with conditions returned {queryResponse.Results?.Count ?? 0} results, total: {queryResponse.TotalCount}");
+        }, "Query with conditions");
 }
