@@ -111,6 +111,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
 | `ASSET_MAX_RESOLUTION_ASSETS` | int | `500` | Maximum number of asset IDs allowed in a single bundle resol... |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
+| `ASSET_METABUNDLE_ASYNC_ASSET_COUNT_THRESHOLD` | int | `50` | Total asset count that triggers async processing. Jobs with ... |
+| `ASSET_METABUNDLE_ASYNC_SIZE_BYTES_THRESHOLD` | int | `104857600` | Estimated total size in bytes that triggers async processing... |
+| `ASSET_METABUNDLE_ASYNC_SOURCE_BUNDLE_THRESHOLD` | int | `3` | Number of source bundles that triggers async processing. Job... |
+| `ASSET_METABUNDLE_JOB_KEY_PREFIX` | string | `metabundle-job:` | Key prefix for metabundle job entries in state store |
+| `ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS` | int | `3600` | Maximum time for a metabundle job before marking as failed |
+| `ASSET_METABUNDLE_JOB_TTL_SECONDS` | int | `86400` | How long job status records are retained after completion (f... |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
 | `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
 | `ASSET_MULTIPART_PART_SIZE_MB` | int | `16` | Size of each part in multipart uploads in megabytes |
@@ -137,6 +143,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
 | `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
+| `ASSET_STREAMING_COMPRESSION_BUFFER_KB` | int | `16384` | Size of compression buffer in KB for LZ4 streaming compressi... |
+| `ASSET_STREAMING_MAX_CONCURRENT_SOURCE_STREAMS` | int | `2` | Maximum number of source bundles to stream concurrently duri... |
+| `ASSET_STREAMING_MAX_MEMORY_MB` | int | `100` | Maximum memory in MB for streaming operations. Limits total ... |
+| `ASSET_STREAMING_PART_SIZE_MB` | int | `50` | Size of each part in MB for streaming multipart uploads. S3/... |
+| `ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS` | int | `10` | Number of assets to process before updating job progress. Lo... |
 | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | string | `temp` | Path prefix for temporary upload staging in storage bucket |
 | `ASSET_TEXTURE_PROCESSOR_POOL_TYPE` | string | `texture-processor` | Pool type name for texture processing |
 | `ASSET_TOKEN_TTL_SECONDS` | int | `3600` | TTL for pre-signed upload/download URLs in seconds |
@@ -543,9 +554,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 414
+- **Total properties**: 425
 - **Required (no default)**: 40
-- **Optional (has default)**: 374
+- **Optional (has default)**: 385
 
 ## Environment Variable Naming Convention
 
