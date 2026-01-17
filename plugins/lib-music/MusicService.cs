@@ -1,37 +1,17 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.Bannou.MusicTheory.Collections;
+using BeyondImmersion.Bannou.MusicTheory.Harmony;
+using BeyondImmersion.Bannou.MusicTheory.Melody;
+using BeyondImmersion.Bannou.MusicTheory.Output;
+using BeyondImmersion.Bannou.MusicTheory.Pitch;
+using BeyondImmersion.Bannou.MusicTheory.Style;
+using BeyondImmersion.Bannou.MusicTheory.Time;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-
-// Music Theory SDK types shared via x-sdk-type (same type in API and SDK)
-// These are not aliased because they're used directly in the generated models
-using PitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
-using ModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
-
-// Music Theory SDK types (using aliases to avoid conflicts with generated API types)
-using MusicTheory = BeyondImmersion.Bannou.MusicTheory;
-using SdkPitch = BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch;
-using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
-using SdkScale = BeyondImmersion.Bannou.MusicTheory.Collections.Scale;
-using SdkChord = BeyondImmersion.Bannou.MusicTheory.Collections.Chord;
-using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
-using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
-using SdkMeter = BeyondImmersion.Bannou.MusicTheory.Time.Meter;
-using SdkStyleDefinition = BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition;
-using SdkBuiltInStyles = BeyondImmersion.Bannou.MusicTheory.Style.BuiltInStyles;
-using SdkMidiJson = BeyondImmersion.Bannou.MusicTheory.Output.MidiJson;
-using SdkMidiJsonRenderer = BeyondImmersion.Bannou.MusicTheory.Output.MidiJsonRenderer;
-using SdkKeySignatureEvent = BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent;
-using SdkMelodyGenerator = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator;
-using SdkMelodyOptions = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions;
-using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
-using SdkProgressionGenerator = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionGenerator;
-using SdkProgressionChord = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord;
-using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
-using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
 
 [assembly: InternalsVisibleTo("lib-music.tests")]
 
@@ -89,8 +69,8 @@ public partial class MusicService : IMusicService
 
             // Determine key signature
             var key = body.Key != null
-                ? new SdkScale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode))
-                : new SdkScale(
+                ? new Scale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode))
+                : new Scale(
                     (PitchClass)random.Next(12),
                     style.ModeDistribution.Select(random));
 
@@ -114,32 +94,32 @@ public partial class MusicService : IMusicService
             var totalBars = body.DurationBars;
 
             // Generate chord progression
-            var progressionGenerator = new SdkProgressionGenerator(seed);
+            var progressionGenerator = new ProgressionGenerator(seed);
             var chordsPerBar = 1; // One chord per bar for simplicity
             var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
 
             // Voice the chords
-            var voiceLeader = new SdkVoiceLeader();
+            var voiceLeader = new VoiceLeader();
             var (voicings, voiceViolations) = voiceLeader.Voice(
                 progression.Select(p => p.Chord).ToList(),
                 voiceCount: 4);
 
             // Generate melody over the harmony
-            var melodyOptions = new SdkMelodyOptions
+            var melodyOptions = new MelodyOptions
             {
-                Range = SdkPitchRange.Vocal.Soprano,
-                Contour = SdkContourShape.Arch,
+                Range = PitchRange.Vocal.Soprano,
+                Contour = ContourShape.Arch,
                 IntervalPreferences = style.IntervalPreferences,
                 Density = 0.7,
                 Syncopation = 0.2,
                 TicksPerBeat = ticksPerBeat
             };
 
-            var melodyGenerator = new SdkMelodyGenerator(seed);
+            var melodyGenerator = new MelodyGenerator(seed);
             var melody = melodyGenerator.Generate(progression, key, melodyOptions);
 
             // Render to MIDI-JSON
-            var midiJson = SdkMidiJsonRenderer.RenderComposition(
+            var midiJson = MidiJsonRenderer.RenderComposition(
                 melody,
                 voicings,
                 tempo,
@@ -329,15 +309,15 @@ public partial class MusicService : IMusicService
 
         try
         {
-            SdkStyleDefinition? style = null;
+            StyleDefinition? style = null;
 
             if (!string.IsNullOrEmpty(body.StyleId))
             {
-                style = SdkBuiltInStyles.GetById(body.StyleId);
+                style = BuiltInStyles.GetById(body.StyleId);
             }
             else if (!string.IsNullOrEmpty(body.StyleName))
             {
-                style = SdkBuiltInStyles.All.FirstOrDefault(s =>
+                style = BuiltInStyles.All.FirstOrDefault(s =>
                     s.Name.Equals(body.StyleName, StringComparison.OrdinalIgnoreCase));
             }
 
@@ -378,7 +358,7 @@ public partial class MusicService : IMusicService
 
         try
         {
-            var styles = SdkBuiltInStyles.All.AsEnumerable();
+            var styles = BuiltInStyles.All.AsEnumerable();
 
             // Filter by category if specified
             if (!string.IsNullOrEmpty(body.Category))
@@ -490,8 +470,8 @@ public partial class MusicService : IMusicService
             var seed = body.Seed ?? Environment.TickCount;
             var random = new Random(seed);
 
-            var scale = new SdkScale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode));
-            var generator = new SdkProgressionGenerator(seed);
+            var scale = new Scale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode));
+            var generator = new ProgressionGenerator(seed);
 
             var length = body.Length > 0 ? body.Length : 8;
             var progression = generator.Generate(scale, length);
@@ -571,11 +551,11 @@ public partial class MusicService : IMusicService
             var firstChord = body.Harmony?.FirstOrDefault();
             var root = firstChord != null ? ToPitchClass(firstChord.Chord.Root) : PitchClass.C;
             var mode = ModeType.Major;
-            var scale = new SdkScale(root, mode);
+            var scale = new Scale(root, mode);
 
             // Convert harmony to SDK progression
-            var progression = body.Harmony?.Select((ce, i) => new SdkProgressionChord(
-                new SdkChord(ToPitchClass(ce.Chord.Root), ToSdkChordQuality(ce.Chord.Quality)),
+            var progression = body.Harmony?.Select((ce, i) => new ProgressionChord(
+                new Chord(ToPitchClass(ce.Chord.Root), ToChordQuality(ce.Chord.Quality)),
                 ce.RomanNumeral ?? GetRomanNumeral(i),
                 i + 1,
                 ce.DurationTicks / 480.0
@@ -583,16 +563,16 @@ public partial class MusicService : IMusicService
 
             // Set up melody options
             var range = body.Range != null
-                ? new SdkPitchRange(
-                    new SdkPitch(ToPitchClass(body.Range.Low.PitchClass), body.Range.Low.Octave),
-                    new SdkPitch(ToPitchClass(body.Range.High.PitchClass), body.Range.High.Octave))
-                : SdkPitchRange.Vocal.Soprano;
+                ? new PitchRange(
+                    new Pitch(ToPitchClass(body.Range.Low.PitchClass), body.Range.Low.Octave),
+                    new Pitch(ToPitchClass(body.Range.High.PitchClass), body.Range.High.Octave))
+                : PitchRange.Vocal.Soprano;
 
             var contour = body.Contour.HasValue
-                ? ToSdkContourShape(body.Contour.Value)
-                : SdkContourShape.Arch;
+                ? ToContourShape(body.Contour.Value)
+                : ContourShape.Arch;
 
-            var options = new SdkMelodyOptions
+            var options = new MelodyOptions
             {
                 Range = range,
                 Contour = contour,
@@ -601,7 +581,7 @@ public partial class MusicService : IMusicService
                 TicksPerBeat = 480
             };
 
-            var generator = new SdkMelodyGenerator(seed);
+            var generator = new MelodyGenerator(seed);
             var melody = generator.Generate(progression, scale, options);
 
             // Convert to API response
@@ -681,11 +661,11 @@ public partial class MusicService : IMusicService
         {
             // Convert API chords to SDK chords
             var chords = body.Chords?.Select(cs =>
-                new SdkChord(ToPitchClass(cs.Root), ToSdkChordQuality(cs.Quality), cs.Bass.HasValue ? ToPitchClass(cs.Bass.Value) : null)
+                new Chord(ToPitchClass(cs.Root), ToChordQuality(cs.Quality), cs.Bass.HasValue ? ToPitchClass(cs.Bass.Value) : null)
             ).ToList() ?? [];
 
             // Set up voice leading rules
-            var rules = new SdkVoiceLeadingRules
+            var rules = new VoiceLeadingRules
             {
                 AvoidParallelFifths = body.Rules?.AvoidParallelFifths ?? true,
                 AvoidParallelOctaves = body.Rules?.AvoidParallelOctaves ?? true,
@@ -694,7 +674,7 @@ public partial class MusicService : IMusicService
                 MaxLeap = body.Rules?.MaxLeap ?? 7
             };
 
-            var voiceLeader = new SdkVoiceLeader(rules);
+            var voiceLeader = new VoiceLeader(rules);
 
             // Voice the chords (returns voicings and violations together)
             var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: 4);
@@ -761,9 +741,9 @@ public partial class MusicService : IMusicService
 
     #region Private Helpers
 
-    private static SdkStyleDefinition? GetStyleDefinition(string styleId)
+    private static StyleDefinition? GetStyleDefinition(string styleId)
     {
-        return SdkBuiltInStyles.GetById(styleId);
+        return BuiltInStyles.GetById(styleId);
     }
 
     private static PitchClass ToPitchClass(PitchClass pc) => (PitchClass)(int)pc;
@@ -795,56 +775,56 @@ public partial class MusicService : IMusicService
         _ => KeySignatureMode.Major
     };
 
-    private static SdkChordQuality ToSdkChordQuality(ChordSymbolQuality quality) => quality switch
+    private static ChordQuality ToChordQuality(ChordSymbolQuality quality) => quality switch
     {
-        ChordSymbolQuality.Major => SdkChordQuality.Major,
-        ChordSymbolQuality.Minor => SdkChordQuality.Minor,
-        ChordSymbolQuality.Diminished => SdkChordQuality.Diminished,
-        ChordSymbolQuality.Augmented => SdkChordQuality.Augmented,
-        ChordSymbolQuality.Dominant7 => SdkChordQuality.Dominant7,
-        ChordSymbolQuality.Major7 => SdkChordQuality.Major7,
-        ChordSymbolQuality.Minor7 => SdkChordQuality.Minor7,
-        ChordSymbolQuality.Diminished7 => SdkChordQuality.Diminished7,
-        ChordSymbolQuality.HalfDiminished7 => SdkChordQuality.HalfDiminished7,
-        ChordSymbolQuality.Augmented7 => SdkChordQuality.Augmented7,
-        ChordSymbolQuality.Sus2 => SdkChordQuality.Sus2,
-        ChordSymbolQuality.Sus4 => SdkChordQuality.Sus4,
-        _ => SdkChordQuality.Major
+        ChordSymbolQuality.Major => ChordQuality.Major,
+        ChordSymbolQuality.Minor => ChordQuality.Minor,
+        ChordSymbolQuality.Diminished => ChordQuality.Diminished,
+        ChordSymbolQuality.Augmented => ChordQuality.Augmented,
+        ChordSymbolQuality.Dominant7 => ChordQuality.Dominant7,
+        ChordSymbolQuality.Major7 => ChordQuality.Major7,
+        ChordSymbolQuality.Minor7 => ChordQuality.Minor7,
+        ChordSymbolQuality.Diminished7 => ChordQuality.Diminished7,
+        ChordSymbolQuality.HalfDiminished7 => ChordQuality.HalfDiminished7,
+        ChordSymbolQuality.Augmented7 => ChordQuality.Augmented7,
+        ChordSymbolQuality.Sus2 => ChordQuality.Sus2,
+        ChordSymbolQuality.Sus4 => ChordQuality.Sus4,
+        _ => ChordQuality.Major
     };
 
-    private static ChordSymbolQuality ToApiChordQuality(SdkChordQuality quality) => quality switch
+    private static ChordSymbolQuality ToApiChordQuality(ChordQuality quality) => quality switch
     {
-        SdkChordQuality.Major => ChordSymbolQuality.Major,
-        SdkChordQuality.Minor => ChordSymbolQuality.Minor,
-        SdkChordQuality.Diminished => ChordSymbolQuality.Diminished,
-        SdkChordQuality.Augmented => ChordSymbolQuality.Augmented,
-        SdkChordQuality.Dominant7 => ChordSymbolQuality.Dominant7,
-        SdkChordQuality.Major7 => ChordSymbolQuality.Major7,
-        SdkChordQuality.Minor7 => ChordSymbolQuality.Minor7,
-        SdkChordQuality.Diminished7 => ChordSymbolQuality.Diminished7,
-        SdkChordQuality.HalfDiminished7 => ChordSymbolQuality.HalfDiminished7,
-        SdkChordQuality.Augmented7 => ChordSymbolQuality.Augmented7,
-        SdkChordQuality.Sus2 => ChordSymbolQuality.Sus2,
-        SdkChordQuality.Sus4 => ChordSymbolQuality.Sus4,
+        ChordQuality.Major => ChordSymbolQuality.Major,
+        ChordQuality.Minor => ChordSymbolQuality.Minor,
+        ChordQuality.Diminished => ChordSymbolQuality.Diminished,
+        ChordQuality.Augmented => ChordSymbolQuality.Augmented,
+        ChordQuality.Dominant7 => ChordSymbolQuality.Dominant7,
+        ChordQuality.Major7 => ChordSymbolQuality.Major7,
+        ChordQuality.Minor7 => ChordSymbolQuality.Minor7,
+        ChordQuality.Diminished7 => ChordSymbolQuality.Diminished7,
+        ChordQuality.HalfDiminished7 => ChordSymbolQuality.HalfDiminished7,
+        ChordQuality.Augmented7 => ChordSymbolQuality.Augmented7,
+        ChordQuality.Sus2 => ChordSymbolQuality.Sus2,
+        ChordQuality.Sus4 => ChordSymbolQuality.Sus4,
         _ => ChordSymbolQuality.Major
     };
 
-    private static SdkContourShape ToSdkContourShape(GenerateMelodyRequestContour contour) => contour switch
+    private static ContourShape ToContourShape(GenerateMelodyRequestContour contour) => contour switch
     {
-        GenerateMelodyRequestContour.Arch => SdkContourShape.Arch,
-        GenerateMelodyRequestContour.Wave => SdkContourShape.Wave,
-        GenerateMelodyRequestContour.Ascending => SdkContourShape.Ascending,
-        GenerateMelodyRequestContour.Descending => SdkContourShape.Descending,
-        GenerateMelodyRequestContour.Static => SdkContourShape.Static,
-        _ => SdkContourShape.Arch
+        GenerateMelodyRequestContour.Arch => ContourShape.Arch,
+        GenerateMelodyRequestContour.Wave => ContourShape.Wave,
+        GenerateMelodyRequestContour.Ascending => ContourShape.Ascending,
+        GenerateMelodyRequestContour.Descending => ContourShape.Descending,
+        GenerateMelodyRequestContour.Static => ContourShape.Static,
+        _ => ContourShape.Arch
     };
 
-    private static FunctionalAnalysis ToApiFunctionalAnalysis(MusicTheory.Harmony.HarmonicFunctionType function) =>
+    private static FunctionalAnalysis ToApiFunctionalAnalysis(HarmonicFunctionType function) =>
         function switch
         {
-            MusicTheory.Harmony.HarmonicFunctionType.Tonic => FunctionalAnalysis.Tonic,
-            MusicTheory.Harmony.HarmonicFunctionType.Subdominant => FunctionalAnalysis.Subdominant,
-            MusicTheory.Harmony.HarmonicFunctionType.Dominant => FunctionalAnalysis.Dominant,
+            HarmonicFunctionType.Tonic => FunctionalAnalysis.Tonic,
+            HarmonicFunctionType.Subdominant => FunctionalAnalysis.Subdominant,
+            HarmonicFunctionType.Dominant => FunctionalAnalysis.Dominant,
             _ => FunctionalAnalysis.Tonic
         };
 
@@ -876,7 +856,7 @@ public partial class MusicService : IMusicService
         _ => "I"
     };
 
-    private static MidiJson ConvertToApiMidiJson(SdkMidiJson sdk)
+    private static MidiJson ConvertToApiMidiJson(MidiJson sdk)
     {
         var api = new MidiJson
         {
@@ -917,7 +897,7 @@ public partial class MusicService : IMusicService
                     Numerator = ts.Numerator,
                     Denominator = (TimeSignatureEventDenominator)ts.Denominator
                 }).ToList(),
-                KeySignatures = sdk.Header.KeySignatures?.Cast<SdkKeySignatureEvent>().Select(ks => new KeySignatureEvent
+                KeySignatures = sdk.Header.KeySignatures?.Cast<KeySignatureEvent>().Select(ks => new KeySignatureEvent
                 {
                     Tick = ks.Tick,
                     Key = new KeySignature
@@ -932,7 +912,7 @@ public partial class MusicService : IMusicService
         return api;
     }
 
-    private static StyleDefinitionResponse ConvertToStyleResponse(SdkStyleDefinition style)
+    private static StyleDefinitionResponse ConvertToStyleResponse(StyleDefinition style)
     {
         return new StyleDefinitionResponse
         {

@@ -1795,9 +1795,10 @@ components:
       properties:
         format:
           type: integer
-          enum: [0, 1, 2]
+          minimum: 0
+          maximum: 2
           default: 1
-          description: MIDI format type
+          description: MIDI format type (0, 1, or 2)
         name:
           type: string
           nullable: true
@@ -1865,8 +1866,7 @@ components:
           minimum: 0
           description: Absolute tick position
         type:
-          type: string
-          enum: [noteOn, noteOff, programChange, controlChange]
+          $ref: '#/components/schemas/MidiEventType'
           description: Event type
         note:
           type: integer
@@ -2102,8 +2102,9 @@ components:
           description: Beats per measure
         denominator:
           type: integer
-          enum: [1, 2, 4, 8, 16, 32]
-          description: Beat unit
+          minimum: 1
+          maximum: 32
+          description: Beat unit (4 = quarter, 8 = eighth)
 
     KeySignatureEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent
@@ -2112,15 +2113,19 @@ components:
       additionalProperties: false
       required:
       - tick
-      - key
+      - tonic
+      - mode
       properties:
         tick:
           type: integer
           minimum: 0
           description: Tick position
-        key:
-          $ref: '#/components/schemas/KeySignature'
-          description: Key signature
+        tonic:
+          $ref: '#/components/schemas/PitchClass'
+          description: Tonic pitch class
+        mode:
+          $ref: '#/components/schemas/ModeType'
+          description: Mode/scale type
 
     ModeType:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Collections.ModeType
