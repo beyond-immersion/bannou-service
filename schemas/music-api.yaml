@@ -112,59 +112,56 @@ paths:
         : \"MIDI tracks\"\n                }\n            }\n        },\n        \"MidiHeader\": {\n            \"x-sdk-type\"\
         : \"BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader\",\n            \"description\": \"MIDI file header information\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"format\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n    \
-        \                    0,\n                        1,\n                        2\n                    ],\n         \
-        \           \"default\": 1,\n                    \"description\": \"MIDI format type\"\n                },\n     \
-        \           \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Composition name\"\n                },\n                \"tempos\": {\n      \
-        \              \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Tempo changes\"\
-        \n                },\n                \"timeSignatures\": {\n                    \"type\": \"array\",\n          \
-        \          \"items\": {\n                        \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Time signature changes\"\n      \
-        \          },\n                \"keySignatures\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"$ref\": \"#/$defs/KeySignatureEvent\"\n                    },\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Key signature changes\"\n              \
-        \  }\n            }\n        },\n        \"TempoEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\"\
-        ,\n            \"description\": \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n      \
-        \      \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n             \
-        \   \"bpm\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n          \
-        \          \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Tempo in
-        BPM\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\",\n            \"description\": \"A time signature
-        change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\n            ],\n\
-        \            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n        \
-        \            \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n       \
-        \         \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
-        \                \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n                },\n\
-        \                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n\
-        \                        1,\n                        2,\n                        4,\n                        8,\n\
-        \                        16,\n                        32\n                    ],\n                    \"description\"\
-        : \"Beat unit\"\n                }\n            }\n        },\n        \"KeySignatureEvent\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\",\n            \"description\": \"A key signature
-        change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tick\",\n                \"key\"\n            ],\n            \"properties\": {\n         \
-        \       \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
-        \         \"description\": \"Tick position\"\n                },\n                \"key\": {\n                   \
-        \ \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\": \"Key signature\"\n                }\n\
-        \            }\n        },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic
-        and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n       \
-        \         \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
-        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n     \
-        \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
-        \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
-        \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
-        \ }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
-        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
-        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
-        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
-        \    },\n        \"MidiTrack\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack\"\
+        \                \"format\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"maximum\": 2,\n                    \"default\": 1,\n                    \"description\": \"\
+        MIDI format type (0, 1, or 2)\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Composition name\"\n  \
+        \              },\n                \"tempos\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\n                    },\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Tempo changes\"\n                },\n              \
+        \  \"timeSignatures\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n                    \"nullable\":
+        true,\n                    \"description\": \"Time signature changes\"\n                },\n                \"keySignatures\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/KeySignatureEvent\"\n                    },\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Key signature changes\"\n                }\n            }\n        },\n        \"TempoEvent\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\",\n            \"description\"\
+        : \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Tick position\"\n                },\n                \"bpm\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 20,\n\
+        \                    \"maximum\": 400,\n                    \"description\": \"Tempo in BPM\"\n                }\n\
+        \            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\"\
+        ,\n            \"description\": \"A time signature change event\",\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n                \"numerator\"\
+        ,\n                \"denominator\"\n            ],\n            \"properties\": {\n                \"tick\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"KeySignatureEvent\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\",\n            \"\
+        description\": \"A key signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tick\",\n                \"tonic\",\n                \"mode\"\
+        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
+        \                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/ModeType\"\
+        ,\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n      \
+        \  \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n     \
+        \       \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
+        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
+        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
+        \       \"ModeType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Collections.ModeType\",\n\
+        \            \"description\": \"Musical mode/scale type\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Major\",\n                \"Minor\",\n                \"Dorian\",\n                \"Phrygian\"\
+        ,\n                \"Lydian\",\n                \"Mixolydian\",\n                \"Aeolian\",\n                \"\
+        Locrian\",\n                \"HarmonicMinor\",\n                \"MelodicMinor\",\n                \"MajorPentatonic\"\
+        ,\n                \"MinorPentatonic\",\n                \"Blues\",\n                \"WholeTone\",\n            \
+        \    \"Chromatic\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack\"\
         ,\n            \"description\": \"A single MIDI track containing events\",\n            \"type\": \"object\",\n  \
         \          \"additionalProperties\": false,\n            \"required\": [\n                \"events\"\n           \
         \ ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n    \
@@ -181,29 +178,30 @@ paths:
         : false,\n            \"required\": [\n                \"tick\",\n                \"type\"\n            ],\n     \
         \       \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n             \
         \       \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\n                },\n   \
-        \             \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"noteOn\",\n                        \"noteOff\",\n                        \"programChange\",\n   \
-        \                     \"controlChange\"\n                    ],\n                    \"description\": \"Event type\"\
-        \n                },\n                \"note\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n             \
-        \       \"description\": \"MIDI note number (for note events)\"\n                },\n                \"velocity\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity (for note events)\"\
-        \n                },\n                \"duration\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Note duration
-        in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\": {\n              \
-        \      \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\n\
-        \                },\n                \"controller\": {\n                    \"type\": \"integer\",\n             \
-        \       \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
+        \             \"type\": {\n                    \"$ref\": \"#/$defs/MidiEventType\",\n                    \"description\"\
+        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
+        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
+        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
+        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
         : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
-        \n                }\n            }\n        },\n        \"CompositionMetadata\": {\n            \"description\": \"\
-        Metadata about a generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Style used\"\n                },\n\
-        \                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"nullable\"\
+        \n                }\n            }\n        },\n        \"MidiEventType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType\"\
+        ,\n            \"description\": \"MIDI event type\",\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"NoteOn\",\n                \"NoteOff\",\n                \"ProgramChange\",\n                \"\
+        ControlChange\"\n            ]\n        },\n        \"CompositionMetadata\": {\n            \"description\": \"Metadata
+        about a generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Style used\"\n                },\n    \
+        \            \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Key signature\"\n                },\n                \"tempo\": {\n\
         \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Tempo in BPM\"\n                },\n                \"bars\": {\n                    \"type\": \"integer\",\n\
@@ -211,7 +209,16 @@ paths:
         \  },\n                \"tuneType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Tune type if applicable\"\n                },\n                \"\
         seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Random seed used\"\n                }\n            }\n        }\n    }\n}"
+        \   \"description\": \"Random seed used\"\n                }\n            }\n        },\n        \"KeySignature\"\
+        : {\n            \"description\": \"A key signature with tonic and mode\",\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"tonic\",\n           \
+        \     \"mode\"\n            ],\n            \"properties\": {\n                \"tonic\": {\n                    \"\
+        $ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch class\"\n                },\n\
+        \                \"mode\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n       \
+        \                 \"major\",\n                        \"minor\",\n                        \"dorian\",\n          \
+        \              \"phrygian\",\n                        \"lydian\",\n                        \"mixolydian\",\n     \
+        \                   \"aeolian\",\n                        \"locrian\"\n                    ],\n                  \
+        \  \"description\": \"Mode/scale type\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate composition from style and constraints\",\n    \"description\"\
         : \"Generates a complete musical composition using the specified style definition\\nand compositional constraints.
         Returns MIDI-JSON format output.\\n\",\n    \"tags\": [\n        \"Generation\"\n    ],\n    \"deprecated\": false,\n\
@@ -262,59 +269,56 @@ paths:
         : \"MIDI tracks\"\n                }\n            }\n        },\n        \"MidiHeader\": {\n            \"x-sdk-type\"\
         : \"BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader\",\n            \"description\": \"MIDI file header information\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"format\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n    \
-        \                    0,\n                        1,\n                        2\n                    ],\n         \
-        \           \"default\": 1,\n                    \"description\": \"MIDI format type\"\n                },\n     \
-        \           \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Composition name\"\n                },\n                \"tempos\": {\n      \
-        \              \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Tempo changes\"\
-        \n                },\n                \"timeSignatures\": {\n                    \"type\": \"array\",\n          \
-        \          \"items\": {\n                        \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Time signature changes\"\n      \
-        \          },\n                \"keySignatures\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"$ref\": \"#/$defs/KeySignatureEvent\"\n                    },\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Key signature changes\"\n              \
-        \  }\n            }\n        },\n        \"TempoEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\"\
-        ,\n            \"description\": \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n      \
-        \      \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n             \
-        \   \"bpm\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n          \
-        \          \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\": \"Tempo in
-        BPM\"\n                }\n            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\",\n            \"description\": \"A time signature
-        change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tick\",\n                \"numerator\",\n                \"denominator\"\n            ],\n\
-        \            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n        \
-        \            \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n       \
-        \         \"numerator\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n    \
-        \                \"maximum\": 32,\n                    \"description\": \"Beats per measure\"\n                },\n\
-        \                \"denominator\": {\n                    \"type\": \"integer\",\n                    \"enum\": [\n\
-        \                        1,\n                        2,\n                        4,\n                        8,\n\
-        \                        16,\n                        32\n                    ],\n                    \"description\"\
-        : \"Beat unit\"\n                }\n            }\n        },\n        \"KeySignatureEvent\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\",\n            \"description\": \"A key signature
-        change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tick\",\n                \"key\"\n            ],\n            \"properties\": {\n         \
-        \       \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
-        \         \"description\": \"Tick position\"\n                },\n                \"key\": {\n                   \
-        \ \"$ref\": \"#/$defs/KeySignature\",\n                    \"description\": \"Key signature\"\n                }\n\
-        \            }\n        },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic
-        and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n       \
-        \         \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
-        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"major\",\n                        \"minor\",\n     \
-        \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
-        \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
-        \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
-        \ }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
-        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
-        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
-        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
-        \    },\n        \"MidiTrack\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack\"\
+        \                \"format\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"maximum\": 2,\n                    \"default\": 1,\n                    \"description\": \"\
+        MIDI format type (0, 1, or 2)\"\n                },\n                \"name\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Composition name\"\n  \
+        \              },\n                \"tempos\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/TempoEvent\"\n                    },\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Tempo changes\"\n                },\n              \
+        \  \"timeSignatures\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/TimeSignatureEvent\"\n                    },\n                    \"nullable\":
+        true,\n                    \"description\": \"Time signature changes\"\n                },\n                \"keySignatures\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/KeySignatureEvent\"\n                    },\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Key signature changes\"\n                }\n            }\n        },\n        \"TempoEvent\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent\",\n            \"description\"\
+        : \"A tempo change event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"tick\",\n                \"bpm\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Tick position\"\n                },\n                \"bpm\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 20,\n\
+        \                    \"maximum\": 400,\n                    \"description\": \"Tempo in BPM\"\n                }\n\
+        \            }\n        },\n        \"TimeSignatureEvent\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent\"\
+        ,\n            \"description\": \"A time signature change event\",\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n                \"numerator\"\
+        ,\n                \"denominator\"\n            ],\n            \"properties\": {\n                \"tick\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"KeySignatureEvent\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent\",\n            \"\
+        description\": \"A key signature change event\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tick\",\n                \"tonic\",\n                \"mode\"\
+        \n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Tick position\"\n                },\n\
+        \                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Tonic pitch class\"\n                },\n                \"mode\": {\n                    \"$ref\": \"#/$defs/ModeType\"\
+        ,\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n      \
+        \  \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n     \
+        \       \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
+        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
+        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
+        \       \"ModeType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Collections.ModeType\",\n\
+        \            \"description\": \"Musical mode/scale type\",\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Major\",\n                \"Minor\",\n                \"Dorian\",\n                \"Phrygian\"\
+        ,\n                \"Lydian\",\n                \"Mixolydian\",\n                \"Aeolian\",\n                \"\
+        Locrian\",\n                \"HarmonicMinor\",\n                \"MelodicMinor\",\n                \"MajorPentatonic\"\
+        ,\n                \"MinorPentatonic\",\n                \"Blues\",\n                \"WholeTone\",\n            \
+        \    \"Chromatic\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack\"\
         ,\n            \"description\": \"A single MIDI track containing events\",\n            \"type\": \"object\",\n  \
         \          \"additionalProperties\": false,\n            \"required\": [\n                \"events\"\n           \
         \ ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n    \
@@ -331,25 +335,26 @@ paths:
         : false,\n            \"required\": [\n                \"tick\",\n                \"type\"\n            ],\n     \
         \       \"properties\": {\n                \"tick\": {\n                    \"type\": \"integer\",\n             \
         \       \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\n                },\n   \
-        \             \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n          \
-        \              \"noteOn\",\n                        \"noteOff\",\n                        \"programChange\",\n   \
-        \                     \"controlChange\"\n                    ],\n                    \"description\": \"Event type\"\
-        \n                },\n                \"note\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n             \
-        \       \"description\": \"MIDI note number (for note events)\"\n                },\n                \"velocity\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity (for note events)\"\
-        \n                },\n                \"duration\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"Note duration
-        in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\": {\n              \
-        \      \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\n\
-        \                },\n                \"controller\": {\n                    \"type\": \"integer\",\n             \
-        \       \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
+        \             \"type\": {\n                    \"$ref\": \"#/$defs/MidiEventType\",\n                    \"description\"\
+        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
+        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
+        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
+        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
         : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \n                }\n            }\n        },\n        \"MidiEventType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType\"\
+        ,\n            \"description\": \"MIDI event type\",\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"NoteOn\",\n                \"NoteOff\",\n                \"ProgramChange\",\n                \"\
+        ControlChange\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateMidiJsonResponse\"\
         ,\n    \"$defs\": {\n        \"ValidateMidiJsonResponse\": {\n            \"description\": \"Response containing validation
         results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -502,34 +507,33 @@ paths:
         : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
         ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
         : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
-        integer\",\n                    \"enum\": [\n                        1,\n                        2,\n            \
-        \            4,\n                        8,\n                        16,\n                        32\n           \
-        \         ],\n                    \"description\": \"Beat unit\"\n                }\n            }\n        },\n \
-        \       \"TempoRange\": {\n            \"description\": \"A tempo range with min and max BPM\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"min\"\
-        ,\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n          \
-        \          \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n \
-        \                   \"description\": \"Minimum tempo\"\n                },\n                \"max\": {\n         \
-        \           \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n\
-        \                    \"description\": \"Maximum tempo\"\n                }\n            }\n        },\n        \"\
-        HarmonyStyle\": {\n            \"description\": \"Harmonic progression style preferences\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"primaryCadence\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"authentic\"\
-        ,\n                        \"plagal\",\n                        \"half\",\n                        \"deceptive\"\n\
-        \                    ],\n                    \"default\": \"authentic\",\n                    \"description\": \"\
-        Most common cadence type\"\n                },\n                \"dominantPrepProbability\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n   \
-        \                 \"maximum\": 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"\
-        Probability of pre-dominant before dominant\"\n                },\n                \"secondaryDominantProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.3,\n                  \
-        \  \"description\": \"Probability of secondary dominants\"\n                },\n                \"modalInterchangeProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.1,\n                  \
-        \  \"description\": \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Common chord progressions as roman numeral strings\"\n                }\n            }\n        }\n    }\n}"
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"TempoRange\": {\n\
+        \            \"description\": \"A tempo range with min and max BPM\",\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"required\": [\n                \"min\",\n                \"\
+        max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Minimum tempo\"\n                },\n                \"max\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
+        : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
+        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
+        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
+        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
+        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
+        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
+        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
+        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get style definition\",\n    \"description\": \"Retrieves a style definition
         by ID or name. Styles define mode preferences,\\ninterval rules, form templates, and genre-specific parameters.\\\
         n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetStyle\"\n\
@@ -726,34 +730,33 @@ paths:
         : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
         ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
         : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
-        integer\",\n                    \"enum\": [\n                        1,\n                        2,\n            \
-        \            4,\n                        8,\n                        16,\n                        32\n           \
-        \         ],\n                    \"description\": \"Beat unit\"\n                }\n            }\n        },\n \
-        \       \"TempoRange\": {\n            \"description\": \"A tempo range with min and max BPM\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"min\"\
-        ,\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n          \
-        \          \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n \
-        \                   \"description\": \"Minimum tempo\"\n                },\n                \"max\": {\n         \
-        \           \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n\
-        \                    \"description\": \"Maximum tempo\"\n                }\n            }\n        },\n        \"\
-        HarmonyStyle\": {\n            \"description\": \"Harmonic progression style preferences\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"primaryCadence\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"authentic\"\
-        ,\n                        \"plagal\",\n                        \"half\",\n                        \"deceptive\"\n\
-        \                    ],\n                    \"default\": \"authentic\",\n                    \"description\": \"\
-        Most common cadence type\"\n                },\n                \"dominantPrepProbability\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n   \
-        \                 \"maximum\": 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"\
-        Probability of pre-dominant before dominant\"\n                },\n                \"secondaryDominantProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.3,\n                  \
-        \  \"description\": \"Probability of secondary dominants\"\n                },\n                \"modalInterchangeProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.1,\n                  \
-        \  \"description\": \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Common chord progressions as roman numeral strings\"\n                }\n            }\n        }\n    }\n}"
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"TempoRange\": {\n\
+        \            \"description\": \"A tempo range with min and max BPM\",\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"required\": [\n                \"min\",\n                \"\
+        max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Minimum tempo\"\n                },\n                \"max\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
+        : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
+        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
+        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
+        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
+        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
+        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
+        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
+        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StyleDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"StyleDefinitionResponse\": {\n            \"description\": \"Response containing a
         style definition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
@@ -847,34 +850,33 @@ paths:
         : \"Tick position\"\n                },\n                \"numerator\": {\n                    \"type\": \"integer\"\
         ,\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
         : \"Beats per measure\"\n                },\n                \"denominator\": {\n                    \"type\": \"\
-        integer\",\n                    \"enum\": [\n                        1,\n                        2,\n            \
-        \            4,\n                        8,\n                        16,\n                        32\n           \
-        \         ],\n                    \"description\": \"Beat unit\"\n                }\n            }\n        },\n \
-        \       \"TempoRange\": {\n            \"description\": \"A tempo range with min and max BPM\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"min\"\
-        ,\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n          \
-        \          \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n \
-        \                   \"description\": \"Minimum tempo\"\n                },\n                \"max\": {\n         \
-        \           \"type\": \"integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n\
-        \                    \"description\": \"Maximum tempo\"\n                }\n            }\n        },\n        \"\
-        HarmonyStyle\": {\n            \"description\": \"Harmonic progression style preferences\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"primaryCadence\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"authentic\"\
-        ,\n                        \"plagal\",\n                        \"half\",\n                        \"deceptive\"\n\
-        \                    ],\n                    \"default\": \"authentic\",\n                    \"description\": \"\
-        Most common cadence type\"\n                },\n                \"dominantPrepProbability\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n   \
-        \                 \"maximum\": 1.0,\n                    \"default\": 0.6,\n                    \"description\": \"\
-        Probability of pre-dominant before dominant\"\n                },\n                \"secondaryDominantProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.3,\n                  \
-        \  \"description\": \"Probability of secondary dominants\"\n                },\n                \"modalInterchangeProbability\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.1,\n                  \
-        \  \"description\": \"Probability of borrowed chords\"\n                },\n                \"commonProgressions\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Common chord progressions as roman numeral strings\"\n                }\n            }\n        }\n    }\n}"
+        integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 32,\n                    \"description\"\
+        : \"Beat unit (4 = quarter, 8 = eighth)\"\n                }\n            }\n        },\n        \"TempoRange\": {\n\
+        \            \"description\": \"A tempo range with min and max BPM\",\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"required\": [\n                \"min\",\n                \"\
+        max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Minimum tempo\"\n                },\n                \"max\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 20,\n                    \"maximum\": 400,\n                    \"description\"\
+        : \"Maximum tempo\"\n                }\n            }\n        },\n        \"HarmonyStyle\": {\n            \"description\"\
+        : \"Harmonic progression style preferences\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"primaryCadence\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"authentic\",\n                        \"plagal\",\n\
+        \                        \"half\",\n                        \"deceptive\"\n                    ],\n              \
+        \      \"default\": \"authentic\",\n                    \"description\": \"Most common cadence type\"\n          \
+        \      },\n                \"dominantPrepProbability\": {\n                    \"type\": \"number\",\n           \
+        \         \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n \
+        \                   \"default\": 0.6,\n                    \"description\": \"Probability of pre-dominant before dominant\"\
+        \n                },\n                \"secondaryDominantProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.3,\n                    \"description\": \"Probability of secondary dominants\"\
+        \n                },\n                \"modalInterchangeProbability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"default\": 0.1,\n                    \"description\": \"Probability of borrowed chords\"\
+        \n                },\n                \"commonProgressions\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Common chord progressions as roman numeral strings\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new style definition\",\n    \"description\": \"Creates a new style
         definition. Only accessible to admin users.\\n\",\n    \"tags\": [\n        \"Styles\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"CreateStyle\"\n}"
@@ -2147,6 +2149,16 @@ components:
       - Blues
       - WholeTone
       - Chromatic
+
+    MidiEventType:
+      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType
+      description: MIDI event type
+      type: string
+      enum:
+      - NoteOn
+      - NoteOff
+      - ProgramChange
+      - ControlChange
 
     # ============================================================================
     # Style Definition Models

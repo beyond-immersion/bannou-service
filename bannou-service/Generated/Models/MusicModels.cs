@@ -1284,40 +1284,6 @@ public enum GenerateMelodyRequestContour
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MidiHeaderFormat
-{
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MidiEventType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"noteOn")]
-    NoteOn = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"noteOff")]
-    NoteOff = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"programChange")]
-    ProgramChange = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"controlChange")]
-    ControlChange = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ChordSymbolQuality
 {
 
@@ -1388,26 +1354,6 @@ public enum KeySignatureMode
 
     [System.Runtime.Serialization.EnumMember(Value = @"locrian")]
     Locrian = 7,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum TimeSignatureEventDenominator
-{
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _4 = 4,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _32 = 32,
 
 }
 #pragma warning restore CS1591

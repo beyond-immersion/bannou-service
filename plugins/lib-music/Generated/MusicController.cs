@@ -502,13 +502,10 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             "properties": {
                 "format": {
                     "type": "integer",
-                    "enum": [
-                        0,
-                        1,
-                        2
-                    ],
+                    "minimum": 0,
+                    "maximum": 2,
                     "default": 1,
-                    "description": "MIDI format type"
+                    "description": "MIDI format type (0, 1, or 2)"
                 },
                 "name": {
                     "type": "string",
@@ -589,15 +586,9 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "denominator": {
                     "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        8,
-                        16,
-                        32
-                    ],
-                    "description": "Beat unit"
+                    "minimum": 1,
+                    "maximum": 32,
+                    "description": "Beat unit (4 = quarter, 8 = eighth)"
                 }
             }
         },
@@ -608,7 +599,8 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "required": [
                 "tick",
-                "key"
+                "tonic",
+                "mode"
             ],
             "properties": {
                 "tick": {
@@ -616,37 +608,12 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "minimum": 0,
                     "description": "Tick position"
                 },
-                "key": {
-                    "$ref": "#/$defs/KeySignature",
-                    "description": "Key signature"
-                }
-            }
-        },
-        "KeySignature": {
-            "description": "A key signature with tonic and mode",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "tonic",
-                "mode"
-            ],
-            "properties": {
                 "tonic": {
                     "$ref": "#/$defs/PitchClass",
                     "description": "Tonic pitch class"
                 },
                 "mode": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "dorian",
-                        "phrygian",
-                        "lydian",
-                        "mixolydian",
-                        "aeolian",
-                        "locrian"
-                    ],
+                    "$ref": "#/$defs/ModeType",
                     "description": "Mode/scale type"
                 }
             }
@@ -668,6 +635,28 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "ModeType": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Collections.ModeType",
+            "description": "Musical mode/scale type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Dorian",
+                "Phrygian",
+                "Lydian",
+                "Mixolydian",
+                "Aeolian",
+                "Locrian",
+                "HarmonicMinor",
+                "MelodicMinor",
+                "MajorPentatonic",
+                "MinorPentatonic",
+                "Blues",
+                "WholeTone",
+                "Chromatic"
             ]
         },
         "MidiTrack": {
@@ -723,13 +712,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Absolute tick position"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "noteOn",
-                        "noteOff",
-                        "programChange",
-                        "controlChange"
-                    ],
+                    "$ref": "#/$defs/MidiEventType",
                     "description": "Event type"
                 },
                 "note": {
@@ -775,6 +758,17 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 }
             }
         },
+        "MidiEventType": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType",
+            "description": "MIDI event type",
+            "type": "string",
+            "enum": [
+                "NoteOn",
+                "NoteOff",
+                "ProgramChange",
+                "ControlChange"
+            ]
+        },
         "CompositionMetadata": {
             "description": "Metadata about a generated composition",
             "type": "object",
@@ -809,6 +803,35 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Random seed used"
+                }
+            }
+        },
+        "KeySignature": {
+            "description": "A key signature with tonic and mode",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "tonic",
+                "mode"
+            ],
+            "properties": {
+                "tonic": {
+                    "$ref": "#/$defs/PitchClass",
+                    "description": "Tonic pitch class"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "major",
+                        "minor",
+                        "dorian",
+                        "phrygian",
+                        "lydian",
+                        "mixolydian",
+                        "aeolian",
+                        "locrian"
+                    ],
+                    "description": "Mode/scale type"
                 }
             }
         }
@@ -935,13 +958,10 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             "properties": {
                 "format": {
                     "type": "integer",
-                    "enum": [
-                        0,
-                        1,
-                        2
-                    ],
+                    "minimum": 0,
+                    "maximum": 2,
                     "default": 1,
-                    "description": "MIDI format type"
+                    "description": "MIDI format type (0, 1, or 2)"
                 },
                 "name": {
                     "type": "string",
@@ -1022,15 +1042,9 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "denominator": {
                     "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        8,
-                        16,
-                        32
-                    ],
-                    "description": "Beat unit"
+                    "minimum": 1,
+                    "maximum": 32,
+                    "description": "Beat unit (4 = quarter, 8 = eighth)"
                 }
             }
         },
@@ -1041,7 +1055,8 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             "additionalProperties": false,
             "required": [
                 "tick",
-                "key"
+                "tonic",
+                "mode"
             ],
             "properties": {
                 "tick": {
@@ -1049,37 +1064,12 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "minimum": 0,
                     "description": "Tick position"
                 },
-                "key": {
-                    "$ref": "#/$defs/KeySignature",
-                    "description": "Key signature"
-                }
-            }
-        },
-        "KeySignature": {
-            "description": "A key signature with tonic and mode",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "tonic",
-                "mode"
-            ],
-            "properties": {
                 "tonic": {
                     "$ref": "#/$defs/PitchClass",
                     "description": "Tonic pitch class"
                 },
                 "mode": {
-                    "type": "string",
-                    "enum": [
-                        "major",
-                        "minor",
-                        "dorian",
-                        "phrygian",
-                        "lydian",
-                        "mixolydian",
-                        "aeolian",
-                        "locrian"
-                    ],
+                    "$ref": "#/$defs/ModeType",
                     "description": "Mode/scale type"
                 }
             }
@@ -1101,6 +1091,28 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "A",
                 "As",
                 "B"
+            ]
+        },
+        "ModeType": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Collections.ModeType",
+            "description": "Musical mode/scale type",
+            "type": "string",
+            "enum": [
+                "Major",
+                "Minor",
+                "Dorian",
+                "Phrygian",
+                "Lydian",
+                "Mixolydian",
+                "Aeolian",
+                "Locrian",
+                "HarmonicMinor",
+                "MelodicMinor",
+                "MajorPentatonic",
+                "MinorPentatonic",
+                "Blues",
+                "WholeTone",
+                "Chromatic"
             ]
         },
         "MidiTrack": {
@@ -1156,13 +1168,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Absolute tick position"
                 },
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "noteOn",
-                        "noteOff",
-                        "programChange",
-                        "controlChange"
-                    ],
+                    "$ref": "#/$defs/MidiEventType",
                     "description": "Event type"
                 },
                 "note": {
@@ -1207,6 +1213,17 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Controller value (for controlChange)"
                 }
             }
+        },
+        "MidiEventType": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType",
+            "description": "MIDI event type",
+            "type": "string",
+            "enum": [
+                "NoteOn",
+                "NoteOff",
+                "ProgramChange",
+                "ControlChange"
+            ]
         }
     }
 }
@@ -1633,15 +1650,9 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "denominator": {
                     "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        8,
-                        16,
-                        32
-                    ],
-                    "description": "Beat unit"
+                    "minimum": 1,
+                    "maximum": 32,
+                    "description": "Beat unit (4 = quarter, 8 = eighth)"
                 }
             }
         },
@@ -2236,15 +2247,9 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "denominator": {
                     "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        8,
-                        16,
-                        32
-                    ],
-                    "description": "Beat unit"
+                    "minimum": 1,
+                    "maximum": 32,
+                    "description": "Beat unit (4 = quarter, 8 = eighth)"
                 }
             }
         },
@@ -2595,15 +2600,9 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 },
                 "denominator": {
                     "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        8,
-                        16,
-                        32
-                    ],
-                    "description": "Beat unit"
+                    "minimum": 1,
+                    "maximum": 32,
+                    "description": "Beat unit (4 = quarter, 8 = eighth)"
                 }
             }
         },
