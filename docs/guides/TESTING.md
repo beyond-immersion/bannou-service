@@ -148,8 +148,8 @@ bannou-service.tests/                # Core framework tests
 ```csharp
 public class AccountServiceTests
 {
-    private Mock<ILogger<AccountService>> _mockLogger = null!;
-    private Mock<AccountServiceConfiguration> _mockConfiguration = null!;
+    private readonly Mock<ILogger<AccountService>> _mockLogger = new();
+    private readonly Mock<AccountServiceConfiguration> _mockConfiguration = new();
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()

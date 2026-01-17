@@ -8,19 +8,14 @@ namespace BeyondImmersion.BannouService.State.Tests;
 
 public class StateServiceTests
 {
-    private readonly Mock<ILogger<StateService>> _mockLogger = null!;
-    private readonly StateServiceConfiguration _configuration = null!;
-    private readonly Mock<IMessageBus> _mockMessageBus = null!;
-    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = null!;
-    private readonly Mock<IStateStore<object>> _mockStateStore = null!;
+    private readonly Mock<ILogger<StateService>> _mockLogger = new();
+    private readonly StateServiceConfiguration _configuration = new();
+    private readonly Mock<IMessageBus> _mockMessageBus = new();
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
+    private readonly Mock<IStateStore<object>> _mockStateStore = new();
 
     public StateServiceTests()
     {
-        _mockLogger = new Mock<ILogger<StateService>>();
-        _configuration = new StateServiceConfiguration();
-        _mockMessageBus = new Mock<IMessageBus>();
-        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockStateStore = new Mock<IStateStore<object>>();
     }
 
     private StateService CreateService()

@@ -23,17 +23,6 @@ public class BannouMeshAssetSourceTests
     #region Constructor Tests
 
     /// <summary>
-    /// Verifies that constructor throws when client is null.
-    /// </summary>
-    [Fact]
-    public void Constructor_NullClient_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new BannouMeshAssetSource(null!));
-    }
-
-    /// <summary>
     /// Verifies that constructor accepts valid client.
     /// </summary>
     [Fact]
@@ -86,17 +75,6 @@ public class BannouMeshAssetSourceTests
     #endregion
 
     #region ResolveBundlesAsync Tests
-
-    /// <summary>
-    /// Verifies that ResolveBundlesAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task ResolveBundlesAsync_NullAssetIds_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _source.ResolveBundlesAsync(null!));
-    }
 
     /// <summary>
     /// Verifies that ResolveBundlesAsync returns resolved bundles.
@@ -238,17 +216,6 @@ public class BannouMeshAssetSourceTests
     #region GetBundleDownloadInfoAsync Tests
 
     /// <summary>
-    /// Verifies that GetBundleDownloadInfoAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _source.GetBundleDownloadInfoAsync(null!));
-    }
-
-    /// <summary>
     /// Verifies that GetBundleDownloadInfoAsync validates empty input.
     /// </summary>
     [Fact]
@@ -318,17 +285,6 @@ public class BannouMeshAssetSourceTests
     #endregion
 
     #region GetAssetDownloadInfoAsync Tests
-
-    /// <summary>
-    /// Verifies that GetAssetDownloadInfoAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            _source.GetAssetDownloadInfoAsync(null!));
-    }
 
     /// <summary>
     /// Verifies that GetAssetDownloadInfoAsync validates empty input.

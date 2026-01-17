@@ -39,7 +39,7 @@ public static class Program
         internal set => _configurationRoot = value;
     }
 
-    private static AppConfiguration _configuration;
+    private static AppConfiguration? _configuration;
 
     /// <summary>
     /// Service configuration.
@@ -50,6 +50,12 @@ public static class Program
         get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
         internal set => _configuration = value;
     }
+
+    /// <summary>
+    /// Resets the configuration to null, forcing it to be rebuilt from environment on next access.
+    /// Internal method for test cleanup.
+    /// </summary>
+    internal static void ResetConfiguration() => _configuration = null;
 
     private static string _serviceGUID;
 

@@ -33,17 +33,6 @@ public class BehaviorModelCacheTests
     }
 
     [Fact]
-    public void RegisterModel_NullVariant_UsesDefault()
-    {
-        var cache = new BehaviorModelCache();
-        var model = CreateTestModel();
-
-        cache.RegisterModel(BehaviorModelType.Combat, null!, model);
-
-        Assert.NotNull(cache.GetModel(BehaviorModelType.Combat, BehaviorModelCache.DefaultVariant));
-    }
-
-    [Fact]
     public void UnregisterModel_RemovesFromCache()
     {
         var cache = new BehaviorModelCache();

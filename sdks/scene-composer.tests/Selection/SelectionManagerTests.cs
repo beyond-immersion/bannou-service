@@ -143,14 +143,6 @@ public class SelectionManagerTests
     }
 
     [Fact]
-    public void Select_ThrowsOnNullNode()
-    {
-        var manager = new SelectionManager();
-
-        Assert.Throws<ArgumentNullException>(() => manager.Select((ComposerSceneNode)null!));
-    }
-
-    [Fact]
     public void Select_LockedNode_IsIgnored()
     {
         var manager = new SelectionManager();

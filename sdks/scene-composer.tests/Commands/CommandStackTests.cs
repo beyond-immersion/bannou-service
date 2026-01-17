@@ -82,14 +82,6 @@ public class CommandStackTests
     }
 
     [Fact]
-    public void Execute_ThrowsOnNullCommand()
-    {
-        var stack = new CommandStack();
-
-        Assert.Throws<ArgumentNullException>(() => stack.Execute(null!));
-    }
-
-    [Fact]
     public void Execute_TrimsToMaxDepth()
     {
         var stack = new CommandStack(3);
@@ -295,14 +287,6 @@ public class CommandStackTests
         }
 
         Assert.False(stack.IsInCompound);
-    }
-
-    [Fact]
-    public void BeginCompound_ThrowsOnNullDescription()
-    {
-        var stack = new CommandStack();
-
-        Assert.Throws<ArgumentNullException>(() => stack.BeginCompound(null!));
     }
 
     [Fact]

@@ -57695,6 +57695,12 @@
             Pull from Config.json, ENVs, and command line args.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Program.ResetConfiguration">
+            <summary>
+            Resets the configuration to null, forcing it to be rebuilt from environment on next access.
+            Internal method for test cleanup.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Program.ServiceGUID">
             <summary>
             Internal service GUID- largely used for administrative network commands.
