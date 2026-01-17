@@ -962,10 +962,23 @@ public class DocumentationServiceTests
 
     #region Sorting Tests
 
+    /// <summary>
+    /// Helper to set up mocks for ListDocumentsAsync tests.
+    /// </summary>
+    private void SetupListDocumentsMocks()
+    {
+        // ListDocumentsAsync uses _searchIndexService.ListDocumentIdsAsync, not state store directly
+        _mockSearchIndexService.Setup(x => x.ListDocumentIdsAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+    }
+
     [Fact]
-    public async Task ListDocumentsAsync_WithSortByCreatedAtAsc_ShouldCallStateStoreWithCorrectParams()
+    public async Task ListDocumentsAsync_WithSortByCreatedAtAsc_ShouldReturnOk()
     {
         // Arrange
+        SetupListDocumentsMocks();
+
         var request = new ListDocumentsRequest
         {
             Namespace = TEST_NAMESPACE,
@@ -973,10 +986,6 @@ public class DocumentationServiceTests
             SortOrder = ListDocumentsRequestSortOrder.Asc
         };
 
-        _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<Guid>());
-
         // Act
         var (status, response) = await _service.ListDocumentsAsync(request);
 
@@ -986,9 +995,11 @@ public class DocumentationServiceTests
     }
 
     [Fact]
-    public async Task ListDocumentsAsync_WithSortByTitleDesc_ShouldReturnDocuments()
+    public async Task ListDocumentsAsync_WithSortByTitleDesc_ShouldReturnOk()
     {
         // Arrange
+        SetupListDocumentsMocks();
+
         var request = new ListDocumentsRequest
         {
             Namespace = TEST_NAMESPACE,
@@ -996,10 +1007,6 @@ public class DocumentationServiceTests
             SortOrder = ListDocumentsRequestSortOrder.Desc
         };
 
-        _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<Guid>());
-
         // Act
         var (status, response) = await _service.ListDocumentsAsync(request);
 
@@ -1009,9 +1016,11 @@ public class DocumentationServiceTests
     }
 
     [Fact]
-    public async Task ListDocumentsAsync_WithTagsMatchAll_ShouldFilterDocuments()
+    public async Task ListDocumentsAsync_WithTagsMatchAll_ShouldReturnOk()
     {
         // Arrange
+        SetupListDocumentsMocks();
+
         var request = new ListDocumentsRequest
         {
             Namespace = TEST_NAMESPACE,
@@ -1019,10 +1028,6 @@ public class DocumentationServiceTests
             TagsMatch = ListDocumentsRequestTagsMatch.All
         };
 
-        _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<Guid>());
-
         // Act
         var (status, response) = await _service.ListDocumentsAsync(request);
 
@@ -1032,19 +1037,17 @@ public class DocumentationServiceTests
     }
 
     [Fact]
-    public async Task ListDocumentsAsync_WithTagsMatchAny_ShouldFilterDocuments()
+    public async Task ListDocumentsAsync_WithTagsMatchAny_ShouldReturnOk()
     {
         // Arrange
+        SetupListDocumentsMocks();
+
         var request = new ListDocumentsRequest
         {
             Namespace = TEST_NAMESPACE,
             Tags = new List<string> { "tag1", "tag2" },
             TagsMatch = ListDocumentsRequestTagsMatch.Any
         };
-
-        _mockGuidSetStore.Setup(s => s.GetAsync(
-            It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HashSet<Guid>());
 
         // Act
         var (status, response) = await _service.ListDocumentsAsync(request);
