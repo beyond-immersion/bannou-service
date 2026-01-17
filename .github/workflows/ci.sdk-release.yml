@@ -31,20 +31,25 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Get Current Version and Last Release Tag
-        id: version
+      - name: Get Base Version and Last Release Tag
+        id: base
         run: |
-          # Read current base version from SDK_VERSION file
-          CURRENT_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
-          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "📌 Current SDK_VERSION: ${CURRENT_VERSION}"
+          # SDK_VERSION represents the last stable release (base for calculating next version)
+          SDK_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
+          echo "sdk_version=${SDK_VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 SDK_VERSION (last stable): ${SDK_VERSION}"
 
-          # Find the last sdk release tag
+          # Parse version components for bump calculations
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$SDK_VERSION"
+          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+          echo "minor=${MINOR}" >> $GITHUB_OUTPUT
+          echo "patch=${PATCH}" >> $GITHUB_OUTPUT
+
+          # Find the last sdk release tag for changelog generation
           LAST_TAG=$(git tag -l 'sdk-v*' --sort=-v:refname | head -n 1)
           if [ -z "$LAST_TAG" ]; then
             echo "last_tag=" >> $GITHUB_OUTPUT
             echo "📌 No previous SDK release tag found - this will be the first stable release"
-            # Use first commit as reference point
             LAST_REF=$(git rev-list --max-parents=0 HEAD | head -n 1)
           else
             echo "last_tag=${LAST_TAG}" >> $GITHUB_OUTPUT
@@ -58,22 +63,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LAST_REF="${{ steps.version.outputs.last_ref }}"
-
+          LAST_REF="${{ steps.base.outputs.last_ref }}"
           echo "🔍 Analyzing PRs merged since ${LAST_REF}..."
-
-          # Get all merge commits since last release
-          MERGE_COMMITS=$(git log ${LAST_REF}..HEAD --merges --pretty=format:"%H" 2>/dev/null || echo "")
 
           HAS_MAJOR=false
           HAS_MINOR=false
           HAS_PATCH=false
           PR_COUNT=0
 
-          # Also check direct commits (non-merge) that might have labels via their associated PRs
-          # Get all commits and find associated PRs
           for COMMIT in $(git log ${LAST_REF}..HEAD --pretty=format:"%H" 2>/dev/null || echo ""); do
-            # Try to find PR number from commit
             PR_INFO=$(gh api repos/${{ github.repository }}/commits/${COMMIT}/pulls 2>/dev/null || echo "[]")
             PR_NUMBERS=$(echo "$PR_INFO" | jq -r '.[].number' 2>/dev/null || echo "")
 
@@ -84,113 +82,74 @@ jobs:
                 # Get labels for this PR
                 LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' 2>/dev/null || echo "")
 
-                echo "  PR #${PR_NUM} labels: ${LABELS}"
-
                 if echo "$LABELS" | grep -q "sdk:major"; then
                   HAS_MAJOR=true
-                  echo "    → Found sdk:major"
-                fi
-                if echo "$LABELS" | grep -q "sdk:minor"; then
+                  echo "  PR #${PR_NUM}: sdk:major (breaking changes)"
+                elif echo "$LABELS" | grep -q "sdk:minor"; then
                   HAS_MINOR=true
-                  echo "    → Found sdk:minor"
-                fi
-                if echo "$LABELS" | grep -q "sdk:patch"; then
+                  echo "  PR #${PR_NUM}: sdk:minor (new features)"
+                elif echo "$LABELS" | grep -q "sdk:patch"; then
                   HAS_PATCH=true
-                  echo "    → Found sdk:patch"
+                  echo "  PR #${PR_NUM}: sdk:patch (bug fixes)"
                 fi
               fi
             done
           done
 
-          echo ""
-          echo "📊 Analysis Results:"
-          echo "  PRs analyzed: ${PR_COUNT}"
-          echo "  Has major changes: ${HAS_MAJOR}"
-          echo "  Has minor changes: ${HAS_MINOR}"
-          echo "  Has patch changes: ${HAS_PATCH}"
-
-          # Determine version bump type (biggest wins)
+          # Determine version bump type - biggest wins (semantic versioning)
           if [ "$HAS_MAJOR" = true ]; then
             BUMP_TYPE="major"
           elif [ "$HAS_MINOR" = true ]; then
             BUMP_TYPE="minor"
-          elif [ "$HAS_PATCH" = true ]; then
-            BUMP_TYPE="patch"
           else
-            BUMP_TYPE="none"
+            BUMP_TYPE="patch"
           fi
 
           echo ""
+          echo "📊 PRs included: ${PR_COUNT}"
           echo "🎯 Version bump type: ${BUMP_TYPE}"
 
-          echo "bump_type=${BUMP_TYPE}" >> $GITHUB_OUTPUT
           echo "pr_count=${PR_COUNT}" >> $GITHUB_OUTPUT
-          echo "has_major=${HAS_MAJOR}" >> $GITHUB_OUTPUT
-          echo "has_minor=${HAS_MINOR}" >> $GITHUB_OUTPUT
-          echo "has_patch=${HAS_PATCH}" >> $GITHUB_OUTPUT
+          echo "bump_type=${BUMP_TYPE}" >> $GITHUB_OUTPUT
 
-      - name: Calculate New Version
-        id: new_version
+      - name: Calculate Release Version
+        id: release
         run: |
-          CURRENT="${{ steps.version.outputs.current_version }}"
+          MAJOR="${{ steps.base.outputs.major }}"
+          MINOR="${{ steps.base.outputs.minor }}"
+          PATCH="${{ steps.base.outputs.patch }}"
           BUMP_TYPE="${{ steps.analyze.outputs.bump_type }}"
 
-          # Parse current version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-
+          # Calculate release version based on bump type (semantic versioning)
           case $BUMP_TYPE in
             major)
-              NEW_MAJOR=$((MAJOR + 1))
-              NEW_VERSION="${NEW_MAJOR}.0.0"
+              RELEASE_VERSION="$((MAJOR + 1)).0.0"
               ;;
             minor)
-              NEW_MINOR=$((MINOR + 1))
-              NEW_VERSION="${MAJOR}.${NEW_MINOR}.0"
+              RELEASE_VERSION="${MAJOR}.$((MINOR + 1)).0"
               ;;
             patch)
-              NEW_PATCH=$((PATCH + 1))
-              NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
-              ;;
-            none)
-              echo "⚠️ No SDK version labels found on PRs since last release"
-              echo "   Either no SDK changes were made, or PRs are missing sdk:* labels"
-              echo ""
-              echo "   To proceed, ensure PRs that modify SDK have one of:"
-              echo "   - sdk:major (breaking changes)"
-              echo "   - sdk:minor (new features)"
-              echo "   - sdk:patch (bug fixes)"
-              echo "   - sdk:none (no SDK impact)"
-              NEW_VERSION=""
+              RELEASE_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
               ;;
           esac
 
-          if [ -n "$NEW_VERSION" ]; then
-            echo "📦 Version bump: ${CURRENT} → ${NEW_VERSION} (${BUMP_TYPE})"
-          fi
-
-          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "release_version=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "📦 Release calculation:"
+          echo "   SDK_VERSION (base): ${{ steps.base.outputs.sdk_version }}"
+          echo "   Bump type: ${BUMP_TYPE}"
+          echo "   Release version: ${RELEASE_VERSION}"
 
       - name: Validate Release
-        if: steps.new_version.outputs.new_version == ''
         run: |
-          echo "❌ Cannot create release: No version changes detected"
-          echo ""
-          echo "This could mean:"
-          echo "1. No PRs have been merged since the last release"
-          echo "2. Merged PRs are missing sdk:* labels"
-          echo "3. All merged PRs have sdk:none labels"
-          echo ""
-          echo "Please ensure PRs that modify the SDK have appropriate labels."
-          exit 1
-
-      - name: Update SDK_VERSION File
-        if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
-        run: |
-          echo "${{ steps.new_version.outputs.new_version }}" > sdks/SDK_VERSION
-          echo "✅ Updated SDK_VERSION to ${{ steps.new_version.outputs.new_version }}"
+          VERSION="${{ steps.release.outputs.release_version }}"
+          if [ -z "$VERSION" ]; then
+            echo "❌ Cannot create release: Failed to calculate version"
+            exit 1
+          fi
+          echo "✅ Will release SDK version ${VERSION}"
 
       - name: Restore NuGet Packages
-        if: steps.new_version.outputs.new_version != ''
         run: |
           echo "📦 Restoring NuGet packages..."
           dotnet restore
@@ -199,9 +158,8 @@ jobs:
       # No regeneration needed - just use committed files
 
       - name: Build and Pack Stable SDKs
-        if: steps.new_version.outputs.new_version != ''
         run: |
-          VERSION="${{ steps.new_version.outputs.new_version }}"
+          VERSION="${{ steps.release.outputs.release_version }}"
           echo "📦 Building SDKs v${VERSION}..."
 
           # Define all packable SDK projects (order matters - dependencies first)
@@ -240,10 +198,27 @@ jobs:
           echo "✅ Packages built: ./nuget-packages/"
           ls -la ./nuget-packages/
 
-      - name: Publish to NuGet (Stable)
-        if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
+      # Create tag BEFORE publishing - this marks the release point
+      # If publish fails, tag exists but can be deleted; if we tagged after publish
+      # and that failed, we'd have orphaned packages on NuGet
+      - name: Create Git Tag
+        if: inputs.dry_run == false
         run: |
-          VERSION="${{ steps.new_version.outputs.new_version }}"
+          VERSION="${{ steps.release.outputs.release_version }}"
+          TAG="sdk-v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$TAG" -m "SDK Release ${VERSION}"
+          git push origin "$TAG"
+
+          echo "✅ Created and pushed tag: ${TAG}"
+
+      - name: Publish to NuGet (Stable)
+        if: inputs.dry_run == false
+        run: |
+          VERSION="${{ steps.release.outputs.release_version }}"
           echo "🚀 Publishing stable release v${VERSION} to NuGet.org..."
 
           dotnet nuget push ./nuget-packages/*.nupkg \
@@ -251,48 +226,43 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
-          echo "✅ Stable package published!"
+          echo "✅ Stable packages published!"
 
-      - name: Commit SDK_VERSION Update
-        if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
+      # Update SDK_VERSION to the released version
+      # Preview workflow adds +0.0.1 before the -preview suffix, so previews will be higher
+      # e.g., SDK_VERSION=1.1.0 → previews are 1.1.1-preview.X (> 1.1.0 stable)
+      - name: Update SDK_VERSION to Released Version
+        if: inputs.dry_run == false
         run: |
-          VERSION="${{ steps.new_version.outputs.new_version }}"
+          RELEASED_VERSION="${{ steps.release.outputs.release_version }}"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "${RELEASED_VERSION}" > sdks/SDK_VERSION
+          echo "📦 Updated SDK_VERSION to ${RELEASED_VERSION}"
 
           git add sdks/SDK_VERSION
-          git commit -m "chore: bump SDK version to ${VERSION}
+          git commit -m "chore: update SDK_VERSION to ${RELEASED_VERSION}
+
+          Previews will now be based on this version (with +0.0.1 patch bump).
+          e.g., next preview: ${RELEASED_VERSION%.*}.$((${RELEASED_VERSION##*.} + 1))-preview.X
 
           🤖 Generated by SDK Release workflow"
 
           git push
 
-      - name: Create Git Tag
-        if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
-        run: |
-          VERSION="${{ steps.new_version.outputs.new_version }}"
-          TAG="sdk-v${VERSION}"
-
-          git tag -a "$TAG" -m "SDK Release ${VERSION}"
-          git push origin "$TAG"
-
-          echo "✅ Created and pushed tag: ${TAG}"
+          echo "✅ SDK_VERSION updated"
 
       - name: Create GitHub Release
-        if: steps.new_version.outputs.new_version != '' && inputs.dry_run == false
+        if: inputs.dry_run == false
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ steps.new_version.outputs.new_version }}"
+          VERSION="${{ steps.release.outputs.release_version }}"
           TAG="sdk-v${VERSION}"
-          BUMP_TYPE="${{ steps.analyze.outputs.bump_type }}"
           PR_COUNT="${{ steps.analyze.outputs.pr_count }}"
 
           # Create release notes
           NOTES="## Bannou SDKs v${VERSION}
 
-          **Release Type:** ${BUMP_TYPE^} update
           **PRs Included:** ${PR_COUNT}
 
           ### Installation
@@ -372,7 +342,7 @@ jobs:
 
           ### What's Changed
 
-          See the [compare view](https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.last_tag }}...${TAG}) for all changes since the last release.
+          See the [compare view](https://github.com/${{ github.repository }}/compare/${{ steps.base.outputs.last_tag }}...${TAG}) for all changes since the last release.
           "
 
           gh release create "$TAG" \
@@ -386,28 +356,30 @@ jobs:
           echo "🧪 DRY RUN SUMMARY"
           echo "=================="
           echo ""
-          echo "Would bump version: ${{ steps.version.outputs.current_version }} → ${{ steps.new_version.outputs.new_version }}"
+          echo "SDK_VERSION (base): ${{ steps.base.outputs.sdk_version }}"
           echo "Bump type: ${{ steps.analyze.outputs.bump_type }}"
-          echo "PRs analyzed: ${{ steps.analyze.outputs.pr_count }}"
+          echo "Release version: ${{ steps.release.outputs.release_version }}"
+          echo "PRs included: ${{ steps.analyze.outputs.pr_count }}"
           echo ""
           echo "Actions that would be taken:"
-          echo "  1. Update SDK_VERSION file"
-          echo "  2. Build and pack SDK"
+          echo "  1. Build and pack SDKs with version ${{ steps.release.outputs.release_version }}"
+          echo "  2. Create git tag: sdk-v${{ steps.release.outputs.release_version }}"
           echo "  3. Publish to NuGet"
-          echo "  4. Commit SDK_VERSION change"
-          echo "  5. Create git tag: sdk-v${{ steps.new_version.outputs.new_version }}"
-          echo "  6. Create GitHub release"
+          echo "  4. Update SDK_VERSION to ${{ steps.release.outputs.release_version }}"
+          echo "  5. Create GitHub release"
+          echo ""
+          echo "Version calculation: ${{ steps.base.outputs.sdk_version }} + ${{ steps.analyze.outputs.bump_type }} = ${{ steps.release.outputs.release_version }}"
           echo ""
           echo "To perform the actual release, run this workflow again with dry_run=false"
 
       - name: Notify Discord
-        if: always() && inputs.dry_run == false && steps.new_version.outputs.new_version != ''
+        if: always() && inputs.dry_run == false
         uses: ./.github/actions/discord-notify
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          stage-name: "SDK Stable Release v${{ steps.new_version.outputs.new_version }}"
+          stage-name: "SDK Stable Release v${{ steps.release.outputs.release_version }}"
           status: ${{ job.status }}
-          commit-message: "SDK Release ${{ steps.analyze.outputs.bump_type }} update"
+          commit-message: "SDK Release v${{ steps.release.outputs.release_version }}"
           commit-author: ${{ github.actor }}
           run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           repository-url: ${{ github.server_url }}/${{ github.repository }}

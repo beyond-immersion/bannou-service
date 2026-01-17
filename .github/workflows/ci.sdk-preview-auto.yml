@@ -34,12 +34,20 @@ jobs:
       - name: Build and Pack SDK Previews
         id: pack
         run: |
-          # Read base version from SDK_VERSION file
-          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
-          PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
+          # Read base version from SDK_VERSION file (represents last stable release)
+          SDK_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
+
+          # Add patch bump so previews are always higher than the last stable release
+          # e.g., SDK_VERSION=1.0.0 → preview base=1.0.1 → 1.0.1-preview.X > 1.0.0 stable
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$SDK_VERSION"
+          PREVIEW_BASE="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          PREVIEW_VERSION="${PREVIEW_BASE}-preview.${{ github.run_number }}"
+
+          echo "sdk_version=${SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
           echo "Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
+          echo "  SDK_VERSION (last stable): ${SDK_VERSION}"
+          echo "  Preview version: ${PREVIEW_VERSION}"
 
           # Build SDK dependencies first (internal packages not in main solution)
           echo "Building SDK dependencies..."

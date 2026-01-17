@@ -68,12 +68,21 @@ jobs:
       - name: Generate Preview Version
         id: version
         run: |
-          BASE_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
+          # Read base version from SDK_VERSION file (represents last stable release)
+          SDK_VERSION=$(cat sdks/SDK_VERSION | tr -d '[:space:]')
+
+          # Add patch bump so previews are always higher than the last stable release
+          # e.g., SDK_VERSION=1.0.0 → preview base=1.0.1 → 1.0.1-preview.X > 1.0.0 stable
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$SDK_VERSION"
+          PREVIEW_BASE="${MAJOR}.${MINOR}.$((PATCH + 1))"
+
           # Use timestamp for unique preview versions
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          PREVIEW_VERSION="${BASE_VERSION}-preview.manual.${TIMESTAMP}"
+          PREVIEW_VERSION="${PREVIEW_BASE}-preview.manual.${TIMESTAMP}"
+
+          echo "sdk_version=${SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 SDK_VERSION (last stable): ${SDK_VERSION}"
           echo "📦 Preview version: ${PREVIEW_VERSION}"
 
       - name: Build and Pack SDKs
