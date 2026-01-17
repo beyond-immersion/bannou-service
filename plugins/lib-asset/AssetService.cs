@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
@@ -2113,6 +2114,118 @@ public partial class AssetService : IAssetService
                 ex.Message,
                 dependency: null,
                 endpoint: "post:/bundles/job/status",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of CancelJob operation.
+    /// Cancels a pending or processing async metabundle job.
+    /// </summary>
+    public async Task<(StatusCodes, CancelJobResponse?)> CancelJobAsync(CancelJobRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("CancelJob: jobId={JobId}", body.JobId);
+
+        try
+        {
+            if (body.JobId == default)
+            {
+                _logger.LogWarning("CancelJob: Invalid job ID");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+            var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{body.JobId}";
+            var job = await jobStore.GetAsync(jobKey, cancellationToken).ConfigureAwait(false);
+
+            if (job == null)
+            {
+                _logger.LogWarning("CancelJob: Job {JobId} not found", body.JobId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if job can be cancelled
+            if (job.Status == InternalJobStatus.Ready || job.Status == InternalJobStatus.Failed)
+            {
+                // Job already completed - cannot cancel
+                var completedStatus = job.Status switch
+                {
+                    InternalJobStatus.Ready => CancelJobResponseStatus.Ready,
+                    InternalJobStatus.Failed => CancelJobResponseStatus.Failed,
+                    _ => CancelJobResponseStatus.Failed
+                };
+
+                return (StatusCodes.Conflict, new CancelJobResponse
+                {
+                    JobId = body.JobId,
+                    Cancelled = false,
+                    Status = completedStatus,
+                    Message = $"Job already completed with status '{job.Status}'"
+                });
+            }
+
+            if (job.Status == InternalJobStatus.Cancelled)
+            {
+                // Already cancelled
+                return (StatusCodes.OK, new CancelJobResponse
+                {
+                    JobId = body.JobId,
+                    Cancelled = true,
+                    Status = CancelJobResponseStatus.Cancelled,
+                    Message = "Job was already cancelled"
+                });
+            }
+
+            // Cancel the job
+            var previousStatus = job.Status;
+            job.Status = InternalJobStatus.Cancelled;
+            job.UpdatedAt = DateTimeOffset.UtcNow;
+            job.CompletedAt = DateTimeOffset.UtcNow;
+            job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString();
+            job.ErrorMessage = "Job cancelled by user request";
+            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("CancelJob: Job {JobId} cancelled (was {PreviousStatus})", body.JobId, previousStatus);
+
+            // Emit completion event if there's a session to notify
+            if (!string.IsNullOrEmpty(job.RequesterSessionId))
+            {
+                await _eventEmitter.EmitMetabundleCreationCompleteAsync(
+                    job.RequesterSessionId,
+                    job.JobId,
+                    job.MetabundleId,
+                    success: false,
+                    MetabundleJobStatus.Cancelled,
+                    downloadUrl: null,
+                    sizeBytes: null,
+                    assetCount: null,
+                    standaloneAssetCount: null,
+                    processingTimeMs: null,
+                    MetabundleErrorCode.CANCELLED,
+                    "Job cancelled by user request",
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            return (StatusCodes.OK, new CancelJobResponse
+            {
+                JobId = body.JobId,
+                Cancelled = true,
+                Status = CancelJobResponseStatus.Cancelled,
+                Message = $"Job cancelled successfully (was {previousStatus})"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CancelJob operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CancelJob",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/job/cancel",
                 details: null,
                 stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);

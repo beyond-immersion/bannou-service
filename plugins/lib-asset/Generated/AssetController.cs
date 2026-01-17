@@ -180,6 +180,22 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatusAsync(GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Cancel an async metabundle job
+    /// </summary>
+
+    /// <remarks>
+    /// Cancel a pending or processing metabundle creation job.
+    /// <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+    /// <br/>
+    /// <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+    /// <br/>with status 'cancelled' via WebSocket.
+    /// </remarks>
+
+    /// <returns>Job cancellation result</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelJobResponse>> CancelJobAsync(CancelJobRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Compute optimal bundles for requested assets
     /// </summary>
 
@@ -560,6 +576,26 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.GetJobStatusAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Cancel an async metabundle job
+    /// </summary>
+    /// <remarks>
+    /// Cancel a pending or processing metabundle creation job.
+    /// <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+    /// <br/>
+    /// <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+    /// <br/>with status 'cancelled' via WebSocket.
+    /// </remarks>
+    /// <returns>Job cancellation result</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/job/cancel")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelJobResponse>> CancelJob([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CancelJobRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CancelJobAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -3086,6 +3122,132 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             _GetJobStatus_Info,
             _GetJobStatus_RequestSchema,
             _GetJobStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CancelJob
+
+    private static readonly string _CancelJob_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CancelJobRequest",
+    "$defs": {
+        "CancelJobRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to cancel an async metabundle creation job",
+            "required": [
+                "jobId"
+            ],
+            "properties": {
+                "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Job ID from the createMetabundle response"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CancelJob_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CancelJobResponse",
+    "$defs": {
+        "CancelJobResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Result of job cancellation attempt",
+            "required": [
+                "jobId",
+                "cancelled",
+                "status"
+            ],
+            "properties": {
+                "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Job identifier"
+                },
+                "cancelled": {
+                    "type": "boolean",
+                    "description": "Whether the job was successfully cancelled"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "queued",
+                        "processing",
+                        "ready",
+                        "failed",
+                        "cancelled"
+                    ],
+                    "description": "Current job status after cancellation attempt"
+                },
+                "message": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Additional context about the cancellation result"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CancelJob_Info = """
+{
+    "summary": "Cancel an async metabundle job",
+    "description": "Cancel a pending or processing metabundle creation job.\nJobs that are already completed (ready or failed) cannot be cancelled.\n\nSuccessfully cancelled jobs will emit a MetabundleCreationCompleteEvent\nwith status 'cancelled' via WebSocket.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "cancelJob"
+}
+""";
+
+    /// <summary>Returns endpoint information for CancelJob</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/cancel/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelJob_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/job/cancel",
+            _CancelJob_Info));
+
+    /// <summary>Returns request schema for CancelJob</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/cancel/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelJob_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/cancel",
+            "request-schema",
+            _CancelJob_RequestSchema));
+
+    /// <summary>Returns response schema for CancelJob</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/cancel/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelJob_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/cancel",
+            "response-schema",
+            _CancelJob_ResponseSchema));
+
+    /// <summary>Returns full schema for CancelJob</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/cancel/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CancelJob_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/cancel",
+            _CancelJob_Info,
+            _CancelJob_RequestSchema,
+            _CancelJob_ResponseSchema));
 
     #endregion
 

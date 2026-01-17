@@ -1564,6 +1564,61 @@ public partial class GetJobStatusResponse
 }
 
 /// <summary>
+/// Request to cancel an async metabundle creation job
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CancelJobRequest
+{
+
+    /// <summary>
+    /// Job ID from the createMetabundle response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of job cancellation attempt
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CancelJobResponse
+{
+
+    /// <summary>
+    /// Job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the job was successfully cancelled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cancelled")]
+    public bool Cancelled { get; set; } = default!;
+
+    /// <summary>
+    /// Current job status after cancellation attempt
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CancelJobResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context about the cancellation result
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    public string? Message { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to resolve optimal bundle downloads for requested assets
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2683,6 +2738,29 @@ public enum CreateMetabundleResponseStatus
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum GetJobStatusResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CancelJobResponseStatus
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"queued")]

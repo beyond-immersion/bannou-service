@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -31,7 +31,7 @@ public partial class AssetService
     /// Processes the metabundle creation and emits completion event.
     /// </summary>
     /// <param name="evt">The job queued event.</param>
-    public async Task HandleMetabundleJobQueuedAsync(MetabundleJobQueuedEvent evt)
+    internal async Task HandleMetabundleJobQueuedAsync(MetabundleJobQueuedEvent evt)
     {
         var stopwatch = Stopwatch.StartNew();
         var cancellationToken = CancellationToken.None;
@@ -61,7 +61,7 @@ public partial class AssetService
             job.Status = InternalJobStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
-            job.ErrorCode = MetabundleErrorCode.Timeout.ToString();
+            job.ErrorCode = MetabundleErrorCode.TIMEOUT.ToString();
             job.ErrorMessage = "Job timed out before processing could start";
             await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -105,7 +105,7 @@ public partial class AssetService
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
-            job.ErrorCode = MetabundleErrorCode.Internal_error.ToString();
+            job.ErrorCode = MetabundleErrorCode.INTERNAL_ERROR.ToString();
             job.ErrorMessage = ex.Message;
             await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
@@ -136,13 +136,13 @@ public partial class AssetService
         }
 
         // Load standalone assets if specified
-        var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(_configuration.StatestoreName);
-        var standaloneAssets = new List<AssetMetadata>();
+        var assetStore = _stateStoreFactory.GetStore<InternalAssetRecord>(_configuration.StatestoreName);
+        var standaloneAssets = new List<InternalAssetRecord>();
         foreach (var assetId in request.StandaloneAssetIds ?? Enumerable.Empty<string>())
         {
             var assetKey = $"{_configuration.AssetKeyPrefix}{assetId}";
             var asset = await assetStore.GetAsync(assetKey, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (asset != null && asset.Status == AssetStatus.Ready)
+            if (asset != null && asset.ProcessingStatus == ProcessingStatus.Complete)
             {
                 standaloneAssets.Add(asset);
             }
@@ -349,10 +349,12 @@ public partial class AssetService
         {
             try
             {
-                downloadUrl = await _storageProvider.GeneratePresignedGetUrlAsync(
+                var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
                     _configuration.StorageBucket,
                     job.Result.StorageKey,
+                    null,
                     TimeSpan.FromSeconds(_configuration.DownloadTokenTtlSeconds)).ConfigureAwait(false);
+                downloadUrl = new Uri(downloadResult.DownloadUrl);
             }
             catch (Exception ex)
             {

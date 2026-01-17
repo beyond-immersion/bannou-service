@@ -23441,6 +23441,22 @@
             <returns>Job status retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <remarks>
+            Cancel a pending or processing metabundle creation job.
+            <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+            <br/>
+            <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+            <br/>with status 'cancelled' via WebSocket.
+            </remarks>
+            <returns>Job cancellation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -23803,6 +23819,22 @@
             <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
             </remarks>
             <returns>Job status retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <remarks>
+            Cancel a pending or processing metabundle creation job.
+            <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+            <br/>
+            <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+            <br/>with status 'cancelled' via WebSocket.
+            </remarks>
+            <returns>Job cancellation result</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
@@ -24969,6 +25001,41 @@
         <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ProcessingTimeMs">
             <summary>
             Total processing time in milliseconds (when complete)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobRequest">
+            <summary>
+            Request to cancel an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobResponse">
+            <summary>
+            Result of job cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Cancelled">
+            <summary>
+            Whether the job was successfully cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Status">
+            <summary>
+            Current job status after cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Message">
+            <summary>
+            Additional context about the cancellation result
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">

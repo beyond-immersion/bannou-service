@@ -935,10 +935,6 @@ paths:
         '404':
           description: Job not found or expired
 
-  # ==========================================================================
-  # Bundle Resolution
-  # ==========================================================================
-
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetJobStatusRequest\"\
         ,\n    \"$defs\": {\n        \"GetJobStatusRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to get the status of an async metabundle creation job\",\n      \
@@ -1002,6 +998,68 @@ paths:
         nClients can either poll this endpoint or wait for the\\nMetabundleCreationCompleteEvent via WebSocket for completion
         notification.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getJobStatus\"\n}"
+  /bundles/job/cancel:
+    post:
+      summary: Cancel an async metabundle job
+      description: |
+        Cancel a pending or processing metabundle creation job.
+        Jobs that are already completed (ready or failed) cannot be cancelled.
+
+        Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+        with status 'cancelled' via WebSocket.
+      operationId: cancelJob
+      tags:
+      - Bundles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelJobRequest'
+      responses:
+        '200':
+          description: Job cancellation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelJobResponse'
+        '404':
+          description: Job not found or expired
+        '409':
+          description: Job cannot be cancelled (already completed)
+
+  # ==========================================================================
+  # Bundle Resolution
+  # ==========================================================================
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CancelJobRequest\"\
+        ,\n    \"$defs\": {\n        \"CancelJobRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to cancel an async metabundle creation job\",\n            \"required\"\
+        : [\n                \"jobId\"\n            ],\n            \"properties\": {\n                \"jobId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Job ID from the createMetabundle response\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CancelJobResponse\"\
+        ,\n    \"$defs\": {\n        \"CancelJobResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of job cancellation attempt\",\n            \"required\": [\n    \
+        \            \"jobId\",\n                \"cancelled\",\n                \"status\"\n            ],\n            \"\
+        properties\": {\n                \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Job identifier\"\n                },\n                \"cancelled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the job was successfully
+        cancelled\"\n                },\n                \"status\": {\n                    \"type\": \"string\",\n      \
+        \              \"enum\": [\n                        \"queued\",\n                        \"processing\",\n       \
+        \                 \"ready\",\n                        \"failed\",\n                        \"cancelled\"\n       \
+        \             ],\n                    \"description\": \"Current job status after cancellation attempt\"\n       \
+        \         },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Additional context about the cancellation result\"\n             \
+        \   }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cancel an async metabundle job\",\n    \"description\": \"Cancel a pending
+        or processing metabundle creation job.\\nJobs that are already completed (ready or failed) cannot be cancelled.\\\
+        n\\nSuccessfully cancelled jobs will emit a MetabundleCreationCompleteEvent\\nwith status 'cancelled' via WebSocket.\\\
+        n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cancelJob\"\
+        \n}"
   /bundles/resolve:
     post:
       summary: Compute optimal bundles for requested assets
@@ -2846,6 +2904,48 @@ components:
           format: int64
           nullable: true
           description: Total processing time in milliseconds (when complete)
+
+    CancelJobRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cancel an async metabundle creation job
+      required:
+      - jobId
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Job ID from the createMetabundle response
+
+    CancelJobResponse:
+      type: object
+      additionalProperties: false
+      description: Result of job cancellation attempt
+      required:
+      - jobId
+      - cancelled
+      - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Job identifier
+        cancelled:
+          type: boolean
+          description: Whether the job was successfully cancelled
+        status:
+          type: string
+          enum:
+          - queued
+          - processing
+          - ready
+          - failed
+          - cancelled
+          description: Current job status after cancellation attempt
+        message:
+          type: string
+          nullable: true
+          description: Additional context about the cancellation result
 
     # ==========================================================================
     # Bundle Resolution
