@@ -1,0 +1,1498 @@
+openapi: 3.0.0
+info:
+  title: Music Theory Engine API
+  version: 1.0.0
+  description: |
+    Pure computation music generation using formal music theory rules.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    This API handles:
+    - Deterministic MIDI-JSON generation from style configurations
+    - Chord progression generation using harmonic functions
+    - Melody generation with voice leading rules
+    - Style management for genre-specific parameters (Celtic, Jazz, Baroque, etc.)
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /music/generate:
+    post:
+      summary: Generate composition from style and constraints
+      description: |
+        Generates a complete musical composition using the specified style definition
+        and compositional constraints. Returns MIDI-JSON format output.
+      operationId: GenerateComposition
+      tags:
+      - Generation
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCompositionRequest'
+      responses:
+        '200':
+          description: Composition generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateCompositionResponse'
+        '400':
+          description: Invalid request or generation constraints
+        '404':
+          description: Style not found
+
+  /music/validate:
+    post:
+      summary: Validate MIDI-JSON structure
+      description: |
+        Validates a MIDI-JSON structure for correctness including note ranges,
+        timing, and format compliance.
+      operationId: ValidateMidiJson
+      tags:
+      - Validation
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateMidiJsonRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateMidiJsonResponse'
+
+  /music/style/get:
+    post:
+      summary: Get style definition
+      description: |
+        Retrieves a style definition by ID or name. Styles define mode preferences,
+        interval rules, form templates, and genre-specific parameters.
+      operationId: GetStyle
+      tags:
+      - Styles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStyleRequest'
+      responses:
+        '200':
+          description: Style retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StyleDefinitionResponse'
+        '404':
+          description: Style not found
+
+  /music/style/list:
+    post:
+      summary: List available styles
+      description: |
+        Lists all available style definitions with optional filtering by category.
+      operationId: ListStyles
+      tags:
+      - Styles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListStylesRequest'
+      responses:
+        '200':
+          description: Styles listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStylesResponse'
+
+  /music/style/create:
+    post:
+      summary: Create new style definition
+      description: |
+        Creates a new style definition. Only accessible to admin users.
+      operationId: CreateStyle
+      tags:
+      - Styles
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStyleRequest'
+      responses:
+        '200':
+          description: Style created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StyleDefinitionResponse'
+        '400':
+          description: Invalid style definition
+        '409':
+          description: Style with this name already exists
+
+  /music/theory/progression:
+    post:
+      summary: Generate chord progression
+      description: |
+        Generates a chord progression using harmonic function theory.
+        Supports multiple harmonic styles including functional harmony,
+        modal interchange, and jazz voicings.
+      operationId: GenerateProgression
+      tags:
+      - Theory
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateProgressionRequest'
+      responses:
+        '200':
+          description: Progression generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateProgressionResponse'
+        '400':
+          description: Invalid request
+
+  /music/theory/melody:
+    post:
+      summary: Generate melody over harmony
+      description: |
+        Generates a melodic line over a chord progression using contour rules,
+        interval preferences, and rhythmic patterns from the specified style.
+      operationId: GenerateMelody
+      tags:
+      - Theory
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateMelodyRequest'
+      responses:
+        '200':
+          description: Melody generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateMelodyResponse'
+        '400':
+          description: Invalid request
+
+  /music/theory/voice-lead:
+    post:
+      summary: Apply voice leading to chords
+      description: |
+        Applies voice leading rules to a chord sequence, ensuring smooth
+        part-writing according to traditional or style-specific rules.
+      operationId: ApplyVoiceLeading
+      tags:
+      - Theory
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceLeadRequest'
+      responses:
+        '200':
+          description: Voice leading applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceLeadResponse'
+        '400':
+          description: Invalid request
+
+components:
+  schemas:
+    # ============================================================================
+    # Request Models
+    # ============================================================================
+
+    GenerateCompositionRequest:
+      description: Request to generate a complete musical composition
+      type: object
+      additionalProperties: false
+      required:
+      - styleId
+      properties:
+        styleId:
+          type: string
+          description: ID of the style to use for generation
+          example: "celtic"
+        durationBars:
+          type: integer
+          minimum: 4
+          maximum: 256
+          default: 32
+          description: Target duration in bars
+        key:
+          $ref: '#/components/schemas/KeySignature'
+          nullable: true
+          description: Key signature (random if not specified)
+        tempo:
+          type: integer
+          minimum: 40
+          maximum: 240
+          description: Tempo in BPM (uses style default if not specified)
+        mood:
+          type: string
+          enum: [bright, dark, neutral, melancholic, triumphant]
+          nullable: true
+          description: Mood constraint for generation
+        tuneType:
+          type: string
+          nullable: true
+          description: Style-specific tune type (e.g., "reel", "jig" for Celtic)
+          example: "reel"
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for reproducible generation
+
+    ValidateMidiJsonRequest:
+      description: Request to validate MIDI-JSON structure
+      type: object
+      additionalProperties: false
+      required:
+      - midiJson
+      properties:
+        midiJson:
+          $ref: '#/components/schemas/MidiJson'
+          description: MIDI-JSON structure to validate
+        strictMode:
+          type: boolean
+          default: false
+          description: Enable strict validation with additional checks
+
+    GetStyleRequest:
+      description: Request to get a style definition
+      type: object
+      additionalProperties: false
+      properties:
+        styleId:
+          type: string
+          nullable: true
+          description: Style ID to retrieve
+        styleName:
+          type: string
+          nullable: true
+          description: Style name to retrieve (alternative to ID)
+
+    ListStylesRequest:
+      description: Request to list available styles
+      type: object
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+          nullable: true
+          description: Filter by category (e.g., "folk", "classical", "jazz")
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of styles to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+
+    CreateStyleRequest:
+      description: Request to create a new style definition
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - category
+      - modeDistribution
+      properties:
+        name:
+          type: string
+          description: Unique style name
+          example: "celtic"
+        category:
+          type: string
+          description: Style category
+          example: "folk"
+        description:
+          type: string
+          nullable: true
+          description: Human-readable style description
+        modeDistribution:
+          $ref: '#/components/schemas/ModeDistribution'
+          description: Probability distribution over modes
+        intervalPreferences:
+          $ref: '#/components/schemas/IntervalPreferences'
+          nullable: true
+          description: Preferred interval patterns
+        formTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormTemplate'
+          nullable: true
+          description: Available form structures
+        rhythmPatterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/RhythmPattern'
+          nullable: true
+          description: Common rhythm patterns
+        tuneTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TuneType'
+          nullable: true
+          description: Style-specific tune types
+        defaultTempo:
+          type: integer
+          minimum: 40
+          maximum: 240
+          description: Default tempo for this style
+        harmonyStyle:
+          $ref: '#/components/schemas/HarmonyStyle'
+          nullable: true
+          description: Harmonic progression preferences
+
+    GenerateProgressionRequest:
+      description: Request to generate a chord progression
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - length
+      properties:
+        key:
+          $ref: '#/components/schemas/KeySignature'
+          description: Key for the progression
+        length:
+          type: integer
+          minimum: 2
+          maximum: 64
+          description: Number of chords in the progression
+        styleId:
+          type: string
+          nullable: true
+          description: Style to use for harmonic preferences
+        startChord:
+          type: string
+          nullable: true
+          description: Starting chord (roman numeral, e.g., "I")
+        endChord:
+          type: string
+          nullable: true
+          description: Ending chord (roman numeral, e.g., "I")
+        cadenceType:
+          type: string
+          enum: [authentic, half, plagal, deceptive]
+          nullable: true
+          description: Cadence type for ending
+        allowSecondaryDominants:
+          type: boolean
+          default: true
+          description: Allow secondary dominant chords
+        allowModalInterchange:
+          type: boolean
+          default: false
+          description: Allow borrowed chords from parallel modes
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for reproducibility
+
+    GenerateMelodyRequest:
+      description: Request to generate a melody over harmony
+      type: object
+      additionalProperties: false
+      required:
+      - harmony
+      properties:
+        harmony:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChordEvent'
+          description: Chord progression to generate melody over
+        styleId:
+          type: string
+          nullable: true
+          description: Style for melodic preferences
+        range:
+          $ref: '#/components/schemas/PitchRange'
+          nullable: true
+          description: Pitch range for the melody
+        contour:
+          type: string
+          enum: [arch, wave, ascending, descending, static]
+          nullable: true
+          description: Overall melodic contour
+        rhythmDensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Note density (0=sparse, 1=dense)
+        syncopation:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Amount of syncopation
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed for reproducibility
+
+    VoiceLeadRequest:
+      description: Request to apply voice leading to a chord sequence
+      type: object
+      additionalProperties: false
+      required:
+      - chords
+      - voiceCount
+      properties:
+        chords:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChordSymbol'
+          description: Chord symbols to voice
+        voiceCount:
+          type: integer
+          minimum: 2
+          maximum: 8
+          description: Number of voices
+        ranges:
+          type: array
+          items:
+            $ref: '#/components/schemas/PitchRange'
+          nullable: true
+          description: Pitch range per voice (defaults based on voice count)
+        rules:
+          $ref: '#/components/schemas/VoiceLeadingRules'
+          nullable: true
+          description: Voice leading rules to apply
+
+    # ============================================================================
+    # Response Models
+    # ============================================================================
+
+    GenerateCompositionResponse:
+      description: Response containing the generated composition
+      type: object
+      additionalProperties: false
+      required:
+      - compositionId
+      - midiJson
+      properties:
+        compositionId:
+          type: string
+          description: Unique identifier for the composition
+        midiJson:
+          $ref: '#/components/schemas/MidiJson'
+          description: Generated MIDI-JSON output
+        metadata:
+          $ref: '#/components/schemas/CompositionMetadata'
+          nullable: true
+          description: Metadata about the generation
+        generationTimeMs:
+          type: integer
+          description: Time taken to generate in milliseconds
+
+    ValidateMidiJsonResponse:
+      description: Response containing validation results
+      type: object
+      additionalProperties: false
+      required:
+      - isValid
+      properties:
+        isValid:
+          type: boolean
+          description: Whether the MIDI-JSON is valid
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          nullable: true
+          description: Validation errors if invalid
+        warnings:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Non-fatal warnings
+
+    StyleDefinitionResponse:
+      description: Response containing a style definition
+      type: object
+      additionalProperties: false
+      required:
+      - styleId
+      - name
+      - category
+      properties:
+        styleId:
+          type: string
+          description: Unique style identifier
+        name:
+          type: string
+          description: Style name
+        category:
+          type: string
+          description: Style category
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        modeDistribution:
+          $ref: '#/components/schemas/ModeDistribution'
+          nullable: true
+          description: Mode probability distribution
+        intervalPreferences:
+          $ref: '#/components/schemas/IntervalPreferences'
+          nullable: true
+          description: Interval preferences
+        formTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormTemplate'
+          nullable: true
+          description: Available forms
+        tuneTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TuneType'
+          nullable: true
+          description: Style-specific tune types
+        defaultTempo:
+          type: integer
+          description: Default tempo
+        harmonyStyle:
+          $ref: '#/components/schemas/HarmonyStyle'
+          nullable: true
+          description: Harmony preferences
+
+    ListStylesResponse:
+      description: Response containing a list of styles
+      type: object
+      additionalProperties: false
+      required:
+      - styles
+      - total
+      properties:
+        styles:
+          type: array
+          items:
+            $ref: '#/components/schemas/StyleSummary'
+          description: Style summaries
+        total:
+          type: integer
+          description: Total number of styles matching filter
+
+    GenerateProgressionResponse:
+      description: Response containing a generated chord progression
+      type: object
+      additionalProperties: false
+      required:
+      - chords
+      properties:
+        chords:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChordEvent'
+          description: Generated chord events
+        analysis:
+          $ref: '#/components/schemas/ProgressionAnalysis'
+          nullable: true
+          description: Analysis of the progression
+
+    GenerateMelodyResponse:
+      description: Response containing a generated melody
+      type: object
+      additionalProperties: false
+      required:
+      - notes
+      properties:
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteEvent'
+          description: Generated note events
+        analysis:
+          $ref: '#/components/schemas/MelodyAnalysis'
+          nullable: true
+          description: Analysis of the melody
+
+    VoiceLeadResponse:
+      description: Response containing voiced chords
+      type: object
+      additionalProperties: false
+      required:
+      - voicings
+      properties:
+        voicings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoicedChord'
+          description: Voiced chord realizations
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceLeadingViolation'
+          nullable: true
+          description: Voice leading rule violations (warnings)
+
+    # ============================================================================
+    # Core Data Models
+    # ============================================================================
+
+    MidiJson:
+      description: MIDI-JSON format representation of a musical piece
+      type: object
+      additionalProperties: false
+      required:
+      - tracks
+      - ticksPerBeat
+      properties:
+        header:
+          $ref: '#/components/schemas/MidiHeader'
+          nullable: true
+          description: MIDI header information
+        ticksPerBeat:
+          type: integer
+          minimum: 24
+          maximum: 960
+          default: 480
+          description: Ticks per beat (PPQN)
+        tracks:
+          type: array
+          items:
+            $ref: '#/components/schemas/MidiTrack'
+          description: MIDI tracks
+
+    MidiHeader:
+      description: MIDI file header information
+      type: object
+      additionalProperties: false
+      properties:
+        format:
+          type: integer
+          enum: [0, 1, 2]
+          default: 1
+          description: MIDI format type
+        name:
+          type: string
+          nullable: true
+          description: Composition name
+        tempos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TempoEvent'
+          nullable: true
+          description: Tempo changes
+        timeSignatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSignatureEvent'
+          nullable: true
+          description: Time signature changes
+        keySignatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeySignatureEvent'
+          nullable: true
+          description: Key signature changes
+
+    MidiTrack:
+      description: A single MIDI track containing events
+      type: object
+      additionalProperties: false
+      required:
+      - events
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Track name
+        channel:
+          type: integer
+          minimum: 0
+          maximum: 15
+          default: 0
+          description: MIDI channel
+        instrument:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: GM instrument number
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MidiEvent'
+          description: Track events
+
+    MidiEvent:
+      description: A single MIDI event
+      type: object
+      additionalProperties: false
+      required:
+      - tick
+      - type
+      properties:
+        tick:
+          type: integer
+          minimum: 0
+          description: Absolute tick position
+        type:
+          type: string
+          enum: [noteOn, noteOff, programChange, controlChange]
+          description: Event type
+        note:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: MIDI note number (for note events)
+        velocity:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: Note velocity (for note events)
+        duration:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Note duration in ticks (for noteOn with implicit noteOff)
+        program:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: Program number (for programChange)
+        controller:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: Controller number (for controlChange)
+        value:
+          type: integer
+          minimum: 0
+          maximum: 127
+          nullable: true
+          description: Controller value (for controlChange)
+
+    NoteEvent:
+      description: A musical note event with timing and pitch
+      type: object
+      additionalProperties: false
+      required:
+      - pitch
+      - startTick
+      - durationTicks
+      properties:
+        pitch:
+          $ref: '#/components/schemas/Pitch'
+          description: Note pitch
+        startTick:
+          type: integer
+          minimum: 0
+          description: Start position in ticks
+        durationTicks:
+          type: integer
+          minimum: 1
+          description: Duration in ticks
+        velocity:
+          type: integer
+          minimum: 1
+          maximum: 127
+          default: 80
+          description: Note velocity
+
+    ChordEvent:
+      description: A chord with timing information
+      type: object
+      additionalProperties: false
+      required:
+      - chord
+      - startTick
+      - durationTicks
+      properties:
+        chord:
+          $ref: '#/components/schemas/ChordSymbol'
+          description: Chord symbol
+        startTick:
+          type: integer
+          minimum: 0
+          description: Start position in ticks
+        durationTicks:
+          type: integer
+          minimum: 1
+          description: Duration in ticks
+        romanNumeral:
+          type: string
+          nullable: true
+          description: Roman numeral analysis (e.g., "IV", "V7")
+
+    ChordSymbol:
+      description: A chord symbol with root and quality
+      type: object
+      additionalProperties: false
+      required:
+      - root
+      - quality
+      properties:
+        root:
+          $ref: '#/components/schemas/PitchClass'
+          description: Chord root
+        quality:
+          type: string
+          enum: [major, minor, diminished, augmented, dominant7, major7, minor7, diminished7, halfDiminished7, augmented7, sus2, sus4]
+          description: Chord quality
+        bass:
+          $ref: '#/components/schemas/PitchClass'
+          nullable: true
+          description: Bass note (for inversions/slash chords)
+        extensions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Chord extensions (e.g., "9", "11", "13")
+
+    VoicedChord:
+      description: A chord with specific voice pitches
+      type: object
+      additionalProperties: false
+      required:
+      - symbol
+      - pitches
+      properties:
+        symbol:
+          $ref: '#/components/schemas/ChordSymbol'
+          description: Original chord symbol
+        pitches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pitch'
+          description: Pitches from lowest to highest voice
+
+    Pitch:
+      description: A specific pitch with pitch class and octave
+      type: object
+      additionalProperties: false
+      required:
+      - pitchClass
+      - octave
+      properties:
+        pitchClass:
+          $ref: '#/components/schemas/PitchClass'
+          description: Pitch class (note name)
+        octave:
+          type: integer
+          minimum: 0
+          maximum: 9
+          description: Octave number (middle C = C4)
+        midiNumber:
+          type: integer
+          minimum: 0
+          maximum: 127
+          description: MIDI note number (computed if not provided)
+
+    PitchClass:
+      description: A pitch class (note name without octave)
+      type: string
+      enum: [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
+
+    PitchRange:
+      description: A pitch range from low to high
+      type: object
+      additionalProperties: false
+      required:
+      - low
+      - high
+      properties:
+        low:
+          $ref: '#/components/schemas/Pitch'
+          description: Lowest pitch (inclusive)
+        high:
+          $ref: '#/components/schemas/Pitch'
+          description: Highest pitch (inclusive)
+
+    KeySignature:
+      description: A key signature with tonic and mode
+      type: object
+      additionalProperties: false
+      required:
+      - tonic
+      - mode
+      properties:
+        tonic:
+          $ref: '#/components/schemas/PitchClass'
+          description: Tonic pitch class
+        mode:
+          type: string
+          enum: [major, minor, dorian, phrygian, lydian, mixolydian, aeolian, locrian]
+          description: Mode/scale type
+
+    TempoEvent:
+      description: A tempo change event
+      type: object
+      additionalProperties: false
+      required:
+      - tick
+      - bpm
+      properties:
+        tick:
+          type: integer
+          minimum: 0
+          description: Tick position
+        bpm:
+          type: number
+          format: float
+          minimum: 20
+          maximum: 400
+          description: Tempo in BPM
+
+    TimeSignatureEvent:
+      description: A time signature change event
+      type: object
+      additionalProperties: false
+      required:
+      - tick
+      - numerator
+      - denominator
+      properties:
+        tick:
+          type: integer
+          minimum: 0
+          description: Tick position
+        numerator:
+          type: integer
+          minimum: 1
+          maximum: 32
+          description: Beats per measure
+        denominator:
+          type: integer
+          enum: [1, 2, 4, 8, 16, 32]
+          description: Beat unit
+
+    KeySignatureEvent:
+      description: A key signature change event
+      type: object
+      additionalProperties: false
+      required:
+      - tick
+      - key
+      properties:
+        tick:
+          type: integer
+          minimum: 0
+          description: Tick position
+        key:
+          $ref: '#/components/schemas/KeySignature'
+          description: Key signature
+
+    # ============================================================================
+    # Style Definition Models
+    # ============================================================================
+
+    ModeDistribution:
+      description: Probability distribution over musical modes
+      type: object
+      additionalProperties: false
+      properties:
+        major:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of major mode
+        minor:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of natural minor
+        dorian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of dorian mode
+        phrygian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of phrygian mode
+        lydian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of lydian mode
+        mixolydian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of mixolydian mode
+        aeolian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of aeolian mode
+        locrian:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Probability of locrian mode
+
+    IntervalPreferences:
+      description: Melodic interval preference weights
+      type: object
+      additionalProperties: false
+      properties:
+        stepWeight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: Weight for stepwise motion (M2, m2)
+        thirdWeight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.25
+          description: Weight for thirds (M3, m3)
+        leapWeight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.15
+          description: Weight for larger leaps (P4, P5)
+        largeLeapWeight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.1
+          description: Weight for leaps larger than P5
+
+    FormTemplate:
+      description: A musical form structure template
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - sections
+      properties:
+        name:
+          type: string
+          description: Form name (e.g., "AABB", "verse-chorus")
+        sections:
+          type: array
+          items:
+            type: string
+          description: Section sequence (e.g., ["A", "A", "B", "B"])
+        barsPerSection:
+          type: integer
+          minimum: 1
+          maximum: 64
+          default: 8
+          description: Default bars per section
+
+    RhythmPattern:
+      description: A rhythmic pattern with note durations
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - pattern
+      properties:
+        name:
+          type: string
+          description: Pattern name
+        pattern:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Relative durations (1.0 = beat)
+        weight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Selection weight
+
+    TuneType:
+      description: A style-specific tune type definition
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - meter
+      properties:
+        name:
+          type: string
+          description: Tune type name (e.g., "reel", "jig")
+        meter:
+          $ref: '#/components/schemas/TimeSignatureEvent'
+          description: Time signature for this tune type
+        tempoRange:
+          $ref: '#/components/schemas/TempoRange'
+          nullable: true
+          description: Typical tempo range
+        defaultForm:
+          type: string
+          nullable: true
+          description: Default form for this tune type
+        rhythmPatterns:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Rhythm pattern names to use
+
+    TempoRange:
+      description: A tempo range with min and max BPM
+      type: object
+      additionalProperties: false
+      required:
+      - min
+      - max
+      properties:
+        min:
+          type: integer
+          minimum: 20
+          maximum: 400
+          description: Minimum tempo
+        max:
+          type: integer
+          minimum: 20
+          maximum: 400
+          description: Maximum tempo
+
+    HarmonyStyle:
+      description: Harmonic progression style preferences
+      type: object
+      additionalProperties: false
+      properties:
+        primaryCadence:
+          type: string
+          enum: [authentic, plagal, half, deceptive]
+          default: authentic
+          description: Most common cadence type
+        dominantPrepProbability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.6
+          description: Probability of pre-dominant before dominant
+        secondaryDominantProbability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.3
+          description: Probability of secondary dominants
+        modalInterchangeProbability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.1
+          description: Probability of borrowed chords
+        commonProgressions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Common chord progressions as roman numeral strings
+
+    StyleSummary:
+      description: Brief style summary for listing
+      type: object
+      additionalProperties: false
+      required:
+      - styleId
+      - name
+      - category
+      properties:
+        styleId:
+          type: string
+          description: Style identifier
+        name:
+          type: string
+          description: Style name
+        category:
+          type: string
+          description: Style category
+        description:
+          type: string
+          nullable: true
+          description: Brief description
+
+    # ============================================================================
+    # Analysis Models
+    # ============================================================================
+
+    ProgressionAnalysis:
+      description: Analysis of a chord progression
+      type: object
+      additionalProperties: false
+      properties:
+        romanNumerals:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Roman numeral analysis
+        cadences:
+          type: array
+          items:
+            $ref: '#/components/schemas/CadenceInfo'
+          nullable: true
+          description: Detected cadences
+        functionalAnalysis:
+          type: array
+          items:
+            type: string
+            enum: [tonic, subdominant, dominant, predominant]
+          nullable: true
+          description: Functional analysis per chord
+
+    CadenceInfo:
+      description: Information about a cadence
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - position
+      properties:
+        type:
+          type: string
+          enum: [authentic, half, plagal, deceptive]
+          description: Cadence type
+        position:
+          type: integer
+          description: Chord index where cadence ends
+        strength:
+          type: string
+          enum: [perfect, imperfect]
+          nullable: true
+          description: Cadence strength
+
+    MelodyAnalysis:
+      description: Analysis of a melody
+      type: object
+      additionalProperties: false
+      properties:
+        range:
+          $ref: '#/components/schemas/PitchRange'
+          nullable: true
+          description: Pitch range used
+        intervalDistribution:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+          description: Distribution of interval sizes
+        contour:
+          type: string
+          nullable: true
+          description: Detected contour shape
+        noteCount:
+          type: integer
+          description: Total number of notes
+        averageNoteDuration:
+          type: number
+          format: float
+          nullable: true
+          description: Average note duration in ticks
+
+    # ============================================================================
+    # Voice Leading Models
+    # ============================================================================
+
+    VoiceLeadingRules:
+      description: Rules for voice leading
+      type: object
+      additionalProperties: false
+      properties:
+        avoidParallelFifths:
+          type: boolean
+          default: true
+          description: Avoid parallel perfect fifths
+        avoidParallelOctaves:
+          type: boolean
+          default: true
+          description: Avoid parallel octaves
+        preferStepwiseMotion:
+          type: boolean
+          default: true
+          description: Prefer stepwise voice motion
+        avoidVoiceCrossing:
+          type: boolean
+          default: true
+          description: Avoid voice crossing
+        maxLeap:
+          type: integer
+          minimum: 1
+          maximum: 12
+          default: 7
+          description: Maximum leap in semitones
+
+    VoiceLeadingViolation:
+      description: A voice leading rule violation
+      type: object
+      additionalProperties: false
+      required:
+      - rule
+      - position
+      - severity
+      properties:
+        rule:
+          type: string
+          description: Rule that was violated
+        position:
+          type: integer
+          description: Chord position of violation
+        voices:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: Voice indices involved
+        severity:
+          type: string
+          enum: [warning, error]
+          description: Violation severity
+
+    # ============================================================================
+    # Metadata Models
+    # ============================================================================
+
+    CompositionMetadata:
+      description: Metadata about a generated composition
+      type: object
+      additionalProperties: false
+      properties:
+        styleId:
+          type: string
+          nullable: true
+          description: Style used
+        key:
+          $ref: '#/components/schemas/KeySignature'
+          nullable: true
+          description: Key signature
+        tempo:
+          type: integer
+          nullable: true
+          description: Tempo in BPM
+        bars:
+          type: integer
+          nullable: true
+          description: Number of bars
+        tuneType:
+          type: string
+          nullable: true
+          description: Tune type if applicable
+        seed:
+          type: integer
+          nullable: true
+          description: Random seed used
+
+    ValidationError:
+      description: A validation error
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - message
+      properties:
+        type:
+          type: string
+          enum: [structure, range, timing, format]
+          description: Error type
+        message:
+          type: string
+          description: Error message
+        path:
+          type: string
+          nullable: true
+          description: Path to problematic element
+
+tags:
+- name: Generation
+  description: High-level composition generation
+- name: Validation
+  description: MIDI-JSON validation
+- name: Styles
+  description: Style definition management
+- name: Theory
+  description: Low-level music theory operations

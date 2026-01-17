@@ -372,3 +372,18 @@ x-state-stores:
     prefix: "mesh:idx"
     service: Mesh
     purpose: Global endpoint index for discovery
+
+  # ============================================================================
+  # Music Stores
+  # ============================================================================
+
+  music-styles:
+    backend: mysql
+    service: Music
+    purpose: Style definitions (celtic, jazz, baroque, etc.)
+
+  music-compositions:
+    backend: redis
+    prefix: "music:comp"
+    service: Music
+    purpose: Cached generated compositions
