@@ -207,6 +207,24 @@ public sealed class AssetProxy
     }
 
     /// <summary>
+    /// Get async metabundle job status
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetJobStatusResponse on success.</returns>
+    public Task<ApiResponse<GetJobStatusResponse>> GetJobStatusAsync(
+        GetJobStatusRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetJobStatusRequest, GetJobStatusResponse>(
+            "POST", "/bundles/job/status", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Compute optimal bundles for requested assets
     /// </summary>
     /// <param name="request">The request payload.</param>

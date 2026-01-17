@@ -27,6 +27,7 @@ public static class ClientEventWhitelist
         "asset.bundle.creation.complete",
         "asset.bundle.validation.complete",
         "asset.bundle.validation.failed",
+        "asset.metabundle.creation.complete",
         "asset.processing.complete",
         "asset.processing.failed",
         "asset.ready",

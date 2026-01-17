@@ -368,3 +368,41 @@ x-service-configuration:
       nullable: true  # NRT: Optional config MUST be nullable (extends defaults)
       description: Comma-separated list of additional forbidden content types
       env: ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES
+
+    # === Async Metabundle Job Configuration (Tier 2) ===
+    MetabundleAsyncSourceBundleThreshold:
+      type: integer
+      description: Number of source bundles that triggers async processing. Jobs with fewer bundles process synchronously.
+      env: ASSET_METABUNDLE_ASYNC_SOURCE_BUNDLE_THRESHOLD
+      default: 3
+
+    MetabundleAsyncAssetCountThreshold:
+      type: integer
+      description: Total asset count that triggers async processing. Jobs with fewer assets process synchronously.
+      env: ASSET_METABUNDLE_ASYNC_ASSET_COUNT_THRESHOLD
+      default: 50
+
+    MetabundleAsyncSizeBytesThreshold:
+      type: integer
+      format: int64
+      description: Estimated total size in bytes that triggers async processing. Default 100MB.
+      env: ASSET_METABUNDLE_ASYNC_SIZE_BYTES_THRESHOLD
+      default: 104857600
+
+    MetabundleJobTtlSeconds:
+      type: integer
+      description: How long job status records are retained after completion (for polling)
+      env: ASSET_METABUNDLE_JOB_TTL_SECONDS
+      default: 86400
+
+    MetabundleJobKeyPrefix:
+      type: string
+      description: Key prefix for metabundle job entries in state store
+      env: ASSET_METABUNDLE_JOB_KEY_PREFIX
+      default: "metabundle-job:"
+
+    MetabundleJobTimeoutSeconds:
+      type: integer
+      description: Maximum time for a metabundle job before marking as failed
+      env: ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS
+      default: 3600

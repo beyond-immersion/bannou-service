@@ -217,6 +217,21 @@ public static class AssetPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/bundles/job/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getJobStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/bundles/resolve",
             Method = ServiceEndpointMethod.POST,
             Description = "resolveBundles",

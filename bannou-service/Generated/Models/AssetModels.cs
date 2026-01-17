@@ -1359,7 +1359,10 @@ public partial class CreateMetabundleRequest
 }
 
 /// <summary>
-/// Response from metabundle creation
+/// Response from metabundle creation.
+/// <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+/// <br/>For async creation (large jobs): status=queued with jobId for polling.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateMetabundleResponse
@@ -1374,13 +1377,33 @@ public partial class CreateMetabundleResponse
     public string MetabundleId { get; set; } = default!;
 
     /// <summary>
-    /// Creation status
+    /// Job ID for async processing. Only present when status is 'queued' or 'processing'.
+    /// <br/>Use /bundles/job/status to poll for completion, or wait for
+    /// <br/>MetabundleCreationCompleteEvent via WebSocket.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    public System.Guid? JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Creation status.
+    /// <br/>- queued: Job accepted for async processing (poll with jobId)
+    /// <br/>- processing: Job is actively running
+    /// <br/>- ready: Metabundle created and available for download
+    /// <br/>- failed: Creation failed (see conflicts for details)
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CreateMetabundleResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL (only present when status is 'ready')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// Number of assets in the metabundle
@@ -1411,6 +1434,132 @@ public partial class CreateMetabundleResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conflicts")]
     public System.Collections.Generic.ICollection<AssetConflict>? Conflicts { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get the status of an async metabundle creation job
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetJobStatusRequest
+{
+
+    /// <summary>
+    /// Job ID from the createMetabundle response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Status of an async metabundle creation job.
+/// <br/>When status is 'ready', the response includes the full metabundle details.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetJobStatusResponse
+{
+
+    /// <summary>
+    /// Job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle identifier being created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Current job status.
+    /// <br/>- queued: Waiting for processing resources
+    /// <br/>- processing: Actively being processed
+    /// <br/>- ready: Completed successfully
+    /// <br/>- failed: Creation failed
+    /// <br/>- cancelled: Job was cancelled
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GetJobStatusResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Progress percentage (0-100) when status is 'processing'
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progress")]
+    [System.ComponentModel.DataAnnotations.Range(0, 100)]
+    public int? Progress { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL (only when status is 'ready')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Number of assets in metabundle (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int? AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size in bytes (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Provenance data (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundles")]
+    public System.Collections.Generic.ICollection<SourceBundleReference>? SourceBundles { get; set; } = default!;
+
+    /// <summary>
+    /// Error code (when status is 'failed')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
+    public string? ErrorCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error description (when status is 'failed')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    /// <summary>
+    /// When the job was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the job was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Total processing time in milliseconds (when complete)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("processingTimeMs")]
+    public long? ProcessingTimeMs { get; set; } = default!;
 
 }
 
@@ -2527,6 +2676,29 @@ public enum CreateMetabundleResponseStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"failed")]
     Failed = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GetJobStatusResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
 
 }
 #pragma warning restore CS1591

@@ -353,6 +353,98 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
 }
 
 /// <summary>
+/// Sent when async metabundle creation job completes (success or failure).
+/// <br/>Clients that initiated metabundle creation with async processing receive
+/// <br/>this event when the job finishes, allowing them to retrieve the result.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MetabundleCreationCompleteEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "asset.metabundle.creation.complete";
+
+    /// <summary>
+    /// Job ID from the original async creation request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether creation completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Final job status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MetabundleJobStatus? Status { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL (on success)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of assets in the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int? AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total processing time in milliseconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("processingTimeMs")]
+    public long? ProcessingTimeMs { get; set; } = default!;
+
+    /// <summary>
+    /// Error code on failure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MetabundleErrorCode? ErrorCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Final notification that an asset is ready for use.
 /// <br/>Sent after upload and any required processing completes.
 /// <br/>
@@ -615,6 +707,79 @@ public enum ValidationErrorCode
 
     [System.Runtime.Serialization.EnumMember(Value = @"MISSING_DEPENDENCY")]
     MISSING_DEPENDENCY = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Status of an async metabundle creation job.
+/// <br/>- queued: Job accepted, waiting for processing resources
+/// <br/>- processing: Job is actively being processed
+/// <br/>- ready: Job completed successfully
+/// <br/>- failed: Job failed (see errorCode/errorMessage)
+/// <br/>- cancelled: Job was cancelled before completion
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MetabundleJobStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error codes for metabundle creation failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MetabundleErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_FOUND")]
+    SOURCE_BUNDLE_NOT_FOUND = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_READY")]
+    SOURCE_BUNDLE_NOT_READY = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_FOUND")]
+    STANDALONE_ASSET_NOT_FOUND = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_READY")]
+    STANDALONE_ASSET_NOT_READY = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"REALM_MISMATCH")]
+    REALM_MISMATCH = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ASSET_CONFLICT")]
+    ASSET_CONFLICT = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
+    STORAGE_ERROR = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
+    TIMEOUT = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CANCELLED")]
+    CANCELLED = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
+    INTERNAL_ERROR = 9,
 
 }
 #pragma warning restore CS1591

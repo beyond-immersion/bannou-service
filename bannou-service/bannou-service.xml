@@ -23425,6 +23425,22 @@
             <returns>Metabundle created or queued for creation</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <remarks>
+            Poll the status of an async metabundle creation job.
+            <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+            <br/>
+            <br/>Clients can either poll this endpoint or wait for the
+            <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+            </remarks>
+            <returns>Job status retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -23771,6 +23787,22 @@
             <br/>with conflict details.
             </remarks>
             <returns>Metabundle created or queued for creation</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <remarks>
+            Poll the status of an async metabundle creation job.
+            <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+            <br/>
+            <br/>Clients can either poll this endpoint or wait for the
+            <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+            </remarks>
+            <returns>Job status retrieved</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
@@ -24787,7 +24819,10 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse">
             <summary>
-            Response from metabundle creation
+            Response from metabundle creation.
+            <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+            <br/>For async creation (large jobs): status=queued with jobId for polling.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
@@ -24795,9 +24830,27 @@
             Metabundle identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.JobId">
+            <summary>
+            Job ID for async processing. Only present when status is 'queued' or 'processing'.
+            <br/>Use /bundles/job/status to poll for completion, or wait for
+            <br/>MetabundleCreationCompleteEvent via WebSocket.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Status">
             <summary>
-            Creation status
+            Creation status.
+            <br/>- queued: Job accepted for async processing (poll with jobId)
+            <br/>- processing: Job is actively running
+            <br/>- ready: Metabundle created and available for download
+            <br/>- failed: Creation failed (see conflicts for details)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only present when status is 'ready')
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.AssetCount">
@@ -24823,6 +24876,99 @@
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Conflicts">
             <summary>
             Present if creation failed due to asset conflicts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusRequest">
+            <summary>
+            Request to get the status of an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusResponse">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>When status is 'ready', the response includes the full metabundle details.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.MetabundleId">
+            <summary>
+            Metabundle identifier being created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Status">
+            <summary>
+            Current job status.
+            <br/>- queued: Waiting for processing resources
+            <br/>- processing: Actively being processed
+            <br/>- ready: Completed successfully
+            <br/>- failed: Creation failed
+            <br/>- cancelled: Job was cancelled
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Progress">
+            <summary>
+            Progress percentage (0-100) when status is 'processing'
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only when status is 'ready')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.AssetCount">
+            <summary>
+            Number of assets in metabundle (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SizeBytes">
+            <summary>
+            Total size in bytes (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SourceBundles">
+            <summary>
+            Provenance data (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorCode">
+            <summary>
+            Error code (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorMessage">
+            <summary>
+            Human-readable error description (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.CreatedAt">
+            <summary>
+            When the job was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.UpdatedAt">
+            <summary>
+            When the job was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds (when complete)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">

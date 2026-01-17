@@ -383,4 +383,40 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string? AdditionalForbiddenContentTypes { get; set; }
 
+    /// <summary>
+    /// Number of source bundles that triggers async processing. Jobs with fewer bundles process synchronously.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_SOURCE_BUNDLE_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncSourceBundleThreshold { get; set; } = 3;
+
+    /// <summary>
+    /// Total asset count that triggers async processing. Jobs with fewer assets process synchronously.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_ASSET_COUNT_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncAssetCountThreshold { get; set; } = 50;
+
+    /// <summary>
+    /// Estimated total size in bytes that triggers async processing. Default 100MB.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_SIZE_BYTES_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncSizeBytesThreshold { get; set; } = 104857600;
+
+    /// <summary>
+    /// How long job status records are retained after completion (for polling)
+    /// Environment variable: ASSET_METABUNDLE_JOB_TTL_SECONDS
+    /// </summary>
+    public int MetabundleJobTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Key prefix for metabundle job entries in state store
+    /// Environment variable: ASSET_METABUNDLE_JOB_KEY_PREFIX
+    /// </summary>
+    public string MetabundleJobKeyPrefix { get; set; } = "metabundle-job:";
+
+    /// <summary>
+    /// Maximum time for a metabundle job before marking as failed
+    /// Environment variable: ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS
+    /// </summary>
+    public int MetabundleJobTimeoutSeconds { get; set; } = 3600;
+
 }

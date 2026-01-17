@@ -164,6 +164,22 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateMetabundleResponse>> CreateMetabundleAsync(CreateMetabundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get async metabundle job status
+    /// </summary>
+
+    /// <remarks>
+    /// Poll the status of an async metabundle creation job.
+    /// <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+    /// <br/>
+    /// <br/>Clients can either poll this endpoint or wait for the
+    /// <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+    /// </remarks>
+
+    /// <returns>Job status retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatusAsync(GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Compute optimal bundles for requested assets
     /// </summary>
 
@@ -524,6 +540,26 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.CreateMetabundleAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get async metabundle job status
+    /// </summary>
+    /// <remarks>
+    /// Poll the status of an async metabundle creation job.
+    /// <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+    /// <br/>
+    /// <br/>Clients can either poll this endpoint or wait for the
+    /// <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+    /// </remarks>
+    /// <returns>Job status retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("bundles/job/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetJobStatusAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -2639,7 +2675,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         "CreateMetabundleResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Response from metabundle creation",
+            "description": "Response from metabundle creation.\nFor synchronous creation (small jobs): status=ready with downloadUrl.\nFor async creation (large jobs): status=queued with jobId for polling.\n",
             "required": [
                 "metabundleId",
                 "status",
@@ -2651,6 +2687,12 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "string",
                     "description": "Metabundle identifier"
                 },
+                "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
+                },
                 "status": {
                     "type": "string",
                     "enum": [
@@ -2659,7 +2701,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "ready",
                         "failed"
                     ],
-                    "description": "Creation status"
+                    "description": "Creation status.\n- queued: Job accepted for async processing (poll with jobId)\n- processing: Job is actively running\n- ready: Metabundle created and available for download\n- failed: Creation failed (see conflicts for details)\n"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Pre-signed download URL (only present when status is 'ready')"
                 },
                 "assetCount": {
                     "type": "integer",
@@ -2820,6 +2868,224 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
             _CreateMetabundle_Info,
             _CreateMetabundle_RequestSchema,
             _CreateMetabundle_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetJobStatus
+
+    private static readonly string _GetJobStatus_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetJobStatusRequest",
+    "$defs": {
+        "GetJobStatusRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to get the status of an async metabundle creation job",
+            "required": [
+                "jobId"
+            ],
+            "properties": {
+                "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Job ID from the createMetabundle response"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetJobStatus_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetJobStatusResponse",
+    "$defs": {
+        "GetJobStatusResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Status of an async metabundle creation job.\nWhen status is 'ready', the response includes the full metabundle details.\n",
+            "required": [
+                "jobId",
+                "metabundleId",
+                "status"
+            ],
+            "properties": {
+                "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Job identifier"
+                },
+                "metabundleId": {
+                    "type": "string",
+                    "description": "Metabundle identifier being created"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "queued",
+                        "processing",
+                        "ready",
+                        "failed",
+                        "cancelled"
+                    ],
+                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\n- cancelled: Job was cancelled\n"
+                },
+                "progress": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "nullable": true,
+                    "description": "Progress percentage (0-100) when status is 'processing'"
+                },
+                "downloadUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "description": "Pre-signed download URL (only when status is 'ready')"
+                },
+                "assetCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Number of assets in metabundle (when ready)"
+                },
+                "standaloneAssetCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Number of standalone assets included (when ready)"
+                },
+                "sizeBytes": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "description": "Total size in bytes (when ready)"
+                },
+                "sourceBundles": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/SourceBundleReference"
+                    },
+                    "description": "Provenance data (when ready)"
+                },
+                "errorCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error code (when status is 'failed')"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable error description (when status is 'failed')"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the job was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the job was last updated"
+                },
+                "processingTimeMs": {
+                    "type": "integer",
+                    "format": "int64",
+                    "nullable": true,
+                    "description": "Total processing time in milliseconds (when complete)"
+                }
+            }
+        },
+        "SourceBundleReference": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Provenance reference to a source bundle used in metabundle creation",
+            "required": [
+                "bundleId",
+                "version",
+                "assetIds",
+                "contentHash"
+            ],
+            "properties": {
+                "bundleId": {
+                    "type": "string",
+                    "description": "Source bundle identifier"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Version of source bundle at composition time"
+                },
+                "assetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Asset IDs contributed from this source bundle"
+                },
+                "contentHash": {
+                    "type": "string",
+                    "description": "Hash of source bundle at composition time (for integrity verification)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetJobStatus_Info = """
+{
+    "summary": "Get async metabundle job status",
+    "description": "Poll the status of an async metabundle creation job.\nUse the jobId returned from createMetabundle when status was 'queued'.\n\ nClients can either poll this endpoint or wait for the\nMetabundleCreationCompleteEvent via WebSocket for completion notification.\n",
+    "tags": [
+        "Bundles"
+    ],
+    "deprecated": false,
+    "operationId": "getJobStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetJobStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetJobStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Asset",
+            "Post",
+            "bundles/job/status",
+            _GetJobStatus_Info));
+
+    /// <summary>Returns request schema for GetJobStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetJobStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/status",
+            "request-schema",
+            _GetJobStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetJobStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetJobStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/status",
+            "response-schema",
+            _GetJobStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetJobStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("bundles/job/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetJobStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Asset",
+            "Post",
+            "bundles/job/status",
+            _GetJobStatus_Info,
+            _GetJobStatus_RequestSchema,
+            _GetJobStatus_ResponseSchema));
 
     #endregion
 

@@ -288,6 +288,72 @@ components:
           nullable: true
           description: Human-readable error description
 
+    MetabundleCreationCompleteEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent when async metabundle creation job completes (success or failure).
+        Clients that initiated metabundle creation with async processing receive
+        this event when the job finishes, allowing them to retrieve the result.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - jobId
+        - metabundleId
+        - success
+      properties:
+        eventName:
+          type: string
+          default: "asset.metabundle.creation.complete"
+          description: Fixed event type identifier
+        jobId:
+          type: string
+          format: uuid
+          description: Job ID from the original async creation request
+        metabundleId:
+          type: string
+          description: ID of the metabundle
+        success:
+          type: boolean
+          description: Whether creation completed successfully
+        status:
+          $ref: '#/components/schemas/MetabundleJobStatus'
+          description: Final job status
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Pre-signed download URL (on success)
+        sizeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Metabundle file size in bytes
+        assetCount:
+          type: integer
+          nullable: true
+          description: Total number of assets in the metabundle
+        standaloneAssetCount:
+          type: integer
+          nullable: true
+          description: Number of standalone assets included
+        processingTimeMs:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total processing time in milliseconds
+        errorCode:
+          $ref: '#/components/schemas/MetabundleErrorCode'
+          description: Error code on failure
+        errorMessage:
+          type: string
+          nullable: true
+          description: Human-readable error description
+
     # ============================================
     # Asset Ready Event
     # ============================================
@@ -445,3 +511,36 @@ components:
         - DUPLICATE_ASSET_ID
         - MISSING_DEPENDENCY
       description: Error codes for bundle validation failures
+
+    MetabundleJobStatus:
+      type: string
+      nullable: true
+      enum:
+        - queued
+        - processing
+        - ready
+        - failed
+        - cancelled
+      description: |
+        Status of an async metabundle creation job.
+        - queued: Job accepted, waiting for processing resources
+        - processing: Job is actively being processed
+        - ready: Job completed successfully
+        - failed: Job failed (see errorCode/errorMessage)
+        - cancelled: Job was cancelled before completion
+
+    MetabundleErrorCode:
+      type: string
+      nullable: true
+      enum:
+        - SOURCE_BUNDLE_NOT_FOUND
+        - SOURCE_BUNDLE_NOT_READY
+        - STANDALONE_ASSET_NOT_FOUND
+        - STANDALONE_ASSET_NOT_READY
+        - REALM_MISMATCH
+        - ASSET_CONFLICT
+        - STORAGE_ERROR
+        - TIMEOUT
+        - CANCELLED
+        - INTERNAL_ERROR
+      description: Error codes for metabundle creation failures

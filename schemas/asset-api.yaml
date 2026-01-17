@@ -811,10 +811,6 @@ paths:
         '409':
           description: Metabundle ID already exists
 
-  # ==========================================================================
-  # Bundle Resolution
-  # ==========================================================================
-
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleRequest\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to create a metabundle from source bundles and/or standalone assets.\\
@@ -849,16 +845,25 @@ paths:
         \       \"description\": \"Game realm the asset belongs to\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response from metabundle creation\",\n            \"required\": [\n     \
-        \           \"metabundleId\",\n                \"status\",\n                \"assetCount\",\n                \"sizeBytes\"\
-        \n            ],\n            \"properties\": {\n                \"metabundleId\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Metabundle identifier\"\n                },\n              \
-        \  \"status\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                   \
-        \     \"queued\",\n                        \"processing\",\n                        \"ready\",\n                 \
-        \       \"failed\"\n                    ],\n                    \"description\": \"Creation status\"\n           \
-        \     },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of assets in the metabundle\"\n                },\n                \"standaloneAssetCount\": {\n      \
-        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : false,\n            \"description\": \"Response from metabundle creation.\\nFor synchronous creation (small jobs):
+        status=ready with downloadUrl.\\nFor async creation (large jobs): status=queued with jobId for polling.\\n\",\n  \
+        \          \"required\": [\n                \"metabundleId\",\n                \"status\",\n                \"assetCount\"\
+        ,\n                \"sizeBytes\"\n            ],\n            \"properties\": {\n                \"metabundleId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Metabundle identifier\"\n \
+        \               },\n                \"jobId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Job ID for async
+        processing. Only present when status is 'queued' or 'processing'.\\nUse /bundles/job/status to poll for completion,
+        or wait for\\nMetabundleCreationCompleteEvent via WebSocket.\\n\"\n                },\n                \"status\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"queued\"\
+        ,\n                        \"processing\",\n                        \"ready\",\n                        \"failed\"\
+        \n                    ],\n                    \"description\": \"Creation status.\\n- queued: Job accepted for async
+        processing (poll with jobId)\\n- processing: Job is actively running\\n- ready: Metabundle created and available for
+        download\\n- failed: Creation failed (see conflicts for details)\\n\"\n                },\n                \"downloadUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Pre-signed download URL (only present when status is 'ready')\"\n\
+        \                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Number of assets in the metabundle\"\n                },\n                \"standaloneAssetCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Number of standalone assets included directly (not from bundles)\"\n                },\n                \"sizeBytes\"\
         : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
         description\": \"Total size in bytes\"\n                },\n                \"sourceBundles\": {\n               \
@@ -899,6 +904,104 @@ paths:
         If the same asset ID exists in\\nmultiple source bundles with different content hashes, the request fails\\nwith conflict
         details.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         createMetabundle\"\n}"
+  /bundles/job/status:
+    post:
+      summary: Get async metabundle job status
+      description: |
+        Poll the status of an async metabundle creation job.
+        Use the jobId returned from createMetabundle when status was 'queued'.
+
+        Clients can either poll this endpoint or wait for the
+        MetabundleCreationCompleteEvent via WebSocket for completion notification.
+      operationId: getJobStatus
+      tags:
+      - Bundles
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetJobStatusRequest'
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetJobStatusResponse'
+        '404':
+          description: Job not found or expired
+
+  # ==========================================================================
+  # Bundle Resolution
+  # ==========================================================================
+
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetJobStatusRequest\"\
+        ,\n    \"$defs\": {\n        \"GetJobStatusRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the status of an async metabundle creation job\",\n      \
+        \      \"required\": [\n                \"jobId\"\n            ],\n            \"properties\": {\n               \
+        \ \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Job ID from the createMetabundle response\"\n                }\n            }\n     \
+        \   }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetJobStatusResponse\"\
+        ,\n    \"$defs\": {\n        \"GetJobStatusResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Status of an async metabundle creation job.\\nWhen status is 'ready', the
+        response includes the full metabundle details.\\n\",\n            \"required\": [\n                \"jobId\",\n  \
+        \              \"metabundleId\",\n                \"status\"\n            ],\n            \"properties\": {\n    \
+        \            \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Job identifier\"\n                },\n                \"metabundleId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Metabundle identifier being created\"\
+        \n                },\n                \"status\": {\n                    \"type\": \"string\",\n                 \
+        \   \"enum\": [\n                        \"queued\",\n                        \"processing\",\n                  \
+        \      \"ready\",\n                        \"failed\",\n                        \"cancelled\"\n                  \
+        \  ],\n                    \"description\": \"Current job status.\\n- queued: Waiting for processing resources\\n-
+        processing: Actively being processed\\n- ready: Completed successfully\\n- failed: Creation failed\\n- cancelled:
+        Job was cancelled\\n\"\n                },\n                \"progress\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Progress percentage (0-100) when status is 'processing'\"\n              \
+        \  },\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed download URL
+        (only when status is 'ready')\"\n                },\n                \"assetCount\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Number of assets in
+        metabundle (when ready)\"\n                },\n                \"standaloneAssetCount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Number of standalone
+        assets included (when ready)\"\n                },\n                \"sizeBytes\": {\n                    \"type\"\
+        : \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Total size in bytes (when ready)\"\n                },\n                \"sourceBundles\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/SourceBundleReference\"\n                    },\n               \
+        \     \"description\": \"Provenance data (when ready)\"\n                },\n                \"errorCode\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Error code (when status is 'failed')\"\n                },\n                \"errorMessage\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
+        error description (when status is 'failed')\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
+        true,\n                    \"description\": \"When the job was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the job was last updated\"\n                },\n\
+        \                \"processingTimeMs\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Total processing time
+        in milliseconds (when complete)\"\n                }\n            }\n        },\n        \"SourceBundleReference\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Provenance reference to a source bundle used in metabundle creation\",\n            \"required\": [\n        \
+        \        \"bundleId\",\n                \"version\",\n                \"assetIds\",\n                \"contentHash\"\
+        \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Source bundle identifier\"\n                },\n               \
+        \ \"version\": {\n                    \"type\": \"string\",\n                    \"description\": \"Version of source
+        bundle at composition time\"\n                },\n                \"assetIds\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Asset IDs contributed from this source bundle\"\n                },\n    \
+        \            \"contentHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Hash of source bundle at composition time (for integrity verification)\"\n                }\n            }\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get async metabundle job status\",\n    \"description\": \"Poll the status
+        of an async metabundle creation job.\\nUse the jobId returned from createMetabundle when status was 'queued'.\\n\\
+        nClients can either poll this endpoint or wait for the\\nMetabundleCreationCompleteEvent via WebSocket for completion
+        notification.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getJobStatus\"\n}"
   /bundles/resolve:
     post:
       summary: Compute optimal bundles for requested assets
@@ -2579,7 +2682,10 @@ components:
     CreateMetabundleResponse:
       type: object
       additionalProperties: false
-      description: Response from metabundle creation
+      description: |
+        Response from metabundle creation.
+        For synchronous creation (small jobs): status=ready with downloadUrl.
+        For async creation (large jobs): status=queued with jobId for polling.
       required:
       - metabundleId
       - status
@@ -2589,6 +2695,14 @@ components:
         metabundleId:
           type: string
           description: Metabundle identifier
+        jobId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Job ID for async processing. Only present when status is 'queued' or 'processing'.
+            Use /bundles/job/status to poll for completion, or wait for
+            MetabundleCreationCompleteEvent via WebSocket.
         status:
           type: string
           enum:
@@ -2596,7 +2710,17 @@ components:
           - processing
           - ready
           - failed
-          description: Creation status
+          description: |
+            Creation status.
+            - queued: Job accepted for async processing (poll with jobId)
+            - processing: Job is actively running
+            - ready: Metabundle created and available for download
+            - failed: Creation failed (see conflicts for details)
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Pre-signed download URL (only present when status is 'ready')
         assetCount:
           type: integer
           description: Number of assets in the metabundle
@@ -2619,6 +2743,109 @@ components:
           items:
             $ref: '#/components/schemas/AssetConflict'
           description: Present if creation failed due to asset conflicts
+
+    # ==========================================================================
+    # Async Job Status
+    # ==========================================================================
+
+    GetJobStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the status of an async metabundle creation job
+      required:
+      - jobId
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Job ID from the createMetabundle response
+
+    GetJobStatusResponse:
+      type: object
+      additionalProperties: false
+      description: |
+        Status of an async metabundle creation job.
+        When status is 'ready', the response includes the full metabundle details.
+      required:
+      - jobId
+      - metabundleId
+      - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Job identifier
+        metabundleId:
+          type: string
+          description: Metabundle identifier being created
+        status:
+          type: string
+          enum:
+          - queued
+          - processing
+          - ready
+          - failed
+          - cancelled
+          description: |
+            Current job status.
+            - queued: Waiting for processing resources
+            - processing: Actively being processed
+            - ready: Completed successfully
+            - failed: Creation failed
+            - cancelled: Job was cancelled
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Progress percentage (0-100) when status is 'processing'
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Pre-signed download URL (only when status is 'ready')
+        assetCount:
+          type: integer
+          nullable: true
+          description: Number of assets in metabundle (when ready)
+        standaloneAssetCount:
+          type: integer
+          nullable: true
+          description: Number of standalone assets included (when ready)
+        sizeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total size in bytes (when ready)
+        sourceBundles:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SourceBundleReference'
+          description: Provenance data (when ready)
+        errorCode:
+          type: string
+          nullable: true
+          description: Error code (when status is 'failed')
+        errorMessage:
+          type: string
+          nullable: true
+          description: Human-readable error description (when status is 'failed')
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the job was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the job was last updated
+        processingTimeMs:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total processing time in milliseconds (when complete)
 
     # ==========================================================================
     # Bundle Resolution
