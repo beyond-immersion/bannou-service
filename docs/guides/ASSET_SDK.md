@@ -512,3 +512,205 @@ var manager = await AssetManager.ConnectAsync(
 | `CurrentBundleId` | Currently downloading bundle |
 | `Progress` | Overall progress (0.0-1.0) |
 | `EstimatedTimeRemaining` | ETA based on download speed |
+
+---
+
+## Server-Side Asset Access
+
+Game servers and backend services access assets differently than game clients. This section covers server-side patterns.
+
+### SDK Comparison
+
+| Aspect | Game Client | Game Server / Backend |
+|--------|-------------|----------------------|
+| SDK Package | `asset-loader-client` | `asset-loader-server` or direct API |
+| Connection | WebSocket | Service mesh (HTTP) |
+| Authentication | User credentials | Service identity (automatic) |
+| Primary need | Load assets into memory | Metadata queries, URLs, validation |
+| Caching | Persistent disk cache | Ephemeral or none |
+| Facade | `AssetManager` | Usually not needed |
+
+### When to Use Each Approach
+
+| Use Case | Recommended Approach |
+|----------|---------------------|
+| Query asset metadata | Direct `IAssetClient` |
+| Get download URLs for clients | Direct `IAssetClient` |
+| Validate uploaded bundles | Direct `IAssetClient` |
+| Server-authoritative physics/collision | `AssetLoader` + `BannouMeshAssetSource` |
+| NPC AI reading asset data | `AssetLoader` + `BannouMeshAssetSource` |
+| Asset processing pipelines | Direct MinIO access or `IAssetClient` |
+
+### Direct API Access (Most Common)
+
+For servers that just need metadata or URLs, use the generated client directly:
+
+```csharp
+public class AssetQueryService
+{
+    private readonly IAssetClient _assetClient;  // Injected via DI
+
+    public AssetQueryService(IAssetClient assetClient)
+    {
+        _assetClient = assetClient;
+    }
+
+    // Get asset metadata
+    public async Task<AssetWithDownloadUrl> GetAssetInfoAsync(string assetId)
+    {
+        var request = new GetAssetRequest { AssetId = assetId, Version = "latest" };
+        return await _assetClient.GetAssetAsync(request);
+    }
+
+    // Get bundle download URL to pass to workers/clients
+    public async Task<string> GetBundleUrlAsync(string bundleId)
+    {
+        var request = new GetBundleRequest { BundleId = bundleId };
+        var response = await _assetClient.GetBundleAsync(request);
+        return response.DownloadUrl;  // Pre-signed URL
+    }
+
+    // Resolve optimal bundles for a set of assets
+    public async Task<ResolveBundlesResponse> ResolveAssetsAsync(IEnumerable<string> assetIds)
+    {
+        var request = new ResolveBundlesRequest
+        {
+            AssetIds = assetIds.ToList(),
+            Realm = Realm.Arcadia,
+            PreferMetabundles = true
+        };
+        return await _assetClient.ResolveBundlesAsync(request);
+    }
+}
+```
+
+### Dependency Injection Setup
+
+```csharp
+// In your service's DI registration
+services.AddSingleton<IAssetClient>(sp =>
+{
+    var meshClient = sp.GetRequiredService<IMeshClient>();
+    return new AssetClient(meshClient);  // Generated client
+});
+
+services.AddSingleton<AssetQueryService>();
+```
+
+### Loading Actual Bundle Contents (When Needed)
+
+If your server needs to actually read asset data (e.g., server-side physics, AI behavior):
+
+```csharp
+using BeyondImmersion.Bannou.AssetLoader;
+using BeyondImmersion.Bannou.AssetLoader.Server;
+using BeyondImmersion.Bannou.AssetLoader.Cache;
+
+public class ServerAssetLoader
+{
+    private readonly AssetLoader _loader;
+
+    public ServerAssetLoader(IAssetClient assetClient)
+    {
+        // Create mesh-based asset source
+        var source = new BannouMeshAssetSource(assetClient, Realm.Arcadia);
+
+        // Optional: ephemeral cache for container environments
+        var cache = new MemoryAssetCache(maxSizeBytes: 256 * 1024 * 1024);
+
+        _loader = new AssetLoader(source, cache, new AssetLoaderOptions
+        {
+            ValidateBundles = true,
+            MaxConcurrentDownloads = 2,
+            PreferCache = true
+        });
+    }
+
+    public async Task<byte[]?> GetAssetDataAsync(string assetId)
+    {
+        // Ensure asset is available (downloads bundle if needed)
+        await _loader.EnsureAssetsAvailableAsync(new[] { assetId });
+
+        // Get raw bytes
+        return await _loader.GetAssetBytesAsync(assetId);
+    }
+}
+```
+
+### DI Registration for Full Asset Loading
+
+```csharp
+// Register the mesh-based source
+services.AddSingleton<IAssetSource>(sp =>
+{
+    var assetClient = sp.GetRequiredService<IAssetClient>();
+    var logger = sp.GetService<ILogger<BannouMeshAssetSource>>();
+    return new BannouMeshAssetSource(assetClient, Realm.Arcadia, logger);
+});
+
+// Optional cache (use MemoryAssetCache for containers, FileAssetCache for VMs)
+services.AddSingleton<IAssetCache>(sp =>
+    new MemoryAssetCache(maxSizeBytes: 256 * 1024 * 1024));
+
+// Register the loader
+services.AddSingleton<AssetLoader>(sp =>
+{
+    var source = sp.GetRequiredService<IAssetSource>();
+    var cache = sp.GetService<IAssetCache>();
+    var logger = sp.GetService<ILogger<AssetLoader>>();
+    return new AssetLoader(source, cache, logger: logger);
+});
+```
+
+### Caching Considerations for Servers
+
+| Environment | Recommended Cache | Reason |
+|-------------|-------------------|--------|
+| Containers (K8s, Docker) | `MemoryAssetCache` | Ephemeral filesystem, fast restarts |
+| VMs with persistent disk | `FileAssetCache` | Survives restarts, larger capacity |
+| Serverless functions | None | Cold starts, minimal lifetime |
+| Processing workers | `MemoryAssetCache` | Process specific assets, then discard |
+
+### Server-Side Best Practices
+
+1. **Prefer metadata over content**: Most server use cases only need asset info, not the actual bytes
+2. **Use direct API for simple queries**: Don't add loader overhead for metadata lookups
+3. **Choose appropriate caching**: Match cache strategy to your deployment model
+4. **Consider asset processing separately**: Heavy processing should use dedicated workers with direct storage access
+5. **Monitor memory usage**: Server caches can grow; set appropriate limits
+
+### Comparison: Client vs Server Code
+
+**Game Client (WebSocket)**:
+```csharp
+// High-level facade with persistent cache
+var manager = await AssetManager.ConnectAsync(url, email, password, options);
+await manager.LoadAssetsAsync(assetIds);
+var model = await manager.GetAssetAsync<Model>(assetId);
+```
+
+**Game Server (Mesh)**:
+```csharp
+// Direct API for metadata
+var info = await _assetClient.GetAssetAsync(new GetAssetRequest { AssetId = assetId });
+
+// Or full loading when needed
+var source = new BannouMeshAssetSource(assetClient, Realm.Arcadia);
+var loader = new AssetLoader(source);
+await loader.EnsureAssetsAvailableAsync(assetIds);
+var bytes = await loader.GetAssetBytesAsync(assetId);
+```
+
+---
+
+## SDK Package Reference
+
+| Package | Purpose | Use Case |
+|---------|---------|----------|
+| `BeyondImmersion.Bannou.AssetLoader` | Core loader (no network) | All consumers |
+| `BeyondImmersion.Bannou.AssetLoader.Client` | WebSocket source + AssetManager | Game clients |
+| `BeyondImmersion.Bannou.AssetLoader.Server` | Mesh source | Game servers needing bundle content |
+| `BeyondImmersion.Bannou.AssetBundler` | Bundle creation | Content tools |
+| `BeyondImmersion.Bannou.AssetLoader.Stride` | Stride type loaders | Stride engine integration |
+
+For most server scenarios, you won't need `AssetLoader.Server` at all - just use the generated `IAssetClient` from the main `bannou-service` package
