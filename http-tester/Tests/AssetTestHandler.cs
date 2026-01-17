@@ -63,6 +63,11 @@ public class AssetTestHandler : BaseHttpTestHandler
         // Bulk asset retrieval tests
         new ServiceTest(TestBulkGetAssetsWithoutUrls, "BulkGetAssetsWithoutUrls", "Asset", "Test bulk asset metadata retrieval without download URLs"),
         new ServiceTest(TestBulkGetAssetsWithUrls, "BulkGetAssetsWithUrls", "Asset", "Test bulk asset metadata retrieval with download URLs"),
+
+        // Async job handling tests
+        new ServiceTest(TestGetJobStatus, "GetJobStatus", "Asset", "Test polling job status for async metabundle creation"),
+        new ServiceTest(TestGetJobStatusNotFound, "GetJobStatusNotFound", "Asset", "Test 404 for non-existent job ID"),
+        new ServiceTest(TestCancelNonExistentJob, "CancelNonExistentJob", "Asset", "Test 404 for cancelling non-existent job"),
     ];
 
     /// <summary>
@@ -1210,4 +1215,127 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"BulkGetAssets (with URLs): {response.Assets.Count} assets with pre-signed URLs");
         }, "Bulk get assets with URLs");
+
+    /// <summary>
+    /// Test polling job status for an async metabundle creation.
+    /// Creates a metabundle that may be processed asynchronously, then polls for status.
+    /// </summary>
+    private static async Task<TestResult> TestGetJobStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var assetClient = GetServiceClient<IAssetClient>();
+
+            // Step 1: Upload assets and create a source bundle
+            Console.WriteLine("  Step 1: Creating source bundle for metabundle...");
+            var asset = await UploadTestAsset(assetClient, "job-status-test");
+            if (asset == null)
+                return TestResult.Failed("Failed to upload test asset");
+
+            var bundleId = $"job-status-bundle-{DateTime.Now.Ticks}";
+            var bundle = await assetClient.CreateBundleAsync(new CreateBundleRequest
+            {
+                Owner = "http-tester",
+                BundleId = bundleId,
+                Version = "1.0.0",
+                AssetIds = new List<string> { asset.AssetId },
+                Compression = CompressionType.None
+            });
+            if (bundle.Status == CreateBundleResponseStatus.Failed)
+                return TestResult.Failed("Failed to create source bundle");
+
+            Console.WriteLine($"  Created source bundle: {bundleId}");
+
+            // Step 2: Create metabundle (may be async for large bundles)
+            Console.WriteLine("  Step 2: Creating metabundle...");
+            var metabundleId = $"job-status-metabundle-{DateTime.Now.Ticks}";
+            var metabundle = await assetClient.CreateMetabundleAsync(new CreateMetabundleRequest
+            {
+                MetabundleId = metabundleId,
+                SourceBundleIds = new List<string> { bundleId },
+                Owner = "http-tester",
+                Version = "1.0.0",
+                Realm = Asset.Realm.Arcadia
+            });
+
+            // Check if we got a job ID for async processing
+            if (metabundle.JobId == null || metabundle.JobId == Guid.Empty)
+            {
+                // Small metabundles complete synchronously
+                Console.WriteLine($"  Metabundle completed synchronously: Status={metabundle.Status}");
+                return TestResult.Successful($"Metabundle completed synchronously (no async job needed): Status={metabundle.Status}");
+            }
+
+            Console.WriteLine($"  Got async job: JobId={metabundle.JobId}");
+
+            // Step 3: Poll job status
+            Console.WriteLine("  Step 3: Polling job status...");
+            var maxWaitSeconds = 30;
+            var pollIntervalMs = 500;
+            var startTime = DateTime.UtcNow;
+
+            GetJobStatusResponse? lastStatus = null;
+            while ((DateTime.UtcNow - startTime).TotalSeconds < maxWaitSeconds)
+            {
+                var statusRequest = new GetJobStatusRequest
+                {
+                    JobId = metabundle.JobId.Value
+                };
+
+                lastStatus = await assetClient.GetJobStatusAsync(statusRequest);
+
+                Console.WriteLine($"  Poll: Status={lastStatus.Status}, Progress={lastStatus.Progress}%");
+
+                if (lastStatus.Status == GetJobStatusResponseStatus.Ready || lastStatus.Status == GetJobStatusResponseStatus.Failed)
+                    break;
+
+                await Task.Delay(pollIntervalMs);
+            }
+
+            if (lastStatus == null)
+                return TestResult.Failed("Failed to get job status");
+
+            if (lastStatus.Status == GetJobStatusResponseStatus.Failed)
+                return TestResult.Failed($"Job failed: {lastStatus.ErrorCode} - {lastStatus.ErrorMessage}");
+
+            if (lastStatus.Status != GetJobStatusResponseStatus.Ready)
+                return TestResult.Failed($"Job did not complete within {maxWaitSeconds}s, status={lastStatus.Status}");
+
+            // Verify download URL is available for completed job
+            if (lastStatus.DownloadUrl == null)
+                return TestResult.Failed("Completed job has no download URL");
+
+            return TestResult.Successful($"GetJobStatus: JobId={metabundle.JobId}, FinalStatus={lastStatus.Status}, Size={lastStatus.SizeBytes}");
+        }, "Get job status");
+
+    /// <summary>
+    /// Test 404 error when getting status of non-existent job.
+    /// </summary>
+    private static async Task<TestResult> TestGetJobStatusNotFound(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.GetJobStatusAsync(new GetJobStatusRequest
+                {
+                    JobId = Guid.NewGuid()
+                });
+            },
+            404,
+            "Get status for non-existent job");
+
+    /// <summary>
+    /// Test 404 error when cancelling non-existent job.
+    /// </summary>
+    private static async Task<TestResult> TestCancelNonExistentJob(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var assetClient = GetServiceClient<IAssetClient>();
+                await assetClient.CancelJobAsync(new CancelJobRequest
+                {
+                    JobId = Guid.NewGuid()
+                });
+            },
+            404,
+            "Cancel non-existent job");
 }

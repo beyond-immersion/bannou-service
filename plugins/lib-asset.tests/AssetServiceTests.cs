@@ -2567,6 +2567,412 @@ public class AssetServiceTests
 
     #endregion
 
+    #region GetJobStatusAsync Tests
+
+    [Fact]
+    public async Task GetJobStatusAsync_WithInvalidJobId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetJobStatusRequest { JobId = Guid.Empty };
+
+        // Act
+        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetJobStatusAsync_WithNonExistentJob_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new GetJobStatusRequest { JobId = jobId };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MetabundleJob?)null);
+
+        // Act
+        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetJobStatusAsync_WithQueuedJob_ShouldReturnQueuedStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var metabundleId = "test-metabundle";
+        var request = new GetJobStatusRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = metabundleId,
+            Status = InternalJobStatus.Queued,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        // Act
+        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(jobId, result.JobId);
+        Assert.Equal(metabundleId, result.MetabundleId);
+        Assert.Equal(GetJobStatusResponseStatus.Queued, result.Status);
+    }
+
+    [Fact]
+    public async Task GetJobStatusAsync_WithReadyJob_ShouldReturnResultDataAndDownloadUrl()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var metabundleId = "test-metabundle";
+        var storageKey = "bundles/current/test-metabundle.bundle";
+        var expectedUrl = "https://storage.example.com/download/test-metabundle.bundle";
+        var request = new GetJobStatusRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = metabundleId,
+            Status = InternalJobStatus.Ready,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow,
+            ProcessingTimeMs = 5000,
+            Result = new MetabundleJobResult
+            {
+                AssetCount = 10,
+                StandaloneAssetCount = 2,
+                SizeBytes = 1024000,
+                StorageKey = storageKey,
+                SourceBundles = new List<SourceBundleReferenceInternal>
+                {
+                    new() { BundleId = "source-1", Version = "1.0.0", AssetIds = new List<string> { "asset-1" }, ContentHash = "hash1" }
+                }
+            }
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        _mockStorageProvider.Setup(s => s.GenerateDownloadUrlAsync(
+            It.IsAny<string>(),
+            storageKey,
+            It.IsAny<string?>(),
+            It.IsAny<TimeSpan?>()))
+            .ReturnsAsync(new StorageModels.PreSignedDownloadResult(
+                DownloadUrl: expectedUrl,
+                Key: storageKey,
+                VersionId: null,
+                ExpiresAt: DateTime.UtcNow.AddHours(1),
+                ContentLength: 1024000,
+                ContentType: "application/bannou-bundle"));
+
+        // Act
+        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(GetJobStatusResponseStatus.Ready, result.Status);
+        Assert.Equal(10, result.AssetCount);
+        Assert.Equal(2, result.StandaloneAssetCount);
+        Assert.Equal(1024000, result.SizeBytes);
+        Assert.NotNull(result.DownloadUrl);
+        Assert.Equal(expectedUrl, result.DownloadUrl.ToString());
+        Assert.NotNull(result.SourceBundles);
+        Assert.Single(result.SourceBundles);
+    }
+
+    [Fact]
+    public async Task GetJobStatusAsync_WithFailedJob_ShouldReturnErrorDetails()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new GetJobStatusRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = "test-metabundle",
+            Status = InternalJobStatus.Failed,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow,
+            ErrorCode = "TIMEOUT",
+            ErrorMessage = "Job timed out before processing could start"
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        // Act
+        var (status, result) = await service.GetJobStatusAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.Equal(GetJobStatusResponseStatus.Failed, result.Status);
+        Assert.Equal("TIMEOUT", result.ErrorCode);
+        Assert.Equal("Job timed out before processing could start", result.ErrorMessage);
+    }
+
+    #endregion
+
+    #region CancelJobAsync Tests
+
+    [Fact]
+    public async Task CancelJobAsync_WithInvalidJobId_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new CancelJobRequest { JobId = Guid.Empty };
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CancelJobAsync_WithNonExistentJob_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new CancelJobRequest { JobId = jobId };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MetabundleJob?)null);
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CancelJobAsync_WithQueuedJob_ShouldCancelSuccessfully()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new CancelJobRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = "test-metabundle",
+            Status = InternalJobStatus.Queued,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        _mockJobStore.Setup(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<MetabundleJob>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-123");
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.Cancelled);
+        Assert.Equal(CancelJobResponseStatus.Cancelled, result.Status);
+        Assert.Contains("Queued", result.Message);
+
+        // Verify job was saved with cancelled status
+        _mockJobStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.Is<MetabundleJob>(j => j.Status == InternalJobStatus.Cancelled),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelJobAsync_WithReadyJob_ShouldReturnConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new CancelJobRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = "test-metabundle",
+            Status = InternalJobStatus.Ready,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.NotNull(result);
+        Assert.False(result.Cancelled);
+        Assert.Equal(CancelJobResponseStatus.Ready, result.Status);
+        Assert.Contains("already completed", result.Message);
+    }
+
+    [Fact]
+    public async Task CancelJobAsync_WithAlreadyCancelledJob_ShouldReturnOkWithCancelledStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var request = new CancelJobRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = "test-metabundle",
+            Status = InternalJobStatus.Cancelled,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.Cancelled);
+        Assert.Equal(CancelJobResponseStatus.Cancelled, result.Status);
+        Assert.Contains("already cancelled", result.Message);
+    }
+
+    [Fact]
+    public async Task CancelJobAsync_WithSessionId_ShouldEmitCompletionEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var jobId = Guid.NewGuid();
+        var sessionId = "test-session-123";
+        var request = new CancelJobRequest { JobId = jobId };
+
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = "test-metabundle",
+            Status = InternalJobStatus.Queued,
+            RequesterSessionId = sessionId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockJobStore.Setup(s => s.GetAsync(
+            It.Is<string>(k => k.Contains(jobId.ToString())),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+
+        _mockJobStore.Setup(s => s.SaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<MetabundleJob>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-456");
+
+        _mockAssetEventEmitter.Setup(e => e.EmitMetabundleCreationCompleteAsync(
+            sessionId,
+            jobId,
+            "test-metabundle",
+            false,
+            MetabundleJobStatus.Cancelled,
+            null,
+            null,
+            null,
+            null,
+            null,
+            MetabundleErrorCode.CANCELLED,
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, result) = await service.CancelJobAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(result);
+        Assert.True(result.Cancelled);
+
+        // Verify completion event was emitted
+        _mockAssetEventEmitter.Verify(e => e.EmitMetabundleCreationCompleteAsync(
+            sessionId,
+            jobId,
+            "test-metabundle",
+            false,
+            MetabundleJobStatus.Cancelled,
+            null,
+            null,
+            null,
+            null,
+            null,
+            MetabundleErrorCode.CANCELLED,
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private AssetService CreateService()
