@@ -24710,51 +24710,6 @@
             Hash of source bundle at composition time (for integrity verification)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleAssetEntry">
-            <summary>
-            Asset entry within a bundle (supports platform-specific IDs)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.AssetId">
-            <summary>
-            Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentHash">
-            <summary>
-            SHA256 hash of asset content
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Filename">
-            <summary>
-            Original filename
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Size">
-            <summary>
-            Asset size in bytes (uncompressed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ExternalAssetId">
-            <summary>
-            External asset identifier for cross-system references.
-            <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Tags">
-            <summary>
-            Tags associated with this asset within the bundle.
-            <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-            <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetConflict">
             <summary>
             Describes a conflict when the same asset ID has different content hashes
