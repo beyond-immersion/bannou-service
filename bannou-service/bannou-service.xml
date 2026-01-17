@@ -55850,6 +55850,600 @@
             Call this during application startup to enable native messaging.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator">
+            <summary>
+            Generated partial interface adding service client properties to IServiceNavigator.
+            </summary>
+             <summary>
+             Aggregates all service clients into a single navigation interface with
+             session context awareness for pushing client events.
+             </summary>
+             <remarks>
+             <para>
+             This interface consolidates service client access (e.g., navigator.Account, navigator.Asset)
+             and provides session context methods for:
+             1. Determining if the current request originated from a WebSocket client
+             2. Getting the originating session ID for client event delivery
+             3. Publishing events directly back to the requester
+             </para>
+            
+             <para>
+             Usage example:
+             <code>
+             public class AssetService : IAssetService
+             {
+                 private readonly IServiceNavigator _nav;
+            
+                 public AssetService(IServiceNavigator nav) => _nav = nav;
+            
+                 public async Task&lt;(StatusCodes, CreateMetabundleResponse?)&gt; CreateMetabundleAsync(...)
+                 {
+                     // For long-running jobs, capture the session for later notification
+                     var sessionId = _nav.GetRequesterSessionId();
+            
+                     // Start async job...
+                     var job = new MetabundleJob { OriginatingSessionId = sessionId };
+            
+                     // When job completes, notify the client:
+                     if (_nav.HasClientContext)
+                     {
+                         await _nav.PublishToRequesterAsync(new MetabundleCompleteEvent { JobId = job.JobId });
+                     }
+                 }
+             }
+             </code>
+             </para>
+            
+             <para>
+             WARNING: Session ID is for correlation, tracing, and client event delivery only.
+             DO NOT use for authentication, authorization, or ownership decisions.
+             </para>
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Account">
+            <summary>
+            Gets the Account service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Achievement">
+            <summary>
+            Gets the Achievement service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Actor">
+            <summary>
+            Gets the Actor service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Analytics">
+            <summary>
+            Gets the Analytics service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Asset">
+            <summary>
+            Gets the Asset service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Auth">
+            <summary>
+            Gets the Auth service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Behavior">
+            <summary>
+            Gets the Behavior service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Character">
+            <summary>
+            Gets the Character service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterHistory">
+            <summary>
+            Gets the CharacterHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterPersonality">
+            <summary>
+            Gets the CharacterPersonality service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Connect">
+            <summary>
+            Gets the Connect service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Documentation">
+            <summary>
+            Gets the Documentation service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameService">
+            <summary>
+            Gets the GameService service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameSession">
+            <summary>
+            Gets the GameSession service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Leaderboard">
+            <summary>
+            Gets the Leaderboard service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Location">
+            <summary>
+            Gets the Location service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mapping">
+            <summary>
+            Gets the Mapping service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Matchmaking">
+            <summary>
+            Gets the Matchmaking service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mesh">
+            <summary>
+            Gets the Mesh service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Messaging">
+            <summary>
+            Gets the Messaging service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Orchestrator">
+            <summary>
+            Gets the Orchestrator service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Permission">
+            <summary>
+            Gets the Permission service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Realm">
+            <summary>
+            Gets the Realm service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RealmHistory">
+            <summary>
+            Gets the RealmHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Relationship">
+            <summary>
+            Gets the Relationship service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RelationshipType">
+            <summary>
+            Gets the RelationshipType service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.SaveLoad">
+            <summary>
+            Gets the SaveLoad service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Scene">
+            <summary>
+            Gets the Scene service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Species">
+            <summary>
+            Gets the Species service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.State">
+            <summary>
+            Gets the State service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Subscription">
+            <summary>
+            Gets the Subscription service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Voice">
+            <summary>
+            Gets the Voice service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Website">
+            <summary>
+            Gets the Website service client.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetRequesterSessionId">
+            <summary>
+            Gets the session ID of the WebSocket client that initiated this request.
+            Returns null if the request did not originate from a WebSocket client.
+            </summary>
+            <returns>Session ID string, or null if not a client-initiated request.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetCorrelationId">
+            <summary>
+            Gets the correlation ID for distributed tracing.
+            Returns null if no correlation ID was provided.
+            </summary>
+            <returns>Correlation ID string, or null.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.HasClientContext">
+            <summary>
+            Returns true if this request originated from a WebSocket client,
+            meaning GetRequesterSessionId() will return a valid session ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the WebSocket session that initiated this request.
+            Returns false if there is no client context (request was not from WebSocket).
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published, false if no client context exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to a specific session by ID.
+            Use this when you have stored a session ID for later notification.
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="sessionId">The target session ID.</param>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published successfully.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator">
+            <summary>
+            Concrete implementation of IServiceNavigator that aggregates all service clients
+            and provides session context access for client event publishing.
+            </summary>
+            <remarks>
+            Registered as Scoped in DI to ensure per-request isolation of service clients.
+            Session context is read from ServiceRequestContext (AsyncLocal storage).
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+            <summary>
+            Creates a new ServiceNavigator with all service client dependencies.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GetRequesterSessionId">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GetCorrelationId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.HasClientContext">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Account">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Achievement">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Actor">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Analytics">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Asset">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Auth">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Behavior">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Character">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterHistory">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterPersonality">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Connect">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Documentation">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameService">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameSession">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Leaderboard">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Location">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Mapping">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Matchmaking">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Mesh">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Messaging">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Orchestrator">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Permission">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Realm">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.RealmHistory">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Relationship">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.RelationshipType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.SaveLoad">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Scene">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Species">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.State">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Subscription">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Voice">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Website">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
+            <summary>
+            Base marker interface for all Bannou service clients.
+            Provides explicit identification of client types for plugin discovery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Should match the service name in the corresponding BannouServiceAttribute.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
+            <summary>
+            Generic interface for Bannou service clients with fluent API support.
+            Provides type-safe method chaining for request configuration.
+            </summary>
+            <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
+            <summary>
+            Dependency injection extensions for registering Bannou-aware service clients.
+            Provides dynamic app-id resolution with default "bannou" routing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddServiceAppMappingResolver(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the service app mapping resolver as a singleton.
+            This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
+            <summary>
+            Registers a Bannou-aware service client with automatic HttpClient configuration.
+            The client uses dynamic app-id resolution defaulting to "bannou".
+            </summary>
+            <typeparam name="TClient">The service client type (e.g., AccountClient)</typeparam>
+            <typeparam name="TInterface">The service interface type (e.g., IAccountClient)</typeparam>
+            <param name="services">The service collection to add the client to.</param>
+            <param name="serviceName">The service name for app-id resolution (e.g., "account")</param>
+            <param name="configureClient">Optional HttpClient configuration</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers multiple Bannou service clients at once for convenience.
+            Uses service name derived from client type name (e.g., AccountClient -> "account").
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Auto-registers all service clients found in the current assembly and plugin assemblies.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
+            <summary>
+            Auto-registers all service clients found in the provided assemblies.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            Use this overload when PluginLoader is not available (e.g., in test harnesses).
+            </summary>
+            <param name="services">The service collection.</param>
+            <param name="assemblies">The assemblies to scan for client types.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
+            <summary>
+            Extension methods for registering all service client infrastructure.
+            This includes Bannou service clients, event handling, and service mapping.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the complete Bannou service client infrastructure.
+            Includes Bannou clients, service mapping, events, and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers all discovered Bannou service clients automatically.
+            Uses reflection to find all {Service}Client classes and registers them with DI.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddSpecificServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers specific service clients manually for more control.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext">
+             <summary>
+             Provides ambient context for service requests using AsyncLocal storage.
+             Captures session ID and correlation ID from incoming requests for:
+             1. Forwarding to downstream service calls (auto-propagation)
+             2. Pushing client events back to the originating WebSocket session
+             </summary>
+             <remarks>
+             The session ID is extracted from the X-Bannou-Session-Id header, which Connect
+             attaches when proxying WebSocket requests to backend services.
+            
+             WARNING: Session ID is for correlation/tracing and client event delivery only.
+             DO NOT use for authentication, authorization, or ownership decisions.
+             See ConnectService.cs comments for security guidance.
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.SessionId">
+            <summary>
+            The session ID of the WebSocket client that initiated this request chain.
+            Null if the request did not originate from a WebSocket client (e.g., internal/scheduled).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.CorrelationId">
+            <summary>
+            Optional correlation ID for distributed tracing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.HasClientContext">
+            <summary>
+            Returns true if this request originated from a WebSocket client.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.Clear">
+            <summary>
+            Clears all context values. Called by middleware after request completion.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware">
+             <summary>
+             Middleware that extracts service context headers from incoming requests
+             and stores them in ServiceRequestContext for use by downstream services.
+             </summary>
+             <remarks>
+             This middleware captures:
+             - X-Bannou-Session-Id: WebSocket session ID (set by Connect when proxying)
+             - X-Correlation-Id: Optional distributed tracing ID
+            
+             The context is automatically cleared after the request completes.
+             </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.SessionIdHeader">
+            <summary>
+            Header name for session ID propagation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.CorrelationIdHeader">
+            <summary>
+            Header name for correlation ID propagation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate)">
+            <summary>
+            Creates a new instance of the middleware.
+            </summary>
+            <param name="next">The next middleware in the pipeline.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Invokes the middleware.
+            </summary>
+            <param name="context">The HTTP context.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddlewareExtensions">
+            <summary>
+            Extension methods for registering ServiceRequestContextMiddleware.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddlewareExtensions.UseServiceRequestContext(Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Adds the ServiceRequestContextMiddleware to the application pipeline.
+            Should be added early in the pipeline to capture context for all requests.
+            </summary>
+            <param name="app">The application builder.</param>
+            <returns>The application builder for chaining.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler">
+             <summary>
+             HTTP message handler that automatically forwards the session ID header
+             to downstream service calls when making mesh requests.
+             </summary>
+             <remarks>
+             This handler reads from ServiceRequestContext.SessionId and attaches
+             the X-Bannou-Session-Id header to outgoing requests, enabling full
+             request chain tracing through distributed service calls.
+            
+             Add this handler to HttpClient via .AddHttpMessageHandler() in DI registration.
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler})">
+            <summary>
+            Creates a new instance of the handler.
+            </summary>
+            <param name="logger">Logger for diagnostic output.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler.SendAsync(System.Net.Http.HttpRequestMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends an HTTP request, adding the session ID header if available in context.
+            </summary>
+            <param name="request">The HTTP request message.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The HTTP response message.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Helpers.ErrorResponses">
             <summary>
             Standardized error response factory methods for consistent error handling across services.
@@ -57302,103 +57896,6 @@
             Should be generated once per server instance and reused.
             </summary>
             <returns>Cryptographically secure server salt</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
-            <summary>
-            Base marker interface for all Bannou service clients.
-            Provides explicit identification of client types for plugin discovery.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceClient.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Should match the service name in the corresponding BannouServiceAttribute.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
-            <summary>
-            Generic interface for Bannou service clients with fluent API support.
-            Provides type-safe method chaining for request configuration.
-            </summary>
-            <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1.WithAuthorization(System.String)">
-            <summary>
-            Sets the Authorization header for the next request.
-            Automatically prefixes with "Bearer " if not already present.
-            Returns this instance for method chaining.
-            </summary>
-            <param name="token">JWT token or authorization value</param>
-            <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
-            <summary>
-            Dependency injection extensions for registering Bannou-aware service clients.
-            Provides dynamic app-id resolution with default "bannou" routing.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddServiceAppMappingResolver(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers the service app mapping resolver as a singleton.
-            This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
-            <summary>
-            Registers a Bannou-aware service client with automatic HttpClient configuration.
-            The client uses dynamic app-id resolution defaulting to "bannou".
-            </summary>
-            <typeparam name="TClient">The service client type (e.g., AccountClient)</typeparam>
-            <typeparam name="TInterface">The service interface type (e.g., IAccountClient)</typeparam>
-            <param name="services">The service collection to add the client to.</param>
-            <param name="serviceName">The service name for app-id resolution (e.g., "account")</param>
-            <param name="configureClient">Optional HttpClient configuration</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
-            <summary>
-            Registers multiple Bannou service clients at once for convenience.
-            Uses service name derived from client type name (e.g., AccountClient -> "account").
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Auto-registers all service clients found in the current assembly and plugin assemblies.
-            Follows naming convention: {Service}Client implements I{Service}Client.
-            Service name is derived by removing "Client" suffix and converting to lowercase.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
-            <summary>
-            Auto-registers all service clients found in the provided assemblies.
-            Follows naming convention: {Service}Client implements I{Service}Client.
-            Service name is derived by removing "Client" suffix and converting to lowercase.
-            Use this overload when PluginLoader is not available (e.g., in test harnesses).
-            </summary>
-            <param name="services">The service collection.</param>
-            <param name="assemblies">The assemblies to scan for client types.</param>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
-            <summary>
-            Extension methods for registering all service client infrastructure.
-            This includes Bannou service clients, event handling, and service mapping.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers the complete Bannou service client infrastructure.
-            Includes Bannou clients, service mapping, events, and lifecycle management.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers all discovered Bannou service clients automatically.
-            Uses reflection to find all {Service}Client classes and registers them with DI.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddSpecificServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
-            <summary>
-            Registers specific service clients manually for more control.
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.BannouServiceBase">
             <summary>

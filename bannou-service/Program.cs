@@ -273,6 +273,10 @@ public static class Program
         }
         try
         {
+            // Add service request context middleware to capture session ID from incoming requests
+            // This MUST be early in the pipeline to capture context before any service calls
+            webApp.UseServiceRequestContext();
+
             // Add diagnostic middleware to track request lifecycle
             webApp.Use(async (context, next) =>
             {

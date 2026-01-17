@@ -20,11 +20,19 @@ public static class ServiceClientsDependencyInjection
         // Core service mapping infrastructure
         services.AddServiceAppMappingResolver();
 
+        // Session ID forwarding handler for automatic header propagation
+        // Registered as transient - HttpClientFactory creates new instance per HttpClient
+        services.AddTransient<SessionIdForwardingHandler>();
+
         // Event consumer for cross-plugin event dispatch
         services.AddEventConsumer();
 
         // ABML runtime services (required by actor plugin for behavior execution)
         services.AddSingleton<IExpressionEvaluator, ExpressionEvaluator>();
+
+        // ServiceNavigator aggregates all service clients with session context
+        // Scoped lifetime ensures per-request client instances
+        services.AddScoped<IServiceNavigator, ServiceNavigator>();
 
         return services;
     }
