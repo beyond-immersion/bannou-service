@@ -34,7 +34,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing IngestEventResponse on success.</returns>
-    public Task<ApiResponse<IngestEventResponse>> IngesteventAsync(
+    public Task<ApiResponse<IngestEventResponse>> IngestEventAsync(
         IngestEventRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing IngestEventBatchResponse on success.</returns>
-    public Task<ApiResponse<IngestEventBatchResponse>> IngesteventbatchAsync(
+    public Task<ApiResponse<IngestEventBatchResponse>> IngestEventBatchAsync(
         IngestEventBatchRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing EntitySummaryResponse on success.</returns>
-    public Task<ApiResponse<EntitySummaryResponse>> GetEntitysummaryAsync(
+    public Task<ApiResponse<EntitySummaryResponse>> GetEntitySummaryAsync(
         GetEntitySummaryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryEntitySummariesResponse on success.</returns>
-    public Task<ApiResponse<QueryEntitySummariesResponse>> QueryentitysummariesAsync(
+    public Task<ApiResponse<QueryEntitySummariesResponse>> QueryEntitySummariesAsync(
         QueryEntitySummariesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SkillRatingResponse on success.</returns>
-    public Task<ApiResponse<SkillRatingResponse>> GetSkillratingAsync(
+    public Task<ApiResponse<SkillRatingResponse>> GetSkillRatingAsync(
         GetSkillRatingRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UpdateSkillRatingResponse on success.</returns>
-    public Task<ApiResponse<UpdateSkillRatingResponse>> UpdateSkillratingAsync(
+    public Task<ApiResponse<UpdateSkillRatingResponse>> UpdateSkillRatingAsync(
         UpdateSkillRatingRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -141,7 +141,7 @@ public sealed class AnalyticsProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task RecordcontrollereventEventAsync(
+    public Task RecordControllerEventEventAsync(
         RecordControllerEventRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -158,7 +158,7 @@ public sealed class AnalyticsProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryControllerHistoryResponse on success.</returns>
-    public Task<ApiResponse<QueryControllerHistoryResponse>> QuerycontrollerhistoryAsync(
+    public Task<ApiResponse<QueryControllerHistoryResponse>> QueryControllerHistoryAsync(
         QueryControllerHistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

@@ -122,7 +122,7 @@ public sealed class MatchmakingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing JoinMatchmakingResponse on success.</returns>
-    public Task<ApiResponse<JoinMatchmakingResponse>> JoinmatchmakingAsync(
+    public Task<ApiResponse<JoinMatchmakingResponse>> JoinMatchmakingAsync(
         JoinMatchmakingRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -139,7 +139,7 @@ public sealed class MatchmakingProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task LeavematchmakingEventAsync(
+    public Task LeaveMatchmakingEventAsync(
         LeaveMatchmakingRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -156,7 +156,7 @@ public sealed class MatchmakingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MatchmakingStatusResponse on success.</returns>
-    public Task<ApiResponse<MatchmakingStatusResponse>> GetMatchmakingstatusAsync(
+    public Task<ApiResponse<MatchmakingStatusResponse>> GetMatchmakingStatusAsync(
         GetMatchmakingStatusRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -174,7 +174,7 @@ public sealed class MatchmakingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AcceptMatchResponse on success.</returns>
-    public Task<ApiResponse<AcceptMatchResponse>> AcceptmatchAsync(
+    public Task<ApiResponse<AcceptMatchResponse>> AcceptMatchAsync(
         AcceptMatchRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -191,7 +191,7 @@ public sealed class MatchmakingProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeclinematchEventAsync(
+    public Task DeclineMatchEventAsync(
         DeclineMatchRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -208,7 +208,7 @@ public sealed class MatchmakingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MatchmakingStatsResponse on success.</returns>
-    public Task<ApiResponse<MatchmakingStatsResponse>> GetMatchmakingstatsAsync(
+    public Task<ApiResponse<MatchmakingStatsResponse>> GetMatchmakingStatsAsync(
         GetMatchmakingStatsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

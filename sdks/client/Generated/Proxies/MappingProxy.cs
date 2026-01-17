@@ -52,7 +52,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ReleaseAuthorityResponse on success.</returns>
-    public Task<ApiResponse<ReleaseAuthorityResponse>> ReleaseauthorityAsync(
+    public Task<ApiResponse<ReleaseAuthorityResponse>> ReleaseAuthorityAsync(
         ReleaseAuthorityRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthorityHeartbeatResponse on success.</returns>
-    public Task<ApiResponse<AuthorityHeartbeatResponse>> AuthorityheartbeatAsync(
+    public Task<ApiResponse<AuthorityHeartbeatResponse>> AuthorityHeartbeatAsync(
         AuthorityHeartbeatRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PublishMapUpdateResponse on success.</returns>
-    public Task<ApiResponse<PublishMapUpdateResponse>> PublishmapupdateAsync(
+    public Task<ApiResponse<PublishMapUpdateResponse>> PublishMapUpdateAsync(
         PublishMapUpdateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PublishObjectChangesResponse on success.</returns>
-    public Task<ApiResponse<PublishObjectChangesResponse>> PublishobjectchangesAsync(
+    public Task<ApiResponse<PublishObjectChangesResponse>> PublishObjectChangesAsync(
         PublishObjectChangesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RequestSnapshotResponse on success.</returns>
-    public Task<ApiResponse<RequestSnapshotResponse>> RequestsnapshotAsync(
+    public Task<ApiResponse<RequestSnapshotResponse>> RequestSnapshotAsync(
         RequestSnapshotRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -142,7 +142,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryPointResponse on success.</returns>
-    public Task<ApiResponse<QueryPointResponse>> QuerypointAsync(
+    public Task<ApiResponse<QueryPointResponse>> QueryPointAsync(
         QueryPointRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryBoundsResponse on success.</returns>
-    public Task<ApiResponse<QueryBoundsResponse>> QueryboundsAsync(
+    public Task<ApiResponse<QueryBoundsResponse>> QueryBoundsAsync(
         QueryBoundsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -178,7 +178,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryObjectsByTypeResponse on success.</returns>
-    public Task<ApiResponse<QueryObjectsByTypeResponse>> QueryobjectsbytypeAsync(
+    public Task<ApiResponse<QueryObjectsByTypeResponse>> QueryObjectsByTypeAsync(
         QueryObjectsByTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -196,7 +196,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AffordanceQueryResponse on success.</returns>
-    public Task<ApiResponse<AffordanceQueryResponse>> QueryaffordanceAsync(
+    public Task<ApiResponse<AffordanceQueryResponse>> QueryAffordanceAsync(
         AffordanceQueryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthoringCheckoutResponse on success.</returns>
-    public Task<ApiResponse<AuthoringCheckoutResponse>> CheckoutforauthoringAsync(
+    public Task<ApiResponse<AuthoringCheckoutResponse>> CheckoutForAuthoringAsync(
         AuthoringCheckoutRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -232,7 +232,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthoringCommitResponse on success.</returns>
-    public Task<ApiResponse<AuthoringCommitResponse>> CommitauthoringAsync(
+    public Task<ApiResponse<AuthoringCommitResponse>> CommitAuthoringAsync(
         AuthoringCommitRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -250,7 +250,7 @@ public sealed class MappingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthoringReleaseResponse on success.</returns>
-    public Task<ApiResponse<AuthoringReleaseResponse>> ReleaseauthoringAsync(
+    public Task<ApiResponse<AuthoringReleaseResponse>> ReleaseAuthoringAsync(
         AuthoringReleaseRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

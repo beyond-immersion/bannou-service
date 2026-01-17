@@ -34,7 +34,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UploadResponse on success.</returns>
-    public Task<ApiResponse<UploadResponse>> RequestuploadAsync(
+    public Task<ApiResponse<UploadResponse>> RequestUploadAsync(
         UploadRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AssetMetadata on success.</returns>
-    public Task<ApiResponse<AssetMetadata>> CompleteuploadAsync(
+    public Task<ApiResponse<AssetMetadata>> CompleteUploadAsync(
         CompleteUploadRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AssetVersionList on success.</returns>
-    public Task<ApiResponse<AssetVersionList>> ListAssetversionsAsync(
+    public Task<ApiResponse<AssetVersionList>> ListAssetVersionsAsync(
         ListVersionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AssetSearchResult on success.</returns>
-    public Task<ApiResponse<AssetSearchResult>> SearchassetsAsync(
+    public Task<ApiResponse<AssetSearchResult>> SearchAssetsAsync(
         AssetSearchRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -178,7 +178,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UploadResponse on success.</returns>
-    public Task<ApiResponse<UploadResponse>> RequestbundleuploadAsync(
+    public Task<ApiResponse<UploadResponse>> RequestBundleUploadAsync(
         BundleUploadRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ResolveBundlesResponse on success.</returns>
-    public Task<ApiResponse<ResolveBundlesResponse>> ResolvebundlesAsync(
+    public Task<ApiResponse<ResolveBundlesResponse>> ResolveBundlesAsync(
         ResolveBundlesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -232,7 +232,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryBundlesByAssetResponse on success.</returns>
-    public Task<ApiResponse<QueryBundlesByAssetResponse>> QuerybundlesbyassetAsync(
+    public Task<ApiResponse<QueryBundlesByAssetResponse>> QueryBundlesByAssetAsync(
         QueryBundlesByAssetRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -286,7 +286,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RestoreBundleResponse on success.</returns>
-    public Task<ApiResponse<RestoreBundleResponse>> RestorebundleAsync(
+    public Task<ApiResponse<RestoreBundleResponse>> RestoreBundleAsync(
         RestoreBundleRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -304,7 +304,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryBundlesResponse on success.</returns>
-    public Task<ApiResponse<QueryBundlesResponse>> QuerybundlesAsync(
+    public Task<ApiResponse<QueryBundlesResponse>> QueryBundlesAsync(
         QueryBundlesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -322,7 +322,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListBundleVersionsResponse on success.</returns>
-    public Task<ApiResponse<ListBundleVersionsResponse>> ListBundleversionsAsync(
+    public Task<ApiResponse<ListBundleVersionsResponse>> ListBundleVersionsAsync(
         ListBundleVersionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -340,7 +340,7 @@ public sealed class AssetProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BulkGetAssetsResponse on success.</returns>
-    public Task<ApiResponse<BulkGetAssetsResponse>> BulkgetassetsAsync(
+    public Task<ApiResponse<BulkGetAssetsResponse>> BulkGetAssetsAsync(
         BulkGetAssetsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

@@ -34,7 +34,7 @@ public sealed class BehaviorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CompileBehaviorResponse on success.</returns>
-    public Task<ApiResponse<CompileBehaviorResponse>> CompileabmlbehaviorAsync(
+    public Task<ApiResponse<CompileBehaviorResponse>> CompileAbmlBehaviorAsync(
         CompileBehaviorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class BehaviorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CachedBehaviorResponse on success.</returns>
-    public Task<ApiResponse<CachedBehaviorResponse>> GetCachedbehaviorAsync(
+    public Task<ApiResponse<CachedBehaviorResponse>> GetCachedBehaviorAsync(
         GetCachedBehaviorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -87,7 +87,7 @@ public sealed class BehaviorProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task InvalidatecachedbehaviorEventAsync(
+    public Task InvalidateCachedBehaviorEventAsync(
         InvalidateCacheRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -104,7 +104,7 @@ public sealed class BehaviorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GoapPlanResponse on success.</returns>
-    public Task<ApiResponse<GoapPlanResponse>> GenerategoapplanAsync(
+    public Task<ApiResponse<GoapPlanResponse>> GenerateGoapPlanAsync(
         GoapPlanRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -122,7 +122,7 @@ public sealed class BehaviorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ValidateGoapPlanResponse on success.</returns>
-    public Task<ApiResponse<ValidateGoapPlanResponse>> ValidateGoapplanAsync(
+    public Task<ApiResponse<ValidateGoapPlanResponse>> ValidateGoapPlanAsync(
         ValidateGoapPlanRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

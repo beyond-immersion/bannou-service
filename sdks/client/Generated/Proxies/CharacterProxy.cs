@@ -122,7 +122,7 @@ public sealed class CharacterProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing EnrichedCharacterResponse on success.</returns>
-    public Task<ApiResponse<EnrichedCharacterResponse>> GetEnrichedcharacterAsync(
+    public Task<ApiResponse<EnrichedCharacterResponse>> GetEnrichedCharacterAsync(
         GetEnrichedCharacterRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class CharacterProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CharacterArchive on success.</returns>
-    public Task<ApiResponse<CharacterArchive>> CompresscharacterAsync(
+    public Task<ApiResponse<CharacterArchive>> CompressCharacterAsync(
         CompressCharacterRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class CharacterProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CharacterArchive on success.</returns>
-    public Task<ApiResponse<CharacterArchive>> GetCharacterarchiveAsync(
+    public Task<ApiResponse<CharacterArchive>> GetCharacterArchiveAsync(
         GetCharacterArchiveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -176,7 +176,7 @@ public sealed class CharacterProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CharacterRefCount on success.</returns>
-    public Task<ApiResponse<CharacterRefCount>> CheckcharacterreferencesAsync(
+    public Task<ApiResponse<CharacterRefCount>> CheckCharacterReferencesAsync(
         CheckReferencesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -194,7 +194,7 @@ public sealed class CharacterProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CharacterListResponse on success.</returns>
-    public Task<ApiResponse<CharacterListResponse>> GetCharactersbyrealmAsync(
+    public Task<ApiResponse<CharacterListResponse>> GetCharactersByRealmAsync(
         GetCharactersByRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

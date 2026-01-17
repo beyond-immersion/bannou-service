@@ -34,10 +34,21 @@ except ImportError:
 
 
 def to_pascal_case(name: str) -> str:
-    """Convert kebab-case or snake_case to PascalCase."""
-    # Handle kebab-case
-    parts = name.replace('_', '-').split('-')
-    return ''.join(p.capitalize() for p in parts)
+    """Convert kebab-case, snake_case, or camelCase to PascalCase."""
+    import re
+
+    # First, handle kebab-case and snake_case by replacing delimiters with spaces
+    name = name.replace('-', ' ').replace('_', ' ')
+
+    # If no spaces (was camelCase or PascalCase), split on case boundaries
+    if ' ' not in name:
+        # Insert space before uppercase letters (handles camelCase and PascalCase)
+        # e.g., 'addBackstoryElement' -> 'add Backstory Element'
+        name = re.sub(r'([a-z])([A-Z])', r'\1 \2', name)
+
+    # Split on spaces and capitalize each part, then join
+    parts = name.split()
+    return ''.join(p[0].upper() + p[1:] if p else '' for p in parts)
 
 
 def to_camel_case(name: str) -> str:
@@ -54,18 +65,13 @@ def extract_type_name(ref: str) -> str:
 
 
 def operation_id_to_method_name(operation_id: str) -> str:
-    """Convert operationId to method name (e.g., 'createCharacter' -> 'CreateAsync')."""
-    # Handle common prefixes that should be kept
-    prefixes = ['get', 'list', 'create', 'update', 'delete', 'validate', 'login', 'register', 'logout']
+    """Convert operationId to method name (e.g., 'createCharacter' -> 'CreateCharacterAsync').
 
-    # Find and capitalize the prefix
-    for prefix in prefixes:
-        if operation_id.lower().startswith(prefix):
-            # Capitalize the prefix and the rest
-            rest = operation_id[len(prefix):]
-            return prefix.capitalize() + to_pascal_case(rest) + 'Async'
-
-    # Default: just capitalize
+    The operationId is expected to be camelCase (e.g., 'addBackstoryElement').
+    This converts it to PascalCase with 'Async' suffix (e.g., 'AddBackstoryElementAsync').
+    """
+    # The simple approach: convert camelCase to PascalCase and add Async suffix
+    # to_pascal_case handles camelCase input properly now
     return to_pascal_case(operation_id) + 'Async'
 
 

@@ -34,7 +34,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmHistoricalParticipation on success.</returns>
-    public Task<ApiResponse<RealmHistoricalParticipation>> RecordrealmparticipationAsync(
+    public Task<ApiResponse<RealmHistoricalParticipation>> RecordRealmParticipationAsync(
         RecordRealmParticipationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmParticipationListResponse on success.</returns>
-    public Task<ApiResponse<RealmParticipationListResponse>> GetRealmparticipationAsync(
+    public Task<ApiResponse<RealmParticipationListResponse>> GetRealmParticipationAsync(
         GetRealmParticipationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmParticipationListResponse on success.</returns>
-    public Task<ApiResponse<RealmParticipationListResponse>> GetRealmeventparticipantsAsync(
+    public Task<ApiResponse<RealmParticipationListResponse>> GetRealmEventParticipantsAsync(
         GetRealmEventParticipantsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -87,7 +87,7 @@ public sealed class RealmHistoryProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteRealmparticipationEventAsync(
+    public Task DeleteRealmParticipationEventAsync(
         DeleteRealmParticipationRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -104,7 +104,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmLoreResponse on success.</returns>
-    public Task<ApiResponse<RealmLoreResponse>> GetRealmloreAsync(
+    public Task<ApiResponse<RealmLoreResponse>> GetRealmLoreAsync(
         GetRealmLoreRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -122,7 +122,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmLoreResponse on success.</returns>
-    public Task<ApiResponse<RealmLoreResponse>> SetrealmloreAsync(
+    public Task<ApiResponse<RealmLoreResponse>> SetRealmLoreAsync(
         SetRealmLoreRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmLoreResponse on success.</returns>
-    public Task<ApiResponse<RealmLoreResponse>> AddrealmloreelementAsync(
+    public Task<ApiResponse<RealmLoreResponse>> AddRealmLoreElementAsync(
         AddRealmLoreElementRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -157,7 +157,7 @@ public sealed class RealmHistoryProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteRealmloreEventAsync(
+    public Task DeleteRealmLoreEventAsync(
         DeleteRealmLoreRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -174,7 +174,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DeleteAllRealmHistoryResponse on success.</returns>
-    public Task<ApiResponse<DeleteAllRealmHistoryResponse>> DeleteAllrealmhistoryAsync(
+    public Task<ApiResponse<DeleteAllRealmHistoryResponse>> DeleteAllRealmHistoryAsync(
         DeleteAllRealmHistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -192,7 +192,7 @@ public sealed class RealmHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmHistorySummaryResponse on success.</returns>
-    public Task<ApiResponse<RealmHistorySummaryResponse>> SummarizerealmhistoryAsync(
+    public Task<ApiResponse<RealmHistorySummaryResponse>> SummarizeRealmHistoryAsync(
         SummarizeRealmHistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

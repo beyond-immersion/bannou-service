@@ -34,7 +34,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing HistoricalParticipation on success.</returns>
-    public Task<ApiResponse<HistoricalParticipation>> RecordparticipationAsync(
+    public Task<ApiResponse<HistoricalParticipation>> RecordParticipationAsync(
         RecordParticipationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ParticipationListResponse on success.</returns>
-    public Task<ApiResponse<ParticipationListResponse>> GetEventparticipantsAsync(
+    public Task<ApiResponse<ParticipationListResponse>> GetEventParticipantsAsync(
         GetEventParticipantsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -122,7 +122,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BackstoryResponse on success.</returns>
-    public Task<ApiResponse<BackstoryResponse>> SetbackstoryAsync(
+    public Task<ApiResponse<BackstoryResponse>> SetBackstoryAsync(
         SetBackstoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BackstoryResponse on success.</returns>
-    public Task<ApiResponse<BackstoryResponse>> AddbackstoryelementAsync(
+    public Task<ApiResponse<BackstoryResponse>> AddBackstoryElementAsync(
         AddBackstoryElementRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -174,7 +174,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DeleteAllHistoryResponse on success.</returns>
-    public Task<ApiResponse<DeleteAllHistoryResponse>> DeleteAllhistoryAsync(
+    public Task<ApiResponse<DeleteAllHistoryResponse>> DeleteAllHistoryAsync(
         DeleteAllHistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -192,7 +192,7 @@ public sealed class CharacterHistoryProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing HistorySummaryResponse on success.</returns>
-    public Task<ApiResponse<HistorySummaryResponse>> SummarizehistoryAsync(
+    public Task<ApiResponse<HistorySummaryResponse>> SummarizeHistoryAsync(
         SummarizeHistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

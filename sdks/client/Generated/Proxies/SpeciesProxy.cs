@@ -52,7 +52,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesResponse on success.</returns>
-    public Task<ApiResponse<SpeciesResponse>> GetSpeciesbycodeAsync(
+    public Task<ApiResponse<SpeciesResponse>> GetSpeciesByCodeAsync(
         GetSpeciesByCodeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesListResponse on success.</returns>
-    public Task<ApiResponse<SpeciesListResponse>> ListSpeciesbyrealmAsync(
+    public Task<ApiResponse<SpeciesListResponse>> ListSpeciesByRealmAsync(
         ListSpeciesByRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesResponse on success.</returns>
-    public Task<ApiResponse<SpeciesResponse>> DeprecatespeciesAsync(
+    public Task<ApiResponse<SpeciesResponse>> DeprecateSpeciesAsync(
         DeprecateSpeciesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -176,7 +176,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesResponse on success.</returns>
-    public Task<ApiResponse<SpeciesResponse>> UndeprecatespeciesAsync(
+    public Task<ApiResponse<SpeciesResponse>> UndeprecateSpeciesAsync(
         UndeprecateSpeciesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -194,7 +194,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MergeSpeciesResponse on success.</returns>
-    public Task<ApiResponse<MergeSpeciesResponse>> MergespeciesAsync(
+    public Task<ApiResponse<MergeSpeciesResponse>> MergeSpeciesAsync(
         MergeSpeciesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -212,7 +212,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesResponse on success.</returns>
-    public Task<ApiResponse<SpeciesResponse>> AddspeciestorealmAsync(
+    public Task<ApiResponse<SpeciesResponse>> AddSpeciesToRealmAsync(
         AddSpeciesToRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -230,7 +230,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SpeciesResponse on success.</returns>
-    public Task<ApiResponse<SpeciesResponse>> RemovespeciesfromrealmAsync(
+    public Task<ApiResponse<SpeciesResponse>> RemoveSpeciesFromRealmAsync(
         RemoveSpeciesFromRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -248,7 +248,7 @@ public sealed class SpeciesProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SeedSpeciesResponse on success.</returns>
-    public Task<ApiResponse<SeedSpeciesResponse>> SeedspeciesAsync(
+    public Task<ApiResponse<SeedSpeciesResponse>> SeedSpeciesAsync(
         SeedSpeciesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

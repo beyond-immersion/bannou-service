@@ -34,7 +34,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing InfrastructureHealthResponse on success.</returns>
-    public Task<ApiResponse<InfrastructureHealthResponse>> GetInfrastructurehealthAsync(
+    public Task<ApiResponse<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(
         InfrastructureHealthRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ServiceHealthReport on success.</returns>
-    public Task<ApiResponse<ServiceHealthReport>> GetServiceshealthAsync(
+    public Task<ApiResponse<ServiceHealthReport>> GetServicesHealthAsync(
         ServiceHealthRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ServiceRestartResult on success.</returns>
-    public Task<ApiResponse<ServiceRestartResult>> RestartserviceAsync(
+    public Task<ApiResponse<ServiceRestartResult>> RestartServiceAsync(
         ServiceRestartRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RestartRecommendation on success.</returns>
-    public Task<ApiResponse<RestartRecommendation>> ShouldrestartserviceAsync(
+    public Task<ApiResponse<RestartRecommendation>> ShouldRestartServiceAsync(
         ShouldRestartServiceRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ServiceRoutingResponse on success.</returns>
-    public Task<ApiResponse<ServiceRoutingResponse>> GetServiceroutingAsync(
+    public Task<ApiResponse<ServiceRoutingResponse>> GetServiceRoutingAsync(
         GetServiceRoutingRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -268,7 +268,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ContainerRestartResponse on success.</returns>
-    public Task<ApiResponse<ContainerRestartResponse>> RequestcontainerrestartAsync(
+    public Task<ApiResponse<ContainerRestartResponse>> RequestContainerRestartAsync(
         ContainerRestartRequestBody request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -286,7 +286,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ContainerStatus on success.</returns>
-    public Task<ApiResponse<ContainerStatus>> GetContainerstatusAsync(
+    public Task<ApiResponse<ContainerStatus>> GetContainerStatusAsync(
         GetContainerStatusRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -304,7 +304,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ConfigRollbackResponse on success.</returns>
-    public Task<ApiResponse<ConfigRollbackResponse>> RollbackconfigurationAsync(
+    public Task<ApiResponse<ConfigRollbackResponse>> RollbackConfigurationAsync(
         ConfigRollbackRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -322,7 +322,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ConfigVersionResponse on success.</returns>
-    public Task<ApiResponse<ConfigVersionResponse>> GetConfigversionAsync(
+    public Task<ApiResponse<ConfigVersionResponse>> GetConfigVersionAsync(
         GetConfigVersionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -340,7 +340,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AcquireProcessorResponse on success.</returns>
-    public Task<ApiResponse<AcquireProcessorResponse>> AcquireprocessorAsync(
+    public Task<ApiResponse<AcquireProcessorResponse>> AcquireProcessorAsync(
         AcquireProcessorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -358,7 +358,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ReleaseProcessorResponse on success.</returns>
-    public Task<ApiResponse<ReleaseProcessorResponse>> ReleaseprocessorAsync(
+    public Task<ApiResponse<ReleaseProcessorResponse>> ReleaseProcessorAsync(
         ReleaseProcessorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -376,7 +376,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PoolStatusResponse on success.</returns>
-    public Task<ApiResponse<PoolStatusResponse>> GetPoolstatusAsync(
+    public Task<ApiResponse<PoolStatusResponse>> GetPoolStatusAsync(
         GetPoolStatusRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -394,7 +394,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ScalePoolResponse on success.</returns>
-    public Task<ApiResponse<ScalePoolResponse>> ScalepoolAsync(
+    public Task<ApiResponse<ScalePoolResponse>> ScalePoolAsync(
         ScalePoolRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -412,7 +412,7 @@ public sealed class OrchestratorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CleanupPoolResponse on success.</returns>
-    public Task<ApiResponse<CleanupPoolResponse>> CleanuppoolAsync(
+    public Task<ApiResponse<CleanupPoolResponse>> CleanupPoolAsync(
         CleanupPoolRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

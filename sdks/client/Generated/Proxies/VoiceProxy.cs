@@ -34,7 +34,7 @@ public sealed class VoiceProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing VoiceRoomResponse on success.</returns>
-    public Task<ApiResponse<VoiceRoomResponse>> CreateVoiceroomAsync(
+    public Task<ApiResponse<VoiceRoomResponse>> CreateVoiceRoomAsync(
         CreateVoiceRoomRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class VoiceProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing VoiceRoomResponse on success.</returns>
-    public Task<ApiResponse<VoiceRoomResponse>> GetVoiceroomAsync(
+    public Task<ApiResponse<VoiceRoomResponse>> GetVoiceRoomAsync(
         GetVoiceRoomRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class VoiceProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing JoinVoiceRoomResponse on success.</returns>
-    public Task<ApiResponse<JoinVoiceRoomResponse>> JoinvoiceroomAsync(
+    public Task<ApiResponse<JoinVoiceRoomResponse>> JoinVoiceRoomAsync(
         JoinVoiceRoomRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -87,7 +87,7 @@ public sealed class VoiceProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task LeavevoiceroomEventAsync(
+    public Task LeaveVoiceRoomEventAsync(
         LeaveVoiceRoomRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -103,7 +103,7 @@ public sealed class VoiceProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteVoiceroomEventAsync(
+    public Task DeleteVoiceRoomEventAsync(
         DeleteVoiceRoomRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -119,7 +119,7 @@ public sealed class VoiceProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task PeerheartbeatEventAsync(
+    public Task PeerHeartbeatEventAsync(
         PeerHeartbeatRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -135,7 +135,7 @@ public sealed class VoiceProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task AnswerpeerEventAsync(
+    public Task AnswerPeerEventAsync(
         AnswerPeerRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

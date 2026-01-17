@@ -34,7 +34,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ActorTemplateResponse on success.</returns>
-    public Task<ApiResponse<ActorTemplateResponse>> CreateActortemplateAsync(
+    public Task<ApiResponse<ActorTemplateResponse>> CreateActorTemplateAsync(
         CreateActorTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ActorTemplateResponse on success.</returns>
-    public Task<ApiResponse<ActorTemplateResponse>> GetActortemplateAsync(
+    public Task<ApiResponse<ActorTemplateResponse>> GetActorTemplateAsync(
         GetActorTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListActorTemplatesResponse on success.</returns>
-    public Task<ApiResponse<ListActorTemplatesResponse>> ListActortemplatesAsync(
+    public Task<ApiResponse<ListActorTemplatesResponse>> ListActorTemplatesAsync(
         ListActorTemplatesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ActorTemplateResponse on success.</returns>
-    public Task<ApiResponse<ActorTemplateResponse>> UpdateActortemplateAsync(
+    public Task<ApiResponse<ActorTemplateResponse>> UpdateActorTemplateAsync(
         UpdateActorTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DeleteActorTemplateResponse on success.</returns>
-    public Task<ApiResponse<DeleteActorTemplateResponse>> DeleteActortemplateAsync(
+    public Task<ApiResponse<DeleteActorTemplateResponse>> DeleteActorTemplateAsync(
         DeleteActorTemplateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ActorInstanceResponse on success.</returns>
-    public Task<ApiResponse<ActorInstanceResponse>> SpawnactorAsync(
+    public Task<ApiResponse<ActorInstanceResponse>> SpawnActorAsync(
         SpawnActorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing StopActorResponse on success.</returns>
-    public Task<ApiResponse<StopActorResponse>> StopactorAsync(
+    public Task<ApiResponse<StopActorResponse>> StopActorAsync(
         StopActorRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -196,7 +196,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing InjectPerceptionResponse on success.</returns>
-    public Task<ApiResponse<InjectPerceptionResponse>> InjectperceptionAsync(
+    public Task<ApiResponse<InjectPerceptionResponse>> InjectPerceptionAsync(
         InjectPerceptionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryOptionsResponse on success.</returns>
-    public Task<ApiResponse<QueryOptionsResponse>> QueryoptionsAsync(
+    public Task<ApiResponse<QueryOptionsResponse>> QueryOptionsAsync(
         QueryOptionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -231,7 +231,7 @@ public sealed class ActorProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task StartencounterEventAsync(
+    public Task StartEncounterEventAsync(
         StartEncounterRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -248,7 +248,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UpdateEncounterPhaseResponse on success.</returns>
-    public Task<ApiResponse<UpdateEncounterPhaseResponse>> UpdateEncounterphaseAsync(
+    public Task<ApiResponse<UpdateEncounterPhaseResponse>> UpdateEncounterPhaseAsync(
         UpdateEncounterPhaseRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -266,7 +266,7 @@ public sealed class ActorProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing EndEncounterResponse on success.</returns>
-    public Task<ApiResponse<EndEncounterResponse>> EndencounterAsync(
+    public Task<ApiResponse<EndEncounterResponse>> EndEncounterAsync(
         EndEncounterRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

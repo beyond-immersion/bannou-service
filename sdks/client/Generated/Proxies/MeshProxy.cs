@@ -87,7 +87,7 @@ public sealed class MeshProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeregisterendpointEventAsync(
+    public Task DeregisterEndpointEventAsync(
         DeregisterEndpointRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

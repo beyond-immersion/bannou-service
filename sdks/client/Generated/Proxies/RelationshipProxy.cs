@@ -70,7 +70,7 @@ public sealed class RelationshipProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipListResponse on success.</returns>
-    public Task<ApiResponse<RelationshipListResponse>> ListRelationshipsbyentityAsync(
+    public Task<ApiResponse<RelationshipListResponse>> ListRelationshipsByEntityAsync(
         ListRelationshipsByEntityRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class RelationshipProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipListResponse on success.</returns>
-    public Task<ApiResponse<RelationshipListResponse>> GetRelationshipsbetweenAsync(
+    public Task<ApiResponse<RelationshipListResponse>> GetRelationshipsBetweenAsync(
         GetRelationshipsBetweenRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class RelationshipProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipListResponse on success.</returns>
-    public Task<ApiResponse<RelationshipListResponse>> ListRelationshipsbytypeAsync(
+    public Task<ApiResponse<RelationshipListResponse>> ListRelationshipsByTypeAsync(
         ListRelationshipsByTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -141,7 +141,7 @@ public sealed class RelationshipProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task EndrelationshipEventAsync(
+    public Task EndRelationshipEventAsync(
         EndRelationshipRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

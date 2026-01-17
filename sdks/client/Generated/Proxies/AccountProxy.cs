@@ -122,7 +122,7 @@ public sealed class AccountProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AccountResponse on success.</returns>
-    public Task<ApiResponse<AccountResponse>> GetAccountbyemailAsync(
+    public Task<ApiResponse<AccountResponse>> GetAccountByEmailAsync(
         GetAccountByEmailRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class AccountProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthMethodsResponse on success.</returns>
-    public Task<ApiResponse<AuthMethodsResponse>> GetAuthmethodsAsync(
+    public Task<ApiResponse<AuthMethodsResponse>> GetAuthMethodsAsync(
         GetAuthMethodsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class AccountProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthMethodResponse on success.</returns>
-    public Task<ApiResponse<AuthMethodResponse>> AddauthmethodAsync(
+    public Task<ApiResponse<AuthMethodResponse>> AddAuthMethodAsync(
         AddAuthMethodRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -175,7 +175,7 @@ public sealed class AccountProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task RemoveauthmethodEventAsync(
+    public Task RemoveAuthMethodEventAsync(
         RemoveAuthMethodRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -192,7 +192,7 @@ public sealed class AccountProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AccountResponse on success.</returns>
-    public Task<ApiResponse<AccountResponse>> GetAccountbyproviderAsync(
+    public Task<ApiResponse<AccountResponse>> GetAccountByProviderAsync(
         GetAccountByProviderRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -227,7 +227,7 @@ public sealed class AccountProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task UpdatePasswordhashEventAsync(
+    public Task UpdatePasswordHashEventAsync(
         UpdatePasswordRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -243,7 +243,7 @@ public sealed class AccountProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task UpdateVerificationstatusEventAsync(
+    public Task UpdateVerificationStatusEventAsync(
         UpdateVerificationRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

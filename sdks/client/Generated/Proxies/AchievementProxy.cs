@@ -34,7 +34,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AchievementDefinitionResponse on success.</returns>
-    public Task<ApiResponse<AchievementDefinitionResponse>> CreateAchievementdefinitionAsync(
+    public Task<ApiResponse<AchievementDefinitionResponse>> CreateAchievementDefinitionAsync(
         CreateAchievementDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AchievementDefinitionResponse on success.</returns>
-    public Task<ApiResponse<AchievementDefinitionResponse>> GetAchievementdefinitionAsync(
+    public Task<ApiResponse<AchievementDefinitionResponse>> GetAchievementDefinitionAsync(
         GetAchievementDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListAchievementDefinitionsResponse on success.</returns>
-    public Task<ApiResponse<ListAchievementDefinitionsResponse>> ListAchievementdefinitionsAsync(
+    public Task<ApiResponse<ListAchievementDefinitionsResponse>> ListAchievementDefinitionsAsync(
         ListAchievementDefinitionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AchievementDefinitionResponse on success.</returns>
-    public Task<ApiResponse<AchievementDefinitionResponse>> UpdateAchievementdefinitionAsync(
+    public Task<ApiResponse<AchievementDefinitionResponse>> UpdateAchievementDefinitionAsync(
         UpdateAchievementDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -105,7 +105,7 @@ public sealed class AchievementProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteAchievementdefinitionEventAsync(
+    public Task DeleteAchievementDefinitionEventAsync(
         DeleteAchievementDefinitionRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -122,7 +122,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AchievementProgressResponse on success.</returns>
-    public Task<ApiResponse<AchievementProgressResponse>> GetAchievementprogressAsync(
+    public Task<ApiResponse<AchievementProgressResponse>> GetAchievementProgressAsync(
         GetAchievementProgressRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UpdateAchievementProgressResponse on success.</returns>
-    public Task<ApiResponse<UpdateAchievementProgressResponse>> UpdateAchievementprogressAsync(
+    public Task<ApiResponse<UpdateAchievementProgressResponse>> UpdateAchievementProgressAsync(
         UpdateAchievementProgressRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UnlockAchievementResponse on success.</returns>
-    public Task<ApiResponse<UnlockAchievementResponse>> UnlockachievementAsync(
+    public Task<ApiResponse<UnlockAchievementResponse>> UnlockAchievementAsync(
         UnlockAchievementRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -176,7 +176,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListUnlockedAchievementsResponse on success.</returns>
-    public Task<ApiResponse<ListUnlockedAchievementsResponse>> ListUnlockedachievementsAsync(
+    public Task<ApiResponse<ListUnlockedAchievementsResponse>> ListUnlockedAchievementsAsync(
         ListUnlockedAchievementsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -194,7 +194,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SyncPlatformAchievementsResponse on success.</returns>
-    public Task<ApiResponse<SyncPlatformAchievementsResponse>> SyncplatformachievementsAsync(
+    public Task<ApiResponse<SyncPlatformAchievementsResponse>> SyncPlatformAchievementsAsync(
         SyncPlatformAchievementsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -212,7 +212,7 @@ public sealed class AchievementProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PlatformSyncStatusResponse on success.</returns>
-    public Task<ApiResponse<PlatformSyncStatusResponse>> GetPlatformsyncstatusAsync(
+    public Task<ApiResponse<PlatformSyncStatusResponse>> GetPlatformSyncStatusAsync(
         GetPlatformSyncStatusRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

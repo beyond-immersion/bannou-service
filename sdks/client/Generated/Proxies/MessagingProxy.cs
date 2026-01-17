@@ -34,7 +34,7 @@ public sealed class MessagingProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PublishEventResponse on success.</returns>
-    public Task<ApiResponse<PublishEventResponse>> PublisheventAsync(
+    public Task<ApiResponse<PublishEventResponse>> PublishEventAsync(
         PublishEventRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -69,7 +69,7 @@ public sealed class MessagingProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task RemovesubscriptionEventAsync(
+    public Task RemoveSubscriptionEventAsync(
         RemoveSubscriptionRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

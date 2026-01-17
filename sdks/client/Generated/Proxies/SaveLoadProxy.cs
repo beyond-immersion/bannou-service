@@ -106,7 +106,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SlotResponse on success.</returns>
-    public Task<ApiResponse<SlotResponse>> RenameslotAsync(
+    public Task<ApiResponse<SlotResponse>> RenameSlotAsync(
         RenameSlotRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BulkDeleteSlotsResponse on success.</returns>
-    public Task<ApiResponse<BulkDeleteSlotsResponse>> BulkdeleteslotsAsync(
+    public Task<ApiResponse<BulkDeleteSlotsResponse>> BulkDeleteSlotsAsync(
         BulkDeleteSlotsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -178,7 +178,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SaveDeltaResponse on success.</returns>
-    public Task<ApiResponse<SaveDeltaResponse>> SavedeltaAsync(
+    public Task<ApiResponse<SaveDeltaResponse>> SaveDeltaAsync(
         SaveDeltaRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -196,7 +196,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LoadResponse on success.</returns>
-    public Task<ApiResponse<LoadResponse>> LoadwithdeltasAsync(
+    public Task<ApiResponse<LoadResponse>> LoadWithDeltasAsync(
         LoadRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SaveResponse on success.</returns>
-    public Task<ApiResponse<SaveResponse>> CollapsedeltasAsync(
+    public Task<ApiResponse<SaveResponse>> CollapseDeltasAsync(
         CollapseDeltasRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -250,7 +250,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing VersionResponse on success.</returns>
-    public Task<ApiResponse<VersionResponse>> PinversionAsync(
+    public Task<ApiResponse<VersionResponse>> PinVersionAsync(
         PinVersionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -268,7 +268,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing VersionResponse on success.</returns>
-    public Task<ApiResponse<VersionResponse>> UnpinversionAsync(
+    public Task<ApiResponse<VersionResponse>> UnpinVersionAsync(
         UnpinVersionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -304,7 +304,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QuerySavesResponse on success.</returns>
-    public Task<ApiResponse<QuerySavesResponse>> QuerysavesAsync(
+    public Task<ApiResponse<QuerySavesResponse>> QuerySavesAsync(
         QuerySavesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -322,7 +322,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SaveResponse on success.</returns>
-    public Task<ApiResponse<SaveResponse>> CopysaveAsync(
+    public Task<ApiResponse<SaveResponse>> CopySaveAsync(
         CopySaveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -340,7 +340,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ExportSavesResponse on success.</returns>
-    public Task<ApiResponse<ExportSavesResponse>> ExportsavesAsync(
+    public Task<ApiResponse<ExportSavesResponse>> ExportSavesAsync(
         ExportSavesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -358,7 +358,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ImportSavesResponse on success.</returns>
-    public Task<ApiResponse<ImportSavesResponse>> ImportsavesAsync(
+    public Task<ApiResponse<ImportSavesResponse>> ImportSavesAsync(
         ImportSavesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -376,7 +376,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing VerifyIntegrityResponse on success.</returns>
-    public Task<ApiResponse<VerifyIntegrityResponse>> VerifyintegrityAsync(
+    public Task<ApiResponse<VerifyIntegrityResponse>> VerifyIntegrityAsync(
         VerifyIntegrityRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -394,7 +394,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SaveResponse on success.</returns>
-    public Task<ApiResponse<SaveResponse>> PromoteversionAsync(
+    public Task<ApiResponse<SaveResponse>> PromoteVersionAsync(
         PromoteVersionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -412,7 +412,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MigrateSaveResponse on success.</returns>
-    public Task<ApiResponse<MigrateSaveResponse>> MigratesaveAsync(
+    public Task<ApiResponse<MigrateSaveResponse>> MigrateSaveAsync(
         MigrateSaveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -466,7 +466,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AdminCleanupResponse on success.</returns>
-    public Task<ApiResponse<AdminCleanupResponse>> AdmincleanupAsync(
+    public Task<ApiResponse<AdminCleanupResponse>> AdminCleanupAsync(
         AdminCleanupRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -484,7 +484,7 @@ public sealed class SaveLoadProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AdminStatsResponse on success.</returns>
-    public Task<ApiResponse<AdminStatsResponse>> AdminstatsAsync(
+    public Task<ApiResponse<AdminStatsResponse>> AdminStatsAsync(
         AdminStatsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
