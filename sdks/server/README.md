@@ -93,6 +93,8 @@ Full DI configuration for a game server:
 ```csharp
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 
 var services = new ServiceCollection();
@@ -100,22 +102,40 @@ var services = new ServiceCollection();
 // Logging
 services.AddLogging(builder => builder.AddConsole());
 
-// Mesh configuration (Redis-based service discovery)
-var meshConfig = new MeshServiceConfiguration
+// State infrastructure (Redis connection via lib-state)
+var stateConfig = new StateServiceConfiguration
 {
+    UseInMemory = false,
     RedisConnectionString = "bannou-redis:6379",
-    UseLocalRouting = false,
-    RedisConnectionTimeoutSeconds = 60
+    ConnectionTimeoutSeconds = 60,
+    ConnectRetryCount = 10
 };
-services.AddSingleton(meshConfig);
+services.AddSingleton(stateConfig);
 
-// Mesh infrastructure
-services.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+// Build StateStoreFactoryConfiguration
+var factoryConfig = new StateStoreFactoryConfiguration
+{
+    UseInMemory = stateConfig.UseInMemory,
+    RedisConnectionString = stateConfig.RedisConnectionString ?? "bannou-redis:6379",
+    ConnectionRetryCount = stateConfig.ConnectRetryCount,
+    ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds
+};
+foreach (var (storeName, storeConfig) in StateStoreDefinitions.Configurations)
+{
+    factoryConfig.Stores[storeName] = storeConfig;
+}
+services.AddSingleton(factoryConfig);
+services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+
+// Mesh infrastructure (uses lib-state for Redis)
+var meshConfig = new MeshServiceConfiguration { UseLocalRouting = false };
+services.AddSingleton(meshConfig);
+services.AddSingleton<IMeshStateManager, MeshStateManager>();
 services.AddSingleton<IMeshInvocationClient>(sp =>
 {
-    var redis = sp.GetRequiredService<IMeshRedisManager>();
+    var stateManager = sp.GetRequiredService<IMeshStateManager>();
     var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-    return new MeshInvocationClient(redis, logger);
+    return new MeshInvocationClient(stateManager, logger);
 });
 
 // Bannou service client infrastructure
@@ -130,9 +150,11 @@ services.AddScoped<IGameSessionClient, GameSessionClient>();
 
 var provider = services.BuildServiceProvider();
 
-// Initialize mesh connection
-var meshManager = provider.GetRequiredService<IMeshRedisManager>();
-await meshManager.InitializeAsync();
+// Initialize state and mesh connections
+var stateStoreFactory = provider.GetRequiredService<IStateStoreFactory>();
+await stateStoreFactory.InitializeAsync();
+var meshStateManager = provider.GetRequiredService<IMeshStateManager>();
+await meshStateManager.InitializeAsync();
 ```
 
 ## Mesh Service Routing
@@ -410,13 +432,13 @@ dotnet add package BeyondImmersion.Bannou.Server
 
 ## Configuration
 
-Environment variables for mesh configuration:
+Environment variables for state and mesh configuration:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MESH_REDIS_HOST` | Redis host for service discovery | `bannou-redis` |
-| `MESH_REDIS_PORT` | Redis port | `6379` |
-| `MESH_REDIS_CONNECTION_STRING` | Full connection string (overrides host/port) | - |
+| `STATE_REDIS_CONNECTION_STRING` | Redis connection for state and mesh | `bannou-redis:6379` |
+| `STATE_MYSQL_CONNECTION_STRING` | MySQL connection for persistent state | - |
+| `STATE_USE_INMEMORY` | Use in-memory storage (testing only) | `false` |
 
 ## License
 

@@ -166,7 +166,7 @@ public class AuthServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(12, endpoints.Count); // 12 endpoints defined in auth-api.yaml with x-permissions (removed steam/init)
+        Assert.Equal(13, endpoints.Count); // 13 endpoints defined in auth-api.yaml with x-permissions
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class AuthServiceTests
         Assert.Equal("auth", registrationEvent.ServiceName);
         Assert.Equal(instanceId, registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(12, registrationEvent.Endpoints.Count); // 12 endpoints (removed steam/init)
+        Assert.Equal(13, registrationEvent.Endpoints.Count); // 13 endpoints
         Assert.NotEmpty(registrationEvent.Version);
     }
 
@@ -498,6 +498,72 @@ public class AuthServiceTests
     #endregion
 
     #region OAuth Provider Tests
+
+    [Fact]
+    public async Task ListProvidersAsync_WithConfiguredProviders_ShouldReturnProviderList()
+    {
+        // Arrange
+        var service = CreateAuthService();
+
+        // Act
+        var (status, response) = await service.ListProvidersAsync();
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Providers);
+
+        // Configuration has Discord, Google, Twitch, and Steam configured
+        Assert.Equal(4, response.Providers.Count);
+
+        // Verify OAuth providers have correct auth type
+        var discord = response.Providers.FirstOrDefault(p => p.Name == "discord");
+        Assert.NotNull(discord);
+        Assert.Equal("Discord", discord.DisplayName);
+        Assert.Equal(ProviderInfoAuthType.Oauth, discord.AuthType);
+        Assert.NotNull(discord.AuthUrl);
+
+        // Verify Steam has ticket auth type
+        var steam = response.Providers.FirstOrDefault(p => p.Name == "steam");
+        Assert.NotNull(steam);
+        Assert.Equal("Steam", steam.DisplayName);
+        Assert.Equal(ProviderInfoAuthType.Ticket, steam.AuthType);
+        Assert.Null(steam.AuthUrl); // Steam uses ticket, no auth URL
+    }
+
+    [Fact]
+    public async Task ListProvidersAsync_WithNoConfiguredProviders_ShouldReturnEmptyList()
+    {
+        // Arrange - create service with empty configuration
+        var emptyConfig = new AuthServiceConfiguration
+        {
+            JwtExpirationMinutes = 60,
+            MockProviders = true
+            // No OAuth/Steam providers configured
+        };
+
+        var service = new AuthService(
+            _mockAccountClient.Object,
+            _mockSubscriptionClient.Object,
+            _mockStateStoreFactory.Object,
+            _mockMessageBus.Object,
+            emptyConfig,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object,
+            _mockEventConsumer.Object);
+
+        // Act
+        var (status, response) = await service.ListProvidersAsync();
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotNull(response.Providers);
+        Assert.Empty(response.Providers);
+    }
 
     [Fact]
     public async Task InitOAuthAsync_ShouldReturnAuthorizationUrl()

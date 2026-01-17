@@ -52,7 +52,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationResponse on success.</returns>
-    public Task<ApiResponse<LocationResponse>> GetLocationbycodeAsync(
+    public Task<ApiResponse<LocationResponse>> GetLocationByCodeAsync(
         GetLocationByCodeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationListResponse on success.</returns>
-    public Task<ApiResponse<LocationListResponse>> ListLocationsbyrealmAsync(
+    public Task<ApiResponse<LocationListResponse>> ListLocationsByRealmAsync(
         ListLocationsByRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationListResponse on success.</returns>
-    public Task<ApiResponse<LocationListResponse>> ListLocationsbyparentAsync(
+    public Task<ApiResponse<LocationListResponse>> ListLocationsByParentAsync(
         ListLocationsByParentRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationListResponse on success.</returns>
-    public Task<ApiResponse<LocationListResponse>> ListRootlocationsAsync(
+    public Task<ApiResponse<LocationListResponse>> ListRootLocationsAsync(
         ListRootLocationsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -142,7 +142,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationListResponse on success.</returns>
-    public Task<ApiResponse<LocationListResponse>> GetLocationancestorsAsync(
+    public Task<ApiResponse<LocationListResponse>> GetLocationAncestorsAsync(
         GetLocationAncestorsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationListResponse on success.</returns>
-    public Task<ApiResponse<LocationListResponse>> GetLocationdescendantsAsync(
+    public Task<ApiResponse<LocationListResponse>> GetLocationDescendantsAsync(
         GetLocationDescendantsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationResponse on success.</returns>
-    public Task<ApiResponse<LocationResponse>> SetlocationparentAsync(
+    public Task<ApiResponse<LocationResponse>> SetLocationParentAsync(
         SetLocationParentRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -232,7 +232,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationResponse on success.</returns>
-    public Task<ApiResponse<LocationResponse>> RemovelocationparentAsync(
+    public Task<ApiResponse<LocationResponse>> RemoveLocationParentAsync(
         RemoveLocationParentRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -266,7 +266,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationResponse on success.</returns>
-    public Task<ApiResponse<LocationResponse>> DeprecatelocationAsync(
+    public Task<ApiResponse<LocationResponse>> DeprecateLocationAsync(
         DeprecateLocationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -284,7 +284,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationResponse on success.</returns>
-    public Task<ApiResponse<LocationResponse>> UndeprecatelocationAsync(
+    public Task<ApiResponse<LocationResponse>> UndeprecateLocationAsync(
         UndeprecateLocationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -302,7 +302,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LocationExistsResponse on success.</returns>
-    public Task<ApiResponse<LocationExistsResponse>> LocationexistsAsync(
+    public Task<ApiResponse<LocationExistsResponse>> LocationExistsAsync(
         LocationExistsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -320,7 +320,7 @@ public sealed class LocationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SeedLocationsResponse on success.</returns>
-    public Task<ApiResponse<SeedLocationsResponse>> SeedlocationsAsync(
+    public Task<ApiResponse<SeedLocationsResponse>> SeedLocationsAsync(
         SeedLocationsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

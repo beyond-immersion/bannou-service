@@ -48,40 +48,10 @@ public class MeshServiceConfiguration : IServiceConfiguration
     public string? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Use local-only routing instead of Redis. All calls route to local instance. ONLY for testing/minimal infrastructure.
+    /// Use local-only routing instead of lib-state. All calls route to local instance. ONLY for testing/minimal infrastructure.
     /// Environment variable: MESH_USE_LOCAL_ROUTING
     /// </summary>
     public bool UseLocalRouting { get; set; } = false;
-
-    /// <summary>
-    /// Redis connection string for service registry storage.
-    /// Environment variable: MESH_REDIS_CONNECTION_STRING
-    /// </summary>
-    public string RedisConnectionString { get; set; } = "bannou-redis:6379";
-
-    /// <summary>
-    /// Prefix for all mesh-related Redis keys
-    /// Environment variable: MESH_REDIS_KEY_PREFIX
-    /// </summary>
-    public string RedisKeyPrefix { get; set; } = "mesh:";
-
-    /// <summary>
-    /// Total timeout in seconds for Redis connection establishment including retries
-    /// Environment variable: MESH_REDIS_CONNECTION_TIMEOUT_SECONDS
-    /// </summary>
-    public int RedisConnectionTimeoutSeconds { get; set; } = 60;
-
-    /// <summary>
-    /// Maximum number of Redis connection retry attempts
-    /// Environment variable: MESH_REDIS_CONNECT_RETRY_COUNT
-    /// </summary>
-    public int RedisConnectRetryCount { get; set; } = 5;
-
-    /// <summary>
-    /// Timeout in milliseconds for synchronous Redis operations
-    /// Environment variable: MESH_REDIS_SYNC_TIMEOUT_MS
-    /// </summary>
-    public int RedisSyncTimeoutMs { get; set; } = 5000;
 
     /// <summary>
     /// Hostname/IP for mesh endpoint registration. Defaults to app-id for Docker Compose compatibility.

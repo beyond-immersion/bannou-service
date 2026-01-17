@@ -24,6 +24,9 @@ public class AuthTestHandler : BaseHttpTestHandler
         new ServiceTest(TestTokenValidation, "TokenValidation", "Auth", "Test access token validation"),
         new ServiceTest(TestTokenRefresh, "TokenRefresh", "Auth", "Test token refresh functionality"),
 
+        // Provider discovery
+        new ServiceTest(TestListProviders, "ListProviders", "Auth", "Test listing available authentication providers"),
+
         // Third-party authentication
         new ServiceTest(TestOAuthFlow, "OAuthFlow", "Auth", "Test OAuth provider authentication flow"),
         new ServiceTest(TestSteamAuthFlow, "SteamAuthFlow", "Auth", "Test Steam Session Ticket authentication flow"),
@@ -143,6 +146,37 @@ public class AuthTestHandler : BaseHttpTestHandler
                 return TestResult.Successful("Token refresh correctly rejected invalid refresh token");
             }
         }, "Token refresh");
+
+    private static async Task<TestResult> TestListProviders(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var authClient = GetServiceClient<IAuthClient>();
+
+            var response = await authClient.ListProvidersAsync();
+
+            if (response.Providers == null)
+                return TestResult.Failed("Providers list is null");
+
+            // In test environment, expect at least some providers configured
+            // The exact count depends on environment configuration
+            var providerDetails = string.Join(", ", response.Providers.Select(p => $"{p.Name}({p.AuthType})"));
+
+            // Verify structure of returned providers
+            foreach (var provider in response.Providers)
+            {
+                if (string.IsNullOrEmpty(provider.Name))
+                    return TestResult.Failed("Provider has empty name");
+
+                if (string.IsNullOrEmpty(provider.DisplayName))
+                    return TestResult.Failed($"Provider {provider.Name} has empty display name");
+
+                // OAuth providers should have auth URL, ticket providers should not
+                if (provider.AuthType == ProviderInfoAuthType.Oauth && provider.AuthUrl == null)
+                    return TestResult.Failed($"OAuth provider {provider.Name} missing auth URL");
+            }
+
+            return TestResult.Successful($"Listed {response.Providers.Count} providers: {providerDetails}");
+        }, "List providers");
 
     private static async Task<TestResult> TestOAuthFlow(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>

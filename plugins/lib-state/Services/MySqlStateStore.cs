@@ -390,7 +390,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<JsonQueryResult<TValue>>> JsonQueryAsync(
-        IReadOnlyList<JsonQueryCondition> conditions,
+        IReadOnlyList<QueryCondition> conditions,
         CancellationToken cancellationToken = default)
     {
 
@@ -429,7 +429,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
     /// <inheritdoc/>
     public async Task<JsonPagedResult<TValue>> JsonQueryPagedAsync(
-        IReadOnlyList<JsonQueryCondition>? conditions,
+        IReadOnlyList<QueryCondition>? conditions,
         int offset,
         int limit,
         JsonSortSpec? sortBy = null,
@@ -438,7 +438,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
         if (limit <= 0) throw new ArgumentOutOfRangeException(nameof(limit));
 
-        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<QueryCondition>());
 
         // Build ORDER BY clause
         var orderBy = "ORDER BY `UpdatedAt` DESC"; // Default ordering
@@ -507,10 +507,10 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
     /// <inheritdoc/>
     public async Task<long> JsonCountAsync(
-        IReadOnlyList<JsonQueryCondition>? conditions,
+        IReadOnlyList<QueryCondition>? conditions,
         CancellationToken cancellationToken = default)
     {
-        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<QueryCondition>());
 
         // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
         var sql = $@"
@@ -533,11 +533,11 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// <inheritdoc/>
     public async Task<IReadOnlyList<object?>> JsonDistinctAsync(
         string path,
-        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        IReadOnlyList<QueryCondition>? conditions = null,
         CancellationToken cancellationToken = default)
     {
 
-        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<QueryCondition>());
         var escapedPath = EscapeJsonPath(path);
 
         // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
@@ -566,11 +566,11 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     public async Task<object?> JsonAggregateAsync(
         string path,
         JsonAggregation aggregation,
-        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        IReadOnlyList<QueryCondition>? conditions = null,
         CancellationToken cancellationToken = default)
     {
 
-        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<JsonQueryCondition>());
+        var (whereClauses, parameters) = BuildWhereClause(conditions ?? Array.Empty<QueryCondition>());
         var escapedPath = EscapeJsonPath(path);
 
         var aggFunc = aggregation switch
@@ -616,7 +616,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// Builds WHERE clause conditions from JSON query conditions.
     /// </summary>
     private (string WhereClause, List<object?> Parameters) BuildWhereClause(
-        IReadOnlyList<JsonQueryCondition> conditions)
+        IReadOnlyList<QueryCondition> conditions)
     {
         if (conditions.Count == 0)
         {
@@ -644,7 +644,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// Builds a single condition clause.
     /// </summary>
     private static string BuildConditionClause(
-        JsonQueryCondition condition,
+        QueryCondition condition,
         string escapedPath,
         ref int paramIndex,
         List<object?> parameters)
@@ -654,55 +654,55 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 
         switch (condition.Operator)
         {
-            case JsonOperator.Equals:
+            case QueryOperator.Equals:
                 parameters.Add(SerializeValue(condition.Value));
                 return $"{jsonUnquote} = @p{paramIndex++}";
 
-            case JsonOperator.NotEquals:
+            case QueryOperator.NotEquals:
                 parameters.Add(SerializeValue(condition.Value));
                 return $"{jsonUnquote} != @p{paramIndex++}";
 
-            case JsonOperator.GreaterThan:
+            case QueryOperator.GreaterThan:
                 parameters.Add(condition.Value);
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) > @p{paramIndex++}";
 
-            case JsonOperator.GreaterThanOrEqual:
+            case QueryOperator.GreaterThanOrEqual:
                 parameters.Add(condition.Value);
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) >= @p{paramIndex++}";
 
-            case JsonOperator.LessThan:
+            case QueryOperator.LessThan:
                 parameters.Add(condition.Value);
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) < @p{paramIndex++}";
 
-            case JsonOperator.LessThanOrEqual:
+            case QueryOperator.LessThanOrEqual:
                 parameters.Add(condition.Value);
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) <= @p{paramIndex++}";
 
-            case JsonOperator.Contains:
+            case QueryOperator.Contains:
                 parameters.Add($"%{condition.Value}%");
                 return $"{jsonUnquote} LIKE @p{paramIndex++}";
 
-            case JsonOperator.StartsWith:
+            case QueryOperator.StartsWith:
                 parameters.Add($"{condition.Value}%");
                 return $"{jsonUnquote} LIKE @p{paramIndex++}";
 
-            case JsonOperator.EndsWith:
+            case QueryOperator.EndsWith:
                 parameters.Add($"%{condition.Value}");
                 return $"{jsonUnquote} LIKE @p{paramIndex++}";
 
-            case JsonOperator.In:
+            case QueryOperator.In:
                 // For array containment: JSON_CONTAINS(ValueJson, '"value"', '$.path')
                 var jsonValue = BannouJson.Serialize(condition.Value);
                 parameters.Add(jsonValue);
                 return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
 
-            case JsonOperator.Exists:
+            case QueryOperator.Exists:
                 return $"JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
 
-            case JsonOperator.NotExists:
+            case QueryOperator.NotExists:
                 return $"NOT JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
 
-            case JsonOperator.FullText:
+            case QueryOperator.FullText:
                 // Full-text search requires a FULLTEXT index on the column
                 // This is a simplified implementation using LIKE
                 parameters.Add($"%{condition.Value}%");

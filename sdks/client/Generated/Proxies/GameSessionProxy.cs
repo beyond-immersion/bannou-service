@@ -34,7 +34,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GameSessionListResponse on success.</returns>
-    public Task<ApiResponse<GameSessionListResponse>> ListGamesessionsAsync(
+    public Task<ApiResponse<GameSessionListResponse>> ListGameSessionsAsync(
         ListGameSessionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GameSessionResponse on success.</returns>
-    public Task<ApiResponse<GameSessionResponse>> CreateGamesessionAsync(
+    public Task<ApiResponse<GameSessionResponse>> CreateGameSessionAsync(
         CreateGameSessionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GameSessionResponse on success.</returns>
-    public Task<ApiResponse<GameSessionResponse>> GetGamesessionAsync(
+    public Task<ApiResponse<GameSessionResponse>> GetGameSessionAsync(
         GetGameSessionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing JoinGameSessionResponse on success.</returns>
-    public Task<ApiResponse<JoinGameSessionResponse>> JoingamesessionAsync(
+    public Task<ApiResponse<JoinGameSessionResponse>> JoinGameSessionAsync(
         JoinGameSessionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -105,7 +105,7 @@ public sealed class GameSessionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task LeavegamesessionEventAsync(
+    public Task LeaveGameSessionEventAsync(
         LeaveGameSessionRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -121,7 +121,7 @@ public sealed class GameSessionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task KickplayerEventAsync(
+    public Task KickPlayerEventAsync(
         KickPlayerRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -137,7 +137,7 @@ public sealed class GameSessionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task SendchatmessageEventAsync(
+    public Task SendChatMessageEventAsync(
         ChatMessageRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -154,7 +154,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GameActionResponse on success.</returns>
-    public Task<ApiResponse<GameActionResponse>> PerformgameactionAsync(
+    public Task<ApiResponse<GameActionResponse>> PerformGameActionAsync(
         GameActionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -172,7 +172,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing JoinGameSessionResponse on success.</returns>
-    public Task<ApiResponse<JoinGameSessionResponse>> JoingamesessionbyidAsync(
+    public Task<ApiResponse<JoinGameSessionResponse>> JoinGameSessionByIdAsync(
         JoinGameSessionByIdRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -189,7 +189,7 @@ public sealed class GameSessionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task LeavegamesessionbyidEventAsync(
+    public Task LeaveGameSessionByIdEventAsync(
         LeaveGameSessionByIdRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -206,7 +206,7 @@ public sealed class GameSessionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PublishJoinShortcutResponse on success.</returns>
-    public Task<ApiResponse<PublishJoinShortcutResponse>> PublishjoinshortcutAsync(
+    public Task<ApiResponse<PublishJoinShortcutResponse>> PublishJoinShortcutAsync(
         PublishJoinShortcutRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

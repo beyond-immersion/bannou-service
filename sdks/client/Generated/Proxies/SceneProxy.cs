@@ -142,7 +142,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing InstantiateSceneResponse on success.</returns>
-    public Task<ApiResponse<InstantiateSceneResponse>> InstantiatesceneAsync(
+    public Task<ApiResponse<InstantiateSceneResponse>> InstantiateSceneAsync(
         InstantiateSceneRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DestroyInstanceResponse on success.</returns>
-    public Task<ApiResponse<DestroyInstanceResponse>> DestroyinstanceAsync(
+    public Task<ApiResponse<DestroyInstanceResponse>> DestroyInstanceAsync(
         DestroyInstanceRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -178,7 +178,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CheckoutResponse on success.</returns>
-    public Task<ApiResponse<CheckoutResponse>> CheckoutsceneAsync(
+    public Task<ApiResponse<CheckoutResponse>> CheckoutSceneAsync(
         CheckoutRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -196,7 +196,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CommitResponse on success.</returns>
-    public Task<ApiResponse<CommitResponse>> CommitsceneAsync(
+    public Task<ApiResponse<CommitResponse>> CommitSceneAsync(
         CommitRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DiscardResponse on success.</returns>
-    public Task<ApiResponse<DiscardResponse>> DiscardcheckoutAsync(
+    public Task<ApiResponse<DiscardResponse>> DiscardCheckoutAsync(
         DiscardRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -232,7 +232,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing HeartbeatResponse on success.</returns>
-    public Task<ApiResponse<HeartbeatResponse>> HeartbeatcheckoutAsync(
+    public Task<ApiResponse<HeartbeatResponse>> HeartbeatCheckoutAsync(
         HeartbeatRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -250,7 +250,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing HistoryResponse on success.</returns>
-    public Task<ApiResponse<HistoryResponse>> GetScenehistoryAsync(
+    public Task<ApiResponse<HistoryResponse>> GetSceneHistoryAsync(
         HistoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -268,7 +268,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RegisterValidationRulesResponse on success.</returns>
-    public Task<ApiResponse<RegisterValidationRulesResponse>> RegisterValidationrulesAsync(
+    public Task<ApiResponse<RegisterValidationRulesResponse>> RegisterValidationRulesAsync(
         RegisterValidationRulesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -286,7 +286,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GetValidationRulesResponse on success.</returns>
-    public Task<ApiResponse<GetValidationRulesResponse>> GetValidationrulesAsync(
+    public Task<ApiResponse<GetValidationRulesResponse>> GetValidationRulesAsync(
         GetValidationRulesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -304,7 +304,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SearchScenesResponse on success.</returns>
-    public Task<ApiResponse<SearchScenesResponse>> SearchscenesAsync(
+    public Task<ApiResponse<SearchScenesResponse>> SearchScenesAsync(
         SearchScenesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -322,7 +322,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing FindReferencesResponse on success.</returns>
-    public Task<ApiResponse<FindReferencesResponse>> FindreferencesAsync(
+    public Task<ApiResponse<FindReferencesResponse>> FindReferencesAsync(
         FindReferencesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -340,7 +340,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing FindAssetUsageResponse on success.</returns>
-    public Task<ApiResponse<FindAssetUsageResponse>> FindassetusageAsync(
+    public Task<ApiResponse<FindAssetUsageResponse>> FindAssetUsageAsync(
         FindAssetUsageRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -358,7 +358,7 @@ public sealed class SceneProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SceneResponse on success.</returns>
-    public Task<ApiResponse<SceneResponse>> DuplicatesceneAsync(
+    public Task<ApiResponse<SceneResponse>> DuplicateSceneAsync(
         DuplicateSceneRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

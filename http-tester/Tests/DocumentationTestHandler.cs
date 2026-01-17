@@ -46,6 +46,11 @@ public class DocumentationTestHandler : BaseHttpTestHandler
 
         // Complete lifecycle
         new ServiceTest(TestCompleteDocumentLifecycle, "CompleteDocumentLifecycle", "Documentation", "Test complete document lifecycle with trashcan"),
+
+        // Sorting tests
+        new ServiceTest(TestListDocumentsWithSorting, "ListDocumentsWithSorting", "Documentation", "Test listing documents with sorting options"),
+        new ServiceTest(TestSearchDocumentationWithSorting, "SearchWithSorting", "Documentation", "Test search with sorting options"),
+        new ServiceTest(TestListDocumentsWithTagsFilter, "ListDocumentsWithTags", "Documentation", "Test listing documents with tags filter"),
     ];
 
     private static async Task<TestResult> TestCreateDocument(ITestClient client, string[] args) =>
@@ -801,4 +806,185 @@ public class DocumentationTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful("Complete document lifecycle test passed");
         }, "Complete document lifecycle");
+
+    private static async Task<TestResult> TestListDocumentsWithSorting(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var docClient = GetServiceClient<IDocumentationClient>();
+            var testNamespace = $"sort-test-{DateTime.Now.Ticks}";
+
+            // Create documents with different titles
+            var titles = new[] { "Zebra Guide", "Apple Tutorial", "Mango Reference" };
+            foreach (var title in titles)
+            {
+                await docClient.CreateDocumentAsync(new CreateDocumentRequest
+                {
+                    Namespace = testNamespace,
+                    Title = title,
+                    Slug = $"sort-{title.ToLower().Replace(" ", "-")}-{DateTime.Now.Ticks}",
+                    Content = $"Content for {title}",
+                    Category = DocumentCategory.GettingStarted
+                });
+            }
+
+            // Test sorting by title ascending
+            var ascResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
+            {
+                Namespace = testNamespace,
+                SortBy = ListSortField.Title,
+                SortOrder = ListDocumentsRequestSortOrder.Asc
+            });
+
+            if (ascResponse.Documents == null || ascResponse.Documents.Count < 3)
+                return TestResult.Failed($"Expected 3 documents, got {ascResponse.Documents?.Count ?? 0}");
+
+            // Verify ascending order - first should be Apple
+            var ascFirst = ascResponse.Documents.First();
+            if (!ascFirst.Title.StartsWith("Apple"))
+                return TestResult.Failed($"Expected first document to be 'Apple...', got '{ascFirst.Title}'");
+
+            // Test sorting by title descending
+            var descResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
+            {
+                Namespace = testNamespace,
+                SortBy = ListSortField.Title,
+                SortOrder = ListDocumentsRequestSortOrder.Desc
+            });
+
+            // Verify descending order - first should be Zebra
+            var descFirst = descResponse.Documents.First();
+            if (!descFirst.Title.StartsWith("Zebra"))
+                return TestResult.Failed($"Expected first document to be 'Zebra...', got '{descFirst.Title}'");
+
+            // Test sorting by created_at
+            var createdResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
+            {
+                Namespace = testNamespace,
+                SortBy = ListSortField.Created_at,
+                SortOrder = ListDocumentsRequestSortOrder.Desc
+            });
+
+            if (createdResponse.Documents == null || createdResponse.Documents.Count < 3)
+                return TestResult.Failed("Sort by created_at failed to return documents");
+
+            return TestResult.Successful($"Sorting tests passed: title asc first='{ascFirst.Title}', title desc first='{descFirst.Title}'");
+        }, "List documents with sorting");
+
+    private static async Task<TestResult> TestSearchDocumentationWithSorting(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var docClient = GetServiceClient<IDocumentationClient>();
+            var testNamespace = $"search-sort-{DateTime.Now.Ticks}";
+
+            // Create documents with searchable content
+            var docs = new[]
+            {
+                ("Zebra API Guide", "The zebra API provides authentication features"),
+                ("Apple SDK Reference", "The apple SDK includes authentication methods"),
+                ("Mango Integration", "Mango authentication integration guide")
+            };
+
+            foreach (var (title, content) in docs)
+            {
+                await docClient.CreateDocumentAsync(new CreateDocumentRequest
+                {
+                    Namespace = testNamespace,
+                    Title = title,
+                    Slug = $"search-sort-{title.ToLower().Replace(" ", "-")}-{DateTime.Now.Ticks}",
+                    Content = content,
+                    Category = DocumentCategory.ApiReference
+                });
+            }
+
+            // Test search with alphabetical sorting
+            var alphaResponse = await docClient.SearchDocumentationAsync(new SearchDocumentationRequest
+            {
+                Namespace = testNamespace,
+                SearchTerm = "authentication",
+                SortBy = SearchDocumentationRequestSortBy.Alphabetical
+            });
+
+            if (alphaResponse.Results == null)
+                return TestResult.Failed("Search returned null results");
+
+            // Test search with relevance sorting (default)
+            var relevanceResponse = await docClient.SearchDocumentationAsync(new SearchDocumentationRequest
+            {
+                Namespace = testNamespace,
+                SearchTerm = "authentication",
+                SortBy = SearchDocumentationRequestSortBy.Relevance
+            });
+
+            // Test search with recency sorting
+            var recencyResponse = await docClient.SearchDocumentationAsync(new SearchDocumentationRequest
+            {
+                Namespace = testNamespace,
+                SearchTerm = "authentication",
+                SortBy = SearchDocumentationRequestSortBy.Recency
+            });
+
+            return TestResult.Successful($"Search sorting tests passed: alpha={alphaResponse.TotalResults}, relevance={relevanceResponse.TotalResults}, recency={recencyResponse.TotalResults}");
+        }, "Search with sorting");
+
+    private static async Task<TestResult> TestListDocumentsWithTagsFilter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var docClient = GetServiceClient<IDocumentationClient>();
+            var testNamespace = $"tags-test-{DateTime.Now.Ticks}";
+
+            // Create documents with different tag combinations
+            await docClient.CreateDocumentAsync(new CreateDocumentRequest
+            {
+                Namespace = testNamespace,
+                Title = "Doc with tag1 and tag2",
+                Slug = $"tags-both-{DateTime.Now.Ticks}",
+                Content = "Content with both tags",
+                Category = DocumentCategory.GettingStarted,
+                Tags = new List<string> { "tag1", "tag2" }
+            });
+
+            await docClient.CreateDocumentAsync(new CreateDocumentRequest
+            {
+                Namespace = testNamespace,
+                Title = "Doc with only tag1",
+                Slug = $"tags-one-{DateTime.Now.Ticks}",
+                Content = "Content with one tag",
+                Category = DocumentCategory.GettingStarted,
+                Tags = new List<string> { "tag1" }
+            });
+
+            await docClient.CreateDocumentAsync(new CreateDocumentRequest
+            {
+                Namespace = testNamespace,
+                Title = "Doc with tag3",
+                Slug = $"tags-three-{DateTime.Now.Ticks}",
+                Content = "Content with different tag",
+                Category = DocumentCategory.GettingStarted,
+                Tags = new List<string> { "tag3" }
+            });
+
+            // Test tagsMatch=all - should only return doc with both tags
+            var allResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
+            {
+                Namespace = testNamespace,
+                Tags = new List<string> { "tag1", "tag2" },
+                TagsMatch = ListDocumentsRequestTagsMatch.All
+            });
+
+            if (allResponse.Documents == null || allResponse.Documents.Count != 1)
+                return TestResult.Failed($"TagsMatch=All: expected 1 document, got {allResponse.Documents?.Count ?? 0}");
+
+            // Test tagsMatch=any - should return docs with tag1 OR tag2
+            var anyResponse = await docClient.ListDocumentsAsync(new ListDocumentsRequest
+            {
+                Namespace = testNamespace,
+                Tags = new List<string> { "tag1", "tag2" },
+                TagsMatch = ListDocumentsRequestTagsMatch.Any
+            });
+
+            if (anyResponse.Documents == null || anyResponse.Documents.Count != 2)
+                return TestResult.Failed($"TagsMatch=Any: expected 2 documents, got {anyResponse.Documents?.Count ?? 0}");
+
+            return TestResult.Successful($"Tags filter tests passed: all={allResponse.Documents.Count}, any={anyResponse.Documents.Count}");
+        }, "List documents with tags filter");
 }

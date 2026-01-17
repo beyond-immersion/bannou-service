@@ -52,7 +52,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ValidationResponse on success.</returns>
-    public Task<ApiResponse<ValidationResponse>> ValidateApiaccessAsync(
+    public Task<ApiResponse<ValidationResponse>> ValidateApiAccessAsync(
         ValidationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RegistrationResponse on success.</returns>
-    public Task<ApiResponse<RegistrationResponse>> RegisterServicepermissionsAsync(
+    public Task<ApiResponse<RegistrationResponse>> RegisterServicePermissionsAsync(
         ServicePermissionMatrix request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SessionUpdateResponse on success.</returns>
-    public Task<ApiResponse<SessionUpdateResponse>> UpdateSessionstateAsync(
+    public Task<ApiResponse<SessionUpdateResponse>> UpdateSessionStateAsync(
         SessionStateUpdate request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SessionUpdateResponse on success.</returns>
-    public Task<ApiResponse<SessionUpdateResponse>> UpdateSessionroleAsync(
+    public Task<ApiResponse<SessionUpdateResponse>> UpdateSessionRoleAsync(
         SessionRoleUpdate request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SessionUpdateResponse on success.</returns>
-    public Task<ApiResponse<SessionUpdateResponse>> ClearsessionstateAsync(
+    public Task<ApiResponse<SessionUpdateResponse>> ClearSessionStateAsync(
         ClearSessionStateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -142,7 +142,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SessionInfo on success.</returns>
-    public Task<ApiResponse<SessionInfo>> GetSessioninfoAsync(
+    public Task<ApiResponse<SessionInfo>> GetSessionInfoAsync(
         SessionInfoRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class PermissionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RegisteredServicesResponse on success.</returns>
-    public Task<ApiResponse<RegisteredServicesResponse>> GetRegisteredservicesAsync(
+    public Task<ApiResponse<RegisteredServicesResponse>> GetRegisteredServicesAsync(
         ListServicesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

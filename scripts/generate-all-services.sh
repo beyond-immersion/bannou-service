@@ -310,6 +310,16 @@ else
 fi
 echo ""
 
+# Generate IServiceNavigator and ServiceNavigator (aggregates all service clients)
+echo -e "${BLUE}🧭 Generating ServiceNavigator (service client aggregator)...${NC}"
+if python3 "$SCRIPT_DIR/generate-service-navigator.py"; then
+    echo -e "${GREEN}✅ ServiceNavigator generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate ServiceNavigator${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate client event registry (for typed event subscriptions)
 echo -e "${BLUE}📡 Generating client event registry...${NC}"
 if python3 "$SCRIPT_DIR/generate-client-event-registry.py"; then

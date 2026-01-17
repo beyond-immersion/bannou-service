@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
@@ -10,6 +11,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Services;
@@ -1589,6 +1591,27 @@ public partial class AssetService : IAssetService
                 "CreateMetabundle: Creating metabundle {MetabundleId} with {AssetCount} assets ({Size} bytes)",
                 body.MetabundleId, totalAssetCount, totalSize);
 
+            // Check if job should be processed asynchronously
+            var shouldProcessAsync = ShouldProcessMetabundleAsync(
+                sourceBundles.Count,
+                totalAssetCount,
+                totalSize);
+
+            if (shouldProcessAsync)
+            {
+                // Create async job and return queued response
+                return await CreateMetabundleJobAsync(
+                    body,
+                    sourceBundles,
+                    standaloneAssets,
+                    assetsToInclude,
+                    standalonesToInclude,
+                    totalAssetCount,
+                    totalSize,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            // Synchronous processing for small jobs
             // Create metabundle
             var metabundlePath = $"{_configuration.BundleCurrentPathPrefix}/{body.MetabundleId}.bundle";
 
@@ -1990,6 +2013,216 @@ public partial class AssetService : IAssetService
                 ex.Message,
                 dependency: null,
                 endpoint: "post:/bundles/resolve",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of GetJobStatus operation.
+    /// Returns the status of an async metabundle creation job.
+    /// </summary>
+    public async Task<(StatusCodes, GetJobStatusResponse?)> GetJobStatusAsync(GetJobStatusRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("GetJobStatus: jobId={JobId}", body.JobId);
+
+        try
+        {
+            if (body.JobId == default)
+            {
+                _logger.LogWarning("GetJobStatus: Invalid job ID");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+            var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{body.JobId}";
+            var job = await jobStore.GetAsync(jobKey, cancellationToken).ConfigureAwait(false);
+
+            if (job == null)
+            {
+                _logger.LogWarning("GetJobStatus: Job {JobId} not found", body.JobId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Convert internal status to API status
+            var apiStatus = job.Status switch
+            {
+                InternalJobStatus.Queued => GetJobStatusResponseStatus.Queued,
+                InternalJobStatus.Processing => GetJobStatusResponseStatus.Processing,
+                InternalJobStatus.Ready => GetJobStatusResponseStatus.Ready,
+                InternalJobStatus.Failed => GetJobStatusResponseStatus.Failed,
+                InternalJobStatus.Cancelled => GetJobStatusResponseStatus.Cancelled,
+                _ => GetJobStatusResponseStatus.Failed
+            };
+
+            var response = new GetJobStatusResponse
+            {
+                JobId = job.JobId,
+                MetabundleId = job.MetabundleId,
+                Status = apiStatus,
+                Progress = job.Progress,
+                CreatedAt = job.CreatedAt,
+                UpdatedAt = job.UpdatedAt,
+                ProcessingTimeMs = job.ProcessingTimeMs,
+                ErrorCode = job.ErrorCode,
+                ErrorMessage = job.ErrorMessage
+            };
+
+            // If job is complete, include result data and generate download URL
+            if (job.Status == InternalJobStatus.Ready && job.Result != null)
+            {
+                response.AssetCount = job.Result.AssetCount;
+                response.StandaloneAssetCount = job.Result.StandaloneAssetCount;
+                response.SizeBytes = job.Result.SizeBytes;
+
+                // Generate download URL if we have the storage key
+                if (!string.IsNullOrEmpty(job.Result.StorageKey))
+                {
+                    var tokenTtl = TimeSpan.FromSeconds(_configuration.DownloadTokenTtlSeconds);
+                    var downloadResult = await _storageProvider.GenerateDownloadUrlAsync(
+                        _configuration.StorageBucket,
+                        job.Result.StorageKey,
+                        expiration: tokenTtl).ConfigureAwait(false);
+                    response.DownloadUrl = new Uri(downloadResult.DownloadUrl);
+                }
+
+                // Convert source bundles
+                if (job.Result.SourceBundles != null)
+                {
+                    response.SourceBundles = job.Result.SourceBundles
+                        .Select(sb => new SourceBundleReference
+                        {
+                            BundleId = sb.BundleId,
+                            Version = sb.Version,
+                            AssetIds = sb.AssetIds,
+                            ContentHash = sb.ContentHash
+                        })
+                        .ToList();
+                }
+            }
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing GetJobStatus operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "GetJobStatus",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/job/status",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Implementation of CancelJob operation.
+    /// Cancels a pending or processing async metabundle job.
+    /// </summary>
+    public async Task<(StatusCodes, CancelJobResponse?)> CancelJobAsync(CancelJobRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("CancelJob: jobId={JobId}", body.JobId);
+
+        try
+        {
+            if (body.JobId == default)
+            {
+                _logger.LogWarning("CancelJob: Invalid job ID");
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+            var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{body.JobId}";
+            var job = await jobStore.GetAsync(jobKey, cancellationToken).ConfigureAwait(false);
+
+            if (job == null)
+            {
+                _logger.LogWarning("CancelJob: Job {JobId} not found", body.JobId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if job can be cancelled
+            if (job.Status == InternalJobStatus.Ready || job.Status == InternalJobStatus.Failed)
+            {
+                // Job already completed - cannot cancel
+                var completedStatus = job.Status == InternalJobStatus.Ready
+                    ? CancelJobResponseStatus.Ready
+                    : CancelJobResponseStatus.Failed;
+
+                return (StatusCodes.Conflict, new CancelJobResponse
+                {
+                    JobId = body.JobId,
+                    Cancelled = false,
+                    Status = completedStatus,
+                    Message = $"Job already completed with status '{job.Status}'"
+                });
+            }
+
+            if (job.Status == InternalJobStatus.Cancelled)
+            {
+                // Already cancelled
+                return (StatusCodes.OK, new CancelJobResponse
+                {
+                    JobId = body.JobId,
+                    Cancelled = true,
+                    Status = CancelJobResponseStatus.Cancelled,
+                    Message = "Job was already cancelled"
+                });
+            }
+
+            // Cancel the job
+            var previousStatus = job.Status;
+            job.Status = InternalJobStatus.Cancelled;
+            job.UpdatedAt = DateTimeOffset.UtcNow;
+            job.CompletedAt = DateTimeOffset.UtcNow;
+            job.ErrorCode = MetabundleErrorCode.CANCELLED.ToString();
+            job.ErrorMessage = "Job cancelled by user request";
+            await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("CancelJob: Job {JobId} cancelled (was {PreviousStatus})", body.JobId, previousStatus);
+
+            // Emit completion event if there's a session to notify
+            if (!string.IsNullOrEmpty(job.RequesterSessionId))
+            {
+                await _eventEmitter.EmitMetabundleCreationCompleteAsync(
+                    job.RequesterSessionId,
+                    job.JobId,
+                    job.MetabundleId,
+                    success: false,
+                    MetabundleJobStatus.Cancelled,
+                    downloadUrl: null,
+                    sizeBytes: null,
+                    assetCount: null,
+                    standaloneAssetCount: null,
+                    processingTimeMs: null,
+                    MetabundleErrorCode.CANCELLED,
+                    "Job cancelled by user request",
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            return (StatusCodes.OK, new CancelJobResponse
+            {
+                JobId = body.JobId,
+                Cancelled = true,
+                Status = CancelJobResponseStatus.Cancelled,
+                Message = $"Job cancelled successfully (was {previousStatus})"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing CancelJob operation");
+            await _messageBus.TryPublishErrorAsync(
+                "asset",
+                "CancelJob",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/bundles/job/cancel",
                 details: null,
                 stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
@@ -3293,6 +3526,123 @@ public partial class AssetService : IAssetService
 
     #endregion
 
+    #region Async Metabundle Helpers
+
+    /// <summary>
+    /// Determines if a metabundle creation job should be processed asynchronously
+    /// based on configured thresholds.
+    /// </summary>
+    private bool ShouldProcessMetabundleAsync(int sourceBundleCount, int totalAssetCount, long totalSizeBytes)
+    {
+        // Check source bundle threshold
+        if (sourceBundleCount >= _configuration.MetabundleAsyncSourceBundleThreshold)
+        {
+            _logger.LogInformation(
+                "CreateMetabundle: Job exceeds source bundle threshold ({Count} >= {Threshold}), using async processing",
+                sourceBundleCount, _configuration.MetabundleAsyncSourceBundleThreshold);
+            return true;
+        }
+
+        // Check asset count threshold
+        if (totalAssetCount >= _configuration.MetabundleAsyncAssetCountThreshold)
+        {
+            _logger.LogInformation(
+                "CreateMetabundle: Job exceeds asset count threshold ({Count} >= {Threshold}), using async processing",
+                totalAssetCount, _configuration.MetabundleAsyncAssetCountThreshold);
+            return true;
+        }
+
+        // Check size threshold
+        if (totalSizeBytes >= _configuration.MetabundleAsyncSizeBytesThreshold)
+        {
+            _logger.LogInformation(
+                "CreateMetabundle: Job exceeds size threshold ({Size} >= {Threshold}), using async processing",
+                totalSizeBytes, _configuration.MetabundleAsyncSizeBytesThreshold);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Creates an async metabundle job and returns a queued response.
+    /// </summary>
+    private async Task<(StatusCodes, CreateMetabundleResponse?)> CreateMetabundleJobAsync(
+        CreateMetabundleRequest request,
+        List<BundleMetadata> sourceBundles,
+        List<InternalAssetRecord> standaloneAssets,
+        List<(StoredBundleAssetEntry Entry, string SourceBundleId)> assetsToInclude,
+        List<InternalAssetRecord> standalonesToInclude,
+        int totalAssetCount,
+        long totalSizeBytes,
+        CancellationToken cancellationToken)
+    {
+        var jobId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Capture requester session ID for completion notification
+        var requesterSessionId = ServiceRequestContext.SessionId;
+
+        // Create job record
+        var job = new MetabundleJob
+        {
+            JobId = jobId,
+            MetabundleId = request.MetabundleId,
+            Status = InternalJobStatus.Queued,
+            Request = request,
+            RequesterSessionId = requesterSessionId,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save job to state store
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{jobId}";
+        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "CreateMetabundle: Created async job {JobId} for metabundle {MetabundleId} with {AssetCount} assets",
+            jobId, request.MetabundleId, totalAssetCount);
+
+        // Publish job to processing queue
+        await _messageBus.TryPublishAsync(
+            "asset.metabundle.job.queued",
+            new MetabundleJobQueuedEvent
+            {
+                JobId = jobId,
+                MetabundleId = request.MetabundleId,
+                SourceBundleCount = sourceBundles.Count,
+                AssetCount = totalAssetCount,
+                EstimatedSizeBytes = totalSizeBytes,
+                RequesterSessionId = requesterSessionId
+            }).ConfigureAwait(false);
+
+        // Build provenance data for response
+        var sourceBundleRefs = sourceBundles.Select(sb => new SourceBundleReference
+        {
+            BundleId = sb.BundleId,
+            Version = sb.Version,
+            AssetIds = assetsToInclude
+                .Where(a => a.SourceBundleId == sb.BundleId)
+                .Select(a => a.Entry.AssetId)
+                .ToList(),
+            ContentHash = sb.StorageKey // Use storage key as proxy for content hash
+        }).ToList();
+
+        return (StatusCodes.OK, new CreateMetabundleResponse
+        {
+            MetabundleId = request.MetabundleId,
+            JobId = jobId,
+            Status = CreateMetabundleResponseStatus.Queued,
+            AssetCount = totalAssetCount,
+            StandaloneAssetCount = standalonesToInclude.Count,
+            SizeBytes = totalSizeBytes,
+            SourceBundles = sourceBundleRefs
+        });
+    }
+
+    #endregion
+
     #region Permission Registration
 
     /// <summary>
@@ -3370,4 +3720,150 @@ internal sealed class AssetBundleIndex
     /// List of bundle IDs containing this asset.
     /// </summary>
     public List<string> BundleIds { get; set; } = new();
+}
+
+/// <summary>
+/// Internal model for tracking async metabundle creation jobs.
+/// Stored in state store for status polling and completion handling.
+/// </summary>
+internal sealed class MetabundleJob
+{
+    /// <summary>
+    /// Unique job identifier.
+    /// </summary>
+    public Guid JobId { get; set; }
+
+    /// <summary>
+    /// Target metabundle identifier.
+    /// </summary>
+    public string MetabundleId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Current job status.
+    /// </summary>
+    public InternalJobStatus Status { get; set; } = InternalJobStatus.Queued;
+
+    /// <summary>
+    /// Progress percentage (0-100) when processing.
+    /// </summary>
+    public int? Progress { get; set; }
+
+    /// <summary>
+    /// Session ID of the requester for completion notification.
+    /// </summary>
+    public string? RequesterSessionId { get; set; }
+
+    /// <summary>
+    /// Serialized request for background processing.
+    /// Always set when job is created; null indicates data corruption.
+    /// </summary>
+    public CreateMetabundleRequest? Request { get; set; }
+
+    /// <summary>
+    /// When the job was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// When the job was last updated.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// When the job completed (success or failure).
+    /// </summary>
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    /// <summary>
+    /// Processing time in milliseconds after completion.
+    /// </summary>
+    public long? ProcessingTimeMs { get; set; }
+
+    /// <summary>
+    /// Error code if job failed.
+    /// </summary>
+    public string? ErrorCode { get; set; }
+
+    /// <summary>
+    /// Error message if job failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Result data when job completes successfully.
+    /// </summary>
+    public MetabundleJobResult? Result { get; set; }
+}
+
+/// <summary>
+/// Job status enum for internal tracking (distinct from client event enum).
+/// </summary>
+internal enum InternalJobStatus
+{
+    Queued,
+    Processing,
+    Ready,
+    Failed,
+    Cancelled
+}
+
+/// <summary>
+/// Result data stored when metabundle job completes successfully.
+/// </summary>
+internal sealed class MetabundleJobResult
+{
+    public int AssetCount { get; set; }
+    public int? StandaloneAssetCount { get; set; }
+    public long SizeBytes { get; set; }
+    public string? StorageKey { get; set; }
+    public List<SourceBundleReferenceInternal>? SourceBundles { get; set; }
+}
+
+/// <summary>
+/// Internal model for source bundle reference in job results.
+/// </summary>
+internal sealed class SourceBundleReferenceInternal
+{
+    public string BundleId { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public List<string> AssetIds { get; set; } = new();
+    public string ContentHash { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Event published when a metabundle job is queued for async processing.
+/// Consumed by background workers to process the metabundle creation.
+/// </summary>
+internal sealed class MetabundleJobQueuedEvent
+{
+    /// <summary>
+    /// Unique identifier for this job.
+    /// </summary>
+    public Guid JobId { get; set; }
+
+    /// <summary>
+    /// The metabundle ID being created.
+    /// </summary>
+    public string MetabundleId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number of source bundles to merge.
+    /// </summary>
+    public int SourceBundleCount { get; set; }
+
+    /// <summary>
+    /// Total number of assets in the metabundle.
+    /// </summary>
+    public int AssetCount { get; set; }
+
+    /// <summary>
+    /// Estimated total size in bytes.
+    /// </summary>
+    public long EstimatedSizeBytes { get; set; }
+
+    /// <summary>
+    /// Session ID of the requester for completion notification.
+    /// Null if request did not originate from a WebSocket session.
+    /// </summary>
+    public string? RequesterSessionId { get; set; }
 }

@@ -13,8 +13,8 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 8 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
-| [Asset Service API](#asset) | `client.Asset` | 18 | Asset management service for storage, versioning, and distri... |
-| [Bannou Auth Service API](#auth) | `client.Auth` | 11 | Authentication and session management service (Internet-faci... |
+| [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
+| [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
 | [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for Arcadia game world. |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
@@ -233,6 +233,8 @@ Asset management service for storage, versioning, and distribution of large bina
 | `GetBundleAsync` | `GetBundleRequest` | `BundleWithDownloadUrl` | Get bundle manifest and download URL |
 | `RequestbundleuploadAsync` | `BundleUploadRequest` | `UploadResponse` | Request upload URL for a pre-made bundle |
 | `CreateMetabundleAsync` | `CreateMetabundleRequest` | `CreateMetabundleResponse` | Create metabundle from source bundles |
+| `GetJobstatusAsync` | `GetJobStatusRequest` | `GetJobStatusResponse` | Get async metabundle job status |
+| `CanceljobAsync` | `CancelJobRequest` | `CancelJobResponse` | Cancel an async metabundle job |
 | `ResolvebundlesAsync` | `ResolveBundlesRequest` | `ResolveBundlesResponse` | Compute optimal bundles for requested assets |
 | `QuerybundlesbyassetAsync` | `QueryBundlesByAssetRequest` | `QueryBundlesByAssetResponse` | Find all bundles containing a specific asset |
 | `UpdateBundleAsync` | `UpdateBundleRequest` | `UpdateBundleResponse` | Update bundle metadata |
@@ -256,6 +258,7 @@ Authentication and session management service (Internet-facing).
 | `LoginAsync` | `LoginRequest` | `AuthResponse` | Login with email/password |
 | `RegisterAsync` | `RegisterRequest` | `RegisterResponse` | Register new user account |
 | `LogoutEventAsync` | `LogoutRequest` | *(fire-and-forget)* | Logout and invalidate tokens |
+| `ListProvidersAsync` | - | `ProvidersResponse` | List available authentication providers |
 
 ### OAuth
 
@@ -1249,7 +1252,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 33
-- **Total methods**: 389
+- **Total methods**: 392
 
 ---
 

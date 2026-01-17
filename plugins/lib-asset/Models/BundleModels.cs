@@ -230,23 +230,6 @@ public sealed class StoredBundleAssetEntry
     /// Tags associated with this asset within the bundle.
     /// </summary>
     public List<string>? Tags { get; init; }
-
-    /// <summary>
-    /// Converts to API response model.
-    /// </summary>
-    public BundleAssetEntry ToApiModel()
-    {
-        return new BundleAssetEntry
-        {
-            AssetId = AssetId,
-            ContentHash = ContentHash,
-            Filename = Filename,
-            ContentType = ContentType,
-            Size = Size,
-            ExternalAssetId = ExternalAssetId,
-            Tags = Tags
-        };
-    }
 }
 
 /// <summary>

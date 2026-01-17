@@ -611,11 +611,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "string",
                     "description": "Name of the state store (MySQL or Redis with search enabled)"
                 },
-                "filter": {
-                    "type": "object",
-                    "additionalProperties": false,
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/QueryCondition"
+                    },
                     "nullable": true,
-                    "description": "Filter expression. Format depends on backend:\n\n**MySQL JSON queries** - structured conditions:\n```json\n{\n  \"conditions\": [\n    { \"path\": \"$.name\", \"operator\": \"equals\", \"value\": \"John\" },\n    { \"path\": \"$.age\", \"operator\": \"gte\", \"value\": 18 }\n  ]\n}\n```\n\n**MySQL simple equality** - flat object format:\n```json\n{ \"$.name\": \"John\", \"$.status\": \"active\" }\n```\n\n**Redis search** - use indexName and query properties instead\n"
+                    "description": "Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.\nFor Redis search, use indexName and query properties instead.\n"
                 },
                 "indexName": {
                     "type": "string",
@@ -646,6 +648,47 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "description": "Items per page (max 1000)"
                 }
             }
+        },
+        "QueryCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A single query condition for MySQL JSON queries",
+            "required": [
+                "path"
+            ],
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "JSON path to query (e.g., \"$.name\", \"$.address.city\", \"$.tags[0]\")"
+                },
+                "operator": {
+                    "$ref": "#/$defs/QueryOperator",
+                    "description": "Comparison operator to use for the condition"
+                },
+                "value": {
+                    "description": "Value to compare against. Not required for exists/notExists operators."
+                }
+            }
+        },
+        "QueryOperator": {
+            "type": "string",
+            "description": "Comparison operator for query conditions",
+            "enum": [
+                "equals",
+                "notEquals",
+                "greaterThan",
+                "greaterThanOrEqual",
+                "lessThan",
+                "lessThanOrEqual",
+                "contains",
+                "startsWith",
+                "endsWith",
+                "in",
+                "exists",
+                "notExists",
+                "fullText"
+            ],
+            "default": "equals"
         },
         "SortField": {
             "description": "Specifies a field and direction for sorting query results",

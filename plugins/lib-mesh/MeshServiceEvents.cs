@@ -41,13 +41,13 @@ public partial class MeshService
         try
         {
             // Check if this instance is already registered
-            var existingEndpoint = await _redisManager.GetEndpointByInstanceIdAsync(evt.ServiceId);
+            var existingEndpoint = await _stateManager.GetEndpointByInstanceIdAsync(evt.ServiceId);
 
             if (existingEndpoint != null)
             {
                 // Update heartbeat for existing endpoint
                 var status = MapHeartbeatStatus(evt.Status);
-                await _redisManager.UpdateHeartbeatAsync(
+                await _stateManager.UpdateHeartbeatAsync(
                     existingEndpoint.InstanceId,
                     evt.AppId,
                     status,
@@ -79,7 +79,7 @@ public partial class MeshService
                     LastSeen = DateTimeOffset.UtcNow
                 };
 
-                await _redisManager.RegisterEndpointAsync(endpoint, 90);
+                await _stateManager.RegisterEndpointAsync(endpoint, 90);
 
                 _logger.LogInformation(
                     "Auto-registered endpoint {InstanceId} for app {AppId} from heartbeat",

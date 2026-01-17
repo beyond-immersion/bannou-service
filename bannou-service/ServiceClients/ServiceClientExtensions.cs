@@ -49,6 +49,8 @@ public static class ServiceClientExtensions
             configureClient?.Invoke(client);
         })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+        // Add session ID forwarding handler for automatic header propagation through mesh calls
+        .AddHttpMessageHandler<SessionIdForwardingHandler>()
         .SetHandlerLifetime(TimeSpan.FromMinutes(5));
 
         // Register the client with its interface

@@ -80,6 +80,16 @@ public partial interface IAssetService : IBannouService
         Task<(StatusCodes, CreateMetabundleResponse?)> CreateMetabundleAsync(CreateMetabundleRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// GetJobStatus operation
+        /// </summary>
+        Task<(StatusCodes, GetJobStatusResponse?)> GetJobStatusAsync(GetJobStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CancelJob operation
+        /// </summary>
+        Task<(StatusCodes, CancelJobResponse?)> CancelJobAsync(CancelJobRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ResolveBundles operation
         /// </summary>
         Task<(StatusCodes, ResolveBundlesResponse?)> ResolveBundlesAsync(ResolveBundlesRequest body, CancellationToken cancellationToken = default(CancellationToken));

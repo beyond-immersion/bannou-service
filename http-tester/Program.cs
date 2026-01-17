@@ -8,6 +8,8 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -188,35 +190,63 @@ public class Program
             serviceCollection.AddSingleton<IMessageTap, RabbitMQMessageTap>();
 
             // =====================================================================
-            // MESH INFRASTRUCTURE - Real Redis-based service discovery
+            // STATE INFRASTRUCTURE - Redis connection via lib-state
             // =====================================================================
-            // Configure MeshServiceConfiguration from environment variables
-            var meshRedisHost = Environment.GetEnvironmentVariable("MESH_REDIS_HOST") ?? "bannou-redis";
-            var meshRedisPort = Environment.GetEnvironmentVariable("MESH_REDIS_PORT") ?? "6379";
-            var meshRedisConnectionString = Environment.GetEnvironmentVariable("MESH_REDIS_CONNECTION_STRING")
-                ?? $"{meshRedisHost}:{meshRedisPort}";
+            var stateRedisConnectionString = Environment.GetEnvironmentVariable("STATE_REDIS_CONNECTION_STRING")
+                ?? "bannou-redis:6379";
 
-            Console.WriteLine($"🔗 Configuring Mesh to use Redis at {meshRedisConnectionString}");
+            Console.WriteLine($"🔗 Configuring State to use Redis at {stateRedisConnectionString}");
+
+            // Register StateServiceConfiguration
+            var stateConfig = new StateServiceConfiguration
+            {
+                UseInMemory = false,
+                RedisConnectionString = stateRedisConnectionString,
+                ConnectionTimeoutSeconds = 60,
+                ConnectRetryCount = 10
+            };
+            serviceCollection.AddSingleton(stateConfig);
+
+            // Build StateStoreFactoryConfiguration from StateServiceConfiguration
+            // (same pattern as StateServicePlugin.BuildFactoryConfiguration)
+            var factoryConfig = new StateStoreFactoryConfiguration
+            {
+                UseInMemory = stateConfig.UseInMemory,
+                RedisConnectionString = stateRedisConnectionString,
+                ConnectionRetryCount = stateConfig.ConnectRetryCount,
+                ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds
+            };
+
+            // Load store configurations from generated definitions (schema-first approach)
+            foreach (var (storeName, storeConfig) in StateStoreDefinitions.Configurations)
+            {
+                factoryConfig.Stores[storeName] = storeConfig;
+            }
+            serviceCollection.AddSingleton(factoryConfig);
+
+            // Register IStateStoreFactory
+            serviceCollection.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+
+            // =====================================================================
+            // MESH INFRASTRUCTURE - Service discovery via lib-state
+            // =====================================================================
+            Console.WriteLine($"🔗 Configuring Mesh to use lib-state for Redis access");
 
             var meshConfig = new MeshServiceConfiguration
             {
-                RedisConnectionString = meshRedisConnectionString,
-                UseLocalRouting = false,  // MUST use real Redis
-                RedisConnectionTimeoutSeconds = 60,
-                RedisConnectRetryCount = 10,
-                RedisSyncTimeoutMs = 5000
+                UseLocalRouting = false  // MUST use real Redis via lib-state
             };
             serviceCollection.AddSingleton(meshConfig);
 
-            // Register real MeshRedisManager (NOT LocalMeshRedisManager)
-            serviceCollection.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+            // Register MeshStateManager (uses IStateStoreFactory for Redis)
+            serviceCollection.AddSingleton<IMeshStateManager, MeshStateManager>();
 
             // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
-                var redisManager = sp.GetRequiredService<IMeshRedisManager>();
+                var stateManager = sp.GetRequiredService<IMeshStateManager>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-                return new MeshInvocationClient(redisManager, logger);
+                return new MeshInvocationClient(stateManager, logger);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)
@@ -231,11 +261,19 @@ public class Program
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            // Initialize mesh Redis connection (required for service discovery)
-            var meshRedisManager = ServiceProvider.GetRequiredService<IMeshRedisManager>();
-            if (!await WaitForMeshReadiness(meshRedisManager))
+            // Initialize state store factory first (required by mesh)
+            var stateStoreFactory = ServiceProvider.GetRequiredService<IStateStoreFactory>();
+            if (!await WaitForStateReadiness(stateStoreFactory))
             {
-                Console.WriteLine("❌ Mesh Redis connection failed.");
+                Console.WriteLine("❌ State store factory initialization failed.");
+                return false;
+            }
+
+            // Initialize mesh state manager (required for service discovery)
+            var meshStateManager = ServiceProvider.GetRequiredService<IMeshStateManager>();
+            if (!await WaitForMeshReadiness(meshStateManager))
+            {
+                Console.WriteLine("❌ Mesh state manager initialization failed.");
                 return false;
             }
 
@@ -323,32 +361,55 @@ public class Program
     }
 
     /// <summary>
-    /// Waits for the mesh Redis connection to be established.
-    /// This is required for service discovery to work.
+    /// Waits for the state store factory to initialize.
+    /// This is required for mesh state management to work.
     /// </summary>
-    /// <param name="meshRedisManager">The mesh Redis manager to initialize.</param>
-    /// <returns>True if mesh is ready, false if timeout or error occurs.</returns>
-    private static async Task<bool> WaitForMeshReadiness(IMeshRedisManager meshRedisManager)
+    /// <param name="stateStoreFactory">The state store factory to initialize.</param>
+    /// <returns>True if state is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForStateReadiness(IStateStoreFactory stateStoreFactory)
     {
-        Console.WriteLine("Waiting for Mesh Redis connection...");
+        Console.WriteLine("Waiting for State store factory initialization...");
 
         try
         {
-            var initialized = await meshRedisManager.InitializeAsync();
+            await stateStoreFactory.InitializeAsync();
+            Console.WriteLine("✅ State store factory initialized");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ State store factory initialization failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Waits for the mesh state manager to initialize.
+    /// This is required for service discovery to work.
+    /// </summary>
+    /// <param name="meshStateManager">The mesh state manager to initialize.</param>
+    /// <returns>True if mesh is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForMeshReadiness(IMeshStateManager meshStateManager)
+    {
+        Console.WriteLine("Waiting for Mesh state manager initialization...");
+
+        try
+        {
+            var initialized = await meshStateManager.InitializeAsync();
             if (initialized)
             {
-                Console.WriteLine("✅ Mesh Redis connection established");
+                Console.WriteLine("✅ Mesh state manager initialized");
                 return true;
             }
             else
             {
-                Console.WriteLine("❌ Mesh Redis initialization returned false");
+                Console.WriteLine("❌ Mesh state manager initialization returned false");
                 return false;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Mesh Redis initialization failed: {ex.Message}");
+            Console.WriteLine($"❌ Mesh state manager initialization failed: {ex.Message}");
             return false;
         }
     }

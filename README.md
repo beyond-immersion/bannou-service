@@ -1,6 +1,6 @@
 # Bannou Service
 
-[![Build Status](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.integration.yml/badge.svg?branch=master&event=push)](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.integration.yml)
+[![Build Status](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.unit.yml/badge.svg?branch=master&event=push)](https://github.com/beyond-immersion/bannou-service/actions/workflows/ci.unit.yml)
 
 Bannou is a schema-driven monoservice platform for multiplayer games. It provides a WebSocket-first edge gateway with zero-copy message routing, plugin-based service architecture, and abstracted infrastructure (lib-state, lib-messaging, lib-mesh). Designed to support Arcadia, a revolutionary MMORPG with 100,000+ AI-driven NPCs, Bannou scales from a single development machine to distributed production clusters without code changes.
 

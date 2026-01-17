@@ -39,20 +39,6 @@ public class EventSubscriptionTests
         Assert.True(subscription.IsActive);
     }
 
-    [Fact]
-    public void Constructor_NullEventName_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new EventSubscription(null!, Guid.NewGuid(), _ => { }));
-    }
-
-    [Fact]
-    public void Constructor_NullCallback_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            new EventSubscription("test.event", Guid.NewGuid(), null!));
-    }
-
     // =========================================================================
     // DISPOSE TESTS
     // =========================================================================

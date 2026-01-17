@@ -175,7 +175,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     public Attributes(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Attributes>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Attributes>.Instance;
     }
 
     private BindingFlags UseAllBindingFlags()

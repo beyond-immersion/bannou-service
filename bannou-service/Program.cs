@@ -39,7 +39,7 @@ public static class Program
         internal set => _configurationRoot = value;
     }
 
-    private static AppConfiguration _configuration;
+    private static AppConfiguration? _configuration;
 
     /// <summary>
     /// Service configuration.
@@ -50,6 +50,12 @@ public static class Program
         get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
         internal set => _configuration = value;
     }
+
+    /// <summary>
+    /// Resets the configuration to null, forcing it to be rebuilt from environment on next access.
+    /// Internal method for test cleanup.
+    /// </summary>
+    internal static void ResetConfiguration() => _configuration = null;
 
     private static string _serviceGUID;
 
@@ -271,8 +277,21 @@ public static class Program
             }
             throw; // Re-throw to maintain original behavior
         }
+
+        // Defensive: webApp is guaranteed non-null here since Build() succeeded (exception re-thrown above if it failed)
+        // This explicit check satisfies static analysis tools that can't track the throw-based control flow
+        if (webApp == null)
+        {
+            Logger.Log(LogLevel.Critical, null, "WebApplication is unexpectedly null after successful build - this should never happen");
+            return 1;
+        }
+
         try
         {
+            // Add service request context middleware to capture session ID from incoming requests
+            // This MUST be early in the pipeline to capture context before any service calls
+            webApp.UseServiceRequestContext();
+
             // Add diagnostic middleware to track request lifecycle
             webApp.Use(async (context, next) =>
             {

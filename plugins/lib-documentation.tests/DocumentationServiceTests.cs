@@ -959,6 +959,174 @@ public class DocumentationServiceTests
     }
 
     #endregion
+
+    #region Sorting Tests
+
+    /// <summary>
+    /// Helper to set up mocks for ListDocumentsAsync tests.
+    /// </summary>
+    private void SetupListDocumentsMocks()
+    {
+        // ListDocumentsAsync uses _searchIndexService.ListDocumentIdsAsync, not state store directly
+        _mockSearchIndexService.Setup(x => x.ListDocumentIdsAsync(
+            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid>());
+    }
+
+    [Fact]
+    public async Task ListDocumentsAsync_WithSortByCreatedAtAsc_ShouldReturnOk()
+    {
+        // Arrange
+        SetupListDocumentsMocks();
+
+        var request = new ListDocumentsRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SortBy = ListSortField.Created_at,
+            SortOrder = ListDocumentsRequestSortOrder.Asc
+        };
+
+        // Act
+        var (status, response) = await _service.ListDocumentsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task ListDocumentsAsync_WithSortByTitleDesc_ShouldReturnOk()
+    {
+        // Arrange
+        SetupListDocumentsMocks();
+
+        var request = new ListDocumentsRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SortBy = ListSortField.Title,
+            SortOrder = ListDocumentsRequestSortOrder.Desc
+        };
+
+        // Act
+        var (status, response) = await _service.ListDocumentsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task ListDocumentsAsync_WithTagsMatchAll_ShouldReturnOk()
+    {
+        // Arrange
+        SetupListDocumentsMocks();
+
+        var request = new ListDocumentsRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            Tags = new List<string> { "tag1", "tag2" },
+            TagsMatch = ListDocumentsRequestTagsMatch.All
+        };
+
+        // Act
+        var (status, response) = await _service.ListDocumentsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task ListDocumentsAsync_WithTagsMatchAny_ShouldReturnOk()
+    {
+        // Arrange
+        SetupListDocumentsMocks();
+
+        var request = new ListDocumentsRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            Tags = new List<string> { "tag1", "tag2" },
+            TagsMatch = ListDocumentsRequestTagsMatch.Any
+        };
+
+        // Act
+        var (status, response) = await _service.ListDocumentsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task SearchDocumentationAsync_WithSortByRelevance_ShouldReturnResults()
+    {
+        // Arrange
+        var request = new SearchDocumentationRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SearchTerm = "test query",
+            SortBy = SearchDocumentationRequestSortBy.Relevance
+        };
+
+        _mockSearchIndexService.Setup(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
+
+        // Act
+        var (status, response) = await _service.SearchDocumentationAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task SearchDocumentationAsync_WithSortByRecency_ShouldReturnResults()
+    {
+        // Arrange
+        var request = new SearchDocumentationRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SearchTerm = "test query",
+            SortBy = SearchDocumentationRequestSortBy.Recency
+        };
+
+        _mockSearchIndexService.Setup(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
+
+        // Act
+        var (status, response) = await _service.SearchDocumentationAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task SearchDocumentationAsync_WithSortByAlphabetical_ShouldReturnResults()
+    {
+        // Arrange
+        var request = new SearchDocumentationRequest
+        {
+            Namespace = TEST_NAMESPACE,
+            SearchTerm = "test query",
+            SortBy = SearchDocumentationRequestSortBy.Alphabetical
+        };
+
+        _mockSearchIndexService.Setup(x => x.SearchAsync(
+            TEST_NAMESPACE, "test query", null, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SearchResult>());
+
+        // Act
+        var (status, response) = await _service.SearchDocumentationAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    #endregion
 }
 
 /// <summary>

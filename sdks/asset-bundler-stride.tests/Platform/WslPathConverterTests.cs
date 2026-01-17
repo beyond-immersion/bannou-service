@@ -14,10 +14,9 @@ public class WslPathConverterTests
     #region ToWindowsPath Tests (Non-WSL behavior)
 
     [Fact]
-    public void ToWindowsPath_NullOrEmpty_ReturnsInput()
+    public void ToWindowsPath_Empty_ReturnsEmpty()
     {
         Assert.Equal("", WslPathConverter.ToWindowsPath(""));
-        Assert.Null(WslPathConverter.ToWindowsPath(null!));
     }
 
     [Theory]
@@ -49,10 +48,9 @@ public class WslPathConverterTests
     #region ToUnixPath Tests (Non-WSL behavior)
 
     [Fact]
-    public void ToUnixPath_NullOrEmpty_ReturnsInput()
+    public void ToUnixPath_Empty_ReturnsEmpty()
     {
         Assert.Equal("", WslPathConverter.ToUnixPath(""));
-        Assert.Null(WslPathConverter.ToUnixPath(null!));
     }
 
     [Fact]

@@ -36,6 +36,6 @@ public static class TestConfigurationHelper
     /// </summary>
     public static void ResetConfiguration()
     {
-        Program.Configuration = null!;
+        Program.ResetConfiguration();
     }
 }

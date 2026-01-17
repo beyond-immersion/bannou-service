@@ -23425,6 +23425,38 @@
             <returns>Metabundle created or queued for creation</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <remarks>
+            Poll the status of an async metabundle creation job.
+            <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+            <br/>
+            <br/>Clients can either poll this endpoint or wait for the
+            <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+            </remarks>
+            <returns>Job status retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <remarks>
+            Cancel a pending or processing metabundle creation job.
+            <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+            <br/>
+            <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+            <br/>with status 'cancelled' via WebSocket.
+            </remarks>
+            <returns>Job cancellation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Asset.IAssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -23773,6 +23805,38 @@
             <returns>Metabundle created or queued for creation</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <remarks>
+            Poll the status of an async metabundle creation job.
+            <br/>Use the jobId returned from createMetabundle when status was 'queued'.
+            <br/>
+            <br/>Clients can either poll this endpoint or wait for the
+            <br/>MetabundleCreationCompleteEvent via WebSocket for completion notification.
+            </remarks>
+            <returns>Job status retrieved</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.Threading.CancellationToken)">
+            <param name="body">The body parameter.</param>
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <remarks>
+            Cancel a pending or processing metabundle creation job.
+            <br/>Jobs that are already completed (ready or failed) cannot be cancelled.
+            <br/>
+            <br/>Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
+            <br/>with status 'cancelled' via WebSocket.
+            </remarks>
+            <returns>Job cancellation result</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Asset.AssetClient.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.Threading.CancellationToken)">
             <param name="body">The body parameter.</param>
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -23980,17 +24044,6 @@
             Bundle category:
             <br/>- source: Original bundle (uploaded or server-created from assets)
             <br/>- metabundle: Composed from other bundles server-side
-            <br/>
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetIdStyle">
-            <summary>
-            Asset ID validation style presets:
-            <br/>- any: No style enforcement (just max length and basic characters)
-            <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-            <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-            <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-            <br/>- custom: Use custom regex pattern from configuration
             <br/>
             </summary>
         </member>
@@ -24646,51 +24699,6 @@
             Hash of source bundle at composition time (for integrity verification)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleAssetEntry">
-            <summary>
-            Asset entry within a bundle (supports platform-specific IDs)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.AssetId">
-            <summary>
-            Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentHash">
-            <summary>
-            SHA256 hash of asset content
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Filename">
-            <summary>
-            Original filename
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Size">
-            <summary>
-            Asset size in bytes (uncompressed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ExternalAssetId">
-            <summary>
-            External asset identifier for cross-system references.
-            <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Tags">
-            <summary>
-            Tags associated with this asset within the bundle.
-            <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-            <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetConflict">
             <summary>
             Describes a conflict when the same asset ID has different content hashes
@@ -24787,7 +24795,10 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse">
             <summary>
-            Response from metabundle creation
+            Response from metabundle creation.
+            <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+            <br/>For async creation (large jobs): status=queued with jobId for polling.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
@@ -24795,9 +24806,27 @@
             Metabundle identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.JobId">
+            <summary>
+            Job ID for async processing. Only present when status is 'queued' or 'processing'.
+            <br/>Use /bundles/job/status to poll for completion, or wait for
+            <br/>MetabundleCreationCompleteEvent via WebSocket.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Status">
             <summary>
-            Creation status
+            Creation status.
+            <br/>- queued: Job accepted for async processing (poll with jobId)
+            <br/>- processing: Job is actively running
+            <br/>- ready: Metabundle created and available for download
+            <br/>- failed: Creation failed (see conflicts for details)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only present when status is 'ready')
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.AssetCount">
@@ -24823,6 +24852,134 @@
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Conflicts">
             <summary>
             Present if creation failed due to asset conflicts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusRequest">
+            <summary>
+            Request to get the status of an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusResponse">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>When status is 'ready', the response includes the full metabundle details.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.MetabundleId">
+            <summary>
+            Metabundle identifier being created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Status">
+            <summary>
+            Current job status.
+            <br/>- queued: Waiting for processing resources
+            <br/>- processing: Actively being processed
+            <br/>- ready: Completed successfully
+            <br/>- failed: Creation failed
+            <br/>- cancelled: Job was cancelled
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Progress">
+            <summary>
+            Progress percentage (0-100) when status is 'processing'
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only when status is 'ready')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.AssetCount">
+            <summary>
+            Number of assets in metabundle (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SizeBytes">
+            <summary>
+            Total size in bytes (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SourceBundles">
+            <summary>
+            Provenance data (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorCode">
+            <summary>
+            Error code (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorMessage">
+            <summary>
+            Human-readable error description (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.CreatedAt">
+            <summary>
+            When the job was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.UpdatedAt">
+            <summary>
+            When the job was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds (when complete)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobRequest">
+            <summary>
+            Request to cancel an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobResponse">
+            <summary>
+            Result of job cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Cancelled">
+            <summary>
+            Whether the job was successfully cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Status">
+            <summary>
+            Current job status after cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Message">
+            <summary>
+            Additional context about the cancellation result
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">
@@ -25682,6 +25839,19 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.ListProvidersAsync(System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available authentication providers
+            </summary>
+            <remarks>
+            Returns a list of available OAuth and authentication providers based on server configuration.
+            <br/>Providers are only listed if their client credentials are configured.
+            <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+            </remarks>
+            <returns>List of available providers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthClient">
             <summary>
             Client implementation for the Auth service.
@@ -25882,6 +26052,19 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.ListProvidersAsync(System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available authentication providers
+            </summary>
+            <remarks>
+            Returns a list of available OAuth and authentication providers based on server configuration.
+            <br/>Providers are only listed if their client credentials are configured.
+            <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+            </remarks>
+            <returns>List of available providers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthClient.ObjectResponseResult`1">
             <summary>
             Represents the result of deserializing an HTTP response into an object.
@@ -26014,21 +26197,6 @@
         <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.ConnectUrl">
             <summary>
             WebSocket endpoint for Connect service
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.LoginResponse">
-            <summary>
-            Response from successful user login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.AccessToken">
-            <summary>
-            JWT access token for authentication
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.RefreshToken">
-            <summary>
-            Refresh token for obtaining new access tokens
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthResponse">
@@ -26263,44 +26431,39 @@
             New password to set for the account
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProvidersResponse">
             <summary>
-            List of available OAuth providers
+            List of available authentication providers
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProvidersResponse.Providers">
             <summary>
-            Available OAuth providers for authentication
+            Available authentication providers
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProviderInfo">
             <summary>
-            Response from routing preference update
+            Information about an available authentication provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.Name">
             <summary>
-            The preferred Connect service instance ID
+            Internal identifier for the provider (matches Provider enum for OAuth)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.DisplayName">
             <summary>
-            An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
+            Human-readable name for the provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.Name">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthType">
             <summary>
-            Internal identifier for the OAuth provider
+            Authentication mechanism (oauth = browser redirect, ticket = game client token)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.DisplayName">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
-            Human-readable name for the OAuth provider
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.AuthUrl">
-            <summary>
-            URL to initiate authentication with this provider
+            URL to initiate OAuth authentication (null for ticket-based auth like Steam)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.ICharacterClient">
@@ -29512,13 +29675,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionData">
-            <summary>
-            Connection state data returned for connection service requests.
-            <br/>Currently a placeholder for future connection metadata.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
             <summary>
             Response codes used in the binary protocol for success/error indication.
@@ -29622,75 +29778,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ServiceResponseMessage.Payload">
             <summary>
             Optional response payload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionConfiguration">
-            <summary>
-            Configuration options for the connect service.
-            <br/>These are server-side settings and not directly exposed via API.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ObfuscateNotFoundResponse">
-            <summary>
-            Return Unauthorized instead of NotFound for better security
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientRequestMaxSize">
-            <summary>
-            Maximum size for client requests in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientResponseMaxSize">
-            <summary>
-            Maximum size for client responses in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientReconnectionTime">
-            <summary>
-            Time in seconds to allow client reconnection
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.TokenPublicKey">
-            <summary>
-            Base64-encoded RSA public key for JWT validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent">
-            <summary>
-            Event published when a session's capabilities change (permissions, role changes, etc.).
-            <br/>Triggers real-time WebSocket updates to connected clients.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.SessionId">
-            <summary>
-            Session ID that had capability changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.AddedCapabilities">
-            <summary>
-            New capabilities added to the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.RemovedCapabilities">
-            <summary>
-            Capabilities removed from the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.UpdatedServices">
-            <summary>
-            Services that had permission changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.Version">
-            <summary>
-            New capability version number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.ExpiresAt">
-            <summary>
-            When these capabilities expire and need refresh
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.AuthEvent">
@@ -33724,36 +33811,6 @@
         <member name="T:BeyondImmersion.BannouService.GameSession.SessionType">
             <summary>
             Type of game session - determines join behavior
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
-            <summary>
-            A slot reservation for an expected player in a matchmade session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
-            <summary>
-            Account ID of the player this slot is reserved for
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
-            <summary>
-            One-time use token for claiming this reservation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
-            <summary>
-            When this reservation was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
-            <summary>
-            Whether this reservation has been claimed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
-            <summary>
-            When this reservation was claimed (null if not yet claimed)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
@@ -41569,96 +41626,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Metadata">
             <summary>
             Additional service metadata (null if not provided)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest">
-            <summary>
-            Request to execute a specific type of test
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.TestType">
-            <summary>
-            Type of tests to execute
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Plugin">
-            <summary>
-            Specific plugin to test (for http tests)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Configuration">
-            <summary>
-            Additional test configuration parameters
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Timeout">
-            <summary>
-            Test timeout in seconds (default 300)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult">
-            <summary>
-            Result of executing a test suite including overall status and individual test outcomes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Success">
-            <summary>
-            Overall test success status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.TestType">
-            <summary>
-            Type of tests executed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Duration">
-            <summary>
-            Total execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Results">
-            <summary>
-            Individual test results
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Summary">
-            <summary>
-            Human-readable test summary
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Error">
-            <summary>
-            Error message if test execution failed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestResult">
-            <summary>
-            Outcome of a single test case including pass/fail status and optional error details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Name">
-            <summary>
-            Test name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Passed">
-            <summary>
-            Test pass/fail status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Duration">
-            <summary>
-            Test execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Message">
-            <summary>
-            Test result message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.StackTrace">
-            <summary>
-            Stack trace if test failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest">
@@ -53347,26 +53314,10 @@
             Name of the state store (MySQL or Redis with search enabled)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Filter">
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Conditions">
             <summary>
-            Filter expression. Format depends on backend:
-            <br/>
-            <br/>**MySQL JSON queries** - structured conditions:
-            <br/>```json
-            <br/>{
-            <br/>  "conditions": [
-            <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
-            <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
-            <br/>  ]
-            <br/>}
-            <br/>```
-            <br/>
-            <br/>**MySQL simple equality** - flat object format:
-            <br/>```json
-            <br/>{ "$.name": "John", "$.status": "active" }
-            <br/>```
-            <br/>
-            <br/>**Redis search** - use indexName and query properties instead
+            Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+            <br/>For Redis search, use indexName and query properties instead.
             <br/>
             </summary>
         </member>
@@ -54049,26 +54000,6 @@
         <member name="P:BeyondImmersion.BannouService.Subscription.SubscriptionInfo.UpdatedAt">
             <summary>
             When the subscription was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse">
-            <summary>
-            Response containing current active subscriptions and authorization strings
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.AccountId">
-            <summary>
-            ID of the account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Authorizations">
-            <summary>
-            List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Subscriptions">
-            <summary>
-            Full subscription details (optional, for debugging)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse">
@@ -55850,6 +55781,600 @@
             Call this during application startup to enable native messaging.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator">
+            <summary>
+            Generated partial interface adding service client properties to IServiceNavigator.
+            </summary>
+             <summary>
+             Aggregates all service clients into a single navigation interface with
+             session context awareness for pushing client events.
+             </summary>
+             <remarks>
+             <para>
+             This interface consolidates service client access (e.g., navigator.Account, navigator.Asset)
+             and provides session context methods for:
+             1. Determining if the current request originated from a WebSocket client
+             2. Getting the originating session ID for client event delivery
+             3. Publishing events directly back to the requester
+             </para>
+            
+             <para>
+             Usage example:
+             <code>
+             public class AssetService : IAssetService
+             {
+                 private readonly IServiceNavigator _nav;
+            
+                 public AssetService(IServiceNavigator nav) => _nav = nav;
+            
+                 public async Task&lt;(StatusCodes, CreateMetabundleResponse?)&gt; CreateMetabundleAsync(...)
+                 {
+                     // For long-running jobs, capture the session for later notification
+                     var sessionId = _nav.GetRequesterSessionId();
+            
+                     // Start async job...
+                     var job = new MetabundleJob { OriginatingSessionId = sessionId };
+            
+                     // When job completes, notify the client:
+                     if (_nav.HasClientContext)
+                     {
+                         await _nav.PublishToRequesterAsync(new MetabundleCompleteEvent { JobId = job.JobId });
+                     }
+                 }
+             }
+             </code>
+             </para>
+            
+             <para>
+             WARNING: Session ID is for correlation, tracing, and client event delivery only.
+             DO NOT use for authentication, authorization, or ownership decisions.
+             </para>
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Account">
+            <summary>
+            Gets the Account service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Achievement">
+            <summary>
+            Gets the Achievement service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Actor">
+            <summary>
+            Gets the Actor service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Analytics">
+            <summary>
+            Gets the Analytics service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Asset">
+            <summary>
+            Gets the Asset service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Auth">
+            <summary>
+            Gets the Auth service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Behavior">
+            <summary>
+            Gets the Behavior service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Character">
+            <summary>
+            Gets the Character service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterHistory">
+            <summary>
+            Gets the CharacterHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.CharacterPersonality">
+            <summary>
+            Gets the CharacterPersonality service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Connect">
+            <summary>
+            Gets the Connect service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Documentation">
+            <summary>
+            Gets the Documentation service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameService">
+            <summary>
+            Gets the GameService service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GameSession">
+            <summary>
+            Gets the GameSession service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Leaderboard">
+            <summary>
+            Gets the Leaderboard service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Location">
+            <summary>
+            Gets the Location service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mapping">
+            <summary>
+            Gets the Mapping service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Matchmaking">
+            <summary>
+            Gets the Matchmaking service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Mesh">
+            <summary>
+            Gets the Mesh service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Messaging">
+            <summary>
+            Gets the Messaging service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Orchestrator">
+            <summary>
+            Gets the Orchestrator service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Permission">
+            <summary>
+            Gets the Permission service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Realm">
+            <summary>
+            Gets the Realm service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RealmHistory">
+            <summary>
+            Gets the RealmHistory service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Relationship">
+            <summary>
+            Gets the Relationship service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.RelationshipType">
+            <summary>
+            Gets the RelationshipType service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.SaveLoad">
+            <summary>
+            Gets the SaveLoad service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Scene">
+            <summary>
+            Gets the Scene service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Species">
+            <summary>
+            Gets the Species service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.State">
+            <summary>
+            Gets the State service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Subscription">
+            <summary>
+            Gets the Subscription service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Voice">
+            <summary>
+            Gets the Voice service client.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.Website">
+            <summary>
+            Gets the Website service client.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetRequesterSessionId">
+            <summary>
+            Gets the session ID of the WebSocket client that initiated this request.
+            Returns null if the request did not originate from a WebSocket client.
+            </summary>
+            <returns>Session ID string, or null if not a client-initiated request.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.GetCorrelationId">
+            <summary>
+            Gets the correlation ID for distributed tracing.
+            Returns null if no correlation ID was provided.
+            </summary>
+            <returns>Correlation ID string, or null.</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.HasClientContext">
+            <summary>
+            Returns true if this request originated from a WebSocket client,
+            meaning GetRequesterSessionId() will return a valid session ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the WebSocket session that initiated this request.
+            Returns false if there is no client context (request was not from WebSocket).
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published, false if no client context exists.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to a specific session by ID.
+            Use this when you have stored a session ID for later notification.
+            </summary>
+            <typeparam name="TEvent">The event type (must extend BaseClientEvent).</typeparam>
+            <param name="sessionId">The target session ID.</param>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published successfully.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator">
+            <summary>
+            Concrete implementation of IServiceNavigator that aggregates all service clients
+            and provides session context access for client event publishing.
+            </summary>
+            <remarks>
+            Registered as Scoped in DI to ensure per-request isolation of service clients.
+            Session context is read from ServiceRequestContext (AsyncLocal storage).
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.#ctor(BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher,BeyondImmersion.BannouService.Account.IAccountClient,BeyondImmersion.BannouService.Achievement.IAchievementClient,BeyondImmersion.BannouService.Actor.IActorClient,BeyondImmersion.BannouService.Analytics.IAnalyticsClient,BeyondImmersion.BannouService.Asset.IAssetClient,BeyondImmersion.BannouService.Auth.IAuthClient,BeyondImmersion.BannouService.Behavior.IBehaviorClient,BeyondImmersion.BannouService.Character.ICharacterClient,BeyondImmersion.BannouService.CharacterHistory.ICharacterHistoryClient,BeyondImmersion.BannouService.CharacterPersonality.ICharacterPersonalityClient,BeyondImmersion.BannouService.Connect.IConnectClient,BeyondImmersion.BannouService.Documentation.IDocumentationClient,BeyondImmersion.BannouService.GameService.IGameServiceClient,BeyondImmersion.BannouService.GameSession.IGameSessionClient,BeyondImmersion.BannouService.Leaderboard.ILeaderboardClient,BeyondImmersion.BannouService.Location.ILocationClient,BeyondImmersion.BannouService.Mapping.IMappingClient,BeyondImmersion.BannouService.Matchmaking.IMatchmakingClient,BeyondImmersion.BannouService.Mesh.IMeshClient,BeyondImmersion.BannouService.Messaging.IMessagingClient,BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient,BeyondImmersion.BannouService.Permission.IPermissionClient,BeyondImmersion.BannouService.Realm.IRealmClient,BeyondImmersion.BannouService.RealmHistory.IRealmHistoryClient,BeyondImmersion.BannouService.Relationship.IRelationshipClient,BeyondImmersion.BannouService.RelationshipType.IRelationshipTypeClient,BeyondImmersion.BannouService.SaveLoad.ISaveLoadClient,BeyondImmersion.BannouService.Scene.ISceneClient,BeyondImmersion.BannouService.Species.ISpeciesClient,BeyondImmersion.BannouService.State.IStateClient,BeyondImmersion.BannouService.Subscription.ISubscriptionClient,BeyondImmersion.BannouService.Voice.IVoiceClient,BeyondImmersion.BannouService.Website.IWebsiteClient)">
+            <summary>
+            Creates a new ServiceNavigator with all service client dependencies.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GetRequesterSessionId">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GetCorrelationId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.HasClientContext">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.PublishToRequesterAsync``1(``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Account">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Achievement">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Actor">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Analytics">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Asset">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Auth">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Behavior">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Character">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterHistory">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.CharacterPersonality">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Connect">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Documentation">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameService">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.GameSession">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Leaderboard">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Location">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Mapping">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Matchmaking">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Mesh">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Messaging">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Orchestrator">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Permission">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Realm">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.RealmHistory">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Relationship">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.RelationshipType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.SaveLoad">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Scene">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Species">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.State">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Subscription">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Voice">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceNavigator.Website">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
+            <summary>
+            Base marker interface for all Bannou service clients.
+            Provides explicit identification of client types for plugin discovery.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceClient.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Should match the service name in the corresponding BannouServiceAttribute.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
+            <summary>
+            Generic interface for Bannou service clients with fluent API support.
+            Provides type-safe method chaining for request configuration.
+            </summary>
+            <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
+            <summary>
+            Dependency injection extensions for registering Bannou-aware service clients.
+            Provides dynamic app-id resolution with default "bannou" routing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddServiceAppMappingResolver(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the service app mapping resolver as a singleton.
+            This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
+            <summary>
+            Registers a Bannou-aware service client with automatic HttpClient configuration.
+            The client uses dynamic app-id resolution defaulting to "bannou".
+            </summary>
+            <typeparam name="TClient">The service client type (e.g., AccountClient)</typeparam>
+            <typeparam name="TInterface">The service interface type (e.g., IAccountClient)</typeparam>
+            <param name="services">The service collection to add the client to.</param>
+            <param name="serviceName">The service name for app-id resolution (e.g., "account")</param>
+            <param name="configureClient">Optional HttpClient configuration</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers multiple Bannou service clients at once for convenience.
+            Uses service name derived from client type name (e.g., AccountClient -> "account").
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Auto-registers all service clients found in the current assembly and plugin assemblies.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
+            <summary>
+            Auto-registers all service clients found in the provided assemblies.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            Use this overload when PluginLoader is not available (e.g., in test harnesses).
+            </summary>
+            <param name="services">The service collection.</param>
+            <param name="assemblies">The assemblies to scan for client types.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
+            <summary>
+            Extension methods for registering all service client infrastructure.
+            This includes Bannou service clients, event handling, and service mapping.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the complete Bannou service client infrastructure.
+            Includes Bannou clients, service mapping, events, and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers all discovered Bannou service clients automatically.
+            Uses reflection to find all {Service}Client classes and registers them with DI.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddSpecificServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers specific service clients manually for more control.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext">
+             <summary>
+             Provides ambient context for service requests using AsyncLocal storage.
+             Captures session ID and correlation ID from incoming requests for:
+             1. Forwarding to downstream service calls (auto-propagation)
+             2. Pushing client events back to the originating WebSocket session
+             </summary>
+             <remarks>
+             The session ID is extracted from the X-Bannou-Session-Id header, which Connect
+             attaches when proxying WebSocket requests to backend services.
+            
+             WARNING: Session ID is for correlation/tracing and client event delivery only.
+             DO NOT use for authentication, authorization, or ownership decisions.
+             See ConnectService.cs comments for security guidance.
+             </remarks>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.SessionId">
+            <summary>
+            The session ID of the WebSocket client that initiated this request chain.
+            Null if the request did not originate from a WebSocket client (e.g., internal/scheduled).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.CorrelationId">
+            <summary>
+            Optional correlation ID for distributed tracing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.HasClientContext">
+            <summary>
+            Returns true if this request originated from a WebSocket client.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContext.Clear">
+            <summary>
+            Clears all context values. Called by middleware after request completion.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware">
+             <summary>
+             Middleware that extracts service context headers from incoming requests
+             and stores them in ServiceRequestContext for use by downstream services.
+             </summary>
+             <remarks>
+             This middleware captures:
+             - X-Bannou-Session-Id: WebSocket session ID (set by Connect when proxying)
+             - X-Correlation-Id: Optional distributed tracing ID
+            
+             The context is automatically cleared after the request completes.
+             </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.SessionIdHeader">
+            <summary>
+            Header name for session ID propagation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.CorrelationIdHeader">
+            <summary>
+            Header name for correlation ID propagation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate)">
+            <summary>
+            Creates a new instance of the middleware.
+            </summary>
+            <param name="next">The next middleware in the pipeline.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Invokes the middleware.
+            </summary>
+            <param name="context">The HTTP context.</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddlewareExtensions">
+            <summary>
+            Extension methods for registering ServiceRequestContextMiddleware.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceRequestContextMiddlewareExtensions.UseServiceRequestContext(Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Adds the ServiceRequestContextMiddleware to the application pipeline.
+            Should be added early in the pipeline to capture context for all requests.
+            </summary>
+            <param name="app">The application builder.</param>
+            <returns>The application builder for chaining.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler">
+             <summary>
+             HTTP message handler that automatically forwards the session ID header
+             to downstream service calls when making mesh requests.
+             </summary>
+             <remarks>
+             This handler reads from ServiceRequestContext.SessionId and attaches
+             the X-Bannou-Session-Id header to outgoing requests, enabling full
+             request chain tracing through distributed service calls.
+            
+             Add this handler to HttpClient via .AddHttpMessageHandler() in DI registration.
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler})">
+            <summary>
+            Creates a new instance of the handler.
+            </summary>
+            <param name="logger">Logger for diagnostic output.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.SessionIdForwardingHandler.SendAsync(System.Net.Http.HttpRequestMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends an HTTP request, adding the session ID header if available in context.
+            </summary>
+            <param name="request">The HTTP request message.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The HTTP response message.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Helpers.ErrorResponses">
             <summary>
             Standardized error response factory methods for consistent error handling across services.
@@ -57170,6 +57695,12 @@
             Pull from Config.json, ENVs, and command line args.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Program.ResetConfiguration">
+            <summary>
+            Resets the configuration to null, forcing it to be rebuilt from environment on next access.
+            Internal method for test cleanup.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Program.ServiceGUID">
             <summary>
             Internal service GUID- largely used for administrative network commands.
@@ -57302,103 +57833,6 @@
             Should be generated once per server instance and reused.
             </summary>
             <returns>Cryptographically secure server salt</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient">
-            <summary>
-            Base marker interface for all Bannou service clients.
-            Provides explicit identification of client types for plugin discovery.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.ServiceClients.IServiceClient.ServiceName">
-            <summary>
-            The name of the service this client communicates with.
-            Should match the service name in the corresponding BannouServiceAttribute.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
-            <summary>
-            Generic interface for Bannou service clients with fluent API support.
-            Provides type-safe method chaining for request configuration.
-            </summary>
-            <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1.WithAuthorization(System.String)">
-            <summary>
-            Sets the Authorization header for the next request.
-            Automatically prefixes with "Bearer " if not already present.
-            Returns this instance for method chaining.
-            </summary>
-            <param name="token">JWT token or authorization value</param>
-            <returns>This client instance for method chaining</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
-            <summary>
-            Dependency injection extensions for registering Bannou-aware service clients.
-            Provides dynamic app-id resolution with default "bannou" routing.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddServiceAppMappingResolver(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers the service app mapping resolver as a singleton.
-            This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
-            <summary>
-            Registers a Bannou-aware service client with automatic HttpClient configuration.
-            The client uses dynamic app-id resolution defaulting to "bannou".
-            </summary>
-            <typeparam name="TClient">The service client type (e.g., AccountClient)</typeparam>
-            <typeparam name="TInterface">The service interface type (e.g., IAccountClient)</typeparam>
-            <param name="services">The service collection to add the client to.</param>
-            <param name="serviceName">The service name for app-id resolution (e.g., "account")</param>
-            <param name="configureClient">Optional HttpClient configuration</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
-            <summary>
-            Registers multiple Bannou service clients at once for convenience.
-            Uses service name derived from client type name (e.g., AccountClient -> "account").
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Auto-registers all service clients found in the current assembly and plugin assemblies.
-            Follows naming convention: {Service}Client implements I{Service}Client.
-            Service name is derived by removing "Client" suffix and converting to lowercase.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
-            <summary>
-            Auto-registers all service clients found in the provided assemblies.
-            Follows naming convention: {Service}Client implements I{Service}Client.
-            Service name is derived by removing "Client" suffix and converting to lowercase.
-            Use this overload when PluginLoader is not available (e.g., in test harnesses).
-            </summary>
-            <param name="services">The service collection.</param>
-            <param name="assemblies">The assemblies to scan for client types.</param>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
-            <summary>
-            Extension methods for registering all service client infrastructure.
-            This includes Bannou service clients, event handling, and service mapping.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers the complete Bannou service client infrastructure.
-            Includes Bannou clients, service mapping, events, and lifecycle management.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers all discovered Bannou service clients automatically.
-            Uses reflection to find all {Service}Client classes and registers them with DI.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddSpecificServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
-            <summary>
-            Registers specific service clients manually for more control.
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.BannouServiceBase">
             <summary>
@@ -57625,96 +58059,6 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Lock response indicating success and providing disposal</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.JsonQueryCondition">
-            <summary>
-            Query condition for JSON path queries.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Path">
-            <summary>
-            JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]").
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Operator">
-            <summary>
-            Comparison operator to use.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Value">
-            <summary>
-            Value to compare against. Null for EXISTS/NOT_EXISTS operators.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Services.JsonOperator">
-            <summary>
-            JSON comparison operators for queries.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Equals">
-            <summary>
-            Exact equality (=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.NotEquals">
-            <summary>
-            Inequality (!=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.GreaterThan">
-            <summary>
-            Greater than (>).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.GreaterThanOrEqual">
-            <summary>
-            Greater than or equal (>=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.LessThan">
-            <summary>
-            Less than (&lt;).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.LessThanOrEqual">
-            <summary>
-            Less than or equal (&lt;=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Contains">
-            <summary>
-            String contains (LIKE '%value%').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.StartsWith">
-            <summary>
-            String starts with (LIKE 'value%').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.EndsWith">
-            <summary>
-            String ends with (LIKE '%value').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.In">
-            <summary>
-            Value is in array (JSON_CONTAINS for arrays).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Exists">
-            <summary>
-            Path exists in JSON document.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.NotExists">
-            <summary>
-            Path does not exist in JSON document.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.FullText">
-            <summary>
-            Full-text search in string value (MATCH AGAINST for indexed columns).
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Services.JsonSortSpec">
             <summary>
             Sort specification for JSON queries.
@@ -57796,7 +58140,7 @@
             </summary>
             <typeparam name="TValue">Value type stored.</typeparam>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Query entries using JSON path conditions.
             Executes directly on MySQL using JSON functions.
@@ -57805,7 +58149,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>List of matching values with their keys.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryPagedAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Int32,System.Int32,BeyondImmersion.BannouService.Services.JsonSortSpec,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryPagedAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Int32,System.Int32,BeyondImmersion.BannouService.Services.JsonSortSpec,System.Threading.CancellationToken)">
             <summary>
             Query entries using JSON path conditions with pagination.
             </summary>
@@ -57816,7 +58160,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Paged result with matching values.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonCountAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonCountAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Count entries matching JSON path conditions.
             </summary>
@@ -57824,7 +58168,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Number of matching entries.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonDistinctAsync(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonDistinctAsync(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Get distinct values at a JSON path.
             </summary>
@@ -57833,7 +58177,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>List of distinct values at the path.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonAggregateAsync(System.String,BeyondImmersion.BannouService.Services.JsonAggregation,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonAggregateAsync(System.String,BeyondImmersion.BannouService.Services.JsonAggregation,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Aggregate values at a JSON path.
             </summary>
@@ -59443,6 +59787,64 @@
             <param name="metadata">Optional metadata</param>
             <returns>Reference to the created object</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.InitiateServerMultipartUploadAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Initiates a server-side multipart upload.
+            Unlike client-side multipart (which generates pre-signed URLs),
+            server-side uploads stream parts directly through the service.
+            </summary>
+            <param name="bucket">Target bucket name</param>
+            <param name="key">Object key (path) for the final object</param>
+            <param name="contentType">MIME content type of the final object</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Session information for tracking the upload</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.UploadPartAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Int32,System.IO.Stream,System.Int64,System.Threading.CancellationToken)">
+            <summary>
+            Uploads a single part in a server-side multipart upload.
+            Each part (except the last) must be at least 5MB per S3 specification.
+            </summary>
+            <param name="session">The upload session from InitiateServerMultipartUploadAsync</param>
+            <param name="partNumber">1-based part number (1 to 10,000)</param>
+            <param name="content">Stream containing the part data</param>
+            <param name="contentLength">Length of the part data in bytes</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Uploaded part information including ETag</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.CompleteServerMultipartUploadAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Collections.Generic.IList{BeyondImmersion.BannouService.Storage.ServerUploadedPart},System.Threading.CancellationToken)">
+            <summary>
+            Completes a server-side multipart upload by assembling all parts.
+            </summary>
+            <param name="session">The upload session</param>
+            <param name="parts">List of uploaded parts in order</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Reference to the completed object</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.AbortServerMultipartUploadAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Threading.CancellationToken)">
+            <summary>
+            Aborts a server-side multipart upload, cleaning up any uploaded parts.
+            </summary>
+            <param name="session">The upload session to abort</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.GetObjectStreamingAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets an object's content as a streaming download without buffering to memory.
+            The returned stream reads directly from the network connection.
+            Caller must dispose the stream when done.
+            </summary>
+            <remarks>
+            Unlike GetObjectAsync which buffers the entire object to MemoryStream,
+            this method returns a stream that reads directly from the network.
+            Use this for large objects to avoid memory pressure.
+            Note: The stream may not support seeking depending on the storage provider.
+            </remarks>
+            <param name="bucket">Bucket name</param>
+            <param name="key">Object key</param>
+            <param name="versionId">Optional version ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Stream for reading object data directly from network</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Storage.StorageCapability">
             <summary>
             Storage capabilities that may or may not be supported by providers.
@@ -59756,6 +60158,72 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Storage.ObjectMetadata.Metadata">
             <summary>Custom metadata attached to the object</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession">
+            <summary>
+            Session information for server-side multipart uploads.
+            Unlike client-side multipart uploads (which use pre-signed URLs),
+            server-side uploads stream data directly through the service to storage.
+            Used for streaming large bundle assembly without buffering in memory.
+            </summary>
+            <param name="UploadId">The S3/MinIO upload ID for this multipart session</param>
+            <param name="Bucket">Target bucket for the upload</param>
+            <param name="Key">Object key (path) being uploaded</param>
+            <param name="ContentType">MIME content type of the final object</param>
+            <param name="InitiatedAt">When this upload session was created</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.#ctor(System.String,System.String,System.String,System.String,System.DateTime)">
+            <summary>
+            Session information for server-side multipart uploads.
+            Unlike client-side multipart uploads (which use pre-signed URLs),
+            server-side uploads stream data directly through the service to storage.
+            Used for streaming large bundle assembly without buffering in memory.
+            </summary>
+            <param name="UploadId">The S3/MinIO upload ID for this multipart session</param>
+            <param name="Bucket">Target bucket for the upload</param>
+            <param name="Key">Object key (path) being uploaded</param>
+            <param name="ContentType">MIME content type of the final object</param>
+            <param name="InitiatedAt">When this upload session was created</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.UploadId">
+            <summary>The S3/MinIO upload ID for this multipart session</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.Bucket">
+            <summary>Target bucket for the upload</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.Key">
+            <summary>Object key (path) being uploaded</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.ContentType">
+            <summary>MIME content type of the final object</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.InitiatedAt">
+            <summary>When this upload session was created</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Storage.ServerUploadedPart">
+            <summary>
+            Information about a server-side uploaded part.
+            </summary>
+            <param name="PartNumber">1-based part number</param>
+            <param name="ETag">ETag returned by storage for this part</param>
+            <param name="Size">Size of this part in bytes</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.ServerUploadedPart.#ctor(System.Int32,System.String,System.Int64)">
+            <summary>
+            Information about a server-side uploaded part.
+            </summary>
+            <param name="PartNumber">1-based part number</param>
+            <param name="ETag">ETag returned by storage for this part</param>
+            <param name="Size">Size of this part in bytes</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.PartNumber">
+            <summary>1-based part number</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.ETag">
+            <summary>ETag returned by storage for this part</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.Size">
+            <summary>Size of this part in bytes</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Testing.ServiceTestBase`1">
              <summary>

@@ -34,7 +34,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryDocumentationResponse on success.</returns>
-    public Task<ApiResponse<QueryDocumentationResponse>> QuerydocumentationAsync(
+    public Task<ApiResponse<QueryDocumentationResponse>> QueryDocumentationAsync(
         QueryDocumentationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SearchDocumentationResponse on success.</returns>
-    public Task<ApiResponse<SearchDocumentationResponse>> SearchdocumentationAsync(
+    public Task<ApiResponse<SearchDocumentationResponse>> SearchDocumentationAsync(
         SearchDocumentationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SuggestRelatedResponse on success.</returns>
-    public Task<ApiResponse<SuggestRelatedResponse>> SuggestrelatedtopicsAsync(
+    public Task<ApiResponse<SuggestRelatedResponse>> SuggestRelatedTopicsAsync(
         SuggestRelatedRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -178,7 +178,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RecoverDocumentResponse on success.</returns>
-    public Task<ApiResponse<RecoverDocumentResponse>> RecoverdocumentAsync(
+    public Task<ApiResponse<RecoverDocumentResponse>> RecoverDocumentAsync(
         RecoverDocumentRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -196,7 +196,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BulkUpdateResponse on success.</returns>
-    public Task<ApiResponse<BulkUpdateResponse>> BulkupdatedocumentsAsync(
+    public Task<ApiResponse<BulkUpdateResponse>> BulkUpdateDocumentsAsync(
         BulkUpdateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -214,7 +214,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BulkDeleteResponse on success.</returns>
-    public Task<ApiResponse<BulkDeleteResponse>> BulkdeletedocumentsAsync(
+    public Task<ApiResponse<BulkDeleteResponse>> BulkDeleteDocumentsAsync(
         BulkDeleteRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -232,7 +232,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ImportDocumentationResponse on success.</returns>
-    public Task<ApiResponse<ImportDocumentationResponse>> ImportdocumentationAsync(
+    public Task<ApiResponse<ImportDocumentationResponse>> ImportDocumentationAsync(
         ImportDocumentationRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -268,7 +268,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PurgeTrashcanResponse on success.</returns>
-    public Task<ApiResponse<PurgeTrashcanResponse>> PurgetrashcanAsync(
+    public Task<ApiResponse<PurgeTrashcanResponse>> PurgeTrashcanAsync(
         PurgeTrashcanRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -286,7 +286,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing NamespaceStatsResponse on success.</returns>
-    public Task<ApiResponse<NamespaceStatsResponse>> GetNamespacestatsAsync(
+    public Task<ApiResponse<NamespaceStatsResponse>> GetNamespaceStatsAsync(
         GetNamespaceStatsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -304,7 +304,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BindRepositoryResponse on success.</returns>
-    public Task<ApiResponse<BindRepositoryResponse>> BindrepositoryAsync(
+    public Task<ApiResponse<BindRepositoryResponse>> BindRepositoryAsync(
         BindRepositoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -322,7 +322,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UnbindRepositoryResponse on success.</returns>
-    public Task<ApiResponse<UnbindRepositoryResponse>> UnbindrepositoryAsync(
+    public Task<ApiResponse<UnbindRepositoryResponse>> UnbindRepositoryAsync(
         UnbindRepositoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -340,7 +340,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SyncRepositoryResponse on success.</returns>
-    public Task<ApiResponse<SyncRepositoryResponse>> SyncrepositoryAsync(
+    public Task<ApiResponse<SyncRepositoryResponse>> SyncRepositoryAsync(
         SyncRepositoryRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -358,7 +358,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RepositoryStatusResponse on success.</returns>
-    public Task<ApiResponse<RepositoryStatusResponse>> GetRepositorystatusAsync(
+    public Task<ApiResponse<RepositoryStatusResponse>> GetRepositoryStatusAsync(
         RepositoryStatusRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -376,7 +376,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListRepositoryBindingsResponse on success.</returns>
-    public Task<ApiResponse<ListRepositoryBindingsResponse>> ListRepositorybindingsAsync(
+    public Task<ApiResponse<ListRepositoryBindingsResponse>> ListRepositoryBindingsAsync(
         ListRepositoryBindingsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -394,7 +394,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing UpdateRepositoryBindingResponse on success.</returns>
-    public Task<ApiResponse<UpdateRepositoryBindingResponse>> UpdateRepositorybindingAsync(
+    public Task<ApiResponse<UpdateRepositoryBindingResponse>> UpdateRepositoryBindingAsync(
         UpdateRepositoryBindingRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -412,7 +412,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CreateArchiveResponse on success.</returns>
-    public Task<ApiResponse<CreateArchiveResponse>> CreateDocumentationarchiveAsync(
+    public Task<ApiResponse<CreateArchiveResponse>> CreateDocumentationArchiveAsync(
         CreateArchiveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -430,7 +430,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListArchivesResponse on success.</returns>
-    public Task<ApiResponse<ListArchivesResponse>> ListDocumentationarchivesAsync(
+    public Task<ApiResponse<ListArchivesResponse>> ListDocumentationArchivesAsync(
         ListArchivesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -448,7 +448,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RestoreArchiveResponse on success.</returns>
-    public Task<ApiResponse<RestoreArchiveResponse>> RestoredocumentationarchiveAsync(
+    public Task<ApiResponse<RestoreArchiveResponse>> RestoreDocumentationArchiveAsync(
         RestoreArchiveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -466,7 +466,7 @@ public sealed class DocumentationProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing DeleteArchiveResponse on success.</returns>
-    public Task<ApiResponse<DeleteArchiveResponse>> DeleteDocumentationarchiveAsync(
+    public Task<ApiResponse<DeleteArchiveResponse>> DeleteDocumentationArchiveAsync(
         DeleteArchiveRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

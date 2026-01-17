@@ -12,6 +12,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `BundleCreationCompleteEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
 | `BundleValidationCompleteEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
 | `BundleValidationFailedEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
+| `MetabundleCreationCompleteEvent` | `asset.metabundle.creation.complete` | Sent when async metabundle creation job completes (success o... |
 | `AssetProcessingCompleteEvent` | `asset.processing.complete` | Sent when asset processing (e.g., texture mipmaps, model LOD... |
 | `AssetProcessingFailedEvent` | `asset.processing.failed` | Sent when asset processing fails. Includes retry information... |
 | `AssetReadyEvent` | `asset.ready` | Final notification that an asset is ready for use. |
@@ -121,6 +122,28 @@ Sent when bundle validation fails. Includes detailed error information.
 |----------|-------------|
 | `errors` | List of validation errors that caused the failure |
 | `uploadId` | Correlates with the bundle upload request |
+
+### `MetabundleCreationCompleteEvent`
+
+**Event Name**: `asset.metabundle.creation.complete`
+
+Sent when async metabundle creation job completes (success or failure).
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `assetCount` | Total number of assets in the metabundle |
+| `downloadUrl` | Pre-signed download URL (on success) |
+| `errorCode` | Error code on failure |
+| `errorMessage` | Human-readable error description |
+| `jobId` | Job ID from the original async creation request |
+| `metabundleId` | ID of the metabundle |
+| `processingTimeMs` | Total processing time in milliseconds |
+| `sizeBytes` | Metabundle file size in bytes |
+| `standaloneAssetCount` | Number of standalone assets included |
+| `status` | Final job status |
+| `success` | Whether creation completed successfully |
 
 ### `AssetProcessingCompleteEvent`
 
@@ -602,7 +625,7 @@ Sent to all room participants when the voice tier upgrades.
 
 ## Summary
 
-- **Total event types**: 31
+- **Total event types**: 32
 - **Services with events**: 5
 
 ---

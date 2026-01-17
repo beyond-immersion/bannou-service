@@ -103,7 +103,7 @@ public class Services : IClassFixture<CollectionFixture>
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Services>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Services>.Instance;
     }
 
     [Fact]

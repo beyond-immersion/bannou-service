@@ -52,7 +52,7 @@ public sealed class StateProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SaveStateResponse on success.</returns>
-    public Task<ApiResponse<SaveStateResponse>> SavestateAsync(
+    public Task<ApiResponse<SaveStateResponse>> SaveStateAsync(
         SaveStateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class StateProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QueryStateResponse on success.</returns>
-    public Task<ApiResponse<QueryStateResponse>> QuerystateAsync(
+    public Task<ApiResponse<QueryStateResponse>> QueryStateAsync(
         QueryStateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class StateProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BulkGetStateResponse on success.</returns>
-    public Task<ApiResponse<BulkGetStateResponse>> BulkgetstateAsync(
+    public Task<ApiResponse<BulkGetStateResponse>> BulkGetStateAsync(
         BulkGetStateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

@@ -99,4 +99,15 @@ public sealed class AssetEventSubscriptions
     {
         return _client.OnEvent<BundleValidationFailedEvent>(handler);
     }
+
+    /// <summary>
+    /// Subscribe to <see cref="MetabundleCreationCompleteEvent"/> events.
+    /// Sent when async metabundle creation job completes (success or failure).
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnMetabundleCreationComplete(Action<MetabundleCreationCompleteEvent> handler)
+    {
+        return _client.OnEvent<MetabundleCreationCompleteEvent>(handler);
+    }
 }

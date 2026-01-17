@@ -93,7 +93,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     public Configuration(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<Configuration>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<Configuration>.Instance;
     }
 
     [Fact]

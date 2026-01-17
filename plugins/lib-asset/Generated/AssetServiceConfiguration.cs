@@ -383,4 +383,70 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public string? AdditionalForbiddenContentTypes { get; set; }
 
+    /// <summary>
+    /// Number of source bundles that triggers async processing. Jobs with fewer bundles process synchronously.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_SOURCE_BUNDLE_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncSourceBundleThreshold { get; set; } = 3;
+
+    /// <summary>
+    /// Total asset count that triggers async processing. Jobs with fewer assets process synchronously.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_ASSET_COUNT_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncAssetCountThreshold { get; set; } = 50;
+
+    /// <summary>
+    /// Estimated total size in bytes that triggers async processing. Default 100MB.
+    /// Environment variable: ASSET_METABUNDLE_ASYNC_SIZE_BYTES_THRESHOLD
+    /// </summary>
+    public int MetabundleAsyncSizeBytesThreshold { get; set; } = 104857600;
+
+    /// <summary>
+    /// How long job status records are retained after completion (for polling)
+    /// Environment variable: ASSET_METABUNDLE_JOB_TTL_SECONDS
+    /// </summary>
+    public int MetabundleJobTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Key prefix for metabundle job entries in state store
+    /// Environment variable: ASSET_METABUNDLE_JOB_KEY_PREFIX
+    /// </summary>
+    public string MetabundleJobKeyPrefix { get; set; } = "metabundle-job:";
+
+    /// <summary>
+    /// Maximum time for a metabundle job before marking as failed
+    /// Environment variable: ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS
+    /// </summary>
+    public int MetabundleJobTimeoutSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Maximum memory in MB for streaming operations. Limits total buffer allocation during streaming metabundle assembly.
+    /// Environment variable: ASSET_STREAMING_MAX_MEMORY_MB
+    /// </summary>
+    public int StreamingMaxMemoryMb { get; set; } = 100;
+
+    /// <summary>
+    /// Size of each part in MB for streaming multipart uploads. S3/MinIO requires minimum 5MB per part except for the last part.
+    /// Environment variable: ASSET_STREAMING_PART_SIZE_MB
+    /// </summary>
+    public int StreamingPartSizeMb { get; set; } = 50;
+
+    /// <summary>
+    /// Maximum number of source bundles to stream concurrently during metabundle assembly. Higher values use more memory but improve throughput.
+    /// Environment variable: ASSET_STREAMING_MAX_CONCURRENT_SOURCE_STREAMS
+    /// </summary>
+    public int StreamingMaxConcurrentSourceStreams { get; set; } = 2;
+
+    /// <summary>
+    /// Size of compression buffer in KB for LZ4 streaming compression. Larger buffers improve compression ratio but use more memory.
+    /// Environment variable: ASSET_STREAMING_COMPRESSION_BUFFER_KB
+    /// </summary>
+    public int StreamingCompressionBufferKb { get; set; } = 16384;
+
+    /// <summary>
+    /// Number of assets to process before updating job progress. Lower values give more frequent updates but add overhead.
+    /// Environment variable: ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS
+    /// </summary>
+    public int StreamingProgressUpdateIntervalAssets { get; set; } = 10;
+
 }

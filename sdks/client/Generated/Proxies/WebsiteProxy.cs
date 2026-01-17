@@ -49,7 +49,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PageContent on success.</returns>
-    public Task<ApiResponse<PageContent>> GetPagecontentAsync(
+    public Task<ApiResponse<PageContent>> GetPageContentAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -81,7 +81,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ServerStatusResponse on success.</returns>
-    public Task<ApiResponse<ServerStatusResponse>> GetServerstatusAsync(
+    public Task<ApiResponse<ServerStatusResponse>> GetServerStatusAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -114,7 +114,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ContactResponse on success.</returns>
-    public Task<ApiResponse<ContactResponse>> SubmitcontactAsync(
+    public Task<ApiResponse<ContactResponse>> SubmitContactAsync(
         ContactRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -131,7 +131,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AccountProfile on success.</returns>
-    public Task<ApiResponse<AccountProfile>> GetAccountprofileAsync(
+    public Task<ApiResponse<AccountProfile>> GetAccountProfileAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -147,7 +147,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CharacterListResponse on success.</returns>
-    public Task<ApiResponse<CharacterListResponse>> GetAccountcharactersAsync(
+    public Task<ApiResponse<CharacterListResponse>> GetAccountCharactersAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -199,7 +199,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SiteSettings on success.</returns>
-    public Task<ApiResponse<SiteSettings>> GetSitesettingsAsync(
+    public Task<ApiResponse<SiteSettings>> GetSiteSettingsAsync(
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
@@ -216,7 +216,7 @@ public sealed class WebsiteProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SiteSettings on success.</returns>
-    public Task<ApiResponse<SiteSettings>> UpdateSitesettingsAsync(
+    public Task<ApiResponse<SiteSettings>> UpdateSiteSettingsAsync(
         SiteSettings request,
         ushort channel = 0,
         TimeSpan? timeout = null,

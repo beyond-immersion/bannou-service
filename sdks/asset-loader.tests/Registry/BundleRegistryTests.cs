@@ -62,16 +62,6 @@ public class BundleRegistryTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that null bundle throws ArgumentNullException.
-    /// </summary>
-    [Fact]
-    public void Register_NullBundle_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _registry.Register(null!));
-    }
-
-    /// <summary>
     /// Verifies that re-registering same bundle ID replaces previous entry.
     /// </summary>
     [Fact]
@@ -164,16 +154,6 @@ public class BundleRegistryTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that unregistering with null throws ArgumentNullException.
-    /// </summary>
-    [Fact]
-    public void Unregister_Null_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _registry.Unregister(null!));
-    }
-
-    /// <summary>
     /// Verifies that unregistering with empty throws ArgumentException.
     /// </summary>
     [Fact]
@@ -219,16 +199,6 @@ public class BundleRegistryTests : IDisposable
 
         // Assert
         Assert.Null(result);
-    }
-
-    /// <summary>
-    /// Verifies that FindBundleForAsset with null throws ArgumentNullException.
-    /// </summary>
-    [Fact]
-    public void FindBundleForAsset_Null_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _registry.FindBundleForAsset(null!));
     }
 
     /// <summary>

@@ -52,7 +52,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing PersonalityResponse on success.</returns>
-    public Task<ApiResponse<PersonalityResponse>> SetpersonalityAsync(
+    public Task<ApiResponse<PersonalityResponse>> SetPersonalityAsync(
         SetPersonalityRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ExperienceResult on success.</returns>
-    public Task<ApiResponse<ExperienceResult>> RecordexperienceAsync(
+    public Task<ApiResponse<ExperienceResult>> RecordExperienceAsync(
         RecordExperienceRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing BatchPersonalityResponse on success.</returns>
-    public Task<ApiResponse<BatchPersonalityResponse>> BatchgetpersonalitiesAsync(
+    public Task<ApiResponse<BatchPersonalityResponse>> BatchGetPersonalitiesAsync(
         BatchGetPersonalitiesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -122,7 +122,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CombatPreferencesResponse on success.</returns>
-    public Task<ApiResponse<CombatPreferencesResponse>> GetCombatpreferencesAsync(
+    public Task<ApiResponse<CombatPreferencesResponse>> GetCombatPreferencesAsync(
         GetCombatPreferencesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CombatPreferencesResponse on success.</returns>
-    public Task<ApiResponse<CombatPreferencesResponse>> SetcombatpreferencesAsync(
+    public Task<ApiResponse<CombatPreferencesResponse>> SetCombatPreferencesAsync(
         SetCombatPreferencesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing CombatEvolutionResult on success.</returns>
-    public Task<ApiResponse<CombatEvolutionResult>> EvolvecombatpreferencesAsync(
+    public Task<ApiResponse<CombatEvolutionResult>> EvolveCombatPreferencesAsync(
         EvolveCombatRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -175,7 +175,7 @@ public sealed class CharacterPersonalityProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteCombatpreferencesEventAsync(
+    public Task DeleteCombatPreferencesEventAsync(
         DeleteCombatPreferencesRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)

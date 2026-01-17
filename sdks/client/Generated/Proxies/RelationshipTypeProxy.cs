@@ -34,7 +34,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshiptypeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshipTypeAsync(
         GetRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshiptypebycodeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshipTypeByCodeAsync(
         GetRelationshipTypeByCodeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeListResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeListResponse>> ListRelationshiptypesAsync(
+    public Task<ApiResponse<RelationshipTypeListResponse>> ListRelationshipTypesAsync(
         ListRelationshipTypesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeListResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeListResponse>> GetChildrelationshiptypesAsync(
+    public Task<ApiResponse<RelationshipTypeListResponse>> GetChildRelationshipTypesAsync(
         GetChildRelationshipTypesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MatchesHierarchyResponse on success.</returns>
-    public Task<ApiResponse<MatchesHierarchyResponse>> MatcheshierarchyAsync(
+    public Task<ApiResponse<MatchesHierarchyResponse>> MatchesHierarchyAsync(
         MatchesHierarchyRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -142,7 +142,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> CreateRelationshiptypeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> CreateRelationshipTypeAsync(
         CreateRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -160,7 +160,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> UpdateRelationshiptypeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> UpdateRelationshipTypeAsync(
         UpdateRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -177,7 +177,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteRelationshiptypeEventAsync(
+    public Task DeleteRelationshipTypeEventAsync(
         DeleteRelationshipTypeRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -194,7 +194,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> DeprecaterelationshiptypeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> DeprecateRelationshipTypeAsync(
         DeprecateRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -212,7 +212,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<RelationshipTypeResponse>> UndeprecaterelationshiptypeAsync(
+    public Task<ApiResponse<RelationshipTypeResponse>> UndeprecateRelationshipTypeAsync(
         UndeprecateRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -230,7 +230,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing MergeRelationshipTypeResponse on success.</returns>
-    public Task<ApiResponse<MergeRelationshipTypeResponse>> MergerelationshiptypeAsync(
+    public Task<ApiResponse<MergeRelationshipTypeResponse>> MergeRelationshipTypeAsync(
         MergeRelationshipTypeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -248,7 +248,7 @@ public sealed class RelationshipTypeProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SeedRelationshipTypesResponse on success.</returns>
-    public Task<ApiResponse<SeedRelationshipTypesResponse>> SeedrelationshiptypesAsync(
+    public Task<ApiResponse<SeedRelationshipTypesResponse>> SeedRelationshipTypesAsync(
         SeedRelationshipTypesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

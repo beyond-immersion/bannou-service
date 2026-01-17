@@ -161,38 +161,6 @@ public enum BundleType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Asset ID validation style presets:
-/// <br/>- any: No style enforcement (just max length and basic characters)
-/// <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-/// <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-/// <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-/// <br/>- custom: Use custom regex pattern from configuration
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetIdStyle
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"any")]
-    Any = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"dot_notation")]
-    Dot_notation = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"reverse_dns")]
-    Reverse_dns = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"path_style")]
-    Path_style = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Request to initiate an asset upload and receive a pre-signed URL
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1165,66 +1133,6 @@ public partial class SourceBundleReference
 }
 
 /// <summary>
-/// Asset entry within a bundle (supports platform-specific IDs)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleAssetEntry
-{
-
-    /// <summary>
-    /// Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
-
-    /// <summary>
-    /// SHA256 hash of asset content
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ContentHash { get; set; } = default!;
-
-    /// <summary>
-    /// Original filename
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("filename")]
-    public string? Filename { get; set; } = default!;
-
-    /// <summary>
-    /// MIME content type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    public string? ContentType { get; set; } = default!;
-
-    /// <summary>
-    /// Asset size in bytes (uncompressed)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
-
-    /// <summary>
-    /// External asset identifier for cross-system references.
-    /// <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("externalAssetId")]
-    public string? ExternalAssetId { get; set; } = default!;
-
-    /// <summary>
-    /// Tags associated with this asset within the bundle.
-    /// <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-    /// <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Describes a conflict when the same asset ID has different content hashes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1359,7 +1267,10 @@ public partial class CreateMetabundleRequest
 }
 
 /// <summary>
-/// Response from metabundle creation
+/// Response from metabundle creation.
+/// <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+/// <br/>For async creation (large jobs): status=queued with jobId for polling.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateMetabundleResponse
@@ -1374,13 +1285,33 @@ public partial class CreateMetabundleResponse
     public string MetabundleId { get; set; } = default!;
 
     /// <summary>
-    /// Creation status
+    /// Job ID for async processing. Only present when status is 'queued' or 'processing'.
+    /// <br/>Use /bundles/job/status to poll for completion, or wait for
+    /// <br/>MetabundleCreationCompleteEvent via WebSocket.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    public System.Guid? JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Creation status.
+    /// <br/>- queued: Job accepted for async processing (poll with jobId)
+    /// <br/>- processing: Job is actively running
+    /// <br/>- ready: Metabundle created and available for download
+    /// <br/>- failed: Creation failed (see conflicts for details)
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CreateMetabundleResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL (only present when status is 'ready')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// Number of assets in the metabundle
@@ -1411,6 +1342,187 @@ public partial class CreateMetabundleResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conflicts")]
     public System.Collections.Generic.ICollection<AssetConflict>? Conflicts { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get the status of an async metabundle creation job
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetJobStatusRequest
+{
+
+    /// <summary>
+    /// Job ID from the createMetabundle response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Status of an async metabundle creation job.
+/// <br/>When status is 'ready', the response includes the full metabundle details.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetJobStatusResponse
+{
+
+    /// <summary>
+    /// Job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Metabundle identifier being created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Current job status.
+    /// <br/>- queued: Waiting for processing resources
+    /// <br/>- processing: Actively being processed
+    /// <br/>- ready: Completed successfully
+    /// <br/>- failed: Creation failed
+    /// <br/>- cancelled: Job was cancelled
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GetJobStatusResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Progress percentage (0-100) when status is 'processing'
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progress")]
+    [System.ComponentModel.DataAnnotations.Range(0, 100)]
+    public int? Progress { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-signed download URL (only when status is 'ready')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
+    public System.Uri? DownloadUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Number of assets in metabundle (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int? AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of standalone assets included (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("standaloneAssetCount")]
+    public int? StandaloneAssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size in bytes (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long? SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Provenance data (when ready)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundles")]
+    public System.Collections.Generic.ICollection<SourceBundleReference>? SourceBundles { get; set; } = default!;
+
+    /// <summary>
+    /// Error code (when status is 'failed')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
+    public string? ErrorCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error description (when status is 'failed')
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+    /// <summary>
+    /// When the job was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the job was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Total processing time in milliseconds (when complete)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("processingTimeMs")]
+    public long? ProcessingTimeMs { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to cancel an async metabundle creation job
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CancelJobRequest
+{
+
+    /// <summary>
+    /// Job ID from the createMetabundle response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of job cancellation attempt
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CancelJobResponse
+{
+
+    /// <summary>
+    /// Job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the job was successfully cancelled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cancelled")]
+    public bool Cancelled { get; set; } = default!;
+
+    /// <summary>
+    /// Current job status after cancellation attempt
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CancelJobResponseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context about the cancellation result
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    public string? Message { get; set; } = default!;
 
 }
 
@@ -2527,6 +2639,52 @@ public enum CreateMetabundleResponseStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"failed")]
     Failed = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GetJobStatusResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CancelJobResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
+    Processing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
+    Ready = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
 
 }
 #pragma warning restore CS1591

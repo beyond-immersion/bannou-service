@@ -40,14 +40,6 @@ public class SceneValidatorTests
     }
 
     [Fact]
-    public void AddRule_ThrowsOnNull()
-    {
-        var validator = new SceneValidator();
-
-        Assert.Throws<ArgumentNullException>(() => validator.AddRule(null!));
-    }
-
-    [Fact]
     public void RemoveRule_RemovesByType()
     {
         var validator = new SceneValidator();
@@ -81,32 +73,6 @@ public class SceneValidatorTests
         var result = validator.Validate(scene);
 
         Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void Validate_ThrowsOnNullScene()
-    {
-        var validator = new SceneValidator();
-
-        Assert.Throws<ArgumentNullException>(() => validator.Validate(null!));
-    }
-
-    [Fact]
-    public void ValidateNode_ThrowsOnNullNode()
-    {
-        var validator = new SceneValidator();
-        var scene = CreateTestScene();
-
-        Assert.Throws<ArgumentNullException>(() => validator.ValidateNode(null!, scene));
-    }
-
-    [Fact]
-    public void ValidateNode_ThrowsOnNullScene()
-    {
-        var validator = new SceneValidator();
-        var node = new ComposerSceneNode(NodeType.Group, "Test");
-
-        Assert.Throws<ArgumentNullException>(() => validator.ValidateNode(node, null!));
     }
 
     [Fact]

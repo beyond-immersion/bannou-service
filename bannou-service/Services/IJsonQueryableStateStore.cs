@@ -1,98 +1,8 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.State;
+
 namespace BeyondImmersion.BannouService.Services;
-
-/// <summary>
-/// Query condition for JSON path queries.
-/// </summary>
-public record JsonQueryCondition
-{
-    /// <summary>
-    /// JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]").
-    /// </summary>
-    public required string Path { get; init; }
-
-    /// <summary>
-    /// Comparison operator to use.
-    /// </summary>
-    public JsonOperator Operator { get; init; } = JsonOperator.Equals;
-
-    /// <summary>
-    /// Value to compare against. Null for EXISTS/NOT_EXISTS operators.
-    /// </summary>
-    public object? Value { get; init; }
-}
-
-/// <summary>
-/// JSON comparison operators for queries.
-/// </summary>
-public enum JsonOperator
-{
-    /// <summary>
-    /// Exact equality (=).
-    /// </summary>
-    Equals,
-
-    /// <summary>
-    /// Inequality (!=).
-    /// </summary>
-    NotEquals,
-
-    /// <summary>
-    /// Greater than (>).
-    /// </summary>
-    GreaterThan,
-
-    /// <summary>
-    /// Greater than or equal (>=).
-    /// </summary>
-    GreaterThanOrEqual,
-
-    /// <summary>
-    /// Less than (&lt;).
-    /// </summary>
-    LessThan,
-
-    /// <summary>
-    /// Less than or equal (&lt;=).
-    /// </summary>
-    LessThanOrEqual,
-
-    /// <summary>
-    /// String contains (LIKE '%value%').
-    /// </summary>
-    Contains,
-
-    /// <summary>
-    /// String starts with (LIKE 'value%').
-    /// </summary>
-    StartsWith,
-
-    /// <summary>
-    /// String ends with (LIKE '%value').
-    /// </summary>
-    EndsWith,
-
-    /// <summary>
-    /// Value is in array (JSON_CONTAINS for arrays).
-    /// </summary>
-    In,
-
-    /// <summary>
-    /// Path exists in JSON document.
-    /// </summary>
-    Exists,
-
-    /// <summary>
-    /// Path does not exist in JSON document.
-    /// </summary>
-    NotExists,
-
-    /// <summary>
-    /// Full-text search in string value (MATCH AGAINST for indexed columns).
-    /// </summary>
-    FullText
-}
 
 /// <summary>
 /// Sort specification for JSON queries.
@@ -179,7 +89,7 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of matching values with their keys.</returns>
     Task<IReadOnlyList<JsonQueryResult<TValue>>> JsonQueryAsync(
-        IReadOnlyList<JsonQueryCondition> conditions,
+        IReadOnlyList<QueryCondition> conditions,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -192,7 +102,7 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paged result with matching values.</returns>
     Task<JsonPagedResult<TValue>> JsonQueryPagedAsync(
-        IReadOnlyList<JsonQueryCondition>? conditions,
+        IReadOnlyList<QueryCondition>? conditions,
         int offset,
         int limit,
         JsonSortSpec? sortBy = null,
@@ -205,7 +115,7 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of matching entries.</returns>
     Task<long> JsonCountAsync(
-        IReadOnlyList<JsonQueryCondition>? conditions,
+        IReadOnlyList<QueryCondition>? conditions,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -217,7 +127,7 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
     /// <returns>List of distinct values at the path.</returns>
     Task<IReadOnlyList<object?>> JsonDistinctAsync(
         string path,
-        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        IReadOnlyList<QueryCondition>? conditions = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -231,6 +141,6 @@ public interface IJsonQueryableStateStore<TValue> : IQueryableStateStore<TValue>
     Task<object?> JsonAggregateAsync(
         string path,
         JsonAggregation aggregation,
-        IReadOnlyList<JsonQueryCondition>? conditions = null,
+        IReadOnlyList<QueryCondition>? conditions = null,
         CancellationToken cancellationToken = default);
 }

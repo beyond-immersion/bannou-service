@@ -11,8 +11,21 @@
     <RootNamespace>BeyondImmersion.Bannou.Core</RootNamespace>
     <AssemblyName>BeyondImmersion.Bannou.Core</AssemblyName>
 
-    <!-- Not published to NuGet yet - internal shared code -->
-    <IsPackable>false</IsPackable>
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Core types for Bannou SDKs including JSON serialization, event infrastructure, and shared exceptions. Foundation package for all Bannou SDK packages.</Description>
+    <PackageTags>bannou;core;sdk;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
 
     <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -20,6 +33,10 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <!-- No external dependencies - pure .NET types only -->
 

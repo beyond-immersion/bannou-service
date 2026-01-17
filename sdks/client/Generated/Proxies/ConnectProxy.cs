@@ -34,7 +34,7 @@ public sealed class ConnectProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing InternalProxyResponse on success.</returns>
-    public Task<ApiResponse<InternalProxyResponse>> ProxyinternalrequestAsync(
+    public Task<ApiResponse<InternalProxyResponse>> ProxyInternalRequestAsync(
         InternalProxyRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class ConnectProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ClientCapabilitiesResponse on success.</returns>
-    public Task<ApiResponse<ClientCapabilitiesResponse>> GetClientcapabilitiesAsync(
+    public Task<ApiResponse<ClientCapabilitiesResponse>> GetClientCapabilitiesAsync(
         GetClientCapabilitiesRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -69,7 +69,7 @@ public sealed class ConnectProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task ConnectwebsocketpostEventAsync(
+    public Task ConnectWebSocketPostEventAsync(
         ConnectRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -86,7 +86,7 @@ public sealed class ConnectProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing GetAccountSessionsResponse on success.</returns>
-    public Task<ApiResponse<GetAccountSessionsResponse>> GetAccountsessionsAsync(
+    public Task<ApiResponse<GetAccountSessionsResponse>> GetAccountSessionsAsync(
         GetAccountSessionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

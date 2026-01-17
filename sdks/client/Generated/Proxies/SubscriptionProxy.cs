@@ -34,7 +34,7 @@ public sealed class SubscriptionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubscriptionListResponse on success.</returns>
-    public Task<ApiResponse<SubscriptionListResponse>> GetAccountsubscriptionsAsync(
+    public Task<ApiResponse<SubscriptionListResponse>> GetAccountSubscriptionsAsync(
         GetAccountSubscriptionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class SubscriptionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing QuerySubscriptionsResponse on success.</returns>
-    public Task<ApiResponse<QuerySubscriptionsResponse>> QuerycurrentsubscriptionsAsync(
+    public Task<ApiResponse<QuerySubscriptionsResponse>> QueryCurrentSubscriptionsAsync(
         QueryCurrentSubscriptionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -124,7 +124,7 @@ public sealed class SubscriptionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubscriptionInfo on success.</returns>
-    public Task<ApiResponse<SubscriptionInfo>> CancelsubscriptionAsync(
+    public Task<ApiResponse<SubscriptionInfo>> CancelSubscriptionAsync(
         CancelSubscriptionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -142,7 +142,7 @@ public sealed class SubscriptionProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubscriptionInfo on success.</returns>
-    public Task<ApiResponse<SubscriptionInfo>> RenewsubscriptionAsync(
+    public Task<ApiResponse<SubscriptionInfo>> RenewSubscriptionAsync(
         RenewSubscriptionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

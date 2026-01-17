@@ -34,7 +34,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LeaderboardDefinitionResponse on success.</returns>
-    public Task<ApiResponse<LeaderboardDefinitionResponse>> CreateLeaderboarddefinitionAsync(
+    public Task<ApiResponse<LeaderboardDefinitionResponse>> CreateLeaderboardDefinitionAsync(
         CreateLeaderboardDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -52,7 +52,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LeaderboardDefinitionResponse on success.</returns>
-    public Task<ApiResponse<LeaderboardDefinitionResponse>> GetLeaderboarddefinitionAsync(
+    public Task<ApiResponse<LeaderboardDefinitionResponse>> GetLeaderboardDefinitionAsync(
         GetLeaderboardDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -70,7 +70,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing ListLeaderboardDefinitionsResponse on success.</returns>
-    public Task<ApiResponse<ListLeaderboardDefinitionsResponse>> ListLeaderboarddefinitionsAsync(
+    public Task<ApiResponse<ListLeaderboardDefinitionsResponse>> ListLeaderboardDefinitionsAsync(
         ListLeaderboardDefinitionsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LeaderboardDefinitionResponse on success.</returns>
-    public Task<ApiResponse<LeaderboardDefinitionResponse>> UpdateLeaderboarddefinitionAsync(
+    public Task<ApiResponse<LeaderboardDefinitionResponse>> UpdateLeaderboardDefinitionAsync(
         UpdateLeaderboardDefinitionRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -105,7 +105,7 @@ public sealed class LeaderboardProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteLeaderboarddefinitionEventAsync(
+    public Task DeleteLeaderboardDefinitionEventAsync(
         DeleteLeaderboardDefinitionRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -122,7 +122,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubmitScoreResponse on success.</returns>
-    public Task<ApiResponse<SubmitScoreResponse>> SubmitscoreAsync(
+    public Task<ApiResponse<SubmitScoreResponse>> SubmitScoreAsync(
         SubmitScoreRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SubmitScoreBatchResponse on success.</returns>
-    public Task<ApiResponse<SubmitScoreBatchResponse>> SubmitscorebatchAsync(
+    public Task<ApiResponse<SubmitScoreBatchResponse>> SubmitScoreBatchAsync(
         SubmitScoreBatchRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing EntityRankResponse on success.</returns>
-    public Task<ApiResponse<EntityRankResponse>> GetEntityrankAsync(
+    public Task<ApiResponse<EntityRankResponse>> GetEntityRankAsync(
         GetEntityRankRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -176,7 +176,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LeaderboardEntriesResponse on success.</returns>
-    public Task<ApiResponse<LeaderboardEntriesResponse>> GetTopranksAsync(
+    public Task<ApiResponse<LeaderboardEntriesResponse>> GetTopRanksAsync(
         GetTopRanksRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -194,7 +194,7 @@ public sealed class LeaderboardProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing LeaderboardEntriesResponse on success.</returns>
-    public Task<ApiResponse<LeaderboardEntriesResponse>> GetRanksaroundAsync(
+    public Task<ApiResponse<LeaderboardEntriesResponse>> GetRanksAroundAsync(
         GetRanksAroundRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

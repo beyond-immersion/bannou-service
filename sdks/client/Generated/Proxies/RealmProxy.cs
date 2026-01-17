@@ -52,7 +52,7 @@ public sealed class RealmProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmResponse on success.</returns>
-    public Task<ApiResponse<RealmResponse>> GetRealmbycodeAsync(
+    public Task<ApiResponse<RealmResponse>> GetRealmByCodeAsync(
         GetRealmByCodeRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -140,7 +140,7 @@ public sealed class RealmProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmResponse on success.</returns>
-    public Task<ApiResponse<RealmResponse>> DeprecaterealmAsync(
+    public Task<ApiResponse<RealmResponse>> DeprecateRealmAsync(
         DeprecateRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -158,7 +158,7 @@ public sealed class RealmProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmResponse on success.</returns>
-    public Task<ApiResponse<RealmResponse>> UndeprecaterealmAsync(
+    public Task<ApiResponse<RealmResponse>> UndeprecateRealmAsync(
         UndeprecateRealmRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -176,7 +176,7 @@ public sealed class RealmProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing RealmExistsResponse on success.</returns>
-    public Task<ApiResponse<RealmExistsResponse>> RealmexistsAsync(
+    public Task<ApiResponse<RealmExistsResponse>> RealmExistsAsync(
         RealmExistsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -194,7 +194,7 @@ public sealed class RealmProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing SeedRealmsResponse on success.</returns>
-    public Task<ApiResponse<SeedRealmsResponse>> SeedrealmsAsync(
+    public Task<ApiResponse<SeedRealmsResponse>> SeedRealmsAsync(
         SeedRealmsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,

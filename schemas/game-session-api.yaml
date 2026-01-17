@@ -1333,35 +1333,7 @@ components:
       description: Type of game session - determines join behavior
       enum: [lobby, matchmade]
 
-    PlayerReservation:
-      type: object
-      description: A slot reservation for an expected player in a matchmade session
-      additionalProperties: false
-      required:
-      - accountId
-      - token
-      - reservedAt
-      properties:
-        accountId:
-          type: string
-          format: uuid
-          description: Account ID of the player this slot is reserved for
-        token:
-          type: string
-          description: One-time use token for claiming this reservation
-        reservedAt:
-          type: string
-          format: date-time
-          description: When this reservation was created
-        claimed:
-          type: boolean
-          default: false
-          description: Whether this reservation has been claimed
-        claimedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When this reservation was claimed (null if not yet claimed)
+    # NOTE: PlayerReservation removed - reservations use ReservationInfo for matchmaking integration
 
     ReservationInfo:
       type: object

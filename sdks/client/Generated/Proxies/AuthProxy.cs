@@ -70,7 +70,7 @@ public sealed class AuthProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthResponse on success.</returns>
-    public Task<ApiResponse<AuthResponse>> CompleteoauthAsync(
+    public Task<ApiResponse<AuthResponse>> CompleteOAuthAsync(
         OAuthCallbackRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -88,7 +88,7 @@ public sealed class AuthProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthResponse on success.</returns>
-    public Task<ApiResponse<AuthResponse>> VerifysteamauthAsync(
+    public Task<ApiResponse<AuthResponse>> VerifySteamAuthAsync(
         SteamVerifyRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -106,7 +106,7 @@ public sealed class AuthProxy
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ApiResponse containing AuthResponse on success.</returns>
-    public Task<ApiResponse<AuthResponse>> RefreshtokenAsync(
+    public Task<ApiResponse<AuthResponse>> RefreshTokenAsync(
         RefreshRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
@@ -171,7 +171,7 @@ public sealed class AuthProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task TerminatesessionEventAsync(
+    public Task TerminateSessionEventAsync(
         TerminateSessionRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -187,7 +187,7 @@ public sealed class AuthProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task RequestpasswordresetEventAsync(
+    public Task RequestPasswordResetEventAsync(
         PasswordResetRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
@@ -203,12 +203,28 @@ public sealed class AuthProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Task that completes when the event is sent.</returns>
-    public Task ConfirmpasswordresetEventAsync(
+    public Task ConfirmPasswordResetEventAsync(
         PasswordResetConfirmRequest request,
         ushort channel = 0,
         CancellationToken cancellationToken = default)
     {
         return _client.SendEventAsync<PasswordResetConfirmRequest>(
             "POST", "/auth/password/confirm", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ProvidersResponse on success.</returns>
+    public Task<ApiResponse<ProvidersResponse>> ListProvidersAsync(
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<object, ProvidersResponse>(
+            "POST", "/auth/providers", new {}, channel, timeout, cancellationToken);
     }
 }

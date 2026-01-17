@@ -413,8 +413,8 @@ public partial class DocumentationService : IDocumentationService
                 maxResults,
                 cancellationToken);
 
-            // Build response with document results
-            var results = new List<DocumentResult>();
+            // Build response with document results (track CreatedAt for recency sorting)
+            var resultsWithMetadata = new List<(DocumentResult Result, DateTimeOffset CreatedAt)>();
             var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
             foreach (var result in searchResults)
             {
@@ -423,7 +423,7 @@ public partial class DocumentationService : IDocumentationService
 
                 if (doc != null)
                 {
-                    results.Add(new DocumentResult
+                    resultsWithMetadata.Add((new DocumentResult
                     {
                         DocumentId = doc.DocumentId,
                         Slug = doc.Slug,
@@ -433,20 +433,31 @@ public partial class DocumentationService : IDocumentationService
                         VoiceSummary = doc.VoiceSummary,
                         RelevanceScore = (float)result.RelevanceScore,
                         MatchHighlights = new List<string> { GenerateSearchSnippet(doc.Content, body.SearchTerm) }
-                    });
+                    }, doc.CreatedAt));
                 }
             }
 
-            // Publish analytics event (non-blocking)
-            _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, results.Count);
+            // Apply sorting based on request
+            IEnumerable<(DocumentResult Result, DateTimeOffset CreatedAt)> sortedResults = body.SortBy switch
+            {
+                SearchDocumentationRequestSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
+                SearchDocumentationRequestSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
+                SearchDocumentationRequestSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
+                _ => resultsWithMetadata
+            };
 
-            _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results",
-                namespaceId, body.SearchTerm, results.Count);
+            var finalResults = sortedResults.Select(r => r.Result).ToList();
+
+            // Publish analytics event (non-blocking)
+            _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, finalResults.Count);
+
+            _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
+                namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
 
             return (StatusCodes.OK, new SearchDocumentationResponse
             {
-                Results = results,
-                TotalResults = results.Count,
+                Results = finalResults,
+                TotalResults = finalResults.Count,
                 SearchTerm = body.SearchTerm,
                 Namespace = namespaceId
             });
@@ -462,7 +473,8 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, ListDocumentsResponse?)> ListDocumentsAsync(ListDocumentsRequest body, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("ListDocuments: namespace={Namespace}, category={Category}", body.Namespace, body.Category);
+        _logger.LogDebug("ListDocuments: namespace={Namespace}, category={Category}, sortBy={SortBy}, sortOrder={SortOrder}",
+            body.Namespace, body.Category, body.SortBy, body.SortOrder);
         try
         {
             // Input validation
@@ -475,23 +487,25 @@ public partial class DocumentationService : IDocumentationService
             var namespaceId = body.Namespace;
             var page = body.Page;
             var pageSize = body.PageSize;
+            var requestedTags = body.Tags?.ToList() ?? new List<string>();
+            var hasTags = requestedTags.Count > 0;
 
-            // Convert page-based to skip/take for search index
-            var skip = (page - 1) * pageSize;
-            var take = pageSize;
-
-            // Get document IDs from search index (respects category filter)
+            // If filtering by tags or sorting, we need to fetch all documents first, then filter/sort/paginate
+            // Otherwise, use the optimized path
             var categoryFilter = body.Category == default ? null : body.Category.ToString();
+            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+
+            // Fetch more documents if we need to filter/sort (max 1000 to prevent memory issues)
+            var fetchLimit = hasTags || body.SortBy != default ? 1000 : pageSize;
             var docIds = await _searchIndexService.ListDocumentIdsAsync(
                 namespaceId,
                 categoryFilter,
-                skip,
-                take,
+                0, // Always start from 0 when sorting/filtering
+                fetchLimit,
                 cancellationToken);
 
-            // Fetch document summaries
-            var documents = new List<DocumentSummary>();
-            var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
+            // Fetch document data with metadata for sorting
+            var documentsWithMetadata = new List<(DocumentSummary Summary, StoredDocument Doc)>();
             foreach (var docId in docIds)
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
@@ -499,7 +513,7 @@ public partial class DocumentationService : IDocumentationService
 
                 if (doc != null)
                 {
-                    documents.Add(new DocumentSummary
+                    documentsWithMetadata.Add((new DocumentSummary
                     {
                         DocumentId = doc.DocumentId,
                         Slug = doc.Slug,
@@ -508,21 +522,53 @@ public partial class DocumentationService : IDocumentationService
                         Summary = doc.Summary,
                         VoiceSummary = doc.VoiceSummary,
                         Tags = doc.Tags
-                    });
+                    }, doc));
                 }
             }
 
-            // Get total count from namespace stats
-            var stats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
-            var totalCount = body.Category != default
-                ? stats.DocumentsByCategory.GetValueOrDefault(body.Category.ToString(), 0)
-                : stats.TotalDocuments;
+            // Apply tags filter if specified
+            if (hasTags)
+            {
+                documentsWithMetadata = body.TagsMatch switch
+                {
+                    ListDocumentsRequestTagsMatch.All => documentsWithMetadata
+                        .Where(d => requestedTags.All(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
+                        .ToList(),
+                    ListDocumentsRequestTagsMatch.Any => documentsWithMetadata
+                        .Where(d => requestedTags.Any(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
+                        .ToList(),
+                    _ => documentsWithMetadata
+                };
+            }
+
+            // Apply sorting
+            IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
+            {
+                ListSortField.Created_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                    ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
+                    : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
+                ListSortField.Updated_at => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                    ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
+                    : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
+                ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+                    ? documentsWithMetadata.OrderBy(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase)
+                    : documentsWithMetadata.OrderByDescending(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase),
+                _ => documentsWithMetadata // Default: no additional sorting
+            };
+
+            // Get filtered count for pagination
+            var filteredList = sortedDocuments.ToList();
+            var totalCount = filteredList.Count;
+
+            // Apply pagination
+            var skip = (page - 1) * pageSize;
+            var documents = filteredList.Skip(skip).Take(pageSize).Select(d => d.Summary).ToList();
 
             // Calculate total pages
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            _logger.LogDebug("ListDocuments returned {Count} of {Total} documents in namespace {Namespace}",
-                documents.Count, totalCount, namespaceId);
+            _logger.LogDebug("ListDocuments returned {Count} of {Total} documents in namespace {Namespace} (filtered by tags: {HasTags})",
+                documents.Count, totalCount, namespaceId, hasTags);
 
             return (StatusCodes.OK, new ListDocumentsResponse
             {

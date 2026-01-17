@@ -13,7 +13,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     public ActionFilters(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<ActionFilters>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ActionFilters>.Instance;
     }
 
     [HeaderArray]

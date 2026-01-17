@@ -229,4 +229,44 @@ public class AssetEventEmitter : IAssetEventEmitter
 
         return await _publisher.PublishToSessionAsync(sessionId, eventData, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<bool> EmitMetabundleCreationCompleteAsync(
+        string sessionId,
+        Guid jobId,
+        string metabundleId,
+        bool success,
+        MetabundleJobStatus? status = null,
+        Uri? downloadUrl = null,
+        long? sizeBytes = null,
+        int? assetCount = null,
+        int? standaloneAssetCount = null,
+        long? processingTimeMs = null,
+        MetabundleErrorCode? errorCode = null,
+        string? errorMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        var eventData = new MetabundleCreationCompleteEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            JobId = jobId,
+            MetabundleId = metabundleId,
+            Success = success,
+            Status = status,
+            DownloadUrl = downloadUrl,
+            SizeBytes = sizeBytes,
+            AssetCount = assetCount,
+            StandaloneAssetCount = standaloneAssetCount,
+            ProcessingTimeMs = processingTimeMs,
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage
+        };
+
+        _logger.LogDebug(
+            "Emitting metabundle creation complete event: jobId={JobId}, metabundleId={MetabundleId}, success={Success}",
+            jobId, metabundleId, success);
+
+        return await _publisher.PublishToSessionAsync(sessionId, eventData, cancellationToken);
+    }
 }

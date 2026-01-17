@@ -20,7 +20,7 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public BackstoryStorageHelperTests(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<BackstoryStorageHelperTests>();
+        Program.Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BackstoryStorageHelperTests>.Instance;
     }
 
     /// <summary>

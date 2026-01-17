@@ -84,6 +84,7 @@ This document lists all events defined in Bannou's event schemas.
 | `BundleCreationCompleteEvent` | Custom | `bundle-creation-complete` | Sent when bundle creation from asset_ids completes... |
 | `BundleValidationCompleteEvent` | Custom | `bundle-validation-complete` | Sent when a bundle upload has been validated and p... |
 | `BundleValidationFailedEvent` | Custom | `bundle-validation-failed` | Sent when bundle validation fails. Includes detail... |
+| `MetabundleCreationCompleteEvent` | Custom | `metabundle-creation-complete` | Sent when async metabundle creation job completes ... |
 
 ### Auth
 

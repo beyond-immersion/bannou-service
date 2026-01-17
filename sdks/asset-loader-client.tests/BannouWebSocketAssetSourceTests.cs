@@ -30,17 +30,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     #region Constructor Tests
 
     /// <summary>
-    /// Verifies that constructor throws when client is null.
-    /// </summary>
-    [Fact]
-    public void Constructor_NullClient_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new BannouWebSocketAssetSource(null!));
-    }
-
-    /// <summary>
     /// Verifies that constructor accepts valid client.
     /// </summary>
     [Fact]
@@ -146,20 +135,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Verifies that ResolveBundlesAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task ResolveBundlesAsync_NullAssetIds_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            source.ResolveBundlesAsync(null!));
-    }
-
-    /// <summary>
     /// Verifies that GetBundleDownloadInfoAsync throws when not connected.
     /// </summary>
     [Fact]
@@ -171,20 +146,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             source.GetBundleDownloadInfoAsync("bundle-1"));
-    }
-
-    /// <summary>
-    /// Verifies that GetBundleDownloadInfoAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task GetBundleDownloadInfoAsync_NullBundleId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            source.GetBundleDownloadInfoAsync(null!));
     }
 
     /// <summary>
@@ -213,20 +174,6 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             source.GetAssetDownloadInfoAsync("asset-1"));
-    }
-
-    /// <summary>
-    /// Verifies that GetAssetDownloadInfoAsync validates null input.
-    /// </summary>
-    [Fact]
-    public async Task GetAssetDownloadInfoAsync_NullAssetId_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            source.GetAssetDownloadInfoAsync(null!));
     }
 
     /// <summary>

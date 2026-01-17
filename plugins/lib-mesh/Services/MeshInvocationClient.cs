@@ -11,16 +11,16 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 
 /// <summary>
 /// HTTP-based implementation of mesh service invocation.
-/// Uses IMeshRedisManager directly for endpoint resolution to avoid circular dependencies.
+/// Uses IMeshStateManager directly for endpoint resolution to avoid circular dependencies.
 /// This is infrastructure that all generated clients depend on, so it cannot use generated clients.
 /// </summary>
 public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 {
-    private readonly IMeshRedisManager _redisManager;
+    private readonly IMeshStateManager _stateManager;
     private readonly ILogger<MeshInvocationClient> _logger;
     private readonly HttpMessageInvoker _httpClient;
 
-    // Cache for endpoint resolution to reduce Redis calls
+    // Cache for endpoint resolution to reduce state store calls
     private readonly EndpointCache _endpointCache;
 
     // Round-robin counter for load balancing across multiple endpoints
@@ -29,13 +29,13 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// <summary>
     /// Creates a new MeshInvocationClient.
     /// </summary>
-    /// <param name="redisManager">Redis manager for direct endpoint resolution (avoids circular dependency with generated clients).</param>
+    /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
     /// <param name="logger">Logger instance.</param>
     public MeshInvocationClient(
-        IMeshRedisManager redisManager,
+        IMeshStateManager stateManager,
         ILogger<MeshInvocationClient> logger)
     {
-        _redisManager = redisManager;
+        _stateManager = stateManager;
         _logger = logger;
 
         // Create HTTP client for outbound requests
@@ -225,8 +225,8 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         try
         {
-            // Query Redis directly for healthy endpoints (avoids circular dependency with generated MeshClient)
-            var endpoints = await _redisManager.GetEndpointsForAppIdAsync(appId, includeUnhealthy: false);
+            // Query state manager directly for healthy endpoints (avoids circular dependency with generated MeshClient)
+            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(appId, includeUnhealthy: false);
 
             if (endpoints.Count == 0)
             {

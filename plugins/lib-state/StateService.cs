@@ -7,7 +7,6 @@ using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.State;
 
@@ -235,8 +234,8 @@ public partial class StateService : IStateService
     {
         var store = _stateStoreFactory.GetJsonQueryableStore<object>(body.StoreName);
 
-        // Parse filter into JSON query conditions (null filter = no conditions)
-        var conditions = body.Filter != null ? ParseJsonFilter(body.Filter) : Array.Empty<JsonQueryCondition>();
+        // Use conditions directly from request (schema-defined QueryCondition type)
+        var conditions = (IReadOnlyList<QueryCondition>?)body.Conditions?.ToList() ?? Array.Empty<QueryCondition>();
 
         // Parse sort specification
         JsonSortSpec? sortSpec = null;
@@ -287,17 +286,9 @@ public partial class StateService : IStateService
     {
         var store = _stateStoreFactory.GetSearchableStore<object>(body.StoreName);
 
-        // Use explicit properties if provided, otherwise parse from filter
+        // Use explicit properties from request
         var indexName = body.IndexName ?? $"{body.StoreName}-idx";
         var searchQuery = body.Query ?? "*";
-
-        // If query not explicitly set, try parsing from filter for backwards compatibility
-        if (string.IsNullOrEmpty(body.Query) && body.Filter != null)
-        {
-            var (parsedIndex, parsedQuery) = ParseRedisSearchFilter(body.Filter, body.StoreName);
-            indexName = body.IndexName ?? parsedIndex;
-            searchQuery = parsedQuery;
-        }
 
         // Parse sort specification
         string? sortBy = null;
@@ -351,161 +342,6 @@ public partial class StateService : IStateService
             Page = page,
             PageSize = pageSize
         });
-    }
-
-    /// <summary>
-    /// Parse JSON filter into MySQL JSON query conditions.
-    /// Supports filter format: { "conditions": [{ "path": "$.name", "operator": "equals", "value": "John" }] }
-    /// </summary>
-    private static IReadOnlyList<JsonQueryCondition> ParseJsonFilter(object filter)
-    {
-        var conditions = new List<JsonQueryCondition>();
-
-        if (filter == null)
-        {
-            return conditions;
-        }
-
-        // Handle JsonElement from System.Text.Json
-        if (filter is JsonElement jsonElement)
-        {
-            // Check for "conditions" array format
-            if (jsonElement.TryGetProperty("conditions", out var conditionsArray) &&
-                conditionsArray.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var conditionElement in conditionsArray.EnumerateArray())
-                {
-                    var condition = ParseConditionElement(conditionElement);
-                    if (condition != null)
-                    {
-                        conditions.Add(condition);
-                    }
-                }
-            }
-            // Also support flat object format: { "$.name": "John" } for simple equality
-            else if (jsonElement.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var property in jsonElement.EnumerateObject())
-                {
-                    // Skip special properties
-                    if (property.Name is "conditions" or "query" or "indexName")
-                    {
-                        continue;
-                    }
-
-                    conditions.Add(new JsonQueryCondition
-                    {
-                        Path = property.Name.StartsWith("$") ? property.Name : $"$.{property.Name}",
-                        Operator = JsonOperator.Equals,
-                        Value = GetJsonValue(property.Value)
-                    });
-                }
-            }
-        }
-
-        return conditions;
-    }
-
-    /// <summary>
-    /// Parse a single condition from JSON element.
-    /// </summary>
-    private static JsonQueryCondition? ParseConditionElement(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        string? path = null;
-        var op = JsonOperator.Equals;
-        object? value = null;
-
-        if (element.TryGetProperty("path", out var pathProp))
-        {
-            path = pathProp.GetString();
-        }
-
-        if (element.TryGetProperty("operator", out var opProp))
-        {
-            var opStr = opProp.GetString()?.ToLowerInvariant();
-            op = opStr switch
-            {
-                "equals" or "eq" or "=" => JsonOperator.Equals,
-                "notequals" or "neq" or "ne" or "!=" => JsonOperator.NotEquals,
-                "greaterthan" or "gt" or ">" => JsonOperator.GreaterThan,
-                "greaterthanorequal" or "gte" or ">=" => JsonOperator.GreaterThanOrEqual,
-                "lessthan" or "lt" or "<" => JsonOperator.LessThan,
-                "lessthanorequal" or "lte" or "<=" => JsonOperator.LessThanOrEqual,
-                "contains" or "like" => JsonOperator.Contains,
-                "startswith" => JsonOperator.StartsWith,
-                "endswith" => JsonOperator.EndsWith,
-                "in" => JsonOperator.In,
-                "exists" => JsonOperator.Exists,
-                "notexists" => JsonOperator.NotExists,
-                "fulltext" or "search" => JsonOperator.FullText,
-                _ => JsonOperator.Equals
-            };
-        }
-
-        if (element.TryGetProperty("value", out var valueProp))
-        {
-            value = GetJsonValue(valueProp);
-        }
-
-        if (string.IsNullOrEmpty(path))
-        {
-            return null;
-        }
-
-        return new JsonQueryCondition
-        {
-            Path = path.StartsWith("$") ? path : $"$.{path}",
-            Operator = op,
-            Value = value
-        };
-    }
-
-    /// <summary>
-    /// Extract value from JsonElement.
-    /// </summary>
-    private static object? GetJsonValue(JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number when element.TryGetInt64(out var l) => l,
-            JsonValueKind.Number => element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => null,
-            _ => element.GetRawText()
-        };
-    }
-
-    /// <summary>
-    /// Parse filter for Redis search.
-    /// Supports: { "indexName": "idx", "query": "@name:John" }
-    /// Or simple: { "query": "*" } with default index name.
-    /// </summary>
-    private static (string IndexName, string Query) ParseRedisSearchFilter(object filter, string storeName)
-    {
-        var indexName = $"{storeName}-idx"; // Default index name
-        var query = "*"; // Default to match all
-
-        if (filter is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            if (jsonElement.TryGetProperty("indexName", out var idxProp))
-            {
-                indexName = idxProp.GetString() ?? indexName;
-            }
-
-            if (jsonElement.TryGetProperty("query", out var queryProp))
-            {
-                query = queryProp.GetString() ?? "*";
-            }
-        }
-
-        return (indexName, query);
     }
 
     /// <inheritdoc />

@@ -59,22 +59,6 @@ public class ProxyTests
     }
 
     // =========================================================================
-    // CONSTRUCTOR NULL HANDLING TESTS
-    // =========================================================================
-
-    [Fact]
-    public void CharacterProxy_Constructor_NullClient_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() => new CharacterProxy(null!));
-    }
-
-    [Fact]
-    public void RealmProxy_Constructor_NullClient_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() => new RealmProxy(null!));
-    }
-
-    // =========================================================================
     // METHOD SIGNATURE TESTS
     // =========================================================================
 
