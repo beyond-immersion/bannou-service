@@ -2598,49 +2598,6 @@ components:
           type: string
           description: Hash of source bundle at composition time (for integrity verification)
 
-    BundleAssetEntry:
-      type: object
-      additionalProperties: false
-      description: Asset entry within a bundle (supports platform-specific IDs)
-      required:
-      - assetId
-      - contentHash
-      - size
-      properties:
-        assetId:
-          type: string
-          description: Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-        contentHash:
-          type: string
-          description: SHA256 hash of asset content
-        filename:
-          type: string
-          nullable: true
-          description: Original filename
-        contentType:
-          type: string
-          nullable: true
-          description: MIME content type
-        size:
-          type: integer
-          format: int64
-          description: Asset size in bytes (uncompressed)
-        externalAssetId:
-          type: string
-          nullable: true
-          description: |
-            External asset identifier for cross-system references.
-            Used to map platform-internal IDs to external catalogs or asset databases.
-        tags:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: |
-            Tags associated with this asset within the bundle.
-            Used for smart bundling decisions (e.g., group all "furniture" assets together).
-            Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-
     AssetConflict:
       type: object
       additionalProperties: false

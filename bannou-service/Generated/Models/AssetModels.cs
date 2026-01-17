@@ -1165,66 +1165,6 @@ public partial class SourceBundleReference
 }
 
 /// <summary>
-/// Asset entry within a bundle (supports platform-specific IDs)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleAssetEntry
-{
-
-    /// <summary>
-    /// Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
-
-    /// <summary>
-    /// SHA256 hash of asset content
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contentHash")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ContentHash { get; set; } = default!;
-
-    /// <summary>
-    /// Original filename
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("filename")]
-    public string? Filename { get; set; } = default!;
-
-    /// <summary>
-    /// MIME content type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    public string? ContentType { get; set; } = default!;
-
-    /// <summary>
-    /// Asset size in bytes (uncompressed)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long Size { get; set; } = default!;
-
-    /// <summary>
-    /// External asset identifier for cross-system references.
-    /// <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("externalAssetId")]
-    public string? ExternalAssetId { get; set; } = default!;
-
-    /// <summary>
-    /// Tags associated with this asset within the bundle.
-    /// <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-    /// <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Describes a conflict when the same asset ID has different content hashes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

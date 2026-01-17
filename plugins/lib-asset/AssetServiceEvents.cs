@@ -1,7 +1,9 @@
 using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.BannouService.Asset.Models;
+using BeyondImmersion.BannouService.Asset.Streaming;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -115,13 +117,24 @@ public partial class AssetService
     }
 
     /// <summary>
-    /// Processes a metabundle job - creates the actual metabundle file.
+    /// Processes a metabundle job using streaming to limit memory usage.
+    /// Uses server-side multipart upload for efficient large bundle assembly.
     /// </summary>
     private async Task<MetabundleJobResult> ProcessMetabundleJobAsync(MetabundleJob job, CancellationToken cancellationToken)
     {
+        if (job.Request == null)
+        {
+            throw new InvalidOperationException($"Job {job.JobId} has null Request - data corruption detected");
+        }
+
         var request = job.Request;
         var bucket = _configuration.StorageBucket;
         var bundleStore = _stateStoreFactory.GetStore<BundleMetadata>(_configuration.StatestoreName);
+        var jobStore = _stateStoreFactory.GetStore<MetabundleJob>(_configuration.StatestoreName);
+        var jobKey = $"{_configuration.MetabundleJobKeyPrefix}{job.JobId}";
+
+        // Load streaming options from configuration
+        var streamingOptions = StreamingBundleWriterOptions.FromConfiguration(_configuration);
 
         // Load source bundles and validate
         var sourceBundles = new List<BundleMetadata>();
@@ -148,99 +161,160 @@ public partial class AssetService
             }
         }
 
-        // Build list of assets to include
-        var assetsToInclude = new List<(StoredBundleAssetEntry Entry, string SourceBundleId)>();
+        // Build list of assets to include with source bundle grouping
+        var assetsBySourceBundle = new Dictionary<string, List<(StoredBundleAssetEntry Entry, BundleMetadata SourceBundle)>>();
         foreach (var sourceBundle in sourceBundles)
         {
             if (sourceBundle.Assets != null)
             {
+                var entries = new List<(StoredBundleAssetEntry, BundleMetadata)>();
                 foreach (var asset in sourceBundle.Assets)
                 {
-                    assetsToInclude.Add((asset, sourceBundle.BundleId));
+                    entries.Add((asset, sourceBundle));
                 }
+                assetsBySourceBundle[sourceBundle.BundleId] = entries;
             }
         }
 
-        // Create metabundle
+        // Calculate total assets for progress tracking
+        var totalAssetCount = assetsBySourceBundle.Values.Sum(list => list.Count) + standaloneAssets.Count;
+
+        // Create metabundle path
         var metabundlePath = $"{_configuration.BundleCurrentPathPrefix}/{request.MetabundleId}.bundle";
 
-        using var bundleStream = new MemoryStream();
-        using var writer = new BannouBundleWriter(bundleStream);
-
-        // Track provenance
-        var provenanceByBundle = new Dictionary<string, List<string>>();
-        var standaloneAssetIds = new List<string>();
-
-        // Process assets from source bundles
-        foreach (var (entry, sourceBundleId) in assetsToInclude)
-        {
-            var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
-
-            using var sourceBundleStream = await _storageProvider.GetObjectAsync(
-                sourceBundle.Bucket ?? bucket,
-                sourceBundle.StorageKey).ConfigureAwait(false);
-
-            using var reader = new BannouBundleReader(sourceBundleStream);
-            var assetData = reader.ReadAsset(entry.AssetId);
-
-            if (assetData == null)
-            {
-                _logger.LogWarning("ProcessMetabundleJob: Asset {AssetId} not found in source bundle {BundleId}",
-                    entry.AssetId, sourceBundleId);
-                continue;
-            }
-
-            writer.AddAsset(
-                entry.AssetId,
-                entry.Filename ?? entry.AssetId,
-                entry.ContentType ?? "application/octet-stream",
-                assetData);
-
-            if (!provenanceByBundle.TryGetValue(sourceBundleId, out var assetList))
-            {
-                assetList = new List<string>();
-                provenanceByBundle[sourceBundleId] = assetList;
-            }
-            assetList.Add(entry.AssetId);
-        }
-
-        // Process standalone assets
-        foreach (var standalone in standaloneAssets)
-        {
-            using var assetStream = await _storageProvider.GetObjectAsync(
-                standalone.Bucket ?? bucket,
-                standalone.StorageKey).ConfigureAwait(false);
-
-            using var memoryStream = new MemoryStream();
-            await assetStream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
-            var assetData = memoryStream.ToArray();
-
-            writer.AddAsset(
-                standalone.AssetId,
-                standalone.Filename ?? standalone.AssetId,
-                standalone.ContentType ?? "application/octet-stream",
-                assetData);
-
-            standaloneAssetIds.Add(standalone.AssetId);
-        }
-
-        // Finalize the bundle
-        writer.Finalize(
-            request.MetabundleId,
-            request.MetabundleId,
-            request.Version ?? "1.0.0",
-            request.Owner,
-            request.Description,
-            request.Metadata != null ? MetadataHelper.ConvertToStringDictionary(request.Metadata) : null);
-
-        // Upload metabundle
-        bundleStream.Position = 0;
-        await _storageProvider.PutObjectAsync(
+        // Initialize streaming multipart upload
+        var uploadSession = await _storageProvider.InitiateServerMultipartUploadAsync(
             bucket,
             metabundlePath,
-            bundleStream,
-            bundleStream.Length,
-            "application/x-bannou-bundle").ConfigureAwait(false);
+            "application/x-bannou-bundle",
+            cancellationToken).ConfigureAwait(false);
+
+        long bundleSize;
+        var provenanceByBundle = new Dictionary<string, List<string>>();
+        var standaloneAssetIds = new List<string>();
+        var metabundleAssets = new List<StoredBundleAssetEntry>();
+        var processedCount = 0;
+
+        try
+        {
+            await using var writer = new StreamingBundleWriter(
+                uploadSession,
+                _storageProvider,
+                streamingOptions,
+                _logger);
+
+            // Process assets from source bundles - stream one bundle at a time
+            foreach (var (sourceBundleId, assets) in assetsBySourceBundle)
+            {
+                var sourceBundle = sourceBundles.First(b => b.BundleId == sourceBundleId);
+
+                // Use streaming download to get bundle data
+                // Note: BannouBundleReader requires seekable stream for random access,
+                // so we buffer the bundle but process one bundle at a time to limit memory
+                await using var sourceBundleStream = await _storageProvider.GetObjectStreamingAsync(
+                    sourceBundle.Bucket ?? bucket,
+                    sourceBundle.StorageKey,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                using var bufferedStream = new MemoryStream();
+                await sourceBundleStream.CopyToAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
+                bufferedStream.Position = 0;
+
+                using var reader = new BannouBundleReader(bufferedStream, leaveOpen: true);
+                reader.ReadHeader();
+
+                foreach (var (entry, _) in assets)
+                {
+                    var added = await writer.AddAssetFromBundleAsync(
+                        reader,
+                        entry.AssetId,
+                        entry.Filename ?? entry.AssetId,
+                        entry.ContentType ?? "application/octet-stream",
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (!added)
+                    {
+                        _logger.LogWarning(
+                            "ProcessMetabundleJob: Asset {AssetId} not found in source bundle {BundleId}",
+                            entry.AssetId, sourceBundleId);
+                        continue;
+                    }
+
+                    // Track provenance
+                    if (!provenanceByBundle.TryGetValue(sourceBundleId, out var assetList))
+                    {
+                        assetList = new List<string>();
+                        provenanceByBundle[sourceBundleId] = assetList;
+                    }
+                    assetList.Add(entry.AssetId);
+                    metabundleAssets.Add(entry);
+
+                    processedCount++;
+
+                    // Update progress periodically
+                    if (processedCount % streamingOptions.ProgressUpdateIntervalAssets == 0)
+                    {
+                        var progress = 10 + (int)(80.0 * processedCount / totalAssetCount);
+                        await UpdateJobProgressAsync(jobStore, jobKey, job, progress, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                }
+            }
+
+            // Process standalone assets
+            foreach (var standalone in standaloneAssets)
+            {
+                await using var assetStream = await _storageProvider.GetObjectStreamingAsync(
+                    standalone.Bucket ?? bucket,
+                    standalone.StorageKey,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                await writer.AddAssetFromStreamAsync(
+                    standalone.AssetId,
+                    standalone.Filename ?? standalone.AssetId,
+                    standalone.ContentType ?? "application/octet-stream",
+                    assetStream,
+                    cancellationToken).ConfigureAwait(false);
+
+                standaloneAssetIds.Add(standalone.AssetId);
+                metabundleAssets.Add(new StoredBundleAssetEntry
+                {
+                    AssetId = standalone.AssetId,
+                    Filename = standalone.Filename,
+                    ContentType = standalone.ContentType,
+                    Size = standalone.Size,
+                    ContentHash = standalone.ContentHash
+                });
+
+                processedCount++;
+
+                // Update progress periodically
+                if (processedCount % streamingOptions.ProgressUpdateIntervalAssets == 0)
+                {
+                    var progress = 10 + (int)(80.0 * processedCount / totalAssetCount);
+                    await UpdateJobProgressAsync(jobStore, jobKey, job, progress, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+
+            // Update progress to finalizing phase
+            await UpdateJobProgressAsync(jobStore, jobKey, job, 90, cancellationToken).ConfigureAwait(false);
+
+            // Finalize the streaming bundle
+            bundleSize = await writer.FinalizeAsync(
+                request.MetabundleId,
+                request.MetabundleId,
+                request.Version ?? "1.0.0",
+                request.Owner,
+                request.Description,
+                request.Metadata != null ? MetadataHelper.ConvertToStringDictionary(request.Metadata) : null,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // On failure, the StreamingBundleWriter.DisposeAsync will abort the upload
+            throw;
+        }
 
         // Build provenance references
         var sourceBundleRefs = sourceBundles
@@ -253,18 +327,6 @@ public partial class AssetService
                 ContentHash = sb.StorageKey
             })
             .ToList();
-
-        // Build asset entries
-        var metabundleAssets = assetsToInclude.Select(a => a.Entry).ToList();
-        var standaloneEntries = standaloneAssets.Select(s => new StoredBundleAssetEntry
-        {
-            AssetId = s.AssetId,
-            Filename = s.Filename,
-            ContentType = s.ContentType,
-            Size = s.Size,
-            ContentHash = s.ContentHash
-        }).ToList();
-        metabundleAssets.AddRange(standaloneEntries);
 
         var allAssetIds = metabundleAssets.Select(a => a.AssetId).ToList();
 
@@ -280,7 +342,7 @@ public partial class AssetService
             Assets = metabundleAssets,
             StorageKey = metabundlePath,
             Bucket = bucket,
-            SizeBytes = bundleStream.Length,
+            SizeBytes = bundleSize,
             CreatedAt = DateTimeOffset.UtcNow,
             Status = Models.BundleStatus.Ready,
             Owner = request.Owner,
@@ -310,7 +372,7 @@ public partial class AssetService
                 StandaloneAssetCount = standaloneAssetIds.Count,
                 Bucket = bucket,
                 Key = metabundlePath,
-                SizeBytes = bundleStream.Length,
+                SizeBytes = bundleSize,
                 Owner = request.Owner
             }).ConfigureAwait(false);
 
@@ -318,7 +380,7 @@ public partial class AssetService
         {
             AssetCount = metabundleAssets.Count,
             StandaloneAssetCount = standaloneAssetIds.Count,
-            SizeBytes = bundleStream.Length,
+            SizeBytes = bundleSize,
             StorageKey = metabundlePath,
             SourceBundles = sourceBundleRefs.Select(sb => new SourceBundleReferenceInternal
             {
@@ -328,6 +390,21 @@ public partial class AssetService
                 ContentHash = sb.ContentHash
             }).ToList()
         };
+    }
+
+    /// <summary>
+    /// Updates job progress in state store.
+    /// </summary>
+    private static async Task UpdateJobProgressAsync(
+        IStateStore<MetabundleJob> jobStore,
+        string jobKey,
+        MetabundleJob job,
+        int progress,
+        CancellationToken cancellationToken)
+    {
+        job.Progress = progress;
+        job.UpdatedAt = DateTimeOffset.UtcNow;
+        await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

@@ -419,4 +419,34 @@ public class AssetServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int MetabundleJobTimeoutSeconds { get; set; } = 3600;
 
+    /// <summary>
+    /// Maximum memory in MB for streaming operations. Limits total buffer allocation during streaming metabundle assembly.
+    /// Environment variable: ASSET_STREAMING_MAX_MEMORY_MB
+    /// </summary>
+    public int StreamingMaxMemoryMb { get; set; } = 100;
+
+    /// <summary>
+    /// Size of each part in MB for streaming multipart uploads. S3/MinIO requires minimum 5MB per part except for the last part.
+    /// Environment variable: ASSET_STREAMING_PART_SIZE_MB
+    /// </summary>
+    public int StreamingPartSizeMb { get; set; } = 50;
+
+    /// <summary>
+    /// Maximum number of source bundles to stream concurrently during metabundle assembly. Higher values use more memory but improve throughput.
+    /// Environment variable: ASSET_STREAMING_MAX_CONCURRENT_SOURCE_STREAMS
+    /// </summary>
+    public int StreamingMaxConcurrentSourceStreams { get; set; } = 2;
+
+    /// <summary>
+    /// Size of compression buffer in KB for LZ4 streaming compression. Larger buffers improve compression ratio but use more memory.
+    /// Environment variable: ASSET_STREAMING_COMPRESSION_BUFFER_KB
+    /// </summary>
+    public int StreamingCompressionBufferKb { get; set; } = 16384;
+
+    /// <summary>
+    /// Number of assets to process before updating job progress. Lower values give more frequent updates but add overhead.
+    /// Environment variable: ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS
+    /// </summary>
+    public int StreamingProgressUpdateIntervalAssets { get; set; } = 10;
+
 }

@@ -3758,8 +3758,9 @@ internal sealed class MetabundleJob
 
     /// <summary>
     /// Serialized request for background processing.
+    /// Always set when job is created; null indicates data corruption.
     /// </summary>
-    public CreateMetabundleRequest Request { get; set; } = null!;
+    public CreateMetabundleRequest? Request { get; set; }
 
     /// <summary>
     /// When the job was created.

@@ -60153,6 +60153,64 @@
             <param name="metadata">Optional metadata</param>
             <returns>Reference to the created object</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.InitiateServerMultipartUploadAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Initiates a server-side multipart upload.
+            Unlike client-side multipart (which generates pre-signed URLs),
+            server-side uploads stream parts directly through the service.
+            </summary>
+            <param name="bucket">Target bucket name</param>
+            <param name="key">Object key (path) for the final object</param>
+            <param name="contentType">MIME content type of the final object</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Session information for tracking the upload</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.UploadPartAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Int32,System.IO.Stream,System.Int64,System.Threading.CancellationToken)">
+            <summary>
+            Uploads a single part in a server-side multipart upload.
+            Each part (except the last) must be at least 5MB per S3 specification.
+            </summary>
+            <param name="session">The upload session from InitiateServerMultipartUploadAsync</param>
+            <param name="partNumber">1-based part number (1 to 10,000)</param>
+            <param name="content">Stream containing the part data</param>
+            <param name="contentLength">Length of the part data in bytes</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Uploaded part information including ETag</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.CompleteServerMultipartUploadAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Collections.Generic.IList{BeyondImmersion.BannouService.Storage.ServerUploadedPart},System.Threading.CancellationToken)">
+            <summary>
+            Completes a server-side multipart upload by assembling all parts.
+            </summary>
+            <param name="session">The upload session</param>
+            <param name="parts">List of uploaded parts in order</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Reference to the completed object</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.AbortServerMultipartUploadAsync(BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession,System.Threading.CancellationToken)">
+            <summary>
+            Aborts a server-side multipart upload, cleaning up any uploaded parts.
+            </summary>
+            <param name="session">The upload session to abort</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.IAssetStorageProvider.GetObjectStreamingAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets an object's content as a streaming download without buffering to memory.
+            The returned stream reads directly from the network connection.
+            Caller must dispose the stream when done.
+            </summary>
+            <remarks>
+            Unlike GetObjectAsync which buffers the entire object to MemoryStream,
+            this method returns a stream that reads directly from the network.
+            Use this for large objects to avoid memory pressure.
+            Note: The stream may not support seeking depending on the storage provider.
+            </remarks>
+            <param name="bucket">Bucket name</param>
+            <param name="key">Object key</param>
+            <param name="versionId">Optional version ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Stream for reading object data directly from network</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Storage.StorageCapability">
             <summary>
             Storage capabilities that may or may not be supported by providers.
@@ -60466,6 +60524,72 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Storage.ObjectMetadata.Metadata">
             <summary>Custom metadata attached to the object</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession">
+            <summary>
+            Session information for server-side multipart uploads.
+            Unlike client-side multipart uploads (which use pre-signed URLs),
+            server-side uploads stream data directly through the service to storage.
+            Used for streaming large bundle assembly without buffering in memory.
+            </summary>
+            <param name="UploadId">The S3/MinIO upload ID for this multipart session</param>
+            <param name="Bucket">Target bucket for the upload</param>
+            <param name="Key">Object key (path) being uploaded</param>
+            <param name="ContentType">MIME content type of the final object</param>
+            <param name="InitiatedAt">When this upload session was created</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.#ctor(System.String,System.String,System.String,System.String,System.DateTime)">
+            <summary>
+            Session information for server-side multipart uploads.
+            Unlike client-side multipart uploads (which use pre-signed URLs),
+            server-side uploads stream data directly through the service to storage.
+            Used for streaming large bundle assembly without buffering in memory.
+            </summary>
+            <param name="UploadId">The S3/MinIO upload ID for this multipart session</param>
+            <param name="Bucket">Target bucket for the upload</param>
+            <param name="Key">Object key (path) being uploaded</param>
+            <param name="ContentType">MIME content type of the final object</param>
+            <param name="InitiatedAt">When this upload session was created</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.UploadId">
+            <summary>The S3/MinIO upload ID for this multipart session</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.Bucket">
+            <summary>Target bucket for the upload</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.Key">
+            <summary>Object key (path) being uploaded</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.ContentType">
+            <summary>MIME content type of the final object</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerMultipartUploadSession.InitiatedAt">
+            <summary>When this upload session was created</summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Storage.ServerUploadedPart">
+            <summary>
+            Information about a server-side uploaded part.
+            </summary>
+            <param name="PartNumber">1-based part number</param>
+            <param name="ETag">ETag returned by storage for this part</param>
+            <param name="Size">Size of this part in bytes</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Storage.ServerUploadedPart.#ctor(System.Int32,System.String,System.Int64)">
+            <summary>
+            Information about a server-side uploaded part.
+            </summary>
+            <param name="PartNumber">1-based part number</param>
+            <param name="ETag">ETag returned by storage for this part</param>
+            <param name="Size">Size of this part in bytes</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.PartNumber">
+            <summary>1-based part number</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.ETag">
+            <summary>ETag returned by storage for this part</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Storage.ServerUploadedPart.Size">
+            <summary>Size of this part in bytes</summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Testing.ServiceTestBase`1">
              <summary>
