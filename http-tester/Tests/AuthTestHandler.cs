@@ -159,7 +159,6 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             // In test environment, expect at least some providers configured
             // The exact count depends on environment configuration
-            var providerNames = response.Providers.Select(p => p.Name).ToList();
             var providerDetails = string.Join(", ", response.Providers.Select(p => $"{p.Name}({p.AuthType})"));
 
             // Verify structure of returned providers

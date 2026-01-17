@@ -782,7 +782,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
                 request.AddPartETags(new PartETag(part.PartNumber, part.ETag));
             }
 
-            var response = await _s3Client.CompleteMultipartUploadAsync(request, cancellationToken)
+            await _s3Client.CompleteMultipartUploadAsync(request, cancellationToken)
                 .ConfigureAwait(false);
 
             // Get final object metadata

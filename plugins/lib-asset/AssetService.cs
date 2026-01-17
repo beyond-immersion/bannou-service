@@ -2150,12 +2150,9 @@ public partial class AssetService : IAssetService
             if (job.Status == InternalJobStatus.Ready || job.Status == InternalJobStatus.Failed)
             {
                 // Job already completed - cannot cancel
-                var completedStatus = job.Status switch
-                {
-                    InternalJobStatus.Ready => CancelJobResponseStatus.Ready,
-                    InternalJobStatus.Failed => CancelJobResponseStatus.Failed,
-                    _ => CancelJobResponseStatus.Failed
-                };
+                var completedStatus = job.Status == InternalJobStatus.Ready
+                    ? CancelJobResponseStatus.Ready
+                    : CancelJobResponseStatus.Failed;
 
                 return (StatusCodes.Conflict, new CancelJobResponse
                 {

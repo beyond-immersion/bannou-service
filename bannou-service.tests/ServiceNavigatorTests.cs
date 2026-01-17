@@ -272,11 +272,11 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         ServiceRequestContext.SessionId = "forward-session-123";
 
         var mockInnerHandler = new MockHttpMessageHandler();
-        var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
+        using var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
         {
             InnerHandler = mockInnerHandler
         };
-        var client = new HttpClient(handler);
+        using var client = new HttpClient(handler);
 
         // Act
         await client.GetAsync("http://test.local/api/test");
@@ -294,11 +294,11 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         ServiceRequestContext.CorrelationId = "forward-corr-456";
 
         var mockInnerHandler = new MockHttpMessageHandler();
-        var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
+        using var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
         {
             InnerHandler = mockInnerHandler
         };
-        var client = new HttpClient(handler);
+        using var client = new HttpClient(handler);
 
         // Act
         await client.GetAsync("http://test.local/api/test");
@@ -314,11 +314,11 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
     {
         // Arrange - no context set
         var mockInnerHandler = new MockHttpMessageHandler();
-        var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
+        using var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
         {
             InnerHandler = mockInnerHandler
         };
-        var client = new HttpClient(handler);
+        using var client = new HttpClient(handler);
 
         // Act
         await client.GetAsync("http://test.local/api/test");
@@ -334,13 +334,13 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
         ServiceRequestContext.SessionId = "context-session";
 
         var mockInnerHandler = new MockHttpMessageHandler();
-        var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
+        using var handler = new SessionIdForwardingHandler(NullLogger<SessionIdForwardingHandler>.Instance)
         {
             InnerHandler = mockInnerHandler
         };
-        var client = new HttpClient(handler);
+        using var client = new HttpClient(handler);
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "http://test.local/api/test");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "http://test.local/api/test");
         request.Headers.Add(ServiceRequestContextMiddleware.SessionIdHeader, "existing-session");
 
         // Act
@@ -371,9 +371,12 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
 
     /// <summary>
     /// Mock HTTP handler for testing outbound requests.
+    /// Properly manages HttpResponseMessage lifecycle.
     /// </summary>
     private class MockHttpMessageHandler : HttpMessageHandler
     {
+        private readonly HttpResponseMessage _okResponse = new(System.Net.HttpStatusCode.OK);
+
         public HttpRequestMessage? LastRequest { get; private set; }
 
         protected override Task<HttpResponseMessage> SendAsync(
@@ -381,7 +384,16 @@ public class ServiceNavigatorTests : IClassFixture<CollectionFixture>, IDisposab
             CancellationToken cancellationToken)
         {
             LastRequest = request;
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+            return Task.FromResult(_okResponse);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _okResponse.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }
