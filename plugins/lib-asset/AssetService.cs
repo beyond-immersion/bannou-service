@@ -2047,11 +2047,11 @@ public partial class AssetService : IAssetService
             // Convert internal status to API status
             var apiStatus = job.Status switch
             {
-                MetabundleJobStatus.Queued => GetJobStatusResponseStatus.Queued,
-                MetabundleJobStatus.Processing => GetJobStatusResponseStatus.Processing,
-                MetabundleJobStatus.Ready => GetJobStatusResponseStatus.Ready,
-                MetabundleJobStatus.Failed => GetJobStatusResponseStatus.Failed,
-                MetabundleJobStatus.Cancelled => GetJobStatusResponseStatus.Cancelled,
+                InternalJobStatus.Queued => GetJobStatusResponseStatus.Queued,
+                InternalJobStatus.Processing => GetJobStatusResponseStatus.Processing,
+                InternalJobStatus.Ready => GetJobStatusResponseStatus.Ready,
+                InternalJobStatus.Failed => GetJobStatusResponseStatus.Failed,
+                InternalJobStatus.Cancelled => GetJobStatusResponseStatus.Cancelled,
                 _ => GetJobStatusResponseStatus.Failed
             };
 
@@ -2069,7 +2069,7 @@ public partial class AssetService : IAssetService
             };
 
             // If job is complete, include result data and generate download URL
-            if (job.Status == MetabundleJobStatus.Ready && job.Result != null)
+            if (job.Status == InternalJobStatus.Ready && job.Result != null)
             {
                 response.AssetCount = job.Result.AssetCount;
                 response.StandaloneAssetCount = job.Result.StandaloneAssetCount;
@@ -3478,7 +3478,7 @@ public partial class AssetService : IAssetService
         {
             JobId = jobId,
             MetabundleId = request.MetabundleId,
-            Status = MetabundleJobStatus.Queued,
+            Status = InternalJobStatus.Queued,
             Request = request,
             RequesterSessionId = requesterSessionId,
             CreatedAt = now,
@@ -3631,7 +3631,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Current job status.
     /// </summary>
-    public MetabundleJobStatus Status { get; set; } = MetabundleJobStatus.Queued;
+    public InternalJobStatus Status { get; set; } = InternalJobStatus.Queued;
 
     /// <summary>
     /// Progress percentage (0-100) when processing.
@@ -3685,9 +3685,9 @@ internal sealed class MetabundleJob
 }
 
 /// <summary>
-/// Job status enum for internal tracking.
+/// Job status enum for internal tracking (distinct from client event enum).
 /// </summary>
-internal enum MetabundleJobStatus
+internal enum InternalJobStatus
 {
     Queued,
     Processing,

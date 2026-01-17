@@ -155,4 +155,37 @@ public interface IAssetEventEmitter
         string? contentType = null,
         object? metadata = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Emits a metabundle creation complete event to the specified session.
+    /// Used for async metabundle jobs to notify the requester of completion.
+    /// </summary>
+    /// <param name="sessionId">The target session ID.</param>
+    /// <param name="jobId">The job ID.</param>
+    /// <param name="metabundleId">The metabundle ID.</param>
+    /// <param name="success">Whether creation succeeded.</param>
+    /// <param name="status">Final job status.</param>
+    /// <param name="downloadUrl">Pre-signed download URL (on success).</param>
+    /// <param name="sizeBytes">Metabundle size in bytes.</param>
+    /// <param name="assetCount">Total number of assets.</param>
+    /// <param name="standaloneAssetCount">Number of standalone assets.</param>
+    /// <param name="processingTimeMs">Processing time in milliseconds.</param>
+    /// <param name="errorCode">Error code (on failure).</param>
+    /// <param name="errorMessage">Error message (on failure).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the event was published successfully.</returns>
+    Task<bool> EmitMetabundleCreationCompleteAsync(
+        string sessionId,
+        Guid jobId,
+        string metabundleId,
+        bool success,
+        MetabundleJobStatus? status = null,
+        Uri? downloadUrl = null,
+        long? sizeBytes = null,
+        int? assetCount = null,
+        int? standaloneAssetCount = null,
+        long? processingTimeMs = null,
+        MetabundleErrorCode? errorCode = null,
+        string? errorMessage = null,
+        CancellationToken cancellationToken = default);
 }
