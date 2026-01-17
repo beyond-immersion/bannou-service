@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
@@ -17,7 +18,7 @@ public class MeshServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<MeshService>> _mockLogger;
     private readonly MeshServiceConfiguration _configuration;
-    private readonly Mock<IMeshRedisManager> _mockRedisManager;
+    private readonly Mock<IMeshStateManager> _mockStateManager;
     private readonly Mock<IServiceAppMappingResolver> _mockMappingResolver;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
@@ -26,7 +27,7 @@ public class MeshServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<MeshService>>();
         _configuration = new MeshServiceConfiguration();
-        _mockRedisManager = new Mock<IMeshRedisManager>();
+        _mockStateManager = new Mock<IMeshStateManager>();
         _mockMappingResolver = new Mock<IServiceAppMappingResolver>();
         _mockEventConsumer = new Mock<IEventConsumer>();
 
@@ -42,7 +43,7 @@ public class MeshServiceTests
             _mockMessageBus.Object,
             _mockLogger.Object,
             _configuration,
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockMappingResolver.Object,
             _mockEventConsumer.Object);
     }
@@ -76,7 +77,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(endpoints);
 
@@ -104,7 +105,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "connect" } }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(endpoints);
 
@@ -125,7 +126,7 @@ public class MeshServiceTests
     public async Task GetEndpointsAsync_WhenRedisThrows_ShouldReturnInternalServerError()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ThrowsAsync(new Exception("Redis connection failed"));
 
@@ -170,7 +171,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou-db", Status = EndpointStatus.Unavailable }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetAllEndpointsAsync(null))
             .ReturnsAsync(endpoints);
 
@@ -199,7 +200,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou-auth", Status = EndpointStatus.Healthy }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetAllEndpointsAsync("bannou-auth"))
             .ReturnsAsync(endpoints);
 
@@ -223,7 +224,7 @@ public class MeshServiceTests
     public async Task RegisterEndpointAsync_WithValidRequest_ShouldReturnCreated()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.RegisterEndpointAsync(It.IsAny<MeshEndpoint>(), It.IsAny<int>()))
             .ReturnsAsync(true);
 
@@ -257,7 +258,7 @@ public class MeshServiceTests
     public async Task RegisterEndpointAsync_WhenRegistrationFails_ShouldReturnInternalServerError()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.RegisterEndpointAsync(It.IsAny<MeshEndpoint>(), It.IsAny<int>()))
             .ReturnsAsync(false);
 
@@ -284,7 +285,7 @@ public class MeshServiceTests
         var expectedInstanceId = Guid.NewGuid();
         MeshEndpoint? capturedEndpoint = null;
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.RegisterEndpointAsync(It.IsAny<MeshEndpoint>(), It.IsAny<int>()))
             .Callback<MeshEndpoint, int>((endpoint, _) => capturedEndpoint = endpoint)
             .ReturnsAsync(true);
@@ -327,11 +328,11 @@ public class MeshServiceTests
             Status = EndpointStatus.Healthy
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
             .ReturnsAsync(existingEndpoint);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.DeregisterEndpointAsync(instanceId, "bannou"))
             .ReturnsAsync(true);
 
@@ -359,7 +360,7 @@ public class MeshServiceTests
         // Arrange
         var instanceId = Guid.NewGuid();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
             .ReturnsAsync((MeshEndpoint?)null);
 
@@ -392,11 +393,11 @@ public class MeshServiceTests
             Status = EndpointStatus.Healthy
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
             .ReturnsAsync(existingEndpoint);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.UpdateHeartbeatAsync(
                 instanceId, "bannou", EndpointStatus.Healthy, 50, 100, 90))
             .ReturnsAsync(true);
@@ -425,7 +426,7 @@ public class MeshServiceTests
         // Arrange
         var instanceId = Guid.NewGuid();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
             .ReturnsAsync((MeshEndpoint?)null);
 
@@ -457,11 +458,11 @@ public class MeshServiceTests
         };
         int? capturedTtl = null;
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointByInstanceIdAsync(instanceId))
             .ReturnsAsync(existingEndpoint);
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.UpdateHeartbeatAsync(
                 instanceId, "bannou", EndpointStatus.Healthy,
                 It.IsAny<float>(), It.IsAny<int>(), It.IsAny<int>()))
@@ -497,7 +498,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Host = "host2", Port = 3500, Status = EndpointStatus.Healthy }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(endpoints);
 
@@ -518,7 +519,7 @@ public class MeshServiceTests
     public async Task GetRouteAsync_WithNoEndpoints_ShouldReturnNotFound()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(new List<MeshEndpoint>());
 
@@ -543,7 +544,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, Services = new List<string> { "connect" } }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(endpoints);
 
@@ -569,7 +570,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy, CurrentConnections = 10, Host = "light" }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync("bannou", false))
             .ReturnsAsync(endpoints);
 
@@ -670,7 +671,7 @@ public class MeshServiceTests
     public async Task GetHealthAsync_WhenAllHealthy_ShouldReturnHealthyStatus()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
@@ -680,7 +681,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou-auth", Status = EndpointStatus.Healthy }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetAllEndpointsAsync(null))
             .ReturnsAsync(endpoints);
 
@@ -703,7 +704,7 @@ public class MeshServiceTests
     public async Task GetHealthAsync_WhenRedisUnhealthy_ShouldReturnDegradedStatus()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((false, "Redis connection failed", (TimeSpan?)null));
 
@@ -712,7 +713,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetAllEndpointsAsync(null))
             .ReturnsAsync(endpoints);
 
@@ -733,7 +734,7 @@ public class MeshServiceTests
     public async Task GetHealthAsync_WithMixedEndpointHealth_ShouldReturnDegraded()
     {
         // Arrange
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
@@ -743,7 +744,7 @@ public class MeshServiceTests
             new() { InstanceId = Guid.NewGuid(), AppId = "bannou-auth", Status = EndpointStatus.Degraded }
         };
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetAllEndpointsAsync(null))
             .ReturnsAsync(endpoints);
 
@@ -891,59 +892,60 @@ public class MeshConfigurationTests
 }
 
 /// <summary>
-/// Tests for MeshRedisManager.
+/// Tests for MeshStateManager.
+/// Uses mocked IStateStoreFactory for state store access.
 /// </summary>
-public class MeshRedisManagerTests
+public class MeshStateManagerTests
 {
-    private readonly Mock<ILogger<MeshRedisManager>> _mockLogger;
-    private readonly MeshServiceConfiguration _testConfig;
+    private readonly Mock<ILogger<MeshStateManager>> _mockLogger;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
 
-    public MeshRedisManagerTests()
+    public MeshStateManagerTests()
     {
-        _mockLogger = new Mock<ILogger<MeshRedisManager>>();
-        _testConfig = new MeshServiceConfiguration
-        {
-            RedisConnectionString = "localhost:6379"
-        };
+        _mockLogger = new Mock<ILogger<MeshStateManager>>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
     }
 
     [Fact]
-    public void Constructor_ShouldNotThrow_WithValidConfiguration()
+    public void Constructor_ShouldNotThrow_WithValidDependencies()
     {
-        // Act & Assert - verify it can be constructed with valid configuration
-        var manager = new MeshRedisManager(_testConfig, _mockLogger.Object);
+        // Act & Assert - verify it can be constructed with valid dependencies
+        var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         Assert.NotNull(manager);
     }
 
     [Fact]
-    public void Constructor_ShouldThrow_WhenConfigurationMissingConnectionString()
+    public async Task InitializeAsync_WithNonFunctionalStateStore_ShouldReturnFalse()
     {
-        // Arrange - configuration with empty connection string
-        var configWithoutConnection = new MeshServiceConfiguration
-        {
-            RedisConnectionString = string.Empty
-        };
+        // Arrange - state store factory throws when getting stores
+        _mockStateStoreFactory
+            .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("State store not available"));
 
-        // Act & Assert - should throw because connection string is required
-        Assert.Throws<InvalidOperationException>(() =>
-            new MeshRedisManager(configWithoutConnection, _mockLogger.Object));
+        var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+
+        // Act
+        var result = await manager.InitializeAsync();
+
+        // Assert - should return false when initialization fails
+        Assert.False(result);
     }
 }
 
 /// <summary>
 /// Tests for MeshInvocationClient - the HTTP-based service invocation client
 /// for service-to-service communication via lib-mesh infrastructure.
-/// Uses IMeshRedisManager directly to avoid circular dependency with generated clients.
+/// Uses IMeshStateManager for endpoint resolution to avoid circular dependency with generated clients.
 /// </summary>
 public class MeshInvocationClientTests : IDisposable
 {
-    private readonly Mock<IMeshRedisManager> _mockRedisManager;
+    private readonly Mock<IMeshStateManager> _mockStateManager;
     private readonly Mock<ILogger<MeshInvocationClient>> _mockLogger;
     private MeshInvocationClient? _client;
 
     public MeshInvocationClientTests()
     {
-        _mockRedisManager = new Mock<IMeshRedisManager>();
+        _mockStateManager = new Mock<IMeshStateManager>();
         _mockLogger = new Mock<ILogger<MeshInvocationClient>>();
     }
 
@@ -955,7 +957,7 @@ public class MeshInvocationClientTests : IDisposable
     private MeshInvocationClient CreateClient()
     {
         _client = new MeshInvocationClient(
-            _mockRedisManager.Object,
+            _mockStateManager.Object,
             _mockLogger.Object);
         return _client;
     }
@@ -1030,7 +1032,7 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ReturnsAsync(new List<MeshEndpoint>()); // Return empty list for no endpoints
 
@@ -1054,7 +1056,7 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ReturnsAsync(new List<MeshEndpoint>
             {
@@ -1074,7 +1076,7 @@ public class MeshInvocationClientTests : IDisposable
         // Arrange
         var client = CreateClient();
 
-        _mockRedisManager
+        _mockStateManager
             .Setup(x => x.GetEndpointsForAppIdAsync(It.IsAny<string>(), It.IsAny<bool>()))
             .ReturnsAsync(new List<MeshEndpoint>()); // Return empty list
 

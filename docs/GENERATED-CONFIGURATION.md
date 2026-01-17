@@ -365,13 +365,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_METRICS_ENABLED` | bool | `true` | Whether to collect routing metrics |
-| `MESH_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for service registry storage. |
-| `MESH_REDIS_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for Redis connection establishment ... |
-| `MESH_REDIS_CONNECT_RETRY_COUNT` | int | `5` | Maximum number of Redis connection retry attempts |
-| `MESH_REDIS_KEY_PREFIX` | string | `mesh:` | Prefix for all mesh-related Redis keys |
-| `MESH_REDIS_SYNC_TIMEOUT_MS` | int | `5000` | Timeout in milliseconds for synchronous Redis operations |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
-| `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of Redis. All calls route to ... |
+| `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of lib-state. All calls route... |
 
 ### Messaging
 
@@ -548,9 +543,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 419
+- **Total properties**: 414
 - **Required (no default)**: 40
-- **Optional (has default)**: 379
+- **Optional (has default)**: 374
 
 ## Environment Variable Naming Convention
 
