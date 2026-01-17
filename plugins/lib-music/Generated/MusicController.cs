@@ -464,6 +464,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiJson": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiJson",
             "description": "MIDI-JSON format representation of a musical piece",
             "type": "object",
             "additionalProperties": false,
@@ -494,6 +495,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiHeader": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader",
             "description": "MIDI file header information",
             "type": "object",
             "additionalProperties": false,
@@ -540,6 +542,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TempoEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent",
             "description": "A tempo change event",
             "type": "object",
             "additionalProperties": false,
@@ -563,6 +566,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TimeSignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -598,6 +602,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "KeySignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent",
             "description": "A key signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -666,6 +671,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             ]
         },
         "MidiTrack": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack",
             "description": "A single MIDI track containing events",
             "type": "object",
             "additionalProperties": false,
@@ -702,6 +708,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent",
             "description": "A single MIDI event",
             "type": "object",
             "additionalProperties": false,
@@ -890,6 +897,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiJson": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiJson",
             "description": "MIDI-JSON format representation of a musical piece",
             "type": "object",
             "additionalProperties": false,
@@ -920,6 +928,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiHeader": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiHeader",
             "description": "MIDI file header information",
             "type": "object",
             "additionalProperties": false,
@@ -966,6 +975,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TempoEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TempoEvent",
             "description": "A tempo change event",
             "type": "object",
             "additionalProperties": false,
@@ -989,6 +999,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TimeSignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -1024,6 +1035,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "KeySignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent",
             "description": "A key signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -1092,6 +1104,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             ]
         },
         "MidiTrack": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack",
             "description": "A single MIDI track containing events",
             "type": "object",
             "additionalProperties": false,
@@ -1128,6 +1141,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "MidiEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent",
             "description": "A single MIDI event",
             "type": "object",
             "additionalProperties": false,
@@ -1419,6 +1433,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "ModeDistribution": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -1595,6 +1610,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TimeSignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -1989,6 +2005,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "ModeDistribution": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -2196,6 +2213,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TimeSignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -2377,6 +2395,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "ModeDistribution": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution",
             "description": "Probability distribution over musical modes",
             "type": "object",
             "additionalProperties": false,
@@ -2553,6 +2572,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "TimeSignatureEvent": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Output.TimeSignatureEvent",
             "description": "A time signature change event",
             "type": "object",
             "additionalProperties": false,
@@ -3255,6 +3275,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             ]
         },
         "PitchRange": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3274,6 +3295,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "Pitch": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3365,6 +3387,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "Pitch": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3447,6 +3470,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchRange": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3633,6 +3657,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             ]
         },
         "PitchRange": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange",
             "description": "A pitch range from low to high",
             "type": "object",
             "additionalProperties": false,
@@ -3652,6 +3677,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "Pitch": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3679,6 +3705,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "VoiceLeadingRules": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules",
             "description": "Rules for voice leading",
             "type": "object",
             "additionalProperties": false,
@@ -3834,6 +3861,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             ]
         },
         "Pitch": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch",
             "description": "A specific pitch with pitch class and octave",
             "type": "object",
             "additionalProperties": false,
@@ -3861,6 +3889,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "VoiceLeadingViolation": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation",
             "description": "A voice leading rule violation",
             "type": "object",
             "additionalProperties": false,
