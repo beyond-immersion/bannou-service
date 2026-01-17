@@ -53314,26 +53314,10 @@
             Name of the state store (MySQL or Redis with search enabled)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Filter">
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Conditions">
             <summary>
-            Filter expression. Format depends on backend:
-            <br/>
-            <br/>**MySQL JSON queries** - structured conditions:
-            <br/>```json
-            <br/>{
-            <br/>  "conditions": [
-            <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
-            <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
-            <br/>  ]
-            <br/>}
-            <br/>```
-            <br/>
-            <br/>**MySQL simple equality** - flat object format:
-            <br/>```json
-            <br/>{ "$.name": "John", "$.status": "active" }
-            <br/>```
-            <br/>
-            <br/>**Redis search** - use indexName and query properties instead
+            Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+            <br/>For Redis search, use indexName and query properties instead.
             <br/>
             </summary>
         </member>
@@ -58069,96 +58053,6 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Lock response indicating success and providing disposal</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Services.JsonQueryCondition">
-            <summary>
-            Query condition for JSON path queries.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Path">
-            <summary>
-            JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]").
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Operator">
-            <summary>
-            Comparison operator to use.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Services.JsonQueryCondition.Value">
-            <summary>
-            Value to compare against. Null for EXISTS/NOT_EXISTS operators.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Services.JsonOperator">
-            <summary>
-            JSON comparison operators for queries.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Equals">
-            <summary>
-            Exact equality (=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.NotEquals">
-            <summary>
-            Inequality (!=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.GreaterThan">
-            <summary>
-            Greater than (>).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.GreaterThanOrEqual">
-            <summary>
-            Greater than or equal (>=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.LessThan">
-            <summary>
-            Less than (&lt;).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.LessThanOrEqual">
-            <summary>
-            Less than or equal (&lt;=).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Contains">
-            <summary>
-            String contains (LIKE '%value%').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.StartsWith">
-            <summary>
-            String starts with (LIKE 'value%').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.EndsWith">
-            <summary>
-            String ends with (LIKE '%value').
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.In">
-            <summary>
-            Value is in array (JSON_CONTAINS for arrays).
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.Exists">
-            <summary>
-            Path exists in JSON document.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.NotExists">
-            <summary>
-            Path does not exist in JSON document.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Services.JsonOperator.FullText">
-            <summary>
-            Full-text search in string value (MATCH AGAINST for indexed columns).
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Services.JsonSortSpec">
             <summary>
             Sort specification for JSON queries.
@@ -58240,7 +58134,7 @@
             </summary>
             <typeparam name="TValue">Value type stored.</typeparam>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Query entries using JSON path conditions.
             Executes directly on MySQL using JSON functions.
@@ -58249,7 +58143,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>List of matching values with their keys.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryPagedAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Int32,System.Int32,BeyondImmersion.BannouService.Services.JsonSortSpec,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonQueryPagedAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Int32,System.Int32,BeyondImmersion.BannouService.Services.JsonSortSpec,System.Threading.CancellationToken)">
             <summary>
             Query entries using JSON path conditions with pagination.
             </summary>
@@ -58260,7 +58154,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Paged result with matching values.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonCountAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonCountAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Count entries matching JSON path conditions.
             </summary>
@@ -58268,7 +58162,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Number of matching entries.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonDistinctAsync(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonDistinctAsync(System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Get distinct values at a JSON path.
             </summary>
@@ -58277,7 +58171,7 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>List of distinct values at the path.</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonAggregateAsync(System.String,BeyondImmersion.BannouService.Services.JsonAggregation,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.Services.JsonQueryCondition},System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Services.IJsonQueryableStateStore`1.JsonAggregateAsync(System.String,BeyondImmersion.BannouService.Services.JsonAggregation,System.Collections.Generic.IReadOnlyList{BeyondImmersion.BannouService.State.QueryCondition},System.Threading.CancellationToken)">
             <summary>
             Aggregate values at a JSON path.
             </summary>
