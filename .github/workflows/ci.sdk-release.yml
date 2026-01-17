@@ -49,10 +49,14 @@ jobs:
           LAST_TAG=$(git tag -l 'sdk-v*' --sort=-v:refname | head -n 1)
           if [ -z "$LAST_TAG" ]; then
             echo "last_tag=" >> $GITHUB_OUTPUT
+            echo "is_first_release=true" >> $GITHUB_OUTPUT
             echo "📌 No previous SDK release tag found - this will be the first stable release"
-            LAST_REF=$(git rev-list --max-parents=0 HEAD | head -n 1)
+            echo "📌 First release uses SDK_VERSION directly (no bump calculation)"
+            # For first release, we don't need to analyze PRs - SDK_VERSION IS the version
+            LAST_REF=""
           else
             echo "last_tag=${LAST_TAG}" >> $GITHUB_OUTPUT
+            echo "is_first_release=false" >> $GITHUB_OUTPUT
             echo "📌 Last SDK release tag: ${LAST_TAG}"
             LAST_REF=$LAST_TAG
           fi
@@ -63,7 +67,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          IS_FIRST_RELEASE="${{ steps.base.outputs.is_first_release }}"
           LAST_REF="${{ steps.base.outputs.last_ref }}"
+
+          # For first release, skip PR analysis - use SDK_VERSION directly
+          if [ "$IS_FIRST_RELEASE" = "true" ]; then
+            echo "📌 First release - skipping PR label analysis"
+            echo "📌 Will use SDK_VERSION (${{ steps.base.outputs.sdk_version }}) as release version"
+            echo "pr_count=0" >> $GITHUB_OUTPUT
+            echo "bump_type=none" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           echo "🔍 Analyzing PRs merged since ${LAST_REF}..."
 
           HAS_MAJOR=false
@@ -119,26 +134,32 @@ jobs:
           MINOR="${{ steps.base.outputs.minor }}"
           PATCH="${{ steps.base.outputs.patch }}"
           BUMP_TYPE="${{ steps.analyze.outputs.bump_type }}"
+          IS_FIRST_RELEASE="${{ steps.base.outputs.is_first_release }}"
 
-          # Calculate release version based on bump type (semantic versioning)
-          case $BUMP_TYPE in
-            major)
-              RELEASE_VERSION="$((MAJOR + 1)).0.0"
-              ;;
-            minor)
-              RELEASE_VERSION="${MAJOR}.$((MINOR + 1)).0"
-              ;;
-            patch)
-              RELEASE_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-              ;;
-          esac
+          # For first release, use SDK_VERSION directly (no bump)
+          if [ "$IS_FIRST_RELEASE" = "true" ] || [ "$BUMP_TYPE" = "none" ]; then
+            RELEASE_VERSION="${{ steps.base.outputs.sdk_version }}"
+            echo "📦 First release - using SDK_VERSION directly: ${RELEASE_VERSION}"
+          else
+            # Calculate release version based on bump type (semantic versioning)
+            case $BUMP_TYPE in
+              major)
+                RELEASE_VERSION="$((MAJOR + 1)).0.0"
+                ;;
+              minor)
+                RELEASE_VERSION="${MAJOR}.$((MINOR + 1)).0"
+                ;;
+              patch)
+                RELEASE_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+                ;;
+            esac
+            echo "📦 Release calculation:"
+            echo "   SDK_VERSION (base): ${{ steps.base.outputs.sdk_version }}"
+            echo "   Bump type: ${BUMP_TYPE}"
+            echo "   Release version: ${RELEASE_VERSION}"
+          fi
 
           echo "release_version=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
-          echo ""
-          echo "📦 Release calculation:"
-          echo "   SDK_VERSION (base): ${{ steps.base.outputs.sdk_version }}"
-          echo "   Bump type: ${BUMP_TYPE}"
-          echo "   Release version: ${RELEASE_VERSION}"
 
       - name: Validate Release
         run: |
