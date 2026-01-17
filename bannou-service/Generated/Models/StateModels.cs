@@ -242,28 +242,12 @@ public partial class QueryStateRequest
     public string StoreName { get; set; } = default!;
 
     /// <summary>
-    /// Filter expression. Format depends on backend:
-    /// <br/>
-    /// <br/>**MySQL JSON queries** - structured conditions:
-    /// <br/>```json
-    /// <br/>{
-    /// <br/>  "conditions": [
-    /// <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
-    /// <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
-    /// <br/>  ]
-    /// <br/>}
-    /// <br/>```
-    /// <br/>
-    /// <br/>**MySQL simple equality** - flat object format:
-    /// <br/>```json
-    /// <br/>{ "$.name": "John", "$.status": "active" }
-    /// <br/>```
-    /// <br/>
-    /// <br/>**Redis search** - use indexName and query properties instead
+    /// Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+    /// <br/>For Redis search, use indexName and query properties instead.
     /// <br/>
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("filter")]
-    public object? Filter { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("conditions")]
+    public System.Collections.Generic.ICollection<QueryCondition>? Conditions { get; set; } = default!;
 
     /// <summary>
     /// Redis search index name. Defaults to "{storeName}-idx".

@@ -187,28 +187,39 @@ paths:
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"storeName\"\n    \
         \        ],\n            \"properties\": {\n                \"storeName\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Name of the state store (MySQL or Redis with search enabled)\"\n       \
-        \         },\n                \"filter\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : false,\n                    \"nullable\": true,\n                    \"description\": \"Filter expression. Format
-        depends on backend:\\n\\n**MySQL JSON queries** - structured conditions:\\n```json\\n{\\n  \\\"conditions\\\": [\\\
-        n    { \\\"path\\\": \\\"$.name\\\", \\\"operator\\\": \\\"equals\\\", \\\"value\\\": \\\"John\\\" },\\n    { \\\"\
-        path\\\": \\\"$.age\\\", \\\"operator\\\": \\\"gte\\\", \\\"value\\\": 18 }\\n  ]\\n}\\n```\\n\\n**MySQL simple equality**
-        - flat object format:\\n```json\\n{ \\\"$.name\\\": \\\"John\\\", \\\"$.status\\\": \\\"active\\\" }\\n```\\n\\n**Redis
-        search** - use indexName and query properties instead\\n\"\n                },\n                \"indexName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Redis search index name. Defaults to \\\"{storeName}-idx\\\".\\nOnly used for Redis stores with search enabled.\\\
-        n\"\n                },\n                \"query\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"RedisSearch query string (e.g., \\\"@name:John\\\
-        \", \\\"@age:[18 +inf]\\\", \\\"*\\\").\\nDefaults to \\\"*\\\" (match all). Only used for Redis stores with search
-        enabled.\\n\"\n                },\n                \"sort\": {\n                    \"type\": \"array\",\n       \
-        \             \"items\": {\n                        \"$ref\": \"#/$defs/SortField\"\n                    },\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Sort order (first field only is used)
-        (null for default ordering)\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 0,\n                    \"description\": \"Page number (0-indexed)\"\n       \
-        \         },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"\
-        default\": 100,\n                    \"description\": \"Items per page (max 1000)\"\n                }\n         \
-        \   }\n        },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting
-        query results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
-        properties\": {\n                \"field\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \         },\n                \"conditions\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/QueryCondition\"\n                    },\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Query conditions for MySQL JSON queries. Multiple
+        conditions are combined with AND.\\nFor Redis search, use indexName and query properties instead.\\n\"\n         \
+        \       },\n                \"indexName\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Redis search index name. Defaults to \\\"{storeName}-idx\\\".\\nOnly
+        used for Redis stores with search enabled.\\n\"\n                },\n                \"query\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"RedisSearch
+        query string (e.g., \\\"@name:John\\\", \\\"@age:[18 +inf]\\\", \\\"*\\\").\\nDefaults to \\\"*\\\" (match all). Only
+        used for Redis stores with search enabled.\\n\"\n                },\n                \"sort\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SortField\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Sort order
+        (first field only is used) (null for default ordering)\"\n                },\n                \"page\": {\n      \
+        \              \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"\
+        Page number (0-indexed)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 100,\n                    \"description\": \"Items per page (max 1000)\"\n   \
+        \             }\n            }\n        },\n        \"QueryCondition\": {\n            \"type\": \"object\",\n   \
+        \         \"additionalProperties\": false,\n            \"description\": \"A single query condition for MySQL JSON
+        queries\",\n            \"required\": [\n                \"path\"\n            ],\n            \"properties\": {\n\
+        \                \"path\": {\n                    \"type\": \"string\",\n                    \"description\": \"JSON
+        path to query (e.g., \\\"$.name\\\", \\\"$.address.city\\\", \\\"$.tags[0]\\\")\"\n                },\n          \
+        \      \"operator\": {\n                    \"$ref\": \"#/$defs/QueryOperator\",\n                    \"description\"\
+        : \"Comparison operator to use for the condition\"\n                },\n                \"value\": {\n           \
+        \         \"description\": \"Value to compare against. Not required for exists/notExists operators.\"\n          \
+        \      }\n            }\n        },\n        \"QueryOperator\": {\n            \"type\": \"string\",\n           \
+        \ \"description\": \"Comparison operator for query conditions\",\n            \"enum\": [\n                \"equals\"\
+        ,\n                \"notEquals\",\n                \"greaterThan\",\n                \"greaterThanOrEqual\",\n   \
+        \             \"lessThan\",\n                \"lessThanOrEqual\",\n                \"contains\",\n               \
+        \ \"startsWith\",\n                \"endsWith\",\n                \"in\",\n                \"exists\",\n         \
+        \       \"notExists\",\n                \"fullText\"\n            ],\n            \"default\": \"equals\"\n      \
+        \  },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting query
+        results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"field\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Field name to sort by (JSON path for MySQL, field name for Redis)\"\n                },\n                \"order\"\
         : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"asc\",\n\
         \                        \"desc\"\n                    ],\n                    \"default\": \"asc\",\n           \
@@ -466,29 +477,14 @@ components:
         storeName:
           type: string
           description: Name of the state store (MySQL or Redis with search enabled)
-        filter:
-          type: object
-          additionalProperties: false
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryCondition'
           nullable: true
           description: |
-            Filter expression. Format depends on backend:
-
-            **MySQL JSON queries** - structured conditions:
-            ```json
-            {
-              "conditions": [
-                { "path": "$.name", "operator": "equals", "value": "John" },
-                { "path": "$.age", "operator": "gte", "value": 18 }
-              ]
-            }
-            ```
-
-            **MySQL simple equality** - flat object format:
-            ```json
-            { "$.name": "John", "$.status": "active" }
-            ```
-
-            **Redis search** - use indexName and query properties instead
+            Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+            For Redis search, use indexName and query properties instead.
         indexName:
           type: string
           nullable: true
