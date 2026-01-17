@@ -25850,6 +25850,19 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.ListProvidersAsync(System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available authentication providers
+            </summary>
+            <remarks>
+            Returns a list of available OAuth and authentication providers based on server configuration.
+            <br/>Providers are only listed if their client credentials are configured.
+            <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+            </remarks>
+            <returns>List of available providers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthClient">
             <summary>
             Client implementation for the Auth service.
@@ -26050,6 +26063,19 @@
             <returns>Password reset successfully</returns>
             <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Auth.AuthClient.ListProvidersAsync(System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List available authentication providers
+            </summary>
+            <remarks>
+            Returns a list of available OAuth and authentication providers based on server configuration.
+            <br/>Providers are only listed if their client credentials are configured.
+            <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+            </remarks>
+            <returns>List of available providers</returns>
+            <exception cref="T:BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthClient.ObjectResponseResult`1">
             <summary>
             Represents the result of deserializing an HTTP response into an object.
@@ -26182,21 +26208,6 @@
         <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.ConnectUrl">
             <summary>
             WebSocket endpoint for Connect service
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.LoginResponse">
-            <summary>
-            Response from successful user login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.AccessToken">
-            <summary>
-            JWT access token for authentication
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.RefreshToken">
-            <summary>
-            Refresh token for obtaining new access tokens
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthResponse">
@@ -26431,44 +26442,39 @@
             New password to set for the account
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProvidersResponse">
             <summary>
-            List of available OAuth providers
+            List of available authentication providers
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProvidersResponse.Providers">
             <summary>
-            Available OAuth providers for authentication
+            Available authentication providers
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProviderInfo">
             <summary>
-            Response from routing preference update
+            Information about an available authentication provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.Name">
             <summary>
-            The preferred Connect service instance ID
+            Internal identifier for the provider (matches Provider enum for OAuth)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.DisplayName">
             <summary>
-            An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
+            Human-readable name for the provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.Name">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthType">
             <summary>
-            Internal identifier for the OAuth provider
+            Authentication mechanism (oauth = browser redirect, ticket = game client token)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.DisplayName">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
-            Human-readable name for the OAuth provider
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.AuthUrl">
-            <summary>
-            URL to initiate authentication with this provider
+            URL to initiate OAuth authentication (null for ticket-based auth like Steam)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Character.ICharacterClient">

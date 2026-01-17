@@ -726,14 +726,6 @@ components:
       properties: {}
       additionalProperties: false
 
-    ConnectionData:
-      type: object
-      description: |
-        Connection state data returned for connection service requests.
-        Currently a placeholder for future connection metadata.
-      properties: {}
-      additionalProperties: false
-
     # NOTE: ServiceMappingsResponse moved to Orchestrator API as ServiceRoutingResponse
 
     # Binary Protocol Schemas (for documentation purposes)
@@ -902,82 +894,7 @@ components:
           description: Optional response payload
           nullable: true
 
-    ConnectionConfiguration:
-      type: object
-      description: |
-        Configuration options for the connect service.
-        These are server-side settings and not directly exposed via API.
-      additionalProperties: false
-      properties:
-        obfuscateNotFoundResponse:
-          type: boolean
-          description: Return Unauthorized instead of NotFound for better security
-          default: true
-        clientRequestMaxSize:
-          type: integer
-          format: uint32
-          description: Maximum size for client requests in bytes
-          default: 16384
-        clientResponseMaxSize:
-          type: integer
-          format: uint32
-          description: Maximum size for client responses in bytes
-          default: 16384
-        clientReconnectionTime:
-          type: integer
-          format: uint32
-          description: Time in seconds to allow client reconnection
-          default: 30
-        tokenPublicKey:
-          type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: Base64-encoded RSA public key for JWT validation
-
-    # RabbitMQ Event Models for Real-time Communication
-    SessionCapabilityUpdateEvent:
-      type: object
-      description: |
-        Event published when a session's capabilities change (permissions, role changes, etc.).
-        Triggers real-time WebSocket updates to connected clients.
-      additionalProperties: false
-      required:
-      - sessionId
-      - version
-      properties:
-        sessionId:
-          type: string
-          description: Session ID that had capability changes
-        addedCapabilities:
-          type: array
-          items:
-            type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
-          nullable: true
-          description: New capabilities added to the session
-        removedCapabilities:
-          type: array
-          items:
-            type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
-          nullable: true
-          description: Capabilities removed from the session
-        updatedServices:
-          type: array
-          items:
-            type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
-          nullable: true
-          description: Services that had permission changes
-        version:
-          type: integer
-          description: New capability version number
-        expiresAt:
-          type: string
-          format: date-time
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: When these capabilities expire and need refresh
+    # NOTE: SessionCapabilityUpdateEvent removed - capability updates use SessionInvalidatedEvent from auth service
 
     AuthEvent:
       type: object

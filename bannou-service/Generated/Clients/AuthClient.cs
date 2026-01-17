@@ -160,6 +160,19 @@ public partial interface IAuthClient
     /// <returns>Password reset successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+    /// <remarks>
+    /// Returns a list of available OAuth and authentication providers based on server configuration.
+    /// <br/>Providers are only listed if their client credentials are configured.
+    /// <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+    /// </remarks>
+    /// <returns>List of available providers</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ProvidersResponse> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -1284,6 +1297,84 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
                     if (status_ == 200)
                     {
                         return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+    /// <remarks>
+    /// Returns a list of available OAuth and authentication providers based on server configuration.
+    /// <br/>Providers are only listed if their client credentials are configured.
+    /// <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+    /// </remarks>
+    /// <returns>List of available providers</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ProvidersResponse> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "auth/providers"
+        urlBuilder_.Append("auth/providers");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ProvidersResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
                     }
                     else
                     {

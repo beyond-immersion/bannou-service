@@ -163,6 +163,20 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+
+    /// <remarks>
+    /// Returns a list of available OAuth and authentication providers based on server configuration.
+    /// <br/>Providers are only listed if their client credentials are configured.
+    /// <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+    /// </remarks>
+
+    /// <returns>List of available providers</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -393,6 +407,24 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode);
+    }
+
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+    /// <remarks>
+    /// Returns a list of available OAuth and authentication providers based on server configuration.
+    /// <br/>Providers are only listed if their client credentials are configured.
+    /// <br/>Steam authentication uses session tickets, not OAuth, but is included for completeness.
+    /// </remarks>
+    /// <returns>List of available providers</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/providers")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProviders(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
+        return ConvertToActionResult(statusCode, result);
     }
 
 
@@ -1893,6 +1925,129 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             _ConfirmPasswordReset_Info,
             _ConfirmPasswordReset_RequestSchema,
             _ConfirmPasswordReset_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListProviders
+
+    private static readonly string _ListProviders_RequestSchema = """
+{}
+""";
+
+    private static readonly string _ListProviders_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ProvidersResponse",
+    "$defs": {
+        "ProvidersResponse": {
+            "type": "object",
+            "description": "List of available authentication providers",
+            "additionalProperties": false,
+            "required": [
+                "providers"
+            ],
+            "properties": {
+                "providers": {
+                    "type": "array",
+                    "description": "Available authentication providers",
+                    "items": {
+                        "$ref": "#/$defs/ProviderInfo"
+                    }
+                }
+            }
+        },
+        "ProviderInfo": {
+            "type": "object",
+            "description": "Information about an available authentication provider",
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "displayName",
+                "authType"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "discord",
+                    "description": "Internal identifier for the provider (matches Provider enum for OAuth)"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "Discord",
+                    "description": "Human-readable name for the provider"
+                },
+                "authType": {
+                    "type": "string",
+                    "enum": [
+                        "oauth",
+                        "ticket"
+                    ],
+                    "description": "Authentication mechanism (oauth = browser redirect, ticket = game client token)"
+                },
+                "authUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true,
+                    "example": "https://discord.com/oauth2/authorize",
+                    "description": "URL to initiate OAuth authentication (null for ticket-based auth like Steam)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListProviders_Info = """
+{
+    "summary": "List available authentication providers",
+    "description": "Returns a list of available OAuth and authentication providers based on server configuration.\nProviders are only listed if their client credentials are configured.\nSteam authentication uses session tickets, not OAuth, but is included for completeness.\n",
+    "tags": [
+        "Authentication"
+    ],
+    "deprecated": false,
+    "operationId": "listProviders"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListProviders</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/providers/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListProviders_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "Post",
+            "auth/providers",
+            _ListProviders_Info));
+
+    /// <summary>Returns request schema for ListProviders</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/providers/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListProviders_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/providers",
+            "request-schema",
+            _ListProviders_RequestSchema));
+
+    /// <summary>Returns response schema for ListProviders</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/providers/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListProviders_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/providers",
+            "response-schema",
+            _ListProviders_ResponseSchema));
+
+    /// <summary>Returns full schema for ListProviders</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/providers/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListProviders_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "Post",
+            "auth/providers",
+            _ListProviders_Info,
+            _ListProviders_RequestSchema,
+            _ListProviders_ResponseSchema));
 
     #endregion
 

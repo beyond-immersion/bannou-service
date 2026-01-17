@@ -84,4 +84,9 @@ public partial interface IAuthService : IBannouService
         /// </summary>
         Task<StatusCodes> ConfirmPasswordResetAsync(PasswordResetConfirmRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// ListProviders operation
+        /// </summary>
+        Task<(StatusCodes, ProvidersResponse?)> ListProvidersAsync(CancellationToken cancellationToken = default(CancellationToken));
+
 }

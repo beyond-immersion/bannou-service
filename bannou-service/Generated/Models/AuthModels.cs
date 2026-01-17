@@ -192,29 +192,6 @@ public partial class RegisterResponse
 }
 
 /// <summary>
-/// Response from successful user login
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LoginResponse
-{
-
-    /// <summary>
-    /// JWT access token for authentication
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AccessToken { get; set; } = default!;
-
-    /// <summary>
-    /// Refresh token for obtaining new access tokens
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
-    public string? RefreshToken { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Successful authentication response containing tokens and session information
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -559,34 +536,59 @@ public partial class PasswordResetConfirmRequest
 }
 
 /// <summary>
-/// List of available OAuth providers
+/// List of available authentication providers
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class OAuthProvidersResponse
+public partial class ProvidersResponse
 {
 
     /// <summary>
-    /// Available OAuth providers for authentication
+    /// Available authentication providers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("providers")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<Providers> Providers { get; set; } = new System.Collections.ObjectModel.Collection<Providers>();
+    public System.Collections.Generic.ICollection<ProviderInfo> Providers { get; set; } = new System.Collections.ObjectModel.Collection<ProviderInfo>();
 
 }
 
 /// <summary>
-/// Response from routing preference update
+/// Information about an available authentication provider
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RoutingPreferenceResponse
+public partial class ProviderInfo
 {
 
     /// <summary>
-    /// The preferred Connect service instance ID
+    /// Internal identifier for the provider (matches Provider enum for OAuth)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("preferredInstance")]
-    public string? PreferredInstance { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name for the provider
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Authentication mechanism (oauth = browser redirect, ticket = game client token)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ProviderInfoAuthType AuthType { get; set; } = default!;
+
+    /// <summary>
+    /// URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authUrl")]
+    public System.Uri? AuthUrl { get; set; } = default!;
 
 }
 
@@ -610,32 +612,19 @@ public enum DeviceInfoDeviceType
 }
 #pragma warning restore CS1591
 
-/// <summary>
-/// An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
-/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Providers
+public enum ProviderInfoAuthType
 {
 
-    /// <summary>
-    /// Internal identifier for the OAuth provider
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string Name { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"oauth")]
+    Oauth = 0,
 
-    /// <summary>
-    /// Human-readable name for the OAuth provider
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// URL to initiate authentication with this provider
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authUrl")]
-    public System.Uri AuthUrl { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"ticket")]
+    Ticket = 1,
 
 }
+#pragma warning restore CS1591
 
 
 

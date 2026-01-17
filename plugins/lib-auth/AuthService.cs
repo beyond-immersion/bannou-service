@@ -1098,6 +1098,69 @@ public partial class AuthService : IAuthService
         }
     }
 
+    /// <inheritdoc/>
+    public Task<(StatusCodes, ProvidersResponse?)> ListProvidersAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Listing available authentication providers");
+
+        var providers = new List<ProviderInfo>();
+
+        // Discord OAuth
+        if (!string.IsNullOrEmpty(_configuration.DiscordClientId))
+        {
+            providers.Add(new ProviderInfo
+            {
+                Name = "discord",
+                DisplayName = "Discord",
+                AuthType = ProviderInfoAuthType.Oauth,
+                AuthUrl = new Uri($"/auth/oauth/discord/init", UriKind.Relative)
+            });
+        }
+
+        // Google OAuth
+        if (!string.IsNullOrEmpty(_configuration.GoogleClientId))
+        {
+            providers.Add(new ProviderInfo
+            {
+                Name = "google",
+                DisplayName = "Google",
+                AuthType = ProviderInfoAuthType.Oauth,
+                AuthUrl = new Uri($"/auth/oauth/google/init", UriKind.Relative)
+            });
+        }
+
+        // Twitch OAuth
+        if (!string.IsNullOrEmpty(_configuration.TwitchClientId))
+        {
+            providers.Add(new ProviderInfo
+            {
+                Name = "twitch",
+                DisplayName = "Twitch",
+                AuthType = ProviderInfoAuthType.Oauth,
+                AuthUrl = new Uri($"/auth/oauth/twitch/init", UriKind.Relative)
+            });
+        }
+
+        // Steam (session ticket, not OAuth)
+        if (!string.IsNullOrEmpty(_configuration.SteamApiKey))
+        {
+            providers.Add(new ProviderInfo
+            {
+                Name = "steam",
+                DisplayName = "Steam",
+                AuthType = ProviderInfoAuthType.Ticket,
+                AuthUrl = null // Steam uses session tickets from game client, not browser redirect
+            });
+        }
+
+        _logger.LogInformation("Returning {ProviderCount} available authentication provider(s)", providers.Count);
+
+        return Task.FromResult<(StatusCodes, ProvidersResponse?)>((StatusCodes.OK, new ProvidersResponse
+        {
+            Providers = providers
+        }));
+    }
+
     #region Private Helper Methods
 
     /// <summary>

@@ -665,6 +665,55 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Confirm password reset with token\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Password\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"confirmPasswordReset\"\
         \n}"
+
+  /auth/providers:
+    post:
+      summary: List available authentication providers
+      description: |
+        Returns a list of available OAuth and authentication providers based on server configuration.
+        Providers are only listed if their client credentials are configured.
+        Steam authentication uses session tickets, not OAuth, but is included for completeness.
+      operationId: listProviders
+      tags:
+      - Authentication
+      x-permissions:
+      - role: anonymous
+        states: {}
+      responses:
+        '200':
+          description: List of available providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvidersResponse'
+
+      x-request-schema-json: '{}'
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ProvidersResponse\"\
+        ,\n    \"$defs\": {\n        \"ProvidersResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"List of available authentication providers\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"providers\"\n            ],\n            \"properties\": {\n                \"providers\":
+        {\n                    \"type\": \"array\",\n                    \"description\": \"Available authentication providers\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ProviderInfo\"\n                \
+        \    }\n                }\n            }\n        },\n        \"ProviderInfo\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Information about an available authentication provider\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"name\",\n                \"displayName\",\n             \
+        \   \"authType\"\n            ],\n            \"properties\": {\n                \"name\": {\n                   \
+        \ \"type\": \"string\",\n                    \"example\": \"discord\",\n                    \"description\": \"Internal
+        identifier for the provider (matches Provider enum for OAuth)\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"example\": \"Discord\",\n                  \
+        \  \"description\": \"Human-readable name for the provider\"\n                },\n                \"authType\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"oauth\",\n\
+        \                        \"ticket\"\n                    ],\n                    \"description\": \"Authentication
+        mechanism (oauth = browser redirect, ticket = game client token)\"\n                },\n                \"authUrl\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
+        : true,\n                    \"example\": \"https://discord.com/oauth2/authorize\",\n                    \"description\"\
+        : \"URL to initiate OAuth authentication (null for ticket-based auth like Steam)\"\n                }\n          \
+        \  }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List available authentication providers\",\n    \"description\": \"Returns
+        a list of available OAuth and authentication providers based on server configuration.\\nProviders are only listed
+        if their client credentials are configured.\\nSteam authentication uses session tickets, not OAuth, but is included
+        for completeness.\\n\",\n    \"tags\": [\n        \"Authentication\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"listProviders\"\n}"
 components:
   securitySchemes:
     BearerAuth:
@@ -782,23 +831,6 @@ components:
           type: string
           format: uri
           description: WebSocket endpoint for Connect service
-
-    LoginResponse:
-      type: object
-      description: Response from successful user login
-      additionalProperties: false
-      required:
-      - accessToken
-      properties:
-        accessToken:
-          type: string
-          description: JWT access token for authentication
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        refreshToken:
-          type: string
-          description: Refresh token for obtaining new access tokens
-          nullable: true
-          example: "refresh_token_def456uvw012"
 
     AuthResponse:
       description: Successful authentication response containing tokens and session information
@@ -1043,47 +1075,47 @@ components:
           minLength: 8
           description: New password to set for the account
 
-    OAuthProvidersResponse:
+    ProvidersResponse:
       type: object
-      description: List of available OAuth providers
+      description: List of available authentication providers
       additionalProperties: false
       required:
       - providers
       properties:
         providers:
           type: array
-          description: Available OAuth providers for authentication
+          description: Available authentication providers
           items:
-            type: object
-            description: An OAuth provider available for user authentication, including its identifier, display name, 
-              and authentication URL
-            additionalProperties: false
-            properties:
-              name:
-                type: string
-                example: "steam"
-                description: Internal identifier for the OAuth provider
-              displayName:
-                type: string
-                example: "Steam"
-                description: Human-readable name for the OAuth provider
-              authUrl:
-                type: string
-                format: uri
-                example: "https://steamcommunity.com/openid/login"
-                description: URL to initiate authentication with this provider
+            $ref: '#/components/schemas/ProviderInfo'
 
-    RoutingPreferenceResponse:
+    ProviderInfo:
       type: object
-      description: Response from routing preference update
+      description: Information about an available authentication provider
       additionalProperties: false
+      required:
+      - name
+      - displayName
+      - authType
       properties:
-        preferredInstance:
+        name:
           type: string
+          example: "discord"
+          description: Internal identifier for the provider (matches Provider enum for OAuth)
+        displayName:
+          type: string
+          example: "Discord"
+          description: Human-readable name for the provider
+        authType:
+          type: string
+          enum: [oauth, ticket]
+          description: Authentication mechanism (oauth = browser redirect, ticket = game client token)
+        authUrl:
+          type: string
+          format: uri
           # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
-          description: The preferred Connect service instance ID
-          example: "connect-omega-01"
+          example: "https://discord.com/oauth2/authorize"
+          description: URL to initiate OAuth authentication (null for ticket-based auth like Steam)
 
     # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-events.yaml
     # and generated separately. They are NOT part of the HTTP API.

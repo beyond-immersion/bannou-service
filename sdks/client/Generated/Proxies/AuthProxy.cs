@@ -211,4 +211,20 @@ public sealed class AuthProxy
         return _client.SendEventAsync<PasswordResetConfirmRequest>(
             "POST", "/auth/password/confirm", request, channel, cancellationToken);
     }
+
+    /// <summary>
+    /// List available authentication providers
+    /// </summary>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ProvidersResponse on success.</returns>
+    public Task<ApiResponse<ProvidersResponse>> ListProvidersAsync(
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<object, ProvidersResponse>(
+            "POST", "/auth/providers", new {}, channel, timeout, cancellationToken);
+    }
 }
