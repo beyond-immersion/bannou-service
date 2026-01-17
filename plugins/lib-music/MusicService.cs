@@ -110,15 +110,15 @@ public partial class MusicService : IMusicService
             var totalBars = body.DurationBars;
 
             // Generate chord progression
-            var progressionGenerator = new SdkProgressionGenerator(key, random);
+            var progressionGenerator = new SdkProgressionGenerator(seed);
             var chordsPerBar = 1; // One chord per bar for simplicity
-            var progression = progressionGenerator.Generate(totalBars * chordsPerBar);
+            var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
 
             // Voice the chords
             var voiceLeader = new SdkVoiceLeader();
-            var voicings = voiceLeader.VoiceProgression(
+            var (voicings, voiceViolations) = voiceLeader.Voice(
                 progression.Select(p => p.Chord).ToList(),
-                SdkPitchRange.Instrument.Piano);
+                voiceCount: 4);
 
             // Generate melody over the harmony
             var melodyOptions = new SdkMelodyOptions
@@ -127,11 +127,12 @@ public partial class MusicService : IMusicService
                 Contour = SdkContourShape.Arch,
                 IntervalPreferences = style.IntervalPreferences,
                 Density = 0.7,
-                Syncopation = 0.2
+                Syncopation = 0.2,
+                TicksPerBeat = ticksPerBeat
             };
 
-            var melodyGenerator = new SdkMelodyGenerator(key, random, melodyOptions);
-            var melody = melodyGenerator.GenerateOverProgression(progression, ticksPerBeat);
+            var melodyGenerator = new SdkMelodyGenerator(seed);
+            var melody = melodyGenerator.Generate(progression, key, melodyOptions);
 
             // Render to MIDI-JSON
             var midiJson = SdkMidiJsonRenderer.RenderComposition(
@@ -486,10 +487,10 @@ public partial class MusicService : IMusicService
             var random = new Random(seed);
 
             var scale = new SdkScale(ToSdkPitchClass(body.Key.Tonic), ToSdkModeType(body.Key.Mode));
-            var generator = new SdkProgressionGenerator(scale, random);
+            var generator = new SdkProgressionGenerator(seed);
 
             var length = body.Length > 0 ? body.Length : 8;
-            var progression = generator.Generate(length);
+            var progression = generator.Generate(scale, length);
 
             // Convert to API response
             var ticksPerBeat = 480;
@@ -519,7 +520,7 @@ public partial class MusicService : IMusicService
             var analysis = new ProgressionAnalysis
             {
                 RomanNumerals = progression.Select(p => p.RomanNumeral).ToList(),
-                FunctionalAnalysis = progression.Select(p => ToApiFunctionalAnalysis(p.Function)).ToList()
+                FunctionalAnalysis = progression.Select(p => GetFunctionalAnalysis(p.Degree)).ToList()
             };
 
             var response = new GenerateProgressionResponse
@@ -592,18 +593,19 @@ public partial class MusicService : IMusicService
                 Range = range,
                 Contour = contour,
                 Density = body.RhythmDensity ?? 0.7,
-                Syncopation = body.Syncopation ?? 0.2
+                Syncopation = body.Syncopation ?? 0.2,
+                TicksPerBeat = 480
             };
 
-            var generator = new SdkMelodyGenerator(scale, random, options);
-            var melody = generator.GenerateOverProgression(progression, 480);
+            var generator = new SdkMelodyGenerator(seed);
+            var melody = generator.Generate(progression, scale, options);
 
             // Convert to API response
             var notes = melody.Select(n => new NoteEvent
             {
                 Pitch = new Pitch
                 {
-                    PitchClass = ToApiPitchClass(n.Pitch.Class),
+                    PitchClass = ToApiPitchClass(n.Pitch.PitchClass),
                     Octave = n.Pitch.Octave,
                     MidiNumber = n.Pitch.MidiNumber
                 },
@@ -685,28 +687,24 @@ public partial class MusicService : IMusicService
                 AvoidParallelOctaves = body.Rules?.AvoidParallelOctaves ?? true,
                 PreferStepwiseMotion = body.Rules?.PreferStepwiseMotion ?? true,
                 AvoidVoiceCrossing = body.Rules?.AvoidVoiceCrossing ?? true,
-                MaxLeapSemitones = body.Rules?.MaxLeap ?? 7
+                MaxLeap = body.Rules?.MaxLeap ?? 7
             };
 
             var voiceLeader = new SdkVoiceLeader(rules);
 
-            // Determine voice range (default to piano range)
-            var range = SdkPitchRange.Instrument.Piano;
+            // Voice the chords (returns voicings and violations together)
+            var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: 4);
 
-            // Voice the progression
-            var voicings = voiceLeader.VoiceProgression(chords, range);
-
-            // Check for violations
+            // Convert violations to API format
             var violations = new List<VoiceLeadingViolation>();
-            var sdkViolations = voiceLeader.CheckViolations(voicings);
-            foreach (var (position, violation) in sdkViolations)
+            foreach (var violation in sdkViolations)
             {
                 violations.Add(new VoiceLeadingViolation
                 {
                     Rule = violation.Type.ToString(),
-                    Position = position,
-                    Voices = violation.VoiceIndices?.ToList(),
-                    Severity = violation.IsCritical
+                    Position = violation.Position,
+                    Voices = violation.Voices?.ToList(),
+                    Severity = violation.IsError
                         ? VoiceLeadingViolationSeverity.Error
                         : VoiceLeadingViolationSeverity.Warning
                 });
@@ -724,7 +722,7 @@ public partial class MusicService : IMusicService
                     Symbol = original,
                     Pitches = voicings[i].Pitches.Select(p => new Pitch
                     {
-                        PitchClass = ToApiPitchClass(p.Class),
+                        PitchClass = ToApiPitchClass(p.PitchClass),
                         Octave = p.Octave,
                         MidiNumber = p.MidiNumber
                     }).ToList()
@@ -843,7 +841,22 @@ public partial class MusicService : IMusicService
             MusicTheory.Harmony.HarmonicFunctionType.Tonic => FunctionalAnalysis.Tonic,
             MusicTheory.Harmony.HarmonicFunctionType.Subdominant => FunctionalAnalysis.Subdominant,
             MusicTheory.Harmony.HarmonicFunctionType.Dominant => FunctionalAnalysis.Dominant,
-            MusicTheory.Harmony.HarmonicFunctionType.Predominant => FunctionalAnalysis.Predominant,
+            _ => FunctionalAnalysis.Tonic
+        };
+
+    /// <summary>
+    /// Derives functional analysis from scale degree.
+    /// </summary>
+    private static FunctionalAnalysis GetFunctionalAnalysis(int degree) =>
+        degree switch
+        {
+            1 => FunctionalAnalysis.Tonic,       // I
+            3 => FunctionalAnalysis.Tonic,       // iii (tonic function)
+            6 => FunctionalAnalysis.Tonic,       // vi (tonic function)
+            2 => FunctionalAnalysis.Subdominant, // ii (predominant/subdominant)
+            4 => FunctionalAnalysis.Subdominant, // IV
+            5 => FunctionalAnalysis.Dominant,    // V
+            7 => FunctionalAnalysis.Dominant,    // vii° (leading tone, dominant function)
             _ => FunctionalAnalysis.Tonic
         };
 
