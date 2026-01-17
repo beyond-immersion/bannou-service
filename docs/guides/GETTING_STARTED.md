@@ -265,8 +265,6 @@ CONNECT_SERVER_SALT=your-server-salt-for-guid-generation
 
 #### Service Mesh (MESH_*)
 ```bash
-# Defaults (only override if using non-standard hostnames):
-# MESH_REDIS_CONNECTION_STRING=bannou-redis:6379
 MESH_ENDPOINT_HOST=bannou  # Docker service name
 ```
 
