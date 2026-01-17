@@ -124,7 +124,6 @@ public class MeshStateManager : IMeshStateManager
         try
         {
             var instanceId = endpoint.InstanceId.ToString();
-            var ttl = TimeSpan.FromSeconds(ttlSeconds);
             var options = new StateOptions { Ttl = ttlSeconds };
 
             // Store the endpoint data with TTL

@@ -342,10 +342,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         using var inputStream = new MemoryStream(CreateTestData(100));
         await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
 
-        // Act
-        using (var s1 = await Cache.GetBundleStreamAsync("bundle-1")) { }
-        using (var s2 = await Cache.GetBundleStreamAsync("bundle-1")) { }
-        using (var s3 = await Cache.GetBundleStreamAsync("bundle-1")) { }
+        // Act - call GetBundleStreamAsync three times to register hits
+        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
+        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
+        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
 
         // Assert
         var stats = Cache.GetStats();
@@ -392,7 +392,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Access "old" to make it recently used (updates LastAccessedAt)
         // Order after access: middle (oldest), new (middle), old (newest)
-        using (var accessStream = await Cache.GetBundleStreamAsync("old")) { }
+        (await Cache.GetBundleStreamAsync("old"))?.Dispose();
 
         // Act - evict to 200 bytes (need to remove 100 bytes from 300 total)
         // Only "middle" should be evicted as it has the oldest LastAccessedAt
@@ -489,7 +489,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         // Arrange
         using var inputStream = new MemoryStream(CreateTestData(100));
         await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
-        using (var s = await Cache.GetBundleStreamAsync("bundle-1")) { }
+        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
         await Cache.GetBundleStreamAsync("non-existent");
 
         // Act

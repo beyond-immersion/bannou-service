@@ -451,7 +451,7 @@ public partial class MeshService : IMeshService
 
         try
         {
-            var (isHealthy, message, pingTime) = await _stateManager.CheckHealthAsync();
+            var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
 
             // Get overall mesh statistics
             var endpoints = await _stateManager.GetAllEndpointsAsync();

@@ -387,7 +387,6 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         // If we have remaining data in part buffer, it becomes the final part
         // But first check if everything fits in one part (small bundle case)
         var totalSize = part1Stream.Length + _partBuffer.Length;
-        var remainingInPartBuffer = _partBuffer.Length;
 
         if (_uploadedParts.Count == 0 && totalSize < MinPartSize * 2)
         {
