@@ -19,6 +19,8 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Music;
+using BeyondImmersion.Bannou.MusicTheory.Collections;
+using BeyondImmersion.Bannou.MusicTheory.Pitch;
 
 
 namespace BeyondImmersion.BannouService.Music;
@@ -964,53 +966,6 @@ public partial class Pitch
     public int MidiNumber { get; set; } = default!;
 
 }
-
-/// <summary>
-/// A pitch class (note name without octave)
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PitchClass
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"C")]
-    C = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Cs")]
-    Cs = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"D")]
-    D = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Ds")]
-    Ds = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"E")]
-    E = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"F")]
-    F = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Fs")]
-    Fs = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"G")]
-    G = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Gs")]
-    Gs = 8,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"A")]
-    A = 9,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"As")]
-    As = 10,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"B")]
-    B = 11,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// A pitch range from low to high

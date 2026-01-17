@@ -408,6 +408,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -646,6 +647,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -1071,6 +1073,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -2814,6 +2817,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -2940,6 +2944,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3231,6 +3236,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3386,6 +3392,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3607,6 +3614,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [
@@ -3807,6 +3815,7 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             }
         },
         "PitchClass": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass",
             "description": "A pitch class (note name without octave)",
             "type": "string",
             "enum": [

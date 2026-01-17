@@ -6,20 +6,25 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-// Music Theory SDK
+// Music Theory SDK types shared via x-sdk-type (same type in API and SDK)
+// These are not aliased because they're used directly in the generated models
+using PitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
+using ModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
+
+// Music Theory SDK types (using aliases to avoid conflicts with generated API types)
 using MusicTheory = BeyondImmersion.Bannou.MusicTheory;
-using SdkPitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
 using SdkPitch = BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch;
+using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
 using SdkScale = BeyondImmersion.Bannou.MusicTheory.Collections.Scale;
 using SdkChord = BeyondImmersion.Bannou.MusicTheory.Collections.Chord;
 using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
-using SdkModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
 using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
 using SdkMeter = BeyondImmersion.Bannou.MusicTheory.Time.Meter;
 using SdkStyleDefinition = BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition;
 using SdkBuiltInStyles = BeyondImmersion.Bannou.MusicTheory.Style.BuiltInStyles;
 using SdkMidiJson = BeyondImmersion.Bannou.MusicTheory.Output.MidiJson;
 using SdkMidiJsonRenderer = BeyondImmersion.Bannou.MusicTheory.Output.MidiJsonRenderer;
+using SdkKeySignatureEvent = BeyondImmersion.Bannou.MusicTheory.Output.KeySignatureEvent;
 using SdkMelodyGenerator = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator;
 using SdkMelodyOptions = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions;
 using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
@@ -27,7 +32,6 @@ using SdkProgressionGenerator = BeyondImmersion.Bannou.MusicTheory.Harmony.Progr
 using SdkProgressionChord = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord;
 using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
 using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
-using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
 
 [assembly: InternalsVisibleTo("lib-music.tests")]
 
@@ -85,9 +89,9 @@ public partial class MusicService : IMusicService
 
             // Determine key signature
             var key = body.Key != null
-                ? new SdkScale(ToSdkPitchClass(body.Key.Tonic), ToSdkModeType(body.Key.Mode))
+                ? new SdkScale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode))
                 : new SdkScale(
-                    (SdkPitchClass)random.Next(12),
+                    (PitchClass)random.Next(12),
                     style.ModeDistribution.Select(random));
 
             // Determine tempo
@@ -486,7 +490,7 @@ public partial class MusicService : IMusicService
             var seed = body.Seed ?? Environment.TickCount;
             var random = new Random(seed);
 
-            var scale = new SdkScale(ToSdkPitchClass(body.Key.Tonic), ToSdkModeType(body.Key.Mode));
+            var scale = new SdkScale(ToPitchClass(body.Key.Tonic), ToModeType(body.Key.Mode));
             var generator = new SdkProgressionGenerator(seed);
 
             var length = body.Length > 0 ? body.Length : 8;
@@ -565,13 +569,13 @@ public partial class MusicService : IMusicService
 
             // Infer key from first chord (or default to C major)
             var firstChord = body.Harmony?.FirstOrDefault();
-            var root = firstChord != null ? ToSdkPitchClass(firstChord.Chord.Root) : SdkPitchClass.C;
-            var mode = SdkModeType.Major;
+            var root = firstChord != null ? ToPitchClass(firstChord.Chord.Root) : PitchClass.C;
+            var mode = ModeType.Major;
             var scale = new SdkScale(root, mode);
 
             // Convert harmony to SDK progression
             var progression = body.Harmony?.Select((ce, i) => new SdkProgressionChord(
-                new SdkChord(ToSdkPitchClass(ce.Chord.Root), ToSdkChordQuality(ce.Chord.Quality)),
+                new SdkChord(ToPitchClass(ce.Chord.Root), ToSdkChordQuality(ce.Chord.Quality)),
                 ce.RomanNumeral ?? GetRomanNumeral(i),
                 i + 1,
                 ce.DurationTicks / 480.0
@@ -580,8 +584,8 @@ public partial class MusicService : IMusicService
             // Set up melody options
             var range = body.Range != null
                 ? new SdkPitchRange(
-                    new SdkPitch(ToSdkPitchClass(body.Range.Low.PitchClass), body.Range.Low.Octave),
-                    new SdkPitch(ToSdkPitchClass(body.Range.High.PitchClass), body.Range.High.Octave))
+                    new SdkPitch(ToPitchClass(body.Range.Low.PitchClass), body.Range.Low.Octave),
+                    new SdkPitch(ToPitchClass(body.Range.High.PitchClass), body.Range.High.Octave))
                 : SdkPitchRange.Vocal.Soprano;
 
             var contour = body.Contour.HasValue
@@ -677,7 +681,7 @@ public partial class MusicService : IMusicService
         {
             // Convert API chords to SDK chords
             var chords = body.Chords?.Select(cs =>
-                new SdkChord(ToSdkPitchClass(cs.Root), ToSdkChordQuality(cs.Quality), cs.Bass.HasValue ? ToSdkPitchClass(cs.Bass.Value) : null)
+                new SdkChord(ToPitchClass(cs.Root), ToSdkChordQuality(cs.Quality), cs.Bass.HasValue ? ToPitchClass(cs.Bass.Value) : null)
             ).ToList() ?? [];
 
             // Set up voice leading rules
@@ -762,32 +766,32 @@ public partial class MusicService : IMusicService
         return SdkBuiltInStyles.GetById(styleId);
     }
 
-    private static SdkPitchClass ToSdkPitchClass(PitchClass pc) => (SdkPitchClass)(int)pc;
+    private static PitchClass ToPitchClass(PitchClass pc) => (PitchClass)(int)pc;
 
-    private static PitchClass ToApiPitchClass(SdkPitchClass pc) => (PitchClass)(int)pc;
+    private static PitchClass ToApiPitchClass(PitchClass pc) => (PitchClass)(int)pc;
 
-    private static SdkModeType ToSdkModeType(KeySignatureMode mode) => mode switch
+    private static ModeType ToModeType(KeySignatureMode mode) => mode switch
     {
-        KeySignatureMode.Major => SdkModeType.Major,
-        KeySignatureMode.Minor => SdkModeType.Minor,
-        KeySignatureMode.Dorian => SdkModeType.Dorian,
-        KeySignatureMode.Phrygian => SdkModeType.Phrygian,
-        KeySignatureMode.Lydian => SdkModeType.Lydian,
-        KeySignatureMode.Mixolydian => SdkModeType.Mixolydian,
-        KeySignatureMode.Aeolian => SdkModeType.Minor,
-        KeySignatureMode.Locrian => SdkModeType.Locrian,
-        _ => SdkModeType.Major
+        KeySignatureMode.Major => ModeType.Major,
+        KeySignatureMode.Minor => ModeType.Minor,
+        KeySignatureMode.Dorian => ModeType.Dorian,
+        KeySignatureMode.Phrygian => ModeType.Phrygian,
+        KeySignatureMode.Lydian => ModeType.Lydian,
+        KeySignatureMode.Mixolydian => ModeType.Mixolydian,
+        KeySignatureMode.Aeolian => ModeType.Minor,
+        KeySignatureMode.Locrian => ModeType.Locrian,
+        _ => ModeType.Major
     };
 
-    private static KeySignatureMode ToApiMode(SdkModeType mode) => mode switch
+    private static KeySignatureMode ToApiMode(ModeType mode) => mode switch
     {
-        SdkModeType.Major => KeySignatureMode.Major,
-        SdkModeType.Minor => KeySignatureMode.Minor,
-        SdkModeType.Dorian => KeySignatureMode.Dorian,
-        SdkModeType.Phrygian => KeySignatureMode.Phrygian,
-        SdkModeType.Lydian => KeySignatureMode.Lydian,
-        SdkModeType.Mixolydian => KeySignatureMode.Mixolydian,
-        SdkModeType.Locrian => KeySignatureMode.Locrian,
+        ModeType.Major => KeySignatureMode.Major,
+        ModeType.Minor => KeySignatureMode.Minor,
+        ModeType.Dorian => KeySignatureMode.Dorian,
+        ModeType.Phrygian => KeySignatureMode.Phrygian,
+        ModeType.Lydian => KeySignatureMode.Lydian,
+        ModeType.Mixolydian => KeySignatureMode.Mixolydian,
+        ModeType.Locrian => KeySignatureMode.Locrian,
         _ => KeySignatureMode.Major
     };
 
@@ -913,12 +917,12 @@ public partial class MusicService : IMusicService
                     Numerator = ts.Numerator,
                     Denominator = (TimeSignatureEventDenominator)ts.Denominator
                 }).ToList(),
-                KeySignatures = sdk.Header.KeySignatures?.Select(ks => new KeySignatureEvent
+                KeySignatures = sdk.Header.KeySignatures?.Cast<SdkKeySignatureEvent>().Select(ks => new KeySignatureEvent
                 {
                     Tick = ks.Tick,
                     Key = new KeySignature
                     {
-                        Tonic = ToApiPitchClass(ks.Tonic),
+                        Tonic = ks.Tonic,
                         Mode = ToApiMode(ks.Mode)
                     }
                 }).ToList()

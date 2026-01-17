@@ -92,7 +92,7 @@ public class PitchTests
     public void Pitch_MiddleC_HasCorrectMidiNumber()
     {
         // Arrange & Act
-        var middleC = SdkPitch.Standard.MiddleC;
+        var middleC = SdkPitch.Common.MiddleC;
 
         // Assert
         Assert.Equal(60, middleC.MidiNumber);
@@ -104,7 +104,7 @@ public class PitchTests
     public void Pitch_ConcertA_HasCorrectMidiNumber()
     {
         // Arrange & Act
-        var concertA = SdkPitch.Standard.ConcertA;
+        var concertA = SdkPitch.Common.ConcertA;
 
         // Assert
         Assert.Equal(69, concertA.MidiNumber);
@@ -141,10 +141,10 @@ public class IntervalTests
     public void Interval_FromSemitones_ReturnsCorrectName(int semitones, string expectedName)
     {
         // Arrange & Act
-        var interval = SdkInterval.FromSemitones(semitones);
+        var interval = new SdkInterval(semitones);
 
         // Assert
-        Assert.Equal(expectedName, interval.ShortName);
+        Assert.Equal(expectedName, interval.Name);
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public class IntervalTests
     public void Interval_Octave_HasTwelveSemitones()
     {
         // Arrange & Act
-        var octave = SdkInterval.Octave;
+        var octave = SdkInterval.PerfectOctave;
 
         // Assert
         Assert.Equal(12, octave.Semitones);
@@ -582,7 +582,7 @@ intervalPreferences:
         // Assert
         Assert.Contains(SdkModeType.Major, modes);
         // Minor or Dorian should also appear given the distribution
-        Assert.True(modes.Any(m => m != SdkModeType.Major));
+        Assert.Contains(modes, m => m != SdkModeType.Major);
     }
 }
 
@@ -630,9 +630,10 @@ public class CelticGenerationTests
 
         // Assert
         Assert.NotEmpty(melody);
+        Assert.NotNull(options.Range);
         Assert.All(melody, note =>
         {
-            Assert.True(options.Range.Contains(note.Pitch),
+            Assert.True(options.Range.Value.Contains(note.Pitch),
                 $"Note {note.Pitch} outside flute range");
         });
     }

@@ -64,6 +64,7 @@
   <!-- Shared core types (events, JSON, exceptions) -->
   <ItemGroup>
     <ProjectReference Include="../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
+    <ProjectReference Include="../sdks/music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
   </ItemGroup>
 
 

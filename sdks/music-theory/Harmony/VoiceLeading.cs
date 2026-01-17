@@ -188,9 +188,11 @@ public sealed class VoiceLeader
 
     private Voicing VoiceFirstChord(Chord chord, int voiceCount, IReadOnlyList<PitchRange> ranges)
     {
-        // Use close position for first chord
-        var centerOctave = (ranges[0].Low.Octave + ranges[^1].High.Octave) / 2;
-        return Voicing.ClosePosition(chord, centerOctave);
+        // Create a combined range spanning all voices
+        var combinedRange = new PitchRange(ranges[0].Low, ranges[^1].High);
+
+        // Use VoicingFactory.CreateInRange which respects voiceCount by doubling notes as needed
+        return VoicingFactory.CreateInRange(chord, combinedRange, voiceCount);
     }
 
     private Voicing VoiceNextChord(Chord chord, Voicing previous, IReadOnlyList<PitchRange> ranges)

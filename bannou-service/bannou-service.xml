@@ -41384,11 +41384,6 @@
             MIDI note number (computed if not provided)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Music.PitchClass">
-            <summary>
-            A pitch class (note name without octave)
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Music.PitchRange">
             <summary>
             A pitch range from low to high

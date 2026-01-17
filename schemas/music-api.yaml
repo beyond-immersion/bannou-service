@@ -82,11 +82,12 @@ paths:
         \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
         \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
         \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
-        \        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\",\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n            \
-        \    \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n  \
-        \              \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n                \"\
-        B\"\n            ]\n        }\n    }\n}"
+        \        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n\
+        \            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n \
+        \           \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n               \
+        \ \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n     \
+        \           \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateCompositionResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateCompositionResponse\": {\n            \"description\": \"Response containing
         the generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -154,57 +155,58 @@ paths:
         \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
         \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
         \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
-        \ }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n \
-        \               \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"\
-        Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n        \
-        \        \"B\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI
-        track containing events\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"events\"\n            ],\n            \"properties\": {\n            \
-        \    \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Track name\"\n                },\n                \"channel\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 15,\n           \
-        \         \"default\": 0,\n                    \"description\": \"MIDI channel\"\n                },\n           \
-        \     \"instrument\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
-        \             \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"\
-        GM instrument number\"\n                },\n                \"events\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                   \
-        \ },\n                    \"description\": \"Track events\"\n                }\n            }\n        },\n      \
-        \  \"MidiEvent\": {\n            \"description\": \"A single MIDI event\",\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n            \
-        \    \"type\"\n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\
-        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
-        \ \"enum\": [\n                        \"noteOn\",\n                        \"noteOff\",\n                       \
-        \ \"programChange\",\n                        \"controlChange\"\n                    ],\n                    \"description\"\
-        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
-        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
-        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
-        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
-        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
-        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
-        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
-        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
-        \n                }\n            }\n        },\n        \"CompositionMetadata\": {\n            \"description\": \"\
-        Metadata about a generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"styleId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Style used\"\n                },\n\
-        \                \"key\": {\n                    \"$ref\": \"#/$defs/KeySignature\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Key signature\"\n                },\n                \"tempo\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Tempo in BPM\"\n                },\n                \"bars\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Number of bars\"\n              \
-        \  },\n                \"tuneType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Tune type if applicable\"\n                },\n                \"\
-        seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Random seed used\"\n                }\n            }\n        }\n    }\n}"
+        \ }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI track containing events\",\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"events\"\n            ],\n            \"properties\": {\n                \"name\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Track
+        name\"\n                },\n                \"channel\": {\n                    \"type\": \"integer\",\n         \
+        \           \"minimum\": 0,\n                    \"maximum\": 15,\n                    \"default\": 0,\n         \
+        \           \"description\": \"MIDI channel\"\n                },\n                \"instrument\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"GM instrument number\"\n           \
+        \     },\n                \"events\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                    },\n                    \"description\"\
+        : \"Track events\"\n                }\n            }\n        },\n        \"MidiEvent\": {\n            \"description\"\
+        : \"A single MIDI event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"tick\",\n                \"type\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Absolute tick position\"\n                },\n                \"type\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"noteOn\",\n\
+        \                        \"noteOff\",\n                        \"programChange\",\n                        \"controlChange\"\
+        \n                    ],\n                    \"description\": \"Event type\"\n                },\n              \
+        \  \"note\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                \
+        \    \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"MIDI note
+        number (for note events)\"\n                },\n                \"velocity\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Note velocity (for note events)\"\n                },\n          \
+        \      \"duration\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Note duration in ticks (for noteOn with implicit
+        noteOff)\"\n                },\n                \"program\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Program number (for programChange)\"\n                },\n               \
+        \ \"controller\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller
+        number (for controlChange)\"\n                },\n                \"value\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Controller value (for controlChange)\"\n                }\n            }\n\
+        \        },\n        \"CompositionMetadata\": {\n            \"description\": \"Metadata about a generated composition\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
+        \                \"styleId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Style used\"\n                },\n                \"key\": {\n           \
+        \         \"$ref\": \"#/$defs/KeySignature\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Key signature\"\n                },\n                \"tempo\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Tempo in BPM\"\n                },\n\
+        \                \"bars\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Number of bars\"\n                },\n                \"tuneType\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Tune type if applicable\"\n                },\n                \"seed\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Random seed used\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate composition from style and constraints\",\n    \"description\"\
         : \"Generates a complete musical composition using the specified style definition\\nand compositional constraints.
         Returns MIDI-JSON format output.\\n\",\n    \"tags\": [\n        \"Generation\"\n    ],\n    \"deprecated\": false,\n\
@@ -299,45 +301,46 @@ paths:
         \                   \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n    \
         \                    \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n\
         \                    ],\n                    \"description\": \"Mode/scale type\"\n                }\n           \
-        \ }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n \
-        \               \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"\
-        Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n        \
-        \        \"B\"\n            ]\n        },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI
-        track containing events\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"events\"\n            ],\n            \"properties\": {\n            \
-        \    \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Track name\"\n                },\n                \"channel\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 15,\n           \
-        \         \"default\": 0,\n                    \"description\": \"MIDI channel\"\n                },\n           \
-        \     \"instrument\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
-        \             \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"\
-        GM instrument number\"\n                },\n                \"events\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                   \
-        \ },\n                    \"description\": \"Track events\"\n                }\n            }\n        },\n      \
-        \  \"MidiEvent\": {\n            \"description\": \"A single MIDI event\",\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"required\": [\n                \"tick\",\n            \
-        \    \"type\"\n            ],\n            \"properties\": {\n                \"tick\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Absolute tick position\"\
-        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
-        \ \"enum\": [\n                        \"noteOn\",\n                        \"noteOff\",\n                       \
-        \ \"programChange\",\n                        \"controlChange\"\n                    ],\n                    \"description\"\
-        : \"Event type\"\n                },\n                \"note\": {\n                    \"type\": \"integer\",\n  \
-        \                  \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"MIDI note number (for note events)\"\n                },\n               \
-        \ \"velocity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
-        \       \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Note velocity
-        (for note events)\"\n                },\n                \"duration\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Note duration in ticks (for noteOn with implicit noteOff)\"\n                },\n                \"program\":
-        {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Program number (for programChange)\"\
-        \n                },\n                \"controller\": {\n                    \"type\": \"integer\",\n            \
-        \        \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Controller number (for controlChange)\"\n                },\n                \"value\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller value (for controlChange)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \ }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"MidiTrack\": {\n            \"description\": \"A single MIDI track containing events\",\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"events\"\n            ],\n            \"properties\": {\n                \"name\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Track
+        name\"\n                },\n                \"channel\": {\n                    \"type\": \"integer\",\n         \
+        \           \"minimum\": 0,\n                    \"maximum\": 15,\n                    \"default\": 0,\n         \
+        \           \"description\": \"MIDI channel\"\n                },\n                \"instrument\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"GM instrument number\"\n           \
+        \     },\n                \"events\": {\n                    \"type\": \"array\",\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/MidiEvent\"\n                    },\n                    \"description\"\
+        : \"Track events\"\n                }\n            }\n        },\n        \"MidiEvent\": {\n            \"description\"\
+        : \"A single MIDI event\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"tick\",\n                \"type\"\n            ],\n            \"properties\"\
+        : {\n                \"tick\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
+        \                    \"description\": \"Absolute tick position\"\n                },\n                \"type\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"noteOn\",\n\
+        \                        \"noteOff\",\n                        \"programChange\",\n                        \"controlChange\"\
+        \n                    ],\n                    \"description\": \"Event type\"\n                },\n              \
+        \  \"note\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                \
+        \    \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"MIDI note
+        number (for note events)\"\n                },\n                \"velocity\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Note velocity (for note events)\"\n                },\n          \
+        \      \"duration\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Note duration in ticks (for noteOn with implicit
+        noteOff)\"\n                },\n                \"program\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Program number (for programChange)\"\n                },\n               \
+        \ \"controller\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"nullable\": true,\n                    \"description\": \"Controller
+        number (for controlChange)\"\n                },\n                \"value\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Controller value (for controlChange)\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateMidiJsonResponse\"\
         ,\n    \"$defs\": {\n        \"ValidateMidiJsonResponse\": {\n            \"description\": \"Response containing validation
         results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -923,11 +926,12 @@ paths:
         \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
         \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
         \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
-        \        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without octave)\",\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n            \
-        \    \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n  \
-        \              \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n                \"\
-        B\"\n            ]\n        }\n    }\n}"
+        \        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n\
+        \            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n \
+        \           \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n               \
+        \ \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n     \
+        \           \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateProgressionResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateProgressionResponse\": {\n            \"description\": \"Response containing
         a generated chord progression\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -962,34 +966,34 @@ paths:
         \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
         \                   },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions
         (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\"\
-        : {\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n            \
-        \    \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n  \
-        \              \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n  \
-        \      },\n        \"ProgressionAnalysis\": {\n            \"description\": \"Analysis of a chord progression\",\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"romanNumerals\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Roman numeral analysis\"\n                },\n                \"cadences\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/CadenceInfo\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Detected cadences\"\n                },\n                \"functionalAnalysis\": {\n            \
-        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n \
-        \                       \"enum\": [\n                            \"tonic\",\n                            \"subdominant\"\
-        ,\n                            \"dominant\",\n                            \"predominant\"\n                      \
-        \  ]\n                    },\n                    \"nullable\": true,\n                    \"description\": \"Functional
-        analysis per chord\"\n                }\n            }\n        },\n        \"CadenceInfo\": {\n            \"description\"\
-        : \"Information about a cadence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"type\",\n                \"position\"\n            ],\n          \
-        \  \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n                   \
-        \ \"enum\": [\n                        \"authentic\",\n                        \"half\",\n                       \
-        \ \"plagal\",\n                        \"deceptive\"\n                    ],\n                    \"description\"\
-        : \"Cadence type\"\n                },\n                \"position\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Chord index where cadence ends\"\n                },\n                \"\
-        strength\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \
-        \  \"perfect\",\n                        \"imperfect\"\n                    ],\n                    \"nullable\":
-        true,\n                    \"description\": \"Cadence strength\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\"\
+        : \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n    \
+        \            \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"\
+        E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n         \
+        \       \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"ProgressionAnalysis\"\
+        : {\n            \"description\": \"Analysis of a chord progression\",\n            \"type\": \"object\",\n      \
+        \      \"additionalProperties\": false,\n            \"properties\": {\n                \"romanNumerals\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Roman numeral
+        analysis\"\n                },\n                \"cadences\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/CadenceInfo\"\n                    },\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Detected cadences\"\n            \
+        \    },\n                \"functionalAnalysis\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\",\n                        \"enum\": [\n             \
+        \               \"tonic\",\n                            \"subdominant\",\n                            \"dominant\"\
+        ,\n                            \"predominant\"\n                        ]\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Functional analysis per chord\"\n             \
+        \   }\n            }\n        },\n        \"CadenceInfo\": {\n            \"description\": \"Information about a cadence\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"type\",\n                \"position\"\n            ],\n            \"properties\": {\n        \
+        \        \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n               \
+        \         \"authentic\",\n                        \"half\",\n                        \"plagal\",\n               \
+        \         \"deceptive\"\n                    ],\n                    \"description\": \"Cadence type\"\n         \
+        \       },\n                \"position\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Chord index where cadence ends\"\n                },\n                \"strength\": {\n                    \"\
+        type\": \"string\",\n                    \"enum\": [\n                        \"perfect\",\n                     \
+        \   \"imperfect\"\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cadence strength\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate chord progression\",\n    \"description\": \"Generates a chord
         progression using harmonic function theory.\\nSupports multiple harmonic styles including functional harmony,\\nmodal
         interchange, and jazz voicings.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n \
@@ -1069,26 +1073,26 @@ paths:
         \      \"extensions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
         \             \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n            \
         \        \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n    \
-        \        }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class (note name without
-        octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n                \"\
-        Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n                \"F\",\n         \
-        \       \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n                \"As\",\n\
-        \                \"B\"\n            ]\n        },\n        \"PitchRange\": {\n            \"description\": \"A pitch
-        range from low to high\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"low\",\n                \"high\"\n            ],\n            \"properties\"\
-        : {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\"\
-        : \"Lowest pitch (inclusive)\"\n                },\n                \"high\": {\n                    \"$ref\": \"\
-        #/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\n                }\n        \
-        \    }\n        },\n        \"Pitch\": {\n            \"description\": \"A specific pitch with pitch class and octave\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"pitchClass\",\n                \"octave\"\n            ],\n            \"properties\": {\n    \
-        \            \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
-        : \"Pitch class (note name)\"\n                },\n                \"octave\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\"\
-        : \"Octave number (middle C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n               \
-        \     \"description\": \"MIDI note number (computed if not provided)\"\n                }\n            }\n       \
-        \ }\n    }\n}"
+        \        }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"PitchRange\": {\n            \"description\": \"A pitch range from low to high\",\n           \
+        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n             \
+        \   \"low\",\n                \"high\"\n            ],\n            \"properties\": {\n                \"low\": {\n\
+        \                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Lowest pitch (inclusive)\"\
+        \n                },\n                \"high\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n            \
+        \        \"description\": \"Highest pitch (inclusive)\"\n                }\n            }\n        },\n        \"\
+        Pitch\": {\n            \"description\": \"A specific pitch with pitch class and octave\",\n            \"type\":
+        \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"pitchClass\"\
+        ,\n                \"octave\"\n            ],\n            \"properties\": {\n                \"pitchClass\": {\n\
+        \                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Pitch class (note name)\"\
+        \n                },\n                \"octave\": {\n                    \"type\": \"integer\",\n                \
+        \    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\": \"Octave number (middle
+        C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"description\": \"\
+        MIDI note number (computed if not provided)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateMelodyResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateMelodyResponse\": {\n            \"description\": \"Response containing a generated
         melody\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1116,29 +1120,30 @@ paths:
         : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
         \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
         \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
-        \                }\n            }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch class
-        (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"C\",\n\
-        \                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n              \
-        \  \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n    \
-        \            \"As\",\n                \"B\"\n            ]\n        },\n        \"MelodyAnalysis\": {\n          \
-        \  \"description\": \"Analysis of a melody\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"range\": {\n                    \"$ref\": \"#/$defs/PitchRange\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Pitch range used\"\n          \
-        \      },\n                \"intervalDistribution\": {\n                    \"type\": \"object\",\n              \
-        \      \"additionalProperties\": {\n                        \"type\": \"number\",\n                        \"format\"\
-        : \"float\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Distribution of interval sizes\"\n                },\n                \"contour\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Detected contour shape\"\
-        \n                },\n                \"noteCount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Total number of notes\"\n                },\n                \"averageNoteDuration\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Average note duration in ticks\"\n                }\n            }\n\
-        \        },\n        \"PitchRange\": {\n            \"description\": \"A pitch range from low to high\",\n       \
-        \     \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n         \
-        \       \"low\",\n                \"high\"\n            ],\n            \"properties\": {\n                \"low\"\
-        : {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Lowest pitch (inclusive)\"\
-        \n                },\n                \"high\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n            \
-        \        \"description\": \"Highest pitch (inclusive)\"\n                }\n            }\n        }\n    }\n}"
+        \                }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"MelodyAnalysis\": {\n            \"description\": \"Analysis of a melody\",\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"range\"\
+        : {\n                    \"$ref\": \"#/$defs/PitchRange\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Pitch range used\"\n                },\n                \"intervalDistribution\": {\n\
+        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
+        \    \"type\": \"number\",\n                        \"format\": \"float\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Distribution of interval sizes\"\n            \
+        \    },\n                \"contour\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Detected contour shape\"\n                },\n                \"noteCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number of notes\"\n\
+        \                },\n                \"averageNoteDuration\": {\n                    \"type\": \"number\",\n     \
+        \               \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Average note duration in ticks\"\n                }\n            }\n        },\n        \"PitchRange\": {\n  \
+        \          \"description\": \"A pitch range from low to high\",\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"low\",\n                \"high\"\n\
+        \            ],\n            \"properties\": {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\"\
+        ,\n                    \"description\": \"Lowest pitch (inclusive)\"\n                },\n                \"high\"\
+        : {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate melody over harmony\",\n    \"description\": \"Generates a melodic
         line over a chord progression using contour rules,\\ninterval preferences, and rhythmic patterns from the specified
         style.\\n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GenerateMelody\"\
@@ -1200,37 +1205,38 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
         \ },\n                    \"nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"\
         9\\\", \\\"11\\\", \\\"13\\\")\"\n                }\n            }\n        },\n        \"PitchClass\": {\n      \
-        \      \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n       \
-        \     \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\"\
-        ,\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n             \
-        \   \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n \
-        \       \"PitchRange\": {\n            \"description\": \"A pitch range from low to high\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"low\"\
-        ,\n                \"high\"\n            ],\n            \"properties\": {\n                \"low\": {\n         \
-        \           \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Lowest pitch (inclusive)\"\n    \
-        \            },\n                \"high\": {\n                    \"$ref\": \"#/$defs/Pitch\",\n                 \
-        \   \"description\": \"Highest pitch (inclusive)\"\n                }\n            }\n        },\n        \"Pitch\"\
-        : {\n            \"description\": \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"pitchClass\",\n  \
-        \              \"octave\"\n            ],\n            \"properties\": {\n                \"pitchClass\": {\n    \
-        \                \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Pitch class (note name)\"\
-        \n                },\n                \"octave\": {\n                    \"type\": \"integer\",\n                \
-        \    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\": \"Octave number (middle
-        C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"minimum\": 0,\n                    \"maximum\": 127,\n                    \"description\": \"\
-        MIDI note number (computed if not provided)\"\n                }\n            }\n        },\n        \"VoiceLeadingRules\"\
-        : {\n            \"description\": \"Rules for voice leading\",\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"properties\": {\n                \"avoidParallelFifths\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Avoid parallel perfect fifths\"\n                },\n                \"avoidParallelOctaves\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"\
-        Avoid parallel octaves\"\n                },\n                \"preferStepwiseMotion\": {\n                    \"\
-        type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Prefer stepwise
-        voice motion\"\n                },\n                \"avoidVoiceCrossing\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": true,\n                    \"description\": \"Avoid voice crossing\"\n       \
-        \         },\n                \"maxLeap\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"maximum\": 12,\n                    \"default\": 7,\n                    \"description\"\
-        : \"Maximum leap in semitones\"\n                }\n            }\n        }\n    }\n}"
+        \      \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n            \"description\": \"A
+        pitch class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n\
+        \                \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n              \
+        \  \"A\",\n                \"As\",\n                \"B\"\n            ]\n        },\n        \"PitchRange\": {\n\
+        \            \"description\": \"A pitch range from low to high\",\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"required\": [\n                \"low\",\n                \"high\"\
+        \n            ],\n            \"properties\": {\n                \"low\": {\n                    \"$ref\": \"#/$defs/Pitch\"\
+        ,\n                    \"description\": \"Lowest pitch (inclusive)\"\n                },\n                \"high\"\
+        : {\n                    \"$ref\": \"#/$defs/Pitch\",\n                    \"description\": \"Highest pitch (inclusive)\"\
+        \n                }\n            }\n        },\n        \"Pitch\": {\n            \"description\": \"A specific pitch
+        with pitch class and octave\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"pitchClass\",\n                \"octave\"\n            ],\n      \
+        \      \"properties\": {\n                \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
+        ,\n                    \"description\": \"Pitch class (note name)\"\n                },\n                \"octave\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
+        \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
+        \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
+        \                }\n            }\n        },\n        \"VoiceLeadingRules\": {\n            \"description\": \"Rules
+        for voice leading\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
+        \  \"properties\": {\n                \"avoidParallelFifths\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": true,\n                    \"description\": \"Avoid parallel perfect fifths\"\n   \
+        \             },\n                \"avoidParallelOctaves\": {\n                    \"type\": \"boolean\",\n      \
+        \              \"default\": true,\n                    \"description\": \"Avoid parallel octaves\"\n             \
+        \   },\n                \"preferStepwiseMotion\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"default\": true,\n                    \"description\": \"Prefer stepwise voice motion\"\n                },\n\
+        \                \"avoidVoiceCrossing\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : true,\n                    \"description\": \"Avoid voice crossing\"\n                },\n                \"maxLeap\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 12,\n                    \"default\": 7,\n                    \"description\": \"Maximum leap in semitones\"\n \
+        \               }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoiceLeadResponse\"\
         ,\n    \"$defs\": {\n        \"VoiceLeadResponse\": {\n            \"description\": \"Response containing voiced chords\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -1262,31 +1268,32 @@ paths:
         \n                },\n                \"extensions\": {\n                    \"type\": \"array\",\n              \
         \      \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"\
         nullable\": true,\n                    \"description\": \"Chord extensions (e.g., \\\"9\\\", \\\"11\\\", \\\"13\\\"\
-        )\"\n                }\n            }\n        },\n        \"PitchClass\": {\n            \"description\": \"A pitch
-        class (note name without octave)\",\n            \"type\": \"string\",\n            \"enum\": [\n                \"\
-        C\",\n                \"Cs\",\n                \"D\",\n                \"Ds\",\n                \"E\",\n         \
-        \       \"F\",\n                \"Fs\",\n                \"G\",\n                \"Gs\",\n                \"A\",\n\
-        \                \"As\",\n                \"B\"\n            ]\n        },\n        \"Pitch\": {\n            \"description\"\
-        : \"A specific pitch with pitch class and octave\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"pitchClass\",\n                \"octave\"\n            ],\n\
-        \            \"properties\": {\n                \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\"\
-        ,\n                    \"description\": \"Pitch class (note name)\"\n                },\n                \"octave\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 9,\n                    \"description\": \"Octave number (middle C = C4)\"\n                },\n               \
-        \ \"midiNumber\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n           \
-        \         \"maximum\": 127,\n                    \"description\": \"MIDI note number (computed if not provided)\"\n\
-        \                }\n            }\n        },\n        \"VoiceLeadingViolation\": {\n            \"description\":
-        \"A voice leading rule violation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"rule\",\n                \"position\",\n                \"severity\"\
-        \n            ],\n            \"properties\": {\n                \"rule\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Rule that was violated\"\n                },\n                \"position\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Chord position of violation\"\
-        \n                },\n                \"voices\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"type\": \"integer\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Voice indices involved\"\n                },\n                \"severity\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"warning\"\
-        ,\n                        \"error\"\n                    ],\n                    \"description\": \"Violation severity\"\
-        \n                }\n            }\n        }\n    }\n}"
+        )\"\n                }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"Pitch\": {\n            \"description\": \"A specific pitch with pitch class and octave\",\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
+        \            \"pitchClass\",\n                \"octave\"\n            ],\n            \"properties\": {\n        \
+        \        \"pitchClass\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\"\
+        : \"Pitch class (note name)\"\n                },\n                \"octave\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 9,\n                    \"description\"\
+        : \"Octave number (middle C = C4)\"\n                },\n                \"midiNumber\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 127,\n               \
+        \     \"description\": \"MIDI note number (computed if not provided)\"\n                }\n            }\n       \
+        \ },\n        \"VoiceLeadingViolation\": {\n            \"description\": \"A voice leading rule violation\",\n   \
+        \         \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
+        \           \"rule\",\n                \"position\",\n                \"severity\"\n            ],\n            \"\
+        properties\": {\n                \"rule\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Rule that was violated\"\n                },\n                \"position\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Chord position of violation\"\n                },\n           \
+        \     \"voices\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"type\": \"integer\"\n                    },\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Voice indices involved\"\n                },\n                \"severity\": {\n          \
+        \          \"type\": \"string\",\n                    \"enum\": [\n                        \"warning\",\n        \
+        \                \"error\"\n                    ],\n                    \"description\": \"Violation severity\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Apply voice leading to chords\",\n    \"description\": \"Applies voice
         leading rules to a chord sequence, ensuring smooth\\npart-writing according to traditional or style-specific rules.\\\
         n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ApplyVoiceLeading\"\
@@ -1993,6 +2000,7 @@ components:
           description: MIDI note number (computed if not provided)
 
     PitchClass:
+      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass
       description: A pitch class (note name without octave)
       type: string
       enum: [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
@@ -2085,6 +2093,27 @@ components:
         key:
           $ref: '#/components/schemas/KeySignature'
           description: Key signature
+
+    ModeType:
+      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Collections.ModeType
+      description: Musical mode/scale type
+      type: string
+      enum:
+      - Major
+      - Minor
+      - Dorian
+      - Phrygian
+      - Lydian
+      - Mixolydian
+      - Aeolian
+      - Locrian
+      - HarmonicMinor
+      - MelodicMinor
+      - MajorPentatonic
+      - MinorPentatonic
+      - Blues
+      - WholeTone
+      - Chromatic
 
     # ============================================================================
     # Style Definition Models
