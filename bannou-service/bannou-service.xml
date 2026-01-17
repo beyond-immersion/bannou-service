@@ -24047,17 +24047,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetIdStyle">
-            <summary>
-            Asset ID validation style presets:
-            <br/>- any: No style enforcement (just max length and basic characters)
-            <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-            <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-            <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-            <br/>- custom: Use custom regex pattern from configuration
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
             <summary>
             Request to initiate an asset upload and receive a pre-signed URL
@@ -29686,13 +29675,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionData">
-            <summary>
-            Connection state data returned for connection service requests.
-            <br/>Currently a placeholder for future connection metadata.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
             <summary>
             Response codes used in the binary protocol for success/error indication.
@@ -29796,75 +29778,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ServiceResponseMessage.Payload">
             <summary>
             Optional response payload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionConfiguration">
-            <summary>
-            Configuration options for the connect service.
-            <br/>These are server-side settings and not directly exposed via API.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ObfuscateNotFoundResponse">
-            <summary>
-            Return Unauthorized instead of NotFound for better security
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientRequestMaxSize">
-            <summary>
-            Maximum size for client requests in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientResponseMaxSize">
-            <summary>
-            Maximum size for client responses in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientReconnectionTime">
-            <summary>
-            Time in seconds to allow client reconnection
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.TokenPublicKey">
-            <summary>
-            Base64-encoded RSA public key for JWT validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent">
-            <summary>
-            Event published when a session's capabilities change (permissions, role changes, etc.).
-            <br/>Triggers real-time WebSocket updates to connected clients.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.SessionId">
-            <summary>
-            Session ID that had capability changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.AddedCapabilities">
-            <summary>
-            New capabilities added to the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.RemovedCapabilities">
-            <summary>
-            Capabilities removed from the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.UpdatedServices">
-            <summary>
-            Services that had permission changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.Version">
-            <summary>
-            New capability version number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.ExpiresAt">
-            <summary>
-            When these capabilities expire and need refresh
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.AuthEvent">
@@ -33898,36 +33811,6 @@
         <member name="T:BeyondImmersion.BannouService.GameSession.SessionType">
             <summary>
             Type of game session - determines join behavior
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
-            <summary>
-            A slot reservation for an expected player in a matchmade session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
-            <summary>
-            Account ID of the player this slot is reserved for
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
-            <summary>
-            One-time use token for claiming this reservation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
-            <summary>
-            When this reservation was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
-            <summary>
-            Whether this reservation has been claimed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
-            <summary>
-            When this reservation was claimed (null if not yet claimed)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
@@ -41743,96 +41626,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Metadata">
             <summary>
             Additional service metadata (null if not provided)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest">
-            <summary>
-            Request to execute a specific type of test
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.TestType">
-            <summary>
-            Type of tests to execute
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Plugin">
-            <summary>
-            Specific plugin to test (for http tests)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Configuration">
-            <summary>
-            Additional test configuration parameters
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Timeout">
-            <summary>
-            Test timeout in seconds (default 300)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult">
-            <summary>
-            Result of executing a test suite including overall status and individual test outcomes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Success">
-            <summary>
-            Overall test success status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.TestType">
-            <summary>
-            Type of tests executed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Duration">
-            <summary>
-            Total execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Results">
-            <summary>
-            Individual test results
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Summary">
-            <summary>
-            Human-readable test summary
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Error">
-            <summary>
-            Error message if test execution failed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestResult">
-            <summary>
-            Outcome of a single test case including pass/fail status and optional error details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Name">
-            <summary>
-            Test name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Passed">
-            <summary>
-            Test pass/fail status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Duration">
-            <summary>
-            Test execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Message">
-            <summary>
-            Test result message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.StackTrace">
-            <summary>
-            Stack trace if test failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest">
@@ -54223,26 +54016,6 @@
         <member name="P:BeyondImmersion.BannouService.Subscription.SubscriptionInfo.UpdatedAt">
             <summary>
             When the subscription was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse">
-            <summary>
-            Response containing current active subscriptions and authorization strings
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.AccountId">
-            <summary>
-            ID of the account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Authorizations">
-            <summary>
-            List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Subscriptions">
-            <summary>
-            Full subscription details (optional, for debugging)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse">

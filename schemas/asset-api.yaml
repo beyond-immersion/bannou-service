@@ -1911,21 +1911,7 @@ components:
         - source: Original bundle (uploaded or server-created from assets)
         - metabundle: Composed from other bundles server-side
 
-    AssetIdStyle:
-      type: string
-      enum:
-      - any
-      - dot_notation
-      - reverse_dns
-      - path_style
-      - custom
-      description: |
-        Asset ID validation style presets:
-        - any: No style enforcement (just max length and basic characters)
-        - dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-        - reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-        - path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-        - custom: Use custom regex pattern from configuration
+    # NOTE: AssetIdStyle enum removed - validation style is configuration, not API
 
     # ==========================================================================
     # Upload Request/Response

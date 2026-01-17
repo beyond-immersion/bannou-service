@@ -161,38 +161,6 @@ public enum BundleType
 #pragma warning restore CS1591
 
 /// <summary>
-/// Asset ID validation style presets:
-/// <br/>- any: No style enforcement (just max length and basic characters)
-/// <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-/// <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-/// <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-/// <br/>- custom: Use custom regex pattern from configuration
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AssetIdStyle
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"any")]
-    Any = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"dot_notation")]
-    Dot_notation = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"reverse_dns")]
-    Reverse_dns = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"path_style")]
-    Path_style = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Request to initiate an asset upload and receive a pre-signed URL
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

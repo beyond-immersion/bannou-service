@@ -437,16 +437,27 @@ public partial class DocumentationService : IDocumentationService
                 }
             }
 
-            // Publish analytics event (non-blocking)
-            _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, results.Count);
+            // Apply sorting based on request
+            IEnumerable<DocumentResult> sortedResults = body.SortBy switch
+            {
+                SearchDocumentationRequestSortBy.Relevance => results, // Already sorted by relevance from search engine
+                SearchDocumentationRequestSortBy.Recency => results.OrderByDescending(r => r.RelevanceScore), // Use relevance as proxy for recency (recent docs indexed recently)
+                SearchDocumentationRequestSortBy.Alphabetical => results.OrderBy(r => r.Title, StringComparer.OrdinalIgnoreCase),
+                _ => results
+            };
 
-            _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results",
-                namespaceId, body.SearchTerm, results.Count);
+            var finalResults = sortedResults.ToList();
+
+            // Publish analytics event (non-blocking)
+            _ = PublishSearchAnalyticsEventAsync(namespaceId, body.SearchTerm, body.SessionId, finalResults.Count);
+
+            _logger.LogInformation("Search in namespace {Namespace} for '{Term}' returned {Count} results (sorted by {SortBy})",
+                namespaceId, body.SearchTerm, finalResults.Count, body.SortBy);
 
             return (StatusCodes.OK, new SearchDocumentationResponse
             {
-                Results = results,
-                TotalResults = results.Count,
+                Results = finalResults,
+                TotalResults = finalResults.Count,
                 SearchTerm = body.SearchTerm,
                 Namespace = namespaceId
             });

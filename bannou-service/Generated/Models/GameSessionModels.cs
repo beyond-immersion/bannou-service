@@ -709,51 +709,6 @@ public enum SessionType
 #pragma warning restore CS1591
 
 /// <summary>
-/// A slot reservation for an expected player in a matchmade session
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerReservation
-{
-
-    /// <summary>
-    /// Account ID of the player this slot is reserved for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// One-time use token for claiming this reservation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("token")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Token { get; set; } = default!;
-
-    /// <summary>
-    /// When this reservation was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reservedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ReservedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this reservation has been claimed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("claimed")]
-    public bool Claimed { get; set; } = false;
-
-    /// <summary>
-    /// When this reservation was claimed (null if not yet claimed)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("claimedAt")]
-    public System.DateTimeOffset? ClaimedAt { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Reservation token returned when creating a matchmade session
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

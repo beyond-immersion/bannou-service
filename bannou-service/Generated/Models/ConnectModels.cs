@@ -411,17 +411,6 @@ public partial class ConnectRequest
 }
 
 /// <summary>
-/// Connection state data returned for connection service requests.
-/// <br/>Currently a placeholder for future connection metadata.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectionData
-{
-
-}
-
-/// <summary>
 /// Response codes used in the binary protocol for success/error indication.
 /// <br/>Provides fine-grained error reporting for different failure scenarios.
 /// <br/>
@@ -594,96 +583,6 @@ public partial class ServiceResponseMessage
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public byte[]? Payload { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Configuration options for the connect service.
-/// <br/>These are server-side settings and not directly exposed via API.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectionConfiguration
-{
-
-    /// <summary>
-    /// Return Unauthorized instead of NotFound for better security
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("obfuscateNotFoundResponse")]
-    public bool ObfuscateNotFoundResponse { get; set; } = true;
-
-    /// <summary>
-    /// Maximum size for client requests in bytes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("clientRequestMaxSize")]
-    public int ClientRequestMaxSize { get; set; } = 16384;
-
-    /// <summary>
-    /// Maximum size for client responses in bytes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("clientResponseMaxSize")]
-    public int ClientResponseMaxSize { get; set; } = 16384;
-
-    /// <summary>
-    /// Time in seconds to allow client reconnection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("clientReconnectionTime")]
-    public int ClientReconnectionTime { get; set; } = 30;
-
-    /// <summary>
-    /// Base64-encoded RSA public key for JWT validation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tokenPublicKey")]
-    public string? TokenPublicKey { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Event published when a session's capabilities change (permissions, role changes, etc.).
-/// <br/>Triggers real-time WebSocket updates to connected clients.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionCapabilityUpdateEvent
-{
-
-    /// <summary>
-    /// Session ID that had capability changes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// New capabilities added to the session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("addedCapabilities")]
-    public System.Collections.Generic.ICollection<string>? AddedCapabilities { get; set; } = default!;
-
-    /// <summary>
-    /// Capabilities removed from the session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("removedCapabilities")]
-    public System.Collections.Generic.ICollection<string>? RemovedCapabilities { get; set; } = default!;
-
-    /// <summary>
-    /// Services that had permission changes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedServices")]
-    public System.Collections.Generic.ICollection<string>? UpdatedServices { get; set; } = default!;
-
-    /// <summary>
-    /// New capability version number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-    /// <summary>
-    /// When these capabilities expire and need refresh
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
 

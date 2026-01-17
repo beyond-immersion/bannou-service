@@ -316,37 +316,6 @@ public partial class SubscriptionInfo
 }
 
 /// <summary>
-/// Response containing current active subscriptions and authorization strings
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrentSubscriptionsResponse
-{
-
-    /// <summary>
-    /// ID of the account
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-    /// <summary>
-    /// Full subscription details (optional, for debugging)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("subscriptions")]
-    public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Response from querying current subscriptions.
 /// <br/>Returns subscriptions matching the query criteria (by account, by stub, or both).
 /// <br/>

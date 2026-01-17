@@ -741,28 +741,7 @@ components:
           nullable: true
           description: When the subscription was last updated
 
-    CurrentSubscriptionsResponse:
-      type: object
-      additionalProperties: false
-      description: Response containing current active subscriptions and authorization strings
-      required:
-      - accountId
-      - authorizations
-      properties:
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the account
-        authorizations:
-          type: array
-          items:
-            type: string
-          description: List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-        subscriptions:
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionInfo'
-          description: Full subscription details (optional, for debugging)
+    # NOTE: CurrentSubscriptionsResponse removed - superseded by QuerySubscriptionsResponse
 
     QuerySubscriptionsResponse:
       type: object
