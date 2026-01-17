@@ -169,8 +169,7 @@ public sealed class StrideBatchProjectGenerator
 
               <ItemGroup>
                 <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="{strideVersion}" />
-                <PackageReference Include="Stride.Assets.Models" Version="{strideVersion}" />
-                <PackageReference Include="Stride.Assets.Media" Version="{strideVersion}" />
+                <PackageReference Include="Stride.Assets" Version="{strideVersion}" />
               </ItemGroup>
             </Project>
             """;
