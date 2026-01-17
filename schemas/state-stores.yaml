@@ -350,3 +350,25 @@ x-state-stores:
     prefix: orch
     service: Orchestrator
     purpose: Primary orchestrator state
+
+  # ============================================================================
+  # Mesh Stores - Service Endpoint Discovery
+  # ============================================================================
+
+  mesh-endpoints:
+    backend: redis
+    prefix: "mesh:endpoint"
+    service: Mesh
+    purpose: Service endpoint registration and health status
+
+  mesh-appid-index:
+    backend: redis
+    prefix: "mesh:appid"
+    service: Mesh
+    purpose: App-ID to instance-ID mapping index
+
+  mesh-global-index:
+    backend: redis
+    prefix: "mesh:idx"
+    service: Mesh
+    purpose: Global endpoint index for discovery

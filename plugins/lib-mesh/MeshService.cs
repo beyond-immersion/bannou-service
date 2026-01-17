@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// <summary>
 /// Implementation of the Mesh service.
 /// Provides service discovery, endpoint registration, load balancing, and routing.
-/// Uses direct Redis connection (NOT via mesh) to avoid circular dependencies.
+/// Uses lib-state via IMeshStateManager (NOT via mesh) to avoid circular dependencies.
 /// Service mappings are managed via IServiceAppMappingResolver (shared across all services).
 /// </summary>
 [BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
@@ -22,7 +22,7 @@ public partial class MeshService : IMeshService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<MeshService> _logger;
     private readonly MeshServiceConfiguration _configuration;
-    private readonly IMeshRedisManager _redisManager;
+    private readonly IMeshStateManager _stateManager;
     private readonly IServiceAppMappingResolver _mappingResolver;
 
     // Round-robin counter for load balancing (per app-id)
@@ -40,21 +40,21 @@ public partial class MeshService : IMeshService
     /// <param name="messageBus">The message bus for pub/sub operations (replaces mesh client).</param>
     /// <param name="logger">The logger.</param>
     /// <param name="configuration">The service configuration.</param>
-    /// <param name="redisManager">The Redis manager for direct Redis access.</param>
+    /// <param name="stateManager">The state manager for endpoint registry access via lib-state.</param>
     /// <param name="mappingResolver">The service-to-app-id mapping resolver (shared across all services).</param>
     /// <param name="eventConsumer">The event consumer for registering event handlers.</param>
     public MeshService(
         IMessageBus messageBus,
         ILogger<MeshService> logger,
         MeshServiceConfiguration configuration,
-        IMeshRedisManager redisManager,
+        IMeshStateManager stateManager,
         IServiceAppMappingResolver mappingResolver,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
-        _redisManager = redisManager;
+        _stateManager = stateManager;
         _mappingResolver = mappingResolver;
 
         RegisterEventConsumers(eventConsumer);
@@ -72,7 +72,7 @@ public partial class MeshService : IMeshService
 
         try
         {
-            var endpoints = await _redisManager.GetEndpointsForAppIdAsync(
+            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
                 body.AppId,
                 body.IncludeUnhealthy);
 
@@ -120,7 +120,7 @@ public partial class MeshService : IMeshService
 
         try
         {
-            var endpoints = await _redisManager.GetAllEndpointsAsync(body.AppIdFilter);
+            var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
 
             // Group by status for summary
             var byStatus = endpoints.GroupBy(e => e.Status)
@@ -187,7 +187,7 @@ public partial class MeshService : IMeshService
                 LastSeen = now
             };
 
-            var success = await _redisManager.RegisterEndpointAsync(endpoint, DEFAULT_TTL_SECONDS);
+            var success = await _stateManager.RegisterEndpointAsync(endpoint, DEFAULT_TTL_SECONDS);
 
             if (!success)
             {
@@ -233,14 +233,14 @@ public partial class MeshService : IMeshService
         try
         {
             // Look up the endpoint to get appId for deregistration
-            var endpoint = await _redisManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
             if (endpoint == null)
             {
                 _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
                 return StatusCodes.NotFound;
             }
 
-            var success = await _redisManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
+            var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
 
             if (!success)
             {
@@ -286,7 +286,7 @@ public partial class MeshService : IMeshService
         try
         {
             // Look up the endpoint to get appId
-            var endpoint = await _redisManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
             if (endpoint == null)
             {
                 _logger.LogWarning(
@@ -295,7 +295,7 @@ public partial class MeshService : IMeshService
                 return (StatusCodes.NotFound, null);
             }
 
-            var success = await _redisManager.UpdateHeartbeatAsync(
+            var success = await _stateManager.UpdateHeartbeatAsync(
                 body.InstanceId,
                 endpoint.AppId,
                 body.Status ?? EndpointStatus.Healthy,
@@ -345,7 +345,7 @@ public partial class MeshService : IMeshService
 
         try
         {
-            var endpoints = await _redisManager.GetEndpointsForAppIdAsync(body.AppId, false);
+            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
 
             if (endpoints.Count == 0)
             {
@@ -451,10 +451,10 @@ public partial class MeshService : IMeshService
 
         try
         {
-            var (isHealthy, message, pingTime) = await _redisManager.CheckHealthAsync();
+            var (isHealthy, message, pingTime) = await _stateManager.CheckHealthAsync();
 
             // Get overall mesh statistics
-            var endpoints = await _redisManager.GetAllEndpointsAsync();
+            var endpoints = await _stateManager.GetAllEndpointsAsync();
             var healthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy);
             var degradedCount = endpoints.Count(e => e.Status == EndpointStatus.Degraded);
             var unavailableCount = endpoints.Count(e => e.Status == EndpointStatus.Unavailable);

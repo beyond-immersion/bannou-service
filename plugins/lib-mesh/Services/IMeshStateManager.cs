@@ -1,26 +1,29 @@
+#nullable enable
+
 using BeyondImmersion.BannouService.Mesh;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
 
 /// <summary>
-/// Interface for Mesh Redis operations.
+/// Interface for Mesh state operations via lib-state infrastructure.
 /// Manages service endpoint registration, health status, and routing information.
-/// Uses direct Redis connection (NOT via mesh) to avoid circular dependencies.
+/// Uses IStateStoreFactory for Redis operations, consolidating infrastructure access.
 /// </summary>
-public interface IMeshRedisManager : IDisposable, IAsyncDisposable
+public interface IMeshStateManager : IAsyncDisposable
 {
     /// <summary>
-    /// Initialize Redis connection with wait-on-startup retry logic.
+    /// Initialize state stores.
+    /// Called during plugin startup to ensure stores are available.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if connection was established successfully.</returns>
+    /// <returns>True if initialization was successful.</returns>
     Task<bool> InitializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Check if Redis is currently connected and healthy.
+    /// Check if state stores are healthy and connected.
     /// </summary>
-    /// <returns>Health status tuple with connectivity state, message, and ping time.</returns>
-    Task<(bool IsHealthy, string? Message, TimeSpan? PingTime)> CheckHealthAsync();
+    /// <returns>Health status tuple with connectivity state, message, and operation time.</returns>
+    Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync();
 
     /// <summary>
     /// Register a new endpoint in the mesh.

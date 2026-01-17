@@ -17,7 +17,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     public override string PluginName => "mesh";
     public override string DisplayName => "Mesh Service";
 
-    private IMeshRedisManager? _redisManager;
+    private IMeshStateManager? _stateManager;
     private bool _useLocalRouting;
     private MeshServiceConfiguration? _cachedConfig;
 
@@ -35,27 +35,27 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         if (_useLocalRouting)
         {
             Logger?.LogWarning(
-                "Mesh using LOCAL ROUTING mode. All service calls will route locally (no Redis)!");
+                "Mesh using LOCAL ROUTING mode. All service calls will route locally (no state store)!");
 
-            // Register LocalMeshRedisManager (no Redis connection)
-            services.AddSingleton<IMeshRedisManager, LocalMeshRedisManager>();
+            // Register LocalMeshStateManager (no state store connection)
+            services.AddSingleton<IMeshStateManager, LocalMeshStateManager>();
         }
         else
         {
-            // Register MeshRedisManager as Singleton (direct Redis connection for service discovery)
-            // This avoids circular dependencies since Mesh IS the service discovery layer
-            services.AddSingleton<IMeshRedisManager, MeshRedisManager>();
+            // Register MeshStateManager as Singleton (uses lib-state for Redis access)
+            // Uses IStateStoreFactory for consistent infrastructure access per IMPLEMENTATION TENETS
+            services.AddSingleton<IMeshStateManager, MeshStateManager>();
         }
 
         // Register the mesh invocation client for service-to-service calls
-        // Uses IMeshRedisManager directly (NOT IMeshClient) to avoid circular dependency:
+        // Uses IMeshStateManager directly (NOT IMeshClient) to avoid circular dependency:
         // - All generated clients (AccountClient, etc.) need IMeshInvocationClient
         // - If MeshInvocationClient needed IMeshClient, and MeshClient needs IMeshInvocationClient = deadlock
         services.AddSingleton<IMeshInvocationClient>(sp =>
         {
-            var redisManager = sp.GetRequiredService<IMeshRedisManager>();
+            var stateManager = sp.GetRequiredService<IMeshStateManager>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-            return new MeshInvocationClient(redisManager, logger);
+            return new MeshInvocationClient(stateManager, logger);
         });
 
         Logger?.LogDebug("Service dependencies configured");
@@ -66,9 +66,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         Logger?.LogInformation("Starting Mesh service{Mode}", _useLocalRouting ? " (local routing)" : "");
 
         var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
-        _redisManager = serviceProvider.GetRequiredService<IMeshRedisManager>();
+        _stateManager = serviceProvider.GetRequiredService<IMeshStateManager>();
 
-        if (!await _redisManager.InitializeAsync(CancellationToken.None))
+        if (!await _stateManager.InitializeAsync(CancellationToken.None))
         {
             Logger?.LogError("Mesh initialization failed");
             return false;
@@ -85,9 +85,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     /// </summary>
     private async Task RegisterMeshEndpointAsync()
     {
-        if (_redisManager == null)
+        if (_stateManager == null)
         {
-            Logger?.LogWarning("Cannot register mesh endpoint - Redis manager not initialized");
+            Logger?.LogWarning("Cannot register mesh endpoint - state manager not initialized");
             return;
         }
 
@@ -120,7 +120,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             LastSeen = DateTimeOffset.UtcNow
         };
 
-        var registered = await _redisManager.RegisterEndpointAsync(endpoint, 90);
+        var registered = await _stateManager.RegisterEndpointAsync(endpoint, 90);
         if (registered)
         {
             Logger?.LogInformation(

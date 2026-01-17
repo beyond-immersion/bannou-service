@@ -37,6 +37,9 @@ This document lists all state store components used in Bannou.
 | `location-statestore` | MySQL | Location | Location hierarchy and metadata |
 | `mapping-statestore` | Redis | Mapping | Spatial map data and channels |
 | `matchmaking-statestore` | Redis | Matchmaking | Matchmaking queue and ticket state |
+| `mesh-appid-index` | Redis | Mesh | App-ID to instance-ID mapping index |
+| `mesh-endpoints` | Redis | Mesh | Service endpoint registration and health status |
+| `mesh-global-index` | Redis | Mesh | Global endpoint index for discovery |
 | `messaging-external-subs` | Redis | Messaging | External subscription recovery data |
 | `orchestrator-config` | Redis | Orchestrator | Configuration version and metadata |
 | `orchestrator-heartbeats` | Redis | Orchestrator | Service heartbeat tracking |
@@ -58,7 +61,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 48 stores (30 Redis, 18 MySQL)
+**Total**: 51 stores (33 Redis, 18 MySQL)
 
 ## Naming Conventions
 

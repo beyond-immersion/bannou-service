@@ -107,6 +107,14 @@ public static class StateStoreDefinitions
     /// <summary>Matchmaking queue and ticket state</summary>
     public const string Matchmaking = "matchmaking-statestore";
 
+    // Mesh Service
+    /// <summary>App-ID to instance-ID mapping index</summary>
+    public const string MeshAppidIndex = "mesh-appid-index";
+    /// <summary>Service endpoint registration and health status</summary>
+    public const string MeshEndpoints = "mesh-endpoints";
+    /// <summary>Global endpoint index for discovery</summary>
+    public const string MeshGlobalIndex = "mesh-global-index";
+
     // Messaging Service
     /// <summary>External subscription recovery data</summary>
     public const string MessagingExternalSubs = "messaging-external-subs";
@@ -212,6 +220,9 @@ public static class StateStoreDefinitions
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
             [Matchmaking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm" },
+            [MeshAppidIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:appid" },
+            [MeshEndpoints] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:endpoint" },
+            [MeshGlobalIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:idx" },
             [MessagingExternalSubs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "msg:subs" },
             [OrchestratorConfig] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:cfg" },
             [OrchestratorHeartbeats] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:hb" },
@@ -272,6 +283,9 @@ public static class StateStoreDefinitions
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
             [Matchmaking] = new StoreMetadata("Matchmaking", "Matchmaking queue and ticket state", "redis"),
+            [MeshAppidIndex] = new StoreMetadata("Mesh", "App-ID to instance-ID mapping index", "redis"),
+            [MeshEndpoints] = new StoreMetadata("Mesh", "Service endpoint registration and health status", "redis"),
+            [MeshGlobalIndex] = new StoreMetadata("Mesh", "Global endpoint index for discovery", "redis"),
             [MessagingExternalSubs] = new StoreMetadata("Messaging", "External subscription recovery data", "redis"),
             [OrchestratorConfig] = new StoreMetadata("Orchestrator", "Configuration version and metadata", "redis"),
             [OrchestratorHeartbeats] = new StoreMetadata("Orchestrator", "Service heartbeat tracking", "redis"),
