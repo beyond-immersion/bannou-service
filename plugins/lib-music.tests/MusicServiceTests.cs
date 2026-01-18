@@ -53,6 +53,16 @@ using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
 using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
 using SdkVoiceLeadingViolationType = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType;
 using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
+// New analysis types
+using SdkDensityAnalysis = BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis;
+using SdkDensityCategory = BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory;
+using SdkHarmonicFunctionAnalyzer = BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer;
+using SdkHarmonicFunctionType = BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionType;
+using SdkMelodicRegister = BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister;
+using SdkMotifTransformation = BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation;
+using SdkMotifTransformationRecord = BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord;
+using SdkRegisterAnalysis = BeyondImmersion.Bannou.MusicTheory.Melody.RegisterAnalysis;
+using SdkRhythmicDensityAnalyzer = BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer;
 
 namespace BeyondImmersion.BannouService.Music.Tests;
 
@@ -2786,5 +2796,553 @@ public class MelodyGeneratorMotifTests
         Assert.Null(options.MotifLibrary);
         Assert.Null(options.StyleId);
         Assert.Equal(0.4, options.MotifProbability);
+    }
+}
+
+/// <summary>
+/// Tests for MotifTransformation enum and MotifTransformationRecord.
+/// </summary>
+public class MotifTransformationTests
+{
+    [Fact]
+    public void MotifTransformation_HasAllExpectedValues()
+    {
+        // Assert all expected enum values exist
+        Assert.Equal(0, (int)SdkMotifTransformation.Original);
+        Assert.Equal(1, (int)SdkMotifTransformation.Transpose);
+        Assert.Equal(2, (int)SdkMotifTransformation.Invert);
+        Assert.Equal(3, (int)SdkMotifTransformation.Retrograde);
+        Assert.Equal(4, (int)SdkMotifTransformation.RetrogradeInvert);
+        Assert.Equal(5, (int)SdkMotifTransformation.Augment);
+        Assert.Equal(6, (int)SdkMotifTransformation.Diminish);
+        Assert.Equal(7, (int)SdkMotifTransformation.Sequence);
+        Assert.Equal(8, (int)SdkMotifTransformation.Fragment);
+    }
+
+    [Fact]
+    public void MotifTransformationRecord_Original_HasNoParameter()
+    {
+        // Act
+        var record = SdkMotifTransformationRecord.Original;
+
+        // Assert
+        Assert.Equal(SdkMotifTransformation.Original, record.Type);
+        Assert.Null(record.Parameter);
+    }
+
+    [Fact]
+    public void MotifTransformationRecord_Transposed_StoresSemitones()
+    {
+        // Act
+        var record = SdkMotifTransformationRecord.Transposed(5);
+
+        // Assert
+        Assert.Equal(SdkMotifTransformation.Transpose, record.Type);
+        Assert.Equal(5, record.Parameter);
+    }
+
+    [Fact]
+    public void MotifTransformationRecord_Augmented_StoresFactor()
+    {
+        // Act
+        var record = SdkMotifTransformationRecord.Augmented(2.0);
+
+        // Assert
+        Assert.Equal(SdkMotifTransformation.Augment, record.Type);
+        Assert.Equal(2.0, record.Parameter);
+    }
+
+    [Fact]
+    public void MotifTransformationRecord_ToString_IncludesParameter()
+    {
+        // Arrange
+        var withParam = SdkMotifTransformationRecord.Transposed(7);
+        var withoutParam = SdkMotifTransformationRecord.Inverted;
+
+        // Act & Assert
+        Assert.Equal("Transpose(7)", withParam.ToString());
+        Assert.Equal("Invert", withoutParam.ToString());
+    }
+
+    [Fact]
+    public void MotifTransformationRecord_StaticFactories_ReturnCorrectTypes()
+    {
+        // Assert each static factory returns correct type
+        Assert.Equal(SdkMotifTransformation.Invert, SdkMotifTransformationRecord.Inverted.Type);
+        Assert.Equal(SdkMotifTransformation.Retrograde, SdkMotifTransformationRecord.Reversed.Type);
+        Assert.Equal(SdkMotifTransformation.Diminish, SdkMotifTransformationRecord.Diminished().Type);
+        Assert.Equal(SdkMotifTransformation.Sequence, SdkMotifTransformationRecord.Sequenced(2).Type);
+    }
+}
+
+/// <summary>
+/// Tests for MelodicRegister enum and RegisterAnalysis.
+/// </summary>
+public class MelodicRegisterTests
+{
+    [Fact]
+    public void MelodicRegister_HasAllExpectedValues()
+    {
+        // Assert all expected enum values exist
+        Assert.Equal(0, (int)SdkMelodicRegister.Low);
+        Assert.Equal(1, (int)SdkMelodicRegister.Middle);
+        Assert.Equal(2, (int)SdkMelodicRegister.High);
+        Assert.Equal(3, (int)SdkMelodicRegister.Expanding);
+        Assert.Equal(4, (int)SdkMelodicRegister.Contracting);
+        Assert.Equal(5, (int)SdkMelodicRegister.Ascending);
+        Assert.Equal(6, (int)SdkMelodicRegister.Descending);
+        Assert.Equal(7, (int)SdkMelodicRegister.Full);
+    }
+
+    [Fact]
+    public void RegisterAnalysis_EmptyNotes_ReturnsMiddle()
+    {
+        // Act
+        var register = SdkRegisterAnalysis.Analyze([], 48, 84);
+
+        // Assert
+        Assert.Equal(SdkMelodicRegister.Middle, register);
+    }
+
+    [Fact]
+    public void RegisterAnalysis_LowNotes_ReturnsLow()
+    {
+        // Arrange - notes in lower third of 48-84 range (48-60)
+        var notes = new List<int> { 50, 52, 54, 50, 55, 52, 53, 50 };
+
+        // Act
+        var register = SdkRegisterAnalysis.Analyze(notes, 48, 84);
+
+        // Assert
+        Assert.Equal(SdkMelodicRegister.Low, register);
+    }
+
+    [Fact]
+    public void RegisterAnalysis_HighNotes_ReturnsHigh()
+    {
+        // Arrange - notes in upper third of 48-84 range (72-84)
+        var notes = new List<int> { 75, 78, 80, 76, 82, 79, 77, 81 };
+
+        // Act
+        var register = SdkRegisterAnalysis.Analyze(notes, 48, 84);
+
+        // Assert
+        Assert.Equal(SdkMelodicRegister.High, register);
+    }
+
+    [Fact]
+    public void RegisterAnalysis_AscendingPattern_ReturnsAscending()
+    {
+        // Arrange - notes that start low and move high
+        var notes = new List<int> { 50, 52, 54, 56, 70, 72, 74, 76 };
+
+        // Act
+        var register = SdkRegisterAnalysis.Analyze(notes, 48, 84);
+
+        // Assert
+        Assert.Equal(SdkMelodicRegister.Ascending, register);
+    }
+
+    [Fact]
+    public void GetTargetPosition_ReturnsValuesInRange()
+    {
+        // Arrange
+        var registers = Enum.GetValues<SdkMelodicRegister>();
+
+        foreach (var register in registers)
+        {
+            // Act
+            var position = SdkRegisterAnalysis.GetTargetPosition(register, 0.5);
+
+            // Assert
+            Assert.InRange(position, 0.0, 1.0);
+        }
+    }
+
+    [Fact]
+    public void GetTargetPosition_LowRegister_ReturnsLowValues()
+    {
+        // Act
+        var start = SdkRegisterAnalysis.GetTargetPosition(SdkMelodicRegister.Low, 0.0);
+        var end = SdkRegisterAnalysis.GetTargetPosition(SdkMelodicRegister.Low, 1.0);
+
+        // Assert - Low register should stay in lower portion
+        Assert.True(start < 0.5);
+        Assert.True(end < 0.5);
+    }
+
+    [Fact]
+    public void GetTargetPosition_HighRegister_ReturnsHighValues()
+    {
+        // Act
+        var start = SdkRegisterAnalysis.GetTargetPosition(SdkMelodicRegister.High, 0.0);
+        var end = SdkRegisterAnalysis.GetTargetPosition(SdkMelodicRegister.High, 1.0);
+
+        // Assert - High register should stay in upper portion
+        Assert.True(start > 0.5);
+        Assert.True(end > 0.5);
+    }
+}
+
+/// <summary>
+/// Tests for HarmonicFunctionAnalyzer.
+/// </summary>
+public class HarmonicFunctionAnalyzerTests
+{
+    [Fact]
+    public void Analyze_TonicChord_ReturnsTonic()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var cMajor = new SdkChord(SdkPitchClass.C, SdkChordQuality.Major);
+
+        // Act
+        var function = SdkHarmonicFunctionAnalyzer.Analyze(cMajor, scale);
+
+        // Assert
+        Assert.NotNull(function);
+        Assert.Equal(SdkHarmonicFunctionType.Tonic, function.Type);
+        Assert.True(function.IsPrimary);
+        Assert.Equal(1, function.Degree);
+    }
+
+    [Fact]
+    public void Analyze_DominantChord_ReturnsDominant()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var gMajor = new SdkChord(SdkPitchClass.G, SdkChordQuality.Major);
+
+        // Act
+        var function = SdkHarmonicFunctionAnalyzer.Analyze(gMajor, scale);
+
+        // Assert
+        Assert.NotNull(function);
+        Assert.Equal(SdkHarmonicFunctionType.Dominant, function.Type);
+        Assert.True(function.IsPrimary);
+        Assert.Equal(5, function.Degree);
+    }
+
+    [Fact]
+    public void Analyze_SubdominantChord_ReturnsSubdominant()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var fMajor = new SdkChord(SdkPitchClass.F, SdkChordQuality.Major);
+
+        // Act
+        var function = SdkHarmonicFunctionAnalyzer.Analyze(fMajor, scale);
+
+        // Assert
+        Assert.NotNull(function);
+        Assert.Equal(SdkHarmonicFunctionType.Subdominant, function.Type);
+        Assert.True(function.IsPrimary);
+        Assert.Equal(4, function.Degree);
+    }
+
+    [Fact]
+    public void Analyze_NonDiatonicChord_ReturnsNull()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var fSharpMajor = new SdkChord(SdkPitchClass.Fs, SdkChordQuality.Major); // Not in C major
+
+        // Act
+        var function = SdkHarmonicFunctionAnalyzer.Analyze(fSharpMajor, scale);
+
+        // Assert
+        Assert.Null(function);
+    }
+
+    [Fact]
+    public void AnalyzeFunctionType_DefaultsToTonicForNonDiatonic()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var fSharpMajor = new SdkChord(SdkPitchClass.Fs, SdkChordQuality.Major);
+
+        // Act
+        var functionType = SdkHarmonicFunctionAnalyzer.AnalyzeFunctionType(fSharpMajor, scale);
+
+        // Assert
+        Assert.Equal(SdkHarmonicFunctionType.Tonic, functionType);
+    }
+
+    [Fact]
+    public void CalculateTonalStability_Tonic_ReturnsHighStability()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var cMajor = new SdkChord(SdkPitchClass.C, SdkChordQuality.Major);
+
+        // Act
+        var stability = SdkHarmonicFunctionAnalyzer.CalculateTonalStability(cMajor, scale);
+
+        // Assert
+        Assert.Equal(1.0, stability);
+    }
+
+    [Fact]
+    public void CalculateTonalStability_Dominant_ReturnsLowerStability()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var gMajor = new SdkChord(SdkPitchClass.G, SdkChordQuality.Major);
+
+        // Act
+        var stability = SdkHarmonicFunctionAnalyzer.CalculateTonalStability(gMajor, scale);
+
+        // Assert
+        Assert.Equal(0.4, stability);
+    }
+
+    [Fact]
+    public void DetectCadence_VtoI_ReturnsAuthenticPerfect()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var chords = new List<SdkChord>
+        {
+            new SdkChord(SdkPitchClass.G, SdkChordQuality.Major), // V
+            new SdkChord(SdkPitchClass.C, SdkChordQuality.Major)  // I
+        };
+
+        // Act
+        var cadence = SdkHarmonicFunctionAnalyzer.DetectCadence(chords, scale);
+
+        // Assert
+        Assert.Equal(SdkCadenceType.AuthenticPerfect, cadence);
+    }
+
+    [Fact]
+    public void DetectCadence_IVtoI_ReturnsPlagal()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var chords = new List<SdkChord>
+        {
+            new SdkChord(SdkPitchClass.F, SdkChordQuality.Major), // IV
+            new SdkChord(SdkPitchClass.C, SdkChordQuality.Major)  // I
+        };
+
+        // Act
+        var cadence = SdkHarmonicFunctionAnalyzer.DetectCadence(chords, scale);
+
+        // Assert
+        Assert.Equal(SdkCadenceType.Plagal, cadence);
+    }
+
+    [Fact]
+    public void DetectCadence_EndingOnV_ReturnsHalf()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var chords = new List<SdkChord>
+        {
+            new SdkChord(SdkPitchClass.C, SdkChordQuality.Major), // I
+            new SdkChord(SdkPitchClass.G, SdkChordQuality.Major)  // V
+        };
+
+        // Act
+        var cadence = SdkHarmonicFunctionAnalyzer.DetectCadence(chords, scale);
+
+        // Assert
+        Assert.Equal(SdkCadenceType.Half, cadence);
+    }
+
+    [Fact]
+    public void CalculateHarmonicTension_Tonic_ReturnsLowTension()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var cMajor = new SdkChord(SdkPitchClass.C, SdkChordQuality.Major);
+
+        // Act
+        var tension = SdkHarmonicFunctionAnalyzer.CalculateHarmonicTension(cMajor, scale);
+
+        // Assert
+        Assert.Equal(0.0, tension);
+    }
+
+    [Fact]
+    public void CalculateHarmonicTension_Dominant_ReturnsHigherTension()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var gMajor = new SdkChord(SdkPitchClass.G, SdkChordQuality.Major);
+
+        // Act
+        var tension = SdkHarmonicFunctionAnalyzer.CalculateHarmonicTension(gMajor, scale);
+
+        // Assert
+        Assert.True(tension > 0.5);
+    }
+}
+
+/// <summary>
+/// Tests for RhythmicDensityAnalyzer.
+/// </summary>
+public class RhythmicDensityAnalyzerTests
+{
+    [Fact]
+    public void Analyze_EmptyNotes_ReturnsZeroDensity()
+    {
+        // Act
+        var result = SdkRhythmicDensityAnalyzer.Analyze([]);
+
+        // Assert
+        Assert.Equal(0, result.NotesPerBeat);
+        Assert.Equal(0, result.NormalizedDensity);
+        Assert.Equal(0, result.ActivityRatio);
+        Assert.Equal(SdkDensityCategory.VerySparse, result.Category);
+    }
+
+    [Fact]
+    public void Analyze_QuarterNotes_ReturnsModerateDensity()
+    {
+        // Arrange - 4 quarter notes at 480 PPQN = 1 note per beat
+        var notes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 480),
+            new(new SdkPitch(SdkPitchClass.D, 4), 480, 480),
+            new(new SdkPitch(SdkPitchClass.E, 4), 960, 480),
+            new(new SdkPitch(SdkPitchClass.F, 4), 1440, 480)
+        };
+
+        // Act
+        var result = SdkRhythmicDensityAnalyzer.Analyze(notes, 480);
+
+        // Assert
+        Assert.Equal(1.0, result.NotesPerBeat, 2);
+        Assert.Equal(SdkDensityCategory.Moderate, result.Category);
+    }
+
+    [Fact]
+    public void Analyze_EighthNotes_ReturnsModerateDensity()
+    {
+        // Arrange - 8 eighth notes at 480 PPQN = 2 notes per beat
+        var notes = new List<SdkMelodyNote>();
+        for (var i = 0; i < 8; i++)
+        {
+            notes.Add(new SdkMelodyNote(
+                new SdkPitch(SdkPitchClass.C, 4),
+                i * 240,  // Each 240 ticks apart
+                240       // Duration of 240 ticks
+            ));
+        }
+
+        // Act
+        var result = SdkRhythmicDensityAnalyzer.Analyze(notes, 480);
+
+        // Assert
+        Assert.Equal(2.0, result.NotesPerBeat, 2);
+        Assert.Equal(SdkDensityCategory.Dense, result.Category);
+    }
+
+    [Fact]
+    public void Analyze_SixteenthNotes_ReturnsDensity()
+    {
+        // Arrange - 16 sixteenth notes at 480 PPQN = 4 notes per beat
+        var notes = new List<SdkMelodyNote>();
+        for (var i = 0; i < 16; i++)
+        {
+            notes.Add(new SdkMelodyNote(
+                new SdkPitch(SdkPitchClass.C, 4),
+                i * 120,  // Each 120 ticks apart
+                120       // Duration of 120 ticks
+            ));
+        }
+
+        // Act
+        var result = SdkRhythmicDensityAnalyzer.Analyze(notes, 480);
+
+        // Assert
+        Assert.Equal(4.0, result.NotesPerBeat, 2);
+        Assert.Equal(SdkDensityCategory.VeryDense, result.Category);
+    }
+
+    [Fact]
+    public void Analyze_HalfNotes_ReturnsSparse()
+    {
+        // Arrange - 2 half notes at 480 PPQN = 0.5 notes per beat
+        var notes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 960),
+            new(new SdkPitch(SdkPitchClass.D, 4), 960, 960)
+        };
+
+        // Act
+        var result = SdkRhythmicDensityAnalyzer.Analyze(notes, 480);
+
+        // Assert
+        Assert.Equal(0.5, result.NotesPerBeat, 2);
+        Assert.Equal(SdkDensityCategory.Sparse, result.Category);
+    }
+
+    [Fact]
+    public void CalculateWindowDensity_ReturnsCorrectDensity()
+    {
+        // Arrange - 4 notes in first 2 beats, none in second 2 beats
+        var notes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 240),
+            new(new SdkPitch(SdkPitchClass.D, 4), 240, 240),
+            new(new SdkPitch(SdkPitchClass.E, 4), 480, 240),
+            new(new SdkPitch(SdkPitchClass.F, 4), 720, 240)
+        };
+
+        // Act - window is first 2 beats
+        var density = SdkRhythmicDensityAnalyzer.CalculateWindowDensity(notes, 0, 960, 480);
+
+        // Assert - 4 notes in 2 beats = 2 notes per beat
+        Assert.Equal(2.0, density);
+    }
+
+    [Fact]
+    public void CalculateDensityProfile_ReturnsCorrectProfile()
+    {
+        // Arrange - dense first beat, sparse second beat
+        var notes = new List<SdkMelodyNote>
+        {
+            // First beat: 4 notes
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 120),
+            new(new SdkPitch(SdkPitchClass.D, 4), 120, 120),
+            new(new SdkPitch(SdkPitchClass.E, 4), 240, 120),
+            new(new SdkPitch(SdkPitchClass.F, 4), 360, 120),
+            // Second beat: 1 note
+            new(new SdkPitch(SdkPitchClass.G, 4), 480, 480)
+        };
+
+        // Act
+        var profile = SdkRhythmicDensityAnalyzer.CalculateDensityProfile(notes, windowBeats: 1.0, ticksPerBeat: 480);
+
+        // Assert
+        Assert.Equal(2, profile.Count);
+        Assert.Equal(4.0, profile[0]); // First beat: 4 notes
+        Assert.Equal(1.0, profile[1]); // Second beat: 1 note
+    }
+
+    [Fact]
+    public void SuggestNotesPerBeat_MapsCorrectly()
+    {
+        // Sparse
+        Assert.Equal(0.5, SdkRhythmicDensityAnalyzer.SuggestNotesPerBeat(0.0));
+
+        // Dense
+        Assert.Equal(4.0, SdkRhythmicDensityAnalyzer.SuggestNotesPerBeat(1.0));
+
+        // Middle
+        Assert.Equal(2.25, SdkRhythmicDensityAnalyzer.SuggestNotesPerBeat(0.5), 2);
+    }
+
+    [Fact]
+    public void DensityCategory_ValuesAreCorrect()
+    {
+        // Assert enum values
+        Assert.Equal(0, (int)SdkDensityCategory.VerySparse);
+        Assert.Equal(1, (int)SdkDensityCategory.Sparse);
+        Assert.Equal(2, (int)SdkDensityCategory.Moderate);
+        Assert.Equal(3, (int)SdkDensityCategory.Dense);
+        Assert.Equal(4, (int)SdkDensityCategory.VeryDense);
     }
 }

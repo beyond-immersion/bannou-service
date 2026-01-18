@@ -1,6 +1,113 @@
 using BeyondImmersion.Bannou.MusicTheory.Pitch;
+using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.Bannou.MusicTheory.Melody;
+
+/// <summary>
+/// Types of motif transformations that can be applied.
+/// </summary>
+public enum MotifTransformation
+{
+    /// <summary>Original motif, unmodified</summary>
+    Original,
+
+    /// <summary>Transposed to a different pitch level</summary>
+    Transpose,
+
+    /// <summary>Intervals inverted (flipped around axis)</summary>
+    Invert,
+
+    /// <summary>Played backwards</summary>
+    Retrograde,
+
+    /// <summary>Retrograde inversion (both reversed and inverted)</summary>
+    RetrogradeInvert,
+
+    /// <summary>Durations lengthened (augmentation)</summary>
+    Augment,
+
+    /// <summary>Durations shortened (diminution)</summary>
+    Diminish,
+
+    /// <summary>Repeated at different pitch levels (sequence)</summary>
+    Sequence,
+
+    /// <summary>Truncated/fragmented version</summary>
+    Fragment
+}
+
+/// <summary>
+/// Record of a transformation applied to a motif.
+/// </summary>
+public sealed class MotifTransformationRecord
+{
+    /// <summary>
+    /// The type of transformation applied.
+    /// </summary>
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public MotifTransformation Type { get; }
+
+    /// <summary>
+    /// Parameter for the transformation (e.g., semitones for transpose, factor for augment).
+    /// </summary>
+    [JsonPropertyName("parameter")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Parameter { get; }
+
+    /// <summary>
+    /// Creates a transformation record.
+    /// </summary>
+    [JsonConstructor]
+    public MotifTransformationRecord(MotifTransformation type, double? parameter = null)
+    {
+        Type = type;
+        Parameter = parameter;
+    }
+
+    /// <summary>
+    /// Original (no transformation).
+    /// </summary>
+    public static MotifTransformationRecord Original => new(MotifTransformation.Original);
+
+    /// <summary>
+    /// Transposition by semitones.
+    /// </summary>
+    public static MotifTransformationRecord Transposed(int semitones) =>
+        new(MotifTransformation.Transpose, semitones);
+
+    /// <summary>
+    /// Inversion.
+    /// </summary>
+    public static MotifTransformationRecord Inverted => new(MotifTransformation.Invert);
+
+    /// <summary>
+    /// Retrograde.
+    /// </summary>
+    public static MotifTransformationRecord Reversed => new(MotifTransformation.Retrograde);
+
+    /// <summary>
+    /// Augmentation by factor.
+    /// </summary>
+    public static MotifTransformationRecord Augmented(double factor = 2.0) =>
+        new(MotifTransformation.Augment, factor);
+
+    /// <summary>
+    /// Diminution by factor.
+    /// </summary>
+    public static MotifTransformationRecord Diminished(double factor = 2.0) =>
+        new(MotifTransformation.Diminish, factor);
+
+    /// <summary>
+    /// Sequence with step interval.
+    /// </summary>
+    public static MotifTransformationRecord Sequenced(int step) =>
+        new(MotifTransformation.Sequence, step);
+
+    public override string ToString() => Parameter.HasValue
+        ? $"{Type}({Parameter.Value})"
+        : Type.ToString();
+}
 
 /// <summary>
 /// Represents a melodic motif - a short thematic fragment that can be developed.

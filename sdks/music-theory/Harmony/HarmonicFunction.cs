@@ -165,6 +165,175 @@ public sealed class HarmonicFunction
 }
 
 /// <summary>
+/// Analyzes harmonic function of chords in context.
+/// </summary>
+public static class HarmonicFunctionAnalyzer
+{
+    /// <summary>
+    /// Analyzes the harmonic function of a chord in a given key.
+    /// </summary>
+    /// <param name="chord">The chord to analyze.</param>
+    /// <param name="key">The key/scale context.</param>
+    /// <returns>The harmonic function, or null if the chord is non-diatonic.</returns>
+    public static HarmonicFunction? Analyze(Chord chord, Scale key)
+    {
+        // Find the scale degree of the chord root
+        var degree = FindScaleDegree(chord.Root, key);
+        if (degree == null)
+        {
+            return null; // Non-diatonic root
+        }
+
+        var isMajorKey = key.Mode == ModeType.Major || key.Mode == ModeType.Mixolydian ||
+                         key.Mode == ModeType.Lydian;
+
+        return isMajorKey
+            ? HarmonicFunction.Major.ForDegree(degree.Value)
+            : HarmonicFunction.Minor.ForDegree(degree.Value);
+    }
+
+    /// <summary>
+    /// Analyzes the harmonic function type of a chord in a given key.
+    /// </summary>
+    /// <param name="chord">The chord to analyze.</param>
+    /// <param name="key">The key/scale context.</param>
+    /// <returns>The function type (Tonic, Subdominant, Dominant).</returns>
+    public static HarmonicFunctionType AnalyzeFunctionType(Chord chord, Scale key)
+    {
+        var function = Analyze(chord, key);
+        return function?.Type ?? HarmonicFunctionType.Tonic;
+    }
+
+    /// <summary>
+    /// Finds the scale degree (1-7) of a pitch class in a scale.
+    /// </summary>
+    /// <param name="pitchClass">The pitch class to find.</param>
+    /// <param name="scale">The scale.</param>
+    /// <returns>The scale degree (1-7), or null if not in scale.</returns>
+    public static int? FindScaleDegree(PitchClass pitchClass, Scale scale)
+    {
+        var scalePitches = scale.PitchClasses.ToList();
+        for (var i = 0; i < scalePitches.Count; i++)
+        {
+            if (scalePitches[i] == pitchClass)
+            {
+                return i + 1; // Degrees are 1-based
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Calculates tonal stability based on harmonic context.
+    /// </summary>
+    /// <param name="chord">The current chord.</param>
+    /// <param name="key">The key context.</param>
+    /// <returns>Stability score from 0 (unstable) to 1 (stable).</returns>
+    public static double CalculateTonalStability(Chord chord, Scale key)
+    {
+        var function = Analyze(chord, key);
+        if (function == null)
+        {
+            // Non-diatonic chord - lower stability
+            return 0.3;
+        }
+
+        return function.Type switch
+        {
+            HarmonicFunctionType.Tonic => function.IsPrimary ? 1.0 : 0.8,
+            HarmonicFunctionType.Subdominant => function.IsPrimary ? 0.6 : 0.5,
+            HarmonicFunctionType.Dominant => function.IsPrimary ? 0.4 : 0.3,
+            _ => 0.5
+        };
+    }
+
+    /// <summary>
+    /// Detects if a chord progression ends with a cadence.
+    /// </summary>
+    /// <param name="chords">The chord sequence.</param>
+    /// <param name="key">The key context.</param>
+    /// <returns>The detected cadence type, or null if no cadence detected.</returns>
+    public static CadenceType? DetectCadence(IReadOnlyList<Chord> chords, Scale key)
+    {
+        if (chords.Count < 2)
+        {
+            return null;
+        }
+
+        var lastChord = chords[^1];
+        var secondLastChord = chords[^2];
+
+        var lastDegree = FindScaleDegree(lastChord.Root, key);
+        var secondLastDegree = FindScaleDegree(secondLastChord.Root, key);
+
+        if (lastDegree == null || secondLastDegree == null)
+        {
+            return null;
+        }
+
+        // V - I = Authentic
+        if (secondLastDegree == 5 && lastDegree == 1)
+        {
+            return CadenceType.AuthenticPerfect;
+        }
+
+        // IV - I = Plagal
+        if (secondLastDegree == 4 && lastDegree == 1)
+        {
+            return CadenceType.Plagal;
+        }
+
+        // any - V = Half
+        if (lastDegree == 5)
+        {
+            return CadenceType.Half;
+        }
+
+        // V - vi = Deceptive
+        if (secondLastDegree == 5 && lastDegree == 6)
+        {
+            return CadenceType.Deceptive;
+        }
+
+        // vii° - I = Leading tone
+        if (secondLastDegree == 7 && lastDegree == 1)
+        {
+            return CadenceType.LeadingTone;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Calculates the harmonic tension of a chord in context.
+    /// </summary>
+    /// <param name="chord">The chord.</param>
+    /// <param name="key">The key context.</param>
+    /// <returns>Tension score from 0 (resolved) to 1 (maximum tension).</returns>
+    public static double CalculateHarmonicTension(Chord chord, Scale key)
+    {
+        var baseTension = 1.0 - CalculateTonalStability(chord, key);
+
+        // Add tension for chord extensions
+        var extensionCount = chord.PitchClasses.Count - 3;
+        if (extensionCount > 0)
+        {
+            baseTension = Math.Min(1.0, baseTension + extensionCount * 0.1);
+        }
+
+        // Add tension for diminished/augmented qualities
+        if (chord.Quality == ChordQuality.Diminished ||
+            chord.Quality == ChordQuality.Augmented)
+        {
+            baseTension = Math.Min(1.0, baseTension + 0.2);
+        }
+
+        return baseTension;
+    }
+}
+
+/// <summary>
 /// Types of cadences.
 /// </summary>
 public enum CadenceType

@@ -30,6 +30,167 @@ public enum ContourShape
 }
 
 /// <summary>
+/// Melodic register describing pitch range usage.
+/// </summary>
+public enum MelodicRegister
+{
+    /// <summary>Predominantly in lower third of range</summary>
+    Low,
+
+    /// <summary>Predominantly in middle third of range</summary>
+    Middle,
+
+    /// <summary>Predominantly in upper third of range</summary>
+    High,
+
+    /// <summary>Full range with expanding motion outward</summary>
+    Expanding,
+
+    /// <summary>Range contracting toward center</summary>
+    Contracting,
+
+    /// <summary>Moving from low to high register</summary>
+    Ascending,
+
+    /// <summary>Moving from high to low register</summary>
+    Descending,
+
+    /// <summary>Full range usage throughout</summary>
+    Full
+}
+
+/// <summary>
+/// Utilities for analyzing melodic register.
+/// </summary>
+public static class RegisterAnalysis
+{
+    /// <summary>
+    /// Analyzes the register usage of a melody.
+    /// </summary>
+    /// <param name="midiNotes">MIDI note numbers.</param>
+    /// <param name="rangeMin">Minimum of available range.</param>
+    /// <param name="rangeMax">Maximum of available range.</param>
+    /// <returns>The detected register.</returns>
+    public static MelodicRegister Analyze(IReadOnlyList<int> midiNotes, int rangeMin, int rangeMax)
+    {
+        if (midiNotes.Count == 0)
+        {
+            return MelodicRegister.Middle;
+        }
+
+        var rangeSize = rangeMax - rangeMin;
+        if (rangeSize <= 0)
+        {
+            return MelodicRegister.Middle;
+        }
+
+        var lowThreshold = rangeMin + rangeSize / 3.0;
+        var highThreshold = rangeMin + 2 * rangeSize / 3.0;
+
+        var lowCount = 0;
+        var midCount = 0;
+        var highCount = 0;
+
+        foreach (var note in midiNotes)
+        {
+            if (note < lowThreshold)
+            {
+                lowCount++;
+            }
+            else if (note > highThreshold)
+            {
+                highCount++;
+            }
+            else
+            {
+                midCount++;
+            }
+        }
+
+        var total = midiNotes.Count;
+        var lowPct = (double)lowCount / total;
+        var midPct = (double)midCount / total;
+        var highPct = (double)highCount / total;
+
+        // Check for expanding/contracting by comparing first and last halves
+        if (midiNotes.Count >= 4)
+        {
+            var firstHalf = midiNotes.Take(midiNotes.Count / 2).ToList();
+            var secondHalf = midiNotes.Skip(midiNotes.Count / 2).ToList();
+
+            var firstRange = firstHalf.Max() - firstHalf.Min();
+            var secondRange = secondHalf.Max() - secondHalf.Min();
+
+            if (secondRange > firstRange * 1.5)
+            {
+                return MelodicRegister.Expanding;
+            }
+
+            if (firstRange > secondRange * 1.5)
+            {
+                return MelodicRegister.Contracting;
+            }
+
+            // Check for ascending/descending register shift
+            var firstAvg = firstHalf.Average();
+            var secondAvg = secondHalf.Average();
+            var avgDiff = secondAvg - firstAvg;
+
+            if (avgDiff > rangeSize * 0.2)
+            {
+                return MelodicRegister.Ascending;
+            }
+
+            if (avgDiff < -rangeSize * 0.2)
+            {
+                return MelodicRegister.Descending;
+            }
+        }
+
+        // Check for predominant register
+        if (lowPct > 0.5)
+        {
+            return MelodicRegister.Low;
+        }
+
+        if (highPct > 0.5)
+        {
+            return MelodicRegister.High;
+        }
+
+        if (midPct > 0.5)
+        {
+            return MelodicRegister.Middle;
+        }
+
+        // Distributed across range
+        return MelodicRegister.Full;
+    }
+
+    /// <summary>
+    /// Gets a target pitch position (0-1) for a register.
+    /// </summary>
+    /// <param name="register">The target register.</param>
+    /// <param name="position">Normalized position in phrase (0-1).</param>
+    /// <returns>Target pitch position within range (0=low, 1=high).</returns>
+    public static double GetTargetPosition(MelodicRegister register, double position)
+    {
+        return register switch
+        {
+            MelodicRegister.Low => 0.2 + position * 0.1,
+            MelodicRegister.Middle => 0.4 + position * 0.2,
+            MelodicRegister.High => 0.7 + position * 0.2,
+            MelodicRegister.Expanding => 0.5 + (position - 0.5) * position,
+            MelodicRegister.Contracting => 0.5 - (position - 0.5) * (1 - position) * 0.5,
+            MelodicRegister.Ascending => 0.2 + position * 0.6,
+            MelodicRegister.Descending => 0.8 - position * 0.6,
+            MelodicRegister.Full => 0.5,
+            _ => 0.5
+        };
+    }
+}
+
+/// <summary>
 /// Defines melodic contour rules and analysis.
 /// </summary>
 public sealed class Contour
@@ -279,5 +440,190 @@ public sealed class IntervalPreferences
         }
 
         return random.Next(8, 13); // m6 to P8
+    }
+}
+
+/// <summary>
+/// Result of melodic density analysis.
+/// </summary>
+public sealed class DensityAnalysis
+{
+    /// <summary>
+    /// Notes per beat (average).
+    /// </summary>
+    public double NotesPerBeat { get; init; }
+
+    /// <summary>
+    /// Normalized density from 0 (very sparse) to 1 (very dense).
+    /// </summary>
+    public double NormalizedDensity { get; init; }
+
+    /// <summary>
+    /// Percentage of time with active notes (vs. rests).
+    /// </summary>
+    public double ActivityRatio { get; init; }
+
+    /// <summary>
+    /// Average note duration in ticks.
+    /// </summary>
+    public double AverageNoteDuration { get; init; }
+
+    /// <summary>
+    /// Descriptive category for the density.
+    /// </summary>
+    public DensityCategory Category { get; init; }
+}
+
+/// <summary>
+/// Categories of rhythmic density.
+/// </summary>
+public enum DensityCategory
+{
+    /// <summary>Very sparse with long notes and rests (less than 0.5 notes/beat)</summary>
+    VerySparse,
+
+    /// <summary>Sparse melodic texture (0.5-1 notes/beat)</summary>
+    Sparse,
+
+    /// <summary>Moderate density (1-2 notes/beat)</summary>
+    Moderate,
+
+    /// <summary>Dense texture (2-4 notes/beat)</summary>
+    Dense,
+
+    /// <summary>Very dense with many short notes (more than 4 notes/beat)</summary>
+    VeryDense
+}
+
+/// <summary>
+/// Utilities for analyzing rhythmic density.
+/// </summary>
+public static class RhythmicDensityAnalyzer
+{
+    /// <summary>
+    /// Analyzes the rhythmic density of a melody.
+    /// </summary>
+    /// <param name="notes">The melody notes.</param>
+    /// <param name="ticksPerBeat">Ticks per beat (PPQN).</param>
+    /// <returns>Density analysis results.</returns>
+    public static DensityAnalysis Analyze(IReadOnlyList<MelodyNote> notes, int ticksPerBeat = 480)
+    {
+        if (notes.Count == 0)
+        {
+            return new DensityAnalysis
+            {
+                NotesPerBeat = 0,
+                NormalizedDensity = 0,
+                ActivityRatio = 0,
+                AverageNoteDuration = 0,
+                Category = DensityCategory.VerySparse
+            };
+        }
+
+        // Calculate total duration span
+        var firstNoteStart = notes.Min(n => n.StartTick);
+        var lastNoteEnd = notes.Max(n => n.EndTick);
+        var totalTicks = lastNoteEnd - firstNoteStart;
+
+        if (totalTicks <= 0)
+        {
+            totalTicks = notes.Sum(n => n.DurationTicks);
+        }
+
+        var totalBeats = (double)totalTicks / ticksPerBeat;
+        var notesPerBeat = totalBeats > 0 ? notes.Count / totalBeats : 0;
+
+        // Calculate activity ratio (how much time has notes playing)
+        var totalNoteDuration = notes.Sum(n => n.DurationTicks);
+        var activityRatio = totalTicks > 0 ? Math.Min(1.0, (double)totalNoteDuration / totalTicks) : 0;
+
+        // Average note duration
+        var avgDuration = notes.Count > 0 ? (double)totalNoteDuration / notes.Count : 0;
+
+        // Normalized density (0-1) based on typical ranges
+        // Reference: 1 note per beat = 0.5 density (quarter notes)
+        // 4 notes per beat = 1.0 density (sixteenth notes)
+        var normalizedDensity = Math.Min(1.0, notesPerBeat / 4.0);
+
+        // Determine category
+        var category = notesPerBeat switch
+        {
+            < 0.5 => DensityCategory.VerySparse,
+            < 1.0 => DensityCategory.Sparse,
+            < 2.0 => DensityCategory.Moderate,
+            < 4.0 => DensityCategory.Dense,
+            _ => DensityCategory.VeryDense
+        };
+
+        return new DensityAnalysis
+        {
+            NotesPerBeat = notesPerBeat,
+            NormalizedDensity = normalizedDensity,
+            ActivityRatio = activityRatio,
+            AverageNoteDuration = avgDuration,
+            Category = category
+        };
+    }
+
+    /// <summary>
+    /// Calculates the density of a specific time window within a melody.
+    /// </summary>
+    /// <param name="notes">The melody notes.</param>
+    /// <param name="startTick">Start of the window.</param>
+    /// <param name="endTick">End of the window.</param>
+    /// <param name="ticksPerBeat">Ticks per beat.</param>
+    /// <returns>Notes per beat in the window.</returns>
+    public static double CalculateWindowDensity(
+        IReadOnlyList<MelodyNote> notes,
+        int startTick,
+        int endTick,
+        int ticksPerBeat = 480)
+    {
+        var windowNotes = notes.Count(n => n.StartTick >= startTick && n.StartTick < endTick);
+        var windowBeats = (double)(endTick - startTick) / ticksPerBeat;
+
+        return windowBeats > 0 ? windowNotes / windowBeats : 0;
+    }
+
+    /// <summary>
+    /// Calculates the density variation across a melody.
+    /// </summary>
+    /// <param name="notes">The melody notes.</param>
+    /// <param name="windowBeats">Size of each analysis window in beats.</param>
+    /// <param name="ticksPerBeat">Ticks per beat.</param>
+    /// <returns>Density values for each window.</returns>
+    public static IReadOnlyList<double> CalculateDensityProfile(
+        IReadOnlyList<MelodyNote> notes,
+        double windowBeats = 1.0,
+        int ticksPerBeat = 480)
+    {
+        if (notes.Count == 0)
+        {
+            return [];
+        }
+
+        var windowTicks = (int)(windowBeats * ticksPerBeat);
+        var firstTick = notes.Min(n => n.StartTick);
+        var lastTick = notes.Max(n => n.EndTick);
+
+        var densities = new List<double>();
+        for (var tick = firstTick; tick < lastTick; tick += windowTicks)
+        {
+            var density = CalculateWindowDensity(notes, tick, tick + windowTicks, ticksPerBeat);
+            densities.Add(density);
+        }
+
+        return densities;
+    }
+
+    /// <summary>
+    /// Suggests a target density based on a normalized value (0-1).
+    /// </summary>
+    /// <param name="normalizedDensity">Target density (0 = sparse, 1 = dense).</param>
+    /// <returns>Target notes per beat.</returns>
+    public static double SuggestNotesPerBeat(double normalizedDensity)
+    {
+        // Maps 0-1 to approximately 0.5-4 notes per beat
+        return 0.5 + normalizedDensity * 3.5;
     }
 }

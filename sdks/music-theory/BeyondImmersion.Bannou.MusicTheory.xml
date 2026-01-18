@@ -516,6 +516,59 @@
             <param name="seventh">Whether to include the seventh.</param>
             <returns>The diatonic chord.</returns>
         </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer">
+            <summary>
+            Analyzes harmonic function of chords in context.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.Analyze(BeyondImmersion.Bannou.MusicTheory.Collections.Chord,BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Analyzes the harmonic function of a chord in a given key.
+            </summary>
+            <param name="chord">The chord to analyze.</param>
+            <param name="key">The key/scale context.</param>
+            <returns>The harmonic function, or null if the chord is non-diatonic.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.AnalyzeFunctionType(BeyondImmersion.Bannou.MusicTheory.Collections.Chord,BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Analyzes the harmonic function type of a chord in a given key.
+            </summary>
+            <param name="chord">The chord to analyze.</param>
+            <param name="key">The key/scale context.</param>
+            <returns>The function type (Tonic, Subdominant, Dominant).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.FindScaleDegree(BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass,BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Finds the scale degree (1-7) of a pitch class in a scale.
+            </summary>
+            <param name="pitchClass">The pitch class to find.</param>
+            <param name="scale">The scale.</param>
+            <returns>The scale degree (1-7), or null if not in scale.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.CalculateTonalStability(BeyondImmersion.Bannou.MusicTheory.Collections.Chord,BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Calculates tonal stability based on harmonic context.
+            </summary>
+            <param name="chord">The current chord.</param>
+            <param name="key">The key context.</param>
+            <returns>Stability score from 0 (unstable) to 1 (stable).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.DetectCadence(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Collections.Chord},BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Detects if a chord progression ends with a cadence.
+            </summary>
+            <param name="chords">The chord sequence.</param>
+            <param name="key">The key context.</param>
+            <returns>The detected cadence type, or null if no cadence detected.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer.CalculateHarmonicTension(BeyondImmersion.Bannou.MusicTheory.Collections.Chord,BeyondImmersion.Bannou.MusicTheory.Collections.Scale)">
+            <summary>
+            Calculates the harmonic tension of a chord in context.
+            </summary>
+            <param name="chord">The chord.</param>
+            <param name="key">The key context.</param>
+            <returns>Tension score from 0 (resolved) to 1 (maximum tension).</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.CadenceType">
             <summary>
             Types of cadences.
@@ -873,6 +926,57 @@
         <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape.Free">
             <summary>Random/unpredictable</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister">
+            <summary>
+            Melodic register describing pitch range usage.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Low">
+            <summary>Predominantly in lower third of range</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Middle">
+            <summary>Predominantly in middle third of range</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.High">
+            <summary>Predominantly in upper third of range</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Expanding">
+            <summary>Full range with expanding motion outward</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Contracting">
+            <summary>Range contracting toward center</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Ascending">
+            <summary>Moving from low to high register</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Descending">
+            <summary>Moving from high to low register</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister.Full">
+            <summary>Full range usage throughout</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.RegisterAnalysis">
+            <summary>
+            Utilities for analyzing melodic register.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RegisterAnalysis.Analyze(System.Collections.Generic.IReadOnlyList{System.Int32},System.Int32,System.Int32)">
+            <summary>
+            Analyzes the register usage of a melody.
+            </summary>
+            <param name="midiNotes">MIDI note numbers.</param>
+            <param name="rangeMin">Minimum of available range.</param>
+            <param name="rangeMax">Maximum of available range.</param>
+            <returns>The detected register.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RegisterAnalysis.GetTargetPosition(BeyondImmersion.Bannou.MusicTheory.Melody.MelodicRegister,System.Double)">
+            <summary>
+            Gets a target pitch position (0-1) for a register.
+            </summary>
+            <param name="register">The target register.</param>
+            <param name="position">Normalized position in phrase (0-1).</param>
+            <returns>Target pitch position within range (0=low, 1=high).</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.Contour">
             <summary>
             Defines melodic contour rules and analysis.
@@ -962,6 +1066,95 @@
             </summary>
             <param name="random">Random number generator.</param>
             <returns>Selected interval in semitones (absolute value).</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis">
+            <summary>
+            Result of melodic density analysis.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis.NotesPerBeat">
+            <summary>
+            Notes per beat (average).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis.NormalizedDensity">
+            <summary>
+            Normalized density from 0 (very sparse) to 1 (very dense).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis.ActivityRatio">
+            <summary>
+            Percentage of time with active notes (vs. rests).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis.AverageNoteDuration">
+            <summary>
+            Average note duration in ticks.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.DensityAnalysis.Category">
+            <summary>
+            Descriptive category for the density.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory">
+            <summary>
+            Categories of rhythmic density.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory.VerySparse">
+            <summary>Very sparse with long notes and rests (less than 0.5 notes/beat)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory.Sparse">
+            <summary>Sparse melodic texture (0.5-1 notes/beat)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory.Moderate">
+            <summary>Moderate density (1-2 notes/beat)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory.Dense">
+            <summary>Dense texture (2-4 notes/beat)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.DensityCategory.VeryDense">
+            <summary>Very dense with many short notes (more than 4 notes/beat)</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer">
+            <summary>
+            Utilities for analyzing rhythmic density.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer.Analyze(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote},System.Int32)">
+            <summary>
+            Analyzes the rhythmic density of a melody.
+            </summary>
+            <param name="notes">The melody notes.</param>
+            <param name="ticksPerBeat">Ticks per beat (PPQN).</param>
+            <returns>Density analysis results.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer.CalculateWindowDensity(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote},System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Calculates the density of a specific time window within a melody.
+            </summary>
+            <param name="notes">The melody notes.</param>
+            <param name="startTick">Start of the window.</param>
+            <param name="endTick">End of the window.</param>
+            <param name="ticksPerBeat">Ticks per beat.</param>
+            <returns>Notes per beat in the window.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer.CalculateDensityProfile(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote},System.Double,System.Int32)">
+            <summary>
+            Calculates the density variation across a melody.
+            </summary>
+            <param name="notes">The melody notes.</param>
+            <param name="windowBeats">Size of each analysis window in beats.</param>
+            <param name="ticksPerBeat">Ticks per beat.</param>
+            <returns>Density values for each window.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.RhythmicDensityAnalyzer.SuggestNotesPerBeat(System.Double)">
+            <summary>
+            Suggests a target density based on a normalized value (0-1).
+            </summary>
+            <param name="normalizedDensity">Target density (0 = sparse, 1 = dense).</param>
+            <returns>Target notes per beat.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote">
             <summary>
@@ -1095,6 +1288,93 @@
         <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator.FindNearestScalePitch(System.Int32,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch},BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange)">
             <summary>
             Finds the nearest pitch in scalePitches to the target MIDI number.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation">
+            <summary>
+            Types of motif transformations that can be applied.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Original">
+            <summary>Original motif, unmodified</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Transpose">
+            <summary>Transposed to a different pitch level</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Invert">
+            <summary>Intervals inverted (flipped around axis)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Retrograde">
+            <summary>Played backwards</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.RetrogradeInvert">
+            <summary>Retrograde inversion (both reversed and inverted)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Augment">
+            <summary>Durations lengthened (augmentation)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Diminish">
+            <summary>Durations shortened (diminution)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Sequence">
+            <summary>Repeated at different pitch levels (sequence)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation.Fragment">
+            <summary>Truncated/fragmented version</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord">
+            <summary>
+            Record of a transformation applied to a motif.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Type">
+            <summary>
+            The type of transformation applied.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Parameter">
+            <summary>
+            Parameter for the transformation (e.g., semitones for transpose, factor for augment).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.#ctor(BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformation,System.Nullable{System.Double})">
+            <summary>
+            Creates a transformation record.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Original">
+            <summary>
+            Original (no transformation).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Transposed(System.Int32)">
+            <summary>
+            Transposition by semitones.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Inverted">
+            <summary>
+            Inversion.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Reversed">
+            <summary>
+            Retrograde.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Augmented(System.Double)">
+            <summary>
+            Augmentation by factor.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Diminished(System.Double)">
+            <summary>
+            Diminution by factor.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.Sequenced(System.Int32)">
+            <summary>
+            Sequence with step interval.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.Motif">
