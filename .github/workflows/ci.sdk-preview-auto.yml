@@ -72,6 +72,9 @@ jobs:
             "sdks/asset-loader-server"
             "sdks/asset-loader-stride"
             "sdks/asset-loader-godot"
+            # Music generation SDKs
+            "sdks/music-theory"
+            "sdks/music-storyteller"
           )
 
           for PROJECT in "${SDK_PROJECTS[@]}"; do
