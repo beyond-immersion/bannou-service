@@ -1,6 +1,6 @@
-using System.Text.Json.Serialization;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Pitch;
+using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.Bannou.MusicTheory.Harmony;
 

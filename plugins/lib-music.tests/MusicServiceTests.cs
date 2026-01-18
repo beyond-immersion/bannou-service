@@ -1,10 +1,23 @@
 using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.TestUtilities;
+using SdkBuiltInMotifs = BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs;
 using SdkBuiltInStyles = BeyondImmersion.Bannou.MusicTheory.Style.BuiltInStyles;
+// Harmony module
+using SdkCadenceType = BeyondImmersion.Bannou.MusicTheory.Harmony.CadenceType;
 using SdkChord = BeyondImmersion.Bannou.MusicTheory.Collections.Chord;
 using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
+// Melody module (Contour, Motif, MotifLibrary)
+using SdkContour = BeyondImmersion.Bannou.MusicTheory.Melody.Contour;
 using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
+// Time module
+using SdkDuration = BeyondImmersion.Bannou.MusicTheory.Time.Duration;
+using SdkDurationValue = BeyondImmersion.Bannou.MusicTheory.Time.DurationValue;
+using SdkExpandedForm = BeyondImmersion.Bannou.MusicTheory.Structure.ExpandedForm;
+// Structure module
+using SdkForm = BeyondImmersion.Bannou.MusicTheory.Structure.Form;
+using SdkFormSection = BeyondImmersion.Bannou.MusicTheory.Structure.FormSection;
 using SdkInterval = BeyondImmersion.Bannou.MusicTheory.Pitch.Interval;
+using SdkIntervalPreferences = BeyondImmersion.Bannou.MusicTheory.Melody.IntervalPreferences;
 using SdkMelodyGenerator = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator;
 using SdkMelodyNote = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote;
 using SdkMelodyOptions = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions;
@@ -16,43 +29,30 @@ using SdkMidiJsonRenderer = BeyondImmersion.Bannou.MusicTheory.Output.MidiJsonRe
 using SdkMidiTrack = BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack;
 using SdkModeDistribution = BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution;
 using SdkModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
+using SdkMotif = BeyondImmersion.Bannou.MusicTheory.Melody.Motif;
+using SdkMotifCategory = BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory;
+using SdkMotifLibrary = BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary;
+using SdkNamedMotif = BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif;
+// Structure module - Phrase
+using SdkPhrase = BeyondImmersion.Bannou.MusicTheory.Structure.Phrase;
+using SdkPhraseBuilder = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseBuilder;
+using SdkPhraseType = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseType;
 using SdkPitch = BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch;
 // SDK types - fully qualified aliases to avoid collision with generated API models
 using SdkPitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
 using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
 using SdkProgressionChord = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord;
 using SdkProgressionGenerator = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionGenerator;
+using SdkRhythmPattern = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPattern;
+using SdkRhythmPatternSet = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPatternSet;
 using SdkScale = BeyondImmersion.Bannou.MusicTheory.Collections.Scale;
+using SdkSection = BeyondImmersion.Bannou.MusicTheory.Structure.Section;
 using SdkStyleDefinition = BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition;
 using SdkStyleLoader = BeyondImmersion.Bannou.MusicTheory.Style.StyleLoader;
 using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
 using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
 using SdkVoiceLeadingViolationType = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType;
 using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
-// Time module
-using SdkDuration = BeyondImmersion.Bannou.MusicTheory.Time.Duration;
-using SdkDurationValue = BeyondImmersion.Bannou.MusicTheory.Time.DurationValue;
-using SdkRhythmPattern = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPattern;
-using SdkRhythmPatternSet = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPatternSet;
-// Structure module
-using SdkForm = BeyondImmersion.Bannou.MusicTheory.Structure.Form;
-using SdkSection = BeyondImmersion.Bannou.MusicTheory.Structure.Section;
-using SdkExpandedForm = BeyondImmersion.Bannou.MusicTheory.Structure.ExpandedForm;
-// Melody module (Contour, Motif, MotifLibrary)
-using SdkContour = BeyondImmersion.Bannou.MusicTheory.Melody.Contour;
-using SdkIntervalPreferences = BeyondImmersion.Bannou.MusicTheory.Melody.IntervalPreferences;
-using SdkMotif = BeyondImmersion.Bannou.MusicTheory.Melody.Motif;
-using SdkMotifCategory = BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory;
-using SdkNamedMotif = BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif;
-using SdkMotifLibrary = BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary;
-using SdkBuiltInMotifs = BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs;
-// Harmony module
-using SdkCadenceType = BeyondImmersion.Bannou.MusicTheory.Harmony.CadenceType;
-// Structure module - Phrase
-using SdkPhrase = BeyondImmersion.Bannou.MusicTheory.Structure.Phrase;
-using SdkPhraseType = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseType;
-using SdkPhraseBuilder = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseBuilder;
-using SdkFormSection = BeyondImmersion.Bannou.MusicTheory.Structure.FormSection;
 
 namespace BeyondImmersion.BannouService.Music.Tests;
 

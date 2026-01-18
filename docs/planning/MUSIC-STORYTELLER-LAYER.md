@@ -1299,16 +1299,364 @@ listener_rules:
 
 ---
 
-## References
+## References and Research Findings
 
-*To be expanded with research findings*
-
-- Lerdahl & Jackendoff - "A Generative Theory of Tonal Music"
-- David Cope - "Computer Models of Musical Creativity"
-- Music psychology research on emotional dimensions
-- Studies of compositional process
-- Analysis of narrative in instrumental music
+This section documents the academic and practical research that informs the Storyteller layer design.
 
 ---
 
-*This document describes an architectural vision. Implementation details will evolve as we build and test.*
+### Compositional Process Theories
+
+#### How Composers Actually Work
+
+Research into compositional processes reveals that composers don't work linearly from start to finish, but navigate a space of possibilities guided by intent:
+
+**Constraint-Driven Exploration**: Stravinsky famously said "The more constraints one imposes, the more one frees oneself." Composers set up constraints (key, form, instrumentation, emotional target) and then explore within those boundaries. This validates our GOAP approach—the "goal" provides constraint, and planning finds paths within it.
+
+**Beethoven's Sketchbooks**: Analysis of Beethoven's compositional process shows he worked through multiple layers:
+1. Initial melodic "kernels" or motifs
+2. Harmonic skeleton
+3. Formal architecture
+4. Surface elaboration
+
+This maps directly to our hierarchical planning: narrative template → section goals → phrase actions → note selection.
+
+**Nick Collins' Research** (2008, "The Analysis of Generative Music Programs"): Validated that GOAP-style planning is appropriate for music, as composition inherently involves goal-oriented behavior with planning under constraints.
+
+**David Cope's EMI System**: While often criticized for being "merely recombinant," Cope's work demonstrated that musical coherence requires understanding of:
+- Signature patterns (our motifs)
+- Harmonic expectation (our progression model)
+- Voice leading (already implemented)
+- Contextual awareness (our CompositionState)
+
+#### The "Double Consciousness"
+
+Research on expert composers (both classical and contemporary) reveals what psychologists call "double consciousness"—the ability to be simultaneously *inside* the music (feeling it emotionally) and *outside* it (analyzing structure and craft).
+
+This directly informs our Listener Model. The composer must model the listener's experience while creating, anticipating:
+- What has the listener heard?
+- What does the listener expect?
+- How can I surprise them without losing them?
+
+---
+
+### Musical Emotion Frameworks
+
+#### The Valence-Arousal-Tension Model
+
+Psychology research consistently validates three primary dimensions of musical emotion:
+
+| Dimension | Description | Musical Correlates |
+|-----------|-------------|-------------------|
+| **Valence** | Positive/negative affect | Major/minor mode, consonance/dissonance, tempo |
+| **Arousal** | Activation level | Tempo, dynamics, note density, register |
+| **Tension** | Expectation/resolution | Harmonic distance, rhythmic syncopation, melodic contour |
+
+**Recommendation**: Add `valence` to our emotional state model:
+
+```csharp
+public class EmotionalState
+{
+    public double Tension { get; }    // 0-1: resolution to climax
+    public double Brightness { get; } // 0-1: dark to bright
+    public double Energy { get; }     // 0-1: calm to energetic
+    public double Warmth { get; }     // 0-1: distant to intimate
+    public double Stability { get; }  // 0-1: unstable to grounded
+    public double Valence { get; }    // 0-1: negative to positive (NEW)
+}
+```
+
+#### ITPRA Theory (David Huron, 2006)
+
+Huron's **Imagination-Tension-Prediction-Reaction-Appraisal** model explains how music creates emotion:
+
+1. **Imagination**: Listeners imagine what comes next (our expectation tracking)
+2. **Tension**: Uncertainty about predictions creates physiological tension
+3. **Prediction**: The brain constantly predicts the next event
+4. **Reaction**: Automatic response when prediction is confirmed or violated
+5. **Appraisal**: Conscious evaluation of the emotional experience
+
+**Key Insight**: Music generates emotion through the *interplay of expectation and outcome*. This validates our emphasis on the Listener Model tracking expectations.
+
+**Implementation Implications**:
+- Track predictability of current passage
+- Vary between predictable (comforting) and surprising (engaging)
+- Surprise without preparation → jarring
+- Prepared surprise → delight
+
+#### BRECVEMA Framework (Patrik Juslin)
+
+Juslin identified 8 psychological mechanisms through which music evokes emotion:
+
+| Mechanism | Description | Relevance |
+|-----------|-------------|-----------|
+| **Brain stem reflex** | Automatic response to loud/sudden | Dynamics, accents |
+| **Rhythmic entrainment** | Body syncs to beat | Tempo, pulse strength |
+| **Evaluative conditioning** | Learned associations | Genre conventions |
+| **Contagion** | Mimicking expressed emotion | Melodic contour, tempo |
+| **Visual imagery** | Music evokes images | Programmatic content |
+| **Episodic memory** | Personal associations | Style references |
+| **Musical expectancy** | Prediction/violation | Harmonic/melodic surprises |
+| **Aesthetic judgment** | Appreciation of craft | Sophistication, elegance |
+
+**For procedural generation**: We can directly influence Brain stem, Rhythmic entrainment, Contagion, and Musical expectancy. The others depend on listener context.
+
+---
+
+### Melodic Expectation Models
+
+#### Narmour's Implication-Realization (I-R) Model
+
+Eugene Narmour's theory explains how listeners form melodic expectations:
+
+**Core Principles**:
+1. **Registral Direction**: After a small interval, expect continuation in same direction
+2. **Intervallic Difference**: After a large interval, expect reversal or smaller interval
+3. **Registral Return**: Tendency to return to starting pitch
+4. **Closure**: Tension resolves on stable scale degrees
+
+**Implication Types**:
+- **Process** (P): Small interval implies continuation (C→D→E)
+- **Reversal** (R): Large interval implies reversal (C→G→F)
+- **Duplication** (D): Repeated note implies change coming
+- **Retrospective** (VR): Pattern clarifies in retrospect
+
+**Implementation**:
+```csharp
+public enum MelodicImplication
+{
+    Process,      // Continue direction
+    Reversal,     // Change direction
+    Duplication,  // Hold, then change
+    Closure       // Move toward tonic
+}
+
+public MelodicImplication GetImplication(int lastInterval, double phrasePosition)
+{
+    if (phrasePosition > 0.85) return MelodicImplication.Closure;
+    if (Math.Abs(lastInterval) <= 2) return MelodicImplication.Process;
+    if (Math.Abs(lastInterval) >= 5) return MelodicImplication.Reversal;
+    return MelodicImplication.Process;
+}
+```
+
+#### Tonal Tension Model (Lerdahl & Krumhansl)
+
+Quantifies harmonic tension based on:
+1. **Distance on Circle of Fifths**: More distant = more tension
+2. **Chord Quality**: Dissonance adds tension
+3. **Hierarchical Position**: Non-tonic chords are inherently tenser
+
+**Tension Calculation**:
+```
+tension = fifthsDistance(current, tonic) × 0.4 +
+          dissonanceLevel(current) × 0.3 +
+          metricalWeight(position) × 0.3
+```
+
+This validates our harmonic tension tracking in CompositionState.
+
+---
+
+### Generative Theory of Tonal Music (GTTM)
+
+Lerdahl & Jackendoff's foundational work establishes that musical understanding involves:
+
+1. **Grouping Structure**: Segmentation into phrases and sections
+2. **Metrical Structure**: Hierarchy of strong/weak beats
+3. **Time-Span Reduction**: Identifying structurally important events
+4. **Prolongational Reduction**: Tension/relaxation patterns
+
+**For the Storyteller**:
+- GTTM validates hierarchical structure (narrative → section → phrase)
+- Time-span reduction suggests which notes "matter" for the skeleton
+- Prolongational reduction maps directly to our tension curves
+
+**Well-Formedness Rules** (must be obeyed):
+- Phrases have clear boundaries
+- Metric accents align with grouping boundaries
+- Important events fall on strong beats
+
+**Preference Rules** (should be followed when possible):
+- Prefer parallel structures (A-A' over A-B)
+- Prefer balanced phrase lengths
+- Prefer smooth harmonic rhythm
+
+---
+
+### Topic Theory and Musical Semantics
+
+**Topic Theory** (Ratner, Agawu, Monelle) identifies conventional musical gestures that carry meaning:
+
+| Topic | Musical Features | Semantic Association |
+|-------|-----------------|---------------------|
+| **Pastoral** | 6/8, parallel thirds, drones | Countryside, innocence |
+| **Heroic** | Dotted rhythms, brass timbre, major | Triumph, nobility |
+| **Lament** | Descending chromatic bass, minor | Grief, tragedy |
+| **Hunt** | 6/8, horn fifths, galloping rhythm | Nobility, chase |
+| **March** | Duple meter, steady pulse, forte | Military, determination |
+| **Singing style** | Lyrical melody, simple accompaniment | Personal expression |
+
+**For Style-Specific Generation**: Topics provide a vocabulary of meaningful gestures. Celtic music has its own topics (jig rhythm = dance, slow air = lament).
+
+---
+
+### Composer Insights on Intent and Expression
+
+#### "Opening Windows, Not Painting Pictures"
+
+Contemporary film composers describe their role not as injecting emotion directly, but creating conditions for emotion to emerge in the listener:
+
+**Hans Zimmer**: "You don't write what's on screen. You write what's *not* on screen—the internal emotional experience."
+
+**John Williams**: "The music should reveal what the characters cannot say."
+
+**Ennio Morricone**: "Melody is the most direct path to the heart, but harmony provides the landscape it travels through."
+
+**For the Storyteller**: We're not encoding "sad" or "happy" directly. We're creating musical conditions that invite those feelings:
+- Minor mode + slow tempo + descending melody → invites sadness
+- The listener completes the emotional experience
+
+#### Constraint as Creative Tool
+
+**Austin Wintory** (Journey composer): "Every limitation I've ever been given has made the music better. Total freedom is terrifying."
+
+**Koji Kondo** (Nintendo): "The hardware limitations of early games forced me to find the essence of each melody. Every note had to justify its existence."
+
+**For procedural generation**: This validates aggressive constraint in our GOAP goals. The Storyteller shouldn't try to do everything—it should set tight constraints and explore deeply within them.
+
+#### The Architecture of Anticipation
+
+**Howard Shore**: "The Ring theme must be recognizable but never boring. Each statement reveals something new while confirming what the audience already knows."
+
+This describes the fundamental tension in narrative music:
+- **Recognition**: Listener connects to familiar material
+- **Development**: Material transforms, revealing new facets
+- **Satisfaction**: Expectations ultimately fulfilled (perhaps unexpectedly)
+
+---
+
+### Practical Implications for Implementation
+
+#### Emotional State Refinement
+
+Based on research, the emotional state model should include:
+
+```csharp
+public sealed class EmotionalState
+{
+    // Core dimensions (validated by psychology research)
+    public double Valence { get; }    // Positive/negative affect
+    public double Arousal { get; }    // Activation/energy level
+    public double Tension { get; }    // Expectation/resolution
+
+    // Derived dimensions (musical correlates)
+    public double Brightness { get; } // Mode, register, timbre-like
+    public double Stability { get; }  // Harmonic groundedness
+    public double Intimacy { get; }   // Distance/closeness
+}
+```
+
+#### Expectation Tracking
+
+Implement Narmour-style implication tracking:
+
+```csharp
+public sealed class ExpectationModel
+{
+    public double MelodicPredictability { get; }  // How expected was last note?
+    public double HarmonicPredictability { get; } // How expected was last chord?
+    public MelodicImplication CurrentImplication { get; }
+    public int SurprisesSinceLastResolution { get; }
+}
+```
+
+#### Topic Recognition
+
+Catalog topics by style for semantic coherence:
+
+```yaml
+# topics/celtic.yaml
+topics:
+  jig:
+    meter: 6/8
+    tempo_range: [100, 130]
+    semantic: dance, celebration
+  reel:
+    meter: 4/4
+    tempo_range: [100, 140]
+    semantic: energy, virtuosity
+  slow_air:
+    meter: 4/4
+    tempo_range: [60, 80]
+    semantic: lament, longing, memory
+```
+
+---
+
+### Key Academic Sources
+
+#### Core Theoretical Works
+
+1. **Lerdahl, F. & Jackendoff, R.** (1983). *A Generative Theory of Tonal Music*. MIT Press.
+   - Foundational text on musical grammar and hierarchy
+
+2. **Huron, D.** (2006). *Sweet Anticipation: Music and the Psychology of Expectation*. MIT Press.
+   - ITPRA theory, expectation as emotional engine
+
+3. **Narmour, E.** (1990). *The Analysis and Cognition of Basic Melodic Structures*. University of Chicago Press.
+   - Implication-Realization model for melodic expectation
+
+4. **Juslin, P. & Sloboda, J.** (2010). *Handbook of Music and Emotion*. Oxford University Press.
+   - BRECVEMA framework, comprehensive emotion research
+
+5. **Lerdahl, F.** (2001). *Tonal Pitch Space*. Oxford University Press.
+   - Quantitative tension model
+
+#### Computational Creativity
+
+6. **Cope, D.** (2005). *Computer Models of Musical Creativity*. MIT Press.
+   - Experiments in Musical Intelligence, recombinant approaches
+
+7. **Collins, N.** (2008). "The Analysis of Generative Music Programs."
+   - Framework for evaluating procedural music systems
+
+8. **Miranda, E. & Biles, J.** (2007). *Evolutionary Computer Music*. Springer.
+   - Genetic algorithms for music, fitness functions
+
+#### Music Psychology
+
+9. **Krumhansl, C.** (1990). *Cognitive Foundations of Musical Pitch*. Oxford University Press.
+   - Tonal hierarchies, key perception
+
+10. **Temperley, D.** (2007). *Music and Probability*. MIT Press.
+    - Probabilistic models of musical expectation
+
+11. **Meyer, L.B.** (1956). *Emotion and Meaning in Music*. University of Chicago Press.
+    - Foundational text on expectation and meaning
+
+#### Semiotics and Meaning
+
+12. **Monelle, R.** (2000). *The Sense of Music*. Princeton University Press.
+    - Topic theory and musical semantics
+
+13. **Hatten, R.** (1994). *Musical Meaning in Beethoven*. Indiana University Press.
+    - Markedness, topics, and expressive meaning
+
+---
+
+### Research Gaps and Future Directions
+
+1. **Cross-Cultural Emotion**: Most research focuses on Western tonal music. Celtic music emotion may have different correlates.
+
+2. **Procedural Narrative**: Little research exists on how procedural systems create coherent musical narratives. We are in novel territory.
+
+3. **Real-Time Adaptation**: How should the Storyteller adjust when listener context is unknown? (Game music problem)
+
+4. **Emergent Complexity**: How do simple rules create perceived complexity? This is the core challenge.
+
+5. **Evaluation Metrics**: How do we measure if the Storyteller is "working"? Subjective evaluation is essential but difficult to automate.
+
+---
+
+*This document describes an architectural vision informed by research. Implementation details will evolve as we build and test.*
