@@ -65,7 +65,7 @@ public static class ModePatterns
     {
         return mode switch
         {
-            ModeType.Major or ModeType.Major => [0, 2, 4, 5, 7, 9, 11],
+            ModeType.Major => [0, 2, 4, 5, 7, 9, 11],
             ModeType.Minor or ModeType.Aeolian => [0, 2, 3, 5, 7, 8, 10],
             ModeType.Dorian => [0, 2, 3, 5, 7, 9, 10],
             ModeType.Phrygian => [0, 1, 3, 5, 7, 8, 10],

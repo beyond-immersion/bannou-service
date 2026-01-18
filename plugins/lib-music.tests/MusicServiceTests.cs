@@ -29,6 +29,19 @@ using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
 using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
 using SdkVoiceLeadingViolationType = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType;
 using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
+// Time module
+using SdkDuration = BeyondImmersion.Bannou.MusicTheory.Time.Duration;
+using SdkDurationValue = BeyondImmersion.Bannou.MusicTheory.Time.DurationValue;
+using SdkRhythmPattern = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPattern;
+using SdkRhythmPatternSet = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPatternSet;
+// Structure module
+using SdkForm = BeyondImmersion.Bannou.MusicTheory.Structure.Form;
+using SdkSection = BeyondImmersion.Bannou.MusicTheory.Structure.Section;
+using SdkExpandedForm = BeyondImmersion.Bannou.MusicTheory.Structure.ExpandedForm;
+// Melody module (Contour, Motif)
+using SdkContour = BeyondImmersion.Bannou.MusicTheory.Melody.Contour;
+using SdkIntervalPreferences = BeyondImmersion.Bannou.MusicTheory.Melody.IntervalPreferences;
+using SdkMotif = BeyondImmersion.Bannou.MusicTheory.Melody.Motif;
 
 namespace BeyondImmersion.BannouService.Music.Tests;
 
@@ -772,5 +785,960 @@ public class VoiceLeadingTests
                 Assert.Contains(pitch.PitchClass, chordPitchClasses);
             });
         }
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Duration calculations.
+/// </summary>
+public class DurationTests
+{
+    [Fact]
+    public void Duration_QuarterNote_HasOnebeat()
+    {
+        // Arrange & Act
+        var quarter = SdkDuration.Common.Quarter;
+
+        // Assert
+        Assert.Equal(1.0, quarter.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_WholeNote_HasFourBeats()
+    {
+        // Arrange & Act
+        var whole = SdkDuration.Common.Whole;
+
+        // Assert
+        Assert.Equal(4.0, whole.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_HalfNote_HasTwoBeats()
+    {
+        // Arrange & Act
+        var half = SdkDuration.Common.Half;
+
+        // Assert
+        Assert.Equal(2.0, half.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_EighthNote_HasHalfBeat()
+    {
+        // Arrange & Act
+        var eighth = SdkDuration.Common.Eighth;
+
+        // Assert
+        Assert.Equal(0.5, eighth.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_DottedQuarter_HasOneAndHalfBeats()
+    {
+        // Arrange & Act
+        var dottedQuarter = SdkDuration.Common.DottedQuarter;
+
+        // Assert
+        Assert.Equal(1.5, dottedQuarter.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_EighthTriplet_HasCorrectDuration()
+    {
+        // Arrange & Act - Triplet eighths: 3 in the space of 2
+        var triplet = SdkDuration.Common.EighthTriplet;
+
+        // Assert - 0.5 * (2/3) = 0.333...
+        Assert.Equal(1.0 / 3.0, triplet.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_ToTicks_CalculatesCorrectly()
+    {
+        // Arrange
+        var quarter = SdkDuration.Common.Quarter;
+        var ticksPerBeat = 480;
+
+        // Act
+        var ticks = quarter.ToTicks(ticksPerBeat);
+
+        // Assert
+        Assert.Equal(480, ticks);
+    }
+
+    [Fact]
+    public void Duration_ToTicks_EighthNote_IsHalf()
+    {
+        // Arrange
+        var eighth = SdkDuration.Common.Eighth;
+        var ticksPerBeat = 480;
+
+        // Act
+        var ticks = eighth.ToTicks(ticksPerBeat);
+
+        // Assert
+        Assert.Equal(240, ticks);
+    }
+
+    [Fact]
+    public void Duration_AsTriplet_ModifiesDuration()
+    {
+        // Arrange
+        var quarter = SdkDuration.Common.Quarter;
+
+        // Act
+        var triplet = quarter.AsTriplet();
+
+        // Assert - Quarter triplet: 3 in the space of 2 quarter notes
+        Assert.Equal(2.0 / 3.0, triplet.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_Dotted_AddsDot()
+    {
+        // Arrange
+        var quarter = SdkDuration.Common.Quarter;
+
+        // Act
+        var dotted = quarter.Dotted();
+
+        // Assert
+        Assert.Equal(1, dotted.Dots);
+        Assert.Equal(1.5, dotted.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_FromBeats_ReturnsClosestMatch()
+    {
+        // Act
+        var duration1 = SdkDuration.FromBeats(1.0);
+        var duration2 = SdkDuration.FromBeats(2.0);
+        var duration4 = SdkDuration.FromBeats(4.0);
+
+        // Assert
+        Assert.Equal(1.0, duration1.Beats, 3);
+        Assert.Equal(2.0, duration2.Beats, 3);
+        Assert.Equal(4.0, duration4.Beats, 3);
+    }
+
+    [Fact]
+    public void Duration_Comparison_WorksCorrectly()
+    {
+        // Arrange
+        var quarter = SdkDuration.Common.Quarter;
+        var eighth = SdkDuration.Common.Eighth;
+        var half = SdkDuration.Common.Half;
+
+        // Assert
+        Assert.True(eighth < quarter);
+        Assert.True(quarter < half);
+        Assert.True(half > quarter);
+        Assert.True(quarter > eighth);
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Meter (time signature).
+/// </summary>
+public class MeterTests
+{
+    [Fact]
+    public void Meter_CommonTime_Is4_4()
+    {
+        // Arrange & Act
+        var commonTime = SdkMeter.Common.CommonTime;
+
+        // Assert
+        Assert.Equal(4, commonTime.Numerator);
+        Assert.Equal(4, commonTime.Denominator);
+    }
+
+    [Fact]
+    public void Meter_SixEight_IsCompound()
+    {
+        // Arrange & Act
+        var sixEight = SdkMeter.Common.SixEight;
+
+        // Assert
+        Assert.Equal(6, sixEight.Numerator);
+        Assert.Equal(8, sixEight.Denominator);
+        Assert.Equal(BeyondImmersion.Bannou.MusicTheory.Time.MeterType.Compound, sixEight.Type);
+    }
+
+    [Fact]
+    public void Meter_ThreeFour_IsSimple()
+    {
+        // Arrange & Act
+        var threeFour = SdkMeter.Common.ThreeFour;
+
+        // Assert
+        Assert.Equal(BeyondImmersion.Bannou.MusicTheory.Time.MeterType.Simple, threeFour.Type);
+    }
+
+    [Fact]
+    public void Meter_SevenEight_IsIrregular()
+    {
+        // Arrange & Act
+        var sevenEight = SdkMeter.Common.SevenEight;
+
+        // Assert
+        Assert.Equal(BeyondImmersion.Bannou.MusicTheory.Time.MeterType.Irregular, sevenEight.Type);
+    }
+
+    [Fact]
+    public void Meter_MeasureBeats_CalculatesCorrectly()
+    {
+        // Arrange
+        var fourFour = SdkMeter.Common.CommonTime;
+        var sixEight = SdkMeter.Common.SixEight;
+
+        // Assert - 4/4 = 4 beats, 6/8 = 3 beats (6 eighths = 3 quarter-note equivalent beats)
+        Assert.Equal(4.0, fourFour.MeasureBeats);
+        Assert.Equal(3.0, sixEight.MeasureBeats);
+    }
+
+    [Fact]
+    public void Meter_Parse_ParsesCorrectly()
+    {
+        // Act
+        var fourFour = SdkMeter.Parse("4/4");
+        var sixEight = SdkMeter.Parse("6/8");
+        var threeFour = SdkMeter.Parse("3/4");
+
+        // Assert
+        Assert.Equal(4, fourFour.Numerator);
+        Assert.Equal(4, fourFour.Denominator);
+        Assert.Equal(6, sixEight.Numerator);
+        Assert.Equal(8, sixEight.Denominator);
+        Assert.Equal(3, threeFour.Numerator);
+        Assert.Equal(4, threeFour.Denominator);
+    }
+
+    [Fact]
+    public void Meter_StrongBeats_IncludesDownbeat()
+    {
+        // Arrange
+        var fourFour = SdkMeter.Common.CommonTime;
+
+        // Act
+        var strongBeats = fourFour.StrongBeats.ToList();
+
+        // Assert - In 4/4, beats 1 and 3 are strong
+        Assert.Contains(1, strongBeats);
+        Assert.Contains(3, strongBeats);
+    }
+
+    [Fact]
+    public void Meter_MeasureTicks_CalculatesCorrectly()
+    {
+        // Arrange
+        var fourFour = SdkMeter.Common.CommonTime;
+        var ticksPerBeat = 480;
+
+        // Act
+        var measureTicks = fourFour.MeasureTicks(ticksPerBeat);
+
+        // Assert - 4 beats * 480 = 1920 ticks
+        Assert.Equal(1920, measureTicks);
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Rhythm patterns.
+/// </summary>
+public class RhythmTests
+{
+    [Fact]
+    public void RhythmPattern_EvenQuarters_HasFourBeats()
+    {
+        // Arrange & Act
+        var evenQuarters = SdkRhythmPattern.Common.EvenQuarters;
+
+        // Assert
+        Assert.Equal(4.0, evenQuarters.TotalBeats);
+        Assert.Equal(4, evenQuarters.Pattern.Count);
+    }
+
+    [Fact]
+    public void RhythmPattern_EvenEighths_HasFourBeats()
+    {
+        // Arrange & Act
+        var evenEighths = SdkRhythmPattern.Common.EvenEighths;
+
+        // Assert
+        Assert.Equal(4.0, evenEighths.TotalBeats);
+        Assert.Equal(8, evenEighths.Pattern.Count);
+    }
+
+    [Fact]
+    public void RhythmPattern_Triplet_HasOnebeat()
+    {
+        // Arrange & Act
+        var triplet = SdkRhythmPattern.Common.Triplet;
+
+        // Assert
+        Assert.Equal(1.0, triplet.TotalBeats, 3);
+        Assert.Equal(3, triplet.Pattern.Count);
+    }
+
+    [Fact]
+    public void RhythmPattern_ToTicks_ConvertsCorrectly()
+    {
+        // Arrange
+        var evenQuarters = SdkRhythmPattern.Common.EvenQuarters;
+        var ticksPerBeat = 480;
+
+        // Act
+        var ticks = evenQuarters.ToTicks(ticksPerBeat).ToList();
+
+        // Assert - Each quarter note should be 480 ticks
+        Assert.Equal(4, ticks.Count);
+        Assert.All(ticks, t => Assert.Equal(480, t));
+    }
+
+    [Fact]
+    public void RhythmPattern_ScaleTo_ScalesCorrectly()
+    {
+        // Arrange
+        var pattern = SdkRhythmPattern.Common.EvenQuarters; // 4 beats total
+
+        // Act
+        var scaled = pattern.ScaleTo(8.0); // Scale to 8 beats
+
+        // Assert
+        Assert.Equal(8.0, scaled.TotalBeats);
+        Assert.All(scaled.Pattern, d => Assert.Equal(2.0, d)); // Each duration doubled
+    }
+
+    [Fact]
+    public void RhythmPattern_Repeat_RepeatsCorrectly()
+    {
+        // Arrange
+        var pattern = new SdkRhythmPattern("test", [1.0, 0.5]);
+
+        // Act
+        var repeated = pattern.Repeat(3);
+
+        // Assert
+        Assert.Equal(6, repeated.Pattern.Count);
+        Assert.Equal(4.5, repeated.TotalBeats); // (1.0 + 0.5) * 3
+    }
+
+    [Fact]
+    public void RhythmPatternSet_SelectWeighted_ReturnsPattern()
+    {
+        // Arrange
+        var patterns = new List<SdkRhythmPattern>
+        {
+            SdkRhythmPattern.Common.EvenQuarters,
+            SdkRhythmPattern.Common.EvenEighths
+        };
+        var patternSet = new SdkRhythmPatternSet(patterns, seed: 42);
+
+        // Act
+        var selected = patternSet.SelectWeighted();
+
+        // Assert
+        Assert.NotNull(selected);
+        Assert.Contains(selected, patterns);
+    }
+
+    [Fact]
+    public void RhythmPattern_Celtic_JigBasic_HasCorrectPattern()
+    {
+        // Arrange & Act
+        var jig = SdkRhythmPattern.Celtic.JigBasic;
+
+        // Assert - Jig: dotted eighth + sixteenth + eighth = 1.5 beats
+        Assert.Equal(1.5, jig.TotalBeats);
+        Assert.Equal(3, jig.Pattern.Count);
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Form and structure.
+/// </summary>
+public class FormTests
+{
+    [Fact]
+    public void Form_AABB_HasFourSections()
+    {
+        // Arrange & Act
+        var aabb = SdkForm.Common.AABB;
+
+        // Assert
+        Assert.Equal(4, aabb.SectionCount);
+        Assert.Equal("AABB", aabb.Name);
+    }
+
+    [Fact]
+    public void Form_AABA_HasCorrectStructure()
+    {
+        // Arrange & Act
+        var aaba = SdkForm.Common.AABA;
+        var sections = aaba.Sections.Select(s => s.Label).ToList();
+
+        // Assert
+        Assert.Equal(["A", "A", "B", "A"], sections);
+    }
+
+    [Fact]
+    public void Form_Parse_ParsesSimplePattern()
+    {
+        // Act
+        var form = SdkForm.Parse("ABAB");
+
+        // Assert
+        Assert.Equal(4, form.SectionCount);
+        Assert.Equal("A", form.Sections[0].Label);
+        Assert.Equal("B", form.Sections[1].Label);
+        Assert.Equal("A", form.Sections[2].Label);
+        Assert.Equal("B", form.Sections[3].Label);
+    }
+
+    [Fact]
+    public void Form_Parse_HandlesHyphenatedPattern()
+    {
+        // Act
+        var form = SdkForm.Parse("A-A-B-B");
+
+        // Assert
+        Assert.Equal(4, form.SectionCount);
+    }
+
+    [Fact]
+    public void Form_TotalBars_CalculatesCorrectly()
+    {
+        // Arrange & Act
+        var aabb = SdkForm.Common.AABB; // 4 sections, 8 bars each
+
+        // Assert
+        Assert.Equal(32, aabb.TotalBars);
+    }
+
+    [Fact]
+    public void Form_UniqueLabels_ReturnsDistinctLabels()
+    {
+        // Arrange & Act
+        var aabb = SdkForm.Common.AABB;
+        var uniqueLabels = aabb.UniqueLabels.ToList();
+
+        // Assert
+        Assert.Equal(2, uniqueLabels.Count);
+        Assert.Contains("A", uniqueLabels);
+        Assert.Contains("B", uniqueLabels);
+    }
+
+    [Fact]
+    public void Section_CreateVariation_IncrementsVariation()
+    {
+        // Arrange
+        var sectionA = SdkSection.A;
+
+        // Act
+        var aPrime = sectionA.CreateVariation();
+        var aDoublePrime = aPrime.CreateVariation();
+
+        // Assert
+        Assert.Equal(0, sectionA.Variation);
+        Assert.Equal(1, aPrime.Variation);
+        Assert.Equal(2, aDoublePrime.Variation);
+        Assert.Equal("A'", aPrime.ToString());
+        Assert.Equal("A''", aDoublePrime.ToString());
+    }
+
+    [Fact]
+    public void ExpandedForm_GetSectionAtBar_FindsCorrectSection()
+    {
+        // Arrange
+        var form = SdkForm.Common.AABB; // 4 sections, 8 bars each
+        var expanded = new SdkExpandedForm(form);
+
+        // Act
+        var sectionAt0 = expanded.GetSectionAtBar(0);
+        var sectionAt8 = expanded.GetSectionAtBar(8);
+        var sectionAt16 = expanded.GetSectionAtBar(16);
+
+        // Assert
+        Assert.NotNull(sectionAt0);
+        Assert.Equal("A", sectionAt0.Section.Label);
+        Assert.NotNull(sectionAt8);
+        Assert.Equal("A", sectionAt8.Section.Label);
+        Assert.NotNull(sectionAt16);
+        Assert.Equal("B", sectionAt16.Section.Label);
+    }
+
+    [Fact]
+    public void ExpandedForm_TotalBars_MatchesFormTotalBars()
+    {
+        // Arrange
+        var form = SdkForm.Common.AABB;
+        var expanded = new SdkExpandedForm(form);
+
+        // Assert
+        Assert.Equal(form.TotalBars, expanded.TotalBars);
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Contour analysis.
+/// </summary>
+public class ContourTests
+{
+    [Fact]
+    public void Contour_Arch_GetDirectionAt_ReturnsUpThenDown()
+    {
+        // Arrange
+        var contour = new SdkContour(SdkContourShape.Arch);
+
+        // Act
+        var directionAtStart = contour.GetDirectionAt(0.25);
+        var directionAtEnd = contour.GetDirectionAt(0.75);
+
+        // Assert
+        Assert.Equal(1, directionAtStart); // Ascending
+        Assert.Equal(-1, directionAtEnd); // Descending
+    }
+
+    [Fact]
+    public void Contour_Ascending_AlwaysReturnsUp()
+    {
+        // Arrange
+        var contour = new SdkContour(SdkContourShape.Ascending);
+
+        // Act & Assert
+        Assert.Equal(1, contour.GetDirectionAt(0.0));
+        Assert.Equal(1, contour.GetDirectionAt(0.5));
+        Assert.Equal(1, contour.GetDirectionAt(1.0));
+    }
+
+    [Fact]
+    public void Contour_Descending_AlwaysReturnsDown()
+    {
+        // Arrange
+        var contour = new SdkContour(SdkContourShape.Descending);
+
+        // Act & Assert
+        Assert.Equal(-1, contour.GetDirectionAt(0.0));
+        Assert.Equal(-1, contour.GetDirectionAt(0.5));
+        Assert.Equal(-1, contour.GetDirectionAt(1.0));
+    }
+
+    [Fact]
+    public void Contour_Static_AlwaysReturnsZero()
+    {
+        // Arrange
+        var contour = new SdkContour(SdkContourShape.Static);
+
+        // Act & Assert
+        Assert.Equal(0, contour.GetDirectionAt(0.0));
+        Assert.Equal(0, contour.GetDirectionAt(0.5));
+        Assert.Equal(0, contour.GetDirectionAt(1.0));
+    }
+
+    [Fact]
+    public void Contour_GetTargetPitchAt_Arch_PeaksAtMiddle()
+    {
+        // Arrange
+        var contour = new SdkContour(SdkContourShape.Arch);
+
+        // Act
+        var pitchAtMiddle = contour.GetTargetPitchAt(0.5);
+        var pitchAtStart = contour.GetTargetPitchAt(0.0);
+        var pitchAtEnd = contour.GetTargetPitchAt(1.0);
+
+        // Assert - Arch peaks at middle (sin(0.5*PI) = 1)
+        Assert.True(pitchAtMiddle > pitchAtStart);
+        Assert.True(pitchAtMiddle > pitchAtEnd);
+    }
+
+    [Fact]
+    public void Contour_Analyze_DetectsArchShape()
+    {
+        // Arrange - Pitches that rise then fall
+        var pitches = new List<int> { 60, 62, 64, 67, 72, 69, 65, 62, 60 };
+
+        // Act
+        var detected = SdkContour.Analyze(pitches);
+
+        // Assert
+        Assert.Equal(SdkContourShape.Arch, detected);
+    }
+
+    [Fact]
+    public void Contour_Analyze_DetectsAscending()
+    {
+        // Arrange - Steadily rising pitches
+        var pitches = new List<int> { 60, 62, 64, 65, 67, 69, 71, 72 };
+
+        // Act
+        var detected = SdkContour.Analyze(pitches);
+
+        // Assert
+        Assert.Equal(SdkContourShape.Ascending, detected);
+    }
+
+    [Fact]
+    public void Contour_Analyze_DetectsStatic()
+    {
+        // Arrange - Barely moving pitches
+        var pitches = new List<int> { 60, 60, 61, 60, 60, 61, 60 };
+
+        // Act
+        var detected = SdkContour.Analyze(pitches);
+
+        // Assert
+        Assert.Equal(SdkContourShape.Static, detected);
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Interval preferences.
+/// </summary>
+public class IntervalPreferencesTests
+{
+    [Fact]
+    public void IntervalPreferences_Default_HasValidWeights()
+    {
+        // Arrange & Act
+        var prefs = SdkIntervalPreferences.Default;
+
+        // Assert - Weights should sum to approximately 1.0
+        var total = prefs.StepWeight + prefs.ThirdWeight + prefs.LeapWeight + prefs.LargeLeapWeight;
+        Assert.Equal(1.0, total, 2);
+    }
+
+    [Fact]
+    public void IntervalPreferences_Celtic_FavorsSteps()
+    {
+        // Arrange & Act
+        var celtic = SdkIntervalPreferences.Celtic;
+
+        // Assert - Celtic style favors stepwise motion
+        Assert.True(celtic.StepWeight > celtic.ThirdWeight);
+        Assert.True(celtic.StepWeight > celtic.LeapWeight);
+    }
+
+    [Fact]
+    public void IntervalPreferences_Jazz_AllowsMoreLeaps()
+    {
+        // Arrange & Act
+        var jazz = SdkIntervalPreferences.Jazz;
+        var celtic = SdkIntervalPreferences.Celtic;
+
+        // Assert - Jazz allows more leaps than Celtic
+        Assert.True(jazz.LargeLeapWeight > celtic.LargeLeapWeight);
+    }
+
+    [Fact]
+    public void IntervalPreferences_SelectInterval_ReturnsValidInterval()
+    {
+        // Arrange
+        var prefs = SdkIntervalPreferences.Default;
+        var random = new Random(42);
+
+        // Act
+        var intervals = Enumerable.Range(0, 100)
+            .Select(_ => prefs.SelectInterval(random))
+            .ToList();
+
+        // Assert - All intervals should be positive
+        Assert.All(intervals, i => Assert.True(i >= 1 && i <= 12));
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Motif transformations.
+/// </summary>
+public class MotifTests
+{
+    [Fact]
+    public void Motif_Create_StoresIntervalsAndDurations()
+    {
+        // Arrange - intervals from first note, relative durations
+        var intervals = new List<int> { 0, 2, 4 }; // C, D, E (steps from C)
+        var durations = new List<double> { 1.0, 1.0, 1.0 };
+
+        // Act
+        var motif = new SdkMotif(intervals, durations);
+
+        // Assert
+        Assert.Equal(3, motif.Length);
+        Assert.Equal(3.0, motif.TotalDuration);
+        Assert.Equal(intervals, motif.Intervals);
+        Assert.Equal(durations, motif.Durations);
+    }
+
+    [Fact]
+    public void Motif_FromNotes_ExtractsIntervalsAndDurations()
+    {
+        // Arrange
+        var notes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 480, 80), // MIDI 60
+            new(new SdkPitch(SdkPitchClass.E, 4), 480, 480, 80), // MIDI 64 (+4)
+            new(new SdkPitch(SdkPitchClass.G, 4), 960, 480, 80) // MIDI 67 (+7)
+        };
+
+        // Act
+        var motif = SdkMotif.FromNotes(notes);
+
+        // Assert - intervals relative to first note
+        Assert.Equal(3, motif.Length);
+        Assert.Equal(0, motif.Intervals[0]); // First note is reference
+        Assert.Equal(4, motif.Intervals[1]); // E is +4 semitones from C
+        Assert.Equal(7, motif.Intervals[2]); // G is +7 semitones from C
+    }
+
+    [Fact]
+    public void Motif_Transpose_ShiftsIntervals()
+    {
+        // Arrange - C-E-G intervals: 0, +4, +7
+        var intervals = new List<int> { 0, 4, 7 };
+        var durations = new List<double> { 1.0, 1.0, 2.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act - Transpose up 2 semitones
+        var transposed = motif.Transpose(2);
+
+        // Assert - All intervals shifted by 2
+        Assert.Equal(2, transposed.Intervals[0]);
+        Assert.Equal(6, transposed.Intervals[1]);
+        Assert.Equal(9, transposed.Intervals[2]);
+    }
+
+    [Fact]
+    public void Motif_Invert_NegatesIntervals()
+    {
+        // Arrange - Ascending major triad intervals: 0, +4, +7
+        var intervals = new List<int> { 0, 4, 7 };
+        var durations = new List<double> { 1.0, 1.0, 2.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act - Invert (no argument - just negates intervals)
+        var inverted = motif.Invert();
+
+        // Assert - Intervals negated: 0, -4, -7
+        Assert.Equal(0, inverted.Intervals[0]);
+        Assert.Equal(-4, inverted.Intervals[1]);
+        Assert.Equal(-7, inverted.Intervals[2]);
+    }
+
+    [Fact]
+    public void Motif_Retrograde_ReversesPattern()
+    {
+        // Arrange - C-D-E intervals: 0, +2, +4
+        var intervals = new List<int> { 0, 2, 4 };
+        var durations = new List<double> { 1.0, 1.0, 1.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act
+        var retrograde = motif.Retrograde();
+
+        // Assert - Pattern reversed, recalculated from new starting point
+        // Original last interval was 4, so retrograde starts at 0 and subtracts
+        Assert.Equal(3, retrograde.Length);
+        Assert.Equal(0, retrograde.Intervals[0]); // New start
+    }
+
+    [Fact]
+    public void Motif_Augment_StretchesDurations()
+    {
+        // Arrange
+        var intervals = new List<int> { 0, 2 };
+        var durations = new List<double> { 1.0, 1.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act - Double the durations
+        var augmented = motif.Augment(2.0);
+
+        // Assert
+        Assert.Equal(2.0, augmented.Durations[0]);
+        Assert.Equal(2.0, augmented.Durations[1]);
+        Assert.Equal(4.0, augmented.TotalDuration);
+    }
+
+    [Fact]
+    public void Motif_Diminish_CompressesDurations()
+    {
+        // Arrange
+        var intervals = new List<int> { 0, 2 };
+        var durations = new List<double> { 1.0, 1.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act - Halve the durations
+        var diminished = motif.Diminish(2.0);
+
+        // Assert
+        Assert.Equal(0.5, diminished.Durations[0]);
+        Assert.Equal(0.5, diminished.Durations[1]);
+        Assert.Equal(1.0, diminished.TotalDuration);
+    }
+
+    [Fact]
+    public void Motif_Sequence_RepeatsAtDifferentPitchLevels()
+    {
+        // Arrange - Simple 2-note motif
+        var intervals = new List<int> { 0, 2 };
+        var durations = new List<double> { 1.0, 1.0 };
+        var motif = new SdkMotif(intervals, durations);
+
+        // Act - Sequence 3 times, stepping up by 2 semitones each time
+        var sequenced = motif.Sequence(2, 3);
+
+        // Assert - 6 notes total (2 * 3)
+        Assert.Equal(6, sequenced.Length);
+        // First repetition: 0, 2
+        Assert.Equal(0, sequenced.Intervals[0]);
+        Assert.Equal(2, sequenced.Intervals[1]);
+        // Second repetition: 2, 4
+        Assert.Equal(2, sequenced.Intervals[2]);
+        Assert.Equal(4, sequenced.Intervals[3]);
+        // Third repetition: 4, 6
+        Assert.Equal(4, sequenced.Intervals[4]);
+        Assert.Equal(6, sequenced.Intervals[5]);
+    }
+
+    [Fact]
+    public void Motif_Realize_CreatesMelodyNotes()
+    {
+        // Arrange - C major triad motif
+        var intervals = new List<int> { 0, 4, 7 };
+        var durations = new List<double> { 1.0, 1.0, 2.0 };
+        var motif = new SdkMotif(intervals, durations);
+        var startPitch = new SdkPitch(SdkPitchClass.C, 4);
+
+        // Act - Realize starting at C4
+        var notes = motif.Realize(startPitch, ticksPerBeat: 480);
+
+        // Assert
+        Assert.Equal(3, notes.Count);
+        Assert.Equal(60, notes[0].Pitch.MidiNumber); // C4
+        Assert.Equal(64, notes[1].Pitch.MidiNumber); // E4
+        Assert.Equal(67, notes[2].Pitch.MidiNumber); // G4
+        Assert.Equal(480, notes[0].DurationTicks); // 1.0 * 480
+        Assert.Equal(480, notes[1].DurationTicks);
+        Assert.Equal(960, notes[2].DurationTicks); // 2.0 * 480
+    }
+
+    [Fact]
+    public void Motif_Patterns_ScaleUp_HasCorrectIntervals()
+    {
+        // Arrange & Act
+        var scaleUp = SdkMotif.Patterns.ScaleUp;
+
+        // Assert - do-re-mi-fa = 0, 2, 4, 5
+        Assert.Equal(4, scaleUp.Length);
+        Assert.Equal(0, scaleUp.Intervals[0]);
+        Assert.Equal(2, scaleUp.Intervals[1]);
+        Assert.Equal(4, scaleUp.Intervals[2]);
+        Assert.Equal(5, scaleUp.Intervals[3]);
+    }
+
+    [Fact]
+    public void Motif_Patterns_ArpeggioUp_HasTriadIntervals()
+    {
+        // Arrange & Act
+        var arpeggio = SdkMotif.Patterns.ArpeggioUp;
+
+        // Assert - do-mi-sol = 0, 4, 7
+        Assert.Equal(3, arpeggio.Length);
+        Assert.Equal(0, arpeggio.Intervals[0]);
+        Assert.Equal(4, arpeggio.Intervals[1]);
+        Assert.Equal(7, arpeggio.Intervals[2]);
+    }
+
+    [Fact]
+    public void Motif_Constructor_ThrowsOnEmptyInput()
+    {
+        // Arrange
+        var emptyIntervals = new List<int>();
+        var emptyDurations = new List<double>();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new SdkMotif(emptyIntervals, emptyDurations));
+    }
+
+    [Fact]
+    public void Motif_Constructor_ThrowsOnMismatchedLengths()
+    {
+        // Arrange
+        var intervals = new List<int> { 0, 2, 4 };
+        var durations = new List<double> { 1.0, 1.0 }; // One less
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new SdkMotif(intervals, durations));
+    }
+}
+
+/// <summary>
+/// Unit tests for music theory SDK - Mode patterns.
+/// </summary>
+public class ModeTests
+{
+    [Fact]
+    public void ModePatterns_Major_HasCorrectPattern()
+    {
+        // Arrange & Act
+        var pattern = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.GetPattern(SdkModeType.Major);
+
+        // Assert - Major: W-W-H-W-W-W-H = 0,2,4,5,7,9,11
+        Assert.Equal([0, 2, 4, 5, 7, 9, 11], pattern);
+    }
+
+    [Fact]
+    public void ModePatterns_Dorian_HasCorrectPattern()
+    {
+        // Arrange & Act
+        var pattern = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.GetPattern(SdkModeType.Dorian);
+
+        // Assert - Dorian: W-H-W-W-W-H-W = 0,2,3,5,7,9,10
+        Assert.Equal([0, 2, 3, 5, 7, 9, 10], pattern);
+    }
+
+    [Fact]
+    public void ModePatterns_Blues_HasSixNotes()
+    {
+        // Arrange & Act
+        var pattern = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.GetPattern(SdkModeType.Blues);
+
+        // Assert - Blues scale has 6 notes
+        Assert.Equal(6, pattern.Count);
+    }
+
+    [Fact]
+    public void ModePatterns_MajorPentatonic_HasFiveNotes()
+    {
+        // Arrange & Act
+        var pattern = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.GetPattern(SdkModeType.MajorPentatonic);
+
+        // Assert
+        Assert.Equal(5, pattern.Count);
+    }
+
+    [Fact]
+    public void ModePatterns_IsMajor_ReturnsTrueForMajorModes()
+    {
+        // Assert
+        Assert.True(BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.IsMajor(SdkModeType.Major));
+        Assert.True(BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.IsMajor(SdkModeType.Lydian));
+        Assert.True(BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.IsMajor(SdkModeType.Mixolydian));
+        Assert.False(BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.IsMajor(SdkModeType.Minor));
+        Assert.False(BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.IsMajor(SdkModeType.Dorian));
+    }
+
+    [Fact]
+    public void ModePatterns_Parse_ParsesCorrectly()
+    {
+        // Act
+        var major = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.Parse("major");
+        var dorian = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.Parse("dorian");
+        var minor = BeyondImmersion.Bannou.MusicTheory.Collections.ModePatterns.Parse("minor");
+
+        // Assert
+        Assert.Equal(SdkModeType.Major, major);
+        Assert.Equal(SdkModeType.Dorian, dorian);
+        Assert.Equal(SdkModeType.Minor, minor);
     }
 }
