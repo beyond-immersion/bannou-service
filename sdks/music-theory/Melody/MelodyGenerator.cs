@@ -75,6 +75,21 @@ public sealed class MelodyOptions
     public RhythmPatternSet? RhythmPatterns { get; set; }
 
     /// <summary>
+    /// Motif library for thematic development.
+    /// </summary>
+    public MotifLibrary? MotifLibrary { get; set; }
+
+    /// <summary>
+    /// Style ID for motif selection.
+    /// </summary>
+    public string? StyleId { get; set; }
+
+    /// <summary>
+    /// Probability of inserting a motif at phrase boundaries (0-1).
+    /// </summary>
+    public double MotifProbability { get; set; } = 0.4;
+
+    /// <summary>
     /// Note density (0 = sparse, 1 = dense).
     /// </summary>
     public double Density { get; set; } = 0.6;
@@ -143,13 +158,42 @@ public sealed class MelodyGenerator
         // Start near the middle of the range
         var currentPitch = scalePitches[scalePitches.Count / 2];
 
+        var chordIndex = 0;
         foreach (var chordEvent in progression)
         {
             var chordStartTick = currentTick;
             var chordEndTick = currentTick + (int)(chordEvent.DurationBeats * ticksPerBeat);
             var chordTones = chordEvent.Chord.PitchClasses;
+            var isFirstChord = chordIndex == 0;
+            var isLastChord = chordIndex == progression.Count - 1;
 
-            // Generate notes for this chord
+            // Try to insert a motif at phrase boundaries
+            if (options.MotifLibrary != null && _random.NextDouble() < options.MotifProbability)
+            {
+                var category = DetermineMotifCategory(isFirstChord, isLastChord, (double)currentTick / totalTicks);
+                var motif = SelectMotif(options.MotifLibrary, options.StyleId, category);
+
+                if (motif != null)
+                {
+                    var motifNotes = ApplyMotif(
+                        motif.Motif,
+                        currentPitch,
+                        currentTick,
+                        ticksPerBeat,
+                        range,
+                        scalePitches,
+                        chordEndTick - currentTick);
+
+                    if (motifNotes.Count > 0)
+                    {
+                        notes.AddRange(motifNotes);
+                        currentTick = motifNotes[^1].EndTick;
+                        currentPitch = motifNotes[^1].Pitch;
+                    }
+                }
+            }
+
+            // Generate remaining notes for this chord (if motif didn't fill it)
             while (currentTick < chordEndTick)
             {
                 // Determine position in phrase for contour
@@ -198,9 +242,122 @@ public sealed class MelodyGenerator
             }
 
             currentTick = chordEndTick;
+            chordIndex++;
         }
 
         return notes;
+    }
+
+    /// <summary>
+    /// Determines the appropriate motif category based on position.
+    /// </summary>
+    private MotifCategory DetermineMotifCategory(bool isFirstChord, bool isLastChord, double phrasePosition)
+    {
+        if (isFirstChord)
+        {
+            return MotifCategory.Opening;
+        }
+
+        if (isLastChord || phrasePosition > 0.85)
+        {
+            return MotifCategory.Cadential;
+        }
+
+        if (phrasePosition > 0.4 && phrasePosition < 0.6)
+        {
+            return MotifCategory.Development;
+        }
+
+        // Random choice between ornament and melodic for middle sections
+        return _random.NextDouble() > 0.5 ? MotifCategory.Ornament : MotifCategory.Melodic;
+    }
+
+    /// <summary>
+    /// Selects a motif from the library for the given category.
+    /// </summary>
+    private NamedMotif? SelectMotif(MotifLibrary library, string? styleId, MotifCategory category)
+    {
+        if (!string.IsNullOrEmpty(styleId))
+        {
+            return library.SelectWeightedByStyleAndCategory(styleId, category);
+        }
+
+        return library.SelectWeightedByCategory(category);
+    }
+
+    /// <summary>
+    /// Applies a motif from a starting pitch, returning the generated notes.
+    /// </summary>
+    private List<MelodyNote> ApplyMotif(
+        Motif motif,
+        Pitch.Pitch startPitch,
+        int startTick,
+        int ticksPerBeat,
+        PitchRange range,
+        IReadOnlyList<Pitch.Pitch> scalePitches,
+        int maxTicks)
+    {
+        var notes = new List<MelodyNote>();
+        var currentTick = startTick;
+        var currentMidi = startPitch.MidiNumber;
+
+        // Calculate total motif duration in ticks
+        var totalMotifTicks = (int)(motif.TotalDuration * ticksPerBeat);
+        if (totalMotifTicks > maxTicks)
+        {
+            // Motif too long, skip it
+            return notes;
+        }
+
+        for (var i = 0; i < motif.Intervals.Count; i++)
+        {
+            var interval = motif.Intervals[i];
+            var duration = motif.Durations[i];
+            var durationTicks = (int)(duration * ticksPerBeat);
+
+            // Apply interval to get target MIDI number
+            var targetMidi = startPitch.MidiNumber + interval;
+
+            // Find nearest scale pitch to target
+            var maybePitch = FindNearestScalePitch(targetMidi, scalePitches, range);
+            if (maybePitch == null)
+            {
+                continue; // Skip if no valid pitch found
+            }
+
+            var bestPitch = maybePitch.Value;
+            var velocity = 75 + _random.Next(15);
+            notes.Add(new MelodyNote(bestPitch, currentTick, durationTicks, velocity));
+            currentTick += durationTicks;
+        }
+
+        return notes;
+    }
+
+    /// <summary>
+    /// Finds the nearest pitch in scalePitches to the target MIDI number.
+    /// </summary>
+    private Pitch.Pitch? FindNearestScalePitch(int targetMidi, IReadOnlyList<Pitch.Pitch> scalePitches, PitchRange range)
+    {
+        Pitch.Pitch? best = null;
+        var bestDistance = int.MaxValue;
+
+        foreach (var pitch in scalePitches)
+        {
+            if (!range.Contains(pitch))
+            {
+                continue;
+            }
+
+            var distance = Math.Abs(pitch.MidiNumber - targetMidi);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = pitch;
+            }
+        }
+
+        return best;
     }
 
     private int SelectDuration(MelodyOptions options, int ticksPerBeat, int maxTicks)

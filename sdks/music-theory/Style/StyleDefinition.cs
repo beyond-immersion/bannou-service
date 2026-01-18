@@ -244,6 +244,47 @@ public sealed class StyleDefinition
     public Meter DefaultMeter { get; set; } = Meter.Common.CommonTime;
 
     /// <summary>
+    /// Characteristic motif IDs for this style.
+    /// These reference motifs in the MotifLibrary.
+    /// </summary>
+    [JsonPropertyName("characteristicMotifs")]
+    public List<string> CharacteristicMotifIds { get; set; } = [];
+
+    /// <summary>
+    /// Gets characteristic motifs from the library.
+    /// Returns motifs matching the IDs plus all universal motifs.
+    /// </summary>
+    public IEnumerable<NamedMotif> GetCharacteristicMotifs(MotifLibrary library)
+    {
+        // Get style-specific motifs by ID
+        foreach (var id in CharacteristicMotifIds)
+        {
+            var motif = library.Get(id);
+            if (motif != null)
+            {
+                yield return motif;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets all available motifs for this style from a library.
+    /// Includes both style-specific motifs and universal motifs.
+    /// </summary>
+    public IEnumerable<NamedMotif> GetAvailableMotifs(MotifLibrary library)
+    {
+        return library.GetByStyle(Id);
+    }
+
+    /// <summary>
+    /// Selects a random motif appropriate for this style and category.
+    /// </summary>
+    public NamedMotif? SelectMotif(MotifLibrary library, MotifCategory category)
+    {
+        return library.SelectWeightedByStyleAndCategory(Id, category);
+    }
+
+    /// <summary>
     /// Gets a tune type by name.
     /// </summary>
     public TuneTypeDefinition? GetTuneType(string name)
@@ -344,7 +385,13 @@ public static class BuiltInStyles
             SecondaryDominantProbability = 0.1,
             ModalInterchangeProbability = 0.05,
             CommonProgressions = ["I-IV-V-I", "I-V-vi-IV", "i-VII-VI-VII"]
-        }
+        },
+        CharacteristicMotifIds =
+        [
+            "celtic-roll",
+            "celtic-triplet",
+            "celtic-leap-step"
+        ]
     };
 
     /// <summary>
@@ -372,7 +419,12 @@ public static class BuiltInStyles
             SecondaryDominantProbability = 0.4,
             ModalInterchangeProbability = 0.1,
             CommonProgressions = ["I-IV-V-I", "I-ii-V-I", "I-vi-IV-V"]
-        }
+        },
+        CharacteristicMotifIds =
+        [
+            "baroque-sequence",
+            "baroque-trill-prep"
+        ]
     };
 
     /// <summary>
@@ -402,7 +454,13 @@ public static class BuiltInStyles
             SecondaryDominantProbability = 0.6,
             ModalInterchangeProbability = 0.3,
             CommonProgressions = ["ii-V-I", "I-VI-ii-V", "iii-vi-ii-V"]
-        }
+        },
+        CharacteristicMotifIds =
+        [
+            "jazz-approach",
+            "jazz-enclosure",
+            "jazz-bebop-scale"
+        ]
     };
 
     /// <summary>

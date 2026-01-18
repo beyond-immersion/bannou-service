@@ -1023,6 +1023,21 @@
             Rhythm pattern set to use.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions.MotifLibrary">
+            <summary>
+            Motif library for thematic development.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions.StyleId">
+            <summary>
+            Style ID for motif selection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions.MotifProbability">
+            <summary>
+            Probability of inserting a motif at phrase boundaries (0-1).
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions.Density">
             <summary>
             Note density (0 = sparse, 1 = dense).
@@ -1061,6 +1076,26 @@
             <param name="scale">The scale/key.</param>
             <param name="options">Generation options.</param>
             <returns>The generated melody.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator.DetermineMotifCategory(System.Boolean,System.Boolean,System.Double)">
+            <summary>
+            Determines the appropriate motif category based on position.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator.SelectMotif(BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary,System.String,BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Selects a motif from the library for the given category.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator.ApplyMotif(BeyondImmersion.Bannou.MusicTheory.Melody.Motif,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,System.Int32,System.Int32,BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch},System.Int32)">
+            <summary>
+            Applies a motif from a starting pitch, returning the generated notes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator.FindNearestScalePitch(System.Int32,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch},BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange)">
+            <summary>
+            Finds the nearest pitch in scalePitches to the target MIDI number.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.Motif">
             <summary>
@@ -1171,6 +1206,191 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.Motif.Patterns.Mordent">
             <summary>Mordent (quick do-re-do)</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory">
+            <summary>
+            Motif usage categories for organizing and selecting motifs.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Opening">
+            <summary>Opening/thematic motif for starting sections</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Ornament">
+            <summary>Ornamental motif (turns, mordents, etc.)</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Cadential">
+            <summary>Cadential motif for phrase endings</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Transition">
+            <summary>Transitional/connecting motif</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Development">
+            <summary>Developmental motif for variation</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Rhythmic">
+            <summary>Rhythmic pattern motif</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory.Melodic">
+            <summary>Melodic fragment (scalar, arpeggiated)</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif">
+            <summary>
+            A named motif with metadata for cataloging and retrieval.
+            Combines the abstract Motif (intervals + durations) with identification and context.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Id">
+            <summary>
+            Unique identifier for the motif.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Name">
+            <summary>
+            Human-readable name.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Motif">
+            <summary>
+            The underlying motif data (intervals and durations).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Category">
+            <summary>
+            Usage category.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.StyleId">
+            <summary>
+            Associated style ID (null = universal).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Description">
+            <summary>
+            Optional description.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Weight">
+            <summary>
+            Selection weight for random choice (higher = more likely).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.#ctor(System.String,System.String,BeyondImmersion.Bannou.MusicTheory.Melody.Motif,BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory,System.String,System.String,System.Double)">
+            <summary>
+            Creates a named motif.
+            </summary>
+            <param name="id">Unique identifier.</param>
+            <param name="name">Display name.</param>
+            <param name="motif">The underlying motif.</param>
+            <param name="category">Usage category.</param>
+            <param name="styleId">Associated style (null = universal).</param>
+            <param name="description">Optional description.</param>
+            <param name="weight">Selection weight (default 1.0).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.Create(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.Int32},System.Collections.Generic.IReadOnlyList{System.Double},BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory,System.String,System.String,System.Double)">
+            <summary>
+            Creates a named motif from intervals and durations.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary">
+            <summary>
+            A library of named motifs for retrieval and random selection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.All">
+            <summary>
+            All motifs in the library.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.Count">
+            <summary>
+            Number of motifs in the library.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.#ctor(System.Nullable{System.Int32})">
+            <summary>
+            Creates an empty motif library.
+            </summary>
+            <param name="seed">Optional random seed for reproducibility.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.#ctor(System.Collections.Generic.IEnumerable{BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif},System.Nullable{System.Int32})">
+            <summary>
+            Creates a library with initial motifs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.Add(BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif)">
+            <summary>
+            Adds a motif to the library.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.Get(System.String)">
+            <summary>
+            Gets a motif by ID.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.GetByStyle(System.String)">
+            <summary>
+            Gets all motifs for a style (including universal motifs).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.GetByCategory(BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Gets all motifs in a category.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.GetByStyleAndCategory(System.String,BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Gets motifs matching both style and category.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.SelectWeighted">
+            <summary>
+            Selects a random motif weighted by the motif weights.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.SelectWeightedByStyle(System.String)">
+            <summary>
+            Selects a random motif from a style (including universal).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.SelectWeightedByCategory(BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Selects a random motif from a category.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary.SelectWeightedByStyleAndCategory(System.String,BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Selects a random motif matching style and category.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs">
+            <summary>
+            Built-in motif library with common patterns.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs.Library">
+            <summary>
+            Gets the built-in motif library.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs.Get(System.String)">
+            <summary>
+            Gets a built-in motif by ID.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs.Celtic">
+            <summary>
+            Gets all Celtic motifs (style-specific + universal).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs.Jazz">
+            <summary>
+            Gets all Jazz motifs (style-specific + universal).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs.Baroque">
+            <summary>
+            Gets all Baroque motifs (style-specific + universal).
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType">
             <summary>
@@ -2319,6 +2539,29 @@
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.DefaultMeter">
             <summary>
             Default time signature.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.CharacteristicMotifIds">
+            <summary>
+            Characteristic motif IDs for this style.
+            These reference motifs in the MotifLibrary.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.GetCharacteristicMotifs(BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary)">
+            <summary>
+            Gets characteristic motifs from the library.
+            Returns motifs matching the IDs plus all universal motifs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.GetAvailableMotifs(BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary)">
+            <summary>
+            Gets all available motifs for this style from a library.
+            Includes both style-specific motifs and universal motifs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.SelectMotif(BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary,BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory)">
+            <summary>
+            Selects a random motif appropriate for this style and category.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition.GetTuneType(System.String)">

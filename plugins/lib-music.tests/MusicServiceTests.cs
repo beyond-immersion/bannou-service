@@ -38,10 +38,21 @@ using SdkRhythmPatternSet = BeyondImmersion.Bannou.MusicTheory.Time.RhythmPatter
 using SdkForm = BeyondImmersion.Bannou.MusicTheory.Structure.Form;
 using SdkSection = BeyondImmersion.Bannou.MusicTheory.Structure.Section;
 using SdkExpandedForm = BeyondImmersion.Bannou.MusicTheory.Structure.ExpandedForm;
-// Melody module (Contour, Motif)
+// Melody module (Contour, Motif, MotifLibrary)
 using SdkContour = BeyondImmersion.Bannou.MusicTheory.Melody.Contour;
 using SdkIntervalPreferences = BeyondImmersion.Bannou.MusicTheory.Melody.IntervalPreferences;
 using SdkMotif = BeyondImmersion.Bannou.MusicTheory.Melody.Motif;
+using SdkMotifCategory = BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory;
+using SdkNamedMotif = BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif;
+using SdkMotifLibrary = BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary;
+using SdkBuiltInMotifs = BeyondImmersion.Bannou.MusicTheory.Melody.BuiltInMotifs;
+// Harmony module
+using SdkCadenceType = BeyondImmersion.Bannou.MusicTheory.Harmony.CadenceType;
+// Structure module - Phrase
+using SdkPhrase = BeyondImmersion.Bannou.MusicTheory.Structure.Phrase;
+using SdkPhraseType = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseType;
+using SdkPhraseBuilder = BeyondImmersion.Bannou.MusicTheory.Structure.PhraseBuilder;
+using SdkFormSection = BeyondImmersion.Bannou.MusicTheory.Structure.FormSection;
 
 namespace BeyondImmersion.BannouService.Music.Tests;
 
@@ -1740,5 +1751,1040 @@ public class ModeTests
         Assert.Equal(SdkModeType.Major, major);
         Assert.Equal(SdkModeType.Dorian, dorian);
         Assert.Equal(SdkModeType.Minor, minor);
+    }
+}
+
+// =============================================================================
+// INTEGRATION TESTS
+// Tests that verify complete end-to-end music generation pipelines
+// =============================================================================
+
+/// <summary>
+/// Integration tests for the complete music generation pipeline.
+/// Tests the flow: Style → Progression → Melody → MIDI-JSON
+/// </summary>
+public class MusicGenerationPipelineTests
+{
+    [Fact]
+    public void Pipeline_CelticStyle_GeneratesValidMidiJson()
+    {
+        // Arrange - Celtic style with D Dorian key
+        var style = SdkBuiltInStyles.Celtic;
+        var scale = new SdkScale(SdkPitchClass.D, SdkModeType.Dorian);
+        var form = SdkForm.Common.AABB;
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var melodyGen = new SdkMelodyGenerator(seed: 42);
+
+        // Act - Generate progression (8 chords for 8 bars)
+        var progression = progressionGen.Generate(scale, length: 8);
+
+        // Generate melody over progression
+        var melodyOptions = new SdkMelodyOptions
+        {
+            Range = SdkPitchRange.Instrument.Flute,
+            Contour = SdkContourShape.Arch,
+            IntervalPreferences = style.IntervalPreferences,
+            TicksPerBeat = 480,
+            Seed = 42
+        };
+        var melody = melodyGen.Generate(progression, scale, melodyOptions);
+
+        // Voice the chords
+        var voiceLeader = new SdkVoiceLeader();
+        var (voicings, _) = voiceLeader.Voice(
+            progression.Select(p => p.Chord).ToList(),
+            voiceCount: 4);
+
+        // Render to MIDI-JSON
+        var midiJson = SdkMidiJsonRenderer.RenderComposition(
+            melody,
+            voicings,
+            tempo: 120,
+            meter: SdkMeter.Common.CommonTime,
+            key: scale,
+            name: "Celtic Test Tune");
+
+        // Assert - Valid MIDI-JSON structure
+        Assert.NotNull(midiJson);
+        Assert.NotNull(midiJson.Header);
+        Assert.Equal(480, midiJson.TicksPerBeat);
+        Assert.True(midiJson.Tracks.Count >= 1, "Should have at least melody track");
+
+        // Verify header metadata
+        Assert.Equal("Celtic Test Tune", midiJson.Header.Name);
+        Assert.NotNull(midiJson.Header.Tempos);
+        Assert.Single(midiJson.Header.Tempos);
+        Assert.Equal(120.0, midiJson.Header.Tempos[0].Bpm);
+        Assert.NotNull(midiJson.Header.KeySignatures);
+        Assert.Equal(SdkPitchClass.D, midiJson.Header.KeySignatures[0].Tonic);
+        Assert.Equal(SdkModeType.Dorian, midiJson.Header.KeySignatures[0].Mode);
+
+        // Verify melody track has notes
+        var melodyTrack = midiJson.Tracks[0];
+        Assert.Equal("Melody", melodyTrack.Name);
+        Assert.True(melodyTrack.Events.Count > 0, "Melody track should have note events");
+
+        // All notes should be NoteOn events with valid MIDI numbers
+        Assert.All(melodyTrack.Events, evt =>
+        {
+            Assert.Equal(SdkMidiEventType.NoteOn, evt.Type);
+            Assert.NotNull(evt.Note);
+            Assert.InRange(evt.Note.Value, 0, 127);
+            Assert.NotNull(evt.Velocity);
+            Assert.InRange(evt.Velocity.Value, 1, 127);
+        });
+    }
+
+    [Fact]
+    public void Pipeline_JazzStyle_GeneratesValidMidiJson()
+    {
+        // Arrange - Jazz style with Bb Major (common jazz key) - using As (A#) for Bb
+        var style = SdkBuiltInStyles.Jazz;
+        var scale = new SdkScale(SdkPitchClass.As, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 123);
+        var melodyGen = new SdkMelodyGenerator(seed: 123);
+
+        // Act - Generate ii-V-I progression (jazz standard)
+        var progression = progressionGen.GenerateFromPattern(scale, "ii-V-I");
+
+        // Generate melody
+        var melodyOptions = new SdkMelodyOptions
+        {
+            IntervalPreferences = style.IntervalPreferences,
+            Contour = SdkContourShape.Wave,
+            TicksPerBeat = 480,
+            Seed = 123
+        };
+        var melody = melodyGen.Generate(progression, scale, melodyOptions);
+
+        // Render
+        var midiJson = SdkMidiJsonRenderer.RenderMelody(melody);
+
+        // Assert
+        Assert.NotNull(midiJson);
+        Assert.Single(midiJson.Tracks);
+        Assert.True(midiJson.Tracks[0].Events.Count > 0);
+    }
+
+    [Fact]
+    public void Pipeline_FormStructure_AABB_CreatesCorrectSections()
+    {
+        // Arrange - AABB form (typical Celtic)
+        var form = SdkForm.Common.AABB;
+        var expanded = new SdkExpandedForm(form, barsPerSection: 8);
+
+        // Act
+        var sections = expanded.Sections.ToList();
+
+        // Assert - 4 sections with correct labels
+        Assert.Equal(4, sections.Count);
+        Assert.Equal("A", sections[0].Section.Label);
+        Assert.Equal("A", sections[1].Section.Label);
+        Assert.Equal("B", sections[2].Section.Label);
+        Assert.Equal("B", sections[3].Section.Label);
+
+        // Verify bar assignments
+        Assert.Equal(0, sections[0].StartBar);
+        Assert.Equal(8, sections[0].Bars);
+        Assert.Equal(8, sections[1].StartBar);
+        Assert.Equal(16, sections[2].StartBar);
+        Assert.Equal(24, sections[3].StartBar);
+        Assert.Equal(32, expanded.TotalBars);
+    }
+
+    [Fact]
+    public void Pipeline_MelodyMatchesProgression_AllNotesWithinChordDuration()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var melodyGen = new SdkMelodyGenerator(seed: 42);
+
+        // Create a simple I-IV-V-I progression
+        var progression = progressionGen.GenerateFromPattern(scale, "I-IV-V-I");
+        var ticksPerBeat = 480;
+
+        // Generate melody
+        var melody = melodyGen.Generate(progression, scale, new SdkMelodyOptions
+        {
+            TicksPerBeat = ticksPerBeat,
+            Seed = 42
+        });
+
+        // Calculate total progression duration
+        var totalProgressionTicks = (int)(progression.Sum(p => p.DurationBeats) * ticksPerBeat);
+
+        // Assert - All melody notes should be within the progression duration
+        Assert.All(melody, note =>
+        {
+            Assert.True(note.StartTick >= 0, $"Note starts at negative tick: {note.StartTick}");
+            Assert.True(note.EndTick <= totalProgressionTicks + ticksPerBeat,
+                $"Note ends at {note.EndTick} but progression ends at {totalProgressionTicks}");
+        });
+    }
+
+    [Fact]
+    public void Pipeline_VoiceLeading_ProducesValidVoicings()
+    {
+        // Arrange - Common progression
+        var scale = new SdkScale(SdkPitchClass.G, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var progression = progressionGen.GenerateFromPattern(scale, "I-V-vi-IV");
+
+        var voiceLeader = new SdkVoiceLeader(SdkVoiceLeadingRules.Standard);
+
+        // Act
+        var (voicings, violations) = voiceLeader.Voice(
+            progression.Select(p => p.Chord).ToList(),
+            voiceCount: 4);
+
+        // Assert - Should have 4 voicings (one per chord)
+        Assert.Equal(4, voicings.Count);
+
+        // Each voicing should have 4 voices
+        Assert.All(voicings, v => Assert.Equal(4, v.VoiceCount));
+
+        // Violations should be minimal for this common progression
+        Assert.True(violations.Count < 5, $"Too many voice leading violations: {violations.Count}");
+    }
+
+    [Fact]
+    public void Pipeline_MidiJsonRoundTrip_PreservesData()
+    {
+        // Arrange - Create a simple MIDI-JSON
+        var notes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 480, 80),
+            new(new SdkPitch(SdkPitchClass.E, 4), 480, 480, 75),
+            new(new SdkPitch(SdkPitchClass.G, 4), 960, 960, 85)
+        };
+        var original = SdkMidiJsonRenderer.RenderMelody(notes, ticksPerBeat: 480, trackName: "Test");
+
+        // Act - Serialize and deserialize
+        var json = original.ToJson();
+        var restored = SdkMidiJson.FromJson(json);
+
+        // Assert - Data preserved
+        Assert.Equal(original.TicksPerBeat, restored.TicksPerBeat);
+        Assert.Equal(original.Tracks.Count, restored.Tracks.Count);
+        Assert.Equal(original.Tracks[0].Events.Count, restored.Tracks[0].Events.Count);
+
+        for (int i = 0; i < original.Tracks[0].Events.Count; i++)
+        {
+            var origEvt = original.Tracks[0].Events[i];
+            var restEvt = restored.Tracks[0].Events[i];
+            Assert.Equal(origEvt.Tick, restEvt.Tick);
+            Assert.Equal(origEvt.Type, restEvt.Type);
+            Assert.Equal(origEvt.Note, restEvt.Note);
+            Assert.Equal(origEvt.Velocity, restEvt.Velocity);
+            Assert.Equal(origEvt.Duration, restEvt.Duration);
+        }
+    }
+}
+
+/// <summary>
+/// Integration tests for motif development workflows.
+/// Tests extracting, transforming, and realizing motifs.
+/// </summary>
+public class MotifDevelopmentTests
+{
+    [Fact]
+    public void Motif_ExtractAndRealize_RoundTrip()
+    {
+        // Arrange - Create original notes
+        var originalNotes = new List<SdkMelodyNote>
+        {
+            new(new SdkPitch(SdkPitchClass.C, 4), 0, 480, 80), // C4
+            new(new SdkPitch(SdkPitchClass.E, 4), 480, 480, 80), // E4 (+4)
+            new(new SdkPitch(SdkPitchClass.G, 4), 960, 480, 80) // G4 (+7)
+        };
+
+        // Act - Extract motif and realize at same starting pitch
+        var motif = SdkMotif.FromNotes(originalNotes);
+        var realized = motif.Realize(
+            new SdkPitch(SdkPitchClass.C, 4),
+            ticksPerBeat: 480);
+
+        // Assert - Should produce same pitches
+        Assert.Equal(3, realized.Count);
+        Assert.Equal(60, realized[0].Pitch.MidiNumber); // C4
+        Assert.Equal(64, realized[1].Pitch.MidiNumber); // E4
+        Assert.Equal(67, realized[2].Pitch.MidiNumber); // G4
+    }
+
+    [Fact]
+    public void Motif_TransposeAndRealize_ShiftsProperly()
+    {
+        // Arrange - C major triad motif
+        var motif = new SdkMotif([0, 4, 7], [1.0, 1.0, 2.0]);
+
+        // Act - Transpose up a whole step (2 semitones) and realize from D4
+        var transposed = motif.Transpose(2);
+        var realized = transposed.Realize(
+            new SdkPitch(SdkPitchClass.C, 4), // Start from C4, but intervals are shifted
+            ticksPerBeat: 480);
+
+        // Assert - Intervals are now 2, 6, 9 (D, F#, A)
+        Assert.Equal(62, realized[0].Pitch.MidiNumber); // D4
+        Assert.Equal(66, realized[1].Pitch.MidiNumber); // F#4
+        Assert.Equal(69, realized[2].Pitch.MidiNumber); // A4
+    }
+
+    [Fact]
+    public void Motif_InvertAndSequence_CreatesDevelopment()
+    {
+        // Arrange - Simple ascending motif
+        var motif = SdkMotif.Patterns.ScaleUp; // 0, 2, 4, 5
+
+        // Act - Invert to get descending
+        var inverted = motif.Invert(); // 0, -2, -4, -5
+
+        // Sequence the inverted motif 2 times, stepping down by 2
+        var developed = inverted.Sequence(-2, 2);
+
+        // Realize from G4
+        var realized = developed.Realize(
+            new SdkPitch(SdkPitchClass.G, 4),
+            ticksPerBeat: 480);
+
+        // Assert - Should have 8 notes (4 * 2)
+        Assert.Equal(8, realized.Count);
+
+        // First group: G, F, E, D (descending from G)
+        Assert.Equal(67, realized[0].Pitch.MidiNumber); // G4
+        Assert.Equal(65, realized[1].Pitch.MidiNumber); // F4
+        Assert.Equal(63, realized[2].Pitch.MidiNumber); // Eb4
+        Assert.Equal(62, realized[3].Pitch.MidiNumber); // D4
+
+        // Second group: same pattern but 2 semitones lower
+        Assert.Equal(65, realized[4].Pitch.MidiNumber); // F4
+    }
+
+    [Fact]
+    public void Motif_AugmentAndDiminish_AffectsDuration()
+    {
+        // Arrange
+        var motif = new SdkMotif([0, 2], [1.0, 1.0]);
+
+        // Act - Augment by 2x
+        var augmented = motif.Augment(2.0);
+        var augNotes = augmented.Realize(
+            new SdkPitch(SdkPitchClass.C, 4),
+            ticksPerBeat: 480);
+
+        // Diminish by 2x
+        var diminished = motif.Diminish(2.0);
+        var dimNotes = diminished.Realize(
+            new SdkPitch(SdkPitchClass.C, 4),
+            ticksPerBeat: 480);
+
+        // Assert - Augmented has double duration
+        Assert.Equal(960, augNotes[0].DurationTicks); // 2.0 * 480
+        Assert.Equal(960, augNotes[1].DurationTicks);
+
+        // Diminished has half duration
+        Assert.Equal(240, dimNotes[0].DurationTicks); // 0.5 * 480
+        Assert.Equal(240, dimNotes[1].DurationTicks);
+    }
+
+    [Fact]
+    public void Motif_Retrograde_ReversesPattern()
+    {
+        // Arrange - Ascending triad: intervals 0, 4, 7
+        var motif = SdkMotif.Patterns.ArpeggioUp;
+
+        // Act
+        var retrograde = motif.Retrograde();
+
+        // Assert - Retrograde recalculates intervals from new starting point
+        // Original: [0, 4, 7] with lastInterval = 7
+        // Retrograde: [7-7, 7-4, 7-0] = [0, 3, 7]
+        Assert.Equal(3, retrograde.Length);
+        Assert.Equal(0, retrograde.Intervals[0]); // First note is always 0
+        Assert.Equal(3, retrograde.Intervals[1]); // 7 - 4 = 3
+        Assert.Equal(7, retrograde.Intervals[2]); // 7 - 0 = 7
+
+        // Durations should be reversed
+        var originalDurations = motif.Durations.ToList();
+        var retrogradeDurations = retrograde.Durations.ToList();
+        Assert.Equal(originalDurations[2], retrogradeDurations[0]);
+        Assert.Equal(originalDurations[1], retrogradeDurations[1]);
+        Assert.Equal(originalDurations[0], retrogradeDurations[2]);
+    }
+
+    [Fact]
+    public void Motif_CombinedTransformations_ChainCorrectly()
+    {
+        // Arrange - Simple motif
+        var motif = new SdkMotif([0, 2, 4], [1.0, 1.0, 1.0]);
+
+        // Act - Chain: Transpose up, Invert, Augment
+        var developed = motif
+            .Transpose(5) // Up a P4
+            .Invert() // Flip direction
+            .Augment(1.5); // Stretch by 1.5x
+
+        var realized = developed.Realize(
+            new SdkPitch(SdkPitchClass.C, 4),
+            ticksPerBeat: 480);
+
+        // Assert - Transformations applied correctly
+        Assert.Equal(3, realized.Count);
+
+        // Durations should be 1.5x original
+        Assert.Equal(720, realized[0].DurationTicks); // 1.5 * 480
+
+        // Intervals: (0, 2, 4) + 5 = (5, 7, 9), then inverted = (-5, -7, -9)
+        Assert.Equal(55, realized[0].Pitch.MidiNumber); // C4 - 5 = G3
+        Assert.Equal(53, realized[1].Pitch.MidiNumber); // C4 - 7 = F3
+        Assert.Equal(51, realized[2].Pitch.MidiNumber); // C4 - 9 = Eb3
+    }
+}
+
+/// <summary>
+/// Integration tests for style-based generation.
+/// Verifies that generated music matches style characteristics.
+/// </summary>
+public class StyleAdherenceTests
+{
+    [Fact]
+    public void StyleDistribution_Celtic_MatchesExpectedModeRatios()
+    {
+        // Arrange - Sample many mode selections from Celtic style
+        var style = SdkBuiltInStyles.Celtic;
+        var random = new Random(42);
+        var sampleSize = 1000;
+
+        var modeCounts = new Dictionary<SdkModeType, int>();
+
+        // Act - Sample mode distribution
+        for (int i = 0; i < sampleSize; i++)
+        {
+            var mode = style.SelectMode(random);
+            modeCounts[mode] = modeCounts.GetValueOrDefault(mode) + 1;
+        }
+
+        // Assert - Distribution should roughly match:
+        // Major ~64%, Minor ~16%, Dorian ~14%, Mixolydian ~6%
+        var majorPct = modeCounts.GetValueOrDefault(SdkModeType.Major) / (double)sampleSize;
+        var minorPct = modeCounts.GetValueOrDefault(SdkModeType.Minor) / (double)sampleSize;
+        var dorianPct = modeCounts.GetValueOrDefault(SdkModeType.Dorian) / (double)sampleSize;
+
+        // Allow 10% tolerance
+        Assert.InRange(majorPct, 0.54, 0.74); // 64% ± 10%
+        Assert.InRange(minorPct, 0.06, 0.26); // 16% ± 10%
+        Assert.InRange(dorianPct, 0.04, 0.24); // 14% ± 10%
+    }
+
+    [Fact]
+    public void StyleIntervals_Celtic_FavorsStepwiseMotion()
+    {
+        // Arrange - Celtic prefers steps
+        var celticPrefs = SdkIntervalPreferences.Celtic;
+        var jazzPrefs = SdkIntervalPreferences.Jazz;
+        var random = new Random(42);
+        var sampleSize = 500;
+
+        // Act - Count step vs leap for each style
+        int celticSteps = 0, celticLeaps = 0;
+        int jazzSteps = 0, jazzLeaps = 0;
+
+        for (int i = 0; i < sampleSize; i++)
+        {
+            var celticInterval = celticPrefs.SelectInterval(random);
+            if (celticInterval <= 2) celticSteps++; else celticLeaps++;
+
+            var jazzInterval = jazzPrefs.SelectInterval(random);
+            if (jazzInterval <= 2) jazzSteps++; else jazzLeaps++;
+        }
+
+        // Assert - Celtic should have higher step ratio than Jazz
+        var celticStepRatio = celticSteps / (double)(celticSteps + celticLeaps);
+        var jazzStepRatio = jazzSteps / (double)(jazzSteps + jazzLeaps);
+
+        Assert.True(celticStepRatio > jazzStepRatio,
+            $"Celtic step ratio ({celticStepRatio:P1}) should exceed Jazz ({jazzStepRatio:P1})");
+    }
+
+    [Fact]
+    public void BuiltInStyles_AllStylesHaveRequiredFields()
+    {
+        // Act & Assert - All built-in styles should be complete
+        foreach (var style in SdkBuiltInStyles.All)
+        {
+            Assert.False(string.IsNullOrEmpty(style.Id), $"Style missing Id");
+            Assert.False(string.IsNullOrEmpty(style.Name), $"Style {style.Id} missing Name");
+            Assert.False(string.IsNullOrEmpty(style.Category), $"Style {style.Id} missing Category");
+            Assert.NotNull(style.ModeDistribution);
+            Assert.NotNull(style.IntervalPreferences);
+            Assert.True(style.DefaultTempo > 0, $"Style {style.Id} has invalid tempo");
+        }
+    }
+
+    [Fact]
+    public void BuiltInStyles_GetById_ReturnsCorrectStyle()
+    {
+        // Act & Assert
+        Assert.Equal("Celtic", SdkBuiltInStyles.GetById("celtic")?.Name);
+        Assert.Equal("Jazz", SdkBuiltInStyles.GetById("jazz")?.Name);
+        Assert.Equal("Baroque", SdkBuiltInStyles.GetById("baroque")?.Name);
+        Assert.Null(SdkBuiltInStyles.GetById("nonexistent"));
+    }
+
+    [Fact]
+    public void Style_TuneTypes_CelticHasExpectedTypes()
+    {
+        // Arrange
+        var celtic = SdkBuiltInStyles.Celtic;
+
+        // Assert
+        Assert.True(celtic.TuneTypes.Count >= 4, "Celtic should have reel, jig, polka, hornpipe");
+
+        var reel = celtic.GetTuneType("reel");
+        Assert.NotNull(reel);
+        Assert.Equal(4, reel.Meter.Numerator);
+        Assert.Equal(4, reel.Meter.Denominator);
+
+        var jig = celtic.GetTuneType("jig");
+        Assert.NotNull(jig);
+        Assert.Equal(6, jig.Meter.Numerator);
+        Assert.Equal(8, jig.Meter.Denominator);
+    }
+}
+
+/// <summary>
+/// Integration tests for phrase building and structural organization.
+/// </summary>
+public class PhraseStructureTests
+{
+    [Fact]
+    public void PhraseBuilder_CreatesPhraseWithNotes()
+    {
+        // Arrange
+        var builder = new SdkPhraseBuilder(startTick: 0)
+            .WithType(SdkPhraseType.Antecedent);
+
+        // Act - Add some notes
+        builder.AddNote(new SdkPitch(SdkPitchClass.C, 4), durationTicks: 480);
+        builder.AddNote(new SdkPitch(SdkPitchClass.D, 4), durationTicks: 480);
+        builder.AddRest(durationTicks: 240);
+        builder.AddNote(new SdkPitch(SdkPitchClass.E, 4), durationTicks: 720);
+        builder.WithCadence(SdkCadenceType.Half);
+
+        var phrase = builder.Build();
+
+        // Assert
+        Assert.Equal(SdkPhraseType.Antecedent, phrase.Type);
+        Assert.Equal(0, phrase.StartTick);
+        Assert.Equal(3, phrase.Notes.Count);
+        Assert.Equal(SdkCadenceType.Half, phrase.EndingCadence);
+
+        // Duration includes rest
+        Assert.Equal(480 + 480 + 240 + 720, phrase.DurationTicks);
+
+        // Notes have correct timings
+        Assert.Equal(0, phrase.Notes[0].StartTick);
+        Assert.Equal(480, phrase.Notes[1].StartTick);
+        Assert.Equal(480 + 480 + 240, phrase.Notes[2].StartTick); // After rest
+    }
+
+    [Fact]
+    public void PhraseBuilder_WithHarmony_IncludesProgression()
+    {
+        // Arrange
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var progression = progressionGen.GenerateFromPattern(scale, "I-V");
+
+        var builder = new SdkPhraseBuilder(startTick: 0)
+            .WithType(SdkPhraseType.Consequent)
+            .WithHarmony(progression)
+            .WithCadence(SdkCadenceType.AuthenticPerfect);
+
+        // Add melody notes
+        builder.AddNote(new SdkPitch(SdkPitchClass.G, 4), 960);
+        builder.AddNote(new SdkPitch(SdkPitchClass.C, 5), 960);
+
+        var phrase = builder.Build();
+
+        // Assert
+        Assert.NotNull(phrase.Harmony);
+        Assert.Equal(2, phrase.Harmony.Count);
+        Assert.Equal(SdkCadenceType.AuthenticPerfect, phrase.EndingCadence);
+    }
+
+    [Fact]
+    public void ExpandedForm_GetSectionsByLabel_ReturnsAllMatches()
+    {
+        // Arrange
+        var form = SdkForm.Common.AABA;
+        var expanded = new SdkExpandedForm(form, barsPerSection: 8);
+
+        // Act
+        var aSections = expanded.GetSectionsByLabel("A").ToList();
+        var bSections = expanded.GetSectionsByLabel("B").ToList();
+
+        // Assert - AABA has 3 A sections and 1 B section
+        Assert.Equal(3, aSections.Count);
+        Assert.Single(bSections);
+
+        // Verify bar positions
+        Assert.Equal(0, aSections[0].StartBar);
+        Assert.Equal(8, aSections[1].StartBar);
+        Assert.Equal(24, aSections[2].StartBar); // After B section
+        Assert.Equal(16, bSections[0].StartBar);
+    }
+}
+
+/// <summary>
+/// Tests for MotifLibrary and NamedMotif cataloguing functionality.
+/// </summary>
+public class MotifLibraryTests
+{
+    [Fact]
+    public void MotifLibrary_Add_IndexesByIdStyleAndCategory()
+    {
+        // Arrange
+        var library = new SdkMotifLibrary(seed: 42);
+        var motif = SdkNamedMotif.Create(
+            "test-motif", "Test Motif",
+            [0, 2, 4], [1.0, 1.0, 2.0],
+            SdkMotifCategory.Melodic,
+            styleId: "celtic",
+            description: "Test melodic pattern");
+
+        // Act
+        library.Add(motif);
+
+        // Assert - Can retrieve by ID
+        var byId = library.Get("test-motif");
+        Assert.NotNull(byId);
+        Assert.Equal("Test Motif", byId.Name);
+
+        // Assert - Indexed by style
+        var byStyle = library.GetByStyle("celtic").ToList();
+        Assert.Contains(byStyle, m => m.Id == "test-motif");
+
+        // Assert - Indexed by category
+        var byCategory = library.GetByCategory(SdkMotifCategory.Melodic).ToList();
+        Assert.Contains(byCategory, m => m.Id == "test-motif");
+    }
+
+    [Fact]
+    public void MotifLibrary_UniversalMotifs_IncludedInAllStyles()
+    {
+        // Arrange
+        var library = new SdkMotifLibrary(seed: 42);
+
+        // Add universal motif (no styleId)
+        library.Add(SdkNamedMotif.Create(
+            "universal-1", "Universal Pattern",
+            [0, 2, 0], [1.0, 0.5, 1.5],
+            SdkMotifCategory.Ornament));
+
+        // Add style-specific motif
+        library.Add(SdkNamedMotif.Create(
+            "celtic-only", "Celtic Pattern",
+            [0, 2, 4, 2], [0.25, 0.25, 0.25, 0.25],
+            SdkMotifCategory.Ornament,
+            styleId: "celtic"));
+
+        // Act
+        var celticMotifs = library.GetByStyle("celtic").ToList();
+        var jazzMotifs = library.GetByStyle("jazz").ToList();
+
+        // Assert - Celtic gets both universal and celtic-specific
+        Assert.Equal(2, celticMotifs.Count);
+        Assert.Contains(celticMotifs, m => m.Id == "universal-1");
+        Assert.Contains(celticMotifs, m => m.Id == "celtic-only");
+
+        // Assert - Jazz only gets universal (no jazz-specific motifs added)
+        Assert.Single(jazzMotifs);
+        Assert.Contains(jazzMotifs, m => m.Id == "universal-1");
+    }
+
+    [Fact]
+    public void MotifLibrary_GetByStyleAndCategory_FiltersCorrectly()
+    {
+        // Arrange
+        var library = new SdkMotifLibrary(seed: 42);
+
+        library.Add(SdkNamedMotif.Create("celtic-orn", "Celtic Ornament",
+            [0, 2, 0], [0.25, 0.25, 0.5], SdkMotifCategory.Ornament, styleId: "celtic"));
+        library.Add(SdkNamedMotif.Create("celtic-mel", "Celtic Melodic",
+            [0, 2, 4, 5], [1.0, 1.0, 1.0, 1.0], SdkMotifCategory.Melodic, styleId: "celtic"));
+        library.Add(SdkNamedMotif.Create("jazz-orn", "Jazz Ornament",
+            [1, -1, 0], [0.5, 0.5, 1.0], SdkMotifCategory.Ornament, styleId: "jazz"));
+
+        // Act
+        var celticOrnaments = library.GetByStyleAndCategory("celtic", SdkMotifCategory.Ornament).ToList();
+
+        // Assert - Only celtic ornaments, not celtic melodic or jazz ornaments
+        Assert.Single(celticOrnaments);
+        Assert.Equal("celtic-orn", celticOrnaments[0].Id);
+    }
+
+    [Fact]
+    public void MotifLibrary_SelectWeighted_RespectsWeights()
+    {
+        // Arrange
+        var library = new SdkMotifLibrary(seed: 42);
+
+        // Add motif with high weight (10x more likely)
+        library.Add(SdkNamedMotif.Create("high-weight", "High Weight",
+            [0, 2], [1.0, 1.0], SdkMotifCategory.Melodic, weight: 10.0));
+
+        // Add motif with low weight
+        library.Add(SdkNamedMotif.Create("low-weight", "Low Weight",
+            [0, -2], [1.0, 1.0], SdkMotifCategory.Melodic, weight: 1.0));
+
+        // Act - Select many times (initialize counts to avoid KeyNotFound)
+        var selections = new Dictionary<string, int> { ["high-weight"] = 0, ["low-weight"] = 0 };
+        for (int i = 0; i < 200; i++)
+        {
+            var selected = library.SelectWeighted();
+            Assert.NotNull(selected);
+            selections[selected.Id]++;
+        }
+
+        // Assert - High weight motif should be selected more often
+        // With 10:1 ratio and 200 selections, expect ~182:18 split
+        Assert.True(selections["high-weight"] > selections["low-weight"],
+            $"High weight: {selections["high-weight"]}, Low weight: {selections["low-weight"]}");
+    }
+
+    [Fact]
+    public void MotifLibrary_DuplicateId_ThrowsException()
+    {
+        // Arrange
+        var library = new SdkMotifLibrary();
+        library.Add(SdkNamedMotif.Create("duplicate-id", "First",
+            [0, 2], [1.0, 1.0], SdkMotifCategory.Melodic));
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+            library.Add(SdkNamedMotif.Create("duplicate-id", "Second",
+                [0, 4], [0.5, 0.5], SdkMotifCategory.Melodic)));
+
+        Assert.Contains("duplicate-id", ex.Message);
+    }
+
+    [Fact]
+    public void BuiltInMotifs_ContainsCelticPatterns()
+    {
+        // Act
+        var celticMotifs = SdkBuiltInMotifs.Celtic.ToList();
+
+        // Assert - Should have Celtic-specific patterns
+        Assert.Contains(celticMotifs, m => m.Id == "celtic-roll");
+        Assert.Contains(celticMotifs, m => m.Id == "celtic-triplet");
+        Assert.Contains(celticMotifs, m => m.Id == "celtic-leap-step");
+
+        // Assert - Should also include universal motifs
+        Assert.Contains(celticMotifs, m => m.Id == "scale-up");
+        Assert.Contains(celticMotifs, m => m.Id == "arpeggio-up");
+    }
+
+    [Fact]
+    public void BuiltInMotifs_ContainsJazzPatterns()
+    {
+        // Act
+        var jazzMotifs = SdkBuiltInMotifs.Jazz.ToList();
+
+        // Assert - Should have Jazz-specific patterns
+        Assert.Contains(jazzMotifs, m => m.Id == "jazz-approach");
+        Assert.Contains(jazzMotifs, m => m.Id == "jazz-enclosure");
+        Assert.Contains(jazzMotifs, m => m.Id == "jazz-bebop-scale");
+
+        // Verify enclosure pattern intervals (above, below, target)
+        var enclosure = jazzMotifs.First(m => m.Id == "jazz-enclosure");
+        Assert.Equal([1, -1, 0], enclosure.Motif.Intervals.ToArray());
+    }
+
+    [Fact]
+    public void BuiltInMotifs_ContainsCadentialPatterns()
+    {
+        // Act
+        var cadentialMotifs = SdkBuiltInMotifs.Library.GetByCategory(SdkMotifCategory.Cadential).ToList();
+
+        // Assert
+        Assert.True(cadentialMotifs.Count >= 2);
+        Assert.Contains(cadentialMotifs, m => m.Id == "cadence-fall");
+        Assert.Contains(cadentialMotifs, m => m.Id == "cadence-resolution");
+
+        // Verify cadential fall ends on tonic (interval 0)
+        var fall = cadentialMotifs.First(m => m.Id == "cadence-fall");
+        Assert.Equal(0, fall.Motif.Intervals.Last());
+    }
+
+    [Fact]
+    public void NamedMotif_UnderlyingMotif_SupportsTransformations()
+    {
+        // Arrange
+        var namedMotif = SdkBuiltInMotifs.Get("scale-up");
+        Assert.NotNull(namedMotif);
+
+        // Act - Apply transformations to underlying motif
+        var inverted = namedMotif.Motif.Invert();
+        var augmented = namedMotif.Motif.Augment(2.0);
+
+        // Assert - Original intervals [0, 2, 4, 5] become [0, -2, -4, -5]
+        Assert.Equal([0, -2, -4, -5], inverted.Intervals.ToArray());
+
+        // Assert - Durations doubled
+        Assert.Equal([2.0, 2.0, 2.0, 2.0], augmented.Durations.ToArray());
+    }
+
+    [Fact]
+    public void NamedMotif_CreateWithValidation_EnforcesConstraints()
+    {
+        // Act & Assert - Empty ID throws
+        Assert.Throws<ArgumentException>(() =>
+            SdkNamedMotif.Create("", "Name", [0, 2], [1.0, 1.0], SdkMotifCategory.Melodic));
+
+        // Act & Assert - Empty name throws
+        Assert.Throws<ArgumentException>(() =>
+            SdkNamedMotif.Create("id", "", [0, 2], [1.0, 1.0], SdkMotifCategory.Melodic));
+
+        // Act & Assert - Negative weight becomes 1.0
+        var motif = SdkNamedMotif.Create("test", "Test",
+            [0, 2], [1.0, 1.0], SdkMotifCategory.Melodic, weight: -5.0);
+        Assert.Equal(1.0, motif.Weight);
+    }
+}
+
+/// <summary>
+/// Tests for StyleDefinition integration with MotifLibrary.
+/// </summary>
+public class StyleMotifIntegrationTests
+{
+    [Fact]
+    public void StyleDefinition_GetCharacteristicMotifs_ReturnsMotifsById()
+    {
+        // Arrange
+        var style = SdkBuiltInStyles.Celtic;
+        var library = SdkBuiltInMotifs.Library;
+
+        // Act
+        var motifs = style.GetCharacteristicMotifs(library).ToList();
+
+        // Assert - Should return the Celtic-specific motifs
+        Assert.Equal(3, motifs.Count);
+        Assert.Contains(motifs, m => m.Id == "celtic-roll");
+        Assert.Contains(motifs, m => m.Id == "celtic-triplet");
+        Assert.Contains(motifs, m => m.Id == "celtic-leap-step");
+    }
+
+    [Fact]
+    public void StyleDefinition_GetAvailableMotifs_IncludesUniversal()
+    {
+        // Arrange
+        var style = SdkBuiltInStyles.Celtic;
+        var library = SdkBuiltInMotifs.Library;
+
+        // Act
+        var motifs = style.GetAvailableMotifs(library).ToList();
+
+        // Assert - Should include both Celtic-specific and universal motifs
+        Assert.Contains(motifs, m => m.Id == "celtic-roll");
+        Assert.Contains(motifs, m => m.Id == "scale-up");
+        Assert.Contains(motifs, m => m.Id == "arpeggio-up");
+    }
+
+    [Fact]
+    public void StyleDefinition_SelectMotif_ReturnsAppropriateCategory()
+    {
+        // Arrange
+        var style = SdkBuiltInStyles.Jazz;
+        var library = SdkBuiltInMotifs.Library;
+
+        // Act - Select an ornament motif for Jazz
+        var motif = style.SelectMotif(library, SdkMotifCategory.Ornament);
+
+        // Assert - Should return an ornament (jazz-enclosure is the jazz-specific ornament)
+        Assert.NotNull(motif);
+        Assert.Equal(SdkMotifCategory.Ornament, motif.Category);
+    }
+
+    [Fact]
+    public void StyleDefinition_JazzCharacteristicMotifs_IncludesAllThree()
+    {
+        // Arrange
+        var style = SdkBuiltInStyles.Jazz;
+        var library = SdkBuiltInMotifs.Library;
+
+        // Act
+        var motifs = style.GetCharacteristicMotifs(library).ToList();
+
+        // Assert
+        Assert.Equal(3, motifs.Count);
+        Assert.Contains(motifs, m => m.Id == "jazz-approach");
+        Assert.Contains(motifs, m => m.Id == "jazz-enclosure");
+        Assert.Contains(motifs, m => m.Id == "jazz-bebop-scale");
+    }
+
+    [Fact]
+    public void StyleDefinition_BaroqueCharacteristicMotifs_IncludesPatterns()
+    {
+        // Arrange
+        var style = SdkBuiltInStyles.Baroque;
+        var library = SdkBuiltInMotifs.Library;
+
+        // Act
+        var motifs = style.GetCharacteristicMotifs(library).ToList();
+
+        // Assert
+        Assert.Equal(2, motifs.Count);
+        Assert.Contains(motifs, m => m.Id == "baroque-sequence");
+        Assert.Contains(motifs, m => m.Id == "baroque-trill-prep");
+    }
+
+    [Fact]
+    public void StyleDefinition_WithCustomMotifLibrary_WorksCorrectly()
+    {
+        // Arrange - Create custom style with custom library
+        var style = new SdkStyleDefinition
+        {
+            Id = "custom",
+            Name = "Custom Style",
+            CharacteristicMotifIds = ["my-motif-1", "my-motif-2"]
+        };
+
+        var library = new SdkMotifLibrary();
+        library.Add(SdkNamedMotif.Create("my-motif-1", "My Motif 1",
+            [0, 2, 4], [1.0, 1.0, 1.0], SdkMotifCategory.Melodic, styleId: "custom"));
+        library.Add(SdkNamedMotif.Create("my-motif-2", "My Motif 2",
+            [0, -2, -4], [0.5, 0.5, 1.0], SdkMotifCategory.Melodic, styleId: "custom"));
+
+        // Act
+        var characteristic = style.GetCharacteristicMotifs(library).ToList();
+        var available = style.GetAvailableMotifs(library).ToList();
+
+        // Assert
+        Assert.Equal(2, characteristic.Count);
+        Assert.Equal(2, available.Count); // Only custom motifs, no universal in this library
+    }
+}
+
+/// <summary>
+/// Tests for MelodyGenerator motif integration.
+/// </summary>
+public class MelodyGeneratorMotifTests
+{
+    [Fact]
+    public void MelodyGenerator_WithMotifLibrary_GeneratesMelody()
+    {
+        // Arrange
+        var generator = new SdkMelodyGenerator(seed: 42);
+        var scale = new SdkScale(SdkPitchClass.C, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var progression = progressionGen.Generate(scale, length: 4);
+
+        var options = new SdkMelodyOptions
+        {
+            MotifLibrary = SdkBuiltInMotifs.Library,
+            StyleId = "celtic",
+            MotifProbability = 0.8, // High probability to trigger motifs
+            Seed = 42
+        };
+
+        // Act
+        var melody = generator.Generate(progression, scale, options);
+
+        // Assert - Should generate a melody with notes
+        Assert.NotNull(melody);
+        Assert.True(melody.Count > 0, "Should generate melody notes");
+    }
+
+    [Fact]
+    public void MelodyGenerator_WithHighMotifProbability_InsertsMotifs()
+    {
+        // Arrange
+        var generator = new SdkMelodyGenerator(seed: 42);
+        var scale = new SdkScale(SdkPitchClass.G, SdkModeType.Major);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var progression = progressionGen.Generate(scale, length: 8);
+
+        var optionsWithMotifs = new SdkMelodyOptions
+        {
+            MotifLibrary = SdkBuiltInMotifs.Library,
+            MotifProbability = 1.0, // Always try to insert motifs
+            Seed = 42
+        };
+
+        var optionsWithoutMotifs = new SdkMelodyOptions
+        {
+            MotifProbability = 0.0,
+            Seed = 42
+        };
+
+        // Act
+        var melodyWithMotifs = generator.Generate(progression, scale, optionsWithMotifs);
+        var melodyWithout = generator.Generate(progression, scale, optionsWithoutMotifs);
+
+        // Assert - Both should generate melodies (different patterns)
+        Assert.True(melodyWithMotifs.Count > 0);
+        Assert.True(melodyWithout.Count > 0);
+    }
+
+    [Fact]
+    public void MelodyGenerator_WithStyleSpecificMotifs_UsesStyleId()
+    {
+        // Arrange
+        var generator = new SdkMelodyGenerator(seed: 123);
+        var scale = new SdkScale(SdkPitchClass.D, SdkModeType.Dorian);
+        var progressionGen = new SdkProgressionGenerator(seed: 123);
+        var progression = progressionGen.Generate(scale, length: 4);
+
+        var options = new SdkMelodyOptions
+        {
+            MotifLibrary = SdkBuiltInMotifs.Library,
+            StyleId = "jazz",
+            MotifProbability = 0.7,
+            Seed = 123
+        };
+
+        // Act
+        var melody = generator.Generate(progression, scale, options);
+
+        // Assert - Should complete without error
+        Assert.NotNull(melody);
+        Assert.True(melody.Count > 0);
+    }
+
+    [Fact]
+    public void MelodyGenerator_WithoutMotifLibrary_GeneratesNormally()
+    {
+        // Arrange
+        var generator = new SdkMelodyGenerator(seed: 42);
+        var scale = new SdkScale(SdkPitchClass.A, SdkModeType.Minor);
+        var progressionGen = new SdkProgressionGenerator(seed: 42);
+        var progression = progressionGen.Generate(scale, length: 4);
+
+        var options = new SdkMelodyOptions
+        {
+            // No MotifLibrary - should generate normally
+            MotifProbability = 1.0, // Even with high probability, no motifs without library
+            Seed = 42
+        };
+
+        // Act
+        var melody = generator.Generate(progression, scale, options);
+
+        // Assert
+        Assert.NotNull(melody);
+        Assert.True(melody.Count > 0);
+    }
+
+    [Fact]
+    public void MelodyOptions_MotifProperties_HaveCorrectDefaults()
+    {
+        // Arrange & Act
+        var options = new SdkMelodyOptions();
+
+        // Assert
+        Assert.Null(options.MotifLibrary);
+        Assert.Null(options.StyleId);
+        Assert.Equal(0.4, options.MotifProbability);
     }
 }
