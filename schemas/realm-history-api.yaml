@@ -66,77 +66,6 @@ paths:
         '409':
           description: Participation already recorded for this realm and event
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RecordRealmParticipationRequest\"\
-        ,\n    \"$defs\": {\n        \"RecordRealmParticipationRequest\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"Request payload for recording event participation\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\",\n                \"eventId\",\n              \
-        \  \"eventName\",\n                \"eventCategory\",\n                \"role\",\n                \"eventDate\"\n\
-        \            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the realm that participated\"\
-        \n                },\n                \"eventId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"description\": \"ID of the historical event\"\n                },\n\
-        \                \"eventName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
-        \                    \"maxLength\": 200,\n                    \"description\": \"Name of the event\"\n           \
-        \     },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/RealmEventCategory\",\n  \
-        \                  \"description\": \"Category of the event\"\n                },\n                \"role\": {\n \
-        \                   \"$ref\": \"#/$defs/RealmEventRole\",\n                    \"description\": \"How the realm participated\"\
-        \n                },\n                \"eventDate\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"In-game date when the event occurred\"\n\
-        \                },\n                \"impact\": {\n                    \"type\": \"number\",\n                  \
-        \  \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n        \
-        \            \"default\": 0.5,\n                    \"description\": \"How significant this event was for the realm\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional event-specific details\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
-        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
-        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
-        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
-        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
-        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
-        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
-        \            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmHistoricalParticipation\"\
-        ,\n    \"$defs\": {\n        \"RealmHistoricalParticipation\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Record of a realm's participation in a historical event\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"participationId\",\n                \"realmId\",\n      \
-        \          \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"role\"\
-        ,\n                \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
-        \                \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm that participated\"\n                },\n              \
-        \  \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"description\": \"ID of the historical event\"\n                },\n                \"eventName\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Name of the event (for display
-        and summarization)\"\n                },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/RealmEventCategory\"\
-        ,\n                    \"description\": \"Category of the historical event\"\n                },\n               \
-        \ \"role\": {\n                    \"$ref\": \"#/$defs/RealmEventRole\",\n                    \"description\": \"\
-        How the realm participated\"\n                },\n                \"eventDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game date when
-        the event occurred\"\n                },\n                \"impact\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
-        for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Record realm participation in a historical event\",\n    \"description\"\
-        : \"Records that a realm participated in a historical event. Events are\\nidentified by eventId (typically managed
-        by a game-specific event system).\\nThe impact level affects how strongly this event influences behavior.\\n\",\n\
-        \    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"recordRealmParticipation\"\
-        \n}"
   /realm-history/get-participation:
     post:
       summary: Get all historical events a realm participated in
@@ -163,80 +92,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmParticipationListResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmParticipationRequest\"\
-        ,\n    \"$defs\": {\n        \"GetRealmParticipationRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request payload for getting a realm's event participation\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm to get participation for\"\n                },\n       \
-        \         \"eventCategory\": {\n                    \"$ref\": \"#/$defs/RealmEventCategory\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Filter by event category\"\n                },\n  \
-        \              \"minimumImpact\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
-        float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Filter by minimum impact\"\n                },\n                \"\
-        page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"\
-        default\": 1,\n                    \"description\": \"Page number for pagination (1-based)\"\n                },\n\
-        \                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\"\
-        : \"Number of results per page\"\n                }\n            }\n        },\n        \"RealmEventCategory\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms can
-        participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n            \
-        \    \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\",\n\
-        \                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
-        \n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmParticipationListResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmParticipationListResponse\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Paginated list of participation records\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"participations\",\n                \"totalCount\",\n              \
-        \  \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"participations\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/RealmHistoricalParticipation\"\n                    },\n                    \"description\": \"List of
-        participation records\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of matching records\"\n                },\n               \
-        \ \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number
-        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"description\": \"Number of results per page\"\n                },\n                \"hasNextPage\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more results
-        after this page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether there are results before this page\"\n                }\n      \
-        \      }\n        },\n        \"RealmHistoricalParticipation\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Record of a realm's participation in a historical event\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"participationId\",\n                \"realmId\",\n      \
-        \          \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"role\"\
-        ,\n                \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
-        \                \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm that participated\"\n                },\n              \
-        \  \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"description\": \"ID of the historical event\"\n                },\n                \"eventName\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Name of the event (for display
-        and summarization)\"\n                },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/RealmEventCategory\"\
-        ,\n                    \"description\": \"Category of the historical event\"\n                },\n               \
-        \ \"role\": {\n                    \"$ref\": \"#/$defs/RealmEventRole\",\n                    \"description\": \"\
-        How the realm participated\"\n                },\n                \"eventDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game date when
-        the event occurred\"\n                },\n                \"impact\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
-        for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get all historical events a realm participated in\",\n    \"description\"\
-        : \"Retrieves all historical event participation records for a realm.\\nSupports filtering by event category and minimum
-        impact.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
-        : \"getRealmParticipation\"\n}"
   /realm-history/get-event-participants:
     post:
       summary: Get all realms that participated in a historical event
@@ -263,76 +118,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmParticipationListResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmEventParticipantsRequest\"\
-        ,\n    \"$defs\": {\n        \"GetRealmEventParticipantsRequest\": {\n            \"type\": \"object\",\n        \
-        \    \"description\": \"Request payload for getting participants of an event\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"eventId\"\n            ],\n            \"properties\": {\n\
-        \                \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the historical event\"\n                },\n                \"role\"\
-        : {\n                    \"$ref\": \"#/$defs/RealmEventRole\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Filter by participation role\"\n                },\n                \"page\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
-        : 1,\n                    \"description\": \"Page number for pagination (1-based)\"\n                },\n        \
-        \        \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n      \
-        \              \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\": \"Number
-        of results per page\"\n                }\n            }\n        },\n        \"RealmEventRole\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How the realm participated in the historical event\",\n      \
-        \      \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"DEFENDER\",\n \
-        \               \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n                \"\
-        INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmParticipationListResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmParticipationListResponse\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Paginated list of participation records\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"participations\",\n                \"totalCount\",\n              \
-        \  \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"participations\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/RealmHistoricalParticipation\"\n                    },\n                    \"description\": \"List of
-        participation records\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of matching records\"\n                },\n               \
-        \ \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number
-        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"description\": \"Number of results per page\"\n                },\n                \"hasNextPage\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more results
-        after this page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether there are results before this page\"\n                }\n      \
-        \      }\n        },\n        \"RealmHistoricalParticipation\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Record of a realm's participation in a historical event\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"participationId\",\n                \"realmId\",\n      \
-        \          \"eventId\",\n                \"eventName\",\n                \"eventCategory\",\n                \"role\"\
-        ,\n                \"eventDate\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
-        \                \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Unique ID for this participation record\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm that participated\"\n                },\n              \
-        \  \"eventId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"description\": \"ID of the historical event\"\n                },\n                \"eventName\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Name of the event (for display
-        and summarization)\"\n                },\n                \"eventCategory\": {\n                    \"$ref\": \"#/$defs/RealmEventCategory\"\
-        ,\n                    \"description\": \"Category of the historical event\"\n                },\n               \
-        \ \"role\": {\n                    \"$ref\": \"#/$defs/RealmEventRole\",\n                    \"description\": \"\
-        How the realm participated\"\n                },\n                \"eventDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game date when
-        the event occurred\"\n                },\n                \"impact\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
-        for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get all realms that participated in a historical event\",\n    \"description\"\
-        : \"Retrieves all realms that participated in a specific historical event.\\nUseful for generating event summaries
-        or finding related realms.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n\
-        \    \"operationId\": \"getRealmEventParticipants\"\n}"
   /realm-history/delete-participation:
     post:
       summary: Delete a participation record
@@ -357,18 +142,6 @@ paths:
         '404':
           description: Participation record not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteRealmParticipationRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteRealmParticipationRequest\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"Request payload for deleting a participation record\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"participationId\"\n            ],\n            \"properties\"\
-        : {\n                \"participationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"ID of the participation record to delete\"\n                }\n\
-        \            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete a participation record\",\n    \"description\": \"Removes a specific
-        participation record. Used during realm deletion\\nor to correct erroneous records.\\n\",\n    \"tags\": [\n     \
-        \   \"Historical Events\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteRealmParticipation\"\n\
-        }"
   /realm-history/get-lore:
     post:
       summary: Get machine-readable lore elements for behavior system
@@ -398,65 +171,6 @@ paths:
         '404':
           description: No lore defined for this realm
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmLoreRequest\"\
-        ,\n    \"$defs\": {\n        \"GetRealmLoreRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request payload for getting a realm's lore\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the realm to get lore for\"\n                },\n                \"elementTypes\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmLoreElementType\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Filter by
-        element types (null for all)\"\n                },\n                \"minimumStrength\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n         \
-        \           \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Filter
-        by minimum strength\"\n                }\n            }\n        },\n        \"RealmLoreElementType\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"Types of lore elements. Each type represents a different
-        aspect\\nof the realm's background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN_MYTH\"\
-        ,\n                \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n                \"ECONOMIC_BASE\"\
-        ,\n                \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n                \"FAMOUS_FIGURE\"\
-        ,\n                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmLoreResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmLoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Complete lore data for a realm\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"realmId\",\n                \"elements\"\n            ],\n            \"properties\": {\n     \
-        \           \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the realm this lore belongs to\"\n                },\n             \
-        \   \"elements\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
-        \        \"$ref\": \"#/$defs/RealmLoreElement\"\n                    },\n                    \"description\": \"All
-        lore elements for this realm\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this lore was first created\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this lore was last modified\"\n             \
-        \   }\n            }\n        },\n        \"RealmLoreElement\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"A machine-readable lore element for behavior system consumption\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"elementType\",\n                \"key\",\n              \
-        \  \"value\"\n            ],\n            \"properties\": {\n                \"elementType\": {\n                \
-        \    \"$ref\": \"#/$defs/RealmLoreElementType\",\n                    \"description\": \"Category of this lore element\"\
-        \n                },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Machine-readable
-        key (e.g., \\\"founding_year\\\", \\\"primary_export\\\", \\\"capital_city\\\").\\nUsed by behavior system to query
-        specific aspects.\\n\"\n                },\n                \"value\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\"\
-        : \"Machine-readable value (e.g., \\\"year_of_the_dragon\\\", \\\"iron_ore\\\", \\\"stormgate\\\").\\nReferenced in
-        behavior rules.\\n\"\n                },\n                \"strength\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How strongly this element affects
-        behavior (0.0 to 1.0).\\nHigher strength = greater influence on decisions.\\n\"\n                },\n            \
-        \    \"relatedEntityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Optional related entity (location,
-        organization, character)\"\n                },\n                \"relatedEntityType\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the related
-        entity (if any)\"\n                }\n            }\n        },\n        \"RealmLoreElementType\": {\n           \
-        \ \"type\": \"string\",\n            \"description\": \"Types of lore elements. Each type represents a different aspect\\
-        nof the realm's background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN_MYTH\"\
-        ,\n                \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n                \"ECONOMIC_BASE\"\
-        ,\n                \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n                \"FAMOUS_FIGURE\"\
-        ,\n                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get machine-readable lore elements for behavior system\",\n    \"description\"\
-        : \"Retrieves structured lore elements for a realm. These elements\\nare machine-readable key-value pairs used by
-        the behavior system for\\ndecision-making, not narrative text for players.\\n\",\n    \"tags\": [\n        \"Lore\"\
-        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmLore\"\n}"
   /realm-history/set-lore:
     post:
       summary: Set lore elements for a realm
@@ -485,84 +199,6 @@ paths:
         '400':
           description: Invalid lore data
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetRealmLoreRequest\"\
-        ,\n    \"$defs\": {\n        \"SetRealmLoreRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request payload for setting a realm's lore\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"realmId\",\n                \"elements\"\n            ],\n            \"properties\": {\n \
-        \               \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm to set lore for\"\n                },\n                \"\
-        elements\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \
-        \  \"$ref\": \"#/$defs/RealmLoreElement\"\n                    },\n                    \"minItems\": 1,\n        \
-        \            \"description\": \"Lore elements to set\"\n                },\n                \"replaceExisting\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"If true, replace all existing elements.\\nIf false, merge with existing (update matching type+key pairs).\\n\"\
-        \n                }\n            }\n        },\n        \"RealmLoreElement\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"A machine-readable lore element for behavior system consumption\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"elementType\",\n              \
-        \  \"key\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"elementType\"\
-        : {\n                    \"$ref\": \"#/$defs/RealmLoreElementType\",\n                    \"description\": \"Category
-        of this lore element\"\n                },\n                \"key\": {\n                    \"type\": \"string\",\n\
-        \                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Machine-readable key (e.g., \\\"founding_year\\\", \\\"primary_export\\\", \\\"capital_city\\\").\\nUsed by behavior
-        system to query specific aspects.\\n\"\n                },\n                \"value\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 500,\n                  \
-        \  \"description\": \"Machine-readable value (e.g., \\\"year_of_the_dragon\\\", \\\"iron_ore\\\", \\\"stormgate\\\"\
-        ).\\nReferenced in behavior rules.\\n\"\n                },\n                \"strength\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n     \
-        \               \"maximum\": 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"\
-        How strongly this element affects behavior (0.0 to 1.0).\\nHigher strength = greater influence on decisions.\\n\"\n\
-        \                },\n                \"relatedEntityId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Optional related entity (location, organization, character)\"\n                },\n                \"relatedEntityType\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the related entity (if any)\"\n                }\n            }\n        },\n        \"RealmLoreElementType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Types of lore elements. Each type represents
-        a different aspect\\nof the realm's background that influences behavior.\\n\",\n            \"enum\": [\n        \
-        \        \"ORIGIN_MYTH\",\n                \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n       \
-        \         \"ECONOMIC_BASE\",\n                \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n\
-        \                \"FAMOUS_FIGURE\",\n                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmLoreResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmLoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Complete lore data for a realm\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"realmId\",\n                \"elements\"\n            ],\n            \"properties\": {\n     \
-        \           \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the realm this lore belongs to\"\n                },\n             \
-        \   \"elements\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
-        \        \"$ref\": \"#/$defs/RealmLoreElement\"\n                    },\n                    \"description\": \"All
-        lore elements for this realm\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this lore was first created\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this lore was last modified\"\n             \
-        \   }\n            }\n        },\n        \"RealmLoreElement\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"A machine-readable lore element for behavior system consumption\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"elementType\",\n                \"key\",\n              \
-        \  \"value\"\n            ],\n            \"properties\": {\n                \"elementType\": {\n                \
-        \    \"$ref\": \"#/$defs/RealmLoreElementType\",\n                    \"description\": \"Category of this lore element\"\
-        \n                },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Machine-readable
-        key (e.g., \\\"founding_year\\\", \\\"primary_export\\\", \\\"capital_city\\\").\\nUsed by behavior system to query
-        specific aspects.\\n\"\n                },\n                \"value\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\"\
-        : \"Machine-readable value (e.g., \\\"year_of_the_dragon\\\", \\\"iron_ore\\\", \\\"stormgate\\\").\\nReferenced in
-        behavior rules.\\n\"\n                },\n                \"strength\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How strongly this element affects
-        behavior (0.0 to 1.0).\\nHigher strength = greater influence on decisions.\\n\"\n                },\n            \
-        \    \"relatedEntityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Optional related entity (location,
-        organization, character)\"\n                },\n                \"relatedEntityType\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the related
-        entity (if any)\"\n                }\n            }\n        },\n        \"RealmLoreElementType\": {\n           \
-        \ \"type\": \"string\",\n            \"description\": \"Types of lore elements. Each type represents a different aspect\\
-        nof the realm's background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN_MYTH\"\
-        ,\n                \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n                \"ECONOMIC_BASE\"\
-        ,\n                \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n                \"FAMOUS_FIGURE\"\
-        ,\n                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Set lore elements for a realm\",\n    \"description\": \"Creates or updates
-        lore elements for a realm. Can either replace\\nall existing elements or merge with them based on the replaceExisting
-        flag.\\n\",\n    \"tags\": [\n        \"Lore\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setRealmLore\"\
-        \n}"
   /realm-history/add-lore-element:
     post:
       summary: Add a single lore element
@@ -591,81 +227,6 @@ paths:
         '400':
           description: Invalid element data
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddRealmLoreElementRequest\"\
-        ,\n    \"$defs\": {\n        \"AddRealmLoreElementRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request payload for adding a single lore element\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"realmId\",\n                \"element\"\n            ],\n        \
-        \    \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"ID of the realm to add element to\"\n       \
-        \         },\n                \"element\": {\n                    \"$ref\": \"#/$defs/RealmLoreElement\",\n      \
-        \              \"description\": \"The lore element to add\"\n                }\n            }\n        },\n      \
-        \  \"RealmLoreElement\": {\n            \"type\": \"object\",\n            \"description\": \"A machine-readable lore
-        element for behavior system consumption\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"elementType\",\n                \"key\",\n                \"value\"\n            ],\n     \
-        \       \"properties\": {\n                \"elementType\": {\n                    \"$ref\": \"#/$defs/RealmLoreElementType\"\
-        ,\n                    \"description\": \"Category of this lore element\"\n                },\n                \"\
-        key\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
-        maxLength\": 100,\n                    \"description\": \"Machine-readable key (e.g., \\\"founding_year\\\", \\\"\
-        primary_export\\\", \\\"capital_city\\\").\\nUsed by behavior system to query specific aspects.\\n\"\n           \
-        \     },\n                \"value\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 500,\n                    \"description\": \"Machine-readable value (e.g.,
-        \\\"year_of_the_dragon\\\", \\\"iron_ore\\\", \\\"stormgate\\\").\\nReferenced in behavior rules.\\n\"\n         \
-        \       },\n                \"strength\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
-        default\": 0.5,\n                    \"description\": \"How strongly this element affects behavior (0.0 to 1.0).\\
-        nHigher strength = greater influence on decisions.\\n\"\n                },\n                \"relatedEntityId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional related entity (location, organization, character)\"\n  \
-        \              },\n                \"relatedEntityType\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Type of the related entity (if any)\"\n  \
-        \              }\n            }\n        },\n        \"RealmLoreElementType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Types of lore elements. Each type represents a different aspect\\nof the realm's
-        background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN_MYTH\",\n          \
-        \      \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n                \"ECONOMIC_BASE\",\n       \
-        \         \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n                \"FAMOUS_FIGURE\",\n\
-        \                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmLoreResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmLoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Complete lore data for a realm\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"realmId\",\n                \"elements\"\n            ],\n            \"properties\": {\n     \
-        \           \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the realm this lore belongs to\"\n                },\n             \
-        \   \"elements\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
-        \        \"$ref\": \"#/$defs/RealmLoreElement\"\n                    },\n                    \"description\": \"All
-        lore elements for this realm\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this lore was first created\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this lore was last modified\"\n             \
-        \   }\n            }\n        },\n        \"RealmLoreElement\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"A machine-readable lore element for behavior system consumption\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"elementType\",\n                \"key\",\n              \
-        \  \"value\"\n            ],\n            \"properties\": {\n                \"elementType\": {\n                \
-        \    \"$ref\": \"#/$defs/RealmLoreElementType\",\n                    \"description\": \"Category of this lore element\"\
-        \n                },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"\
-        minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Machine-readable
-        key (e.g., \\\"founding_year\\\", \\\"primary_export\\\", \\\"capital_city\\\").\\nUsed by behavior system to query
-        specific aspects.\\n\"\n                },\n                \"value\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\"\
-        : \"Machine-readable value (e.g., \\\"year_of_the_dragon\\\", \\\"iron_ore\\\", \\\"stormgate\\\").\\nReferenced in
-        behavior rules.\\n\"\n                },\n                \"strength\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
-        : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How strongly this element affects
-        behavior (0.0 to 1.0).\\nHigher strength = greater influence on decisions.\\n\"\n                },\n            \
-        \    \"relatedEntityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Optional related entity (location,
-        organization, character)\"\n                },\n                \"relatedEntityType\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the related
-        entity (if any)\"\n                }\n            }\n        },\n        \"RealmLoreElementType\": {\n           \
-        \ \"type\": \"string\",\n            \"description\": \"Types of lore elements. Each type represents a different aspect\\
-        nof the realm's background that influences behavior.\\n\",\n            \"enum\": [\n                \"ORIGIN_MYTH\"\
-        ,\n                \"CULTURAL_PRACTICE\",\n                \"POLITICAL_SYSTEM\",\n                \"ECONOMIC_BASE\"\
-        ,\n                \"RELIGIOUS_TRADITION\",\n                \"GEOGRAPHIC_FEATURE\",\n                \"FAMOUS_FIGURE\"\
-        ,\n                \"TECHNOLOGICAL_LEVEL\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Add a single lore element\",\n    \"description\": \"Adds a single lore
-        element to a realm's existing lore.\\nIf an element with the same type and key exists, it will be updated.\\n\",\n\
-        \    \"tags\": [\n        \"Lore\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addRealmLoreElement\"\
-        \n}"
   /realm-history/delete-lore:
     post:
       summary: Delete all lore for a realm
@@ -690,16 +251,6 @@ paths:
         '404':
           description: No lore found for this realm
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteRealmLoreRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteRealmLoreRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request payload for deleting a realm's lore\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the realm to delete lore for\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete all lore for a realm\",\n    \"description\": \"Removes all lore
-        elements for a realm. Used during realm\\ndeletion.\\n\",\n    \"tags\": [\n        \"Lore\"\n    ],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"deleteRealmLore\"\n}"
   /realm-history/delete-all:
     post:
       summary: Delete all history data for a realm
@@ -726,27 +277,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeleteAllRealmHistoryResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAllRealmHistoryRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteAllRealmHistoryRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request payload for deleting all history data for a realm\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm to delete history for\"\n                }\n           \
-        \ }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAllRealmHistoryResponse\"\
-        ,\n    \"$defs\": {\n        \"DeleteAllRealmHistoryResponse\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Result of deleting all history data\",\n            \"additionalProperties\": false,\n      \
-        \      \"required\": [\n                \"realmId\",\n                \"participationsDeleted\",\n               \
-        \ \"loreDeleted\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID
-        of the realm whose history was deleted\"\n                },\n                \"participationsDeleted\": {\n     \
-        \               \"type\": \"integer\",\n                    \"description\": \"Number of participation records deleted\"\
-        \n                },\n                \"loreDeleted\": {\n                    \"type\": \"boolean\",\n           \
-        \         \"description\": \"Whether lore was deleted\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete all history data for a realm\",\n    \"description\": \"Removes
-        all history data (participation records and lore) for a\\nrealm. Used during realm deletion.\\n\",\n    \"tags\":
-        [\n        \"History Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteAllRealmHistory\"\
-        \n}"
   /realm-history/summarize:
     post:
       summary: Generate text summaries for realm archival
@@ -771,35 +301,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RealmHistorySummaryResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SummarizeRealmHistoryRequest\"\
-        ,\n    \"$defs\": {\n        \"SummarizeRealmHistoryRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request payload for generating history summaries\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n       \
-        \         \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
-        \                   \"description\": \"ID of the realm to summarize history for\"\n                },\n          \
-        \      \"maxLorePoints\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n   \
-        \                 \"maximum\": 20,\n                    \"default\": 5,\n                    \"description\": \"Maximum
-        number of key lore points to include\"\n                },\n                \"maxHistoricalEvents\": {\n         \
-        \           \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 20,\n  \
-        \                  \"default\": 10,\n                    \"description\": \"Maximum number of major historical events
-        to include\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmHistorySummaryResponse\"\
-        ,\n    \"$defs\": {\n        \"RealmHistorySummaryResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Generated text summaries for realm archival\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"realmId\",\n                \"keyLorePoints\",\n                \"majorHistoricalEvents\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the realm summarized\"\
-        \n                },\n                \"keyLorePoints\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
-        \ \"description\": \"Key lore elements as text summaries.\\ne.g., [\\\"Founded during Year of the Dragon\\\", \\\"\
-        Primary export: Iron ore\\\"]\\n\"\n                },\n                \"majorHistoricalEvents\": {\n           \
-        \         \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n \
-        \                   },\n                    \"description\": \"Major historical events as text summaries.\\ne.g.,
-        [\\\"Defended against the Northern Invasion\\\", \\\"Treaty of Stormgate established peace\\\"]\\n\"\n           \
-        \     }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Generate text summaries for realm archival\",\n    \"description\": \"\
-        Generates text summaries of a realm's lore and historical\\nparticipation.\\n\",\n    \"tags\": [\n        \"History
-        Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"summarizeRealmHistory\"\n}"
 components:
   schemas:
     # Enums

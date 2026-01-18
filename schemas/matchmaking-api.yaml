@@ -53,41 +53,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListQueuesResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListQueuesRequest\"\
-        ,\n    \"$defs\": {\n        \"ListQueuesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to list available matchmaking queues\",\n            \"additionalProperties\": false,\n            \"\
-        properties\": {\n                \"gameId\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Filter by game ID (null for all games)\"\n             \
-        \   },\n                \"includeDisabled\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": false,\n                    \"description\": \"Include disabled queues in the list (admin only)\"\n   \
-        \             }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListQueuesResponse\"\
-        ,\n    \"$defs\": {\n        \"ListQueuesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response containing available matchmaking queues\",\n            \"additionalProperties\": false,\n          \
-        \  \"required\": [\n                \"queues\"\n            ],\n            \"properties\": {\n                \"\
-        queues\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
-        $ref\": \"#/$defs/QueueSummary\"\n                    },\n                    \"description\": \"List of available
-        queues\"\n                }\n            }\n        },\n        \"QueueSummary\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Summary information about a matchmaking queue\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"queueId\",\n                \"gameId\",\n               \
-        \ \"displayName\",\n                \"enabled\",\n                \"minCount\",\n                \"maxCount\"\n  \
-        \          ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Human-readable queue name\"\n                },\n                \"enabled\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently
-        accepting tickets\"\n                },\n                \"minCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Minimum players required for a match\"\n                },\n           \
-        \     \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum
-        players in a match\"\n                },\n                \"currentTickets\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Current number of tickets
-        in queue (if available)\"\n                },\n                \"averageWaitSeconds\": {\n                    \"type\"\
-        : \"number\",\n                    \"nullable\": true,\n                    \"description\": \"Average wait time in
-        seconds (if available)\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"List available matchmaking queues\",\n    \"description\": \"List all available
-        matchmaking queues that players can join.\\nReturns queue configuration details including skill settings.\\n\",\n\
-        \    \"tags\": [\n        \"Queues\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listQueues\"\n}"
   /matchmaking/queue/get:
     post:
       summary: Get queue details
@@ -114,84 +79,6 @@ paths:
         '404':
           description: Queue not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetQueueRequest\"\
-        ,\n    \"$defs\": {\n        \"GetQueueRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get details of a specific queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"queueId\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"ID of the queue to retrieve\"\n\
-        \                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
-        ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether players must be registered for a tournament\"\n                },\n                \"tournamentIdRequired\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether a tournament ID is required to join\"\n                },\n                \"matchAcceptTimeoutSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 30,\n                    \"description\"\
-        : \"Seconds players have to accept/decline a formed match\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the queue was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
-        true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
-        \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get queue details\",\n    \"description\": \"Get detailed configuration
-        for a specific matchmaking queue.\\n\",\n    \"tags\": [\n        \"Queues\"\n    ],\n    \"deprecated\": false,\n\
-        \    \"operationId\": \"getQueue\"\n}"
   /matchmaking/queue/create:
     post:
       summary: Create a new matchmaking queue
@@ -220,146 +107,6 @@ paths:
         '409':
           description: Queue with this ID already exists
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateQueueRequest\"\
-        ,\n    \"$defs\": {\n        \"CreateQueueRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to create a new matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n               \
-        \ \"minCount\",\n                \"maxCount\"\n            ],\n            \"properties\": {\n                \"queueId\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 64,\n                    \"pattern\": \"^[a-z0-9-]+$\",\n                    \"description\": \"Unique identifier
-        for the queue (lowercase alphanumeric with hyphens)\"\n                },\n                \"gameId\": {\n       \
-        \             \"type\": \"string\",\n                    \"description\": \"Game this queue is for\"\n           \
-        \     },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\",\n   \
-        \                 \"description\": \"Game type for created sessions (maps to game-session service)\"\n           \
-        \     },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Human-readable queue name\"\n                },\n                \"\
-        description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"maxLength\": 500,\n                    \"description\": \"Detailed description of the queue\"\n      \
-        \          },\n                \"minCount\": {\n                    \"type\": \"integer\",\n                    \"\
-        minimum\": 2,\n                    \"maximum\": 200,\n                    \"description\": \"Minimum players required
-        for a match\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n \
-        \                   \"minimum\": 2,\n                    \"maximum\": 200,\n                    \"description\": \"\
-        Maximum players in a match\"\n                },\n                \"countMultiple\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\"\
-        : \"Player count must be divisible by this\"\n                },\n                \"intervalSeconds\": {\n       \
-        \             \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 300,\n\
-        \                    \"default\": 15,\n                    \"description\": \"Seconds between match processing intervals\"\
-        \n                },\n                \"maxIntervals\": {\n                    \"type\": \"integer\",\n          \
-        \          \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 6,\n         \
-        \           \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n             \
-        \   \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
-        \              \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Maximum party size for this queue\"\n                },\n                \"\
-        allowConcurrent\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n       \
-        \             \"description\": \"Whether players can be in multiple queues\"\n                },\n               \
-        \ \"exclusiveGroup\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"maxLength\": 64,\n                    \"description\": \"Exclusive group name\"\n             \
-        \   },\n                \"useSkillRating\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether to use lib-analytics skill rating\"\n           \
-        \     },\n                \"ratingCategory\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"lib-analytics rating category to use\"\n               \
-        \ },\n                \"startWhenMinimumReached\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"default\": false,\n                    \"description\": \"Start match with minCount after maxIntervals\"\n\
-        \                },\n                \"requiresRegistration\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": false,\n                    \"description\": \"Require tournament registration\"\n\
-        \                },\n                \"tournamentIdRequired\": {\n                    \"type\": \"boolean\",\n   \
-        \                 \"default\": false,\n                    \"description\": \"Require tournament ID to join\"\n  \
-        \              },\n                \"matchAcceptTimeoutSeconds\": {\n                    \"type\": \"integer\",\n\
-        \                    \"minimum\": 10,\n                    \"maximum\": 120,\n                    \"default\": 30,\n\
-        \                    \"description\": \"Seconds to accept/decline a match\"\n                }\n            }\n  \
-        \      },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
-        ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether players must be registered for a tournament\"\n                },\n                \"tournamentIdRequired\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether a tournament ID is required to join\"\n                },\n                \"matchAcceptTimeoutSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 30,\n                    \"description\"\
-        : \"Seconds players have to accept/decline a formed match\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the queue was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
-        true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
-        \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Create a new matchmaking queue\",\n    \"description\": \"Create a new
-        matchmaking queue with specified configuration.\\nAdmin only. Queue configuration includes skill settings, party limits,\\
-        nand exclusive group membership.\\n\",\n    \"tags\": [\n        \"Queue Administration\"\n    ],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"createQueue\"\n}"
   /matchmaking/queue/update:
     post:
       summary: Update a matchmaking queue
@@ -387,120 +134,6 @@ paths:
         '404':
           description: Queue not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateQueueRequest\"\
-        ,\n    \"$defs\": {\n        \"UpdateQueueRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to update a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"queueId\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"ID of the queue to update\"\n \
-        \               },\n                \"displayName\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"New display
-        name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
-        \"New description\"\n                },\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Enable or disable the queue\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"nullable\": true,\n                    \"description\": \"New minimum
-        count\"\n                },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n       \
-        \             \"maximum\": 200,\n                    \"nullable\": true,\n                    \"description\": \"\
-        New maximum count\"\n                },\n                \"countMultiple\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New count multiple\"\n                },\n                \"intervalSeconds\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 300,\n                    \"\
-        nullable\": true,\n                    \"description\": \"New interval seconds\"\n                },\n           \
-        \     \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n     \
-        \               \"maximum\": 100,\n                    \"nullable\": true,\n                    \"description\": \"\
-        New max intervals\"\n                },\n                \"skillExpansion\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SkillExpansionStep\"\n          \
-        \          },\n                    \"nullable\": true,\n                    \"description\": \"New skill expansion
-        steps\"\n                },\n                \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New party skill aggregation method\"\
-        \n                },\n                \"partyMaxSize\": {\n                    \"type\": \"integer\",\n          \
-        \          \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"New party
-        max size\"\n                },\n                \"matchAcceptTimeoutSeconds\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 10,\n                    \"maximum\": 120,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New match accept timeout\"\n                }\n            }\n   \
-        \     },\n        \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step
-        in the skill window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Number of intervals after which this step applies\"\n                },\n                \"range\": {\n      \
-        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n\
-        \                    \"description\": \"Skill range (null means any skill level)\"\n                }\n          \
-        \  }\n        },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n       \
-        \         \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueueResponse\"\
-        ,\n    \"$defs\": {\n        \"QueueResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Full configuration details of a matchmaking queue\",\n            \"additionalProperties\": false,\n         \
-        \   \"required\": [\n                \"queueId\",\n                \"gameId\",\n                \"displayName\",\n\
-        \                \"enabled\",\n                \"minCount\",\n                \"maxCount\",\n                \"countMultiple\"\
-        ,\n                \"intervalSeconds\",\n                \"maxIntervals\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique identifier for the queue\"\n                },\n                \"\
-        gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game this queue is
-        for\"\n                },\n                \"sessionGameType\": {\n                    \"$ref\": \"#/$defs/SessionGameType\"\
-        ,\n                    \"description\": \"Game type for created sessions (maps to game-session service)\"\n      \
-        \          },\n                \"displayName\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Human-readable queue name\"\n                },\n                \"description\": {\n       \
-        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the queue\"\n                },\n                \"enabled\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether the queue is currently accepting tickets\"\n\
-        \                },\n                \"minCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"minimum\": 2,\n                    \"description\": \"Minimum players required for a match\"\n           \
-        \     },\n                \"maxCount\": {\n                    \"type\": \"integer\",\n                    \"maximum\"\
-        : 200,\n                    \"description\": \"Maximum players in a match\"\n                },\n                \"\
-        countMultiple\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n            \
-        \        \"description\": \"Player count must be divisible by this (e.g., 2 for pairs)\"\n                },\n   \
-        \             \"intervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Seconds between match processing intervals\"\n                },\n  \
-        \              \"maxIntervals\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Maximum intervals before relaxing to minCount\"\n                },\n    \
-        \            \"skillExpansion\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/SkillExpansionStep\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Skill window expansion steps\"\n                },\n             \
-        \   \"partySkillAggregation\": {\n                    \"$ref\": \"#/$defs/PartySkillAggregation\",\n             \
-        \       \"description\": \"How to calculate party skill rating\"\n                },\n                \"partySkillWeights\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"number\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Weights for weighted party skill aggregation\"\n                },\n                \"partyMaxSize\": {\n    \
-        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum party size for this queue\"\n                },\n                \"allowConcurrent\": {\n            \
-        \        \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        players can be in multiple queues\"\n                },\n                \"exclusiveGroup\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Exclusive
-        group name (player can only be in one queue of the group)\"\n                },\n                \"useSkillRating\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether to use lib-analytics skill rating for matching\"\n                },\n                \"ratingCategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"lib-analytics rating category to use\"\n                },\n                \"startWhenMinimumReached\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Start match with minCount after maxIntervals (for large lobbies)\"\n                },\n                \"requiresRegistration\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether players must be registered for a tournament\"\n                },\n                \"tournamentIdRequired\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether a tournament ID is required to join\"\n                },\n                \"matchAcceptTimeoutSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 30,\n                    \"description\"\
-        : \"Seconds players have to accept/decline a formed match\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the queue was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
-        true,\n                    \"description\": \"When the queue was last updated\"\n                }\n            }\n\
-        \        },\n        \"SessionGameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game
-        type for created sessions (maps to game-session service GameType)\",\n            \"enum\": [\n                \"\
-        generic\",\n                \"arcadia\"\n            ],\n            \"default\": \"generic\"\n        },\n      \
-        \  \"SkillExpansionStep\": {\n            \"type\": \"object\",\n            \"description\": \"A step in the skill
-        window expansion curve\",\n            \"additionalProperties\": false,\n            \"required\": [\n           \
-        \     \"intervals\"\n            ],\n            \"properties\": {\n                \"intervals\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number
-        of intervals after which this step applies\"\n                },\n                \"range\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
-        \             \"description\": \"Skill range (null means any skill level)\"\n                }\n            }\n  \
-        \      },\n        \"PartySkillAggregation\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Method for aggregating party member skills\",\n            \"enum\": [\n                \"highest\",\n           \
-        \     \"average\",\n                \"weighted\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Update a matchmaking queue\",\n    \"description\": \"Update configuration
-        of an existing matchmaking queue.\\nAdmin only. Changes take effect for new tickets only.\\n\",\n    \"tags\": [\n\
-        \        \"Queue Administration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateQueue\"\n}"
   /matchmaking/queue/delete:
     post:
       summary: Delete a matchmaking queue
@@ -524,16 +157,6 @@ paths:
         '404':
           description: Queue not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteQueueRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteQueueRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to delete a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"queueId\"\n            ],\n            \"properties\": {\n                \"queueId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"ID of the queue to delete\"\n \
-        \               }\n            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete a matchmaking queue\",\n    \"description\": \"Delete a matchmaking
-        queue. Admin only.\\nExisting tickets in the queue will be cancelled with reason 'queue_disabled'.\\n\",\n    \"tags\"\
-        : [\n        \"Queue Administration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteQueue\"\n}"
   /matchmaking/join:
     post:
       summary: Join matchmaking queue
@@ -568,59 +191,6 @@ paths:
         '409':
           description: Already in queue, queue limit reached, or exclusive group conflict
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinMatchmakingRequest\"\
-        ,\n    \"$defs\": {\n        \"JoinMatchmakingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to join a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"webSocketSessionId\",\n                \"accountId\",\n                \"queueId\"\n      \
-        \      ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
-        ID for event delivery\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player joining\"\
-        \n                },\n                \"queueId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"ID of the queue to join\"\n                },\n                \"partyId\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Party ID if joining as part of a party\"\n                },\n           \
-        \     \"partyMembers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n          \
-        \              \"$ref\": \"#/$defs/PartyMemberInfo\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Party member information (required if partyId provided)\"\n              \
-        \  },\n                \"stringProperties\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n                \
-        \    \"nullable\": true,\n                    \"description\": \"String properties for query matching\"\n        \
-        \        },\n                \"numericProperties\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": {\n                        \"type\": \"number\"\n                    },\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Numeric properties for query matching\"\n\
-        \                },\n                \"query\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"maxLength\": 1000,\n                    \"description\": \"Lucene-like
-        query for opponent matching\"\n                },\n                \"tournamentId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Tournament ID if joining tournament queue\"\n                }\n            }\n        },\n\
-        \        \"PartyMemberInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Information about
-        a party member for matchmaking\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
-        \             \"accountId\",\n                \"webSocketSessionId\"\n            ],\n            \"properties\":
-        {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Account ID of the party member\"\n                },\n           \
-        \     \"webSocketSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"WebSocket session ID for event delivery\"\n                },\n        \
-        \        \"skillRating\": {\n                    \"type\": \"number\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Pre-fetched skill rating (optional, will be looked up if not provided)\"\n\
-        \                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinMatchmakingResponse\"\
-        ,\n    \"$defs\": {\n        \"JoinMatchmakingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after joining a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"ticketId\",\n                \"queueId\",\n                \"estimatedWaitSeconds\"\n     \
-        \       ],\n            \"properties\": {\n                \"ticketId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this matchmaking
-        ticket\"\n                },\n                \"queueId\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Queue that was joined\"\n                },\n                \"estimatedWaitSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated wait time based on current queue (null if unknown)\"\n                },\n                \"position\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Approximate position in queue (null if not tracked)\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Join matchmaking queue\",\n    \"description\": \"Join a matchmaking queue
-        with specified properties and query.\\nCreates a matchmaking ticket and begins searching for compatible players.\\
-        nReturns immediately after ticket creation. Match results are delivered\\nvia WebSocket push events.\\n\",\n    \"\
-        tags\": [\n        \"Matchmaking\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"joinMatchmaking\"\n\
-        }"
   /matchmaking/leave:
     post:
       summary: Leave matchmaking queue
@@ -646,21 +216,6 @@ paths:
         '404':
           description: Ticket not found or not in queue
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveMatchmakingRequest\"\
-        ,\n    \"$defs\": {\n        \"LeaveMatchmakingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to leave a matchmaking queue\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"webSocketSessionId\",\n                \"accountId\",\n                \"ticketId\"\n     \
-        \       ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
-        ID\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n            \
-        \    },\n                \"ticketId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"ID of the ticket to cancel\"\n                }\n            }\n\
-        \        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Leave matchmaking queue\",\n    \"description\": \"Leave a matchmaking
-        queue and cancel the ticket.\\nOnly available when actively in a queue (shortcut/prebound).\\n\",\n    \"tags\": [\n\
-        \        \"Matchmaking\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"leaveMatchmaking\"\n}"
   /matchmaking/status:
     post:
       summary: Get matchmaking status
@@ -690,44 +245,6 @@ paths:
         '404':
           description: No active matchmaking ticket
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetMatchmakingStatusRequest\"\
-        ,\n    \"$defs\": {\n        \"GetMatchmakingStatusRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to get matchmaking status\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"webSocketSessionId\",\n                \"accountId\",\n                \"ticketId\"\
-        \n            ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
-        ID\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n            \
-        \    },\n                \"ticketId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"ID of the ticket to query\"\n                }\n            }\n\
-        \        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MatchmakingStatusResponse\"\
-        ,\n    \"$defs\": {\n        \"MatchmakingStatusResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Current matchmaking status for a ticket\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"ticketId\",\n                \"queueId\",\n                \"status\",\n                \"\
-        intervalsElapsed\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n              \
-        \  \"ticketId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Ticket identifier\"\n                },\n                \"queueId\": {\n       \
-        \             \"type\": \"string\",\n                    \"description\": \"Queue the ticket is in\"\n           \
-        \     },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TicketStatus\",\n               \
-        \     \"description\": \"Current ticket status\"\n                },\n                \"intervalsElapsed\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"description\": \"Number of processing intervals elapsed\"\
-        \n                },\n                \"currentSkillRange\": {\n                    \"type\": \"integer\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Current skill matching range (null if
-        skill not used)\"\n                },\n                \"estimatedWaitSeconds\": {\n                    \"type\":
-        \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Updated estimated wait
-        time\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"date-time\",\n                    \"description\": \"When the ticket was created\"\n  \
-        \              },\n                \"matchId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Match ID
-        if a match has been found\"\n                }\n            }\n        },\n        \"TicketStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Current status of a matchmaking ticket\",\n            \"\
-        enum\": [\n                \"searching\",\n                \"match_found\",\n                \"match_accepted\",\n\
-        \                \"cancelled\",\n                \"expired\"\n            ]\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get matchmaking status\",\n    \"description\": \"Get current matchmaking
-        status for the player's active ticket.\\nOnly available when actively in a queue (shortcut/prebound).\\n\",\n    \"\
-        tags\": [\n        \"Matchmaking\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getMatchmakingStatus\"\
-        \n}"
   /matchmaking/accept:
     post:
       summary: Accept a formed match
@@ -758,35 +275,6 @@ paths:
         '404':
           description: No pending match or already processed
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AcceptMatchRequest\"\
-        ,\n    \"$defs\": {\n        \"AcceptMatchRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to accept a formed match\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"webSocketSessionId\",\n                \"accountId\",\n                \"matchId\"\n          \
-        \  ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID\"\
-        \n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n                },\n\
-        \                \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the match to accept\"\n                }\n            }\n        }\n\
-        \    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AcceptMatchResponse\"\
-        ,\n    \"$defs\": {\n        \"AcceptMatchResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after accepting a match\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"matchId\",\n                \"allAccepted\"\n            ],\n            \"properties\": {\n  \
-        \              \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Match identifier\"\n                },\n                \"allAccepted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all players have accepted\"\
-        \n                },\n                \"acceptedCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Number of players who have accepted\"\n  \
-        \              },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Total players who need to accept\"\n           \
-        \     },\n                \"gameSessionId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game session
-        ID (set when all players accept)\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Accept a formed match\",\n    \"description\": \"Accept a match that has
-        been formed. Only available when a match\\nis pending acceptance (shortcut/prebound after match formation).\\nAll
-        players must accept within the timeout for the match to start.\\n\",\n    \"tags\": [\n        \"Matchmaking\"\n \
-        \   ],\n    \"deprecated\": false,\n    \"operationId\": \"acceptMatch\"\n}"
   /matchmaking/decline:
     post:
       summary: Decline a formed match
@@ -813,22 +301,6 @@ paths:
         '404':
           description: No pending match or already processed
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeclineMatchRequest\"\
-        ,\n    \"$defs\": {\n        \"DeclineMatchRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to decline a formed match\",\n            \"additionalProperties\": false,\n            \"required\":
-        [\n                \"webSocketSessionId\",\n                \"accountId\",\n                \"matchId\"\n        \
-        \    ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID\"\
-        \n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n                },\n\
-        \                \"matchId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the match to decline\"\n                }\n            }\n       \
-        \ }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Decline a formed match\",\n    \"description\": \"Decline a match that
-        has been formed. Only available when a match\\nis pending acceptance (shortcut/prebound after match formation).\\\
-        nDeclining cancels the match for all participants.\\n\",\n    \"tags\": [\n        \"Matchmaking\"\n    ],\n    \"\
-        deprecated\": false,\n    \"operationId\": \"declineMatch\"\n}"
   /matchmaking/stats:
     post:
       summary: Get queue statistics
@@ -854,42 +326,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MatchmakingStatsResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetMatchmakingStatsRequest\"\
-        ,\n    \"$defs\": {\n        \"GetMatchmakingStatsRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to get matchmaking statistics\",\n            \"additionalProperties\": false,\n        \
-        \    \"properties\": {\n                \"queueId\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Filter by specific queue (null for all queues)\"\
-        \n                },\n                \"gameId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Filter by game ID\"\n                }\n         \
-        \   }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MatchmakingStatsResponse\"\
-        ,\n    \"$defs\": {\n        \"MatchmakingStatsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Matchmaking operational statistics\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"timestamp\",\n                \"queueStats\"\n            ],\n            \"properties\": {\n\
-        \                \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When these stats were collected\"\n                },\n                \"\
-        queueStats\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                    \
-        \    \"$ref\": \"#/$defs/QueueStats\"\n                    },\n                    \"description\": \"Statistics per
-        queue\"\n                }\n            }\n        },\n        \"QueueStats\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Statistics for a single matchmaking queue\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"queueId\",\n                \"currentTickets\",\n       \
-        \         \"matchesFormedLastHour\",\n                \"averageWaitSeconds\"\n            ],\n            \"properties\"\
-        : {\n                \"queueId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Queue identifier\"\n                },\n                \"currentTickets\": {\n                    \"type\": \"\
-        integer\",\n                    \"description\": \"Number of active tickets\"\n                },\n              \
-        \  \"matchesFormedLastHour\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"Matches formed in the last hour\"\n                },\n                \"averageWaitSeconds\": {\n             \
-        \       \"type\": \"number\",\n                    \"description\": \"Average wait time in seconds\"\n           \
-        \     },\n                \"medianWaitSeconds\": {\n                    \"type\": \"number\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Median wait time in seconds\"\n                },\n\
-        \                \"timeoutRatePercent\": {\n                    \"type\": \"number\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Percentage of tickets that timed out\"\n                },\n     \
-        \           \"cancelRatePercent\": {\n                    \"type\": \"number\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Percentage of tickets cancelled by user\"\n                }\n   \
-        \         }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get queue statistics\",\n    \"description\": \"Get operational statistics
-        for matchmaking queues.\\nIncludes queue depths, average wait times, and match rates.\\n\",\n    \"tags\": [\n   \
-        \     \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getMatchmakingStats\"\n}"
 components:
   schemas:
     # ============================================

@@ -1,0 +1,79 @@
+{% comment %}
+Controller.Meta.liquid - Generates meta/introspection endpoints for runtime schema access.
+
+This template generates a partial class containing companion endpoints for each operation:
+- /path/meta/info - Human-readable endpoint description
+- /path/meta/request-schema - JSON Schema for request body
+- /path/meta/response-schema - JSON Schema for response body
+- /path/meta/schema - Complete schema (info + request + response)
+
+Architecture:
+- Input: schemas/Generated/{service}-api-meta.yaml (contains x-*-json extensions)
+- Output: plugins/lib-{service}/Generated/{Service}Controller.Meta.cs
+- Merges with {Service}Controller.cs via C# partial class
+{% endcomment %}
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
+public partial class {{ Class }}Controller
+{
+{%- for operation in Operations -%}
+{%-   assign hasMetaSchemas = operation.ExtensionData["x-request-schema-json"] -%}
+{%-   if hasMetaSchemas %}
+
+    #region Meta Endpoints for {{ operation.ActualOperationName }}
+
+    private static readonly string _{{ operation.ActualOperationName }}_RequestSchema = """
+{{ operation.ExtensionData["x-request-schema-json"] }}
+""";
+
+    private static readonly string _{{ operation.ActualOperationName }}_ResponseSchema = """
+{{ operation.ExtensionData["x-response-schema-json"] }}
+""";
+
+    private static readonly string _{{ operation.ActualOperationName }}_Info = """
+{{ operation.ExtensionData["x-endpoint-info-json"] }}
+""";
+
+    /// <summary>Returns endpoint information for {{ operation.ActualOperationName }}</summary>
+    [{{ AspNetNamespace }}.HttpGet, {{ AspNetNamespace }}.Route("{{ operation.Path }}/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> {{ operation.ActualOperationName }}_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "{{ Class }}",
+            "{{ operation.HttpMethodUpper }}",
+            "{{ operation.Path }}",
+            _{{ operation.ActualOperationName }}_Info));
+
+    /// <summary>Returns request schema for {{ operation.ActualOperationName }}</summary>
+    [{{ AspNetNamespace }}.HttpGet, {{ AspNetNamespace }}.Route("{{ operation.Path }}/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> {{ operation.ActualOperationName }}_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "{{ Class }}",
+            "{{ operation.HttpMethodUpper }}",
+            "{{ operation.Path }}",
+            "request-schema",
+            _{{ operation.ActualOperationName }}_RequestSchema));
+
+    /// <summary>Returns response schema for {{ operation.ActualOperationName }}</summary>
+    [{{ AspNetNamespace }}.HttpGet, {{ AspNetNamespace }}.Route("{{ operation.Path }}/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> {{ operation.ActualOperationName }}_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "{{ Class }}",
+            "{{ operation.HttpMethodUpper }}",
+            "{{ operation.Path }}",
+            "response-schema",
+            _{{ operation.ActualOperationName }}_ResponseSchema));
+
+    /// <summary>Returns full schema for {{ operation.ActualOperationName }}</summary>
+    [{{ AspNetNamespace }}.HttpGet, {{ AspNetNamespace }}.Route("{{ operation.Path }}/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> {{ operation.ActualOperationName }}_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "{{ Class }}",
+            "{{ operation.HttpMethodUpper }}",
+            "{{ operation.Path }}",
+            _{{ operation.ActualOperationName }}_Info,
+            _{{ operation.ActualOperationName }}_RequestSchema,
+            _{{ operation.ActualOperationName }}_ResponseSchema));
+
+    #endregion
+{%-   endif -%}
+{%- endfor %}
+}

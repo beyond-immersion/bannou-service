@@ -40,47 +40,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PublishEventResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventRequest\"\
-        ,\n    \"$defs\": {\n        \"PublishEventRequest\": {\n            \"description\": \"Request to publish an event
-        to a messaging topic\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
-        \     \"required\": [\n                \"topic\",\n                \"payload\"\n            ],\n            \"properties\"\
-        : {\n                \"topic\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Topic/routing key for the event\"\n                },\n                \"payload\": {\n                    \"\
-        type\": \"object\",\n                    \"description\": \"Event payload (any JSON)\"\n                },\n     \
-        \           \"options\": {\n                    \"$ref\": \"#/$defs/PublishOptions\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional publishing configuration for message delivery (null for defaults)\"\
-        \n                }\n            }\n        },\n        \"PublishOptions\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Options for publishing messages to RabbitMQ\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"exchange\": {\n                    \"type\": \"string\"\
-        ,\n                    \"default\": \"bannou\",\n                    \"description\": \"Exchange name for routing\"\
-        \n                },\n                \"routingKey\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Routing key for direct/topic exchanges (required
-        for topic exchanges, ignored for fanout)\"\n                },\n                \"exchangeType\": {\n            \
-        \        \"type\": \"string\",\n                    \"enum\": [\n                        \"fanout\",\n           \
-        \             \"direct\",\n                        \"topic\"\n                    ],\n                    \"default\"\
-        : \"topic\",\n                    \"nullable\": true,\n                    \"description\": \"Exchange type - determines
-        how messages are routed (topic routes by routing key pattern)\"\n                },\n                \"persistent\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether the message should be persisted to disk\"\n                },\n                \"priority\": {\n     \
-        \               \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 9,\n\
-        \                    \"default\": 0,\n                    \"description\": \"Message priority (0-9)\"\n          \
-        \      },\n                \"correlationId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Correlation ID
-        for request/response patterns\"\n                },\n                \"expiration\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"duration\",\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Message expiration time (ISO 8601 duration format)\"\n                },\n         \
-        \       \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Custom headers to include with the
-        message\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventResponse\"\
-        ,\n    \"$defs\": {\n        \"PublishEventResponse\": {\n            \"description\": \"Response confirming event
-        publication with message identifier\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"messageId\"\n            ],\n            \"properties\": {\n     \
-        \           \"messageId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique identifier assigned to the published message\"\n                }\n\
-        \            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Publish an event to a topic\",\n    \"description\": \"\",\n    \"tags\"\
-        : [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"publishEvent\"\n}"
   /messaging/subscribe:
     post:
       operationId: createSubscription
@@ -102,43 +61,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateSubscriptionResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSubscriptionRequest\"\
-        ,\n    \"$defs\": {\n        \"CreateSubscriptionRequest\": {\n            \"description\": \"Request to create a
-        new subscription to a messaging topic\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"topic\",\n                \"callbackUrl\"\n            ],\n\
-        \            \"properties\": {\n                \"topic\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Topic pattern to subscribe to for receiving events\"\n                },\n       \
-        \         \"callbackUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n\
-        \                    \"description\": \"HTTP endpoint to receive events\"\n                },\n                \"\
-        options\": {\n                    \"$ref\": \"#/$defs/SubscriptionOptions\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Optional subscription configuration for queue behavior (null for defaults)\"\
-        \n                }\n            }\n        },\n        \"SubscriptionOptions\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Options for subscribing to RabbitMQ topics\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"durable\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": true,\n                    \"description\": \"Whether the queue should survive
-        broker restarts\"\n                },\n                \"exclusive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether only this connection can
-        consume from the queue\"\n                },\n                \"autoAck\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether messages should be auto-acknowledged\"\
-        \n                },\n                \"prefetchCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"default\": 10,\n                    \"description\": \"Number of messages to prefetch\"\n          \
-        \      },\n                \"useDeadLetter\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether to use dead letter exchange for failed messages\"\
-        \n                },\n                \"consumerGroup\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Name of the consumer group for load balancing\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
-        ,\n    \"$defs\": {\n        \"CreateSubscriptionResponse\": {\n            \"description\": \"Response containing
-        the created subscription details\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"subscriptionId\",\n                \"queueName\"\n            ],\n\
-        \            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the created
-        subscription\"\n                },\n                \"queueName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Name of the RabbitMQ queue created for this subscription\"\n             \
-        \   }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Create a dynamic subscription to a topic\",\n    \"description\": \"\"\
-        ,\n    \"tags\": [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createSubscription\"\
-        \n}"
   /messaging/unsubscribe:
     post:
       operationId: removeSubscription
@@ -156,16 +78,6 @@ paths:
         '200':
           description: Subscription removed
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveSubscriptionRequest\"\
-        ,\n    \"$defs\": {\n        \"RemoveSubscriptionRequest\": {\n            \"description\": \"Request to remove an
-        existing subscription\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
-        \      \"required\": [\n                \"subscriptionId\"\n            ],\n            \"properties\": {\n      \
-        \          \"subscriptionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique identifier of the subscription to remove\"\n                }\n \
-        \           }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Remove a dynamic subscription\",\n    \"description\": \"\",\n    \"tags\"\
-        : [\n        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeSubscription\"\n}"
   /messaging/list-topics:
     post:
       operationId: listTopics
@@ -187,31 +99,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListTopicsResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListTopicsRequest\"\
-        ,\n    \"$defs\": {\n        \"ListTopicsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Optional filters for topic listing (empty object returns all)\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"exchangeFilter\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Filter topics by exchange name prefix\"\
-        \n                },\n                \"includeEmpty\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"default\": true,\n                    \"description\": \"Include topics with no messages\"\n        \
-        \        }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListTopicsResponse\"\
-        ,\n    \"$defs\": {\n        \"ListTopicsResponse\": {\n            \"description\": \"Response containing a list
-        of available messaging topics\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"topics\"\n            ],\n            \"properties\": {\n        \
-        \        \"topics\": {\n                    \"type\": \"array\",\n                    \"description\": \"List of topics
-        matching the filter criteria\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TopicInfo\"\
-        \n                    }\n                }\n            }\n        },\n        \"TopicInfo\": {\n            \"description\"\
-        : \"Information about a messaging topic including its name and statistics\",\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"required\": [\n                \"name\",\n          \
-        \      \"messageCount\",\n                \"consumerCount\"\n            ],\n            \"properties\": {\n     \
-        \           \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name of
-        the topic/exchange\"\n                },\n                \"messageCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of messages currently in the topic queue\"\n                },\n\
-        \                \"consumerCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of active consumers subscribed to this topic\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"List all known topics\",\n    \"description\": \"\",\n    \"tags\": [\n\
-        \        \"Messaging\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listTopics\"\n}"
 components:
   schemas:
     PublishEventRequest:

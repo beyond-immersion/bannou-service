@@ -113,6 +113,7 @@ declare -a GENERATION_ORDER=(
     "project"
     "models"
     "controller"
+    "meta-controller"
     "event-subscriptions"
     "client"
     "interface"

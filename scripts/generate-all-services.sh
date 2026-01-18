@@ -104,12 +104,13 @@ else
 fi
 echo ""
 
-# Embed meta schemas into API schemas for companion endpoint generation
-echo -e "${BLUE}📋 Embedding meta schemas into API schemas...${NC}"
+# Generate meta schemas for companion endpoint generation
+# Creates schemas/Generated/{service}-api-meta.yaml with x-*-json extensions
+echo -e "${BLUE}📋 Generating meta schemas for companion endpoints...${NC}"
 if python3 "$SCRIPT_DIR/embed-meta-schemas.py"; then
-    echo -e "${GREEN}✅ Meta schemas embedded successfully${NC}"
+    echo -e "${GREEN}✅ Meta schemas generated successfully${NC}"
 else
-    echo -e "${RED}❌ Failed to embed meta schemas${NC}"
+    echo -e "${RED}❌ Failed to generate meta schemas${NC}"
     exit 1
 fi
 echo ""
