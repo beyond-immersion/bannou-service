@@ -84,6 +84,15 @@ public partial class GenerateCompositionRequest
     [System.Text.Json.Serialization.JsonPropertyName("seed")]
     public int? Seed { get; set; } = default!;
 
+    /// <summary>
+    /// Narrative/emotional arc options for storyteller-driven composition.
+    /// <br/>If omitted, narrative is inferred from mood. When provided, enables
+    /// <br/>fine-grained control over emotional journey and tension curves.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("narrative")]
+    public NarrativeOptions? Narrative { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -429,6 +438,24 @@ public partial class GenerateCompositionResponse
     [System.Text.Json.Serialization.JsonPropertyName("generationTimeMs")]
     public int GenerationTimeMs { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the narrative template used for composition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("narrativeUsed")]
+    public string? NarrativeUsed { get; set; } = default!;
+
+    /// <summary>
+    /// Emotional state at each section boundary
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("emotionalJourney")]
+    public System.Collections.Generic.ICollection<EmotionalStateSnapshot>? EmotionalJourney { get; set; } = default!;
+
+    /// <summary>
+    /// Tension values at bar boundaries (0-1 scale)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tensionCurve")]
+    public System.Collections.Generic.ICollection<double>? TensionCurve { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -622,6 +649,150 @@ public partial class VoiceLeadResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("violations")]
     public System.Collections.Generic.ICollection<VoiceLeadingViolation>? Violations { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Options for narrative-driven composition using the Storyteller engine
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NarrativeOptions
+{
+
+    /// <summary>
+    /// Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').
+    /// <br/>If not specified, template is inferred from mood or defaults to 'simple_arc'.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    public string? TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Starting emotional state for the composition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("initialEmotion")]
+    public EmotionalStateInput? InitialEmotion { get; set; } = default!;
+
+    /// <summary>
+    /// Target emotional state for the ending
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEmotion")]
+    public EmotionalStateInput? TargetEmotion { get; set; } = default!;
+
+    /// <summary>
+    /// Preferred tension curve shape throughout the composition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tensionProfile")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NarrativeOptionsTensionProfile? TensionProfile { get; set; } = default!;
+
+}
+
+/// <summary>
+/// 6-dimensional emotional state input (all values 0-1)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EmotionalStateInput
+{
+
+    /// <summary>
+    /// Tension level (0=resolved, 1=maximum tension)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tension")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Tension { get; set; } = default!;
+
+    /// <summary>
+    /// Brightness level (0=dark, 1=bright)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("brightness")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Brightness { get; set; } = default!;
+
+    /// <summary>
+    /// Energy level (0=calm, 1=energetic)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("energy")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Energy { get; set; } = default!;
+
+    /// <summary>
+    /// Warmth level (0=distant, 1=intimate)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("warmth")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Warmth { get; set; } = default!;
+
+    /// <summary>
+    /// Stability level (0=unstable, 1=grounded)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stability")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Stability { get; set; } = default!;
+
+    /// <summary>
+    /// Valence level (0=negative, 1=positive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("valence")]
+    [System.ComponentModel.DataAnnotations.Range(0D, 1D)]
+    public double? Valence { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Snapshot of emotional state at a specific point in the composition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EmotionalStateSnapshot
+{
+
+    /// <summary>
+    /// Bar number where this snapshot was taken
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bar")]
+    public int Bar { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the narrative phase at this point
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phaseName")]
+    public string? PhaseName { get; set; } = default!;
+
+    /// <summary>
+    /// Tension level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tension")]
+    public double Tension { get; set; } = default!;
+
+    /// <summary>
+    /// Brightness level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("brightness")]
+    public double Brightness { get; set; } = default!;
+
+    /// <summary>
+    /// Energy level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("energy")]
+    public double Energy { get; set; } = default!;
+
+    /// <summary>
+    /// Warmth level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("warmth")]
+    public double Warmth { get; set; } = default!;
+
+    /// <summary>
+    /// Stability level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stability")]
+    public double Stability { get; set; } = default!;
+
+    /// <summary>
+    /// Valence level (0-1)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("valence")]
+    public double Valence { get; set; } = default!;
 
 }
 
@@ -1278,6 +1449,29 @@ public enum GenerateMelodyRequestContour
 
     [System.Runtime.Serialization.EnumMember(Value = @"static")]
     Static = 4,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum NarrativeOptionsTensionProfile
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"gradual_build")]
+    Gradual_build = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"early_climax")]
+    Early_climax = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"late_climax")]
+    Late_climax = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"sustained")]
+    Sustained = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"wave")]
+    Wave = 4,
 
 }
 #pragma warning restore CS1591

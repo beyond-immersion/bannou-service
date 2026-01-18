@@ -40774,6 +40774,14 @@
             Random seed for reproducible generation
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Narrative">
+            <summary>
+            Narrative/emotional arc options for storyteller-driven composition.
+            <br/>If omitted, narrative is inferred from mood. When provided, enables
+            <br/>fine-grained control over emotional journey and tension curves.
+            <br/>
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Music.ValidateMidiJsonRequest">
             <summary>
             Request to validate MIDI-JSON structure
@@ -41019,6 +41027,21 @@
             Time taken to generate in milliseconds
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.NarrativeUsed">
+            <summary>
+            ID of the narrative template used for composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.EmotionalJourney">
+            <summary>
+            Emotional state at each section boundary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.TensionCurve">
+            <summary>
+            Tension values at bar boundaries (0-1 scale)
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Music.ValidateMidiJsonResponse">
             <summary>
             Response containing validation results
@@ -41152,6 +41175,113 @@
         <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadResponse.Violations">
             <summary>
             Voice leading rule violations (warnings)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.NarrativeOptions">
+            <summary>
+            Options for narrative-driven composition using the Storyteller engine
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TemplateId">
+            <summary>
+            Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').
+            <br/>If not specified, template is inferred from mood or defaults to 'simple_arc'.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.InitialEmotion">
+            <summary>
+            Starting emotional state for the composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TargetEmotion">
+            <summary>
+            Target emotional state for the ending
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TensionProfile">
+            <summary>
+            Preferred tension curve shape throughout the composition
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.EmotionalStateInput">
+            <summary>
+            6-dimensional emotional state input (all values 0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Tension">
+            <summary>
+            Tension level (0=resolved, 1=maximum tension)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Brightness">
+            <summary>
+            Brightness level (0=dark, 1=bright)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Energy">
+            <summary>
+            Energy level (0=calm, 1=energetic)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Warmth">
+            <summary>
+            Warmth level (0=distant, 1=intimate)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Stability">
+            <summary>
+            Stability level (0=unstable, 1=grounded)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Valence">
+            <summary>
+            Valence level (0=negative, 1=positive)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot">
+            <summary>
+            Snapshot of emotional state at a specific point in the composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Bar">
+            <summary>
+            Bar number where this snapshot was taken
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.PhaseName">
+            <summary>
+            Name of the narrative phase at this point
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Tension">
+            <summary>
+            Tension level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Brightness">
+            <summary>
+            Brightness level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Energy">
+            <summary>
+            Energy level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Warmth">
+            <summary>
+            Warmth level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Stability">
+            <summary>
+            Stability level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Valence">
+            <summary>
+            Valence level (0-1)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Music.NoteEvent">

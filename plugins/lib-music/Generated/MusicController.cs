@@ -375,6 +375,11 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                     "type": "integer",
                     "nullable": true,
                     "description": "Random seed for reproducible generation"
+                },
+                "narrative": {
+                    "$ref": "#/$defs/NarrativeOptions",
+                    "nullable": true,
+                    "description": "Narrative/emotional arc options for storyteller-driven composition.\nIf omitted, narrative is inferred from mood. When provided, enables\nfine-grained control over emotional journey and tension curves.\n"
                 }
             }
         },
@@ -425,6 +430,89 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "As",
                 "B"
             ]
+        },
+        "NarrativeOptions": {
+            "description": "Options for narrative-driven composition using the Storyteller engine",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "templateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').\nIf not specified, template is inferred from mood or defaults to 'simple_arc'.\n"
+                },
+                "initialEmotion": {
+                    "$ref": "#/$defs/EmotionalStateInput",
+                    "nullable": true,
+                    "description": "Starting emotional state for the composition"
+                },
+                "targetEmotion": {
+                    "$ref": "#/$defs/EmotionalStateInput",
+                    "nullable": true,
+                    "description": "Target emotional state for the ending"
+                },
+                "tensionProfile": {
+                    "type": "string",
+                    "enum": [
+                        "gradual_build",
+                        "early_climax",
+                        "late_climax",
+                        "sustained",
+                        "wave"
+                    ],
+                    "nullable": true,
+                    "description": "Preferred tension curve shape throughout the composition"
+                }
+            }
+        },
+        "EmotionalStateInput": {
+            "description": "6-dimensional emotional state input (all values 0-1)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "tension": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Tension level (0=resolved, 1=maximum tension)"
+                },
+                "brightness": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Brightness level (0=dark, 1=bright)"
+                },
+                "energy": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Energy level (0=calm, 1=energetic)"
+                },
+                "warmth": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Warmth level (0=distant, 1=intimate)"
+                },
+                "stability": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Stability level (0=unstable, 1=grounded)"
+                },
+                "valence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "nullable": true,
+                    "description": "Valence level (0=negative, 1=positive)"
+                }
+            }
         }
     }
 }
@@ -460,6 +548,27 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "generationTimeMs": {
                     "type": "integer",
                     "description": "Time taken to generate in milliseconds"
+                },
+                "narrativeUsed": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "ID of the narrative template used for composition"
+                },
+                "emotionalJourney": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EmotionalStateSnapshot"
+                    },
+                    "nullable": true,
+                    "description": "Emotional state at each section boundary"
+                },
+                "tensionCurve": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "nullable": true,
+                    "description": "Tension values at bar boundaries (0-1 scale)"
                 }
             }
         },
@@ -832,6 +941,52 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
                         "locrian"
                     ],
                     "description": "Mode/scale type"
+                }
+            }
+        },
+        "EmotionalStateSnapshot": {
+            "description": "Snapshot of emotional state at a specific point in the composition",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bar",
+                "tension",
+                "brightness",
+                "energy"
+            ],
+            "properties": {
+                "bar": {
+                    "type": "integer",
+                    "description": "Bar number where this snapshot was taken"
+                },
+                "phaseName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the narrative phase at this point"
+                },
+                "tension": {
+                    "type": "number",
+                    "description": "Tension level (0-1)"
+                },
+                "brightness": {
+                    "type": "number",
+                    "description": "Brightness level (0-1)"
+                },
+                "energy": {
+                    "type": "number",
+                    "description": "Energy level (0-1)"
+                },
+                "warmth": {
+                    "type": "number",
+                    "description": "Warmth level (0-1)"
+                },
+                "stability": {
+                    "type": "number",
+                    "description": "Stability level (0-1)"
+                },
+                "valence": {
+                    "type": "number",
+                    "description": "Valence level (0-1)"
                 }
             }
         }

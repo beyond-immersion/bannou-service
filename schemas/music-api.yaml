@@ -72,22 +72,57 @@ paths:
         \                    \"nullable\": true,\n                    \"description\": \"Style-specific tune type (e.g., \\\
         \"reel\\\", \\\"jig\\\" for Celtic)\",\n                    \"example\": \"reel\"\n                },\n          \
         \      \"seed\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Random seed for reproducible generation\"\n                }\n            }\n    \
-        \    },\n        \"KeySignature\": {\n            \"description\": \"A key signature with tonic and mode\",\n    \
-        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
-        \          \"tonic\",\n                \"mode\"\n            ],\n            \"properties\": {\n                \"\
-        tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n                    \"description\": \"Tonic pitch
-        class\"\n                },\n                \"mode\": {\n                    \"type\": \"string\",\n            \
-        \        \"enum\": [\n                        \"major\",\n                        \"minor\",\n                   \
-        \     \"dorian\",\n                        \"phrygian\",\n                        \"lydian\",\n                  \
-        \      \"mixolydian\",\n                        \"aeolian\",\n                        \"locrian\"\n              \
-        \      ],\n                    \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n\
-        \        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\",\n\
-        \            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n               \
-        \ \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n     \
-        \           \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n     \
-        \   }\n    }\n}"
+        \            \"description\": \"Random seed for reproducible generation\"\n                },\n                \"\
+        narrative\": {\n                    \"$ref\": \"#/$defs/NarrativeOptions\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Narrative/emotional arc options for storyteller-driven composition.\\nIf omitted,
+        narrative is inferred from mood. When provided, enables\\nfine-grained control over emotional journey and tension
+        curves.\\n\"\n                }\n            }\n        },\n        \"KeySignature\": {\n            \"description\"\
+        : \"A key signature with tonic and mode\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"tonic\",\n                \"mode\"\n            ],\n    \
+        \        \"properties\": {\n                \"tonic\": {\n                    \"$ref\": \"#/$defs/PitchClass\",\n\
+        \                    \"description\": \"Tonic pitch class\"\n                },\n                \"mode\": {\n   \
+        \                 \"type\": \"string\",\n                    \"enum\": [\n                        \"major\",\n   \
+        \                     \"minor\",\n                        \"dorian\",\n                        \"phrygian\",\n   \
+        \                     \"lydian\",\n                        \"mixolydian\",\n                        \"aeolian\",\n\
+        \                        \"locrian\"\n                    ],\n                    \"description\": \"Mode/scale type\"\
+        \n                }\n            }\n        },\n        \"PitchClass\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass\"\
+        ,\n            \"description\": \"A pitch class (note name without octave)\",\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"C\",\n                \"Cs\",\n                \"D\",\n              \
+        \  \"Ds\",\n                \"E\",\n                \"F\",\n                \"Fs\",\n                \"G\",\n    \
+        \            \"Gs\",\n                \"A\",\n                \"As\",\n                \"B\"\n            ]\n    \
+        \    },\n        \"NarrativeOptions\": {\n            \"description\": \"Options for narrative-driven composition
+        using the Storyteller engine\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"properties\": {\n                \"templateId\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Specific narrative template ID (e.g.,
+        'journey_and_return', 'tension_and_release', 'simple_arc').\\nIf not specified, template is inferred from mood or
+        defaults to 'simple_arc'.\\n\"\n                },\n                \"initialEmotion\": {\n                    \"\
+        $ref\": \"#/$defs/EmotionalStateInput\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Starting emotional state for the composition\"\n                },\n                \"targetEmotion\": {\n   \
+        \                 \"$ref\": \"#/$defs/EmotionalStateInput\",\n                    \"nullable\": true,\n          \
+        \          \"description\": \"Target emotional state for the ending\"\n                },\n                \"tensionProfile\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"gradual_build\"\
+        ,\n                        \"early_climax\",\n                        \"late_climax\",\n                        \"\
+        sustained\",\n                        \"wave\"\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Preferred tension curve shape throughout the composition\"\n             \
+        \   }\n            }\n        },\n        \"EmotionalStateInput\": {\n            \"description\": \"6-dimensional
+        emotional state input (all values 0-1)\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"properties\": {\n                \"tension\": {\n                    \"type\": \"number\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Tension level (0=resolved, 1=maximum tension)\"\n                },\n    \
+        \            \"brightness\": {\n                    \"type\": \"number\",\n                    \"minimum\": 0,\n \
+        \                   \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Brightness level (0=dark, 1=bright)\"\n                },\n                \"energy\": {\n                   \
+        \ \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Energy level (0=calm, 1=energetic)\"\n        \
+        \        },\n                \"warmth\": {\n                    \"type\": \"number\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Warmth level (0=distant, 1=intimate)\"\n                },\n                \"stability\": {\n               \
+        \     \"type\": \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Stability level (0=unstable, 1=grounded)\"\n\
+        \                },\n                \"valence\": {\n                    \"type\": \"number\",\n                 \
+        \   \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Valence level (0=negative, 1=positive)\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GenerateCompositionResponse\"\
         ,\n    \"$defs\": {\n        \"GenerateCompositionResponse\": {\n            \"description\": \"Response containing
         the generated composition\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -98,8 +133,16 @@ paths:
         MIDI-JSON output\"\n                },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/CompositionMetadata\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Metadata about the generation\"\
         \n                },\n                \"generationTimeMs\": {\n                    \"type\": \"integer\",\n      \
-        \              \"description\": \"Time taken to generate in milliseconds\"\n                }\n            }\n   \
-        \     },\n        \"MidiJson\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiJson\"\
+        \              \"description\": \"Time taken to generate in milliseconds\"\n                },\n                \"\
+        narrativeUsed\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"ID of the narrative template used for composition\"\n                },\n         \
+        \       \"emotionalJourney\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"$ref\": \"#/$defs/EmotionalStateSnapshot\"\n                    },\n                    \"\
+        nullable\": true,\n                    \"description\": \"Emotional state at each section boundary\"\n           \
+        \     },\n                \"tensionCurve\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"number\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Tension values at bar boundaries (0-1 scale)\"\n                }\n      \
+        \      }\n        },\n        \"MidiJson\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Output.MidiJson\"\
         ,\n            \"description\": \"MIDI-JSON format representation of a musical piece\",\n            \"type\": \"\
         object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"tracks\",\n\
         \                \"ticksPerBeat\"\n            ],\n            \"properties\": {\n                \"header\": {\n\
@@ -218,7 +261,23 @@ paths:
         \                 \"major\",\n                        \"minor\",\n                        \"dorian\",\n          \
         \              \"phrygian\",\n                        \"lydian\",\n                        \"mixolydian\",\n     \
         \                   \"aeolian\",\n                        \"locrian\"\n                    ],\n                  \
-        \  \"description\": \"Mode/scale type\"\n                }\n            }\n        }\n    }\n}"
+        \  \"description\": \"Mode/scale type\"\n                }\n            }\n        },\n        \"EmotionalStateSnapshot\"\
+        : {\n            \"description\": \"Snapshot of emotional state at a specific point in the composition\",\n      \
+        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
+        \        \"bar\",\n                \"tension\",\n                \"brightness\",\n                \"energy\"\n   \
+        \         ],\n            \"properties\": {\n                \"bar\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Bar number where this snapshot was taken\"\n                },\n       \
+        \         \"phaseName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Name of the narrative phase at this point\"\n                },\n         \
+        \       \"tension\": {\n                    \"type\": \"number\",\n                    \"description\": \"Tension
+        level (0-1)\"\n                },\n                \"brightness\": {\n                    \"type\": \"number\",\n\
+        \                    \"description\": \"Brightness level (0-1)\"\n                },\n                \"energy\":
+        {\n                    \"type\": \"number\",\n                    \"description\": \"Energy level (0-1)\"\n      \
+        \          },\n                \"warmth\": {\n                    \"type\": \"number\",\n                    \"description\"\
+        : \"Warmth level (0-1)\"\n                },\n                \"stability\": {\n                    \"type\": \"number\"\
+        ,\n                    \"description\": \"Stability level (0-1)\"\n                },\n                \"valence\"\
+        : {\n                    \"type\": \"number\",\n                    \"description\": \"Valence level (0-1)\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Generate composition from style and constraints\",\n    \"description\"\
         : \"Generates a complete musical composition using the specified style definition\\nand compositional constraints.
         Returns MIDI-JSON format output.\\n\",\n    \"tags\": [\n        \"Generation\"\n    ],\n    \"deprecated\": false,\n\
@@ -1371,6 +1430,13 @@ components:
           type: integer
           nullable: true
           description: Random seed for reproducible generation
+        narrative:
+          $ref: '#/components/schemas/NarrativeOptions'
+          nullable: true
+          description: |
+            Narrative/emotional arc options for storyteller-driven composition.
+            If omitted, narrative is inferred from mood. When provided, enables
+            fine-grained control over emotional journey and tension curves.
 
     ValidateMidiJsonRequest:
       description: Request to validate MIDI-JSON structure
@@ -1622,6 +1688,22 @@ components:
         generationTimeMs:
           type: integer
           description: Time taken to generate in milliseconds
+        narrativeUsed:
+          type: string
+          nullable: true
+          description: ID of the narrative template used for composition
+        emotionalJourney:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmotionalStateSnapshot'
+          nullable: true
+          description: Emotional state at each section boundary
+        tensionCurve:
+          type: array
+          items:
+            type: number
+          nullable: true
+          description: Tension values at bar boundaries (0-1 scale)
 
     ValidateMidiJsonResponse:
       description: Response containing validation results
@@ -1765,6 +1847,113 @@ components:
             $ref: '#/components/schemas/VoiceLeadingViolation'
           nullable: true
           description: Voice leading rule violations (warnings)
+
+    # ============================================================================
+    # Storyteller / Narrative Models
+    # ============================================================================
+
+    NarrativeOptions:
+      description: Options for narrative-driven composition using the Storyteller engine
+      type: object
+      additionalProperties: false
+      properties:
+        templateId:
+          type: string
+          nullable: true
+          description: |
+            Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').
+            If not specified, template is inferred from mood or defaults to 'simple_arc'.
+        initialEmotion:
+          $ref: '#/components/schemas/EmotionalStateInput'
+          nullable: true
+          description: Starting emotional state for the composition
+        targetEmotion:
+          $ref: '#/components/schemas/EmotionalStateInput'
+          nullable: true
+          description: Target emotional state for the ending
+        tensionProfile:
+          type: string
+          enum: [gradual_build, early_climax, late_climax, sustained, wave]
+          nullable: true
+          description: Preferred tension curve shape throughout the composition
+
+    EmotionalStateInput:
+      description: 6-dimensional emotional state input (all values 0-1)
+      type: object
+      additionalProperties: false
+      properties:
+        tension:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Tension level (0=resolved, 1=maximum tension)
+        brightness:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Brightness level (0=dark, 1=bright)
+        energy:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Energy level (0=calm, 1=energetic)
+        warmth:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Warmth level (0=distant, 1=intimate)
+        stability:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Stability level (0=unstable, 1=grounded)
+        valence:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Valence level (0=negative, 1=positive)
+
+    EmotionalStateSnapshot:
+      description: Snapshot of emotional state at a specific point in the composition
+      type: object
+      additionalProperties: false
+      required:
+      - bar
+      - tension
+      - brightness
+      - energy
+      properties:
+        bar:
+          type: integer
+          description: Bar number where this snapshot was taken
+        phaseName:
+          type: string
+          nullable: true
+          description: Name of the narrative phase at this point
+        tension:
+          type: number
+          description: Tension level (0-1)
+        brightness:
+          type: number
+          description: Brightness level (0-1)
+        energy:
+          type: number
+          description: Energy level (0-1)
+        warmth:
+          type: number
+          description: Warmth level (0-1)
+        stability:
+          type: number
+          description: Stability level (0-1)
+        valence:
+          type: number
+          description: Valence level (0-1)
 
     # ============================================================================
     # Core Data Models
