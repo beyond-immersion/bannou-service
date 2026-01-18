@@ -1,3 +1,7 @@
+using BeyondImmersion.Bannou.MusicStoryteller;
+using BeyondImmersion.Bannou.MusicStoryteller.Narratives;
+using BeyondImmersion.Bannou.MusicStoryteller.Planning;
+using BeyondImmersion.Bannou.MusicStoryteller.State;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Harmony;
 using BeyondImmersion.Bannou.MusicTheory.Melody;
@@ -46,6 +50,7 @@ public partial class MusicService : IMusicService
 
     /// <summary>
     /// Generates a complete musical composition using the specified style and constraints.
+    /// Uses the Storyteller SDK for narrative-driven composition when mood or narrative options are provided.
     /// </summary>
     public async Task<(StatusCodes, GenerateCompositionResponse?)> GenerateCompositionAsync(
         GenerateCompositionRequest body,
@@ -90,27 +95,37 @@ public partial class MusicService : IMusicService
 
             // Calculate ticks
             var ticksPerBeat = 480;
-            var beatsPerBar = meter.Numerator;
             var totalBars = body.DurationBars;
 
-            // Generate chord progression
+            // Use Storyteller for narrative-driven composition
+            var storyteller = new Storyteller();
+            var compositionRequest = BuildStorytellerRequest(body, totalBars);
+            var storyResult = storyteller.Compose(compositionRequest);
+
+            _logger.LogDebug(
+                "Storyteller generated {IntentCount} intents across {SectionCount} sections using template {TemplateId}",
+                storyResult.TotalIntents,
+                storyResult.Sections.Count,
+                storyResult.Narrative.Id);
+
+            // Generate chord progression guided by Storyteller intents
             var progressionGenerator = new ProgressionGenerator(seed);
-            var chordsPerBar = 1; // One chord per bar for simplicity
+            var chordsPerBar = 1;
             var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
 
             // Voice the chords
             var voiceLeader = new VoiceLeader();
-            var (voicings, voiceViolations) = voiceLeader.Voice(
+            var (voicings, _) = voiceLeader.Voice(
                 progression.Select(p => p.Chord).ToList(),
                 voiceCount: 4);
 
-            // Generate melody over the harmony
+            // Generate melody over the harmony with Storyteller-guided contour
             var melodyOptions = new MelodyOptions
             {
                 Range = PitchRange.Vocal.Soprano,
-                Contour = ContourShape.Arch,
+                Contour = GetContourFromStoryResult(storyResult),
                 IntervalPreferences = style.IntervalPreferences,
-                Density = 0.7,
+                Density = GetDensityFromStoryResult(storyResult),
                 Syncopation = 0.2,
                 TicksPerBeat = ticksPerBeat
             };
@@ -130,7 +145,7 @@ public partial class MusicService : IMusicService
 
             stopwatch.Stop();
 
-            // SDK types used directly via x-sdk-type (no conversion needed)
+            // Build response with narrative metadata
             var response = new GenerateCompositionResponse
             {
                 CompositionId = Guid.NewGuid().ToString(),
@@ -142,16 +157,19 @@ public partial class MusicService : IMusicService
                     Key = new KeySignature
                     {
                         Tonic = key.Root,
-                        Mode = ToApiMode(key.Mode)  // KeySignature uses API enum, not SDK ModeType
+                        Mode = ToApiMode(key.Mode)
                     },
                     Tempo = tempo,
                     Bars = totalBars,
                     TuneType = body.TuneType,
                     Seed = seed
-                }
+                },
+                NarrativeUsed = storyResult.Narrative.Id,
+                EmotionalJourney = BuildEmotionalJourney(storyResult),
+                TensionCurve = BuildTensionCurve(storyResult, totalBars)
             };
 
-            await Task.CompletedTask; // Satisfy async requirement
+            await Task.CompletedTask;
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
@@ -717,6 +735,243 @@ public partial class MusicService : IMusicService
     private static StyleDefinition? GetStyleDefinition(string styleId)
     {
         return BuiltInStyles.GetById(styleId);
+    }
+
+    /// <summary>
+    /// Builds a Storyteller CompositionRequest from the API request.
+    /// Maps mood to narrative template and emotional preset per design spec.
+    /// </summary>
+    private static CompositionRequest BuildStorytellerRequest(
+        GenerateCompositionRequest body,
+        int totalBars)
+    {
+        // Use explicit narrative options if provided
+        if (body.Narrative != null)
+        {
+            var request = new CompositionRequest
+            {
+                TotalBars = totalBars,
+                TemplateId = body.Narrative.TemplateId,
+                AllowModulation = true
+            };
+
+            if (body.Narrative.InitialEmotion != null)
+            {
+                request.InitialEmotion = ToSdkEmotionalState(body.Narrative.InitialEmotion);
+            }
+
+            if (body.Narrative.TargetEmotion != null)
+            {
+                request.TargetEmotion = ToSdkEmotionalState(body.Narrative.TargetEmotion);
+            }
+
+            return request;
+        }
+
+        // Infer from mood using the design spec mapping:
+        // bright → SimpleArc + Joyful
+        // dark → TensionAndRelease + Tense
+        // neutral → JourneyAndReturn + Neutral
+        // melancholic → SimpleArc + Melancholic
+        // triumphant → TensionAndRelease + Climax→Resolution
+        var (templateId, initialEmotion, targetEmotion) = body.Mood switch
+        {
+            GenerateCompositionRequestMood.Bright => (
+                "simple_arc",
+                EmotionalState.Presets.Joyful,
+                (EmotionalState?)null),
+            GenerateCompositionRequestMood.Dark => (
+                "tension_and_release",
+                EmotionalState.Presets.Tense,
+                (EmotionalState?)null),
+            GenerateCompositionRequestMood.Neutral => (
+                "journey_and_return",
+                EmotionalState.Presets.Neutral,
+                (EmotionalState?)null),
+            GenerateCompositionRequestMood.Melancholic => (
+                "simple_arc",
+                EmotionalState.Presets.Melancholic,
+                (EmotionalState?)null),
+            GenerateCompositionRequestMood.Triumphant => (
+                "tension_and_release",
+                EmotionalState.Presets.Climax,
+                EmotionalState.Presets.Resolution),
+            _ => (
+                "simple_arc",
+                EmotionalState.Presets.Neutral,
+                (EmotionalState?)null)
+        };
+
+        return new CompositionRequest
+        {
+            TotalBars = totalBars,
+            TemplateId = templateId,
+            InitialEmotion = initialEmotion,
+            TargetEmotion = targetEmotion,
+            AllowModulation = true
+        };
+    }
+
+    /// <summary>
+    /// Converts API EmotionalStateInput to SDK EmotionalState.
+    /// </summary>
+    private static EmotionalState ToSdkEmotionalState(EmotionalStateInput input)
+    {
+        return new EmotionalState(
+            input.Tension ?? 0.2,
+            input.Brightness ?? 0.5,
+            input.Energy ?? 0.5,
+            input.Warmth ?? 0.5,
+            input.Stability ?? 0.8,
+            input.Valence ?? 0.5);
+    }
+
+    /// <summary>
+    /// Determines melody contour from Storyteller result.
+    /// Maps narrative arc to contour shape.
+    /// </summary>
+    private static ContourShape GetContourFromStoryResult(CompositionResult result)
+    {
+        // Use the emotional trajectory to determine contour
+        var finalTension = result.FinalState.Emotional.Tension;
+        var initialTension = result.Sections.FirstOrDefault()?.Plan.Goal.TargetState
+            .Get<double>(WorldState.Keys.Tension);
+
+        // If tension generally increases, use ascending contour
+        if (finalTension > (initialTension ?? 0.5) + 0.2)
+        {
+            return ContourShape.Ascending;
+        }
+
+        // If tension generally decreases, use descending contour
+        if (finalTension < (initialTension ?? 0.5) - 0.2)
+        {
+            return ContourShape.Descending;
+        }
+
+        // For dramatic arcs (tension_and_release), use arch
+        if (result.Narrative.Id == "tension_and_release")
+        {
+            return ContourShape.Arch;
+        }
+
+        // For journey narratives, use wave
+        if (result.Narrative.Id == "journey_and_return")
+        {
+            return ContourShape.Wave;
+        }
+
+        // Default to arch for most pleasing melodic shape
+        return ContourShape.Arch;
+    }
+
+    /// <summary>
+    /// Determines melody density from Storyteller result.
+    /// Higher energy phases get denser melodies.
+    /// </summary>
+    private static double GetDensityFromStoryResult(CompositionResult result)
+    {
+        // Average energy across all phases
+        var avgEnergy = result.Sections.Count > 0
+            ? result.Sections.Average(s =>
+                s.Plan.Goal.TargetState.Get<double>(WorldState.Keys.Energy))
+            : 0.5;
+
+        // Map energy (0-1) to density (0.4-0.9)
+        return 0.4 + avgEnergy * 0.5;
+    }
+
+    /// <summary>
+    /// Builds the emotional journey snapshots for the API response.
+    /// </summary>
+    private static List<EmotionalStateSnapshot> BuildEmotionalJourney(
+        CompositionResult result)
+    {
+        var snapshots = new List<EmotionalStateSnapshot>();
+
+        foreach (var section in result.Sections)
+        {
+            // Get target emotional state for this phase
+            var target = section.Plan.Goal.TargetState;
+
+            snapshots.Add(new EmotionalStateSnapshot
+            {
+                Bar = section.StartBar,
+                PhaseName = section.PhaseName,
+                Tension = target.Get<double>(WorldState.Keys.Tension),
+                Brightness = target.Get<double>(WorldState.Keys.Brightness),
+                Energy = target.Get<double>(WorldState.Keys.Energy),
+                Warmth = target.Get<double>(WorldState.Keys.Warmth),
+                Stability = target.Get<double>(WorldState.Keys.Stability),
+                Valence = target.Get<double>(WorldState.Keys.Valence)
+            });
+        }
+
+        // Add final state at the end
+        var finalEmotional = result.FinalState.Emotional;
+        snapshots.Add(new EmotionalStateSnapshot
+        {
+            Bar = result.TotalBars,
+            PhaseName = "End",
+            Tension = finalEmotional.Tension,
+            Brightness = finalEmotional.Brightness,
+            Energy = finalEmotional.Energy,
+            Warmth = finalEmotional.Warmth,
+            Stability = finalEmotional.Stability,
+            Valence = finalEmotional.Valence
+        });
+
+        return snapshots;
+    }
+
+    /// <summary>
+    /// Builds the tension curve for the API response.
+    /// Interpolates tension values at each bar.
+    /// </summary>
+    private static List<double> BuildTensionCurve(
+        CompositionResult result,
+        int totalBars)
+    {
+        var curve = new List<double>();
+
+        // Get section boundaries with their tension targets
+        var sectionTensions = result.Sections
+            .Select(s => (
+                StartBar: s.StartBar,
+                EndBar: s.EndBar,
+                Tension: s.Plan.Goal.TargetState.Get<double>(WorldState.Keys.Tension)))
+            .ToList();
+
+        for (int bar = 1; bar <= totalBars; bar++)
+        {
+            // Find which section this bar belongs to
+            var section = sectionTensions.FirstOrDefault(s => bar >= s.StartBar && bar <= s.EndBar);
+
+            if (section != default)
+            {
+                // Interpolate within the section
+                var progress = section.EndBar > section.StartBar
+                    ? (double)(bar - section.StartBar) / (section.EndBar - section.StartBar)
+                    : 1.0;
+
+                // Get previous section's tension for interpolation
+                var sectionIndex = sectionTensions.IndexOf(section);
+                var prevTension = sectionIndex > 0
+                    ? sectionTensions[sectionIndex - 1].Tension
+                    : result.Request.InitialEmotion?.Tension ?? 0.2;
+
+                // Linear interpolation from previous to current
+                var tension = prevTension + (section.Tension - prevTension) * progress;
+                curve.Add(Math.Clamp(tension, 0, 1));
+            }
+            else
+            {
+                // Fallback to final tension
+                curve.Add(result.FinalState.Emotional.Tension);
+            }
+        }
+
+        return curve;
     }
 
     // ToPitchClass and ToApiPitchClass removed - PitchClass has x-sdk-type (identity conversion)
