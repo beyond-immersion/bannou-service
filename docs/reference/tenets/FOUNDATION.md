@@ -108,12 +108,14 @@ Run `make generate` to execute the full pipeline in order:
 | 3. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
 | 4. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
 | 5. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
-| 6. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
-| 7. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
-| 8. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
-| 9. Event Subscriptions | `x-event-subscriptions` in events.yaml | `{Service}EventsController.cs` + `{Service}ServiceEvents.cs` |
+| 6. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
+| 7. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
+| 7a. Meta Controllers | `{service}-api-meta.yaml` | `{Service}Controller.Meta.cs` |
+| 8. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
+| 9. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
+| 10. Event Subscriptions | `x-event-subscriptions` in events.yaml | `{Service}EventsController.cs` + `{Service}ServiceEvents.cs` |
 
-**Order Matters**: State stores and events must be generated before service APIs because services may reference these types.
+**Order Matters**: State stores and events must be generated before service APIs because services may reference these types. Meta schemas must be generated before meta controllers.
 
 ### What Is Safe to Edit
 
@@ -123,9 +125,10 @@ Run `make generate` to execute the full pipeline in order:
 | `lib-{service}/Services/*.cs` | Yes | Helper services |
 | `lib-{service}/{Service}ServiceEvents.cs` | Yes | Generated once, then manual |
 | `lib-{service}/Generated/*.cs` | Never | Regenerated on `make generate` |
+| `lib-{service}/Generated/*Controller.Meta.cs` | Never | Meta endpoints (regenerated) |
 | `bannou-service/Generated/*.cs` | Never | All generated directories |
 | `schemas/*.yaml` | Yes | Edit schemas, regenerate code |
-| `schemas/Generated/*.yaml` | Never | Generated lifecycle events |
+| `schemas/Generated/*.yaml` | Never | Generated lifecycle events + meta schemas |
 
 ### Schema File Types
 
@@ -137,6 +140,36 @@ Run `make generate` to execute the full pipeline in order:
 | `{service}-configuration.yaml` | Service configuration with `x-service-configuration` |
 | `{service}-client-events.yaml` | Server→client WebSocket push events |
 | `common-events.yaml` | Shared infrastructure events |
+
+### Meta Endpoint Generation (Runtime Schema Introspection)
+
+Each service gets companion "meta" endpoints for runtime schema introspection. These enable clients to discover API contracts at runtime without hardcoded knowledge.
+
+**Architecture**:
+- **Source**: `schemas/{service}-api.yaml` (clean, no embedded metadata)
+- **Intermediate**: `schemas/Generated/{service}-api-meta.yaml` (copy with `x-*-json` extensions)
+- **Output**: `plugins/lib-{service}/Generated/{Service}Controller.Meta.cs` (partial class)
+
+**Generated Meta Endpoints** (4 per operation):
+| Endpoint | Purpose |
+|----------|---------|
+| `/path/meta/info` | Human-readable endpoint description |
+| `/path/meta/request-schema` | JSON Schema for request body |
+| `/path/meta/response-schema` | JSON Schema for response body |
+| `/path/meta/schema` | Complete schema (info + request + response) |
+
+**Why Separate Files?**
+- **Clean schemas**: Main `{service}-api.yaml` stays focused on business logic
+- **Clean controllers**: Main `{Service}Controller.cs` contains only business endpoints
+- **Agent-friendliness**: AI agents can ignore `*.Meta.cs` and `Generated/*-meta.yaml`
+- **Debugging clarity**: Meta endpoints physically separated for easier navigation
+
+**Generation Pipeline**:
+1. `embed-meta-schemas.py` creates `schemas/Generated/{service}-api-meta.yaml` with bundled JSON Schemas
+2. `generate-meta-controller.sh` creates `{Service}Controller.Meta.cs` partial class
+3. Partial class merges with main controller at compile time
+
+**NEVER edit** `schemas/Generated/*-meta.yaml` or `*Controller.Meta.cs` - regenerate from source schemas.
 
 ### Configuration Environment Variable Naming (MANDATORY)
 
