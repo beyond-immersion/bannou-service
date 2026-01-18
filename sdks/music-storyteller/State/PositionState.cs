@@ -47,6 +47,11 @@ public sealed class PositionState
     public double OverallProgress => TotalBars > 0 ? (double)Bar / TotalBars : 0;
 
     /// <summary>
+    /// Alias for OverallProgress (convenience).
+    /// </summary>
+    public double Progress => OverallProgress;
+
+    /// <summary>
     /// Whether we're at the start of a bar.
     /// </summary>
     public bool IsBarStart => Beat < 0.001;

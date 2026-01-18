@@ -154,7 +154,8 @@ public static class MelodicAttraction
                 5 => 0.5,
                 6 => 0.6,
                 7 => 0.5, // Perfect fifth is somewhat stable
-                >= 8 => 0.8
+                >= 8 => 0.8,
+                _ => 0.0 // Should not occur with Math.Abs
             };
         }
 

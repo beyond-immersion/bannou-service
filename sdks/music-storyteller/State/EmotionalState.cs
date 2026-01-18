@@ -178,6 +178,11 @@ public sealed class EmotionalState
     }
 
     /// <summary>
+    /// Gets a neutral emotional state (convenience shorthand).
+    /// </summary>
+    public static EmotionalState Neutral => Presets.Neutral;
+
+    /// <summary>
     /// Common emotional state presets.
     /// </summary>
     public static class Presets

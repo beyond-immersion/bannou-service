@@ -56,6 +56,16 @@ public sealed class HarmonicState
     public bool ExpectingCadence { get; set; }
 
     /// <summary>
+    /// Whether currently on a tonic chord.
+    /// </summary>
+    public bool OnTonic => CurrentFunction == HarmonicFunctionType.Tonic;
+
+    /// <summary>
+    /// Whether currently on a dominant chord.
+    /// </summary>
+    public bool OnDominant => CurrentFunction == HarmonicFunctionType.Dominant;
+
+    /// <summary>
     /// The dominant preparation count (how many pre-dominant chords).
     /// </summary>
     public int DominantPreparation { get; set; }
@@ -70,7 +80,7 @@ public sealed class HarmonicState
     /// </summary>
     public HarmonicState()
     {
-        CurrentKey = Scale.Major(PitchClass.C);
+        CurrentKey = new Scale(PitchClass.C, ModeType.Major);
         HomeKey = CurrentKey;
     }
 

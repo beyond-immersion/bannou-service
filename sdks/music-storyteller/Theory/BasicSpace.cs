@@ -8,7 +8,7 @@ namespace BeyondImmersion.Bannou.MusicStoryteller.Theory;
 /// The basic space defines the hierarchical organization of pitches within a tonal context.
 /// Source: Lerdahl, F. (2001). Tonal Pitch Space. Oxford University Press.
 /// </summary>
-public sealed class BasicSpace
+public class BasicSpace
 {
     /// <summary>
     /// The root pitch class of this basic space.

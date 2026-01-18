@@ -234,6 +234,9 @@ public enum DevelopmentStage
     /// <summary>Themes transforming significantly.</summary>
     Transformation,
 
+    /// <summary>Climactic peak of the piece.</summary>
+    Climax,
+
     /// <summary>Return to original themes.</summary>
     Recapitulation,
 

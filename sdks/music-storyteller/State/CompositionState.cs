@@ -345,7 +345,7 @@ public sealed class CompositionState
 
     private void HandleModulation(PitchClass newTonic)
     {
-        var newKey = Scale.Major(newTonic); // Simplified - would detect mode
+        var newKey = new Scale(newTonic, ModeType.Major); // Simplified - would detect mode
         Harmonic.Modulate(newKey);
         PitchSpace.Modulate(newTonic, ModeType.Major);
 
