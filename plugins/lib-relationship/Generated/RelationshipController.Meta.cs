@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/relationship-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class RelationshipController
 {
     #region Meta Endpoints for CreateRelationship

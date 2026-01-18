@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/leaderboard-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class LeaderboardController
 {
     #region Meta Endpoints for CreateLeaderboardDefinition

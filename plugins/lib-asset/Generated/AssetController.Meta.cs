@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Asset;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/asset-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class AssetController
 {
     #region Meta Endpoints for RequestUpload

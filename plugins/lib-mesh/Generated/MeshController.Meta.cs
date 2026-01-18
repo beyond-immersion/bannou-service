@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/mesh-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class MeshController
 {
     #region Meta Endpoints for GetEndpoints

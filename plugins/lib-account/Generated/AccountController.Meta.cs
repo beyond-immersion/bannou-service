@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Account;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/account-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class AccountController
 {
     #region Meta Endpoints for ListAccounts

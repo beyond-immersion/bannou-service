@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Website;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/website-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class WebsiteController
 {
     #region Meta Endpoints for GetStatus

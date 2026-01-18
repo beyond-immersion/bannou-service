@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Character;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/character-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class CharacterController
 {
     #region Meta Endpoints for CreateCharacter

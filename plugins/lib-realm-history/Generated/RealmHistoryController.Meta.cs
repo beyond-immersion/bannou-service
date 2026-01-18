@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.RealmHistory;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/realm-history-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class RealmHistoryController
 {
     #region Meta Endpoints for RecordRealmParticipation

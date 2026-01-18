@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.GameService;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/game-service-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class GameServiceController
 {
     #region Meta Endpoints for ListServices

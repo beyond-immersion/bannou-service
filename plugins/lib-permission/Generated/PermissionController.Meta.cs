@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Permission;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/permission-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class PermissionController
 {
     #region Meta Endpoints for GetCapabilities

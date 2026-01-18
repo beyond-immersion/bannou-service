@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/behavior-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class BehaviorController
 {
     #region Meta Endpoints for CompileAbmlBehavior

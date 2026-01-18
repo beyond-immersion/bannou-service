@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Analytics;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/analytics-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class AnalyticsController
 {
     #region Meta Endpoints for IngestEvent

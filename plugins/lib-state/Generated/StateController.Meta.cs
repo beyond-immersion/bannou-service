@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.State;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/state-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class StateController
 {
     #region Meta Endpoints for GetState

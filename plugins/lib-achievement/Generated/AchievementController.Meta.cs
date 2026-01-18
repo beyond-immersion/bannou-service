@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Achievement;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/achievement-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class AchievementController
 {
     #region Meta Endpoints for CreateAchievementDefinition

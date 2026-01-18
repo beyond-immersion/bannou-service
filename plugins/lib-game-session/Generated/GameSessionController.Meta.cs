@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/game-session-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class GameSessionController
 {
     #region Meta Endpoints for ListGameSessions

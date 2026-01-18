@@ -1,5 +1,5 @@
-using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicStoryteller.State;
+using BeyondImmersion.Bannou.MusicTheory.Collections;
 
 namespace BeyondImmersion.Bannou.MusicStoryteller.Actions;
 

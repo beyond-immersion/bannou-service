@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/save-load-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class SaveLoadController
 {
     #region Meta Endpoints for CreateSlot

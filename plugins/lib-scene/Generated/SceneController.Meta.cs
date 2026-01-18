@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Scene;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/scene-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class SceneController
 {
     #region Meta Endpoints for CreateScene

@@ -13,7 +13,6 @@ namespace BeyondImmersion.BannouService.Location;
 /// Meta/introspection endpoints for runtime schema access.
 /// Generated from schemas/Generated/location-api-meta.yaml
 /// </summary>
-[System.CodeDom.Compiler.GeneratedCode("generate-meta-controller.sh", "1.0")]
 public partial class LocationController
 {
     #region Meta Endpoints for GetLocation
