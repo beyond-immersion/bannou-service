@@ -29,6 +29,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
+| [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for Arcadia game world. |
@@ -792,6 +793,42 @@ Native RabbitMQ pub/sub messaging with native serialization.
 
 ---
 
+## Music Theory Engine API {#music}
+
+**Proxy**: `client.Music` | **Version**: 1.0.0
+
+Pure computation music generation using formal music theory rules.
+
+### Generation
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GeneratecompositionAsync` | `GenerateCompositionRequest` | `GenerateCompositionResponse` | Generate composition from style and constraints |
+
+### Styles
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetStyleAsync` | `GetStyleRequest` | `StyleDefinitionResponse` | Get style definition |
+| `ListStylesAsync` | `ListStylesRequest` | `ListStylesResponse` | List available styles |
+| `CreateStyleAsync` | `CreateStyleRequest` | `StyleDefinitionResponse` | Create new style definition |
+
+### Theory
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GenerateprogressionAsync` | `GenerateProgressionRequest` | `GenerateProgressionResponse` | Generate chord progression |
+| `GeneratemelodyAsync` | `GenerateMelodyRequest` | `GenerateMelodyResponse` | Generate melody over harmony |
+| `ApplyvoiceleadingAsync` | `VoiceLeadRequest` | `VoiceLeadResponse` | Apply voice leading to chords |
+
+### Validation
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ValidateMidijsonAsync` | `ValidateMidiJsonRequest` | `ValidateMidiJsonResponse` | Validate MIDI-JSON structure |
+
+---
+
 ## Orchestrator API {#orchestrator}
 
 **Proxy**: `client.Orchestrator` | **Version**: 3.0.0
@@ -1251,8 +1288,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 33
-- **Total methods**: 392
+- **Total services**: 34
+- **Total methods**: 400
 
 ---
 

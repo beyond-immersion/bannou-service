@@ -213,14 +213,12 @@ public sealed class StrideBatchCompiler : IAssetProcessor, IDisposable
         StrideIndexParser indexParser,
         CancellationToken ct)
     {
-        // Find matching index entry
-        var assetName = Path.GetFileNameWithoutExtension(sourceAsset.Filename);
-        var matchingEntry = indexEntries.Values
-            .FirstOrDefault(e => e.Url.Contains(assetName, StringComparison.OrdinalIgnoreCase));
+        // Look up asset in index using the safe filename format (slashes become underscores)
+        var indexKey = MakeSafeFileName(sourceAsset.AssetId);
 
-        if (matchingEntry == null)
+        if (!indexEntries.TryGetValue(indexKey, out var matchingEntry))
         {
-            _logger?.LogDebug("No index entry found for {AssetName}", assetName);
+            _logger?.LogDebug("No index entry found for {AssetId} (key: {IndexKey})", sourceAsset.AssetId, indexKey);
             return null;
         }
 
@@ -239,8 +237,12 @@ public sealed class StrideBatchCompiler : IAssetProcessor, IDisposable
         var hash = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
         var contentType = GetContentTypeForAsset(sourceAsset);
 
-        // Collect dependencies (buffer files for models, etc.)
-        var dependencies = await CollectDependenciesAsync(matchingEntry, indexEntries, indexParser, ct);
+        // Collect dependencies (generated buffers, etc.) using the raw index
+        var rawIndex = indexParser.GetIndex();
+        var dbDir = indexParser.GetDbDirectory();
+        var dependencies = dbDir != null
+            ? await CollectDependenciesAsync(rawIndex, dbDir, indexKey, ct)
+            : new Dictionary<string, ReadOnlyMemory<byte>>();
 
         return new StrideProcessedAsset
         {
@@ -264,39 +266,73 @@ public sealed class StrideBatchCompiler : IAssetProcessor, IDisposable
     }
 
     private async Task<Dictionary<string, ReadOnlyMemory<byte>>> CollectDependenciesAsync(
-        StrideIndexEntry mainEntry,
-        Dictionary<string, StrideIndexEntry> allEntries,
-        StrideIndexParser indexParser,
+        IReadOnlyDictionary<string, string> index,
+        DirectoryInfo dbDir,
+        string assetIndexKey,
         CancellationToken ct)
     {
         var dependencies = new Dictionary<string, ReadOnlyMemory<byte>>();
 
-        // For models, look for buffer files
-        if (mainEntry.Url.Contains("/Models/", StringComparison.OrdinalIgnoreCase))
-        {
-            var baseUrl = mainEntry.Url;
-            var bufferPattern = $"{baseUrl}_buffer";
+        // Stride generates additional assets (e.g., vertex/index buffers for models)
+        // under URLs like "{AssetId}/gen/Buffer_1". These must be bundled with the
+        // main asset for it to load correctly.
+        var genPrefix = assetIndexKey + "/gen/";
 
-            foreach (var (url, entry) in allEntries)
+        foreach (var (url, hash) in index)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (!url.StartsWith(genPrefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var blobPath = GetBlobPath(dbDir, hash);
+            if (!File.Exists(blobPath))
             {
-                if (url.StartsWith(bufferPattern, StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        var bufferData = indexParser.ReadAssetData(entry);
-                        var bufferName = Path.GetFileName(url);
-                        dependencies[bufferName] = bufferData;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogWarning(ex, "Failed to read buffer dependency {BufferUrl}", url);
-                    }
-                }
+                _logger?.LogWarning("Dependency blob not found: {Url} at {BlobPath}", url, blobPath);
+                continue;
+            }
+
+            try
+            {
+                var blobData = await File.ReadAllBytesAsync(blobPath, ct);
+                dependencies[url] = blobData;
+                _logger?.LogDebug("Collected dependency {Url} ({Size} bytes)", url, blobData.Length);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to read dependency blob {Url}", url);
             }
         }
 
-        await Task.CompletedTask; // Satisfy async signature
         return dependencies;
+    }
+
+    /// <summary>
+    /// Gets the path to a compiled asset blob given its content hash.
+    /// </summary>
+    private static string GetBlobPath(DirectoryInfo dbDir, string hash)
+    {
+        // Stride stores blobs at: db/{hash[0:2]}/{hash[2:]} (prefix in directory, rest in filename)
+        var prefix = hash[..2].ToLowerInvariant();
+        var filename = hash[2..].ToLowerInvariant();
+        return Path.Combine(dbDir.FullName, prefix, filename);
+    }
+
+    /// <summary>
+    /// Converts asset ID to safe filename format (slashes become underscores).
+    /// </summary>
+    private static string MakeSafeFileName(string name)
+    {
+        var sb = new StringBuilder(name);
+        foreach (var c in Path.GetInvalidFileNameChars())
+        {
+            sb.Replace(c, '_');
+        }
+        sb.Replace(Path.DirectorySeparatorChar, '_');
+        sb.Replace(Path.AltDirectorySeparatorChar, '_');
+        sb.Replace('/', '_');
+        sb.Replace('\\', '_');
+        return sb.ToString();
     }
 
     private static string GetContentTypeForAsset(ExtractedAsset asset)

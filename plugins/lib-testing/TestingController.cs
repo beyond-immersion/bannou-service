@@ -90,7 +90,7 @@ public class TestingController : ControllerBase
                         try
                         {
                             // Create a basic test client (we don't have full infrastructure for this)
-                            var testClient = new BasicTestClient();
+                            using var testClient = new BasicTestClient();
                             var result = await test.TestAction(testClient, Array.Empty<string>());
 
                             if (result.Success)

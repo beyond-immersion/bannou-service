@@ -56,53 +56,6 @@ paths:
         '409':
           description: Character already exists
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"CreateCharacterRequest\": {\n            \"description\": \"Request payload for creating
-        a new character in the game world\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"name\",\n                \"realmId\",\n                \"speciesId\"\
-        ,\n                \"birthDate\"\n            ],\n            \"properties\": {\n                \"name\": {\n   \
-        \                 \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Character name\"\n                },\n                \"realmId\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Realm ID (foreign key to future Realm service, partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to future Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"status\": {\n            \
-        \        \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
-        \n                        }\n                    ],\n                    \"default\": \"alive\",\n               \
-        \     \"description\": \"Initial lifecycle status for the character\"\n                }\n            }\n        },\n\
-        \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
-        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
-        \n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
-        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
-        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
-        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
-        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Create new character\",\n    \"description\": \"\",\n    \"tags\": [\n\
-        \        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createCharacter\"\n}"
   /character/get:
     post:
       summary: Get character by ID
@@ -128,41 +81,6 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"GetCharacterRequest\": {\n            \"description\": \"Request payload for retrieving
-        a single character by ID\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n      \
-        \          \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the character to retrieve\"\n                }\n            }\n  \
-        \      }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
-        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
-        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
-        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
-        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get character by ID\",\n    \"description\": \"\",\n    \"tags\": [\n \
-        \       \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCharacter\"\n}"
   /character/update:
     post:
       summary: Update character
@@ -190,53 +108,6 @@ paths:
         '400':
           description: Invalid update data
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"UpdateCharacterRequest\": {\n            \"description\": \"Request payload for updating
-        an existing character's properties\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
-        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the character to update\"\n                },\n                \"\
-        name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
-        maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"New name for the
-        character\"\n                },\n                \"speciesId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Update character's species (used for species merge migrations)\"\n                },\n                \"status\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"New lifecycle status for the character\"\n                },\n                \"deathDate\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"In-game death timestamp (sets status to dead)\"\n  \
-        \              }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"alive\",\n\
-        \                \"dead\",\n                \"dormant\"\n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
-        from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"characterId\",\n                \"name\",\n                \"realmId\"\
-        ,\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n                \"\
-        createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the character\"\n                },\n                \"name\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Display name of the character\"\n                },\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
-        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Update character\",\n    \"description\": \"\",\n    \"tags\": [\n    \
-        \    \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateCharacter\"\n}"
   /character/delete:
     post:
       summary: Delete character (permanent removal)
@@ -258,17 +129,6 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteCharacterRequest\": {\n            \"description\": \"Request payload for permanently
-        deleting a character\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
-        \     \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n          \
-        \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the character to delete\"\n                }\n            }\n      \
-        \  }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete character (permanent removal)\",\n    \"description\": \"\",\n \
-        \   \"tags\": [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCharacter\"\
-        \n}"
   /character/list:
     post:
       summary: List characters with filtering
@@ -292,68 +152,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCharactersRequest\"\
-        ,\n    \"$defs\": {\n        \"ListCharactersRequest\": {\n            \"description\": \"Request payload for listing
-        characters with filtering and pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm to list characters from (required for efficiency)\"\n            \
-        \    },\n                \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by species\"\n\
-        \                },\n                \"status\": {\n                    \"allOf\": [\n                        {\n\
-        \                            \"$ref\": \"#/$defs/CharacterStatus\"\n                        }\n                  \
-        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by status\"\n      \
-        \          },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 1,\n                    \"default\": 1,\n                    \"description\": \"Page number for pagination (1-based)\"\
-        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
-        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
-        \        \"description\": \"Number of results per page\"\n                }\n            }\n        },\n        \"\
-        CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\"\
-        ,\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n \
-        \           ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
-        with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characters\",\n                \"totalCount\",\n                \"\
-        page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"characters\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/CharacterResponse\"\n                    },\n                    \"description\": \"List of characters
-        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of characters matching the filter criteria\"\n            \
-        \    },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
-        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        there are more results after this page\"\n                },\n                \"hasPreviousPage\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"description\": \"Whether there are results before this page\"\
-        \n                }\n            }\n        },\n        \"CharacterResponse\": {\n            \"description\": \"\
-        Complete character data returned from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
-        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n  \
-        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for the character\"\n                },\n                \"name\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Display name of the character\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
-        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"List characters with filtering\",\n    \"description\": \"\",\n    \"tags\"\
-        : [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCharacters\"\
-        \n}"
   /character/get-enriched:
     post:
       summary: Get character with optional related data (personality, backstory, family)
@@ -383,135 +181,6 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEnrichedCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"GetEnrichedCharacterRequest\": {\n            \"description\": \"Request payload for
-        retrieving a character with optional related data.\\nEach include flag fetches data from its respective service (zero
-        overhead if not requested).\\n\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
-        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the character to retrieve\"\n                },\n                \"\
-        includePersonality\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n   \
-        \                 \"description\": \"Include personality traits from character-personality service\"\n           \
-        \     },\n                \"includeBackstory\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"default\": false,\n                    \"description\": \"Include backstory elements from character-history service\"\
-        \n                },\n                \"includeFamilyTree\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"default\": false,\n                    \"description\": \"Include family relationships from relationship
-        service\"\n                },\n                \"includeCombatPreferences\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Include combat preferences from
-        character-personality service\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnrichedCharacterResponse\"\
-        ,\n    \"$defs\": {\n        \"EnrichedCharacterResponse\": {\n            \"description\": \"Character data with
-        optional enriched fields.\\nFields are only populated if the corresponding include flag was set in the request.\\\
-        n\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"characterId\",\n                \"name\",\n                \"realmId\",\n                \"speciesId\"\
-        ,\n                \"birthDate\",\n                \"status\",\n                \"createdAt\"\n            ],\n  \
-        \          \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the character\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Display name of the character\"\n                },\n                \"realmId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Realm ID (partition key)\"\n                },\n                \"speciesId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Species ID (foreign
-        key to Species service)\"\n                },\n                \"birthDate\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game birth timestamp\"\
-        \n                },\n                \"deathDate\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        In-game death timestamp\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status of the character\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Real-world creation timestamp\"\n                },\n                \"\
-        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Real-world last update timestamp\"\n  \
-        \              },\n                \"personality\": {\n                    \"$ref\": \"#/$defs/PersonalitySnapshot\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Personality traits (included if
-        includePersonality=true)\"\n                },\n                \"backstory\": {\n                    \"$ref\": \"\
-        #/$defs/BackstorySnapshot\",\n                    \"nullable\": true,\n                    \"description\": \"Backstory
-        elements (included if includeBackstory=true)\"\n                },\n                \"familyTree\": {\n          \
-        \          \"$ref\": \"#/$defs/FamilyTreeResponse\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Family relationships (included if includeFamilyTree=true)\"\n                },\n          \
-        \      \"combatPreferences\": {\n                    \"$ref\": \"#/$defs/CombatPreferencesSnapshot\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Combat preferences (included if includeCombatPreferences=true)\"\
-        \n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"alive\"\
-        ,\n                \"dead\",\n                \"dormant\"\n            ]\n        },\n        \"PersonalitySnapshot\"\
-        : {\n            \"description\": \"Snapshot of personality traits for enriched response\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"traits\"\
-        ,\n                \"version\"\n            ],\n            \"properties\": {\n                \"traits\": {\n   \
-        \                 \"type\": \"object\",\n                    \"additionalProperties\": {\n                       \
-        \ \"type\": \"number\",\n                        \"format\": \"float\"\n                    },\n                 \
-        \   \"description\": \"Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)\"\n                },\n  \
-        \              \"version\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Personality version number (increments on evolution)\"\n                }\n            }\n        },\n        \"BackstorySnapshot\"\
-        : {\n            \"description\": \"Snapshot of backstory for enriched response\",\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"elements\"\n     \
-        \       ],\n            \"properties\": {\n                \"elements\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BackstoryElementSnapshot\"\n    \
-        \                },\n                    \"description\": \"List of backstory elements\"\n                }\n    \
-        \        }\n        },\n        \"BackstoryElementSnapshot\": {\n            \"description\": \"Single backstory element\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"elementType\",\n                \"key\",\n                \"value\",\n                \"strength\"\
-        \n            ],\n            \"properties\": {\n                \"elementType\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)\"\n \
-        \               },\n                \"key\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Machine-readable key (homeland, past_job, etc.)\"\n                },\n                \"value\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Machine-readable value (northlands,
-        blacksmith, etc.)\"\n                },\n                \"strength\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"How strongly this affects behavior
-        (0.0 to 1.0)\"\n                }\n            }\n        },\n        \"FamilyTreeResponse\": {\n            \"description\"\
-        : \"Family relationships for a character\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"parents\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\n                  \
-        \  },\n                    \"description\": \"Parent relationships (biological and adoptive)\"\n                },\n\
-        \                \"children\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/FamilyMember\"\n                    },\n                    \"description\"\
-        : \"Child relationships\"\n                },\n                \"siblings\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\n                \
-        \    },\n                    \"description\": \"Sibling relationships (including half-siblings)\"\n              \
-        \  },\n                \"spouse\": {\n                    \"$ref\": \"#/$defs/FamilyMember\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Current spouse (if any)\"\n                },\n   \
-        \             \"pastLives\": {\n                    \"type\": \"array\",\n                    \"items\": {\n     \
-        \                   \"$ref\": \"#/$defs/PastLifeReference\"\n                    },\n                    \"description\"\
-        : \"Previous incarnations (if reincarnation tracked)\"\n                }\n            }\n        },\n        \"FamilyMember\"\
-        : {\n            \"description\": \"Reference to a family member\",\n            \"type\": \"object\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n            \
-        \    \"relationshipType\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the related character\"\n                },\n                \"name\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name (if available)\"\
-        \n                },\n                \"relationshipType\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)\"\n            \
-        \    },\n                \"isAlive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the related character is alive\"\n                }\n            }\n        },\n        \"PastLifeReference\"\
-        : {\n            \"description\": \"Reference to a past incarnation\",\n            \"type\": \"object\",\n      \
-        \      \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\n          \
-        \  ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the previous incarnation\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Display name of the past life\"\n                },\n\
-        \                \"deathDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When the past life ended\"\n  \
-        \              }\n            }\n        },\n        \"CombatPreferencesSnapshot\": {\n            \"description\"\
-        : \"Snapshot of combat preferences for enriched response\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"style\",\n                \"preferredRange\",\n         \
-        \       \"groupRole\",\n                \"riskTolerance\",\n                \"retreatThreshold\",\n              \
-        \  \"protectAllies\"\n            ],\n            \"properties\": {\n                \"style\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Combat style (DEFENSIVE, BALANCED, AGGRESSIVE,
-        BERSERKER, TACTICAL)\"\n                },\n                \"preferredRange\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)\"\n\
-        \                },\n                \"groupRole\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)\"\n                },\n\
-        \                \"riskTolerance\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"description\": \"Willingness to take risky actions (0.0 to 1.0)\"\n            \
-        \    },\n                \"retreatThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Health percentage at which retreat is considered (0.0
-        to 1.0)\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether to prioritize ally protection\"\n                }\n            }\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get character with optional related data (personality, backstory, family)\"\
-        ,\n    \"description\": \"Retrieves a character with optional include flags for related data.\\nUse this endpoint
-        when you need aggregated character data from multiple services.\\nEach included dataset is fetched from its respective
-        service.\\n\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
-        : \"getEnrichedCharacter\"\n}"
   /character/compress:
     post:
       summary: Compress a dead character to archive format
@@ -544,52 +213,6 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompressCharacterRequest\"\
-        ,\n    \"$defs\": {\n        \"CompressCharacterRequest\": {\n            \"description\": \"Request to compress a
-        dead character for archival\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
-        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the dead character to compress\"\n                },\n           \
-        \     \"deleteSourceData\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
-        \                    \"description\": \"If true, delete personality/backstory data after compression.\\nThe archive
-        becomes the only record of this information.\\n\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterArchive\"\
-        ,\n    \"$defs\": {\n        \"CharacterArchive\": {\n            \"description\": \"Compressed archive of a dead
-        character.\\nContains text summaries instead of structured data for long-term storage.\\nSelf-contained with no external
-        references (suitable for cleanup).\\n\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
-        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"deathDate\",\n\
-        \                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Original character ID\"\n                },\n                \"name\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Character display name\"\n                },\n       \
-        \         \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
-        \                   \"description\": \"Realm the character belonged to\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Character's species\"\n                },\n                \"birthDate\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game
-        birth date\"\n                },\n                \"deathDate\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"In-game death date\"\n     \
-        \           },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When this archive was created\"\n         \
-        \       },\n                \"personalitySummary\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Text summary of personality traits.\\nExample: \\\
-        \"Brave and loyal, somewhat hot-tempered with a strong sense of justice\\\"\\n\"\n                },\n           \
-        \     \"keyBackstoryPoints\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
-        \                    \"type\": \"string\"\n                    },\n                    \"description\": \"Key backstory
-        elements as text.\\nExample: [\\\"Trained by the Knights Guild\\\", \\\"Born in the Northlands\\\"]\\n\"\n       \
-        \         },\n                \"majorLifeEvents\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Significant life events as text.\\nExample: [\\\"Fought in the Battle of Stormgate (Hero)\\\", \\\"Survived the
-        Great Flood\\\"]\\n\"\n                },\n                \"familySummary\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Text summary of family
-        relationships.\\nExample: \\\"Father of 3, married to Elena, orphaned at young age\\\"\\n\"\n                }\n \
-        \           }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Compress a dead character to archive format\",\n    \"description\": \"\
-        Compresses a dead character's data for long-term storage.\\nGenerates text summaries of personality, backstory, and
-        relationships.\\nAfter compression, detailed data can be deleted to save storage.\\nOnly works on characters with
-        status 'dead'.\\n\",\n    \"tags\": [\n        \"Character Compression\"\n    ],\n    \"deprecated\": false,\n   \
-        \ \"operationId\": \"compressCharacter\"\n}"
   /character/get-archive:
     post:
       summary: Get compressed archive data for a character
@@ -615,48 +238,6 @@ paths:
         '404':
           description: Archive not found (character may not be compressed yet)
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCharacterArchiveRequest\"\
-        ,\n    \"$defs\": {\n        \"GetCharacterArchiveRequest\": {\n            \"description\": \"Request to retrieve
-        a character's compressed archive\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
-        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the character to get archive for\"\n                }\n          \
-        \  }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterArchive\"\
-        ,\n    \"$defs\": {\n        \"CharacterArchive\": {\n            \"description\": \"Compressed archive of a dead
-        character.\\nContains text summaries instead of structured data for long-term storage.\\nSelf-contained with no external
-        references (suitable for cleanup).\\n\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
-        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"deathDate\",\n\
-        \                \"compressedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Original character ID\"\n                },\n                \"name\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Character display name\"\n                },\n       \
-        \         \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
-        \                   \"description\": \"Realm the character belonged to\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Character's species\"\n                },\n                \"birthDate\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game
-        birth date\"\n                },\n                \"deathDate\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"In-game death date\"\n     \
-        \           },\n                \"compressedAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When this archive was created\"\n         \
-        \       },\n                \"personalitySummary\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Text summary of personality traits.\\nExample: \\\
-        \"Brave and loyal, somewhat hot-tempered with a strong sense of justice\\\"\\n\"\n                },\n           \
-        \     \"keyBackstoryPoints\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
-        \                    \"type\": \"string\"\n                    },\n                    \"description\": \"Key backstory
-        elements as text.\\nExample: [\\\"Trained by the Knights Guild\\\", \\\"Born in the Northlands\\\"]\\n\"\n       \
-        \         },\n                \"majorLifeEvents\": {\n                    \"type\": \"array\",\n                 \
-        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Significant life events as text.\\nExample: [\\\"Fought in the Battle of Stormgate (Hero)\\\", \\\"Survived the
-        Great Flood\\\"]\\n\"\n                },\n                \"familySummary\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Text summary of family
-        relationships.\\nExample: \\\"Father of 3, married to Elena, orphaned at young age\\\"\\n\"\n                }\n \
-        \           }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get compressed archive data for a character\",\n    \"description\": \"\
-        \",\n    \"tags\": [\n        \"Character Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\":
-        \"getCharacterArchive\"\n}"
   /character/check-references:
     post:
       summary: Check reference count for cleanup eligibility
@@ -686,36 +267,6 @@ paths:
         '404':
           description: Character not found
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CheckReferencesRequest\"\
-        ,\n    \"$defs\": {\n        \"CheckReferencesRequest\": {\n            \"description\": \"Request to check reference
-        count for a character\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
-        \      \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n         \
-        \       \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the character to check references for\"\n                }\n       \
-        \     }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterRefCount\"\
-        ,\n    \"$defs\": {\n        \"CharacterRefCount\": {\n            \"description\": \"Reference count information
-        for cleanup eligibility\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"characterId\",\n                \"referenceCount\",\n                \"\
-        isEligibleForCleanup\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Character ID\"\n                },\n                \"referenceCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of active references to this character\"\n                },\n  \
-        \              \"referenceTypes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Types
-        of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)\"\n                },\n                \"isCompressed\":
-        {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the character has been
-        compressed\"\n                },\n                \"isEligibleForCleanup\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"True if compressed, refCount=0, and grace period has passed.\\nSafe to permanently
-        delete if true.\\n\"\n                },\n                \"zeroRefSince\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"When refCount first reached zero (null if refCount > 0)\"\n                }\n            }\n   \
-        \     }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Check reference count for cleanup eligibility\",\n    \"description\":
-        \"Returns the current reference count for a compressed character.\\nCharacters with refCount=0 for the grace period
-        are eligible for deletion.\\nReferences include: family relationships, past lives, historical events, memories.\\\
-        n\",\n    \"tags\": [\n        \"Character Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
-        : \"checkCharacterReferences\"\n}"
   /character/by-realm:
     post:
       summary: Get all characters in a realm (primary query pattern)
@@ -739,68 +290,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CharacterListResponse'
 
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCharactersByRealmRequest\"\
-        ,\n    \"$defs\": {\n        \"GetCharactersByRealmRequest\": {\n            \"description\": \"Request payload for
-        retrieving all characters within a specific realm\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm ID to query (uses partition key for efficiency)\"\n              \
-        \  },\n                \"speciesId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by species\"\n\
-        \                },\n                \"status\": {\n                    \"allOf\": [\n                        {\n\
-        \                            \"$ref\": \"#/$defs/CharacterStatus\"\n                        }\n                  \
-        \  ],\n                    \"nullable\": true,\n                    \"description\": \"Optional status filter\"\n\
-        \                },\n                \"page\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"minimum\": 1,\n                    \"default\": 1,\n                    \"description\": \"Page number for pagination
-        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n \
-        \                   \"description\": \"Number of results per page\"\n                }\n            }\n        },\n\
-        \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
-        status\",\n            \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\
-        \n            ]\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterListResponse\"\
-        ,\n    \"$defs\": {\n        \"CharacterListResponse\": {\n            \"description\": \"Paginated list of characters
-        with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characters\",\n                \"totalCount\",\n                \"\
-        page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"characters\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/CharacterResponse\"\n                    },\n                    \"description\": \"List of characters
-        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of characters matching the filter criteria\"\n            \
-        \    },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
-        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        there are more results after this page\"\n                },\n                \"hasPreviousPage\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"description\": \"Whether there are results before this page\"\
-        \n                }\n            }\n        },\n        \"CharacterResponse\": {\n            \"description\": \"\
-        Complete character data returned from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"characterId\",\n                \"name\",\n             \
-        \   \"realmId\",\n                \"speciesId\",\n                \"birthDate\",\n                \"status\",\n  \
-        \              \"createdAt\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for the character\"\n                },\n                \"name\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Display name of the character\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm ID (partition key)\"\n                },\n                \"speciesId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Species ID (foreign key to Species service)\"\n                },\n                \"birthDate\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"In-game birth timestamp\"\n                },\n                \"deathDate\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
-        status\": {\n                    \"$ref\": \"#/$defs/CharacterStatus\",\n                    \"description\": \"Current
-        lifecycle status of the character\"\n                },\n                \"createdAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Real-world last update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
-        \ \"enum\": [\n                \"alive\",\n                \"dead\",\n                \"dormant\"\n            ]\n\
-        \        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get all characters in a realm (primary query pattern)\",\n    \"description\"\
-        : \"\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
-        getCharactersByRealm\"\n}"
 components:
   schemas:
     # Shared Enum Definitions

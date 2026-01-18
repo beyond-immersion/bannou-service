@@ -339,6 +339,11 @@
             Gets the typed proxy for Bannou Messaging Service API operations.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Music">
+            <summary>
+            Gets the typed proxy for Music Theory Engine API operations.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.Bannou.Client.BannouClient.Orchestrator">
             <summary>
             Gets the typed proxy for Orchestrator API operations.
@@ -3786,6 +3791,14 @@
             <param name="handler">Handler invoked when the event is received.</param>
             <returns>Subscription handle. Dispose to unsubscribe.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Events.AssetEventSubscriptions.OnMetabundleCreationComplete(System.Action{BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent})">
+            <summary>
+            Subscribe to <see cref="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent"/> events.
+            Sent when async metabundle creation job completes (success or failure).
+            </summary>
+            <param name="handler">Handler invoked when the event is received.</param>
+            <returns>Subscription handle. Dispose to unsubscribe.</returns>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Client.Events.BannouClientEvents">
             <summary>
             Container for service-grouped event subscriptions.
@@ -4698,6 +4711,26 @@
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing CreateMetabundleResponse on success.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.GetJobStatusAsync(BeyondImmersion.BannouService.Asset.GetJobStatusRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get async metabundle job status
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GetJobStatusResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.CancelJobAsync(BeyondImmersion.BannouService.Asset.CancelJobRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Cancel an async metabundle job
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing CancelJobResponse on success.</returns>
+        </member>
         <member name="M:BeyondImmersion.Bannou.Client.Proxies.AssetProxy.ResolveBundlesAsync(BeyondImmersion.BannouService.Asset.ResolveBundlesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
             <summary>
             Compute optimal bundles for requested assets
@@ -4892,6 +4925,15 @@
             <param name="channel">Message channel for ordering (default 0).</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>Task that completes when the event is sent.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.AuthProxy.ListProvidersAsync(System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List available authentication providers
+            </summary>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ProvidersResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.BehaviorProxy">
             <summary>
@@ -6527,6 +6569,97 @@
             <param name="timeout">Request timeout.</param>
             <param name="cancellationToken">Cancellation token.</param>
             <returns>ApiResponse containing ListTopicsResponse on success.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Client.Proxies.MusicProxy">
+            <summary>
+            Typed proxy for Music Theory Engine API API endpoints.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.#ctor(BeyondImmersion.Bannou.Client.IBannouClient)">
+            <summary>
+            Creates a new MusicProxy instance.
+            </summary>
+            <param name="client">The underlying Bannou client.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.GenerateCompositionAsync(BeyondImmersion.BannouService.Music.GenerateCompositionRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Generate composition from style and constraints
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GenerateCompositionResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.ValidateMidiJsonAsync(BeyondImmersion.BannouService.Music.ValidateMidiJsonRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Validate MIDI-JSON structure
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ValidateMidiJsonResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.GetStyleAsync(BeyondImmersion.BannouService.Music.GetStyleRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Get style definition
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing StyleDefinitionResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.ListStylesAsync(BeyondImmersion.BannouService.Music.ListStylesRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            List available styles
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing ListStylesResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.CreateStyleAsync(BeyondImmersion.BannouService.Music.CreateStyleRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Create new style definition
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing StyleDefinitionResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.GenerateProgressionAsync(BeyondImmersion.BannouService.Music.GenerateProgressionRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Generate chord progression
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GenerateProgressionResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.GenerateMelodyAsync(BeyondImmersion.BannouService.Music.GenerateMelodyRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Generate melody over harmony
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing GenerateMelodyResponse on success.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Client.Proxies.MusicProxy.ApplyVoiceLeadingAsync(BeyondImmersion.BannouService.Music.VoiceLeadRequest,System.UInt16,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>
+            Apply voice leading to chords
+            </summary>
+            <param name="request">The request payload.</param>
+            <param name="channel">Message channel for ordering (default 0).</param>
+            <param name="timeout">Request timeout.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>ApiResponse containing VoiceLeadResponse on success.</returns>
         </member>
         <member name="T:BeyondImmersion.Bannou.Client.Proxies.OrchestratorProxy">
             <summary>
@@ -9045,6 +9178,74 @@
             Human-readable error description
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent">
+            <summary>
+            Sent when async metabundle creation job completes (success or failure).
+            <br/>Clients that initiated metabundle creation with async processing receive
+            <br/>this event when the job finishes, allowing them to retrieve the result.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.EventName">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.JobId">
+            <summary>
+            Job ID from the original async creation request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.MetabundleId">
+            <summary>
+            ID of the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.Success">
+            <summary>
+            Whether creation completed successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.Status">
+            <summary>
+            Final job status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.DownloadUrl">
+            <summary>
+            Pre-signed download URL (on success)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.SizeBytes">
+            <summary>
+            Metabundle file size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.AssetCount">
+            <summary>
+            Total number of assets in the metabundle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ErrorCode">
+            <summary>
+            Error code on failure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleCreationCompleteEvent.ErrorMessage">
+            <summary>
+            Human-readable error description
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.AssetReadyEvent">
             <summary>
             Final notification that an asset is ready for use.
@@ -9165,6 +9366,22 @@
         <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.ValidationErrorCode">
             <summary>
             Error codes for bundle validation failures
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleJobStatus">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>- queued: Job accepted, waiting for processing resources
+            <br/>- processing: Job is actively being processed
+            <br/>- ready: Job completed successfully
+            <br/>- failed: Job failed (see errorCode/errorMessage)
+            <br/>- cancelled: Job was cancelled before completion
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Asset.ClientEvents.MetabundleErrorCode">
+            <summary>
+            Error codes for metabundle creation failures
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
@@ -11092,13 +11309,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionData">
-            <summary>
-            Connection state data returned for connection service requests.
-            <br/>Currently a placeholder for future connection metadata.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
             <summary>
             Response codes used in the binary protocol for success/error indication.
@@ -11202,75 +11412,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ServiceResponseMessage.Payload">
             <summary>
             Optional response payload
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.ConnectionConfiguration">
-            <summary>
-            Configuration options for the connect service.
-            <br/>These are server-side settings and not directly exposed via API.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ObfuscateNotFoundResponse">
-            <summary>
-            Return Unauthorized instead of NotFound for better security
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientRequestMaxSize">
-            <summary>
-            Maximum size for client requests in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientResponseMaxSize">
-            <summary>
-            Maximum size for client responses in bytes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.ClientReconnectionTime">
-            <summary>
-            Time in seconds to allow client reconnection
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.TokenPublicKey">
-            <summary>
-            Base64-encoded RSA public key for JWT validation
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent">
-            <summary>
-            Event published when a session's capabilities change (permissions, role changes, etc.).
-            <br/>Triggers real-time WebSocket updates to connected clients.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.SessionId">
-            <summary>
-            Session ID that had capability changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.AddedCapabilities">
-            <summary>
-            New capabilities added to the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.RemovedCapabilities">
-            <summary>
-            Capabilities removed from the session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.UpdatedServices">
-            <summary>
-            Services that had permission changes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.Version">
-            <summary>
-            New capability version number
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.SessionCapabilityUpdateEvent.ExpiresAt">
-            <summary>
-            When these capabilities expire and need refresh
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.AuthEvent">
@@ -14741,17 +14882,6 @@
             <br/>
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.AssetIdStyle">
-            <summary>
-            Asset ID validation style presets:
-            <br/>- any: No style enforcement (just max length and basic characters)
-            <br/>- dot_notation: Dot-separated identifiers (e.g., models.characters.hero)
-            <br/>- reverse_dns: Reverse DNS notation (e.g., com.beyondimmersion.arcadia.hero)
-            <br/>- path_style: File path style (e.g., Content/Models/Characters/Hero.sdmodel)
-            <br/>- custom: Use custom regex pattern from configuration
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.UploadRequest">
             <summary>
             Request to initiate an asset upload and receive a pre-signed URL
@@ -15404,51 +15534,6 @@
             Hash of source bundle at composition time (for integrity verification)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Asset.BundleAssetEntry">
-            <summary>
-            Asset entry within a bundle (supports platform-specific IDs)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.AssetId">
-            <summary>
-            Platform-specific asset identifier (e.g., Content/Models/Hero.sdmodel)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentHash">
-            <summary>
-            SHA256 hash of asset content
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Filename">
-            <summary>
-            Original filename
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ContentType">
-            <summary>
-            MIME content type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Size">
-            <summary>
-            Asset size in bytes (uncompressed)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.ExternalAssetId">
-            <summary>
-            External asset identifier for cross-system references.
-            <br/>Used to map platform-internal IDs to external catalogs or asset databases.
-            <br/>
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Asset.BundleAssetEntry.Tags">
-            <summary>
-            Tags associated with this asset within the bundle.
-            <br/>Used for smart bundling decisions (e.g., group all "furniture" assets together).
-            <br/>Clients should supply all applicable tags; hierarchical tag expansion is a future feature.
-            <br/>
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Asset.AssetConflict">
             <summary>
             Describes a conflict when the same asset ID has different content hashes
@@ -15545,7 +15630,10 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse">
             <summary>
-            Response from metabundle creation
+            Response from metabundle creation.
+            <br/>For synchronous creation (small jobs): status=ready with downloadUrl.
+            <br/>For async creation (large jobs): status=queued with jobId for polling.
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.MetabundleId">
@@ -15553,9 +15641,27 @@
             Metabundle identifier
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.JobId">
+            <summary>
+            Job ID for async processing. Only present when status is 'queued' or 'processing'.
+            <br/>Use /bundles/job/status to poll for completion, or wait for
+            <br/>MetabundleCreationCompleteEvent via WebSocket.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Status">
             <summary>
-            Creation status
+            Creation status.
+            <br/>- queued: Job accepted for async processing (poll with jobId)
+            <br/>- processing: Job is actively running
+            <br/>- ready: Metabundle created and available for download
+            <br/>- failed: Creation failed (see conflicts for details)
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only present when status is 'ready')
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.AssetCount">
@@ -15581,6 +15687,134 @@
         <member name="P:BeyondImmersion.BannouService.Asset.CreateMetabundleResponse.Conflicts">
             <summary>
             Present if creation failed due to asset conflicts
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusRequest">
+            <summary>
+            Request to get the status of an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.GetJobStatusResponse">
+            <summary>
+            Status of an async metabundle creation job.
+            <br/>When status is 'ready', the response includes the full metabundle details.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.MetabundleId">
+            <summary>
+            Metabundle identifier being created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Status">
+            <summary>
+            Current job status.
+            <br/>- queued: Waiting for processing resources
+            <br/>- processing: Actively being processed
+            <br/>- ready: Completed successfully
+            <br/>- failed: Creation failed
+            <br/>- cancelled: Job was cancelled
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.Progress">
+            <summary>
+            Progress percentage (0-100) when status is 'processing'
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.DownloadUrl">
+            <summary>
+            Pre-signed download URL (only when status is 'ready')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.AssetCount">
+            <summary>
+            Number of assets in metabundle (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.StandaloneAssetCount">
+            <summary>
+            Number of standalone assets included (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SizeBytes">
+            <summary>
+            Total size in bytes (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.SourceBundles">
+            <summary>
+            Provenance data (when ready)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorCode">
+            <summary>
+            Error code (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ErrorMessage">
+            <summary>
+            Human-readable error description (when status is 'failed')
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.CreatedAt">
+            <summary>
+            When the job was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.UpdatedAt">
+            <summary>
+            When the job was last updated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.GetJobStatusResponse.ProcessingTimeMs">
+            <summary>
+            Total processing time in milliseconds (when complete)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobRequest">
+            <summary>
+            Request to cancel an async metabundle creation job
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobRequest.JobId">
+            <summary>
+            Job ID from the createMetabundle response
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Asset.CancelJobResponse">
+            <summary>
+            Result of job cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.JobId">
+            <summary>
+            Job identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Cancelled">
+            <summary>
+            Whether the job was successfully cancelled
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Status">
+            <summary>
+            Current job status after cancellation attempt
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Asset.CancelJobResponse.Message">
+            <summary>
+            Additional context about the cancellation result
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Asset.ResolveBundlesRequest">
@@ -16402,21 +16636,6 @@
             WebSocket endpoint for Connect service
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.LoginResponse">
-            <summary>
-            Response from successful user login
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.AccessToken">
-            <summary>
-            JWT access token for authentication
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.LoginResponse.RefreshToken">
-            <summary>
-            Refresh token for obtaining new access tokens
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.AuthResponse">
             <summary>
             Successful authentication response containing tokens and session information
@@ -16649,44 +16868,39 @@
             New password to set for the account
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProvidersResponse">
             <summary>
-            List of available OAuth providers
+            List of available authentication providers
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.OAuthProvidersResponse.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProvidersResponse.Providers">
             <summary>
-            Available OAuth providers for authentication
+            Available authentication providers
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse">
+        <member name="T:BeyondImmersion.BannouService.Auth.ProviderInfo">
             <summary>
-            Response from routing preference update
+            Information about an available authentication provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.RoutingPreferenceResponse.PreferredInstance">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.Name">
             <summary>
-            The preferred Connect service instance ID
+            Internal identifier for the provider (matches Provider enum for OAuth)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Auth.Providers">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.DisplayName">
             <summary>
-            An OAuth provider available for user authentication, including its identifier, display name, and authentication URL
+            Human-readable name for the provider
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.Name">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthType">
             <summary>
-            Internal identifier for the OAuth provider
+            Authentication mechanism (oauth = browser redirect, ticket = game client token)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.DisplayName">
+        <member name="P:BeyondImmersion.BannouService.Auth.ProviderInfo.AuthUrl">
             <summary>
-            Human-readable name for the OAuth provider
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Auth.Providers.AuthUrl">
-            <summary>
-            URL to initiate authentication with this provider
+            URL to initiate OAuth authentication (null for ticket-based auth like Steam)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Behavior.GetCachedBehaviorRequest">
@@ -21213,36 +21427,6 @@
             Type of game session - determines join behavior
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.GameSession.PlayerReservation">
-            <summary>
-            A slot reservation for an expected player in a matchmade session
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.AccountId">
-            <summary>
-            Account ID of the player this slot is reserved for
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Token">
-            <summary>
-            One-time use token for claiming this reservation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ReservedAt">
-            <summary>
-            When this reservation was created
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.Claimed">
-            <summary>
-            Whether this reservation has been claimed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.GameSession.PlayerReservation.ClaimedAt">
-            <summary>
-            When this reservation was claimed (null if not yet claimed)
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.GameSession.ReservationInfo">
             <summary>
             Reservation token returned when creating a matchmade session
@@ -25306,6 +25490,951 @@
             Number of active consumers subscribed to this topic
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateCompositionRequest">
+            <summary>
+            Request to generate a complete musical composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.StyleId">
+            <summary>
+            ID of the style to use for generation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.DurationBars">
+            <summary>
+            Target duration in bars
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Key">
+            <summary>
+            Key signature (random if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Tempo">
+            <summary>
+            Tempo in BPM (uses style default if not specified)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Mood">
+            <summary>
+            Mood constraint for generation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.TuneType">
+            <summary>
+            Style-specific tune type (e.g., "reel", "jig" for Celtic)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Seed">
+            <summary>
+            Random seed for reproducible generation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionRequest.Narrative">
+            <summary>
+            Narrative/emotional arc options for storyteller-driven composition.
+            <br/>If omitted, narrative is inferred from mood. When provided, enables
+            <br/>fine-grained control over emotional journey and tension curves.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ValidateMidiJsonRequest">
+            <summary>
+            Request to validate MIDI-JSON structure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidateMidiJsonRequest.MidiJson">
+            <summary>
+            MIDI-JSON structure to validate
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidateMidiJsonRequest.StrictMode">
+            <summary>
+            Enable strict validation with additional checks
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GetStyleRequest">
+            <summary>
+            Request to get a style definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GetStyleRequest.StyleId">
+            <summary>
+            Style ID to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GetStyleRequest.StyleName">
+            <summary>
+            Style name to retrieve (alternative to ID)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ListStylesRequest">
+            <summary>
+            Request to list available styles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ListStylesRequest.Category">
+            <summary>
+            Filter by category (e.g., "folk", "classical", "jazz")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ListStylesRequest.Limit">
+            <summary>
+            Maximum number of styles to return
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ListStylesRequest.Offset">
+            <summary>
+            Pagination offset
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.CreateStyleRequest">
+            <summary>
+            Request to create a new style definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.Name">
+            <summary>
+            Unique style name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.Category">
+            <summary>
+            Style category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.Description">
+            <summary>
+            Human-readable style description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.ModeDistribution">
+            <summary>
+            Probability distribution over modes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.IntervalPreferences">
+            <summary>
+            Preferred interval patterns
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.FormTemplates">
+            <summary>
+            Available form structures
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.RhythmPatterns">
+            <summary>
+            Common rhythm patterns
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.TuneTypes">
+            <summary>
+            Style-specific tune types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.DefaultTempo">
+            <summary>
+            Default tempo for this style
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CreateStyleRequest.HarmonyStyle">
+            <summary>
+            Harmonic progression preferences
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateProgressionRequest">
+            <summary>
+            Request to generate a chord progression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.Key">
+            <summary>
+            Key for the progression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.Length">
+            <summary>
+            Number of chords in the progression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.StyleId">
+            <summary>
+            Style to use for harmonic preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.StartChord">
+            <summary>
+            Starting chord (roman numeral, e.g., "I")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.EndChord">
+            <summary>
+            Ending chord (roman numeral, e.g., "I")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.CadenceType">
+            <summary>
+            Cadence type for ending
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.AllowSecondaryDominants">
+            <summary>
+            Allow secondary dominant chords
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.AllowModalInterchange">
+            <summary>
+            Allow borrowed chords from parallel modes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionRequest.Seed">
+            <summary>
+            Random seed for reproducibility
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateMelodyRequest">
+            <summary>
+            Request to generate a melody over harmony
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.Harmony">
+            <summary>
+            Chord progression to generate melody over
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.StyleId">
+            <summary>
+            Style for melodic preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.Range">
+            <summary>
+            Pitch range for the melody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.Contour">
+            <summary>
+            Overall melodic contour
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.RhythmDensity">
+            <summary>
+            Note density (0=sparse, 1=dense)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.Syncopation">
+            <summary>
+            Amount of syncopation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyRequest.Seed">
+            <summary>
+            Random seed for reproducibility
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.VoiceLeadRequest">
+            <summary>
+            Request to apply voice leading to a chord sequence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadRequest.Chords">
+            <summary>
+            Chord symbols to voice
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadRequest.VoiceCount">
+            <summary>
+            Number of voices
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadRequest.Ranges">
+            <summary>
+            Pitch range per voice (defaults based on voice count)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadRequest.Rules">
+            <summary>
+            Voice leading rules to apply
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateCompositionResponse">
+            <summary>
+            Response containing the generated composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.CompositionId">
+            <summary>
+            Unique identifier for the composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.MidiJson">
+            <summary>
+            Generated MIDI-JSON output
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.Metadata">
+            <summary>
+            Metadata about the generation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.GenerationTimeMs">
+            <summary>
+            Time taken to generate in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.NarrativeUsed">
+            <summary>
+            ID of the narrative template used for composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.EmotionalJourney">
+            <summary>
+            Emotional state at each section boundary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateCompositionResponse.TensionCurve">
+            <summary>
+            Tension values at bar boundaries (0-1 scale)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ValidateMidiJsonResponse">
+            <summary>
+            Response containing validation results
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidateMidiJsonResponse.IsValid">
+            <summary>
+            Whether the MIDI-JSON is valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidateMidiJsonResponse.Errors">
+            <summary>
+            Validation errors if invalid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidateMidiJsonResponse.Warnings">
+            <summary>
+            Non-fatal warnings
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.StyleDefinitionResponse">
+            <summary>
+            Response containing a style definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.StyleId">
+            <summary>
+            Unique style identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.Name">
+            <summary>
+            Style name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.Category">
+            <summary>
+            Style category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.Description">
+            <summary>
+            Human-readable description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.ModeDistribution">
+            <summary>
+            Mode probability distribution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.IntervalPreferences">
+            <summary>
+            Interval preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.FormTemplates">
+            <summary>
+            Available forms
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.TuneTypes">
+            <summary>
+            Style-specific tune types
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.DefaultTempo">
+            <summary>
+            Default tempo
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleDefinitionResponse.HarmonyStyle">
+            <summary>
+            Harmony preferences
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ListStylesResponse">
+            <summary>
+            Response containing a list of styles
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ListStylesResponse.Styles">
+            <summary>
+            Style summaries
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ListStylesResponse.Total">
+            <summary>
+            Total number of styles matching filter
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateProgressionResponse">
+            <summary>
+            Response containing a generated chord progression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionResponse.Chords">
+            <summary>
+            Generated chord events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateProgressionResponse.Analysis">
+            <summary>
+            Analysis of the progression
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.GenerateMelodyResponse">
+            <summary>
+            Response containing a generated melody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyResponse.Notes">
+            <summary>
+            Generated note events
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.GenerateMelodyResponse.Analysis">
+            <summary>
+            Analysis of the melody
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.VoiceLeadResponse">
+            <summary>
+            Response containing voiced chords
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadResponse.Voicings">
+            <summary>
+            Voiced chord realizations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoiceLeadResponse.Violations">
+            <summary>
+            Voice leading rule violations (warnings)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.NarrativeOptions">
+            <summary>
+            Options for narrative-driven composition using the Storyteller engine
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TemplateId">
+            <summary>
+            Specific narrative template ID (e.g., 'journey_and_return', 'tension_and_release', 'simple_arc').
+            <br/>If not specified, template is inferred from mood or defaults to 'simple_arc'.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.InitialEmotion">
+            <summary>
+            Starting emotional state for the composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TargetEmotion">
+            <summary>
+            Target emotional state for the ending
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NarrativeOptions.TensionProfile">
+            <summary>
+            Preferred tension curve shape throughout the composition
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.EmotionalStateInput">
+            <summary>
+            6-dimensional emotional state input (all values 0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Tension">
+            <summary>
+            Tension level (0=resolved, 1=maximum tension)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Brightness">
+            <summary>
+            Brightness level (0=dark, 1=bright)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Energy">
+            <summary>
+            Energy level (0=calm, 1=energetic)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Warmth">
+            <summary>
+            Warmth level (0=distant, 1=intimate)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Stability">
+            <summary>
+            Stability level (0=unstable, 1=grounded)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateInput.Valence">
+            <summary>
+            Valence level (0=negative, 1=positive)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot">
+            <summary>
+            Snapshot of emotional state at a specific point in the composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Bar">
+            <summary>
+            Bar number where this snapshot was taken
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.PhaseName">
+            <summary>
+            Name of the narrative phase at this point
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Tension">
+            <summary>
+            Tension level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Brightness">
+            <summary>
+            Brightness level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Energy">
+            <summary>
+            Energy level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Warmth">
+            <summary>
+            Warmth level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Stability">
+            <summary>
+            Stability level (0-1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.EmotionalStateSnapshot.Valence">
+            <summary>
+            Valence level (0-1)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.NoteEvent">
+            <summary>
+            A musical note event with timing and pitch
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NoteEvent.Pitch">
+            <summary>
+            Note pitch
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NoteEvent.StartTick">
+            <summary>
+            Start position in ticks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NoteEvent.DurationTicks">
+            <summary>
+            Duration in ticks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.NoteEvent.Velocity">
+            <summary>
+            Note velocity
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ChordEvent">
+            <summary>
+            A chord with timing information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordEvent.Chord">
+            <summary>
+            Chord symbol
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordEvent.StartTick">
+            <summary>
+            Start position in ticks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordEvent.DurationTicks">
+            <summary>
+            Duration in ticks
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordEvent.RomanNumeral">
+            <summary>
+            Roman numeral analysis (e.g., "IV", "V7")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ChordSymbol">
+            <summary>
+            A chord symbol with root and quality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordSymbol.Root">
+            <summary>
+            Chord root
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordSymbol.Quality">
+            <summary>
+            Chord quality
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordSymbol.Bass">
+            <summary>
+            Bass note (for inversions/slash chords)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ChordSymbol.Extensions">
+            <summary>
+            Chord extensions (e.g., "9", "11", "13")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.VoicedChord">
+            <summary>
+            A chord with specific voice pitches
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoicedChord.Symbol">
+            <summary>
+            Original chord symbol
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.VoicedChord.Pitches">
+            <summary>
+            Pitches from lowest to highest voice
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.KeySignature">
+            <summary>
+            A key signature with tonic and mode
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.KeySignature.Tonic">
+            <summary>
+            Tonic pitch class
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.KeySignature.Mode">
+            <summary>
+            Mode/scale type
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.IntervalPreferences">
+            <summary>
+            Melodic interval preference weights
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.IntervalPreferences.StepWeight">
+            <summary>
+            Weight for stepwise motion (M2, m2)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.IntervalPreferences.ThirdWeight">
+            <summary>
+            Weight for thirds (M3, m3)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.IntervalPreferences.LeapWeight">
+            <summary>
+            Weight for larger leaps (P4, P5)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.IntervalPreferences.LargeLeapWeight">
+            <summary>
+            Weight for leaps larger than P5
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.FormTemplate">
+            <summary>
+            A musical form structure template
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.FormTemplate.Name">
+            <summary>
+            Form name (e.g., "AABB", "verse-chorus")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.FormTemplate.Sections">
+            <summary>
+            Section sequence (e.g., ["A", "A", "B", "B"])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.FormTemplate.BarsPerSection">
+            <summary>
+            Default bars per section
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.RhythmPattern">
+            <summary>
+            A rhythmic pattern with note durations
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.RhythmPattern.Name">
+            <summary>
+            Pattern name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.RhythmPattern.Pattern">
+            <summary>
+            Relative durations (1.0 = beat)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.RhythmPattern.Weight">
+            <summary>
+            Selection weight
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.TuneType">
+            <summary>
+            A style-specific tune type definition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TuneType.Name">
+            <summary>
+            Tune type name (e.g., "reel", "jig")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TuneType.Meter">
+            <summary>
+            Time signature for this tune type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TuneType.TempoRange">
+            <summary>
+            Typical tempo range
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TuneType.DefaultForm">
+            <summary>
+            Default form for this tune type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TuneType.RhythmPatterns">
+            <summary>
+            Rhythm pattern names to use
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.TempoRange">
+            <summary>
+            A tempo range with min and max BPM
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TempoRange.Min">
+            <summary>
+            Minimum tempo
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.TempoRange.Max">
+            <summary>
+            Maximum tempo
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.HarmonyStyle">
+            <summary>
+            Harmonic progression style preferences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.HarmonyStyle.PrimaryCadence">
+            <summary>
+            Most common cadence type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.HarmonyStyle.DominantPrepProbability">
+            <summary>
+            Probability of pre-dominant before dominant
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.HarmonyStyle.SecondaryDominantProbability">
+            <summary>
+            Probability of secondary dominants
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.HarmonyStyle.ModalInterchangeProbability">
+            <summary>
+            Probability of borrowed chords
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.HarmonyStyle.CommonProgressions">
+            <summary>
+            Common chord progressions as roman numeral strings
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.StyleSummary">
+            <summary>
+            Brief style summary for listing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleSummary.StyleId">
+            <summary>
+            Style identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleSummary.Name">
+            <summary>
+            Style name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleSummary.Category">
+            <summary>
+            Style category
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.StyleSummary.Description">
+            <summary>
+            Brief description
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ProgressionAnalysis">
+            <summary>
+            Analysis of a chord progression
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ProgressionAnalysis.RomanNumerals">
+            <summary>
+            Roman numeral analysis
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ProgressionAnalysis.Cadences">
+            <summary>
+            Detected cadences
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ProgressionAnalysis.FunctionalAnalysis">
+            <summary>
+            Functional analysis per chord
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.CadenceInfo">
+            <summary>
+            Information about a cadence
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CadenceInfo.Type">
+            <summary>
+            Cadence type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CadenceInfo.Position">
+            <summary>
+            Chord index where cadence ends
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CadenceInfo.Strength">
+            <summary>
+            Cadence strength
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.MelodyAnalysis">
+            <summary>
+            Analysis of a melody
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.MelodyAnalysis.Range">
+            <summary>
+            Pitch range used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.MelodyAnalysis.IntervalDistribution">
+            <summary>
+            Distribution of interval sizes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.MelodyAnalysis.Contour">
+            <summary>
+            Detected contour shape
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.MelodyAnalysis.NoteCount">
+            <summary>
+            Total number of notes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.MelodyAnalysis.AverageNoteDuration">
+            <summary>
+            Average note duration in ticks
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.CompositionMetadata">
+            <summary>
+            Metadata about a generated composition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.StyleId">
+            <summary>
+            Style used
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.Key">
+            <summary>
+            Key signature
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.Tempo">
+            <summary>
+            Tempo in BPM
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.Bars">
+            <summary>
+            Number of bars
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.TuneType">
+            <summary>
+            Tune type if applicable
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.CompositionMetadata.Seed">
+            <summary>
+            Random seed used
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Music.ValidationError">
+            <summary>
+            A validation error
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidationError.Type">
+            <summary>
+            Error type
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidationError.Message">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Music.ValidationError.Path">
+            <summary>
+            Path to problematic element
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.InfrastructureHealthRequest">
             <summary>
             Request to check infrastructure health (empty body allowed)
@@ -25638,96 +26767,6 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus.Metadata">
             <summary>
             Additional service metadata (null if not provided)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest">
-            <summary>
-            Request to execute a specific type of test
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.TestType">
-            <summary>
-            Type of tests to execute
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Plugin">
-            <summary>
-            Specific plugin to test (for http tests)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Configuration">
-            <summary>
-            Additional test configuration parameters
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionRequest.Timeout">
-            <summary>
-            Test timeout in seconds (default 300)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult">
-            <summary>
-            Result of executing a test suite including overall status and individual test outcomes
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Success">
-            <summary>
-            Overall test success status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.TestType">
-            <summary>
-            Type of tests executed
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Duration">
-            <summary>
-            Total execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Results">
-            <summary>
-            Individual test results
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Summary">
-            <summary>
-            Human-readable test summary
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestExecutionResult.Error">
-            <summary>
-            Error message if test execution failed
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Orchestrator.TestResult">
-            <summary>
-            Outcome of a single test case including pass/fail status and optional error details
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Name">
-            <summary>
-            Test name
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Passed">
-            <summary>
-            Test pass/fail status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Duration">
-            <summary>
-            Test execution time
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.Message">
-            <summary>
-            Test result message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Orchestrator.TestResult.StackTrace">
-            <summary>
-            Stack trace if test failed
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartRequest">
@@ -33474,26 +34513,10 @@
             Name of the state store (MySQL or Redis with search enabled)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Filter">
+        <member name="P:BeyondImmersion.BannouService.State.QueryStateRequest.Conditions">
             <summary>
-            Filter expression. Format depends on backend:
-            <br/>
-            <br/>**MySQL JSON queries** - structured conditions:
-            <br/>```json
-            <br/>{
-            <br/>  "conditions": [
-            <br/>    { "path": "$.name", "operator": "equals", "value": "John" },
-            <br/>    { "path": "$.age", "operator": "gte", "value": 18 }
-            <br/>  ]
-            <br/>}
-            <br/>```
-            <br/>
-            <br/>**MySQL simple equality** - flat object format:
-            <br/>```json
-            <br/>{ "$.name": "John", "$.status": "active" }
-            <br/>```
-            <br/>
-            <br/>**Redis search** - use indexName and query properties instead
+            Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
+            <br/>For Redis search, use indexName and query properties instead.
             <br/>
             </summary>
         </member>
@@ -33884,26 +34907,6 @@
         <member name="P:BeyondImmersion.BannouService.Subscription.SubscriptionInfo.UpdatedAt">
             <summary>
             When the subscription was last updated
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse">
-            <summary>
-            Response containing current active subscriptions and authorization strings
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.AccountId">
-            <summary>
-            ID of the account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Authorizations">
-            <summary>
-            List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Subscription.CurrentSubscriptionsResponse.Subscriptions">
-            <summary>
-            Full subscription details (optional, for debugging)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse">

@@ -34,6 +34,7 @@ public partial class BannouClient
     private MatchmakingProxy? _matchmaking;
     private MeshProxy? _mesh;
     private MessagingProxy? _messaging;
+    private MusicProxy? _music;
     private OrchestratorProxy? _orchestrator;
     private PermissionProxy? _permission;
     private RealmProxy? _realm;
@@ -167,6 +168,12 @@ public partial class BannouClient
     /// </summary>
     public MessagingProxy Messaging =>
         _messaging ??= new MessagingProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Music Theory Engine API operations.
+    /// </summary>
+    public MusicProxy Music =>
+        _music ??= new MusicProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Orchestrator API operations.

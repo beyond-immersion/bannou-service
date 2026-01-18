@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Manual implementation for endpoints that require custom logic.
 /// This class extends the generated ConnectControllerBase.
 /// </summary>
-public class ConnectController : ConnectControllerBase
+public partial class ConnectController : ConnectControllerBase
 {
     private readonly IConnectService _connectService;
     private readonly ILogger<ConnectController> _logger;

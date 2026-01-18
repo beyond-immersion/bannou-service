@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.MusicTheory</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.MusicTheory</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.MusicTheory</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Pure computation music theory library for deterministic MIDI generation. Provides formal music theory primitives including pitch classes, intervals, scales, chords, harmony, melody generation, and voice leading - all without AI/neural networks.</Description>
+    <PackageTags>bannou;music;theory;midi;composition;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+</Project>

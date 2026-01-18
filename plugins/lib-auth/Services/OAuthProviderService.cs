@@ -74,7 +74,7 @@ public class OAuthProviderService : IOAuthProviderService
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
-            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            using var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "client_id", discordClientId },
                 { "client_secret", discordClientSecret },
@@ -160,7 +160,7 @@ public class OAuthProviderService : IOAuthProviderService
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
-            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            using var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "client_id", googleClientId },
                 { "client_secret", googleClientSecret },
@@ -246,7 +246,7 @@ public class OAuthProviderService : IOAuthProviderService
         {
             using var httpClient = _httpClientFactory.CreateClient();
 
-            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            using var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "client_id", twitchClientId },
                 { "client_secret", twitchClientSecret },

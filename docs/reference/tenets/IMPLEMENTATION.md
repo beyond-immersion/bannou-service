@@ -587,4 +587,100 @@ This maintains proper async semantics without pragma suppressions.
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23. See [TENETS.md](../TENETS.md) for the complete index.*
+## Tenet 24: Using Statement Pattern (MANDATORY)
+
+**Rule**: All disposable objects with method-scoped lifetimes MUST use `using` statements instead of manual `.Dispose()` calls.
+
+### Why This Matters
+
+Manual `.Dispose()` calls are error-prone:
+1. **Exception paths miss disposal** - If an exception is thrown before the `.Dispose()` call, the resource leaks
+2. **Maintenance burden** - Developers must remember to add dispose logic to finally blocks
+3. **Code complexity** - try/finally patterns for disposal are verbose and obscure intent
+4. **Analyzer blindness** - CA2000 cannot verify dispose is called on all paths with manual patterns
+
+### Correct Pattern
+
+```csharp
+// CORRECT: using statement - guarantees disposal on all paths
+using var connection = await _connectionFactory.CreateAsync(ct);
+await connection.SendAsync(data, ct);
+// connection.Dispose() called automatically when scope exits
+
+// CORRECT: using block for explicit scope control
+using (var reader = new StreamReader(stream))
+{
+    var content = await reader.ReadToEndAsync(ct);
+    return Parse(content);
+} // reader.Dispose() called here
+```
+
+### Incorrect Patterns
+
+```csharp
+// WRONG: Manual dispose in try/finally
+var connection = await _connectionFactory.CreateAsync(ct);
+try
+{
+    await connection.SendAsync(data, ct);
+}
+finally
+{
+    connection.Dispose(); // Use 'using' instead!
+}
+
+// WRONG: Manual dispose without exception safety
+var reader = new StreamReader(stream);
+var content = await reader.ReadToEndAsync(ct);
+reader.Dispose(); // If ReadToEndAsync throws, reader leaks!
+
+// WRONG: Conditional dispose that may miss paths
+HttpResponseMessage? response = null;
+try
+{
+    response = await _client.GetAsync(url, ct);
+    // ... processing
+}
+finally
+{
+    response?.Dispose(); // Should be: using var response = await ...
+}
+```
+
+### When Manual Dispose is Acceptable
+
+Manual `.Dispose()` is only acceptable when the disposal scope extends **beyond the creating method**:
+
+1. **Class-owned resources** - Objects stored in instance fields that are disposed in the class's `Dispose()` method
+2. **Conditional ownership transfer** - When a resource is sometimes returned to the caller (who takes ownership)
+3. **Async disposal patterns** - When `await using` is not possible due to framework constraints
+
+```csharp
+// ACCEPTABLE: Class-owned resource, disposed in class's Dispose()
+private readonly Timer _heartbeatTimer;
+
+public void Dispose()
+{
+    _heartbeatTimer.Dispose(); // Class owns lifetime, not a method
+}
+
+// ACCEPTABLE: Conditional ownership transfer
+public async Task<Stream?> TryGetStreamAsync()
+{
+    var stream = await _factory.CreateAsync();
+    if (!await ValidateAsync(stream))
+    {
+        stream.Dispose(); // We own it, validation failed
+        return null;
+    }
+    return stream; // Caller takes ownership
+}
+```
+
+### EditorConfig Enforcement
+
+This tenet is enforced via `CA2000` (Dispose objects before losing scope) at warning level and `IDE0063` (Use simple 'using' statement) at suggestion level in `.editorconfig`.
+
+---
+
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24. See [TENETS.md](../TENETS.md) for the complete index.*

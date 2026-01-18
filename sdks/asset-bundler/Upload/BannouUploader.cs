@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BeyondImmersion.Bannou.AssetBundler.Helpers;
+using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.Bannou.Client;
 using BeyondImmersion.BannouService.Asset;
 using Microsoft.Extensions.Logging;
@@ -123,12 +124,32 @@ public sealed class BannouUploader : IAssetUploader, IAsyncDisposable
             bundleId,
             fileInfo.Length);
 
+        // Read manifest from bundle to include in upload request
+        BundleManifestPreview? manifestPreview = null;
+        try
+        {
+            await using var bundleStream = fileInfo.OpenRead();
+            using var reader = new BannouBundleReader(bundleStream);
+            var manifest = reader.Manifest;
+            manifestPreview = new BundleManifestPreview
+            {
+                BundleId = manifest.BundleId,
+                Version = manifest.Version,
+                AssetCount = manifest.Assets.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Failed to read manifest from bundle, proceeding without preview");
+        }
+
         // Request upload URL via WebSocket
         var uploadRequest = new BundleUploadRequest
         {
             Filename = fileInfo.Name,
             Size = fileInfo.Length,
-            Owner = _options.Owner
+            Owner = _options.Owner,
+            ManifestPreview = manifestPreview
         };
 
         var uploadApiResponse = await _client.InvokeAsync<BundleUploadRequest, UploadResponse>(

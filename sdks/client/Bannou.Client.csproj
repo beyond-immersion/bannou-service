@@ -86,6 +86,8 @@
     <ProjectReference Include="../transport/BeyondImmersion.Bannou.Transport.csproj" />
     <!-- Asset Bundle Infrastructure (Reader only - clients read bundles, build tools create them) -->
     <ProjectReference Include="../bundle-format/BeyondImmersion.Bannou.Bundle.Format.csproj" />
+    <!-- Music Theory types used by Music service models -->
+    <ProjectReference Include="../music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
   </ItemGroup>
 
   <!-- SDK Source Files (WebSocket client, connection manager, caching, meta types, response codes) -->

@@ -468,7 +468,7 @@ public class Messages : IClassFixture<CollectionFixture>
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
         httpRequest.AddPropertyHeaders(requestModel);
         Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
     }
@@ -485,7 +485,7 @@ public class Messages : IClassFixture<CollectionFixture>
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
         httpRequest.AddPropertyHeaders(requestModel);
         Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
     }
@@ -502,7 +502,7 @@ public class Messages : IClassFixture<CollectionFixture>
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
         httpRequest.AddPropertyHeaders(requestModel);
         Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
     }
@@ -519,7 +519,7 @@ public class Messages : IClassFixture<CollectionFixture>
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
         httpRequest.AddPropertyHeaders(requestModel);
         Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
     }
@@ -536,7 +536,7 @@ public class Messages : IClassFixture<CollectionFixture>
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
         httpRequest.AddPropertyHeaders(requestModel);
         Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
     }
@@ -545,7 +545,7 @@ public class Messages : IClassFixture<CollectionFixture>
     public void Messages_GetHeadersFromHttpResponse()
     {
         var testID = Guid.NewGuid().ToString();
-        var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        using var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
         httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
         var responseModel = new Response_HeaderProperties();
         responseModel.SetHeadersToProperties(httpResponse.Headers);
@@ -557,7 +557,7 @@ public class Messages : IClassFixture<CollectionFixture>
     public void Messages_GetHeadersFromHttpResponse_Additional()
     {
         var testID = Guid.NewGuid().ToString();
-        var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        using var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
         httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
         var responseModel = new Response_HeaderProperties_Additional();
         responseModel.SetHeadersToProperties(httpResponse.Headers);
@@ -569,7 +569,7 @@ public class Messages : IClassFixture<CollectionFixture>
     public void Messages_SetPropertiesToHeaders()
     {
         var testID = Guid.NewGuid().ToString();
-        var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        using var httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
         httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
         var responseModel = new Response_HeaderProperties_Additional();
         responseModel.SetHeadersToProperties(httpResponse.Headers);

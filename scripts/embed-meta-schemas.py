@@ -2,19 +2,20 @@
 """
 Embed JSON Schema strings into OpenAPI schemas for meta endpoint generation.
 
-This script reads API schemas and adds x-*-schema-json extension fields
-that are used by Controller.liquid template to generate companion endpoints.
+This script reads API schemas and creates copies with x-*-json extension fields
+that are used by Controller.Meta.liquid template to generate companion endpoints.
 
 Architecture:
 - Input: schemas/{service}-api.yaml
-- Output: schemas/{service}-api.yaml (in-place modification)
+- Output: schemas/Generated/{service}-api-meta.yaml (new file with extensions)
+- The original schema files are NOT modified
 - Extension fields added to each operation:
   - x-request-schema-json: Bundled JSON Schema for request body
   - x-response-schema-json: Bundled JSON Schema for 200/201 response
   - x-endpoint-info-json: Endpoint metadata (summary, description, tags, deprecated)
 
 IDEMPOTENT: This script can be run multiple times safely. Each run regenerates
-and overwrites the extension fields to reflect the current schema state.
+the output files from the current schema state.
 
 Usage:
     python3 scripts/embed-meta-schemas.py [--service SERVICE_NAME]
@@ -180,14 +181,23 @@ def get_response_schema(operation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return dict(schema) if isinstance(schema, dict) else None
 
 
-def process_schema(schema_path: Path) -> bool:
+def deep_copy_yaml(obj: Any) -> Any:
+    """Create a deep copy of a YAML object structure."""
+    if isinstance(obj, dict):
+        return {k: deep_copy_yaml(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [deep_copy_yaml(item) for item in obj]
+    else:
+        return obj
+
+
+def process_schema(schema_path: Path, output_dir: Path) -> bool:
     """
-    Process a single API schema file, adding x-*-json extension fields.
+    Process a single API schema file, creating a copy with x-*-json extension fields.
 
-    IDEMPOTENT: Always overwrites extension fields to ensure they reflect
-    the current schema state. Safe to run multiple times.
+    The original file is NOT modified. Output goes to schemas/Generated/{service}-api-meta.yaml.
 
-    Returns True if any changes were made.
+    Returns True if output file was created.
     """
     with open(schema_path) as f:
         schema = yaml.load(f)
@@ -195,10 +205,12 @@ def process_schema(schema_path: Path) -> bool:
     if schema is None or 'paths' not in schema:
         return False
 
+    # Deep copy to avoid modifying original
+    output_schema = deep_copy_yaml(schema)
     root_schema = dict(schema)
     modified = False
 
-    for path, methods in schema['paths'].items():
+    for path, methods in output_schema['paths'].items():
         if not isinstance(methods, dict):
             continue
 
@@ -221,8 +233,7 @@ def process_schema(schema_path: Path) -> bool:
             # Create info JSON
             info_json = create_info_json(operation)
 
-            # IDEMPOTENT: Always overwrite extension fields to ensure they reflect
-            # the current schema state. Safe to run multiple times.
+            # Add extension fields to the copy
             operation['x-request-schema-json'] = request_json
             operation['x-response-schema-json'] = response_json
             operation['x-endpoint-info-json'] = info_json
@@ -230,15 +241,24 @@ def process_schema(schema_path: Path) -> bool:
             modified = True
 
     if modified:
-        with open(schema_path, 'w') as f:
-            yaml.dump(schema, f)
+        # Ensure output directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    return modified
+        # Output to Generated directory with -meta suffix
+        output_name = schema_path.stem + '-meta.yaml'
+        output_path = output_dir / output_name
+
+        with open(output_path, 'w') as f:
+            yaml.dump(output_schema, f)
+
+        return True
+
+    return False
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Embed meta schemas into API schemas for companion endpoint generation'
+        description='Generate meta schemas from API schemas for companion endpoint generation'
     )
     parser.add_argument(
         '--service',
@@ -250,12 +270,16 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schema_dir = repo_root / 'schemas'
+    output_dir = schema_dir / 'Generated'
 
     if not schema_dir.exists():
         print(f"ERROR: Schema directory not found: {schema_dir}")
         sys.exit(1)
 
-    print("Embedding meta schemas into API schemas...")
+    print("Generating meta schemas from API schemas...")
+    print(f"  Input:  schemas/{{service}}-api.yaml")
+    print(f"  Output: schemas/Generated/{{service}}-api-meta.yaml")
+    print()
 
     if args.service:
         schema_files = [schema_dir / f'{args.service}-api.yaml']
@@ -268,11 +292,13 @@ def main():
             print(f"  WARNING: {schema_path.name} not found")
             continue
 
-        if process_schema(schema_path):
-            print(f"  Embedded: {schema_path.name}")
+        if process_schema(schema_path, output_dir):
+            output_name = schema_path.stem + '-meta.yaml'
+            print(f"  Generated: {output_name}")
             processed += 1
 
-    print(f"\nProcessed {processed} schema file(s)")
+    print()
+    print(f"Generated {processed} meta schema file(s) to schemas/Generated/")
 
 
 if __name__ == '__main__':

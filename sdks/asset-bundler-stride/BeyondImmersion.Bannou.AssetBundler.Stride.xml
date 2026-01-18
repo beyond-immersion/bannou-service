@@ -30,6 +30,16 @@
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.ProcessAsync(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.AssetBundler.Extraction.ExtractedAsset},System.IO.DirectoryInfo,BeyondImmersion.Bannou.AssetBundler.Abstractions.ProcessorOptions,System.Threading.CancellationToken)">
             <inheritdoc />
         </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.GetBlobPath(System.IO.DirectoryInfo,System.String)">
+            <summary>
+            Gets the path to a compiled asset blob given its content hash.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.MakeSafeFileName(System.String)">
+            <summary>
+            Converts asset ID to safe filename format (slashes become underscores).
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideBatchCompiler.Dispose">
             <inheritdoc />
         </member>
@@ -223,15 +233,25 @@
             <summary>ASTC - Adaptive scalable texture compression.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser">
-            <summary>
-            Parses Stride's asset index to locate compiled assets.
-            </summary>
+             <summary>
+             Parses Stride's asset index files to map asset URLs to content hashes.
+             </summary>
+             <remarks>
+             Index file format is simple text:
+             {AssetURL} {32-char-hex-hash}
+             {AssetURL} {32-char-hex-hash}
+             ...
+            
+             Example:
+             Materials/Vegetation/TestMinimal a65a9e3f9c73c9f8e68aaf9283639541
+             Textures/rock_dif b05ee7fbcacbff609a69277b35856b5b
+             </remarks>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.#ctor(System.IO.DirectoryInfo,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser})">
             <summary>
             Creates a new index parser.
             </summary>
-            <param name="outputDirectory">Stride build output directory.</param>
+            <param name="outputDirectory">Stride project directory (containing obj/).</param>
             <param name="logger">Optional logger.</param>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndex">
@@ -240,21 +260,25 @@
             </summary>
             <returns>Dictionary of asset URL to index entry.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndexBinary(System.Byte[])">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.FindBuildOutput">
             <summary>
-            Parses the Stride binary index format.
+            Finds the build output directory.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndexJson(System.Byte[])">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.FindIndexFile(System.IO.DirectoryInfo)">
             <summary>
-            Parses JSON-based index (used in some Stride versions).
+            Finds the index file in a database directory.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.FindDatabaseFiles">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ParseIndexFileAsync(System.String)">
             <summary>
-            Finds all database files containing compiled assets.
+            Parses an index file and returns a mapping of asset URLs to content hashes.
             </summary>
-            <returns>List of database file paths.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.GetBlobPath(System.String)">
+            <summary>
+            Gets the path to a compiled asset blob given its content hash.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.ReadAssetData(BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry)">
             <summary>
@@ -262,6 +286,16 @@
             </summary>
             <param name="entry">Index entry for the asset.</param>
             <returns>Asset data bytes.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.GetIndex">
+            <summary>
+            Gets the raw index dictionary for dependency collection.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexParser.GetDbDirectory">
+            <summary>
+            Gets the database directory.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Stride.Compilation.StrideIndexEntry">
             <summary>

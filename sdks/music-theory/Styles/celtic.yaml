@@ -1,0 +1,106 @@
+# Celtic/Irish Traditional Music Style Definition
+# Derived from analysis of 53,375 traditional tunes
+
+id: celtic
+name: Celtic/Irish Traditional
+category: folk
+description: >
+  Traditional Celtic and Irish folk music characterized by modal melodies,
+  stepwise motion, ornamental embellishments, and dance-derived rhythmic patterns.
+  Common in reels, jigs, hornpipes, and polkas.
+
+modeDistribution:
+  major: 0.64      # Most common - bright, dance tunes
+  minor: 0.16      # Airs and laments
+  dorian: 0.14     # Characteristic Celtic modal flavor
+  mixolydian: 0.07 # Flatted 7th, common in traditional tunes
+  phrygian: 0.0    # Not typical of Celtic music
+  lydian: 0.0      # Not typical of Celtic music
+
+intervalPreferences:
+  stepWeight: 0.48     # Strong preference for stepwise motion
+  thirdWeight: 0.25    # Thirds common for arpeggio patterns
+  leapWeight: 0.18     # Moderate leaps (fifths, sixths)
+  largeLeapWeight: 0.09 # Occasional octave jumps
+
+formTemplates:
+  - AABB           # Most common - two 8-bar strains repeated
+  - AABBCC         # Three-strain tunes
+  - AABA           # Song form variant
+  - ABAB           # Less common but present
+
+tuneTypes:
+  - name: reel
+    meter: 4/4
+    minTempo: 104
+    maxTempo: 120
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1e+a 2e+a 3e+a 4e+a"  # Standard reel subdivision
+      - "1+ 2+ 3+ 4+"          # Driving quarter + eighth pattern
+
+  - name: jig
+    meter: 6/8
+    minTempo: 112
+    maxTempo: 138
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1+a 2+a"              # Standard jig pattern
+      - "1 2+a"                # Dotted rhythm variant
+
+  - name: slip-jig
+    meter: 9/8
+    minTempo: 108
+    maxTempo: 132
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1+a 2+a 3+a"          # Triple compound time
+
+  - name: hornpipe
+    meter: 4/4
+    minTempo: 80
+    maxTempo: 96
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1.+ 2.+ 3.+ 4.+"      # Dotted rhythm characteristic
+
+  - name: polka
+    meter: 2/4
+    minTempo: 104
+    maxTempo: 120
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1+ 2+"                # Simple duple time
+
+  - name: waltz
+    meter: 3/4
+    minTempo: 100
+    maxTempo: 120
+    defaultForm: AABB
+    rhythmPatterns:
+      - "1 2 3"                # Simple triple time
+
+  - name: air
+    meter: 4/4
+    minTempo: 60
+    maxTempo: 80
+    defaultForm: AABA
+    rhythmPatterns:
+      - "1 2 3 4"              # Slow, expressive
+      - "free"                 # Rubato sections
+
+defaultTempo: 112
+defaultMeter: 4/4
+
+harmonyStyle:
+  primaryCadence: authentic
+  dominantPrepProbability: 0.4  # Less dominant prep than classical
+  secondaryDominantProbability: 0.1  # Rare in traditional music
+  modalInterchangeProbability: 0.25  # Modal borrowing common
+  commonProgressions:
+    - "I-V-I"         # Simple authentic cadence
+    - "I-bVII-I"      # Mixolydian cadence
+    - "i-VII-i"       # Natural minor cadence
+    - "I-IV-I"        # Plagal motion
+    - "i-iv-i"        # Minor plagal
+    - "I-ii-V-I"      # Rare but present

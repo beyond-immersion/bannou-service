@@ -249,7 +249,8 @@ public class CleanupService : BackgroundService
             slot.TotalSizeBytes -= bytesFreed;
             slot.UpdatedAt = DateTimeOffset.UtcNow;
 
-            var slotStore = _serviceProvider.CreateScope().ServiceProvider
+            using var scope = _serviceProvider.CreateScope();
+            var slotStore = scope.ServiceProvider
                 .GetRequiredService<IStateStoreFactory>()
                 .GetStore<SaveSlotMetadata>(_configuration.SlotMetadataStoreName);
             await slotStore.SaveAsync(slot.GetStateKey(), slot, cancellationToken: cancellationToken);

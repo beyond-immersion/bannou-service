@@ -45,36 +45,57 @@ jobs:
 
           echo "sdk_version=${SDK_VERSION}" >> $GITHUB_OUTPUT
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
-          echo "Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
+          echo "📦 Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
           echo "  SDK_VERSION (last stable): ${SDK_VERSION}"
           echo "  Preview version: ${PREVIEW_VERSION}"
 
-          # Build SDK dependencies first (internal packages not in main solution)
-          echo "Building SDK dependencies..."
-          dotnet build sdks/bannou-sdks.sln --configuration Release
+          # Define all packable SDK projects (order matters - dependencies first)
+          SDK_PROJECTS=(
+            # Foundation packages (no Bannou dependencies)
+            "sdks/core"
+            "sdks/protocol"
+            # Packages with foundation dependencies
+            "sdks/transport"
+            "sdks/bundle-format"
+            # Public SDK packages
+            "sdks/server"
+            "sdks/client"
+            "sdks/client-voice"
+            "sdks/scene-composer"
+            "sdks/scene-composer-stride"
+            "sdks/scene-composer-godot"
+            "sdks/asset-bundler"
+            "sdks/asset-bundler-stride"
+            "sdks/asset-bundler-godot"
+            "sdks/asset-loader"
+            "sdks/asset-loader-client"
+            "sdks/asset-loader-server"
+            "sdks/asset-loader-stride"
+            "sdks/asset-loader-godot"
+            # Music generation SDKs
+            "sdks/music-theory"
+            "sdks/music-storyteller"
+          )
 
-          # Pack foundation packages first (dependencies)
-          for PROJECT in "sdks/core" "sdks/protocol" "sdks/transport" "sdks/bundle-format"; do
+          for PROJECT in "${SDK_PROJECTS[@]}"; do
             PROJECT_NAME=$(basename "$PROJECT")
-            echo "Packing ${PROJECT_NAME}..."
+            echo "📦 Building ${PROJECT_NAME}..."
+            dotnet restore "$PROJECT"
+            dotnet build "$PROJECT" --configuration Release --no-restore
             dotnet pack "$PROJECT" --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
           done
 
-          # Pack Server SDK
-          echo "Packing Server SDK..."
-          dotnet pack sdks/server --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
-
-          # Pack Client SDK
-          echo "Packing Client SDK..."
-          dotnet pack sdks/client --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
+          echo "✅ Packages built:"
+          ls -la ./nuget-packages/
 
       - name: Publish Previews to NuGet
         run: |
-          echo "Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
-          dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-          echo "Preview packages published:"
-          echo "  - BeyondImmersion.Bannou.Server (Server SDK - with ServiceClients)"
-          echo "  - BeyondImmersion.Bannou.Client (Client SDK - WebSocket only)"
+          echo "🚀 Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
+          dotnet nuget push ./nuget-packages/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          echo "✅ Preview packages published!"
           echo "Pre-release packages are not installed by default - users must explicitly opt-in"
 
       - name: Get Commit Info

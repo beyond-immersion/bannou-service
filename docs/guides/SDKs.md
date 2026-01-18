@@ -15,6 +15,8 @@ This document provides a comprehensive overview of all Bannou SDKs, their purpos
 | `BeyondImmersion.Bannou.SceneComposer` | Engine-agnostic scene editing | Scene editor tools |
 | `BeyondImmersion.Bannou.SceneComposer.Stride` | Stride engine integration | Stride-based editors |
 | `BeyondImmersion.Bannou.SceneComposer.Godot` | Godot 4.x engine integration | Godot-based editors |
+| `BeyondImmersion.Bannou.MusicTheory` | Core music theory primitives | Music generation, theory calculations |
+| `BeyondImmersion.Bannou.MusicStoryteller` | Narrative-driven composition | Emotional music generation |
 
 ## Decision Guide
 
@@ -38,6 +40,15 @@ Are you building a scene editor?
 │        └─ Using Godot? → Add BeyondImmersion.Bannou.SceneComposer.Godot
 │
 └─ No → You don't need the SceneComposer packages
+
+Are you building music-aware features?
+├─ Yes, need emotional storytelling and narrative arcs
+│  └─ Use BeyondImmersion.Bannou.MusicStoryteller (includes MusicTheory)
+│
+├─ Yes, but just need theory primitives (pitches, chords, scales)
+│  └─ Use BeyondImmersion.Bannou.MusicTheory only
+│
+└─ No → You don't need the Music packages
 ```
 
 ---
@@ -693,6 +704,142 @@ public partial class SceneEditor : Node3D
 
 ---
 
+## MusicTheory SDK
+
+**Package**: `BeyondImmersion.Bannou.MusicTheory`
+
+Core music theory primitives for pitch, harmony, melody, and rhythm operations.
+
+### Features
+
+- **Pitch primitives**: `PitchClass` (0-11), `Pitch` (with octave), `Interval`
+- **Scales and modes**: Major, minor, modal scales with degree operations
+- **Chords and voicings**: Chord construction, voice leading algorithms
+- **Rhythm patterns**: Duration, meter, tempo, rhythmic patterns
+- **Style definitions**: Genre-specific configurations (Celtic, Baroque, Jazz)
+- **MIDI-JSON output**: Portable JSON format for generated music
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.MusicTheory
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.MusicTheory.Pitch;
+using BeyondImmersion.Bannou.MusicTheory.Collections;
+using BeyondImmersion.Bannou.MusicTheory.Harmony;
+using BeyondImmersion.Bannou.MusicTheory.Output;
+
+// Create a scale
+var gMajor = new Scale(PitchClass.G, ModeType.Major);
+
+// Build a chord progression
+var chords = new[] { "I", "IV", "V", "I" }
+    .Select(roman => Chord.Parse(roman, gMajor))
+    .ToList();
+
+// Voice the chords with smooth voice leading
+var voicings = VoiceLeading.VoiceProgression(chords);
+
+// Render to MIDI-JSON
+var midiJson = MidiJsonRenderer.RenderChords(voicings, ticksPerBeat: 480);
+Console.WriteLine(midiJson.ToJson(indented: true));
+```
+
+### When to Use
+
+Use MusicTheory SDK when you need:
+- Low-level music theory calculations
+- Custom melody or harmony generation
+- Voice leading algorithms
+- MIDI-JSON output for playback
+
+For high-level emotional composition with narrative arcs, use MusicStoryteller instead.
+
+---
+
+## MusicStoryteller SDK
+
+**Package**: `BeyondImmersion.Bannou.MusicStoryteller`
+
+Narrative-driven music composition using emotional states and GOAP planning. Built on music cognition research from Lerdahl, Huron, and Juslin.
+
+### Features
+
+- **Emotional state model**: 6-dimensional space (tension, brightness, energy, warmth, stability, valence)
+- **Narrative templates**: Pre-built emotional journeys (simple arc, tension-release, journey-return)
+- **GOAP planning**: Goal-oriented action planning for musical decisions
+- **Musical actions**: Library of tension, resolution, thematic, and textural actions
+- **Intent generation**: Bridges storytelling decisions to theory generation
+- **TPS integration**: Lerdahl's Tonal Pitch Space for harmonic calculations
+
+### Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.MusicStoryteller
+```
+
+### Quick Start
+
+```csharp
+using BeyondImmersion.Bannou.MusicStoryteller;
+using BeyondImmersion.Bannou.MusicStoryteller.State;
+
+// Create the storyteller
+var storyteller = new Storyteller();
+
+// Compose a 32-bar piece using the "tension and release" narrative
+var result = storyteller.ComposeWithTemplate("tension_and_release", totalBars: 32);
+
+// Access the composition
+foreach (var section in result.Sections)
+{
+    Console.WriteLine($"Phase: {section.PhaseName}");
+    Console.WriteLine($"  Bars: {section.StartBar}-{section.EndBar}");
+    Console.WriteLine($"  Intents: {section.Intents.Count}");
+
+    foreach (var intent in section.Intents)
+    {
+        Console.WriteLine($"    Tension: {intent.EmotionalTarget.Tension:F2}");
+        Console.WriteLine($"    Character: {intent.HarmonicCharacter}");
+    }
+}
+```
+
+### Emotional State Presets
+
+```csharp
+// Built-in emotional presets
+EmotionalState.Presets.Neutral      // Default starting point
+EmotionalState.Presets.Tense        // High tension, low stability
+EmotionalState.Presets.Peaceful     // Low tension, high stability
+EmotionalState.Presets.Joyful       // High energy, bright, positive
+EmotionalState.Presets.Melancholic  // Low energy, dark, negative
+EmotionalState.Presets.Climax       // Maximum tension
+EmotionalState.Presets.Resolution   // Post-climax resolution
+```
+
+### Narrative Templates
+
+| Template | Description | Phases |
+|----------|-------------|--------|
+| `simple_arc` | Basic dramatic structure | Intro → Build → Climax → Resolution |
+| `tension_and_release` | Repeated tension cycles | Build → Peak → Release (repeated) |
+| `journey_and_return` | Hero's journey pattern | Home → Departure → Adventure → Return |
+
+### When to Use
+
+Use MusicStoryteller SDK when you need:
+- Emotionally-aware procedural music
+- Narrative-driven composition
+- Dynamic music that responds to game state
+- Music that follows dramatic arcs
+
+---
+
 ## Common Patterns
 
 ### WebSocket Connection Modes
@@ -753,4 +900,7 @@ If you're **developing or extending** the Bannou SDKs themselves (not just consu
 - [SceneComposer README](../../sdks/scene-composer/README.md) - Core SceneComposer docs
 - [Stride SceneComposer README](../../sdks/scene-composer-stride/README.md) - Stride integration
 - [Godot SceneComposer README](../../sdks/scene-composer-godot/README.md) - Godot integration
+- [MusicTheory SDK README](../../sdks/music-theory/README.md) - Music theory primitives
+- [MusicStoryteller SDK README](../../sdks/music-storyteller/README.md) - Narrative composition
+- [Music System Guide](MUSIC_SYSTEM.md) - Comprehensive music system documentation
 - [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Binary protocol details

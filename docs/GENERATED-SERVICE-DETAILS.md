@@ -30,6 +30,7 @@ Des... |
 | [Matchmaking](#matchmaking) | 1.0.0 | 11 | Matchmaking service for competitive and casual game matching... |
 | [Mesh](#mesh) | 1.0.0 | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Messaging](#messaging) | 1.0.0 | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
+| [Music](#music) | 1.0.0 | 8 | Pure computation music generation using formal music theory ... |
 | [Orchestrator](#orchestrator) | 3.0.0 | 22 | Central intelligence for Bannou environment management and s... |
 | [Permission](#permission) | 3.0.0 | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Realm](#realm) | 1.0.0 | 10 | Realm management service for Arcadia game world. |
@@ -788,6 +789,42 @@ Native RabbitMQ pub/sub messaging with native serialization.
 
 ---
 
+## Music {#music}
+
+**Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml`
+
+Pure computation music generation using formal music theory rules.
+
+### Generation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/music/generate` | Generate composition from style and constraints | user |
+
+### Styles
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/music/style/create` | Create new style definition | admin |
+| `POST` | `/music/style/get` | Get style definition | user |
+| `POST` | `/music/style/list` | List available styles | user |
+
+### Theory
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/music/theory/melody` | Generate melody over harmony | user |
+| `POST` | `/music/theory/progression` | Generate chord progression | user |
+| `POST` | `/music/theory/voice-lead` | Apply voice leading to chords | user |
+
+### Validation
+
+| Method | Path | Summary | Access |
+|--------|------|---------|--------|
+| `POST` | `/music/validate` | Validate MIDI-JSON structure | user |
+
+---
+
 ## Orchestrator {#orchestrator}
 
 **Version**: 3.0.0 | **Schema**: `schemas/orchestrator-api.yaml`
@@ -1251,8 +1288,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 33
-- **Total endpoints**: 398
+- **Total services**: 34
+- **Total endpoints**: 406
 
 ---
 

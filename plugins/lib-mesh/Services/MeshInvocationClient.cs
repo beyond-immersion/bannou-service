@@ -63,9 +63,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         where TRequest : class
         where TResponse : class
     {
-
-        var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
-
+        using var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
         using var response = await InvokeMethodWithResponseAsync(httpRequest, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -87,9 +85,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         CancellationToken cancellationToken = default)
         where TRequest : class
     {
-
-        var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
-
+        using var httpRequest = CreateInvokeMethodRequest(HttpMethod.Post, appId, methodName, request);
         using var response = await InvokeMethodWithResponseAsync(httpRequest, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -106,9 +102,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         CancellationToken cancellationToken = default)
         where TResponse : class
     {
-
-        var httpRequest = CreateInvokeMethodRequest(HttpMethod.Get, appId, methodName);
-
+        using var httpRequest = CreateInvokeMethodRequest(HttpMethod.Get, appId, methodName);
         using var response = await InvokeMethodWithResponseAsync(httpRequest, cancellationToken);
 
         if (!response.IsSuccessStatusCode)

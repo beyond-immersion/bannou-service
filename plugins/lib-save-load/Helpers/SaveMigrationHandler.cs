@@ -357,7 +357,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             }
 
             using var httpClient = _httpClientFactory.CreateClient();
-            var uploadContent = new ByteArrayContent(compressedData);
+            using var uploadContent = new ByteArrayContent(compressedData);
             uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
             var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
 

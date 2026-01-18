@@ -19,16 +19,23 @@ namespace BeyondImmersion.BannouService.Messaging.Tests;
 /// Unit tests for InMemoryMessageTap - tests in-memory tap functionality without infrastructure.
 /// These are true unit tests that don't require RabbitMQ.
 /// </summary>
-public class InMemoryMessageTapTests
+public class InMemoryMessageTapTests : IDisposable
 {
+    private readonly ILoggerFactory _loggerFactory;
     private readonly InMemoryMessageBus _messageBus;
     private readonly InMemoryMessageTap _messageTap;
 
     public InMemoryMessageTapTests()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-        _messageBus = new InMemoryMessageBus(loggerFactory.CreateLogger<InMemoryMessageBus>());
-        _messageTap = new InMemoryMessageTap(_messageBus, loggerFactory.CreateLogger<InMemoryMessageTap>());
+        _loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
+        _messageBus = new InMemoryMessageBus(_loggerFactory.CreateLogger<InMemoryMessageBus>());
+        _messageTap = new InMemoryMessageTap(_messageBus, _loggerFactory.CreateLogger<InMemoryMessageTap>());
+    }
+
+    public void Dispose()
+    {
+        _loggerFactory.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #region Constructor Tests

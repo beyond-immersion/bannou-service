@@ -28,7 +28,11 @@ README.md
 # Exceptions:
 #   - sdks/core/ contains shared types (BaseServiceEvent, etc.) needed by bannou-service
 #   - sdks/bundle-format/ needed by lib-asset for bundle reading/writing
+#   - sdks/music-theory/ needed by lib-music for music generation
+#   - sdks/music-storyteller/ needed by lib-music for narrative-driven composition
 sdks/
 !sdks/core/
 !sdks/bundle-format/
+!sdks/music-theory/
+!sdks/music-storyteller/
 examples/

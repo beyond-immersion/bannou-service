@@ -43,19 +43,23 @@ public sealed class StrideBatchProjectGenerator
         var projectName = $"AssetBatch_{Guid.NewGuid():N}";
         var projectDir = outputDirectory.CreateSubdirectory(projectName);
 
-        // Create asset directories
+        // Create directory structure
         var assetsDir = projectDir.CreateSubdirectory("Assets");
+        var resourcesDir = projectDir.CreateSubdirectory("Resources");
 
-        // Generate .sdpkg file
+        // Copy source files to Resources folder first
+        await CopyAssetsAsync(assets, resourcesDir, ct);
+
+        // Generate .sdpkg file (creates asset definition files in Assets folder)
         var sdpkgPath = Path.Combine(projectDir.FullName, $"{projectName}.sdpkg");
-        await GenerateSdpkgAsync(sdpkgPath, projectName, assets, assetsDir, ct);
+        await GenerateSdpkgAsync(sdpkgPath, projectName, assets, assetsDir, resourcesDir, ct);
 
         // Generate .csproj file
         var csprojPath = Path.Combine(projectDir.FullName, $"{projectName}.csproj");
         await GenerateCsprojAsync(csprojPath, projectName, ct);
 
-        // Copy assets to project
-        await CopyAssetsAsync(assets, assetsDir, ct);
+        // Generate Program.cs (required for WinExe output type)
+        await GenerateProgramCsAsync(projectDir.FullName, ct);
 
         _logger?.LogInformation(
             "Generated Stride project with {AssetCount} assets at {ProjectPath}",
@@ -64,117 +68,161 @@ public sealed class StrideBatchProjectGenerator
         return csprojPath;
     }
 
-    private async Task GenerateSdpkgAsync(
+    private async Task<Dictionary<string, Guid>> GenerateSdpkgAsync(
         string path,
         string projectName,
         IReadOnlyList<ExtractedAsset> assets,
         DirectoryInfo assetsDir,
+        DirectoryInfo resourcesDir,
         CancellationToken ct)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("!Package");
-        sb.AppendLine($"Id: {Guid.NewGuid()}");
-        sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
+        // Track asset GUIDs for RootAssets section
+        var assetGuids = new Dictionary<string, Guid>();
 
-        // Meta section
-        sb.AppendLine("Meta:");
-        sb.AppendLine($"    Name: {projectName}");
-        sb.AppendLine("    Version: 1.0.0");
-
-        // Profiles section
-        sb.AppendLine("Profiles:");
-        sb.AppendLine("    - Name: Default");
-        sb.AppendLine("      AssetFolders:");
-        sb.AppendLine("          - Path: Assets");
-
-        // Add asset references
+        // Generate asset definition files and track GUIDs
         foreach (var asset in assets)
         {
-            var relativePath = GetRelativeAssetPath(asset);
-            var guid = Guid.NewGuid();
+            var assetGuid = Guid.NewGuid();
+            var safeAssetId = MakeSafeFileName(asset.AssetId);
+            assetGuids[safeAssetId] = assetGuid;
 
-            // Generate .sdasset file for each asset
-            var assetDefPath = Path.Combine(assetsDir.FullName, $"{Path.GetFileNameWithoutExtension(relativePath)}.sd{GetStrideAssetType(asset)}");
-            await GenerateAssetDefinitionAsync(assetDefPath, asset, guid, ct);
+            // Generate asset definition file in Assets folder
+            var assetDefPath = Path.Combine(assetsDir.FullName, $"{safeAssetId}.sd{GetStrideAssetType(asset)}");
+            var relativeResourcePath = $"../Resources/{asset.Filename}";
+            await GenerateAssetDefinitionAsync(assetDefPath, asset, assetGuid, relativeResourcePath, ct);
         }
 
-        await File.WriteAllTextAsync(path, sb.ToString(), ct);
+        // Build RootAssets section
+        var rootAssetsBuilder = new StringBuilder();
+        foreach (var (assetId, guid) in assetGuids)
+        {
+            rootAssetsBuilder.AppendLine($"    - {guid}:{assetId}");
+        }
+        var rootAssets = rootAssetsBuilder.Length > 0
+            ? rootAssetsBuilder.ToString().TrimEnd()
+            : "[]";
+
+        // Generate sdpkg content using correct format
+        var sdpkgContent = $@"!Package
+SerializedVersion: {{Assets: 3.1.0.0}}
+Meta:
+    Name: {projectName}
+    Version: 1.0.0
+    Authors: []
+    Owners: []
+    Dependencies: null
+AssetFolders:
+    -   Path: !dir Assets
+ResourceFolders:
+    - !dir Resources
+OutputGroupDirectories: {{}}
+ExplicitFolders: []
+Bundles: []
+TemplateFolders: []
+RootAssets:
+{rootAssets}";
+
+        await File.WriteAllTextAsync(path, sdpkgContent, ct);
+        return assetGuids;
     }
 
     private async Task GenerateAssetDefinitionAsync(
         string path,
         ExtractedAsset asset,
         Guid guid,
+        string resourcePath,
         CancellationToken ct)
     {
-        var sb = new StringBuilder();
+        string content;
 
         switch (asset.AssetType)
         {
             case AssetType.Model:
-                sb.AppendLine("!Model");
-                sb.AppendLine($"Id: {guid}");
-                sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
-                sb.AppendLine($"Source: !file {asset.Filename}");
-                sb.AppendLine("Materials: {{}}");
+                content = $@"!Model
+Id: {guid}
+SerializedVersion: {{Stride: 2.0.0.0}}
+Tags: []
+Source: {resourcePath}
+PivotPosition: {{X: 0.0, Y: 0.0, Z: 0.0}}
+Materials: {{}}
+Skeleton: null";
                 break;
 
             case AssetType.Texture:
-                sb.AppendLine("!Texture");
-                sb.AppendLine($"Id: {guid}");
-                sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
-                sb.AppendLine($"Source: !file {asset.Filename}");
-                sb.AppendLine($"Width: {_options.MaxTextureSize}");
-                sb.AppendLine($"Height: {_options.MaxTextureSize}");
-                sb.AppendLine($"GenerateMipmaps: {_options.GenerateMipmaps.ToString().ToLowerInvariant()}");
-                sb.AppendLine($"Format: {GetTextureFormat(asset)}");
+                content = GenerateTextureYaml(guid, resourcePath);
                 break;
 
             case AssetType.Audio:
-                sb.AppendLine("!Sound");
-                sb.AppendLine($"Id: {guid}");
-                sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
-                sb.AppendLine($"Source: !file {asset.Filename}");
+                content = $@"!Sound
+Id: {guid}
+SerializedVersion: {{Stride: 2.0.0.0}}
+Tags: []
+Source: {resourcePath}";
                 break;
 
             case AssetType.Animation:
-                sb.AppendLine("!Animation");
-                sb.AppendLine($"Id: {guid}");
-                sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
-                sb.AppendLine($"Source: !file {asset.Filename}");
+                content = $@"!Animation
+Id: {guid}
+SerializedVersion: {{Stride: 2.0.0.0}}
+Tags: []
+Source: {resourcePath}";
                 break;
 
             default:
-                sb.AppendLine("!RawAsset");
-                sb.AppendLine($"Id: {guid}");
-                sb.AppendLine("SerializedVersion: {{Stride: 4.2.0.0}}");
-                sb.AppendLine($"Source: !file {asset.Filename}");
+                content = $@"!RawAsset
+Id: {guid}
+SerializedVersion: {{Stride: 2.0.0.0}}
+Tags: []
+Source: {resourcePath}";
                 break;
         }
 
-        await File.WriteAllTextAsync(path, sb.ToString(), ct);
+        await File.WriteAllTextAsync(path, content, ct);
+    }
+
+    private string GenerateTextureYaml(Guid guid, string resourcePath)
+    {
+        // Use ColorTextureType for general textures
+        return $@"!Texture
+Id: {guid}
+SerializedVersion: {{Stride: 2.0.0.0}}
+Tags: []
+Source: {resourcePath}
+Type: !ColorTextureType
+    ColorKeyColor: {{R: 255, G: 0, B: 255, A: 255}}";
     }
 
     private async Task GenerateCsprojAsync(string path, string projectName, CancellationToken ct)
     {
-        var strideVersion = _options.StrideVersion ?? "4.2.0.2188";
+        var strideVersion = _options.StrideVersion ?? "4.3.0.2507";
 
         var csproj = $"""
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net8.0</TargetFramework>
-                <OutputType>Library</OutputType>
+                <TargetFramework>net10.0-windows</TargetFramework>
+                <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+                <OutputType>WinExe</OutputType>
                 <RootNamespace>{projectName}</RootNamespace>
+                <OutputPath>Bin\Windows\Debug\</OutputPath>
+                <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+                <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
               </PropertyGroup>
 
               <ItemGroup>
-                <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="{strideVersion}" />
-                <PackageReference Include="Stride.Assets" Version="{strideVersion}" />
+                <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="{strideVersion}" IncludeAssets="build;buildTransitive" />
+                <PackageReference Include="Stride.Engine" Version="{strideVersion}" />
               </ItemGroup>
             </Project>
             """;
 
         await File.WriteAllTextAsync(path, csproj, ct);
+    }
+
+    private static async Task GenerateProgramCsAsync(string projectDir, CancellationToken ct)
+    {
+        var programPath = Path.Combine(projectDir, "Program.cs");
+        const string programContent = "class Program { static void Main() { } }";
+        await File.WriteAllTextAsync(programPath, programContent, ct);
     }
 
     private async Task CopyAssetsAsync(
@@ -202,16 +250,11 @@ public sealed class StrideBatchProjectGenerator
         }
     }
 
-    private static string GetRelativeAssetPath(ExtractedAsset asset)
-    {
-        return asset.Filename.Replace('\\', '/');
-    }
-
     private static string GetStrideAssetType(ExtractedAsset asset)
     {
         return asset.AssetType switch
         {
-            AssetType.Model => "model",
+            AssetType.Model => "m3d",
             AssetType.Texture => "tex",
             AssetType.Audio => "sound",
             AssetType.Animation => "anim",
@@ -219,16 +262,18 @@ public sealed class StrideBatchProjectGenerator
         };
     }
 
-    private string GetTextureFormat(ExtractedAsset asset)
+    private static string MakeSafeFileName(string name)
     {
-        return _options.TextureCompression switch
+        // Convert path separators to underscores to match Stride's index format
+        var sb = new StringBuilder(name);
+        foreach (var c in Path.GetInvalidFileNameChars())
         {
-            StrideTextureCompression.BC1 => "BC1_UNorm",
-            StrideTextureCompression.BC3 => "BC3_UNorm",
-            StrideTextureCompression.BC7 => "BC7_UNorm",
-            StrideTextureCompression.ETC2 => "ETC2_RGBA",
-            StrideTextureCompression.ASTC => "ASTC_6x6_UNorm",
-            _ => "R8G8B8A8_UNorm"
-        };
+            sb.Replace(c, '_');
+        }
+        sb.Replace(Path.DirectorySeparatorChar, '_');
+        sb.Replace(Path.AltDirectorySeparatorChar, '_');
+        sb.Replace('/', '_');
+        sb.Replace('\\', '_');
+        return sb.ToString();
     }
 }

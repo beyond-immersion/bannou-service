@@ -41,6 +41,32 @@ mkdir -p "$OUTPUT_DIR"
 require_nswag
 ensure_dotnet_root
 
+# Base NSwag configuration
+EXCLUDED_TYPES="ApiException,ApiException\<TResult\>"
+ADDITIONAL_NAMESPACES="BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
+
+# Extract SDK type mappings from schema (x-sdk-type extensions)
+# This allows schemas to reference types from external SDKs without generating duplicates
+SCRIPT_DIR="$(dirname "$0")"
+SDK_TYPES_OUTPUT=$(python3 "$SCRIPT_DIR/extract-sdk-types.py" "$SCHEMA_FILE" --format=shell 2>/dev/null || echo "")
+
+if [ -n "$SDK_TYPES_OUTPUT" ]; then
+    # Parse the shell output (EXCLUDED_TYPES=... and SDK_NAMESPACES=...)
+    SDK_EXCLUDED=$(echo "$SDK_TYPES_OUTPUT" | grep "^EXCLUDED_TYPES=" | cut -d'=' -f2)
+    SDK_NAMESPACES=$(echo "$SDK_TYPES_OUTPUT" | grep "^SDK_NAMESPACES=" | cut -d'=' -f2)
+
+    if [ -n "$SDK_EXCLUDED" ]; then
+        echo -e "${BLUE}ℹ️  Found x-sdk-type annotations - excluding SDK types from generation${NC}"
+        echo -e "  📦 SDK types: $SDK_EXCLUDED"
+        EXCLUDED_TYPES="$EXCLUDED_TYPES,$SDK_EXCLUDED"
+    fi
+
+    if [ -n "$SDK_NAMESPACES" ]; then
+        echo -e "  📁 SDK namespaces: $SDK_NAMESPACES"
+        ADDITIONAL_NAMESPACES="$ADDITIONAL_NAMESPACES,$SDK_NAMESPACES"
+    fi
+fi
+
 # Generate models using NSwag (DTOs only)
 echo -e "${YELLOW}🔄 Running NSwag model generation...${NC}"
 
@@ -51,12 +77,12 @@ echo -e "${YELLOW}🔄 Running NSwag model generation...${NC}"
     "/generateClientClasses:false" \
     "/generateClientInterfaces:false" \
     "/generateDtoTypes:true" \
-    "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+    "/excludedTypeNames:$EXCLUDED_TYPES" \
     "/jsonLibrary:SystemTextJson" \
     "/generateNullableReferenceTypes:true" \
     "/newLineBehavior:LF" \
     "/templateDirectory:../templates/nswag" \
-    "/additionalNamespaceUsages:BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
+    "/additionalNamespaceUsages:$ADDITIONAL_NAMESPACES"
 
 # Check if generation succeeded
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
