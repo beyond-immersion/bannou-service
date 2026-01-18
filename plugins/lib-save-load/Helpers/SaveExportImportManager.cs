@@ -175,7 +175,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             // Upload to presigned URL
             using var httpClient = _httpClientFactory.CreateClient();
-            var uploadContent = new ByteArrayContent(archiveData);
+            using var uploadContent = new ByteArrayContent(archiveData);
             uploadContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
             var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl, uploadContent, cancellationToken);
 
