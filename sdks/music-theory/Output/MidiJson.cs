@@ -1,10 +1,10 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Harmony;
 using BeyondImmersion.Bannou.MusicTheory.Melody;
 using BeyondImmersion.Bannou.MusicTheory.Pitch;
 using BeyondImmersion.Bannou.MusicTheory.Time;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.Bannou.MusicTheory.Output;
 

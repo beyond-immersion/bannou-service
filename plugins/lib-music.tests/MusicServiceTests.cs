@@ -1,35 +1,34 @@
 using BeyondImmersion.BannouService.Music;
 using BeyondImmersion.BannouService.TestUtilities;
-
-// SDK types - fully qualified aliases to avoid collision with generated API models
-using SdkPitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
-using SdkPitch = BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch;
-using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
-using SdkInterval = BeyondImmersion.Bannou.MusicTheory.Pitch.Interval;
-using SdkScale = BeyondImmersion.Bannou.MusicTheory.Collections.Scale;
+using SdkBuiltInStyles = BeyondImmersion.Bannou.MusicTheory.Style.BuiltInStyles;
 using SdkChord = BeyondImmersion.Bannou.MusicTheory.Collections.Chord;
 using SdkChordQuality = BeyondImmersion.Bannou.MusicTheory.Collections.ChordQuality;
-using SdkModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
-using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
-using SdkMeter = BeyondImmersion.Bannou.MusicTheory.Time.Meter;
-using SdkProgressionGenerator = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionGenerator;
-using SdkProgressionChord = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord;
-using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
-using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
-using SdkVoiceLeadingViolationType = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType;
+using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
+using SdkInterval = BeyondImmersion.Bannou.MusicTheory.Pitch.Interval;
 using SdkMelodyGenerator = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyGenerator;
 using SdkMelodyNote = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote;
 using SdkMelodyOptions = BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions;
-using SdkContourShape = BeyondImmersion.Bannou.MusicTheory.Melody.ContourShape;
-using SdkMidiJson = BeyondImmersion.Bannou.MusicTheory.Output.MidiJson;
-using SdkMidiTrack = BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack;
+using SdkMeter = BeyondImmersion.Bannou.MusicTheory.Time.Meter;
 using SdkMidiEvent = BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent;
 using SdkMidiEventType = BeyondImmersion.Bannou.MusicTheory.Output.MidiEventType;
+using SdkMidiJson = BeyondImmersion.Bannou.MusicTheory.Output.MidiJson;
 using SdkMidiJsonRenderer = BeyondImmersion.Bannou.MusicTheory.Output.MidiJsonRenderer;
-using SdkStyleDefinition = BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition;
-using SdkBuiltInStyles = BeyondImmersion.Bannou.MusicTheory.Style.BuiltInStyles;
+using SdkMidiTrack = BeyondImmersion.Bannou.MusicTheory.Output.MidiTrack;
 using SdkModeDistribution = BeyondImmersion.Bannou.MusicTheory.Style.ModeDistribution;
+using SdkModeType = BeyondImmersion.Bannou.MusicTheory.Collections.ModeType;
+using SdkPitch = BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch;
+// SDK types - fully qualified aliases to avoid collision with generated API models
+using SdkPitchClass = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass;
+using SdkPitchRange = BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange;
+using SdkProgressionChord = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord;
+using SdkProgressionGenerator = BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionGenerator;
+using SdkScale = BeyondImmersion.Bannou.MusicTheory.Collections.Scale;
+using SdkStyleDefinition = BeyondImmersion.Bannou.MusicTheory.Style.StyleDefinition;
 using SdkStyleLoader = BeyondImmersion.Bannou.MusicTheory.Style.StyleLoader;
+using SdkVoiceLeader = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeader;
+using SdkVoiceLeadingRules = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules;
+using SdkVoiceLeadingViolationType = BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType;
+using SdkVoicing = BeyondImmersion.Bannou.MusicTheory.Collections.Voicing;
 
 namespace BeyondImmersion.BannouService.Music.Tests;
 

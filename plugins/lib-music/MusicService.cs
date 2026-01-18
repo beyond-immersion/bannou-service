@@ -1,6 +1,3 @@
-using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Harmony;
 using BeyondImmersion.Bannou.MusicTheory.Melody;
@@ -8,6 +5,9 @@ using BeyondImmersion.Bannou.MusicTheory.Output;
 using BeyondImmersion.Bannou.MusicTheory.Pitch;
 using BeyondImmersion.Bannou.MusicTheory.Style;
 using BeyondImmersion.Bannou.MusicTheory.Time;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
