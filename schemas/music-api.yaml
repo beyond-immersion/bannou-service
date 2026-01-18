@@ -1305,16 +1305,22 @@ paths:
         MIDI note number (computed if not provided)\"\n                }\n            }\n        },\n        \"VoiceLeadingViolation\"\
         : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation\",\n         \
         \   \"description\": \"A voice leading rule violation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"rule\",\n                \"position\",\n                \"\
-        severity\"\n            ],\n            \"properties\": {\n                \"rule\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Rule that was violated\"\n                },\n             \
-        \   \"position\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Chord position
-        of violation\"\n                },\n                \"voices\": {\n                    \"type\": \"array\",\n    \
-        \                \"items\": {\n                        \"type\": \"integer\"\n                    },\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Voice indices involved\"\n                },\n\
-        \                \"severity\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n   \
-        \                     \"warning\",\n                        \"error\"\n                    ],\n                  \
-        \  \"description\": \"Violation severity\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"type\",\n                \"position\",\n                \"\
+        voices\",\n                \"isError\",\n                \"message\"\n            ],\n            \"properties\":
+        {\n                \"type\": {\n                    \"$ref\": \"#/$defs/VoiceLeadingViolationType\",\n           \
+        \         \"description\": \"Type of violation\"\n                },\n                \"position\": {\n          \
+        \          \"type\": \"integer\",\n                    \"description\": \"Position in the progression (0-based)\"\n\
+        \                },\n                \"voices\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"integer\"\n                    },\n                    \"description\"\
+        : \"Voice indices involved (0 = bass)\"\n                },\n                \"isError\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Severity (true = error, false = warning)\"\n        \
+        \        },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable description\"\n                }\n            }\n        },\n        \"VoiceLeadingViolationType\"\
+        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType\",\n     \
+        \       \"description\": \"Type of voice leading rule violation\",\n            \"type\": \"string\",\n          \
+        \  \"enum\": [\n                \"ParallelFifths\",\n                \"ParallelOctaves\",\n                \"VoiceCrossing\"\
+        ,\n                \"VoiceOverlap\",\n                \"LargeLeap\",\n                \"UnresolvedLeap\",\n      \
+        \          \"DoubledLeadingTone\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Apply voice leading to chords\",\n    \"description\": \"Applies voice
         leading rules to a chord sequence, ensuring smooth\\npart-writing according to traditional or style-specific rules.\\\
         n\",\n    \"tags\": [\n        \"Theory\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ApplyVoiceLeading\"\
@@ -2530,32 +2536,48 @@ components:
           default: 7
           description: Maximum leap in semitones
 
+    VoiceLeadingViolationType:
+      x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType
+      description: Type of voice leading rule violation
+      type: string
+      enum:
+      - ParallelFifths
+      - ParallelOctaves
+      - VoiceCrossing
+      - VoiceOverlap
+      - LargeLeap
+      - UnresolvedLeap
+      - DoubledLeadingTone
+
     VoiceLeadingViolation:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation
       description: A voice leading rule violation
       type: object
       additionalProperties: false
       required:
-      - rule
+      - type
       - position
-      - severity
+      - voices
+      - isError
+      - message
       properties:
-        rule:
-          type: string
-          description: Rule that was violated
+        type:
+          $ref: '#/components/schemas/VoiceLeadingViolationType'
+          description: Type of violation
         position:
           type: integer
-          description: Chord position of violation
+          description: Position in the progression (0-based)
         voices:
           type: array
           items:
             type: integer
-          nullable: true
-          description: Voice indices involved
-        severity:
+          description: Voice indices involved (0 = bass)
+        isError:
+          type: boolean
+          description: Severity (true = error, false = warning)
+        message:
           type: string
-          enum: [warning, error]
-          description: Violation severity
+          description: Human-readable description
 
     # ============================================================================
     # Metadata Models

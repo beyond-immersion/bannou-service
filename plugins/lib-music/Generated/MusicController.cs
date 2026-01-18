@@ -3893,36 +3893,51 @@ public partial class MusicController : Microsoft.AspNetCore.Mvc.ControllerBase
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "rule",
+                "type",
                 "position",
-                "severity"
+                "voices",
+                "isError",
+                "message"
             ],
             "properties": {
-                "rule": {
-                    "type": "string",
-                    "description": "Rule that was violated"
+                "type": {
+                    "$ref": "#/$defs/VoiceLeadingViolationType",
+                    "description": "Type of violation"
                 },
                 "position": {
                     "type": "integer",
-                    "description": "Chord position of violation"
+                    "description": "Position in the progression (0-based)"
                 },
                 "voices": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "nullable": true,
-                    "description": "Voice indices involved"
+                    "description": "Voice indices involved (0 = bass)"
                 },
-                "severity": {
+                "isError": {
+                    "type": "boolean",
+                    "description": "Severity (true = error, false = warning)"
+                },
+                "message": {
                     "type": "string",
-                    "enum": [
-                        "warning",
-                        "error"
-                    ],
-                    "description": "Violation severity"
+                    "description": "Human-readable description"
                 }
             }
+        },
+        "VoiceLeadingViolationType": {
+            "x-sdk-type": "BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolationType",
+            "description": "Type of voice leading rule violation",
+            "type": "string",
+            "enum": [
+                "ParallelFifths",
+                "ParallelOctaves",
+                "VoiceCrossing",
+                "VoiceOverlap",
+                "LargeLeap",
+                "UnresolvedLeap",
+                "DoubledLeadingTone"
+            ]
         }
     }
 }

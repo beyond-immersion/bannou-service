@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.Bannou.MusicTheory.Melody;
 
 /// <summary>
@@ -191,21 +193,25 @@ public sealed class IntervalPreferences
     /// <summary>
     /// Weight for stepwise motion (m2, M2).
     /// </summary>
+    [JsonPropertyName("stepWeight")]
     public double StepWeight { get; set; } = 0.5;
 
     /// <summary>
     /// Weight for thirds (m3, M3).
     /// </summary>
+    [JsonPropertyName("thirdWeight")]
     public double ThirdWeight { get; set; } = 0.25;
 
     /// <summary>
     /// Weight for larger leaps (P4, P5).
     /// </summary>
+    [JsonPropertyName("leapWeight")]
     public double LeapWeight { get; set; } = 0.15;
 
     /// <summary>
     /// Weight for very large leaps (> P5).
     /// </summary>
+    [JsonPropertyName("largeLeapWeight")]
     public double LargeLeapWeight { get; set; } = 0.1;
 
     /// <summary>

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.Bannou.MusicTheory.Time;
 
 /// <summary>
@@ -8,11 +10,13 @@ public readonly struct Meter : IEquatable<Meter>
     /// <summary>
     /// Number of beats per measure.
     /// </summary>
+    [JsonPropertyName("numerator")]
     public int Numerator { get; }
 
     /// <summary>
     /// Note value that gets one beat (4 = quarter, 8 = eighth, etc.).
     /// </summary>
+    [JsonPropertyName("denominator")]
     public int Denominator { get; }
 
     /// <summary>
@@ -20,6 +24,7 @@ public readonly struct Meter : IEquatable<Meter>
     /// </summary>
     /// <param name="numerator">Beats per measure.</param>
     /// <param name="denominator">Note value per beat (power of 2).</param>
+    [JsonConstructor]
     public Meter(int numerator, int denominator)
     {
         if (numerator < 1 || numerator > 32)

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Harmony;
 using BeyondImmersion.Bannou.MusicTheory.Melody;
@@ -17,6 +18,7 @@ public sealed class ModeDistribution
     /// <summary>
     /// Gets or sets the weight for a mode.
     /// </summary>
+    [JsonIgnore]
     public double this[ModeType mode]
     {
         get => _weights.GetValueOrDefault(mode, 0.0);
@@ -30,31 +32,37 @@ public sealed class ModeDistribution
     /// <summary>
     /// Major mode weight.
     /// </summary>
+    [JsonPropertyName("major")]
     public double Major { get => this[ModeType.Major]; set => this[ModeType.Major] = value; }
 
     /// <summary>
     /// Minor mode weight.
     /// </summary>
+    [JsonPropertyName("minor")]
     public double Minor { get => this[ModeType.Minor]; set => this[ModeType.Minor] = value; }
 
     /// <summary>
     /// Dorian mode weight.
     /// </summary>
+    [JsonPropertyName("dorian")]
     public double Dorian { get => this[ModeType.Dorian]; set => this[ModeType.Dorian] = value; }
 
     /// <summary>
     /// Mixolydian mode weight.
     /// </summary>
+    [JsonPropertyName("mixolydian")]
     public double Mixolydian { get => this[ModeType.Mixolydian]; set => this[ModeType.Mixolydian] = value; }
 
     /// <summary>
     /// Phrygian mode weight.
     /// </summary>
+    [JsonPropertyName("phrygian")]
     public double Phrygian { get => this[ModeType.Phrygian]; set => this[ModeType.Phrygian] = value; }
 
     /// <summary>
     /// Lydian mode weight.
     /// </summary>
+    [JsonPropertyName("lydian")]
     public double Lydian { get => this[ModeType.Lydian]; set => this[ModeType.Lydian] = value; }
 
     /// <summary>
@@ -91,26 +99,31 @@ public sealed class TuneTypeDefinition
     /// <summary>
     /// Tune type name (e.g., "reel", "jig").
     /// </summary>
+    [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
     /// <summary>
     /// Time signature.
     /// </summary>
+    [JsonPropertyName("meter")]
     public Meter Meter { get; set; } = Meter.Common.CommonTime;
 
     /// <summary>
     /// Typical tempo range (min-max BPM).
     /// </summary>
+    [JsonPropertyName("tempoRange")]
     public (int min, int max) TempoRange { get; set; } = (100, 140);
 
     /// <summary>
     /// Default form for this tune type.
     /// </summary>
+    [JsonPropertyName("defaultForm")]
     public string DefaultForm { get; set; } = "AABB";
 
     /// <summary>
     /// Rhythm pattern names to use.
     /// </summary>
+    [JsonPropertyName("rhythmPatterns")]
     public List<string> RhythmPatterns { get; set; } = [];
 }
 
@@ -122,26 +135,32 @@ public sealed class HarmonyStyleDefinition
     /// <summary>
     /// Primary cadence type.
     /// </summary>
+    [JsonPropertyName("primaryCadence")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public CadenceType PrimaryCadence { get; set; } = CadenceType.AuthenticPerfect;
 
     /// <summary>
     /// Probability of pre-dominant before dominant.
     /// </summary>
+    [JsonPropertyName("dominantPrepProbability")]
     public double DominantPrepProbability { get; set; } = 0.6;
 
     /// <summary>
     /// Probability of secondary dominants.
     /// </summary>
+    [JsonPropertyName("secondaryDominantProbability")]
     public double SecondaryDominantProbability { get; set; } = 0.3;
 
     /// <summary>
     /// Probability of modal interchange (borrowed chords).
     /// </summary>
+    [JsonPropertyName("modalInterchangeProbability")]
     public double ModalInterchangeProbability { get; set; } = 0.1;
 
     /// <summary>
     /// Common chord progressions (roman numeral strings).
     /// </summary>
+    [JsonPropertyName("commonProgressions")]
     public List<string> CommonProgressions { get; set; } = [];
 }
 
@@ -153,61 +172,75 @@ public sealed class StyleDefinition
     /// <summary>
     /// Unique style identifier.
     /// </summary>
+    [JsonPropertyName("id")]
     public string Id { get; set; } = "";
 
     /// <summary>
     /// Human-readable name.
     /// </summary>
+    [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
     /// <summary>
     /// Style category (e.g., "folk", "classical", "jazz").
     /// </summary>
+    [JsonPropertyName("category")]
     public string Category { get; set; } = "";
 
     /// <summary>
     /// Description of the style.
     /// </summary>
+    [JsonPropertyName("description")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Description { get; set; }
 
     /// <summary>
     /// Mode probability distribution.
     /// </summary>
+    [JsonPropertyName("modeDistribution")]
     public ModeDistribution ModeDistribution { get; set; } = new();
 
     /// <summary>
     /// Interval preferences for melody.
     /// </summary>
+    [JsonPropertyName("intervalPreferences")]
     public IntervalPreferences IntervalPreferences { get; set; } = IntervalPreferences.Default;
 
     /// <summary>
     /// Available form templates.
     /// </summary>
+    [JsonPropertyName("formTemplates")]
     public List<Form> FormTemplates { get; set; } = [];
 
     /// <summary>
     /// Rhythm patterns.
     /// </summary>
+    [JsonPropertyName("rhythmPatterns")]
     public List<RhythmPattern> RhythmPatterns { get; set; } = [];
 
     /// <summary>
     /// Tune types (style-specific forms like "reel", "jig").
     /// </summary>
+    [JsonPropertyName("tuneTypes")]
     public List<TuneTypeDefinition> TuneTypes { get; set; } = [];
 
     /// <summary>
     /// Default tempo in BPM.
     /// </summary>
+    [JsonPropertyName("defaultTempo")]
     public int DefaultTempo { get; set; } = 120;
 
     /// <summary>
     /// Harmony style preferences.
     /// </summary>
+    [JsonPropertyName("harmonyStyle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public HarmonyStyleDefinition? HarmonyStyle { get; set; }
 
     /// <summary>
     /// Default time signature.
     /// </summary>
+    [JsonPropertyName("defaultMeter")]
     public Meter DefaultMeter { get; set; } = Meter.Common.CommonTime;
 
     /// <summary>

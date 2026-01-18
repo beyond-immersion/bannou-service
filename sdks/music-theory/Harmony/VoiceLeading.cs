@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BeyondImmersion.Bannou.MusicTheory.Collections;
 using BeyondImmersion.Bannou.MusicTheory.Pitch;
 
@@ -38,31 +39,38 @@ public sealed class VoiceLeadingViolation
     /// <summary>
     /// Type of violation.
     /// </summary>
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public VoiceLeadingViolationType Type { get; }
 
     /// <summary>
     /// Position in the progression (0-based).
     /// </summary>
+    [JsonPropertyName("position")]
     public int Position { get; }
 
     /// <summary>
     /// Voice indices involved (0 = bass).
     /// </summary>
+    [JsonPropertyName("voices")]
     public IReadOnlyList<int> Voices { get; }
 
     /// <summary>
     /// Severity (true = error, false = warning).
     /// </summary>
+    [JsonPropertyName("isError")]
     public bool IsError { get; }
 
     /// <summary>
     /// Human-readable description.
     /// </summary>
+    [JsonPropertyName("message")]
     public string Message { get; }
 
     /// <summary>
     /// Creates a violation record.
     /// </summary>
+    [JsonConstructor]
     public VoiceLeadingViolation(VoiceLeadingViolationType type, int position,
         IReadOnlyList<int> voices, bool isError, string message)
     {
@@ -84,36 +92,43 @@ public sealed class VoiceLeadingRules
     /// <summary>
     /// Avoid parallel perfect fifths.
     /// </summary>
+    [JsonPropertyName("avoidParallelFifths")]
     public bool AvoidParallelFifths { get; set; } = true;
 
     /// <summary>
     /// Avoid parallel octaves.
     /// </summary>
+    [JsonPropertyName("avoidParallelOctaves")]
     public bool AvoidParallelOctaves { get; set; } = true;
 
     /// <summary>
     /// Avoid voice crossing.
     /// </summary>
+    [JsonPropertyName("avoidVoiceCrossing")]
     public bool AvoidVoiceCrossing { get; set; } = true;
 
     /// <summary>
     /// Prefer stepwise motion.
     /// </summary>
+    [JsonPropertyName("preferStepwiseMotion")]
     public bool PreferStepwiseMotion { get; set; } = true;
 
     /// <summary>
     /// Maximum leap in semitones.
     /// </summary>
+    [JsonPropertyName("maxLeap")]
     public int MaxLeap { get; set; } = 7; // Perfect fifth
 
     /// <summary>
     /// Require large leaps to resolve by step.
     /// </summary>
+    [JsonPropertyName("requireLeapResolution")]
     public bool RequireLeapResolution { get; set; } = true;
 
     /// <summary>
     /// Avoid doubling the leading tone.
     /// </summary>
+    [JsonPropertyName("avoidDoubledLeadingTone")]
     public bool AvoidDoubledLeadingTone { get; set; } = true;
 
     /// <summary>

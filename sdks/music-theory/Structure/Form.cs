@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.Bannou.MusicTheory.Structure;
 
 /// <summary>
@@ -8,16 +10,19 @@ public readonly struct Section : IEquatable<Section>
     /// <summary>
     /// The section label (e.g., "A", "B", "C").
     /// </summary>
+    [JsonPropertyName("label")]
     public string Label { get; }
 
     /// <summary>
     /// Variation number (0 = original, 1 = A', 2 = A'', etc.).
     /// </summary>
+    [JsonPropertyName("variation")]
     public int Variation { get; }
 
     /// <summary>
     /// Creates a section with a label.
     /// </summary>
+    [JsonConstructor]
     public Section(string label, int variation = 0)
     {
         Label = label ?? throw new ArgumentNullException(nameof(label));
@@ -63,21 +68,25 @@ public sealed class Form
     /// <summary>
     /// Name of the form.
     /// </summary>
+    [JsonPropertyName("name")]
     public string Name { get; }
 
     /// <summary>
     /// Sequence of sections.
     /// </summary>
+    [JsonPropertyName("sections")]
     public IReadOnlyList<Section> Sections { get; }
 
     /// <summary>
     /// Default number of bars per section.
     /// </summary>
+    [JsonPropertyName("defaultBarsPerSection")]
     public int DefaultBarsPerSection { get; }
 
     /// <summary>
     /// Creates a form.
     /// </summary>
+    [JsonConstructor]
     public Form(string name, IReadOnlyList<Section> sections, int defaultBarsPerSection = 8)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));

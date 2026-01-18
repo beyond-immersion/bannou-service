@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.Bannou.MusicTheory.Time;
 
 /// <summary>
@@ -8,21 +10,25 @@ public sealed class RhythmPattern
     /// <summary>
     /// Name of the pattern.
     /// </summary>
+    [JsonPropertyName("name")]
     public string Name { get; }
 
     /// <summary>
     /// Relative durations (1.0 = one beat).
     /// </summary>
+    [JsonPropertyName("pattern")]
     public IReadOnlyList<double> Pattern { get; }
 
     /// <summary>
     /// Total duration in beats.
     /// </summary>
+    [JsonPropertyName("totalBeats")]
     public double TotalBeats { get; }
 
     /// <summary>
     /// Selection weight for random generation.
     /// </summary>
+    [JsonPropertyName("weight")]
     public double Weight { get; }
 
     /// <summary>
@@ -31,6 +37,7 @@ public sealed class RhythmPattern
     /// <param name="name">Pattern name.</param>
     /// <param name="pattern">Relative durations.</param>
     /// <param name="weight">Selection weight (default 1.0).</param>
+    [JsonConstructor]
     public RhythmPattern(string name, IReadOnlyList<double> pattern, double weight = 1.0)
     {
         if (string.IsNullOrWhiteSpace(name))

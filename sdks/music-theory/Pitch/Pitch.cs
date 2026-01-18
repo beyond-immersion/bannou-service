@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.Bannou.MusicTheory.Pitch;
 
 /// <summary>
@@ -9,16 +11,20 @@ public readonly struct Pitch : IEquatable<Pitch>, IComparable<Pitch>
     /// <summary>
     /// The pitch class (note name without octave).
     /// </summary>
+    [JsonPropertyName("pitchClass")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public PitchClass PitchClass { get; }
 
     /// <summary>
     /// The octave number. Middle C is octave 4.
     /// </summary>
+    [JsonPropertyName("octave")]
     public int Octave { get; }
 
     /// <summary>
     /// The MIDI note number (0-127). Middle C = 60.
     /// </summary>
+    [JsonPropertyName("midiNumber")]
     public int MidiNumber => (Octave + 1) * 12 + (int)PitchClass;
 
     /// <summary>
@@ -26,6 +32,7 @@ public readonly struct Pitch : IEquatable<Pitch>, IComparable<Pitch>
     /// </summary>
     /// <param name="pitchClass">The pitch class.</param>
     /// <param name="octave">The octave (middle C = 4).</param>
+    [JsonConstructor]
     public Pitch(PitchClass pitchClass, int octave)
     {
         if (octave < -1 || octave > 9)
@@ -202,16 +209,19 @@ public readonly struct PitchRange
     /// <summary>
     /// The lowest pitch in the range (inclusive).
     /// </summary>
+    [JsonPropertyName("low")]
     public Pitch Low { get; }
 
     /// <summary>
     /// The highest pitch in the range (inclusive).
     /// </summary>
+    [JsonPropertyName("high")]
     public Pitch High { get; }
 
     /// <summary>
     /// The span of the range in semitones.
     /// </summary>
+    [JsonPropertyName("span")]
     public int Span => High.MidiNumber - Low.MidiNumber;
 
     /// <summary>
@@ -219,6 +229,7 @@ public readonly struct PitchRange
     /// </summary>
     /// <param name="low">Lowest pitch (inclusive).</param>
     /// <param name="high">Highest pitch (inclusive).</param>
+    [JsonConstructor]
     public PitchRange(Pitch low, Pitch high)
     {
         if (high < low)
