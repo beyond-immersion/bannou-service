@@ -27,7 +27,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <NoWarn>$(NoWarn);CS1591</NoWarn> <!-- Allow missing XML docs during initial development -->
 
     <!-- Assembly info -->
     <RootNamespace>BeyondImmersion.Bannou.SceneComposer</RootNamespace>

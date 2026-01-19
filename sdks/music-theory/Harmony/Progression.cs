@@ -39,6 +39,7 @@ public sealed class ProgressionChord
         DurationBeats = durationBeats;
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{RomanNumeral} ({DurationBeats}b)";
 }
 

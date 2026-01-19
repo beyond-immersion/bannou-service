@@ -27,7 +27,7 @@ public static class Program
         private set => _appRunningState = value;
     }
 
-    private static IConfigurationRoot _configurationRoot;
+    private static required IConfigurationRoot _configurationRoot;
 
     /// <summary>
     /// Shared service configuration root.
@@ -57,7 +57,7 @@ public static class Program
     /// </summary>
     internal static void ResetConfiguration() => _configuration = null;
 
-    private static string _serviceGUID;
+    private static required string _serviceGUID;
 
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
@@ -69,7 +69,7 @@ public static class Program
         internal set => _serviceGUID = value;
     }
 
-    private static Microsoft.Extensions.Logging.ILogger _logger;
+    private static required Microsoft.Extensions.Logging.ILogger _logger;
 
     /// <summary>
     /// Application/global logger.
@@ -83,7 +83,7 @@ public static class Program
     /// <summary>
     /// Plugin loader for managing service plugins.
     /// </summary>
-    public static PluginLoader PluginLoader { get; private set; }
+    public static required PluginLoader PluginLoader { get; private set; }
 
     /// <summary>
     /// Service heartbeat manager for publishing instance health to orchestrator.

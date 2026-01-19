@@ -28,7 +28,7 @@
     <!-- Build settings -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>$(NoWarn);CS1591;NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
 
     <!-- Assembly info -->
     <RootNamespace>BeyondImmersion.Bannou.AssetLoader.Stride</RootNamespace>

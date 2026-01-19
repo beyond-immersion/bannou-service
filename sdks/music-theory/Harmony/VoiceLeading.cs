@@ -81,6 +81,7 @@ public sealed class VoiceLeadingViolation
         Message = message;
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"[{Position}] {Type}: {Message}";
 }
 

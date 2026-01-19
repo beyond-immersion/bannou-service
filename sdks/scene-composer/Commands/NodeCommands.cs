@@ -16,8 +16,10 @@ public class CreateNodeCommand : IEditorCommand
     private readonly Action<ComposerSceneNode> _onCreated;
     private readonly Action<ComposerSceneNode> _onDeleted;
 
+    /// <inheritdoc />
     public string Description => $"Create {_node.NodeType} '{_node.Name}'";
 
+    /// <summary>Creates a command to add a node to the scene.</summary>
     public CreateNodeCommand(
         ComposerScene scene,
         ComposerSceneNode node,
@@ -34,6 +36,7 @@ public class CreateNodeCommand : IEditorCommand
         _onDeleted = onDeleted ?? throw new ArgumentNullException(nameof(onDeleted));
     }
 
+    /// <inheritdoc />
     public void Execute()
     {
         _scene.RegisterNode(_node);
@@ -50,6 +53,7 @@ public class CreateNodeCommand : IEditorCommand
         _onCreated(_node);
     }
 
+    /// <inheritdoc />
     public void Undo()
     {
         _onDeleted(_node);
@@ -66,7 +70,9 @@ public class CreateNodeCommand : IEditorCommand
         _scene.UnregisterNode(_node);
     }
 
+    /// <inheritdoc />
     public bool CanMergeWith(IEditorCommand other) => false;
+    /// <inheritdoc />
     public bool TryMerge(IEditorCommand other) => false;
 }
 
@@ -84,8 +90,10 @@ public class DeleteNodeCommand : IEditorCommand
     private readonly Action<ComposerSceneNode> _onCreated;
     private readonly Action<ComposerSceneNode> _onDeleted;
 
+    /// <inheritdoc />
     public string Description => $"Delete '{_node.Name}'";
 
+    /// <summary>Creates a command to delete a node from the scene.</summary>
     public DeleteNodeCommand(
         ComposerScene scene,
         ComposerSceneNode node,

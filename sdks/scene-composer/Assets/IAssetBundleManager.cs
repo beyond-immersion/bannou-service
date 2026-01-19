@@ -226,6 +226,7 @@ public class BundleHandle
     /// </summary>
     public int ReferenceCount { get; internal set; }
 
+    /// <summary>Creates a new bundle handle.</summary>
     public BundleHandle(string bundleId, BundleManifest manifest, long totalSize)
     {
         BundleId = bundleId ?? throw new ArgumentNullException(nameof(bundleId));
@@ -403,8 +404,10 @@ public enum AssetType
 /// </summary>
 public class BundleLoadingEventArgs : EventArgs
 {
+    /// <summary>The bundle identifier.</summary>
     public string BundleId { get; }
 
+    /// <summary>Creates bundle loading event args.</summary>
     public BundleLoadingEventArgs(string bundleId)
     {
         BundleId = bundleId;
@@ -416,10 +419,14 @@ public class BundleLoadingEventArgs : EventArgs
 /// </summary>
 public class BundleLoadedEventArgs : EventArgs
 {
+    /// <summary>The bundle identifier.</summary>
     public string BundleId { get; }
+    /// <summary>The loaded bundle handle.</summary>
     public BundleHandle Handle { get; }
+    /// <summary>Time taken to load the bundle.</summary>
     public TimeSpan LoadTime { get; }
 
+    /// <summary>Creates bundle loaded event args.</summary>
     public BundleLoadedEventArgs(string bundleId, BundleHandle handle, TimeSpan loadTime)
     {
         BundleId = bundleId;
@@ -433,9 +440,12 @@ public class BundleLoadedEventArgs : EventArgs
 /// </summary>
 public class BundleLoadFailedEventArgs : EventArgs
 {
+    /// <summary>The bundle identifier.</summary>
     public string BundleId { get; }
+    /// <summary>The exception that caused the failure.</summary>
     public Exception Exception { get; }
 
+    /// <summary>Creates bundle load failed event args.</summary>
     public BundleLoadFailedEventArgs(string bundleId, Exception exception)
     {
         BundleId = bundleId;
@@ -448,8 +458,10 @@ public class BundleLoadFailedEventArgs : EventArgs
 /// </summary>
 public class BundleUnloadedEventArgs : EventArgs
 {
+    /// <summary>The bundle identifier.</summary>
     public string BundleId { get; }
 
+    /// <summary>Creates bundle unloaded event args.</summary>
     public BundleUnloadedEventArgs(string bundleId)
     {
         BundleId = bundleId;

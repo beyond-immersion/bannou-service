@@ -146,6 +146,7 @@ public sealed class RhythmPattern
         public static RhythmPattern Hornpipe => new("hornpipe", [0.75, 0.25, 0.75, 0.25], 0.7);
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Name}: [{string.Join(", ", Pattern.Select(d => d.ToString("F2")))}]";
 }
 

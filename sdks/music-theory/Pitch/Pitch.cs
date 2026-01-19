@@ -178,21 +178,35 @@ public readonly struct Pitch : IEquatable<Pitch>, IComparable<Pitch>
         }
     }
 
+    /// <summary>Transposes a pitch up by an interval.</summary>
     public static Pitch operator +(Pitch pitch, Interval interval) => pitch.Transpose(interval);
+    /// <summary>Transposes a pitch down by an interval.</summary>
     public static Pitch operator -(Pitch pitch, Interval interval) => pitch.Transpose(-interval);
+    /// <summary>Returns the interval between two pitches.</summary>
     public static Interval operator -(Pitch a, Pitch b) => b.IntervalTo(a);
+    /// <summary>Tests equality between two pitches.</summary>
     public static bool operator ==(Pitch a, Pitch b) => a.MidiNumber == b.MidiNumber;
+    /// <summary>Tests inequality between two pitches.</summary>
     public static bool operator !=(Pitch a, Pitch b) => a.MidiNumber != b.MidiNumber;
+    /// <summary>Tests if one pitch is lower than another.</summary>
     public static bool operator <(Pitch a, Pitch b) => a.MidiNumber < b.MidiNumber;
+    /// <summary>Tests if one pitch is higher than another.</summary>
     public static bool operator >(Pitch a, Pitch b) => a.MidiNumber > b.MidiNumber;
+    /// <summary>Tests if one pitch is lower than or equal to another.</summary>
     public static bool operator <=(Pitch a, Pitch b) => a.MidiNumber <= b.MidiNumber;
+    /// <summary>Tests if one pitch is higher than or equal to another.</summary>
     public static bool operator >=(Pitch a, Pitch b) => a.MidiNumber >= b.MidiNumber;
 
+    /// <inheritdoc />
     public bool Equals(Pitch other) => MidiNumber == other.MidiNumber;
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is Pitch other && Equals(other);
+    /// <inheritdoc />
     public override int GetHashCode() => MidiNumber;
+    /// <inheritdoc />
     public int CompareTo(Pitch other) => MidiNumber.CompareTo(other.MidiNumber);
 
+    /// <inheritdoc />
     public override string ToString() => $"{PitchClass.ToSharpName()}{Octave}";
 
     /// <summary>
@@ -305,5 +319,6 @@ public readonly struct PitchRange
         public static PitchRange Flute => new(new Pitch(PitchClass.C, 4), new Pitch(PitchClass.C, 7));
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Low} - {High}";
 }

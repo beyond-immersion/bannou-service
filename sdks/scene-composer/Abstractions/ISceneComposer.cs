@@ -437,21 +437,27 @@ public readonly struct AssetReference : IEquatable<AssetReference>
     /// </summary>
     public bool IsValid => !string.IsNullOrEmpty(BundleId) && !string.IsNullOrEmpty(AssetId);
 
+    /// <inheritdoc />
     public bool Equals(AssetReference other) =>
         BundleId == other.BundleId && AssetId == other.AssetId && VariantId == other.VariantId;
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is AssetReference other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() =>
         HashCode.Combine(BundleId, AssetId, VariantId);
 
+    /// <summary>Tests equality between two asset references.</summary>
     public static bool operator ==(AssetReference left, AssetReference right) =>
         left.Equals(right);
 
+    /// <summary>Tests inequality between two asset references.</summary>
     public static bool operator !=(AssetReference left, AssetReference right) =>
         !left.Equals(right);
 
+    /// <inheritdoc />
     public override string ToString() =>
         VariantId != null
             ? $"{BundleId}/{AssetId}@{VariantId}"

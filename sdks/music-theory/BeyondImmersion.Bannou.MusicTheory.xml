@@ -140,6 +140,9 @@
             <param name="seventh">Whether to include the seventh.</param>
             <returns>The diatonic chord.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Collections.Chord.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Collections.ModeType">
             <summary>
             Represents musical modes (scales with specific interval patterns).
@@ -301,6 +304,9 @@
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Collections.Scale.Common.AMixolydian">
             <summary>A Mixolydian scale</summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Collections.Scale.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Collections.Voicing">
             <summary>
             Represents a specific voicing of a chord - actual pitches with octaves.
@@ -385,6 +391,9 @@
             <summary>
             Gets MIDI note numbers for all pitches.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Collections.Voicing.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Collections.VoicingFactory">
             <summary>
@@ -516,6 +525,9 @@
             <param name="seventh">Whether to include the seventh.</param>
             <returns>The diatonic chord.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunction.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.HarmonicFunctionAnalyzer">
             <summary>
             Analyzes harmonic function of chords in context.
@@ -643,6 +655,9 @@
             Gets the chords for this cadence in a given scale.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.Cadence.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord">
             <summary>
             Represents a chord in a progression with timing information.
@@ -672,6 +687,9 @@
             <summary>
             Creates a progression chord.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionChord.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.ProgressionOptions">
             <summary>
@@ -830,6 +848,9 @@
             <summary>
             Creates a violation record.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingViolation.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Harmony.VoiceLeadingRules">
             <summary>
@@ -1191,6 +1212,9 @@
             Gets the end tick (non-inclusive).
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyNote.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MelodyOptions">
             <summary>
             Options for melody generation.
@@ -1377,6 +1401,9 @@
             Sequence with step interval.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.MotifTransformationRecord.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.Motif">
             <summary>
             Represents a melodic motif - a short thematic fragment that can be developed.
@@ -1487,6 +1514,9 @@
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Melody.Motif.Patterns.Mordent">
             <summary>Mordent (quick do-re-do)</summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.Motif.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifCategory">
             <summary>
             Motif usage categories for organizing and selecting motifs.
@@ -1570,6 +1600,9 @@
             <summary>
             Creates a named motif from intervals and durations.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Melody.NamedMotif.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Melody.MotifLibrary">
             <summary>
@@ -2026,6 +2059,54 @@
             Gets a human-readable name for this interval.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Addition(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Adds two intervals together.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Subtraction(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Subtracts one interval from another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_UnaryNegation(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Negates an interval.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Equality(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests equality between two intervals.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Inequality(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests inequality between two intervals.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_LessThan(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests if one interval is smaller than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_GreaterThan(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests if one interval is greater than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_LessThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests if one interval is smaller than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_GreaterThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Tests if one interval is greater than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Implicit(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)~System.Int32">
+            <summary>Implicitly converts an interval to its semitone count.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.op_Explicit(System.Int32)~BeyondImmersion.Bannou.MusicTheory.Pitch.Interval">
+            <summary>Explicitly converts a semitone count to an interval.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.Equals(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.CompareTo(BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Interval.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch">
             <summary>
             Represents a specific pitch with pitch class and octave.
@@ -2110,6 +2191,48 @@
             <summary>
             Attempts to parse a pitch from notation.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_Addition(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Transposes a pitch up by an interval.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_Subtraction(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Interval)">
+            <summary>Transposes a pitch down by an interval.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_Subtraction(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Returns the interval between two pitches.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_Equality(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests equality between two pitches.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_Inequality(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests inequality between two pitches.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_LessThan(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests if one pitch is lower than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_GreaterThan(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests if one pitch is higher than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_LessThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests if one pitch is lower than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.op_GreaterThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch,BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <summary>Tests if one pitch is higher than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.Equals(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.CompareTo(BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.ToString">
+            <inheritdoc />
         </member>
         <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.Pitch.ToFlatString">
             <summary>
@@ -2198,6 +2321,9 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange.Instrument.Flute">
             <summary>Flute range (C4-C7)</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Pitch.PitchRange.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Pitch.PitchClass">
             <summary>
@@ -2315,10 +2441,47 @@
             Creates a variation of this section.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Equals(BeyondImmersion.Bannou.MusicTheory.Structure.Section)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.op_Equality(BeyondImmersion.Bannou.MusicTheory.Structure.Section,BeyondImmersion.Bannou.MusicTheory.Structure.Section)">
+            <summary>Tests equality between two sections.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.op_Inequality(BeyondImmersion.Bannou.MusicTheory.Structure.Section,BeyondImmersion.Bannou.MusicTheory.Structure.Section)">
+            <summary>Tests inequality between two sections.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Section.ToString">
+            <inheritdoc />
+        </member>
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.A">
-            <summary>
-            Common section labels.
-            </summary>
+            <summary>Common section label A.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.B">
+            <summary>Common section label B.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.C">
+            <summary>Common section label C.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Intro">
+            <summary>Introduction section.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Verse">
+            <summary>Verse section.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Chorus">
+            <summary>Chorus section.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Bridge">
+            <summary>Bridge section.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.MusicTheory.Structure.Section.Outro">
+            <summary>Outro/coda section.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Structure.Form">
             <summary>
@@ -2394,6 +2557,9 @@
             Parses a form from a string like "AABB" or "A-A-B-B".
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Form.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Structure.FormSection">
             <summary>
             A section instance with specific bar range.
@@ -2423,6 +2589,9 @@
             <summary>
             Creates a form section.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.FormSection.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Structure.ExpandedForm">
             <summary>
@@ -2525,6 +2694,9 @@
             <summary>
             End tick (exclusive).
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Structure.Phrase.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Structure.Period">
             <summary>
@@ -3075,6 +3247,39 @@
             <param name="beats">Number of beats.</param>
             <returns>Closest matching duration.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.Equals(BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.CompareTo(BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_Equality(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests equality between two durations.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_Inequality(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests inequality between two durations.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_LessThan(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests if one duration is shorter than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_GreaterThan(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests if one duration is longer than another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_LessThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests if one duration is shorter than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.op_GreaterThanOrEqual(BeyondImmersion.Bannou.MusicTheory.Time.Duration,BeyondImmersion.Bannou.MusicTheory.Time.Duration)">
+            <summary>Tests if one duration is longer than or equal to another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Duration.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Time.Meter">
             <summary>
             Represents a time signature (meter).
@@ -3161,6 +3366,24 @@
             <summary>
             Parses a time signature from notation like "4/4" or "6/8".
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.Equals(BeyondImmersion.Bannou.MusicTheory.Time.Meter)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.op_Equality(BeyondImmersion.Bannou.MusicTheory.Time.Meter,BeyondImmersion.Bannou.MusicTheory.Time.Meter)">
+            <summary>Tests equality between two meters.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.op_Inequality(BeyondImmersion.Bannou.MusicTheory.Time.Meter,BeyondImmersion.Bannou.MusicTheory.Time.Meter)">
+            <summary>Tests inequality between two meters.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.Meter.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Time.MeterType">
             <summary>
@@ -3279,6 +3502,9 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.MusicTheory.Time.RhythmPattern.Celtic.Hornpipe">
             <summary>Hornpipe pattern (dotted rhythm)</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicTheory.Time.RhythmPattern.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicTheory.Time.RhythmPatternSet">
             <summary>

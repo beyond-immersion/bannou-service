@@ -364,6 +364,7 @@ public class CommandExecutedEventArgs : EventArgs
     /// </summary>
     public CommandExecutionType ExecutionType { get; }
 
+    /// <summary>Creates command executed event args.</summary>
     public CommandExecutedEventArgs(IEditorCommand command, CommandExecutionType executionType)
     {
         Command = command;

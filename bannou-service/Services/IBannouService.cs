@@ -180,7 +180,7 @@ public interface IBannouService
         }
     }
 
-    private static IDictionary<string, IList<(Type, Type, BannouServiceAttribute)>> _serviceAppMappings;
+    private static required IDictionary<string, IList<(Type, Type, BannouServiceAttribute)>> _serviceAppMappings;
 
     /// <summary>
     /// Lookup for mapping applications to services in the Bannou network.
@@ -214,7 +214,7 @@ public interface IBannouService
         }
     }
 
-    private static Dictionary<string, string> _networkModePresets;
+    private static required Dictionary<string, string> _networkModePresets;
 
     /// <summary>
     /// The service->application name mappings for the network.

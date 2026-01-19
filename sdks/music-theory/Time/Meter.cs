@@ -181,13 +181,19 @@ public readonly struct Meter : IEquatable<Meter>
         return new Meter(numerator, denominator);
     }
 
+    /// <inheritdoc />
     public bool Equals(Meter other) => Numerator == other.Numerator && Denominator == other.Denominator;
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is Meter other && Equals(other);
+    /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(Numerator, Denominator);
 
+    /// <summary>Tests equality between two meters.</summary>
     public static bool operator ==(Meter a, Meter b) => a.Equals(b);
+    /// <summary>Tests inequality between two meters.</summary>
     public static bool operator !=(Meter a, Meter b) => !a.Equals(b);
 
+    /// <inheritdoc />
     public override string ToString() => $"{Numerator}/{Denominator}";
 }
 
