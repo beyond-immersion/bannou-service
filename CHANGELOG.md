@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.0] - 2026-01-19
+
+### Added
+- **Music Theory SDK** (`sdks/music-theory`): Pure computation music generation using formal music theory rules
+  - Chord progression generation with voice leading
+  - Melody generation over harmony
+  - Scale and mode support
+- **Music Storyteller SDK** (`sdks/music-storyteller`): Narrative-driven music composition
+  - Story arc to musical structure mapping
+  - Emotional trajectory support
+- **global.json**: Pin .NET SDK version to 9.0.x for consistent builds across local and CI environments
+
+### Changed
+- **lib-state Infrastructure**: Consolidated state management with improved async metabundle processing
+- **Meta Endpoint Schema Separation**: Cleaner API organization
+
+### Fixed
+- **CA2000 Warnings**: Fixed disposable object handling across edge-tester and SDK projects
+- **CS8618 Warnings**: Fixed non-nullable field initialization warnings
+- **IDE0031 Suppression**: Restored pragma for null-check patterns where null propagation isn't valid C#
+- **SDK Release Process**: Fixed version baseline drift issues
+- **CI Build Issues**: Resolved missing files and preview feature alignment
+
+---
+
 ## [0.11.0] - 2026-01-16
 
 ### Added
@@ -234,7 +259,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.8.0...v0.9.0
