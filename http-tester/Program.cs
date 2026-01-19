@@ -567,7 +567,7 @@ public class Program
                 {
                     // Tests no longer need a client parameter - they create their own generated clients
                     // Pass a mock test client to satisfy the interface signature
-                    var mockTestClient = new MockTestClient();
+                    using var mockTestClient = new MockTestClient();
                     var result = await kvp.Value.TestAction(mockTestClient, Array.Empty<string>());
                     if (result.Success)
                     {
@@ -793,7 +793,7 @@ public class Program
             {
                 // Tests no longer need a client parameter - they create their own generated clients
                 // Pass a mock test client to satisfy the interface signature
-                var mockTestClient = new MockTestClient();
+                using var mockTestClient = new MockTestClient();
                 var result = await kvp.Value.TestAction(mockTestClient, args);
                 if (result.Success)
                 {
