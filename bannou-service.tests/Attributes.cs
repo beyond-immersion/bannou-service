@@ -8,6 +8,13 @@ public class Attributes : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
+    // These test helper classes and their members are accessed via reflection
+    // (IServiceAttribute.GetMethodsWithAttribute, GetPropertiesWithAttribute, etc.)
+    // The analyzer cannot track reflection-based access, so we suppress the warnings.
+#pragma warning disable CA1822 // Mark members as static - testing instance member discovery
+#pragma warning disable IDE0051 // Remove unused private members - accessed via reflection
+#pragma warning disable IDE0052 // Remove unread private members - accessed via reflection
+
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     private class ClassAttributeA : Attribute, IServiceAttribute { }
 
@@ -169,6 +176,10 @@ public class Attributes : IClassFixture<CollectionFixture>
             FieldC = type;
         }
     }
+
+#pragma warning restore IDE0052
+#pragma warning restore IDE0051
+#pragma warning restore CA1822
 
     private Attributes(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 

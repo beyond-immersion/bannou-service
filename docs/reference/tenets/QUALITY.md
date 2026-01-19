@@ -332,6 +332,30 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - **NOT allowed**: File-level, class-level, or project-level CA2000 suppression
 - **NOT allowed**: Suppressing CA2000 for actual leaks - only for constructor ownership transfer
 
+**Legacy Binding Redirect Warnings**:
+- CS1701, CS1702 - Assembly version binding redirect warnings
+- These warnings assume .NET Framework behavior that doesn't apply to .NET Core/.NET 5+
+- Suppress via `<NoWarn>1701;1702</NoWarn>` in project files (common pattern across .NET ecosystem)
+- See: [dotnet/roslyn#19640](https://github.com/dotnet/roslyn/issues/19640)
+
+**Reflection-Based Test Fixtures**:
+- CA1822, IDE0051, IDE0052 - When test helper classes/members are accessed via reflection
+- The analyzer cannot track reflection-based access
+- Suppress with **inline** `#pragma warning disable/restore` around the test fixture region only
+- Must include a comment explaining the reflection access pattern
+- Example:
+  ```csharp
+  // These test helper classes are accessed via reflection (IServiceAttribute.GetMethodsWithAttribute)
+  #pragma warning disable CA1822 // Mark members as static - testing instance member discovery
+  #pragma warning disable IDE0051 // Remove unused private members - accessed via reflection
+  #pragma warning disable IDE0052 // Remove unread private members - accessed via reflection
+  private class TestHelperClass { ... }
+  #pragma warning restore IDE0052
+  #pragma warning restore IDE0051
+  #pragma warning restore CA1822
+  ```
+- **NOT allowed**: Assembly-level suppressions in GlobalSuppressions.cs
+
 ### When Warnings Appear
 
 1. **FIRST**: Understand what the warning is telling you
