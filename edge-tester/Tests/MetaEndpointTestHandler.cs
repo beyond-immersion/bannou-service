@@ -109,11 +109,11 @@ public class MetaEndpointTestHandler : IServiceTestHandler
         }
 
         var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
-        var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
-
+        ClientWebSocket? webSocket = null;
         try
         {
+            webSocket = new ClientWebSocket();
+            webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("✅ WebSocket connected");
 
@@ -132,6 +132,8 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     Console.WriteLine("❌ WebSocket closed before receiving capability manifest");
+                    webSocket.Dispose();
+                    webSocket = null;
                     return null;
                 }
 
@@ -179,16 +181,23 @@ public class MetaEndpointTestHandler : IServiceTestHandler
             {
                 Console.WriteLine("❌ No suitable API found in capability manifest");
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "No API found", CancellationToken.None);
+                webSocket.Dispose();
+                webSocket = null;
                 return null;
             }
 
-            return (webSocket, apiGuid.Value, endpointKey);
+            var resultWebSocket = webSocket;
+            webSocket = null; // Transfer ownership to caller
+            return (resultWebSocket, apiGuid.Value, endpointKey);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Failed to connect: {ex.Message}");
-            webSocket.Dispose();
             return null;
+        }
+        finally
+        {
+            webSocket?.Dispose();
         }
     }
 

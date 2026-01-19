@@ -730,8 +730,9 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing OAuth init at: {oauthUrl}");
 
         // Note: We don't follow redirects for this test - we just verify the endpoint works
-        var handler = new HttpClientHandler { AllowAutoRedirect = false };
-        using var client = new HttpClient(handler);
+        // Use SocketsHttpHandler to avoid CA2000 false positives with HttpClientHandler
+        using var handler = new SocketsHttpHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler, disposeHandler: false); // handler has its own using
 
         using var oauthRequest = new HttpRequestMessage(HttpMethod.Get, oauthUrl);
         using var oauthResponse = await client.SendAsync(oauthRequest);

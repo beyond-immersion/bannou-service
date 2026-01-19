@@ -487,11 +487,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", client.AccessToken);
             request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
 
-            var response = await Program.HttpClient.SendAsync(request);
+            using var response = await Program.HttpClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
 
             Console.WriteLine($"   Validate response ({response.StatusCode}): {content.Substring(0, Math.Min(200, content.Length))}...");
@@ -1177,17 +1177,19 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
 
         var serverUri = new Uri($"ws://{Program.Configuration.ConnectEndpoint}");
-        var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
-
+        ClientWebSocket? webSocket = null;
         try
         {
+            webSocket = new ClientWebSocket();
+            webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
             Console.WriteLine($"   [{connectionName}] Connecting to {serverUri}...");
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
 
             if (webSocket.State != WebSocketState.Open)
             {
                 Console.WriteLine($"   [{connectionName}] WebSocket in unexpected state: {webSocket.State}");
+                webSocket.Dispose();
+                webSocket = null;
                 return (null, null);
             }
 
@@ -1199,13 +1201,17 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             if (result.Count == 0)
             {
                 Console.WriteLine($"   [{connectionName}] Empty response received");
-                return (webSocket, null);
+                var resultWs1 = webSocket;
+                webSocket = null;
+                return (resultWs1, null);
             }
 
             if (result.Count < BinaryMessage.HeaderSize)
             {
                 Console.WriteLine($"   [{connectionName}] Message too short for header");
-                return (webSocket, null);
+                var resultWs2 = webSocket;
+                webSocket = null;
+                return (resultWs2, null);
             }
 
             var payloadBytes = buffer.Array![(BinaryMessage.HeaderSize)..result.Count];
@@ -1215,31 +1221,42 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             if (manifestObj == null)
             {
                 Console.WriteLine($"   [{connectionName}] Failed to parse manifest JSON");
-                return (webSocket, null);
+                var resultWs3 = webSocket;
+                webSocket = null;
+                return (resultWs3, null);
             }
 
             var eventName = manifestObj["eventName"]?.GetValue<string>();
             if (eventName != "connect.capability_manifest")
             {
                 Console.WriteLine($"   [{connectionName}] Unexpected event type: {eventName}");
-                return (webSocket, null);
+                var resultWs4 = webSocket;
+                webSocket = null;
+                return (resultWs4, null);
             }
 
             var peerGuidStr = manifestObj["peerGuid"]?.GetValue<string>();
             if (string.IsNullOrEmpty(peerGuidStr) || !Guid.TryParse(peerGuidStr, out var peerGuid))
             {
                 Console.WriteLine($"   [{connectionName}] No peerGuid in capability manifest (External mode)");
-                return (webSocket, null);
+                var resultWs5 = webSocket;
+                webSocket = null;
+                return (resultWs5, null);
             }
 
             Console.WriteLine($"   [{connectionName}] Received peerGuid: {peerGuid}");
-            return (webSocket, peerGuid);
+            var resultWebSocket = webSocket;
+            webSocket = null;
+            return (resultWebSocket, peerGuid);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"   [{connectionName}] Connection failed: {ex.Message}");
-            webSocket.Dispose();
             return (null, null);
+        }
+        finally
+        {
+            webSocket?.Dispose();
         }
     }
 

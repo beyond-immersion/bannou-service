@@ -169,9 +169,9 @@ public class ClientEventTestHandler : IServiceTestHandler
             // Wait for initial capability manifest to get session ID
             Console.WriteLine("Waiting for capability manifest to get session ID...");
             var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
             if (result.Count == 0)
             {
                 Console.WriteLine("FAILED Received empty initial message");
@@ -233,11 +233,11 @@ public class ClientEventTestHandler : IServiceTestHandler
 
             // Wait for the event to be delivered via WebSocket
             Console.WriteLine("Waiting for event to be delivered via WebSocket...");
-            cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             try
             {
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts2.Token);
                 if (result.Count == 0)
                 {
                     Console.WriteLine("FAILED Received empty event message");
@@ -263,8 +263,8 @@ public class ClientEventTestHandler : IServiceTestHandler
                     Console.WriteLine($"Received event type: {eventName} (may be capability update or other event)");
                     // This could be a capability update if the Testing service just registered permissions
                     // Try to receive another message - we MUST receive system.notification
-                    cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+                    using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts3.Token);
                     if (result.Count > 0)
                     {
                         receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
@@ -349,8 +349,8 @@ public class ClientEventTestHandler : IServiceTestHandler
             Console.WriteLine("OK Initial WebSocket connected");
 
             // Get capability manifest with session ID
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var result = await webSocket1.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var result = await webSocket1.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
 
             if (result.Count > 0)
             {
@@ -442,14 +442,14 @@ public class ClientEventTestHandler : IServiceTestHandler
             Console.WriteLine("OK Reconnection WebSocket connected");
 
             // Wait for capability manifest first, then check for queued events
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             bool receivedCapabilityManifest = false;
             bool receivedQueuedEvent = false;
 
             try
             {
                 // First message should be capability manifest
-                var result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+                var result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts2.Token);
                 if (result.Count > 0)
                 {
                     var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
@@ -465,8 +465,8 @@ public class ClientEventTestHandler : IServiceTestHandler
                         receivedCapabilityManifest = true;
 
                         // Now wait for the queued event
-                        cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                        result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+                        using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts3.Token);
                         if (result.Count > 0)
                         {
                             receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
