@@ -325,67 +325,19 @@ _stateStore = stateStoreFactory.GetStore<AccountModel>("account-statestore"); //
 
 Backend selection is handled by `IStateStoreFactory` based on configurations defined in `schemas/state-stores.yaml`.
 
-### Allowed Exceptions
+### Infrastructure Lib Backend Access
 
-While infrastructure libs are mandatory for service code, certain specialized components have legitimate reasons for direct infrastructure access:
+Each infrastructure lib accesses its specific backend directly - this is their purpose:
 
-#### 1. SDK/Client Bundle Code (sdks/server, sdks/client)
+| Infrastructure Lib | Direct Backend Access |
+|-------------------|----------------------|
+| lib-state | Redis, MySQL |
+| lib-messaging | RabbitMQ |
+| lib-orchestrator (Orchestrator service) | Docker, Portainer, Kubernetes APIs |
+| lib-voice | RTPEngine, Kamailio |
+| lib-asset | MinIO |
 
-Client and Server SDK packages that ship to external consumers may use `System.Text.Json` directly instead of `BannouJson`. This is because:
-- SDKs must be self-contained without internal Bannou dependencies
-- Clients need standard .NET serialization they can configure
-- `BannouJson` is an internal abstraction not exposed to SDK consumers
-
-```csharp
-// In SDK packages (allowed):
-var json = JsonSerializer.Serialize(request, options);
-
-// In lib-* or bannou-service (forbidden):
-var json = JsonSerializer.Serialize(request); // Use BannouJson.Serialize()
-```
-
-#### 2. MassTransit Dynamic RabbitMQ (lib-messaging internals)
-
-`MassTransitMessageBus` uses direct RabbitMQ management API for dynamic queue/exchange creation. This is internal to lib-messaging, not service code:
-- Dynamic subscriptions require runtime topology changes
-- MassTransit abstracts RabbitMQ but needs management API access
-- Service code still uses `IMessageBus`/`IMessageSubscriber` interfaces
-
-#### 3. Docker.DotNet (Orchestrator Service)
-
-The Orchestrator service uses `Docker.DotNet` for container management. This is legitimate because:
-- Container orchestration IS the service's core responsibility
-- No abstraction lib exists (Docker is the infrastructure being managed)
-- Service manages deployment topology, not application state
-
-```csharp
-// In OrchestratorService (allowed):
-using var client = new DockerClientConfiguration().CreateClient();
-await client.Containers.StartContainerAsync(containerId, new());
-
-// In any other service (forbidden - use lib-mesh for service calls)
-```
-
-#### 4. SDK Behavior Runtime (Client-Side Bytecode Execution)
-
-The ABML Local Runtime interpreter in `lib-behavior/Runtime/` is client-side code designed for embedded execution in game clients (copied to SDKs with namespace transformation). It does NOT use lib-state, lib-messaging, or lib-mesh because:
-- Runs on game clients, not Bannou servers
-- Designed for offline/embedded execution without network dependencies
-- State is provided by game engine, not Bannou state stores
-- No pub/sub needed - intents are returned synchronously
-
-```csharp
-// In lib-behavior/Runtime/ (allowed - copied to SDKs):
-public void Evaluate(ReadOnlySpan<double> inputState, Span<double> outputState)
-{
-    // Pure computation - no infrastructure dependencies
-    // State provided by game client, outputs returned directly
-}
-```
-
-**Key Principle**: Client SDK code designed for embedded execution is exempt from infrastructure lib requirements since it runs outside the Bannou service context.
-
-**Key Principle (General)**: These exceptions are for infrastructure lib internals or specialized services where the infrastructure IS the domain. Regular service code must always use the three infrastructure libs.
+**Key Principle**: Infrastructure libs exist to abstract these backends. Service code uses the infrastructure lib interfaces, never the backends directly.
 
 ---
 

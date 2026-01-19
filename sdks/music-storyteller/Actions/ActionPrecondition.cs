@@ -166,5 +166,6 @@ public sealed class ActionPrecondition
         return new ActionPrecondition(descriptions, s => preconditions.Any(p => p.IsSatisfied(s)));
     }
 
+    /// <inheritdoc />
     public override string ToString() => Description;
 }

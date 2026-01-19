@@ -204,6 +204,7 @@ public sealed class InformationState
         LocalEntropy = Math.Sqrt(variance) + mean * 0.5;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Info[AvgIC={AverageIC:F2}, H={LocalEntropy:F2}, Balance={SurpriseBalance:P0}]";

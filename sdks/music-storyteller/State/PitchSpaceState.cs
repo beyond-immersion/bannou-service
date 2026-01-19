@@ -192,6 +192,7 @@ public sealed class PitchSpaceState
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var region = InTonicization ? $" (region: {RegionalTonic})" : "";

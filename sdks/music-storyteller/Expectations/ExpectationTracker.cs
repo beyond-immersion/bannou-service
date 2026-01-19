@@ -414,6 +414,7 @@ public sealed class ExpectationResponse
     /// </summary>
     public bool? ExpectationMet { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"ExpResp[P={Probability:F2}, IC={InformationContent:F1} bits, Surprise={Surprise:F2}]";

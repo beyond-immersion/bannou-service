@@ -237,6 +237,7 @@ public sealed class HarmonicState
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Harmonic[Key={CurrentKey}, Chord={CurrentChord}, Function={CurrentFunction}]";

@@ -254,6 +254,7 @@ public sealed class ConsciousExpectations
         ActivePrediction = null;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (ActivePrediction != null)

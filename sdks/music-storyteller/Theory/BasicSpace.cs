@@ -208,6 +208,7 @@ public class BasicSpace
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"BasicSpace[{Root} {Mode}]";
