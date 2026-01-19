@@ -294,18 +294,25 @@ public readonly struct AttachmentPointInfo
 /// </summary>
 public readonly struct Vector2
 {
+    /// <summary>X component.</summary>
     public double X { get; }
+    /// <summary>Y component.</summary>
     public double Y { get; }
 
+    /// <summary>Creates a new 2D vector.</summary>
     public Vector2(double x, double y)
     {
         X = x;
         Y = y;
     }
 
+    /// <summary>Adds two vectors.</summary>
     public static Vector2 operator +(Vector2 a, Vector2 b) => new(a.X + b.X, a.Y + b.Y);
+    /// <summary>Subtracts one vector from another.</summary>
     public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.X - b.X, a.Y - b.Y);
+    /// <summary>Multiplies a vector by a scalar.</summary>
     public static Vector2 operator *(Vector2 v, double scalar) => new(v.X * scalar, v.Y * scalar);
 
+    /// <inheritdoc />
     public override string ToString() => $"({X:F2}, {Y:F2})";
 }

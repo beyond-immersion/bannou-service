@@ -203,6 +203,7 @@ public sealed class Voicing
     /// </summary>
     public IEnumerable<int> ToMidi() => Pitches.Select(p => p.MidiNumber);
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var notes = string.Join("-", Pitches.Select(p => p.ToString()));

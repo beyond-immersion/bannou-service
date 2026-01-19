@@ -682,22 +682,43 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
 
             case NodeType.Mesh:
                 root = new Node3D();
-                var meshInstance = new MeshInstance3D
+                MeshInstance3D? meshInstance = null;
+                try
                 {
-                    Name = "MeshInstance",
-                    Mesh = _placeholderMesh
-                };
-                root.AddChild(meshInstance);
+                    meshInstance = new MeshInstance3D
+                    {
+                        Name = "MeshInstance",
+                        Mesh = _placeholderMesh
+                    };
+                    root.AddChild(meshInstance);
+                    meshInstance = null; // Ownership transferred to parent
+                }
+                finally
+                {
+                    meshInstance?.Dispose();
+                }
 
                 // Add collision shape for physics picking
-                var staticBody = new StaticBody3D { Name = "StaticBody" };
-                var collisionShape = new CollisionShape3D
+                StaticBody3D? staticBody = null;
+                CollisionShape3D? collisionShape = null;
+                try
                 {
-                    Name = "CollisionShape",
-                    Shape = new BoxShape3D { Size = new GodotVec3(1, 1, 1) }
-                };
-                staticBody.AddChild(collisionShape);
-                root.AddChild(staticBody);
+                    staticBody = new StaticBody3D { Name = "StaticBody" };
+                    collisionShape = new CollisionShape3D
+                    {
+                        Name = "CollisionShape",
+                        Shape = new BoxShape3D { Size = new GodotVec3(1, 1, 1) }
+                    };
+                    staticBody.AddChild(collisionShape);
+                    collisionShape = null; // Ownership transferred to staticBody
+                    root.AddChild(staticBody);
+                    staticBody = null; // Ownership transferred to root
+                }
+                finally
+                {
+                    collisionShape?.Dispose();
+                    staticBody?.Dispose();
+                }
                 break;
 
             case NodeType.Marker:
@@ -706,12 +727,21 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
 
             case NodeType.Volume:
                 var area = new Area3D();
-                var volumeShape = new CollisionShape3D
+                CollisionShape3D? volumeShape = null;
+                try
                 {
-                    Name = "CollisionShape",
-                    Shape = new BoxShape3D { Size = new GodotVec3(1, 1, 1) }
-                };
-                area.AddChild(volumeShape);
+                    volumeShape = new CollisionShape3D
+                    {
+                        Name = "CollisionShape",
+                        Shape = new BoxShape3D { Size = new GodotVec3(1, 1, 1) }
+                    };
+                    area.AddChild(volumeShape);
+                    volumeShape = null; // Ownership transferred to parent
+                }
+                finally
+                {
+                    volumeShape?.Dispose();
+                }
                 root = area;
                 break;
 
@@ -865,7 +895,7 @@ public class GodotSceneComposerBridge : ISceneComposerBridge
             return null;
         }
 
-        var query = PhysicsRayQueryParameters3D.Create(origin, origin + direction * 1000f);
+        using var query = PhysicsRayQueryParameters3D.Create(origin, origin + direction * 1000f);
         var result = spaceState.IntersectRay(query);
 
         if (result.Count > 0 && result.TryGetValue("collider", out var colliderVariant))

@@ -46,6 +46,7 @@ public sealed class MelodyNote
     /// </summary>
     public int EndTick => StartTick + DurationTicks;
 
+    /// <inheritdoc />
     public override string ToString() => $"{Pitch}@{StartTick}({DurationTicks}t)";
 }
 

@@ -171,6 +171,9 @@ public sealed class AssetLoader : IAsyncDisposable
         }
 
         await _downloadSemaphore.WaitAsync(ct).ConfigureAwait(false);
+        Stream? bundleStream = null;
+        BannouBundleReader? reader = null;
+        LoadedBundle? loadedBundle = null;
         try
         {
             // Double-check after acquiring semaphore
@@ -178,7 +181,6 @@ public sealed class AssetLoader : IAsyncDisposable
                 return BundleLoadResult.AlreadyLoaded(bundleId);
 
             var stopwatch = Stopwatch.StartNew();
-            Stream bundleStream;
             var fromCache = false;
 
             // Check cache first
@@ -204,7 +206,9 @@ public sealed class AssetLoader : IAsyncDisposable
                 {
                     return BundleLoadResult.Failed(bundleId, $"Local file not found: {filePath}");
                 }
+#pragma warning disable CA2000 // Ownership transferred to BannouBundleReader which disposes stream
                 bundleStream = File.OpenRead(filePath);
+#pragma warning restore CA2000
                 fromCache = true;
             }
             else
@@ -212,14 +216,13 @@ public sealed class AssetLoader : IAsyncDisposable
                 bundleStream = await DownloadAndCacheAsync(bundleId, downloadUrl, progress, ct).ConfigureAwait(false);
             }
 
-            // Parse bundle
-            var reader = new BannouBundleReader(bundleStream);
+            // Parse bundle - reader takes ownership of bundleStream (leaveOpen=false)
+            reader = new BannouBundleReader(bundleStream);
+            bundleStream = null; // Ownership transferred to reader
             await reader.ReadHeaderAsync(ct).ConfigureAwait(false);
 
             if (reader.Manifest == null)
             {
-                reader.Dispose();
-                bundleStream.Dispose();
                 return BundleLoadResult.Failed(bundleId, "Failed to parse bundle manifest");
             }
 
@@ -229,8 +232,6 @@ public sealed class AssetLoader : IAsyncDisposable
                 var validationErrors = await ValidateBundleIntegrityAsync(reader, ct).ConfigureAwait(false);
                 if (validationErrors.Count > 0)
                 {
-                    reader.Dispose();
-                    bundleStream.Dispose();
                     var errorMessage = string.Join("; ", validationErrors);
                     _logger?.LogError("Bundle {BundleId} failed integrity validation: {Errors}", bundleId, errorMessage);
                     return BundleLoadResult.Failed(bundleId, $"Bundle integrity validation failed: {errorMessage}");
@@ -238,7 +239,7 @@ public sealed class AssetLoader : IAsyncDisposable
                 _logger?.LogDebug("Bundle {BundleId} passed integrity validation", bundleId);
             }
 
-            var loadedBundle = new LoadedBundle
+            loadedBundle = new LoadedBundle
             {
                 BundleId = bundleId,
                 Manifest = reader.Manifest,
@@ -246,18 +247,27 @@ public sealed class AssetLoader : IAsyncDisposable
                 Reader = reader
             };
 
+            // Ownership transferred to loadedBundle - prevent dispose in finally
+            reader = null;
+
             _registry.Register(loadedBundle);
 
             stopwatch.Stop();
+            var assetCount = loadedBundle.AssetIds.Count;
+            var compressedSize = loadedBundle.Manifest.TotalCompressedSize;
+
+            // Ownership transferred to registry - prevent dispose in finally
+            loadedBundle = null;
+
             _logger?.LogInformation("Loaded bundle {BundleId} with {AssetCount} assets in {Time}ms (cache: {FromCache})",
-                bundleId, loadedBundle.AssetIds.Count, stopwatch.ElapsedMilliseconds, fromCache);
+                bundleId, assetCount, stopwatch.ElapsedMilliseconds, fromCache);
 
             return BundleLoadResult.Success(
                 bundleId,
-                loadedBundle.AssetIds.Count,
+                assetCount,
                 fromCache,
                 stopwatch.ElapsedMilliseconds,
-                reader.Manifest.TotalCompressedSize);
+                compressedSize);
         }
         catch (Exception ex)
         {
@@ -266,6 +276,9 @@ public sealed class AssetLoader : IAsyncDisposable
         }
         finally
         {
+            loadedBundle?.Dispose();
+            reader?.Dispose();
+            bundleStream?.Dispose();
             _downloadSemaphore.Release();
         }
     }
@@ -281,15 +294,24 @@ public sealed class AssetLoader : IAsyncDisposable
         var result = await _downloader.DownloadAsync(downloadUrl, bundleId, progress: progress, ct: ct)
             .ConfigureAwait(false);
 
-        if (_cache != null)
+        // Caller takes ownership of result.Stream
+        try
         {
-            // Store in cache (create a copy of the stream)
-            var cacheStream = new MemoryStream(result.Stream.ToArray());
-            await _cache.StoreBundleAsync(bundleId, cacheStream, result.ContentHash, ct).ConfigureAwait(false);
-        }
+            if (_cache != null)
+            {
+                // Store in cache (create a copy of the stream)
+                var cacheStream = new MemoryStream(result.Stream.ToArray());
+                await _cache.StoreBundleAsync(bundleId, cacheStream, result.ContentHash, ct).ConfigureAwait(false);
+            }
 
-        result.Stream.Position = 0;
-        return result.Stream;
+            result.Stream.Position = 0;
+            return result.Stream;
+        }
+        catch
+        {
+            result.Stream.Dispose();
+            throw;
+        }
     }
 
     /// <summary>

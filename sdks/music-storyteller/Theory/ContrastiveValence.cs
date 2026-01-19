@@ -190,6 +190,7 @@ public sealed class ItpraResponse
     /// <summary>Final affective response.</summary>
     public double FinalAffect { get; init; }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"ITPRA[I={Imagination:F2}, T={Tension:F2}, P={Prediction:F2}, R={Reaction:F2}, A={Appraisal:F2}] → {FinalAffect:F2}";

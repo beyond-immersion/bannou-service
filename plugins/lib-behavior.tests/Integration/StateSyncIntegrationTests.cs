@@ -24,6 +24,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
     private readonly StateSync _stateSync;
     private readonly ControlGateManager _controlGates;
     private readonly BehaviorCompiler _compiler;
+    private readonly List<CinematicRunner> _createdRunners = new();
 
     public StateSyncIntegrationTests()
     {
@@ -35,6 +36,11 @@ public sealed class StateSyncIntegrationTests : IDisposable
 
     public void Dispose()
     {
+        foreach (var runner in _createdRunners)
+        {
+            runner.Dispose();
+        }
+        _createdRunners.Clear();
         _stateRegistry.Clear();
         _controlGates.Clear();
     }
@@ -167,10 +173,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(
-            interpreter,
-            _controlGates,
-            _stateSync);
+        var controller = CreateRunner(interpreter);
 
         var finalState = new EntityState
         {
@@ -207,10 +210,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entities = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(
-            interpreter,
-            _controlGates,
-            _stateSync);
+        var controller = CreateRunner(interpreter);
 
         // Start cinematic
         await controller.StartAsync(
@@ -257,10 +257,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(
-            interpreter,
-            _controlGates,
-            _stateSync);
+        var controller = CreateRunner(interpreter);
 
         await controller.StartAsync(
             "abort-cinematic",
@@ -286,10 +283,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(
-            interpreter,
-            _controlGates,
-            _stateSync);
+        var controller = CreateRunner(interpreter);
 
         await controller.StartAsync(
             "nosync-cinematic",
@@ -319,10 +313,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange - Full end-to-end scenario
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(
-            interpreter,
-            _controlGates,
-            _stateSync);
+        var controller = CreateRunner(interpreter);
 
         // Entity starts with no tracked state
         Assert.False(_stateRegistry.HasState(entityId));
@@ -382,8 +373,8 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller1 = new CinematicRunner(interpreter, _controlGates, _stateSync);
-        var controller2 = new CinematicRunner(CreateMockInterpreter(), _controlGates, _stateSync);
+        var controller1 = CreateRunner(interpreter);
+        var controller2 = CreateRunner(CreateMockInterpreter());
 
         // First cinematic
         await controller1.StartAsync("cinematic-1", new[] { entityId }, null, ControlHandoff.Instant());
@@ -421,7 +412,7 @@ public sealed class StateSyncIntegrationTests : IDisposable
         // Arrange
         var entityId = Guid.NewGuid();
         var interpreter = CreateMockInterpreter();
-        var controller = new CinematicRunner(interpreter, _controlGates, _stateSync);
+        var controller = CreateRunner(interpreter);
 
         var finalState = new EntityState
         {
@@ -543,5 +534,12 @@ public sealed class StateSyncIntegrationTests : IDisposable
         }
         var model = BehaviorModel.Deserialize(result.Bytecode);
         return new CinematicInterpreter(model);
+    }
+
+    private CinematicRunner CreateRunner(CinematicInterpreter interpreter)
+    {
+        var runner = new CinematicRunner(interpreter, _controlGates, _stateSync);
+        _createdRunners.Add(runner);
+        return runner;
     }
 }

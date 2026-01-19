@@ -10,7 +10,7 @@ info:
   version: 1.0.0
   x-event-subscriptions:
     # Service heartbeats from all bannou instances - used for deployment validation
-    - topic: bannou-service-heartbeats
+    - topic: bannou.service-heartbeats
       event: ServiceHeartbeatEvent
       handler: HandleServiceHeartbeat
   x-event-publications:
@@ -19,7 +19,7 @@ info:
       event: OrchestratorHealthPingEvent
       description: Published to verify pub/sub path is active
     # Service mappings broadcast
-    - topic: bannou-full-service-mappings
+    - topic: bannou.full-service-mappings
       event: FullServiceMappingsEvent
       description: Published to broadcast full service-to-appId mappings to mesh
 

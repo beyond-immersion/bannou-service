@@ -197,7 +197,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("📥 Waiting for capability manifest to be pushed by server...");
 
             var receiveBuffer = new byte[65536]; // Large buffer for capability manifest
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             try
             {
@@ -467,7 +467,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             // Wait for response
             var receiveBuffer = new byte[8192];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
 
             Console.WriteLine($"📥 Received routing response: {result.Count} bytes");
@@ -574,9 +574,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             // Wait for initial capability manifest
             Console.WriteLine("📥 Waiting for initial capability manifest...");
             var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts1.Token);
             Console.WriteLine($"📥 Received {result.Count} bytes");
 
             if (result.Count == 0)
@@ -641,10 +641,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             Console.WriteLine("✅ State update succeeded, waiting for capability manifest update...");
 
             // Wait for updated capability manifest
-            cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             try
             {
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts2.Token);
                 Console.WriteLine($"📥 Received capability update: {result.Count} bytes");
 
                 receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);

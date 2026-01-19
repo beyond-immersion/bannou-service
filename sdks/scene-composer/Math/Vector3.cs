@@ -6,16 +6,25 @@ namespace BeyondImmersion.Bannou.SceneComposer.Math;
 /// </summary>
 public readonly struct Vector3 : IEquatable<Vector3>
 {
+    /// <summary>Zero vector (0, 0, 0).</summary>
     public static readonly Vector3 Zero = new(0, 0, 0);
+    /// <summary>One vector (1, 1, 1).</summary>
     public static readonly Vector3 One = new(1, 1, 1);
+    /// <summary>Unit X vector (1, 0, 0).</summary>
     public static readonly Vector3 UnitX = new(1, 0, 0);
+    /// <summary>Unit Y vector (0, 1, 0).</summary>
     public static readonly Vector3 UnitY = new(0, 1, 0);
+    /// <summary>Unit Z vector (0, 0, 1).</summary>
     public static readonly Vector3 UnitZ = new(0, 0, 1);
 
+    /// <summary>X component.</summary>
     public double X { get; }
+    /// <summary>Y component.</summary>
     public double Y { get; }
+    /// <summary>Z component.</summary>
     public double Z { get; }
 
+    /// <summary>Creates a 3D vector from XYZ components.</summary>
     public Vector3(double x, double y, double z)
     {
         X = x;
@@ -46,21 +55,27 @@ public readonly struct Vector3 : IEquatable<Vector3>
         }
     }
 
+    /// <summary>Adds two vectors.</summary>
     public static Vector3 operator +(Vector3 a, Vector3 b) =>
         new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
 
+    /// <summary>Subtracts one vector from another.</summary>
     public static Vector3 operator -(Vector3 a, Vector3 b) =>
         new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 
+    /// <summary>Multiplies a vector by a scalar.</summary>
     public static Vector3 operator *(Vector3 v, double scalar) =>
         new(v.X * scalar, v.Y * scalar, v.Z * scalar);
 
+    /// <summary>Multiplies a scalar by a vector.</summary>
     public static Vector3 operator *(double scalar, Vector3 v) =>
         new(v.X * scalar, v.Y * scalar, v.Z * scalar);
 
+    /// <summary>Divides a vector by a scalar.</summary>
     public static Vector3 operator /(Vector3 v, double scalar) =>
         new(v.X / scalar, v.Y / scalar, v.Z / scalar);
 
+    /// <summary>Negates a vector.</summary>
     public static Vector3 operator -(Vector3 v) =>
         new(-v.X, -v.Y, -v.Z);
 
@@ -112,23 +127,29 @@ public readonly struct Vector3 : IEquatable<Vector3>
             System.Math.Max(a.Y, b.Y),
             System.Math.Max(a.Z, b.Z));
 
+    /// <inheritdoc />
     public bool Equals(Vector3 other) =>
         System.Math.Abs(X - other.X) < double.Epsilon &&
         System.Math.Abs(Y - other.Y) < double.Epsilon &&
         System.Math.Abs(Z - other.Z) < double.Epsilon;
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is Vector3 other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() =>
         HashCode.Combine(X, Y, Z);
 
+    /// <summary>Tests equality between two vectors.</summary>
     public static bool operator ==(Vector3 left, Vector3 right) =>
         left.Equals(right);
 
+    /// <summary>Tests inequality between two vectors.</summary>
     public static bool operator !=(Vector3 left, Vector3 right) =>
         !left.Equals(right);
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"({X:F3}, {Y:F3}, {Z:F3})";
 

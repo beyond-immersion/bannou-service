@@ -73,7 +73,7 @@ public class GitSyncServiceTests
     public async Task SyncRepositoryAsync_WithCancellation_ShouldThrowOrReturnFailed()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

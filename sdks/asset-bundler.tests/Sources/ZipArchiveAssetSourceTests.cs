@@ -227,7 +227,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             new FileInfo(zipPath),
             "cancel", "Cancel", "1.0");
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

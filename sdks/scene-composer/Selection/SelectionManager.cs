@@ -369,6 +369,7 @@ public class HoverChangedEventArgs : EventArgs
     /// </summary>
     public ComposerSceneNode? Current { get; }
 
+    /// <summary>Creates hover changed event args.</summary>
     public HoverChangedEventArgs(ComposerSceneNode? previous, ComposerSceneNode? current)
     {
         Previous = previous;

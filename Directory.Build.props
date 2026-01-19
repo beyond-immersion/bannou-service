@@ -4,6 +4,11 @@
     This file applies common properties across all projects in the repository.
   -->
 
+  <!-- Treat all warnings as errors to enforce code quality -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
   <!-- Suppress Moq-specific nullable inference warnings in test projects (T22 compliant) -->
   <!-- These are caused by Moq's generic type inference and cannot be fixed in our code. -->
   <!-- See: docs/reference/tenets/QUALITY.md (T22) -->

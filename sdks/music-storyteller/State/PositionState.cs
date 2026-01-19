@@ -127,6 +127,7 @@ public sealed class PositionState
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Position[Bar {Bar}/{TotalBars}, Beat {Beat:F1}, Phase {PhaseIndex + 1}/{TotalPhases} ({PhaseProgress:P0})]";

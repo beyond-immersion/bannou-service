@@ -14,7 +14,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerClient_RoundTrip_MessageReceived()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -65,7 +65,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerToClient_Snapshot_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -114,7 +114,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task Fuzz_DropAndDelay_DoesNotCrash()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -154,7 +154,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerToClient_OpportunityData_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -205,7 +205,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ClientToServer_OpportunityResponse_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -255,7 +255,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerToClient_CombatEvent_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -305,7 +305,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerToClient_Delta_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 
@@ -361,7 +361,7 @@ public class LiteNetLibTransportTests
     [Fact]
     public async Task ServerToClient_CinematicExtension_RoundTrip()
     {
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await using var server = new LiteNetLibServerTransport();
         await using var client = new LiteNetLibClientTransport();
 

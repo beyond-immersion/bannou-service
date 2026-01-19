@@ -105,12 +105,10 @@ public sealed class VoiceRoomManager : IDisposable
             }
 
             // Apply to scaled connection
-#pragma warning disable IDE0031
             if (_scaledConnection != null)
             {
                 _scaledConnection.IsMuted = value;
             }
-#pragma warning restore IDE0031
         }
     }
     private bool _isMuted;

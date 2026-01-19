@@ -32,7 +32,7 @@ public class Program
         internal set => _configuration = value;
     }
 
-    private static HttpClient _httpClient;
+    private static HttpClient? _httpClient;
     /// <summary>
     /// HTTP Client for making performing setup for tests.
     /// </summary>
@@ -44,11 +44,21 @@ public class Program
                 return _httpClient;
 
             // allow "insecure" (curl -k) SSL validation, for testing
-            _httpClient = new(new HttpClientHandler()
+            HttpClientHandler? handler = null;
+            try
             {
-                AllowAutoRedirect = true,
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-            });
+                handler = new HttpClientHandler
+                {
+                    AllowAutoRedirect = true,
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
+                _httpClient = new HttpClient(handler);
+                handler = null; // Ownership transferred to HttpClient
+            }
+            finally
+            {
+                handler?.Dispose();
+            }
 
             return _httpClient;
         }
@@ -210,7 +220,7 @@ public class Program
             try
             {
                 // Make a login request with a non-existent account - exercises mesh without publishing events
-                var warmupContent = new StringContent(
+                using var warmupContent = new StringContent(
                     "{\"email\":\"mesh-warmup-nonexistent@test.local\",\"password\":\"warmup-password-123\"}",
                     Encoding.UTF8,
                     "application/json");
@@ -519,7 +529,8 @@ public class Program
                         // Capture console output to detect pass/fail
                         var originalOut = Console.Out;
                         using var stringWriter = new StringWriter();
-                        Console.SetOut(new DualWriter(originalOut, stringWriter));
+                        using var dualWriter = new DualWriter(originalOut, stringWriter);
+                        Console.SetOut(dualWriter);
 
                         kvp.Value?.Invoke(Array.Empty<string>());
 

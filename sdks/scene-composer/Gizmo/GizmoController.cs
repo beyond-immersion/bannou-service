@@ -598,6 +598,7 @@ public record struct TransformDelta
     /// </summary>
     public Vector3 ScalePivot { get; init; }
 
+    /// <summary>Creates an identity transform delta.</summary>
     public TransformDelta()
     {
         Type = TransformDeltaType.None;
@@ -612,9 +613,13 @@ public record struct TransformDelta
 /// </summary>
 public enum TransformDeltaType
 {
+    /// <summary>No transformation.</summary>
     None,
+    /// <summary>Translation (position change).</summary>
     Translation,
+    /// <summary>Rotation.</summary>
     Rotation,
+    /// <summary>Scale change.</summary>
     Scale
 }
 
@@ -633,6 +638,7 @@ public class GizmoTransformEventArgs : EventArgs
     /// </summary>
     public IReadOnlyList<ComposerSceneNode> AffectedNodes { get; }
 
+    /// <summary>Creates gizmo transform event args.</summary>
     public GizmoTransformEventArgs(TransformDelta delta, IReadOnlyList<ComposerSceneNode> affectedNodes)
     {
         Delta = delta;

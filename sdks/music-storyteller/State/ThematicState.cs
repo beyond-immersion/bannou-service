@@ -213,6 +213,7 @@ public sealed class ThematicState
         return clone;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var mainName = MainMotif?.Id ?? "none";

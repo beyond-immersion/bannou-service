@@ -166,5 +166,6 @@ public abstract class MusicalActionBase : IMusicalAction
         return BaseCost;
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Category}:{Name}";
 }

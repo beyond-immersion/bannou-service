@@ -317,6 +317,45 @@ Suppressing warnings hides real issues until they manifest as runtime bugs. The 
 - CS0618 - When testing obsolete API detection, must use obsolete members
 - Suppress with scoped `#pragma warning disable/restore`
 
+**Constructor Ownership Transfer (CA2000 Only)**:
+- CA2000 - When passing a disposable to a constructor that takes ownership
+- The analyzer cannot track ownership transfer through constructor parameters
+- Suppress with **inline** `#pragma warning disable/restore CA2000` around ONLY the constructor call
+- Must include a comment explaining the ownership transfer
+- Example:
+  ```csharp
+  // CA2000: Ownership transferred to TapHandleImpl constructor - it will dispose
+  #pragma warning disable CA2000
+  var handle = new TapHandleImpl(subscription, ...);
+  #pragma warning restore CA2000
+  ```
+- **NOT allowed**: File-level, class-level, or project-level CA2000 suppression
+- **NOT allowed**: Suppressing CA2000 for actual leaks - only for constructor ownership transfer
+
+**Legacy Binding Redirect Warnings**:
+- CS1701, CS1702 - Assembly version binding redirect warnings
+- These warnings assume .NET Framework behavior that doesn't apply to .NET Core/.NET 5+
+- Suppress via `<NoWarn>1701;1702</NoWarn>` in project files (common pattern across .NET ecosystem)
+- See: [dotnet/roslyn#19640](https://github.com/dotnet/roslyn/issues/19640)
+
+**Reflection-Based Test Fixtures**:
+- CA1822, IDE0051, IDE0052 - When test helper classes/members are accessed via reflection
+- The analyzer cannot track reflection-based access
+- Suppress with **inline** `#pragma warning disable/restore` around the test fixture region only
+- Must include a comment explaining the reflection access pattern
+- Example:
+  ```csharp
+  // These test helper classes are accessed via reflection (IServiceAttribute.GetMethodsWithAttribute)
+  #pragma warning disable CA1822 // Mark members as static - testing instance member discovery
+  #pragma warning disable IDE0051 // Remove unused private members - accessed via reflection
+  #pragma warning disable IDE0052 // Remove unread private members - accessed via reflection
+  private class TestHelperClass { ... }
+  #pragma warning restore IDE0052
+  #pragma warning restore IDE0051
+  #pragma warning restore CA1822
+  ```
+- **NOT allowed**: Assembly-level suppressions in GlobalSuppressions.cs
+
 ### When Warnings Appear
 
 1. **FIRST**: Understand what the warning is telling you

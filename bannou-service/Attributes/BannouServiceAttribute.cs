@@ -38,8 +38,6 @@ public class BannouServiceAttribute : BaseServiceAttribute
     /// </summary>
     public string Name { get; }
 
-    private BannouServiceAttribute() { }
-
     /// <summary>
     /// Initializes a new instance of the BannouServiceAttribute with the specified configuration.
     /// </summary>

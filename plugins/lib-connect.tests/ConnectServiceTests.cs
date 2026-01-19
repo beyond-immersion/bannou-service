@@ -483,7 +483,7 @@ public class ConnectServiceTests
 
         // Verify that PublishAsync was called for permission recompilation via IMessageBus
         _mockMessageBus.Verify(x => x.TryPublishAsync(
-            "bannou-permission-recompile",
+            "bannou.permission-recompile",
             It.IsAny<PermissionRecompileEvent>(),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),

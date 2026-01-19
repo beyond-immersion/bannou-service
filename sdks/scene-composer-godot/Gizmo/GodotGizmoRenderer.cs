@@ -267,7 +267,7 @@ public class GodotGizmoRenderer
     private static ArrayMesh CreateMeshFromVertices(Vector3[] vertices)
     {
         var mesh = new ArrayMesh();
-        var arrays = new global::Godot.Collections.Array();
+        using var arrays = new global::Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
 
         arrays[(int)Mesh.ArrayType.Vertex] = vertices;

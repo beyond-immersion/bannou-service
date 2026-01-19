@@ -6,12 +6,17 @@ namespace BeyondImmersion.Bannou.SceneComposer.Math;
 /// </summary>
 public readonly struct Transform : IEquatable<Transform>
 {
+    /// <summary>Identity transform (zero position, identity rotation, unit scale).</summary>
     public static readonly Transform Identity = new(Vector3.Zero, Quaternion.Identity, Vector3.One);
 
+    /// <summary>Position component.</summary>
     public Vector3 Position { get; }
+    /// <summary>Rotation component.</summary>
     public Quaternion Rotation { get; }
+    /// <summary>Scale component.</summary>
     public Vector3 Scale { get; }
 
+    /// <summary>Creates a transform from position, rotation, and scale.</summary>
     public Transform(Vector3 position, Quaternion rotation, Vector3 scale)
     {
         Position = position;
@@ -19,8 +24,10 @@ public readonly struct Transform : IEquatable<Transform>
         Scale = scale;
     }
 
+    /// <summary>Creates a transform from position only (identity rotation, unit scale).</summary>
     public Transform(Vector3 position) : this(position, Quaternion.Identity, Vector3.One) { }
 
+    /// <summary>Creates a transform from position and rotation (unit scale).</summary>
     public Transform(Vector3 position, Quaternion rotation) : this(position, rotation, Vector3.One) { }
 
     /// <summary>
@@ -122,23 +129,29 @@ public readonly struct Transform : IEquatable<Transform>
     public Transform Clone() =>
         new(Position, Rotation, Scale);
 
+    /// <inheritdoc />
     public bool Equals(Transform other) =>
         Position == other.Position &&
         Rotation == other.Rotation &&
         Scale == other.Scale;
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is Transform other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() =>
         HashCode.Combine(Position, Rotation, Scale);
 
+    /// <summary>Tests equality between two transforms.</summary>
     public static bool operator ==(Transform left, Transform right) =>
         left.Equals(right);
 
+    /// <summary>Tests inequality between two transforms.</summary>
     public static bool operator !=(Transform left, Transform right) =>
         !left.Equals(right);
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"Transform(P:{Position}, R:{Rotation}, S:{Scale})";
 }

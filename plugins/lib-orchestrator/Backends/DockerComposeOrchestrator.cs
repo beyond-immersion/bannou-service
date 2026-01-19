@@ -71,7 +71,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Create Docker client using default configuration
         // Linux: unix:///var/run/docker.sock
         // Windows: npipe://./pipe/docker_engine
-        _client = new DockerClientConfiguration().CreateClient();
+        using var dockerConfig = new DockerClientConfiguration();
+        _client = dockerConfig.CreateClient();
 
         // Read configuration from injected configuration class (IMPLEMENTATION TENETS compliant)
         _configuredDockerNetwork = config.DockerNetwork ?? "bannou_default";

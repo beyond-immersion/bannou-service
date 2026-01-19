@@ -34,29 +34,40 @@ public readonly struct Section : IEquatable<Section>
     /// </summary>
     public Section CreateVariation() => new(Label, Variation + 1);
 
+    /// <inheritdoc />
     public bool Equals(Section other) => Label == other.Label && Variation == other.Variation;
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is Section other && Equals(other);
+    /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(Label, Variation);
 
+    /// <summary>Tests equality between two sections.</summary>
     public static bool operator ==(Section a, Section b) => a.Equals(b);
+    /// <summary>Tests inequality between two sections.</summary>
     public static bool operator !=(Section a, Section b) => !a.Equals(b);
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var primes = new string('\'', Variation);
         return $"{Label}{primes}";
     }
 
-    /// <summary>
-    /// Common section labels.
-    /// </summary>
+    /// <summary>Common section label A.</summary>
     public static Section A => new("A");
+    /// <summary>Common section label B.</summary>
     public static Section B => new("B");
+    /// <summary>Common section label C.</summary>
     public static Section C => new("C");
+    /// <summary>Introduction section.</summary>
     public static Section Intro => new("Intro");
+    /// <summary>Verse section.</summary>
     public static Section Verse => new("Verse");
+    /// <summary>Chorus section.</summary>
     public static Section Chorus => new("Chorus");
+    /// <summary>Bridge section.</summary>
     public static Section Bridge => new("Bridge");
+    /// <summary>Outro/coda section.</summary>
     public static Section Outro => new("Outro");
 }
 
@@ -167,6 +178,7 @@ public sealed class Form
         return new Form(pattern, sections, defaultBarsPerSection);
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Name}: {string.Join("-", Sections)}";
 }
 
@@ -205,6 +217,7 @@ public sealed class FormSection
         Bars = bars;
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Section} (bars {StartBar + 1}-{EndBar})";
 }
 

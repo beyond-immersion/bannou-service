@@ -6,9 +6,22 @@ namespace BeyondImmersion.BannouService.Actor.Tests;
 /// <summary>
 /// Unit tests for ActorRegistry - thread-safe registry operations.
 /// </summary>
-public class ActorRegistryTests
+public class ActorRegistryTests : IAsyncLifetime
 {
-    private static IActorRunner CreateMockRunner(
+    private readonly List<IActorRunner> _createdRunners = new();
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        foreach (var runner in _createdRunners)
+        {
+            await runner.DisposeAsync();
+        }
+        _createdRunners.Clear();
+    }
+
+    private IActorRunner CreateMockRunner(
         string actorId,
         Guid templateId,
         string category = "npc-brain",
@@ -21,6 +34,8 @@ public class ActorRegistryTests
         mock.Setup(r => r.Category).Returns(category);
         mock.Setup(r => r.CharacterId).Returns(characterId);
         mock.Setup(r => r.Status).Returns(status);
+        mock.Setup(r => r.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _createdRunners.Add(mock.Object);
         return mock.Object;
     }
 
@@ -105,7 +120,10 @@ public class ActorRegistryTests
         registry.TryRegister("actor-1", runner);
 
         // Act
+        // CA2000: removedRunner is the same object as runner, which is already tracked in _createdRunners
+#pragma warning disable CA2000
         var result = registry.TryRemove("actor-1", out var removedRunner);
+#pragma warning restore CA2000
 
         // Assert
         Assert.True(result);
@@ -120,7 +138,10 @@ public class ActorRegistryTests
         var registry = new ActorRegistry();
 
         // Act
+        // CA2000: runner is null when TryRemove returns false - nothing to dispose
+#pragma warning disable CA2000
         var result = registry.TryRemove("nonexistent", out var runner);
+#pragma warning restore CA2000
 
         // Assert
         Assert.False(result);

@@ -161,6 +161,7 @@ public sealed class HarmonicFunction
         return Chord.FromScaleDegree(scale, Degree, seventh);
     }
 
+    /// <inheritdoc />
     public override string ToString() => RomanNumeral;
 }
 
@@ -419,5 +420,6 @@ public sealed class Cadence
         return Degrees.Select(d => Chord.FromScaleDegree(scale, d, sevenths));
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Type}: {string.Join("-", Degrees)}";
 }

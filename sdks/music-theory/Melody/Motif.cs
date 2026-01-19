@@ -104,6 +104,7 @@ public sealed class MotifTransformationRecord
     public static MotifTransformationRecord Sequenced(int step) =>
         new(MotifTransformation.Sequence, step);
 
+    /// <inheritdoc />
     public override string ToString() => Parameter.HasValue
         ? $"{Type}({Parameter.Value})"
         : Type.ToString();
@@ -322,6 +323,7 @@ public sealed class Motif
         public static Motif Mordent => new([0, 2, 0], [0.25, 0.25, 0.5]);
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var intervals = string.Join(",", Intervals);

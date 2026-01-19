@@ -43881,7 +43881,7 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.DeploymentEvent">
             <summary>
             Published when deployment state changes.
-            <br/>Topic: bannou-deployment-events
+            <br/>Topic: bannou.deployment-events
             <br/>
             </summary>
         </member>
@@ -43928,7 +43928,7 @@
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ServiceRestartEvent">
             <summary>
             Published when a service is restarted.
-            <br/>Topic: bannou-service-lifecycle
+            <br/>Topic: bannou.service-lifecycle
             <br/>
             </summary>
         </member>
@@ -43962,7 +43962,7 @@
             Published by orchestrator when configuration or secrets change.
             <br/>All containers receive this event via RabbitMQ. Plugins decide if they care
             <br/>based on the changedKeys prefixes and request restart if needed.
-            <br/>Topic: bannou-configuration-events
+            <br/>Topic: bannou.configuration-events
             <br/>
             </summary>
         </member>
@@ -58382,6 +58382,11 @@
             metadata, along with the message.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.GetOrCreateFactory">
+            <summary>
+            Gets or creates the shared logger factory. Disposed via DisposeFactory() on shutdown.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateApplicationLogger">
             <summary>
             Create a JSON-enabled service logger.
@@ -58390,6 +58395,11 @@
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateServiceLogger(System.String)">
             <summary>
             Create a simple service logger.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.DisposeFactory">
+            <summary>
+            Disposes the shared logger factory. Call on application shutdown.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateServiceLogger``1">

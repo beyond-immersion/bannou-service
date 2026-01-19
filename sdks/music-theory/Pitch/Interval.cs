@@ -141,22 +141,38 @@ public readonly struct Interval : IEquatable<Interval>, IComparable<Interval>
         _ => $"{Semitones}st"
     };
 
+    /// <summary>Adds two intervals together.</summary>
     public static Interval operator +(Interval a, Interval b) => new(a.Semitones + b.Semitones);
+    /// <summary>Subtracts one interval from another.</summary>
     public static Interval operator -(Interval a, Interval b) => new(a.Semitones - b.Semitones);
+    /// <summary>Negates an interval.</summary>
     public static Interval operator -(Interval a) => new(-a.Semitones);
+    /// <summary>Tests equality between two intervals.</summary>
     public static bool operator ==(Interval a, Interval b) => a.Semitones == b.Semitones;
+    /// <summary>Tests inequality between two intervals.</summary>
     public static bool operator !=(Interval a, Interval b) => a.Semitones != b.Semitones;
+    /// <summary>Tests if one interval is smaller than another.</summary>
     public static bool operator <(Interval a, Interval b) => a.Semitones < b.Semitones;
+    /// <summary>Tests if one interval is greater than another.</summary>
     public static bool operator >(Interval a, Interval b) => a.Semitones > b.Semitones;
+    /// <summary>Tests if one interval is smaller than or equal to another.</summary>
     public static bool operator <=(Interval a, Interval b) => a.Semitones <= b.Semitones;
+    /// <summary>Tests if one interval is greater than or equal to another.</summary>
     public static bool operator >=(Interval a, Interval b) => a.Semitones >= b.Semitones;
 
+    /// <summary>Implicitly converts an interval to its semitone count.</summary>
     public static implicit operator int(Interval interval) => interval.Semitones;
+    /// <summary>Explicitly converts a semitone count to an interval.</summary>
     public static explicit operator Interval(int semitones) => new(semitones);
 
+    /// <inheritdoc />
     public bool Equals(Interval other) => Semitones == other.Semitones;
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is Interval other && Equals(other);
+    /// <inheritdoc />
     public override int GetHashCode() => Semitones.GetHashCode();
+    /// <inheritdoc />
     public int CompareTo(Interval other) => Semitones.CompareTo(other.Semitones);
+    /// <inheritdoc />
     public override string ToString() => Name;
 }

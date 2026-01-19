@@ -146,16 +146,24 @@ public sealed class RabbitMQConnectionManager : IAsyncDisposable
         }
 
         // Try to get from pool
-        if (_channelPool.TryTake(out var channel))
+        while (_channelPool.TryTake(out var channel))
         {
             if (channel.IsOpen)
             {
-                return channel;
+                return channel; // Ownership transferred to caller
             }
-            // Channel was closed, create new one
+            // Channel was closed, close it properly before trying next
+            try
+            {
+                await channel.CloseAsync(cancellationToken);
+            }
+            catch
+            {
+                // Ignore errors during close of already-closed channel
+            }
         }
 
-        // Create new channel
+        // No usable channel in pool, create new one
         return await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
     }
 

@@ -42,11 +42,9 @@ public class RtpStreamHelper : IDisposable
     private long _packetsLost;
     private DateTime _startTime;
     // Note: Accurate jitter calculation requires tracking inter-arrival times
-    // and comparing to expected RTP timestamp intervals. This is a placeholder
-    // for future implementation when RTCP receiver reports are processed.
-#pragma warning disable CS0649 // Field never assigned - placeholder for future RTCP integration
-    private double _jitterMs;
-#pragma warning restore CS0649
+    // and comparing to expected RTP timestamp intervals. Currently returns 0.0
+    // until RTCP receiver reports processing is implemented.
+    private double _jitterMs = 0.0;
 
     /// <summary>
     /// Maximum number of SSRC sources to track for de-duplication.

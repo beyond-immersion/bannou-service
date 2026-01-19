@@ -35,7 +35,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Expose internals to test project -->

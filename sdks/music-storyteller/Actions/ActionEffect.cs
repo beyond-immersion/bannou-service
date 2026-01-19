@@ -197,6 +197,7 @@ public sealed class ActionEffect
         }
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return Type switch

@@ -116,7 +116,7 @@ public sealed class AssetManager : IAsyncDisposable
 
         logger?.LogDebug("Connecting to {ServerUrl} with email {Email}", serverUrl, email);
 
-        var source = await BannouWebSocketAssetSource.ConnectAsync(
+        BannouWebSocketAssetSource? source = await BannouWebSocketAssetSource.ConnectAsync(
             serverUrl,
             email,
             password,
@@ -124,7 +124,17 @@ public sealed class AssetManager : IAsyncDisposable
             sourceLogger,
             ct).ConfigureAwait(false);
 
-        return CreateFromSource(source, options, loggerFactory, logger);
+        try
+        {
+            var result = await CreateFromSourceAsync(source, options, loggerFactory, logger).ConfigureAwait(false);
+            source = null; // Ownership transferred to AssetManager
+            return result;
+        }
+        finally
+        {
+            if (source != null)
+                await source.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -152,14 +162,24 @@ public sealed class AssetManager : IAsyncDisposable
 
         logger?.LogDebug("Connecting to {ServerUrl} with token", serverUrl);
 
-        var source = await BannouWebSocketAssetSource.ConnectWithTokenAsync(
+        BannouWebSocketAssetSource? source = await BannouWebSocketAssetSource.ConnectWithTokenAsync(
             serverUrl,
             serviceToken,
             options.Realm,
             sourceLogger,
             ct).ConfigureAwait(false);
 
-        return CreateFromSource(source, options, loggerFactory, logger);
+        try
+        {
+            var result = await CreateFromSourceAsync(source, options, loggerFactory, logger).ConfigureAwait(false);
+            source = null; // Ownership transferred to AssetManager
+            return result;
+        }
+        finally
+        {
+            if (source != null)
+                await source.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -170,7 +190,7 @@ public sealed class AssetManager : IAsyncDisposable
     /// <param name="options">Optional configuration.</param>
     /// <param name="loggerFactory">Optional logger factory.</param>
     /// <returns>AssetManager wrapping the client.</returns>
-    public static AssetManager FromClient(
+    public static async Task<AssetManager> FromClientAsync(
         IBannouClient client,
         AssetManagerOptions? options = null,
         ILoggerFactory? loggerFactory = null)
@@ -184,39 +204,63 @@ public sealed class AssetManager : IAsyncDisposable
         var logger = loggerFactory?.CreateLogger<AssetManager>();
         var sourceLogger = loggerFactory?.CreateLogger<BannouWebSocketAssetSource>();
 
-        var source = new BannouWebSocketAssetSource(client, options.Realm, sourceLogger);
-        return CreateFromSource(source, options, loggerFactory, logger);
+        BannouWebSocketAssetSource? source = new BannouWebSocketAssetSource(client, options.Realm, sourceLogger);
+        try
+        {
+            var result = await CreateFromSourceAsync(source, options, loggerFactory, logger).ConfigureAwait(false);
+            source = null; // Ownership transferred to AssetManager
+            return result;
+        }
+        finally
+        {
+            if (source != null)
+                await source.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
-    private static AssetManager CreateFromSource(
+    private static async Task<AssetManager> CreateFromSourceAsync(
         BannouWebSocketAssetSource source,
         AssetManagerOptions options,
         ILoggerFactory? loggerFactory,
         ILogger<AssetManager>? logger)
     {
         IAssetCache? cache = null;
-        if (options.EnableCache)
+        AssetLoader? loader = null;
+        try
         {
-            var cacheLogger = loggerFactory?.CreateLogger<FileAssetCache>();
-            cache = new FileAssetCache(options.CacheDirectory, options.MaxCacheSizeBytes, cacheLogger);
-            logger?.LogDebug("File cache enabled at {CacheDir} (max {MaxSize} bytes)",
-                options.CacheDirectory, options.MaxCacheSizeBytes);
+            if (options.EnableCache)
+            {
+                var cacheLogger = loggerFactory?.CreateLogger<FileAssetCache>();
+                cache = new FileAssetCache(options.CacheDirectory, options.MaxCacheSizeBytes, cacheLogger);
+                logger?.LogDebug("File cache enabled at {CacheDir} (max {MaxSize} bytes)",
+                    options.CacheDirectory, options.MaxCacheSizeBytes);
+            }
+
+            var loaderOptions = new AssetLoaderOptions
+            {
+                ValidateBundles = options.ValidateBundles,
+                MaxConcurrentDownloads = options.MaxConcurrentDownloads,
+                PreferCache = options.PreferCache
+            };
+
+            var loaderLogger = loggerFactory?.CreateLogger<AssetLoader>();
+            loader = new AssetLoader(source, cache, loaderOptions, loaderLogger);
+
+            logger?.LogInformation("AssetManager initialized (cache: {CacheEnabled}, validation: {Validation})",
+                options.EnableCache, options.ValidateBundles);
+
+            var result = new AssetManager(source, loader, cache, options, logger);
+            // Ownership of cache and loader transferred to AssetManager
+            cache = null;
+            loader = null;
+            return result;
         }
-
-        var loaderOptions = new AssetLoaderOptions
+        finally
         {
-            ValidateBundles = options.ValidateBundles,
-            MaxConcurrentDownloads = options.MaxConcurrentDownloads,
-            PreferCache = options.PreferCache
-        };
-
-        var loaderLogger = loggerFactory?.CreateLogger<AssetLoader>();
-        var loader = new AssetLoader(source, cache, loaderOptions, loaderLogger);
-
-        logger?.LogInformation("AssetManager initialized (cache: {CacheEnabled}, validation: {Validation})",
-            options.EnableCache, options.ValidateBundles);
-
-        return new AssetManager(source, loader, cache, options, logger);
+            if (loader != null)
+                await loader.DisposeAsync().ConfigureAwait(false);
+            (cache as IDisposable)?.Dispose();
+        }
     }
 
     /// <summary>

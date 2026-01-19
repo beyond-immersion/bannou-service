@@ -135,6 +135,7 @@ public sealed class NamedMotif
         return new NamedMotif(id, name, new Motif(intervals, durations), category, styleId, description, weight);
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Name} ({Category})";
 }
 

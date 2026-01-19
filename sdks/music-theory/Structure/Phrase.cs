@@ -84,6 +84,7 @@ public sealed class Phrase
     /// </summary>
     public int EndTick => StartTick + DurationTicks;
 
+    /// <inheritdoc />
     public override string ToString() => $"{Type} [{StartTick}-{EndTick}] ({Notes.Count} notes)";
 }
 

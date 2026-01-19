@@ -153,7 +153,17 @@ public class SipRegistrationHelper : IDisposable
                 ? new IPEndPoint(IPAddress.Any, localPort)
                 : new IPEndPoint(IPAddress.Any, 0); // Auto-select port
 
-            _sipTransport.AddSIPChannel(new SIPUDPChannel(listenEndpoint));
+            // SIPTransport takes ownership of the channel and disposes it on Shutdown()
+            SIPUDPChannel? sipChannel = new SIPUDPChannel(listenEndpoint);
+            try
+            {
+                _sipTransport.AddSIPChannel(sipChannel);
+                sipChannel = null; // Ownership transferred to SIPTransport
+            }
+            finally
+            {
+                sipChannel?.Dispose(); // Only disposes if AddSIPChannel threw
+            }
 
             // Create SIP account credentials
             var sipAccountName = credentials.Username;

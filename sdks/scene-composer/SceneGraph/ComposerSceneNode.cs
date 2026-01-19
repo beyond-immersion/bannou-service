@@ -378,6 +378,7 @@ public class ComposerSceneNode
         return clone;
     }
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"Node({Id:N}, {Name}, {NodeType})";
 }
@@ -412,11 +413,13 @@ public class AttachmentPoint
     /// </summary>
     public Guid? AttachedNodeId { get; set; }
 
+    /// <summary>Creates a new attachment point with the specified name.</summary>
     public AttachmentPoint(string name)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
+    /// <summary>Creates a clone of this attachment point.</summary>
     public AttachmentPoint Clone() => new(Name)
     {
         LocalTransform = LocalTransform,
@@ -439,11 +442,13 @@ public class Affordance
     /// </summary>
     public Dictionary<string, object> Parameters { get; } = new();
 
+    /// <summary>Creates a new affordance of the specified type.</summary>
     public Affordance(AffordanceType type)
     {
         Type = type;
     }
 
+    /// <summary>Creates a clone of this affordance.</summary>
     public Affordance Clone()
     {
         var clone = new Affordance(Type);
@@ -503,11 +508,13 @@ public class AssetSlot
     /// </summary>
     public List<AssetReference> Variations { get; } = new();
 
+    /// <summary>Creates a new asset slot with the specified type.</summary>
     public AssetSlot(string slotType)
     {
         SlotType = slotType ?? throw new ArgumentNullException(nameof(slotType));
     }
 
+    /// <summary>Creates a clone of this asset slot.</summary>
     public AssetSlot Clone()
     {
         var clone = new AssetSlot(SlotType)
@@ -568,11 +575,13 @@ public class VolumeShape
     /// </summary>
     public double Height { get; set; } = 1.0;
 
+    /// <summary>Creates a new volume shape of the specified type.</summary>
     public VolumeShape(VolumeShapeType shapeType)
     {
         ShapeType = shapeType;
     }
 
+    /// <summary>Creates a clone of this volume shape.</summary>
     public VolumeShape Clone() => new(ShapeType)
     {
         Size = Size,

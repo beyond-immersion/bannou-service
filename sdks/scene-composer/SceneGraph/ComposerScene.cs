@@ -215,6 +215,7 @@ public class ComposerScene
         _nodeIndex.Clear();
     }
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"Scene({SceneId}, {Name}, {SceneType}, {NodeCount} nodes)";
 }

@@ -184,15 +184,25 @@ public class SceneNodeData
 /// </summary>
 public class TransformData
 {
+    /// <summary>X position.</summary>
     public double PositionX { get; init; }
+    /// <summary>Y position.</summary>
     public double PositionY { get; init; }
+    /// <summary>Z position.</summary>
     public double PositionZ { get; init; }
+    /// <summary>X rotation (quaternion).</summary>
     public double RotationX { get; init; }
+    /// <summary>Y rotation (quaternion).</summary>
     public double RotationY { get; init; }
+    /// <summary>Z rotation (quaternion).</summary>
     public double RotationZ { get; init; }
+    /// <summary>W rotation (quaternion).</summary>
     public double RotationW { get; init; } = 1.0;
+    /// <summary>X scale.</summary>
     public double ScaleX { get; init; } = 1.0;
+    /// <summary>Y scale.</summary>
     public double ScaleY { get; init; } = 1.0;
+    /// <summary>Z scale.</summary>
     public double ScaleZ { get; init; } = 1.0;
 }
 
@@ -201,8 +211,11 @@ public class TransformData
 /// </summary>
 public class AssetReferenceData
 {
+    /// <summary>Bundle identifier.</summary>
     public string BundleId { get; init; } = string.Empty;
+    /// <summary>Asset identifier within the bundle.</summary>
     public string AssetId { get; init; } = string.Empty;
+    /// <summary>Optional variant identifier.</summary>
     public string? VariantId { get; init; }
 }
 

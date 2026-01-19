@@ -50,7 +50,8 @@ public class HeartbeatEmitterTests
     public void ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<HeartbeatEmitter>();
-        Assert.NotNull(CreateEmitter());
+        using var emitter = CreateEmitter();
+        Assert.NotNull(emitter);
     }
 
     #endregion

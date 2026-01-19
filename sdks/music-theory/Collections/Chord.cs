@@ -326,5 +326,6 @@ public sealed class Chord
         return new Chord(root, quality);
     }
 
+    /// <inheritdoc />
     public override string ToString() => Symbol;
 }

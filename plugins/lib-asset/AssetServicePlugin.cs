@@ -184,17 +184,21 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             "Waiting for MinIO connectivity at {Endpoint} (max {MaxRetries} attempts, {Delay}ms between retries)",
             options.Endpoint, maxRetries, retryDelayMs);
 
-        var testClient = new MinioClient()
+        // MinioClient fluent API returns 'this'; Build() also returns 'this' as IMinioClient
+        // The using below disposes the same object that was created by new MinioClient()
+#pragma warning disable CA2000
+        var builder = new MinioClient()
             .WithEndpoint(options.Endpoint)
             .WithCredentials(options.AccessKey, options.SecretKey)
             .WithRegion(options.Region);
+#pragma warning restore CA2000
 
         if (options.UseSSL)
         {
-            testClient = testClient.WithSSL();
+            _ = builder.WithSSL();
         }
 
-        var client = testClient.Build();
+        using var client = builder.Build();
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {

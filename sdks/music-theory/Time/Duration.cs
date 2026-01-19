@@ -195,22 +195,33 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>
         };
     }
 
+    /// <inheritdoc />
     public bool Equals(Duration other)
     {
         return Math.Abs(Beats - other.Beats) < 0.001;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is Duration other && Equals(other);
+    /// <inheritdoc />
     public override int GetHashCode() => Beats.GetHashCode();
+    /// <inheritdoc />
     public int CompareTo(Duration other) => Beats.CompareTo(other.Beats);
 
+    /// <summary>Tests equality between two durations.</summary>
     public static bool operator ==(Duration a, Duration b) => a.Equals(b);
+    /// <summary>Tests inequality between two durations.</summary>
     public static bool operator !=(Duration a, Duration b) => !a.Equals(b);
+    /// <summary>Tests if one duration is shorter than another.</summary>
     public static bool operator <(Duration a, Duration b) => a.Beats < b.Beats;
+    /// <summary>Tests if one duration is longer than another.</summary>
     public static bool operator >(Duration a, Duration b) => a.Beats > b.Beats;
+    /// <summary>Tests if one duration is shorter than or equal to another.</summary>
     public static bool operator <=(Duration a, Duration b) => a.Beats <= b.Beats;
+    /// <summary>Tests if one duration is longer than or equal to another.</summary>
     public static bool operator >=(Duration a, Duration b) => a.Beats >= b.Beats;
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var name = Value switch

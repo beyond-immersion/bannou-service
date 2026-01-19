@@ -10,8 +10,6 @@ public sealed class ServiceTest
     public string Type { get; }
     public Func<ITestClient, string[], Task<TestResult>> TestAction { get; }
 
-    private ServiceTest() { }
-
     public ServiceTest(Func<ITestClient, string[], Task<TestResult>> testAction, string name, string type, string description)
     {
         Name = name;

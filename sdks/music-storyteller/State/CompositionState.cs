@@ -393,6 +393,7 @@ public sealed class CompositionState
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"CompositionState[Bar {Position.Bar}, {Emotional}, {Harmonic.CurrentFunction}]";

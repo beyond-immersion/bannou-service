@@ -136,10 +136,30 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Fact]
     public void EncodeJWT()
     {
-        var jwtBuilder = CreateJWTBuilder();
+        var publicKeyBytes = Convert.FromBase64String(Test_Base64PublicKey);
+        var publicKey = Encoding.UTF8.GetString(publicKeyBytes);
+        var privateKeyBytes = Convert.FromBase64String(Test_Base64PrivateKey);
+        var privateKey = Encoding.UTF8.GetString(privateKeyBytes);
+
+        using var publicRSA = RSA.Create();
+        publicRSA.ImportFromPem(publicKey);
+        using var privateRSA = RSA.Create();
+        privateRSA.ImportFromPem(privateKey);
+
+        var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
+        var jwtSerializer = new SystemTextSerializer();
+        var jwtUrlEncoder = new JwtBase64UrlEncoder();
+        var jwtEncoder = new JwtEncoder(jwtAlgorithm, jwtSerializer, jwtUrlEncoder);
+
+        var jwtBuilder = new JwtBuilder();
+        jwtBuilder.WithJsonSerializer(jwtSerializer);
+        jwtBuilder.WithDateTimeProvider(new UtcDateTimeProvider());
+        jwtBuilder.WithUrlEncoder(jwtUrlEncoder);
+        jwtBuilder.WithAlgorithm(jwtAlgorithm);
+        jwtBuilder.WithEncoder(jwtEncoder);
+
         jwtBuilder.AddHeader("email", "test_user1@celestialmail.com");
         jwtBuilder.AddHeader("display-name", "Test User 1");
-
         jwtBuilder.Id(Guid.NewGuid().ToString());
         jwtBuilder.Issuer("UNIT_TEST_FRAMEWORK");
         jwtBuilder.IssuedAt(DateTime.Now);
@@ -154,10 +174,35 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Fact]
     public void DecodeJWT()
     {
-        var jwtBuilder = CreateJWTBuilder();
+        var publicKeyBytes = Convert.FromBase64String(Test_Base64PublicKey);
+        var publicKey = Encoding.UTF8.GetString(publicKeyBytes);
+        var privateKeyBytes = Convert.FromBase64String(Test_Base64PrivateKey);
+        var privateKey = Encoding.UTF8.GetString(privateKeyBytes);
+
+        using var publicRSA = RSA.Create();
+        publicRSA.ImportFromPem(publicKey);
+        using var privateRSA = RSA.Create();
+        privateRSA.ImportFromPem(privateKey);
+
+        var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
+        var jwtSerializer = new SystemTextSerializer();
+        var jwtDateTimeProvider = new UtcDateTimeProvider();
+        var jwtUrlEncoder = new JwtBase64UrlEncoder();
+        var jwtValidator = new JwtValidator(jwtSerializer, jwtDateTimeProvider);
+        var jwtEncoder = new JwtEncoder(jwtAlgorithm, jwtSerializer, jwtUrlEncoder);
+        var jwtDecoder = new JwtDecoder(jwtSerializer, jwtValidator, jwtUrlEncoder, jwtAlgorithm);
+
+        var jwtBuilder = new JwtBuilder();
+        jwtBuilder.WithJsonSerializer(jwtSerializer);
+        jwtBuilder.WithDateTimeProvider(jwtDateTimeProvider);
+        jwtBuilder.WithUrlEncoder(jwtUrlEncoder);
+        jwtBuilder.WithAlgorithm(jwtAlgorithm);
+        jwtBuilder.WithEncoder(jwtEncoder);
+        jwtBuilder.WithDecoder(jwtDecoder);
+        jwtBuilder.WithValidator(jwtValidator);
+
         jwtBuilder.AddHeader("email", "test_user1@celestialmail.com");
         jwtBuilder.AddHeader("display-name", "Test User 1");
-
         jwtBuilder.Id(Guid.NewGuid().ToString());
         jwtBuilder.Issuer("UNIT_TEST_FRAMEWORK");
         jwtBuilder.IssuedAt(DateTime.Now);
@@ -173,38 +218,6 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         Assert.NotNull(jwtObj);
         Assert.Equal("UNIT_TEST_FRAMEWORK", jwtObj["iss"]?.GetValue<string>());
         Assert.Equal("user", jwtObj["role"]?.GetValue<string>());
-    }
-
-    private JwtBuilder CreateJWTBuilder()
-    {
-        var jwtBuilder = new JwtBuilder();
-
-        var publicKeyByes = Convert.FromBase64String(Test_Base64PublicKey);
-        var publicKey = Encoding.UTF8.GetString(publicKeyByes);
-        var privateKeyBytes = Convert.FromBase64String(Test_Base64PrivateKey);
-        var privateKey = Encoding.UTF8.GetString(privateKeyBytes);
-
-        var publicRSA = RSA.Create();
-        publicRSA.ImportFromPem(publicKey);
-        var privateRSA = RSA.Create();
-        privateRSA.ImportFromPem(privateKey);
-        var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
-
-        var jwtSerializer = new SystemTextSerializer();
-        var jwtDateTimeProvider = new UtcDateTimeProvider();
-        var jwtUrlEncoder = new JwtBase64UrlEncoder();
-        var jwtValidator = new JwtValidator(jwtSerializer, jwtDateTimeProvider);
-        var jwtEncoder = new JwtEncoder(jwtAlgorithm, jwtSerializer, jwtUrlEncoder);
-        var jwtDecoder = new JwtDecoder(jwtSerializer, jwtValidator, jwtUrlEncoder, jwtAlgorithm);
-        jwtBuilder.WithJsonSerializer(jwtSerializer);
-        jwtBuilder.WithDateTimeProvider(jwtDateTimeProvider);
-        jwtBuilder.WithUrlEncoder(jwtUrlEncoder);
-        jwtBuilder.WithAlgorithm(jwtAlgorithm);
-        jwtBuilder.WithEncoder(jwtEncoder);
-        jwtBuilder.WithDecoder(jwtDecoder);
-        jwtBuilder.WithValidator(jwtValidator);
-
-        return jwtBuilder;
     }
 
 }

@@ -179,5 +179,6 @@ public sealed class Scale
         public static Scale AMixolydian => new(PitchClass.A, ModeType.Mixolydian);
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Root.ToSharpName()} {Mode}";
 }

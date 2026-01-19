@@ -169,6 +169,7 @@ public sealed class MechanismState
         };
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Mechanisms[Total={TotalActivation:F2}, Dominant={DominantMechanism}, Expectancy={MusicalExpectancy:F2}]";

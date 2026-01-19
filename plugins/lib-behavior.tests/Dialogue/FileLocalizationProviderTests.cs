@@ -16,6 +16,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly FileLocalizationProvider _provider;
+    private readonly List<YamlFileLocalizationSource> _createdSources = new();
 
     public FileLocalizationProviderTests()
     {
@@ -31,11 +32,25 @@ public sealed class FileLocalizationProviderTests : IDisposable
 
     public void Dispose()
     {
+        foreach (var source in _createdSources)
+        {
+            source.Dispose();
+        }
+        _createdSources.Clear();
         _provider.Dispose();
         if (Directory.Exists(_tempDir))
         {
             Directory.Delete(_tempDir, recursive: true);
         }
+    }
+
+    private YamlFileLocalizationSource CreateSource(string name, string directory, string? filePattern = null, int priority = 0)
+    {
+        var source = filePattern != null
+            ? new YamlFileLocalizationSource(name, directory, filePattern: filePattern, priority: priority)
+            : new YamlFileLocalizationSource(name, directory, priority: priority);
+        _createdSources.Add(source);
+        return source;
     }
 
     // =========================================================================
@@ -48,11 +63,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
         // Arrange
         CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_en_full"));
 
-        var source = new YamlFileLocalizationSource(
-            "test",
-            _tempDir,
-            filePattern: "strings.{locale}.yaml");
-
+        var source = CreateSource("test", _tempDir, filePattern: "strings.{locale}.yaml");
         _provider.RegisterSource(source);
 
         // Act
@@ -74,11 +85,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
         CreateLocalizationFile("strings.es.yaml", DialogueTestFixtures.Load("strings_es_simple"));
         CreateLocalizationFile("strings.ja.yaml", DialogueTestFixtures.Load("strings_ja_simple"));
 
-        var source = new YamlFileLocalizationSource(
-            "test",
-            _tempDir,
-            filePattern: "strings.{locale}.yaml");
-
+        var source = CreateSource("test", _tempDir, filePattern: "strings.{locale}.yaml");
         _provider.RegisterSource(source);
 
         // Act
@@ -99,10 +106,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
         CreateLocalizationFile("strings.en.yaml", DialogueTestFixtures.Load("strings_single_key"));
         CreateLocalizationFile("strings.fr.yaml", DialogueTestFixtures.Load("strings_single_key"));
 
-        var source = new YamlFileLocalizationSource(
-            "test",
-            _tempDir,
-            filePattern: "strings.{locale}.yaml");
+        var source = CreateSource("test", _tempDir, filePattern: "strings.{locale}.yaml");
 
         // Force load by querying
         source.GetText("key", "en");
@@ -235,8 +239,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
         File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_low_priority"));
         File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_high_priority"));
 
-        var lowSource = new YamlFileLocalizationSource("low", lowDir, priority: 0);
-        var highSource = new YamlFileLocalizationSource("high", highDir, priority: 10);
+        var lowSource = CreateSource("low", lowDir, priority: 0);
+        var highSource = CreateSource("high", highDir, priority: 10);
 
         _provider.RegisterSource(lowSource);
         _provider.RegisterSource(highSource);
@@ -260,8 +264,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
         File.WriteAllText(Path.Combine(lowDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_ab_low"));
         File.WriteAllText(Path.Combine(highDir, "strings.en.yaml"), DialogueTestFixtures.Load("strings_key_a_high"));
 
-        var lowSource = new YamlFileLocalizationSource("low", lowDir, priority: 0);
-        var highSource = new YamlFileLocalizationSource("high", highDir, priority: 10);
+        var lowSource = CreateSource("low", lowDir, priority: 0);
+        var highSource = CreateSource("high", highDir, priority: 10);
 
         _provider.RegisterSource(lowSource);
         _provider.RegisterSource(highSource);
@@ -279,9 +283,9 @@ public sealed class FileLocalizationProviderTests : IDisposable
     public void Sources_OrderedByPriority()
     {
         // Arrange
-        var source1 = new YamlFileLocalizationSource("source1", _tempDir, priority: 5);
-        var source2 = new YamlFileLocalizationSource("source2", _tempDir, priority: 10);
-        var source3 = new YamlFileLocalizationSource("source3", _tempDir, priority: 1);
+        var source1 = CreateSource("source1", _tempDir, priority: 5);
+        var source2 = CreateSource("source2", _tempDir, priority: 10);
+        var source3 = CreateSource("source3", _tempDir, priority: 1);
 
         _provider.RegisterSource(source1);
         _provider.RegisterSource(source2);
@@ -295,17 +299,13 @@ public sealed class FileLocalizationProviderTests : IDisposable
         Assert.Equal("source2", sources[0].Name);
         Assert.Equal("source1", sources[1].Name);
         Assert.Equal("source3", sources[2].Name);
-
-        source1.Dispose();
-        source2.Dispose();
-        source3.Dispose();
     }
 
     [Fact]
     public void RemoveSource_RemovesByName()
     {
         // Arrange
-        var source = new YamlFileLocalizationSource("test_source", _tempDir);
+        var source = CreateSource("test_source", _tempDir);
         _provider.RegisterSource(source);
         Assert.Single(_provider.Sources);
 
@@ -315,8 +315,6 @@ public sealed class FileLocalizationProviderTests : IDisposable
         // Assert
         Assert.True(removed);
         Assert.Empty(_provider.Sources);
-
-        source.Dispose();
     }
 
     // =========================================================================
@@ -361,8 +359,8 @@ public sealed class FileLocalizationProviderTests : IDisposable
         File.WriteAllText(Path.Combine(dir2, "strings.de.yaml"), DialogueTestFixtures.Load("strings_single_key"));
         File.WriteAllText(Path.Combine(dir2, "strings.ja.yaml"), DialogueTestFixtures.Load("strings_single_key"));
 
-        var source1 = new YamlFileLocalizationSource("source1", dir1);
-        var source2 = new YamlFileLocalizationSource("source2", dir2);
+        var source1 = CreateSource("source1", dir1);
+        var source2 = CreateSource("source2", dir2);
 
         _provider.RegisterSource(source1);
         _provider.RegisterSource(source2);
@@ -381,9 +379,6 @@ public sealed class FileLocalizationProviderTests : IDisposable
         Assert.Contains("fr", locales);
         Assert.Contains("de", locales);
         Assert.Contains("ja", locales);
-
-        source1.Dispose();
-        source2.Dispose();
     }
 
     [Fact]
@@ -404,10 +399,7 @@ public sealed class FileLocalizationProviderTests : IDisposable
 
     private void RegisterSource()
     {
-        var source = new YamlFileLocalizationSource(
-            "default",
-            _tempDir,
-            filePattern: "strings.{locale}.yaml");
+        var source = CreateSource("default", _tempDir, filePattern: "strings.{locale}.yaml");
         _provider.RegisterSource(source);
     }
 }

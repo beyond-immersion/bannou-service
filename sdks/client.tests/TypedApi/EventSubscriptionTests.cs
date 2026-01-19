@@ -20,7 +20,7 @@ public class EventSubscriptionTests
     [Fact]
     public void Constructor_SetsEventName()
     {
-        var subscription = new EventSubscription(
+        using var subscription = new EventSubscription(
             "test.event",
             Guid.NewGuid(),
             _ => { });
@@ -31,7 +31,7 @@ public class EventSubscriptionTests
     [Fact]
     public void Constructor_IsActiveStartsTrue()
     {
-        var subscription = new EventSubscription(
+        using var subscription = new EventSubscription(
             "test.event",
             Guid.NewGuid(),
             _ => { });
@@ -142,7 +142,7 @@ public class EventSubscriptionTests
     public async Task Dispose_ConcurrentCalls_OnlyInvokesCallbackOnce()
     {
         var callbackCount = 0;
-        var subscription = new EventSubscription(
+        using var subscription = new EventSubscription(
             "test.event",
             Guid.NewGuid(),
             _ => Interlocked.Increment(ref callbackCount));

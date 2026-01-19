@@ -212,6 +212,7 @@ public sealed class EmotionalState
     private static double Clamp(double value) => Math.Clamp(value, 0.0, 1.0);
     private static double Lerp(double a, double b, double t) => a + (b - a) * t;
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Emotional[T={Tension:F2}, B={Brightness:F2}, E={Energy:F2}, W={Warmth:F2}, S={Stability:F2}, V={Valence:F2}]";

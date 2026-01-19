@@ -105,6 +105,9 @@
             Creates a contrastive valence effect (resolution pleasure based on prior tension).
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Actions.ActionEffect.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Actions.EffectType">
             <summary>
             Types of effect application.
@@ -339,6 +342,9 @@
             Combines multiple preconditions with OR logic.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Actions.ActionPrecondition.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Actions.ColorActions">
             <summary>
             Actions that change harmonic color (mode, modulation, borrowed chords).
@@ -520,6 +526,9 @@
         </member>
         <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Actions.MusicalActionBase.CalculateCost(BeyondImmersion.Bannou.MusicStoryteller.State.CompositionState)">
             <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Actions.MusicalActionBase.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Actions.ResolutionActions">
             <summary>
@@ -814,6 +823,9 @@
             Clears all conscious expectations.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Expectations.ConsciousExpectations.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Expectations.DynamicExpectations">
             <summary>
             Dynamic expectations based on very recent patterns.
@@ -1101,6 +1113,9 @@
             <summary>
             Whether a conscious expectation was met.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Expectations.ExpectationResponse.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Expectations.SchematicExpectations">
             <summary>
@@ -3225,6 +3240,9 @@
             </summary>
             <returns>A dictionary of state values.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.CompositionState.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.EmotionalState">
             <summary>
             Represents a 6-dimensional emotional space for music composition.
@@ -3343,6 +3361,9 @@
         <member name="P:BeyondImmersion.Bannou.MusicStoryteller.State.EmotionalState.Presets.Resolution">
             <summary>Resolution after climax.</summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.EmotionalState.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.HarmonicState">
             <summary>
             Tracks the current harmonic context of the composition.
@@ -3458,6 +3479,9 @@
             Creates a deep copy of this harmonic state.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.HarmonicState.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.InformationState">
             <summary>
             Tracks information-theoretic properties of the composition.
@@ -3563,6 +3587,9 @@
             Creates a deep copy of this information state.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.InformationState.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.ListenerModel">
             <summary>
             Models the listener's cognitive state based on Huron's ITPRA theory.
@@ -3660,6 +3687,9 @@
             <summary>
             Creates a deep copy of this listener model.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.ListenerModel.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.SchematicExpectations">
             <summary>
@@ -3884,6 +3914,9 @@
             Creates a deep copy of this mechanism state.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.MechanismState.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.MechanismType">
             <summary>
             The BRECVEMA mechanism types.
@@ -4010,6 +4043,9 @@
             <summary>
             Creates a deep copy of this pitch space state.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.PitchSpaceState.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.BasicSpaceLevels">
             <summary>
@@ -4148,6 +4184,9 @@
             <summary>
             Creates a deep copy of this position state.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.PositionState.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.MotifUsage">
             <summary>
@@ -4293,6 +4332,9 @@
             <summary>
             Creates a deep copy of this thematic state.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.State.ThematicState.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.State.DevelopmentStage">
             <summary>
@@ -4578,6 +4620,9 @@
             <param name="pitchClass">The pitch class.</param>
             <returns>Depth from 0 to 5.</returns>
         </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Theory.BasicSpace.ToString">
+            <inheritdoc />
+        </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Theory.ChordBasicSpace">
             <summary>
             A basic space derived from a chord rather than a key.
@@ -4776,6 +4821,9 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.MusicStoryteller.Theory.ItpraResponse.FinalAffect">
             <summary>Final affective response.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.MusicStoryteller.Theory.ItpraResponse.ToString">
+            <inheritdoc />
         </member>
         <member name="T:BeyondImmersion.Bannou.MusicStoryteller.Theory.CadenceResponse">
             <summary>

@@ -6,9 +6,12 @@ namespace BeyondImmersion.Bannou.SceneComposer.Math;
 /// </summary>
 public readonly struct Ray
 {
+    /// <summary>Origin point of the ray.</summary>
     public Vector3 Origin { get; }
+    /// <summary>Normalized direction of the ray.</summary>
     public Vector3 Direction { get; }
 
+    /// <summary>Creates a ray from an origin point and direction.</summary>
     public Ray(Vector3 origin, Vector3 direction)
     {
         Origin = origin;
@@ -177,6 +180,7 @@ public readonly struct Ray
         }
     }
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"Ray(Origin:{Origin}, Dir:{Direction})";
 }

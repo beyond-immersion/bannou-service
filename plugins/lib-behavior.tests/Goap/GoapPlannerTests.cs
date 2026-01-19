@@ -439,7 +439,7 @@ public class GoapPlannerTests
                 cost: 1.0f)
         };
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel(); // Cancel immediately
 
         // Act

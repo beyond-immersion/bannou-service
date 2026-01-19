@@ -7,8 +7,9 @@ namespace BeyondImmersion.BannouService.Asset.Metrics;
 /// Prometheus-compatible metrics for the Asset service.
 /// Uses System.Diagnostics.Metrics which can be exported via OpenTelemetry.
 /// </summary>
-public sealed class AssetMetrics
+public sealed class AssetMetrics : IDisposable
 {
+    private readonly Meter _meter;
     private readonly Counter<long> _uploadsTotal;
     private readonly Counter<long> _downloadsTotal;
     private readonly Counter<long> _bundleCreationsTotal;
@@ -28,44 +29,44 @@ public sealed class AssetMetrics
     /// </summary>
     public AssetMetrics()
     {
-        var meter = new Meter(MeterName, "1.0.0");
+        _meter = new Meter(MeterName, "1.0.0");
 
-        _uploadsTotal = meter.CreateCounter<long>(
+        _uploadsTotal = _meter.CreateCounter<long>(
             "asset_uploads_total",
             unit: "{uploads}",
             description: "Total number of asset uploads");
 
-        _downloadsTotal = meter.CreateCounter<long>(
+        _downloadsTotal = _meter.CreateCounter<long>(
             "asset_downloads_total",
             unit: "{downloads}",
             description: "Total number of asset downloads");
 
-        _bundleCreationsTotal = meter.CreateCounter<long>(
+        _bundleCreationsTotal = _meter.CreateCounter<long>(
             "asset_bundle_creations_total",
             unit: "{bundles}",
             description: "Total number of bundles created");
 
-        _processingCompletedTotal = meter.CreateCounter<long>(
+        _processingCompletedTotal = _meter.CreateCounter<long>(
             "asset_processing_completed_total",
             unit: "{operations}",
             description: "Total number of completed processing operations");
 
-        _processingFailedTotal = meter.CreateCounter<long>(
+        _processingFailedTotal = _meter.CreateCounter<long>(
             "asset_processing_failed_total",
             unit: "{operations}",
             description: "Total number of failed processing operations");
 
-        _processingDurationSeconds = meter.CreateHistogram<double>(
+        _processingDurationSeconds = _meter.CreateHistogram<double>(
             "asset_processing_duration_seconds",
             unit: "s",
             description: "Duration of asset processing operations");
 
-        _uploadDurationSeconds = meter.CreateHistogram<double>(
+        _uploadDurationSeconds = _meter.CreateHistogram<double>(
             "asset_upload_duration_seconds",
             unit: "s",
             description: "Duration of asset upload operations");
 
-        _downloadDurationSeconds = meter.CreateHistogram<double>(
+        _downloadDurationSeconds = _meter.CreateHistogram<double>(
             "asset_download_duration_seconds",
             unit: "s",
             description: "Duration of asset download operations");
@@ -166,5 +167,13 @@ public sealed class AssetMetrics
         }
 
         _processingDurationSeconds.Record(durationSeconds, tags);
+    }
+
+    /// <summary>
+    /// Disposes the meter and releases resources.
+    /// </summary>
+    public void Dispose()
+    {
+        _meter.Dispose();
     }
 }

@@ -227,10 +227,11 @@ public sealed class AssetDownloader : IDisposable
 
 /// <summary>
 /// Result of a download operation.
+/// The caller takes ownership of the Stream and is responsible for disposing it.
 /// </summary>
-public sealed class DownloadResult : IDisposable
+public sealed class DownloadResult
 {
-    /// <summary>Stream containing downloaded data.</summary>
+    /// <summary>Stream containing downloaded data. Caller owns this stream and must dispose it.</summary>
     public required MemoryStream Stream { get; init; }
 
     /// <summary>Content hash (SHA256) of downloaded data.</summary>
@@ -241,12 +242,6 @@ public sealed class DownloadResult : IDisposable
 
     /// <summary>Download time in milliseconds.</summary>
     public required long DownloadTimeMs { get; init; }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Stream.Dispose();
-    }
 }
 
 /// <summary>

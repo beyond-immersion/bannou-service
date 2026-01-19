@@ -179,6 +179,7 @@ public sealed class ListenerModel
         return clone;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Listener[Attn={Attention:F2}, Surprise={SurpriseBudget:F2}, Accuracy={PredictionAccuracy:F2}]";

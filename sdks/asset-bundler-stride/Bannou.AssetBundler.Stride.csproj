@@ -35,7 +35,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>$(NoWarn);CS1591;NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

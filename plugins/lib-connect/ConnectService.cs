@@ -1746,7 +1746,7 @@ public partial class ConnectService : IConnectService
             // Notify permission service that a new service was registered
             // This will trigger permission recompilation for all sessions
             await _messageBus.TryPublishAsync(
-                "bannou-permission-recompile",
+                "bannou.permission-recompile",
                 new PermissionRecompileEvent
                 {
                     EventId = Guid.NewGuid().ToString(),
