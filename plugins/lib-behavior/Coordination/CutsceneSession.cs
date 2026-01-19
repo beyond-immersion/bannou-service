@@ -5,6 +5,7 @@
 
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 
@@ -65,12 +66,12 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         _syncPointManager = new SyncPointManager(
             participantSet,
             options.DefaultSyncTimeout,
-            logger != null ? LoggerFactory.Create(b => { }).CreateLogger<SyncPointManager>() : null);
+            logger != null ? NullLoggerFactory.Instance.CreateLogger<SyncPointManager>() : null);
 
         _inputWindowManager = new InputWindowManager(
             options.DefaultInputTimeout,
             options.UseBehaviorDefaults ? behaviorDefaultResolver : null,
-            logger != null ? LoggerFactory.Create(b => { }).CreateLogger<InputWindowManager>() : null);
+            logger != null ? NullLoggerFactory.Instance.CreateLogger<InputWindowManager>() : null);
 
         // Wire up events
         _syncPointManager.SyncPointCompleted += OnSyncPointCompleted;

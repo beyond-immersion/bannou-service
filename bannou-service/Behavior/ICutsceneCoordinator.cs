@@ -64,7 +64,7 @@ public interface ICutsceneCoordinator
 /// <summary>
 /// Represents an active cutscene session with multiple participants.
 /// </summary>
-public interface ICutsceneSession
+public interface ICutsceneSession : IDisposable
 {
     /// <summary>
     /// Unique session identifier.

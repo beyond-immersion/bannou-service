@@ -397,7 +397,7 @@ public class ServiceClientResolutionTests
         ServiceClientsDependencyInjection.AddAllBannouServiceClients(services);
 
         // Mock HTTP client factory
-        var mockHttpClient = new HttpClient();
+        using var mockHttpClient = new HttpClient();
         var mockClientFactory = new Mock<IHttpClientFactory>();
         mockClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttpClient);
         services.AddSingleton(mockClientFactory.Object);

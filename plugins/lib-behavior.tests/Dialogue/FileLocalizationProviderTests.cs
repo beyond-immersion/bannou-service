@@ -46,7 +46,9 @@ public sealed class FileLocalizationProviderTests : IDisposable
 
     private YamlFileLocalizationSource CreateSource(string name, string directory, string? filePattern = null, int priority = 0)
     {
-        var source = new YamlFileLocalizationSource(name, directory, filePattern: filePattern, priority: priority);
+        var source = filePattern != null
+            ? new YamlFileLocalizationSource(name, directory, filePattern: filePattern, priority: priority)
+            : new YamlFileLocalizationSource(name, directory, priority: priority);
         _createdSources.Add(source);
         return source;
     }

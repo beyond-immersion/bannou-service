@@ -60,6 +60,8 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             sourceTopic,
             destinationTopic);
 
+        // CA2000: subscription ownership transferred to TapHandleImpl constructor - it will dispose via DisposeAsync()
+#pragma warning disable CA2000
         // Create dynamic subscription that forwards to destination
         var subscription = await _messageBus.SubscribeDynamicAsync<IBannouEvent>(
             sourceTopic,
@@ -83,10 +85,9 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
             sourceTopic,
             destination,
             createdAt,
-            this)
-        {
-            Subscription = subscription
-        };
+            subscription,
+            this);
+#pragma warning restore CA2000
 
         // TapHandleImpl now owns the subscription - it will dispose it via DisposeAsync()
         // If anything fails below, tapHandle.DisposeAsync() will clean up
@@ -213,19 +214,21 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
         public TapDestination Destination { get; }
         public DateTimeOffset CreatedAt { get; }
         public bool IsActive => _isActive;
-        public required IAsyncDisposable Subscription { get; init; }
+        public IAsyncDisposable Subscription { get; }
 
         public TapHandleImpl(
             Guid tapId,
             string sourceTopic,
             TapDestination destination,
             DateTimeOffset createdAt,
+            IAsyncDisposable subscription,
             InMemoryMessageTap parent)
         {
             TapId = tapId;
             SourceTopic = sourceTopic;
             Destination = destination;
             CreatedAt = createdAt;
+            Subscription = subscription;
             _parent = parent;
         }
 

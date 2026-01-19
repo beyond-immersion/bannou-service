@@ -120,7 +120,10 @@ public class ActorRegistryTests : IAsyncLifetime
         registry.TryRegister("actor-1", runner);
 
         // Act
+        // CA2000: removedRunner is the same object as runner, which is already tracked in _createdRunners
+#pragma warning disable CA2000
         var result = registry.TryRemove("actor-1", out var removedRunner);
+#pragma warning restore CA2000
 
         // Assert
         Assert.True(result);
@@ -135,7 +138,10 @@ public class ActorRegistryTests : IAsyncLifetime
         var registry = new ActorRegistry();
 
         // Act
+        // CA2000: runner is null when TryRemove returns false - nothing to dispose
+#pragma warning disable CA2000
         var result = registry.TryRemove("nonexistent", out var runner);
+#pragma warning restore CA2000
 
         // Assert
         Assert.False(result);

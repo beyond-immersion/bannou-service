@@ -32,7 +32,8 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     public DockerSwarmOrchestrator(ILogger<DockerSwarmOrchestrator> logger)
     {
         _logger = logger;
-        _client = new DockerClientConfiguration().CreateClient();
+        using var config = new DockerClientConfiguration();
+        _client = config.CreateClient();
     }
 
     /// <inheritdoc />

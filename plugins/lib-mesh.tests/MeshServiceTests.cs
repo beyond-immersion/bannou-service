@@ -907,10 +907,10 @@ public class MeshStateManagerTests
     }
 
     [Fact]
-    public void Constructor_ShouldNotThrow_WithValidDependencies()
+    public async Task Constructor_ShouldNotThrow_WithValidDependencies()
     {
         // Act & Assert - verify it can be constructed with valid dependencies
-        using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         Assert.NotNull(manager);
     }
 
@@ -922,7 +922,7 @@ public class MeshStateManagerTests
             .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store not available"));
 
-        using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.InitializeAsync();

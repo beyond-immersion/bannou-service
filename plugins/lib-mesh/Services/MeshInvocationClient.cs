@@ -38,7 +38,8 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         _stateManager = stateManager;
         _logger = logger;
 
-        // Create HTTP client for outbound requests
+        // CA2000: handler ownership transferred to HttpMessageInvoker - it will dispose the handler
+#pragma warning disable CA2000
         var handler = new SocketsHttpHandler
         {
             UseProxy = false,
@@ -50,6 +51,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             ConnectTimeout = TimeSpan.FromSeconds(10)
         };
         _httpClient = new HttpMessageInvoker(handler);
+#pragma warning restore CA2000
 
         _endpointCache = new EndpointCache(TimeSpan.FromSeconds(5));
     }

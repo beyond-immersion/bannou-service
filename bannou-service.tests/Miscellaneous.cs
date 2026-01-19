@@ -184,9 +184,9 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         var privateKeyBytes = Convert.FromBase64String(Test_Base64PrivateKey);
         var privateKey = Encoding.UTF8.GetString(privateKeyBytes);
 
-        var publicRSA = RSA.Create();
+        using var publicRSA = RSA.Create();
         publicRSA.ImportFromPem(publicKey);
-        var privateRSA = RSA.Create();
+        using var privateRSA = RSA.Create();
         privateRSA.ImportFromPem(privateKey);
         var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
 

@@ -51,7 +51,7 @@ public class RepositorySyncSchedulerServiceTests
     public void ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<RepositorySyncSchedulerService>();
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration);
@@ -67,7 +67,7 @@ public class RepositorySyncSchedulerServiceTests
     {
         // Arrange
         var config = new DocumentationServiceConfiguration { SyncSchedulerEnabled = false };
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             config);
@@ -87,7 +87,7 @@ public class RepositorySyncSchedulerServiceTests
     public async Task ExecuteAsync_WhenCancelled_ShouldStopGracefully()
     {
         // Arrange
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration);
@@ -120,7 +120,7 @@ public class RepositorySyncSchedulerServiceTests
         mockRegistryStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((HashSet<string>?)null);
 
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration);
@@ -144,7 +144,7 @@ public class RepositorySyncSchedulerServiceTests
         _mockServiceScope.Setup(s => s.ServiceProvider.GetService(typeof(IStateStoreFactory)))
             .Returns((IStateStoreFactory?)null);
 
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             _configuration);
@@ -311,7 +311,7 @@ public class RepositorySyncSchedulerServiceTests
             SyncSchedulerCheckIntervalMinutes = 15
         };
 
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             config);
@@ -331,7 +331,7 @@ public class RepositorySyncSchedulerServiceTests
             MaxConcurrentSyncs = 1 // Only allow 1 concurrent sync
         };
 
-        var service = new RepositorySyncSchedulerService(
+        using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
             config);

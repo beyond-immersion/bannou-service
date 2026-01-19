@@ -1278,12 +1278,12 @@ public class OrchestratorStateManagerTests
     [Fact]
     public void OrchestratorStateManager_Dispose_ShouldNotThrow()
     {
-        // Arrange
-        var manager = new OrchestratorStateManager(
+        // Arrange - using ensures disposal even if assertion fails; Dispose is idempotent
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
-        // Act & Assert - Should not throw (manager is disposed in the test itself)
+        // Act & Assert - Should not throw (manager is disposed explicitly, then again by using)
         var exception = Record.Exception(() => manager.Dispose());
         Assert.Null(exception);
     }
@@ -1291,12 +1291,12 @@ public class OrchestratorStateManagerTests
     [Fact]
     public async Task OrchestratorStateManager_DisposeAsync_ShouldNotThrow()
     {
-        // Arrange
-        var manager = new OrchestratorStateManager(
+        // Arrange - await using ensures disposal even if assertion fails; DisposeAsync is idempotent
+        await using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
-        // Act & Assert - Should not throw (manager is disposed in the test itself)
+        // Act & Assert - Should not throw (manager is disposed explicitly, then again by await using)
         var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
         Assert.Null(exception);
     }

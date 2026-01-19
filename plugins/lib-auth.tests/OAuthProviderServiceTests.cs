@@ -16,10 +16,11 @@ namespace BeyondImmersion.BannouService.Auth.Tests;
 /// Unit tests for OAuthProviderService.
 /// Tests OAuth provider integrations including Discord, Google, Twitch, and Steam.
 /// </summary>
-public class OAuthProviderServiceTests
+public class OAuthProviderServiceTests : IDisposable
 {
     private const string STATE_STORE = "auth-statestore";
 
+    private readonly HttpClient _httpClient;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IAccountClient> _mockAccountClient;
@@ -67,8 +68,8 @@ public class OAuthProviderServiceTests
             .Returns(_mockStringStore.Object);
 
         // Setup default HttpClient
-        var mockHttpClient = new HttpClient();
-        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttpClient);
+        _httpClient = new HttpClient();
+        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(_httpClient);
 
         _service = new OAuthProviderService(
             _mockStateStoreFactory.Object,
@@ -77,6 +78,15 @@ public class OAuthProviderServiceTests
             _configuration,
             _mockMessageBus.Object,
             _mockLogger.Object);
+    }
+
+    /// <summary>
+    /// Disposes test resources.
+    /// </summary>
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #region Constructor Tests

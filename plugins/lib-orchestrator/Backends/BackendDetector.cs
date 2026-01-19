@@ -239,7 +239,8 @@ public class BackendDetector : IBackendDetector
             // Create Docker client using default socket
             // Linux: unix:///var/run/docker.sock
             // Windows: npipe://./pipe/docker_engine
-            using var client = new DockerClientConfiguration().CreateClient();
+            using var config = new DockerClientConfiguration();
+            using var client = config.CreateClient();
 
             // Check Docker availability with ping
             await client.System.PingAsync(cancellationToken);

@@ -20,8 +20,9 @@ namespace BeyondImmersion.BannouService.Auth.Tests;
 /// Unit tests for AuthService
 /// This test project can reference other service clients for integration testing.
 /// </summary>
-public class AuthServiceTests
+public class AuthServiceTests : IDisposable
 {
+    private readonly HttpClient _httpClient;
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly Mock<IAccountClient> _mockAccountClient;
@@ -101,8 +102,17 @@ public class AuthServiceTests
             .ReturnsAsync(true);
 
         // Setup default HttpClient for mock factory
-        var mockHttpClient = new HttpClient();
-        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttpClient);
+        _httpClient = new HttpClient();
+        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(_httpClient);
+    }
+
+    /// <summary>
+    /// Disposes test resources.
+    /// </summary>
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

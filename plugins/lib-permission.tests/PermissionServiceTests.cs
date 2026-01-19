@@ -32,8 +32,9 @@ internal class TestLockResponse : ILockResponse
 /// Unit tests for PermissionService.
 /// Tests verify permission registration, session management, capability compilation, and role-based access.
 /// </summary>
-public class PermissionServiceTests
+public class PermissionServiceTests : IAsyncLifetime
 {
+    private readonly List<TestLockResponse> _createdLockResponses = [];
     private readonly Mock<ILogger<PermissionService>> _mockLogger;
     private readonly Mock<PermissionServiceConfiguration> _mockConfiguration;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
@@ -114,6 +115,33 @@ public class PermissionServiceTests
             .ReturnsAsync(true);
     }
 
+    /// <summary>
+    /// IAsyncLifetime.InitializeAsync - called before each test.
+    /// </summary>
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    /// <summary>
+    /// IAsyncLifetime.DisposeAsync - called after each test.
+    /// </summary>
+    public async Task DisposeAsync()
+    {
+        foreach (var lockResponse in _createdLockResponses)
+        {
+            await lockResponse.DisposeAsync();
+        }
+        _createdLockResponses.Clear();
+    }
+
+    /// <summary>
+    /// Creates a TestLockResponse and tracks it for disposal.
+    /// </summary>
+    private TestLockResponse CreateLockResponse(bool success)
+    {
+        var response = new TestLockResponse { Success = success };
+        _createdLockResponses.Add(response);
+        return response;
+    }
+
     private PermissionService CreateService()
     {
         return new PermissionService(
@@ -152,7 +180,7 @@ public class PermissionServiceTests
         var service = CreateService();
 
         // Set up lock to fail
-        var failedLockResponse = new TestLockResponse { Success = false };
+        var failedLockResponse = CreateLockResponse(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
                 STATE_STORE,
@@ -226,7 +254,7 @@ public class PermissionServiceTests
             .ReturnsAsync((string?)null);
 
         // Set up distributed lock to succeed
-        var lockResponse = new TestLockResponse { Success = true };
+        var lockResponse = CreateLockResponse(true);
         _mockLockProvider
             .Setup(l => l.LockAsync(
                 STATE_STORE,
@@ -1814,7 +1842,7 @@ public class PermissionServiceTests
         var session3 = Guid.NewGuid().ToString();
 
         // Set up a successful lock
-        var lockResponse = new TestLockResponse { Success = true };
+        var lockResponse = CreateLockResponse(true);
         _mockLockProvider
             .Setup(l => l.LockAsync(
                 It.IsAny<string>(),
@@ -1904,7 +1932,7 @@ public class PermissionServiceTests
         // Arrange
         var service = CreateService();
 
-        var lockResponse = new TestLockResponse { Success = true };
+        var lockResponse = CreateLockResponse(true);
         _mockLockProvider
             .Setup(l => l.LockAsync(
                 It.IsAny<string>(),

@@ -486,7 +486,7 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
     public async Task CutsceneCoordinator_SessionCleanup_RemovesCompleted()
     {
         // Arrange
-        var coordinator = new CutsceneCoordinator();
+        using var coordinator = new CutsceneCoordinator();
 
         using var session1 = await coordinator.CreateSessionAsync(
             "session1",
