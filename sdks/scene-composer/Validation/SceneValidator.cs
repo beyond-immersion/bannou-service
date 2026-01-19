@@ -161,6 +161,7 @@ public class ValidationContext
     /// </summary>
     public HashSet<string> SeenReferenceSceneIds { get; } = new();
 
+    /// <summary>Creates a validation context.</summary>
     public ValidationContext(ComposerScene scene, SceneValidator validator)
     {
         Scene = scene;
@@ -175,11 +176,13 @@ public class ValidationContext
 /// </summary>
 public class HierarchyDepthRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break; // Checked per-node
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         var depth = node.GetDepth();
@@ -207,11 +210,13 @@ public class HierarchyDepthRule : IValidationRule
 /// </summary>
 public class ChildCountRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (node.Children.Count > context.Validator.MaxChildrenPerNode)
@@ -230,11 +235,13 @@ public class ChildCountRule : IValidationRule
 /// </summary>
 public class CircularReferenceRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (node.NodeType != NodeType.Reference || string.IsNullOrEmpty(node.ReferenceSceneId))
@@ -267,6 +274,7 @@ public class CircularReferenceRule : IValidationRule
 /// </summary>
 public class EmptyNameRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         if (string.IsNullOrWhiteSpace(scene.Name))
@@ -278,6 +286,7 @@ public class EmptyNameRule : IValidationRule
         }
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (string.IsNullOrWhiteSpace(node.Name))
@@ -296,11 +305,13 @@ public class EmptyNameRule : IValidationRule
 /// </summary>
 public class DuplicateNodeIdRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (!context.SeenNodeIds.Add(node.Id))
@@ -319,11 +330,13 @@ public class DuplicateNodeIdRule : IValidationRule
 /// </summary>
 public class InvalidTransformRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         var transform = node.LocalTransform;
@@ -398,11 +411,13 @@ public class AssetReferenceRule : IValidationRule
         _assetExists = assetExists ?? throw new ArgumentNullException(nameof(assetExists));
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (!context.Validator.ValidateAssetReferences)
@@ -435,11 +450,13 @@ public class ReferenceSceneRule : IValidationRule
         _sceneExists = sceneExists ?? throw new ArgumentNullException(nameof(sceneExists));
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         if (node.NodeType != NodeType.Reference)
@@ -469,11 +486,13 @@ public class ReferenceSceneRule : IValidationRule
 /// </summary>
 public class AttachmentPointRule : IValidationRule
 {
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateScene(ComposerScene scene, ValidationContext context)
     {
         yield break;
     }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationIssue> ValidateNode(ComposerSceneNode node, ValidationContext context)
     {
         var names = new HashSet<string>();

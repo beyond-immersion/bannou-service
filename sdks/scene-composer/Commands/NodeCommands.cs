@@ -110,6 +110,7 @@ public class DeleteNodeCommand : IEditorCommand
         _onDeleted = onDeleted ?? throw new ArgumentNullException(nameof(onDeleted));
     }
 
+    /// <inheritdoc />
     public void Execute()
     {
         // If not deleting children, reparent them first
@@ -158,6 +159,7 @@ public class DeleteNodeCommand : IEditorCommand
         _scene.UnregisterNode(_node);
     }
 
+    /// <inheritdoc />
     public void Undo()
     {
         // Re-add the node
@@ -202,7 +204,9 @@ public class DeleteNodeCommand : IEditorCommand
         }
     }
 
+    /// <inheritdoc />
     public bool CanMergeWith(IEditorCommand other) => false;
+    /// <inheritdoc />
     public bool TryMerge(IEditorCommand other) => false;
 }
 
@@ -219,8 +223,10 @@ public class ReparentNodeCommand : IEditorCommand
     private readonly int? _newIndex;
     private readonly Action<ComposerSceneNode, ComposerSceneNode?, ComposerSceneNode?> _onReparented;
 
+    /// <inheritdoc />
     public string Description => $"Move '{_node.Name}'";
 
+    /// <summary>Creates a command to reparent a node.</summary>
     public ReparentNodeCommand(
         ComposerScene scene,
         ComposerSceneNode node,
@@ -237,6 +243,7 @@ public class ReparentNodeCommand : IEditorCommand
         _onReparented = onReparented ?? throw new ArgumentNullException(nameof(onReparented));
     }
 
+    /// <inheritdoc />
     public void Execute()
     {
         // Remove from old parent
@@ -262,6 +269,7 @@ public class ReparentNodeCommand : IEditorCommand
         _onReparented(_node, _oldParent, _newParent);
     }
 
+    /// <inheritdoc />
     public void Undo()
     {
         // Remove from new parent
@@ -287,7 +295,9 @@ public class ReparentNodeCommand : IEditorCommand
         _onReparented(_node, _newParent, _oldParent);
     }
 
+    /// <inheritdoc />
     public bool CanMergeWith(IEditorCommand other) => false;
+    /// <inheritdoc />
     public bool TryMerge(IEditorCommand other) => false;
 }
 
@@ -299,6 +309,7 @@ public class TransformNodeCommand : NodePropertyCommand<Transform>
     private readonly ComposerSceneNode _node;
     private readonly Action<ComposerSceneNode, Transform, Transform> _onTransformChanged;
 
+    /// <inheritdoc />
     public override string Description => $"Transform '{_node.Name}'";
 
     /// <summary>
@@ -328,12 +339,14 @@ public class TransformNodeCommand : NodePropertyCommand<Transform>
         _onTransformChanged = onTransformChanged ?? throw new ArgumentNullException(nameof(onTransformChanged));
     }
 
+    /// <inheritdoc />
     public override void Execute()
     {
         _node.LocalTransform = NewValue;
         _onTransformChanged(_node, OldValue, NewValue);
     }
 
+    /// <inheritdoc />
     public override void Undo()
     {
         _node.LocalTransform = OldValue;
@@ -351,10 +364,12 @@ public class BindAssetCommand : IEditorCommand
     private readonly AssetReference _newAsset;
     private readonly Action<ComposerSceneNode, AssetReference, AssetReference> _onAssetChanged;
 
+    /// <inheritdoc />
     public string Description => _newAsset.IsValid
         ? $"Set asset on '{_node.Name}'"
         : $"Clear asset from '{_node.Name}'";
 
+    /// <summary>Creates a command to bind an asset to a node.</summary>
     public BindAssetCommand(
         ComposerSceneNode node,
         AssetReference newAsset,
@@ -366,19 +381,23 @@ public class BindAssetCommand : IEditorCommand
         _onAssetChanged = onAssetChanged ?? throw new ArgumentNullException(nameof(onAssetChanged));
     }
 
+    /// <inheritdoc />
     public void Execute()
     {
         _node.Asset = _newAsset;
         _onAssetChanged(_node, _oldAsset, _newAsset);
     }
 
+    /// <inheritdoc />
     public void Undo()
     {
         _node.Asset = _oldAsset;
         _onAssetChanged(_node, _newAsset, _oldAsset);
     }
 
+    /// <inheritdoc />
     public bool CanMergeWith(IEditorCommand other) => false;
+    /// <inheritdoc />
     public bool TryMerge(IEditorCommand other) => false;
 }
 
@@ -390,8 +409,10 @@ public class RenameNodeCommand : NodePropertyCommand<string>
     private readonly ComposerSceneNode _node;
     private readonly Action<ComposerSceneNode>? _onRenamed;
 
+    /// <inheritdoc />
     public override string Description => $"Rename to '{NewValue}'";
 
+    /// <summary>Creates a command to rename a node.</summary>
     public RenameNodeCommand(
         ComposerSceneNode node,
         string newName,
@@ -402,12 +423,14 @@ public class RenameNodeCommand : NodePropertyCommand<string>
         _onRenamed = onRenamed;
     }
 
+    /// <inheritdoc />
     public override void Execute()
     {
         _node.Name = NewValue;
         _onRenamed?.Invoke(_node);
     }
 
+    /// <inheritdoc />
     public override void Undo()
     {
         _node.Name = OldValue;
@@ -425,8 +448,10 @@ public class SetVisibilityCommand : IEditorCommand
     private readonly bool _newVisible;
     private readonly Action<ComposerSceneNode>? _onVisibilityChanged;
 
+    /// <inheritdoc />
     public string Description => _newVisible ? $"Show '{_node.Name}'" : $"Hide '{_node.Name}'";
 
+    /// <summary>Creates a command to set a node's visibility.</summary>
     public SetVisibilityCommand(
         ComposerSceneNode node,
         bool visible,
@@ -438,20 +463,24 @@ public class SetVisibilityCommand : IEditorCommand
         _onVisibilityChanged = onVisibilityChanged;
     }
 
+    /// <inheritdoc />
     public void Execute()
     {
         _node.IsVisible = _newVisible;
         _onVisibilityChanged?.Invoke(_node);
     }
 
+    /// <inheritdoc />
     public void Undo()
     {
         _node.IsVisible = _oldVisible;
         _onVisibilityChanged?.Invoke(_node);
     }
 
+    /// <inheritdoc />
     public bool CanMergeWith(IEditorCommand other) =>
         other is SetVisibilityCommand vc && vc._node.Id == _node.Id;
 
+    /// <inheritdoc />
     public bool TryMerge(IEditorCommand other) => false; // Visibility toggles shouldn't merge
 }

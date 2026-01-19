@@ -6,28 +6,44 @@ namespace BeyondImmersion.Bannou.SceneComposer.Math;
 /// </summary>
 public readonly struct Color : IEquatable<Color>
 {
-    // Common colors
+    /// <summary>White (255, 255, 255).</summary>
     public static readonly Color White = new(255, 255, 255);
+    /// <summary>Black (0, 0, 0).</summary>
     public static readonly Color Black = new(0, 0, 0);
+    /// <summary>Red (255, 0, 0).</summary>
     public static readonly Color Red = new(255, 0, 0);
+    /// <summary>Green (0, 255, 0).</summary>
     public static readonly Color Green = new(0, 255, 0);
+    /// <summary>Blue (0, 0, 255).</summary>
     public static readonly Color Blue = new(0, 0, 255);
+    /// <summary>Yellow (255, 255, 0).</summary>
     public static readonly Color Yellow = new(255, 255, 0);
+    /// <summary>Cyan (0, 255, 255).</summary>
     public static readonly Color Cyan = new(0, 255, 255);
+    /// <summary>Magenta (255, 0, 255).</summary>
     public static readonly Color Magenta = new(255, 0, 255);
+    /// <summary>Transparent (0, 0, 0, 0).</summary>
     public static readonly Color Transparent = new(0, 0, 0, 0);
 
-    // Gizmo standard colors (RGB = XYZ convention)
+    /// <summary>X-axis gizmo color (red).</summary>
     public static readonly Color AxisX = new(255, 80, 80);
+    /// <summary>Y-axis gizmo color (green).</summary>
     public static readonly Color AxisY = new(80, 255, 80);
+    /// <summary>Z-axis gizmo color (blue).</summary>
     public static readonly Color AxisZ = new(80, 80, 255);
+    /// <summary>Highlight color (yellow).</summary>
     public static readonly Color Highlight = new(255, 255, 100);
 
+    /// <summary>Red component (0-255).</summary>
     public byte R { get; }
+    /// <summary>Green component (0-255).</summary>
     public byte G { get; }
+    /// <summary>Blue component (0-255).</summary>
     public byte B { get; }
+    /// <summary>Alpha component (0-255).</summary>
     public byte A { get; }
 
+    /// <summary>Creates a new color from RGBA components.</summary>
     public Color(byte r, byte g, byte b, byte a = 255)
     {
         R = r;
@@ -133,21 +149,27 @@ public readonly struct Color : IEquatable<Color>
             (byte)(a.A + (b.A - a.A) * t));
     }
 
+    /// <inheritdoc />
     public bool Equals(Color other) =>
         R == other.R && G == other.G && B == other.B && A == other.A;
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is Color other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() =>
         HashCode.Combine(R, G, B, A);
 
+    /// <summary>Tests equality between two colors.</summary>
     public static bool operator ==(Color left, Color right) =>
         left.Equals(right);
 
+    /// <summary>Tests inequality between two colors.</summary>
     public static bool operator !=(Color left, Color right) =>
         !left.Equals(right);
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"Color({R}, {G}, {B}, {A})";
 }

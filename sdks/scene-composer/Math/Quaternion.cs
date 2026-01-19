@@ -6,13 +6,19 @@ namespace BeyondImmersion.Bannou.SceneComposer.Math;
 /// </summary>
 public readonly struct Quaternion : IEquatable<Quaternion>
 {
+    /// <summary>Identity quaternion (0, 0, 0, 1).</summary>
     public static readonly Quaternion Identity = new(0, 0, 0, 1);
 
+    /// <summary>X component.</summary>
     public double X { get; }
+    /// <summary>Y component.</summary>
     public double Y { get; }
+    /// <summary>Z component.</summary>
     public double Z { get; }
+    /// <summary>W component.</summary>
     public double W { get; }
 
+    /// <summary>Creates a quaternion from XYZW components.</summary>
     public Quaternion(double x, double y, double z, double w)
     {
         X = x;
@@ -248,24 +254,30 @@ public readonly struct Quaternion : IEquatable<Quaternion>
         return new Quaternion(x, y, z, w).Normalized;
     }
 
+    /// <inheritdoc />
     public bool Equals(Quaternion other) =>
         System.Math.Abs(X - other.X) < double.Epsilon &&
         System.Math.Abs(Y - other.Y) < double.Epsilon &&
         System.Math.Abs(Z - other.Z) < double.Epsilon &&
         System.Math.Abs(W - other.W) < double.Epsilon;
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is Quaternion other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() =>
         HashCode.Combine(X, Y, Z, W);
 
+    /// <summary>Tests equality between two quaternions.</summary>
     public static bool operator ==(Quaternion left, Quaternion right) =>
         left.Equals(right);
 
+    /// <summary>Tests inequality between two quaternions.</summary>
     public static bool operator !=(Quaternion left, Quaternion right) =>
         !left.Equals(right);
 
+    /// <inheritdoc />
     public override string ToString() =>
         $"({X:F3}, {Y:F3}, {Z:F3}, {W:F3})";
 }

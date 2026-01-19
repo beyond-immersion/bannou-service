@@ -40,6 +40,7 @@ public class SceneModifiedEventArgs : SceneComposerEvent
     /// </summary>
     public bool IsUndoable { get; }
 
+    /// <summary>Creates scene modified event args.</summary>
     public SceneModifiedEventArgs(
         SceneModificationType modificationType,
         IEnumerable<ComposerSceneNode> affectedNodes,
@@ -137,6 +138,7 @@ public class SelectionChangedEventArgs : SceneComposerEvent
     /// </summary>
     public ComposerSceneNode? PrimaryNode { get; }
 
+    /// <summary>Creates selection changed event args.</summary>
     public SelectionChangedEventArgs(
         IReadOnlyList<ComposerSceneNode> selectedNodes,
         IReadOnlyList<ComposerSceneNode> added,
@@ -165,6 +167,7 @@ public class NodeCreatedEventArgs : SceneComposerEvent
     /// </summary>
     public ComposerSceneNode? Parent { get; }
 
+    /// <summary>Creates node created event args.</summary>
     public NodeCreatedEventArgs(ComposerSceneNode node, ComposerSceneNode? parent)
     {
         Node = node ?? throw new ArgumentNullException(nameof(node));
@@ -187,6 +190,7 @@ public class NodeDeletedEventArgs : SceneComposerEvent
     /// </summary>
     public ComposerSceneNode? FormerParent { get; }
 
+    /// <summary>Creates node deleted event args.</summary>
     public NodeDeletedEventArgs(ComposerSceneNode node, ComposerSceneNode? formerParent)
     {
         Node = node ?? throw new ArgumentNullException(nameof(node));
@@ -214,6 +218,7 @@ public class NodeReparentedEventArgs : SceneComposerEvent
     /// </summary>
     public ComposerSceneNode? NewParent { get; }
 
+    /// <summary>Creates node reparented event args.</summary>
     public NodeReparentedEventArgs(ComposerSceneNode node, ComposerSceneNode? oldParent, ComposerSceneNode? newParent)
     {
         Node = node ?? throw new ArgumentNullException(nameof(node));
@@ -242,6 +247,7 @@ public class TransformChangedEventArgs : SceneComposerEvent
     /// </summary>
     public Transform NewTransform { get; }
 
+    /// <summary>Creates transform changed event args.</summary>
     public TransformChangedEventArgs(ComposerSceneNode node, Transform oldTransform, Transform newTransform)
     {
         Node = node ?? throw new ArgumentNullException(nameof(node));
@@ -270,6 +276,7 @@ public class AssetChangedEventArgs : SceneComposerEvent
     /// </summary>
     public AssetReference NewAsset { get; }
 
+    /// <summary>Creates asset changed event args.</summary>
     public AssetChangedEventArgs(ComposerSceneNode node, AssetReference oldAsset, AssetReference newAsset)
     {
         Node = node ?? throw new ArgumentNullException(nameof(node));
@@ -298,6 +305,7 @@ public class SceneLoadedEventArgs : SceneComposerEvent
     /// </summary>
     public bool ReferencesResolved { get; }
 
+    /// <summary>Creates scene loaded event args.</summary>
     public SceneLoadedEventArgs(ComposerScene scene, TimeSpan loadTime, bool referencesResolved)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
@@ -326,6 +334,7 @@ public class SceneSavedEventArgs : SceneComposerEvent
     /// </summary>
     public string? Comment { get; }
 
+    /// <summary>Creates scene saved event args.</summary>
     public SceneSavedEventArgs(ComposerScene scene, string newVersion, string? comment)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
@@ -354,6 +363,7 @@ public class CheckoutStateChangedEventArgs : SceneComposerEvent
     /// </summary>
     public string? CheckedOutBy { get; }
 
+    /// <summary>Creates checkout state changed event args.</summary>
     public CheckoutStateChangedEventArgs(bool isCheckedOut, DateTime? expiresAt = null, string? checkedOutBy = null)
     {
         IsCheckedOut = isCheckedOut;
@@ -372,6 +382,7 @@ public class ValidationCompletedEventArgs : SceneComposerEvent
     /// </summary>
     public ValidationResult Result { get; }
 
+    /// <summary>Creates validation completed event args.</summary>
     public ValidationCompletedEventArgs(ValidationResult result)
     {
         Result = result ?? throw new ArgumentNullException(nameof(result));
@@ -403,6 +414,7 @@ public class UndoRedoStateChangedEventArgs : SceneComposerEvent
     /// </summary>
     public string? RedoDescription { get; }
 
+    /// <summary>Creates undo/redo state changed event args.</summary>
     public UndoRedoStateChangedEventArgs(bool canUndo, bool canRedo, string? undoDescription, string? redoDescription)
     {
         CanUndo = canUndo;
@@ -422,6 +434,7 @@ public class DirtyStateChangedEventArgs : SceneComposerEvent
     /// </summary>
     public bool IsDirty { get; }
 
+    /// <summary>Creates dirty state changed event args.</summary>
     public DirtyStateChangedEventArgs(bool isDirty)
     {
         IsDirty = isDirty;
