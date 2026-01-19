@@ -56,7 +56,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// <summary>
     /// The topic name for heartbeat events.
     /// </summary>
-    private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
+    private const string HEARTBEAT_TOPIC = "bannou.service-heartbeats";
 
     /// <inheritdoc/>
     public ServiceHeartbeatManager(

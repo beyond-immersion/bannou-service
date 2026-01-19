@@ -3173,7 +3173,7 @@ components:
       additionalProperties: false
       description: |
         Published when deployment state changes.
-        Topic: bannou-deployment-events
+        Topic: bannou.deployment-events
       required:
       - eventId
       - timestamp
@@ -3219,7 +3219,7 @@ components:
       additionalProperties: false
       description: |
         Published when a service is restarted.
-        Topic: bannou-service-lifecycle
+        Topic: bannou.service-lifecycle
       required:
       - eventId
       - serviceName
@@ -3249,7 +3249,7 @@ components:
         Published by orchestrator when configuration or secrets change.
         All containers receive this event via RabbitMQ. Plugins decide if they care
         based on the changedKeys prefixes and request restart if needed.
-        Topic: bannou-configuration-events
+        Topic: bannou.configuration-events
       required:
       - eventId
       - timestamp

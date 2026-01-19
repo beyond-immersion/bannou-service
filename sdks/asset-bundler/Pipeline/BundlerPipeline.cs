@@ -170,28 +170,35 @@ public sealed class BundlerPipeline
     {
         var results = new List<BundleResult>();
         var semaphore = new SemaphoreSlim(options.MaxParallelSources);
-        var tasks = new List<Task<BundleResult>>();
-
-        await foreach (var source in sources.WithCancellation(ct))
+        try
         {
-            await semaphore.WaitAsync(ct);
+            var tasks = new List<Task<BundleResult>>();
 
-            var capturedSource = source;
-            tasks.Add(Task.Run(async () =>
+            await foreach (var source in sources.WithCancellation(ct))
             {
-                try
-                {
-                    return await ExecuteAsync(capturedSource, processor, state, uploader, options, ct);
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }, ct));
-        }
+                await semaphore.WaitAsync(ct);
 
-        results.AddRange(await Task.WhenAll(tasks));
-        return results;
+                var capturedSource = source;
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        return await ExecuteAsync(capturedSource, processor, state, uploader, options, ct);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }, ct));
+            }
+
+            results.AddRange(await Task.WhenAll(tasks));
+            return results;
+        }
+        finally
+        {
+            semaphore.Dispose();
+        }
     }
 
     private async Task WriteBundleAsync(

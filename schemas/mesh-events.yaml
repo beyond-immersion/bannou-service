@@ -9,10 +9,10 @@ info:
     modifying this schema. Optional reference types require `nullable: true`.
   version: 1.0.0
   x-event-subscriptions:
-    - topic: bannou-service-heartbeats
+    - topic: bannou.service-heartbeats
       event: ServiceHeartbeatEvent
       handler: HandleServiceHeartbeat
-    - topic: bannou-full-service-mappings
+    - topic: bannou.full-service-mappings
       event: FullServiceMappingsEvent
       handler: HandleServiceMappings
   x-event-publications:

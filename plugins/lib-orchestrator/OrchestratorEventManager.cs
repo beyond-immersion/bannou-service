@@ -15,10 +15,10 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
 
-    private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
-    private const string FULL_MAPPINGS_TOPIC = "bannou-full-service-mappings";
-    private const string RESTART_TOPIC = "bannou-service-restart";
-    private const string DEPLOYMENT_TOPIC = "bannou-deployment-events";
+    private const string HEARTBEAT_TOPIC = "bannou.service-heartbeats";
+    private const string FULL_MAPPINGS_TOPIC = "bannou.full-service-mappings";
+    private const string RESTART_TOPIC = "bannou.service-restart";
+    private const string DEPLOYMENT_TOPIC = "bannou.deployment-events";
 
     public OrchestratorEventManager(
         ILogger<OrchestratorEventManager> logger,

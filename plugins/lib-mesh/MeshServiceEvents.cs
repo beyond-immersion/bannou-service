@@ -18,11 +18,11 @@ public partial class MeshService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IMeshService, ServiceHeartbeatEvent>(
-            "bannou-service-heartbeats",
+            "bannou.service-heartbeats",
             async (svc, evt) => await ((MeshService)svc).HandleServiceHeartbeatAsync(evt));
 
         eventConsumer.RegisterHandler<IMeshService, FullServiceMappingsEvent>(
-            "bannou-full-service-mappings",
+            "bannou.full-service-mappings",
             async (svc, evt) => await ((MeshService)svc).HandleServiceMappingsAsync(evt));
     }
 

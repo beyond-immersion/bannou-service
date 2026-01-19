@@ -1929,7 +1929,7 @@ public partial class AppliedChange
 
 /// <summary>
 /// Published when deployment state changes.
-/// <br/>Topic: bannou-deployment-events
+/// <br/>Topic: bannou.deployment-events
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1998,7 +1998,7 @@ public partial class DeploymentEvent
 
 /// <summary>
 /// Published when a service is restarted.
-/// <br/>Topic: bannou-service-lifecycle
+/// <br/>Topic: bannou.service-lifecycle
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2047,7 +2047,7 @@ public partial class ServiceRestartEvent
 /// Published by orchestrator when configuration or secrets change.
 /// <br/>All containers receive this event via RabbitMQ. Plugins decide if they care
 /// <br/>based on the changedKeys prefixes and request restart if needed.
-/// <br/>Topic: bannou-configuration-events
+/// <br/>Topic: bannou.configuration-events
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
