@@ -15,11 +15,13 @@ namespace BeyondImmersion.BannouService.Voice.Tests;
 /// <summary>
 /// Unit tests for KamailioClient JSONRPC 2.0 client.
 /// </summary>
-public class KamailioClientTests
+public class KamailioClientTests : IDisposable
 {
     private readonly Mock<ILogger<KamailioClient>> _mockLogger;
     private readonly Mock<HttpMessageHandler> _mockHandler;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly List<HttpClient> _createdHttpClients = new();
+    private readonly List<HttpResponseMessage> _createdResponses = new();
 
     public KamailioClientTests()
     {
@@ -28,9 +30,26 @@ public class KamailioClientTests
         _mockMessageBus = new Mock<IMessageBus>();
     }
 
+    public void Dispose()
+    {
+        foreach (var client in _createdHttpClients)
+        {
+            client.Dispose();
+        }
+        _createdHttpClients.Clear();
+
+        foreach (var response in _createdResponses)
+        {
+            response.Dispose();
+        }
+        _createdResponses.Clear();
+    }
+
     private HttpClient CreateMockedHttpClient(HttpStatusCode statusCode, string? content = null)
     {
         var response = new HttpResponseMessage(statusCode);
+        _createdResponses.Add(response);
+
         if (content != null)
         {
             response.Content = new StringContent(content, Encoding.UTF8, "application/json");
@@ -43,7 +62,16 @@ public class KamailioClientTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(response);
 
-        return new HttpClient(_mockHandler.Object);
+        var httpClient = new HttpClient(_mockHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
+    }
+
+    private HttpClient CreateThrowingHttpClient()
+    {
+        var httpClient = new HttpClient(_mockHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
     }
 
     private KamailioClient CreateClient(HttpClient httpClient)
@@ -57,7 +85,9 @@ public class KamailioClientTests
     public void ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<KamailioClient>();
-        var client = new KamailioClient(new HttpClient(), "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
+        var httpClient = new HttpClient();
+        _createdHttpClients.Add(httpClient);
+        var client = new KamailioClient(httpClient, "localhost", 5080, _mockLogger.Object, _mockMessageBus.Object);
         Assert.NotNull(client);
     }
 
@@ -355,7 +385,7 @@ public class KamailioClientTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
-        var httpClient = new HttpClient(_mockHandler.Object);
+        var httpClient = CreateThrowingHttpClient();
         var client = CreateClient(httpClient);
 
         // Act
@@ -443,9 +473,9 @@ public class KamailioClientTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException());
 
-        var httpClient = new HttpClient(_mockHandler.Object);
+        var httpClient = CreateThrowingHttpClient();
         var client = CreateClient(httpClient);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

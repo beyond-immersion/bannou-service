@@ -1155,7 +1155,7 @@ public class OrchestratorStateManagerTests
     public void OrchestratorStateManager_ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<OrchestratorStateManager>();
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
         Assert.NotNull(manager);
@@ -1165,7 +1165,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_CheckHealthAsync_WhenNotInitialized_ShouldReturnNotHealthy()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
@@ -1181,7 +1181,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_GetConfigVersionAsync_WhenNotInitialized_ShouldReturnZero()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
@@ -1196,7 +1196,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_GetServiceHeartbeatsAsync_WhenNotInitialized_ShouldReturnEmptyList()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
@@ -1211,7 +1211,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_GetServiceRoutingsAsync_WhenNotInitialized_ShouldReturnEmptyDictionary()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
@@ -1226,7 +1226,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_WriteServiceHeartbeatAsync_WhenNotInitialized_ShouldNotThrow()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
         var heartbeat = new ServiceHeartbeatEvent
@@ -1245,7 +1245,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_WriteServiceRoutingAsync_WhenNotInitialized_ShouldNotThrow()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
         var routing = new ServiceRouting
@@ -1264,7 +1264,7 @@ public class OrchestratorStateManagerTests
     public async Task OrchestratorStateManager_RestoreConfigurationVersionAsync_WhenNotInitialized_ShouldReturnFalse()
     {
         // Arrange
-        var manager = new OrchestratorStateManager(
+        using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
@@ -1283,7 +1283,7 @@ public class OrchestratorStateManagerTests
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
-        // Act & Assert - Should not throw
+        // Act & Assert - Should not throw (manager is disposed in the test itself)
         var exception = Record.Exception(() => manager.Dispose());
         Assert.Null(exception);
     }
@@ -1296,7 +1296,7 @@ public class OrchestratorStateManagerTests
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>());
 
-        // Act & Assert - Should not throw
+        // Act & Assert - Should not throw (manager is disposed in the test itself)
         var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
         Assert.Null(exception);
     }

@@ -910,7 +910,7 @@ public class MeshStateManagerTests
     public void Constructor_ShouldNotThrow_WithValidDependencies()
     {
         // Act & Assert - verify it can be constructed with valid dependencies
-        var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
         Assert.NotNull(manager);
     }
 
@@ -922,7 +922,7 @@ public class MeshStateManagerTests
             .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store not available"));
 
-        var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
 
         // Act
         var result = await manager.InitializeAsync();
@@ -1018,7 +1018,7 @@ public class MeshInvocationClientTests : IDisposable
     {
         // Arrange
         var client = CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "http://example.com/test");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "http://example.com/test");
         // Note: Not setting mesh-app-id option
 
         // Act & Assert

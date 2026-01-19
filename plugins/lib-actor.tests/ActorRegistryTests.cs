@@ -6,9 +6,22 @@ namespace BeyondImmersion.BannouService.Actor.Tests;
 /// <summary>
 /// Unit tests for ActorRegistry - thread-safe registry operations.
 /// </summary>
-public class ActorRegistryTests
+public class ActorRegistryTests : IAsyncLifetime
 {
-    private static IActorRunner CreateMockRunner(
+    private readonly List<IActorRunner> _createdRunners = new();
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        foreach (var runner in _createdRunners)
+        {
+            await runner.DisposeAsync();
+        }
+        _createdRunners.Clear();
+    }
+
+    private IActorRunner CreateMockRunner(
         string actorId,
         Guid templateId,
         string category = "npc-brain",
@@ -21,6 +34,8 @@ public class ActorRegistryTests
         mock.Setup(r => r.Category).Returns(category);
         mock.Setup(r => r.CharacterId).Returns(characterId);
         mock.Setup(r => r.Status).Returns(status);
+        mock.Setup(r => r.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _createdRunners.Add(mock.Object);
         return mock.Object;
     }
 

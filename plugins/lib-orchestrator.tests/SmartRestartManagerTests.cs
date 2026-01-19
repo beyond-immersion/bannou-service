@@ -10,12 +10,13 @@ namespace BeyondImmersion.BannouService.Orchestrator.Tests;
 /// Tests restart logic, health check integration, and error handling.
 /// Note: Docker container operations require integration testing.
 /// </summary>
-public class SmartRestartManagerTests
+public class SmartRestartManagerTests : IAsyncLifetime
 {
     private readonly Mock<ILogger<SmartRestartManager>> _mockLogger;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly List<SmartRestartManager> _createdManagers = new();
 
     public SmartRestartManagerTests()
     {
@@ -28,13 +29,26 @@ public class SmartRestartManagerTests
         };
     }
 
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        foreach (var manager in _createdManagers)
+        {
+            await manager.DisposeAsync();
+        }
+        _createdManagers.Clear();
+    }
+
     private SmartRestartManager CreateManager()
     {
-        return new SmartRestartManager(
+        var manager = new SmartRestartManager(
             _mockLogger.Object,
             _configuration,
             _mockHealthMonitor.Object,
             _mockEventManager.Object);
+        _createdManagers.Add(manager);
+        return manager;
     }
 
     #region Constructor Tests

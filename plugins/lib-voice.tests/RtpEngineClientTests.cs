@@ -285,7 +285,7 @@ public class RtpEngineClientTests : IDisposable
     {
         // Arrange
         using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 1);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert
@@ -298,7 +298,7 @@ public class RtpEngineClientTests : IDisposable
     {
         // Arrange
         using var client = new RtpEngineClient("127.0.0.1", 22222, _mockLogger.Object, _mockMessageBus.Object, timeoutSeconds: 1);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

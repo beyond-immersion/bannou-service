@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Actor.Tests.PoolNode;
 /// Tests direct method behavior without complex BackgroundService lifecycle.
 /// Timing-based lifecycle tests belong in integration tests.
 /// </summary>
-public class ActorPoolNodeWorkerTests
+public class ActorPoolNodeWorkerTests : IAsyncLifetime
 {
     private readonly Mock<IMessageBus> _messageBusMock;
     private readonly Mock<IMessageSubscriber> _messageSubscriberMock;
@@ -22,6 +22,7 @@ public class ActorPoolNodeWorkerTests
     private readonly Mock<ILogger<ActorPoolNodeWorker>> _loggerMock;
     private readonly ActorServiceConfiguration _configuration;
     private readonly HeartbeatEmitter _heartbeatEmitter;
+    private readonly List<ActorPoolNodeWorker> _createdWorkers = new();
 
     public ActorPoolNodeWorkerTests()
     {
@@ -49,9 +50,22 @@ public class ActorPoolNodeWorkerTests
             heartbeatLoggerMock.Object);
     }
 
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        foreach (var worker in _createdWorkers)
+        {
+            await worker.StopAsync(CancellationToken.None);
+            worker.Dispose();
+        }
+        _createdWorkers.Clear();
+        _heartbeatEmitter.Dispose();
+    }
+
     private ActorPoolNodeWorker CreateWorker()
     {
-        return new ActorPoolNodeWorker(
+        var worker = new ActorPoolNodeWorker(
             _messageBusMock.Object,
             _messageSubscriberMock.Object,
             _actorRegistryMock.Object,
@@ -59,6 +73,8 @@ public class ActorPoolNodeWorkerTests
             _heartbeatEmitter,
             _configuration,
             _loggerMock.Object);
+        _createdWorkers.Add(worker);
+        return worker;
     }
 
     #region Constructor Tests

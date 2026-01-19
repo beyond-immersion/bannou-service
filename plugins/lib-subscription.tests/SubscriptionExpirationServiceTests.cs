@@ -65,7 +65,7 @@ public class SubscriptionExpirationServiceTests
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act
-        var service = new SubscriptionExpirationService(
+        using var service = new SubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
@@ -84,7 +84,7 @@ public class SubscriptionExpirationServiceTests
     public async Task ExecuteAsync_WhenCancelled_ShouldStopGracefully()
     {
         // Arrange
-        var service = new SubscriptionExpirationService(
+        using var service = new SubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
@@ -105,7 +105,7 @@ public class SubscriptionExpirationServiceTests
         _mockIndexStore.Setup(s => s.GetAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
-        var service = new TestableSubscriptionExpirationService(
+        using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
@@ -123,7 +123,7 @@ public class SubscriptionExpirationServiceTests
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
             .Returns((object?)null);
 
-        var service = new TestableSubscriptionExpirationService(
+        using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
@@ -139,7 +139,7 @@ public class SubscriptionExpirationServiceTests
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IMessageBus)))
             .Returns((object?)null);
 
-        var service = new TestableSubscriptionExpirationService(
+        using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 
@@ -155,7 +155,7 @@ public class SubscriptionExpirationServiceTests
         _mockIndexStore.Setup(s => s.GetAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string>());
 
-        var service = new TestableSubscriptionExpirationService(
+        using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,
             _mockLogger.Object);
 

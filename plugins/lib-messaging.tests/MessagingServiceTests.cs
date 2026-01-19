@@ -15,7 +15,7 @@ using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Tests;
 
-public class MessagingServiceTests
+public class MessagingServiceTests : IDisposable
 {
     private readonly Mock<ILogger<MessagingService>> _mockLogger;
     private readonly MessagingServiceConfiguration _configuration;
@@ -26,6 +26,23 @@ public class MessagingServiceTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<ExternalSubscriptionData>> _mockSubscriptionStore;
     private readonly MessagingService _service;
+    private readonly List<HttpClient> _createdHttpClients = new();
+
+    public void Dispose()
+    {
+        foreach (var client in _createdHttpClients)
+        {
+            client.Dispose();
+        }
+        _createdHttpClients.Clear();
+    }
+
+    private HttpClient CreateTrackedHttpClient()
+    {
+        var client = new HttpClient();
+        _createdHttpClients.Add(client);
+        return client;
+    }
 
     public MessagingServiceTests()
     {
@@ -407,7 +424,7 @@ public class MessagingServiceTests
         // Set up HttpClientFactory to return a real HttpClient for subscription entry
         _mockHttpClientFactory
             .Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(new HttpClient());
+            .Returns(CreateTrackedHttpClient);
 
         var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
         Assert.NotNull(createResponse);
