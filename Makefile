@@ -57,7 +57,7 @@ build: ## Build all .NET projects
 
 build-sdks: ## Build all SDK projects (separate from server)
 	@echo "🔧 Building SDK projects..."
-	cd sdks && dotnet build bannou-sdks.sln
+	dotnet build sdks/bannou-sdks.sln
 	@echo "✅ SDK build completed"
 
 build-compose: ## Build Docker containers (all services)
@@ -425,7 +425,7 @@ test-unit:
 # SDK unit testing (separate from server tests)
 test-sdks: ## Run all SDK tests
 	@echo "🧪 Running SDK tests..."
-	cd sdks && dotnet test bannou-sdks.sln
+	dotnet test sdks/bannou-sdks.sln
 	@echo "✅ SDK tests completed"
 
 # Infrastructure integration testing (matches CI workflow)
