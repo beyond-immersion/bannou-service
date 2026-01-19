@@ -58382,6 +58382,11 @@
             metadata, along with the message.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.GetOrCreateFactory">
+            <summary>
+            Gets or creates the shared logger factory. Disposed via DisposeFactory() on shutdown.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateApplicationLogger">
             <summary>
             Create a JSON-enabled service logger.
@@ -58390,6 +58395,11 @@
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateServiceLogger(System.String)">
             <summary>
             Create a simple service logger.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.DisposeFactory">
+            <summary>
+            Disposes the shared logger factory. Call on application shutdown.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Logging.ServiceLogging.CreateServiceLogger``1">

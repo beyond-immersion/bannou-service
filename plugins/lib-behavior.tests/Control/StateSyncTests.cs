@@ -210,7 +210,7 @@ public sealed class StateSyncTests
         var entityId = Guid.NewGuid();
         var state = new EntityState { Position = new Vector3(0, 0, 0) };
         var handoff = ControlHandoff.Instant();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

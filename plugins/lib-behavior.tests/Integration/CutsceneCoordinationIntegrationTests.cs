@@ -488,13 +488,13 @@ public sealed class CutsceneCoordinationIntegrationTests : IDisposable
         // Arrange
         var coordinator = new CutsceneCoordinator();
 
-        var session1 = await coordinator.CreateSessionAsync(
+        using var session1 = await coordinator.CreateSessionAsync(
             "session1",
             "cleanup_cinematic",
             _participants.Take(2).ToList(),
             CutsceneSessionOptions.Multiplayer);
 
-        var session2 = await coordinator.CreateSessionAsync(
+        using var session2 = await coordinator.CreateSessionAsync(
             "session2",
             "active_cinematic",
             _participants.Skip(1).ToList(),

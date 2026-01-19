@@ -10,6 +10,43 @@ namespace BeyondImmersion.BannouService.Logging;
 /// </summary>
 public static class ServiceLogging
 {
+    private static ILoggerFactory? _factory;
+    private static readonly object _lock = new();
+
+    /// <summary>
+    /// Gets or creates the shared logger factory. Disposed via DisposeFactory() on shutdown.
+    /// </summary>
+    private static ILoggerFactory GetOrCreateFactory()
+    {
+        if (_factory is not null)
+        {
+            return _factory;
+        }
+
+        lock (_lock)
+        {
+            // Double-check after acquiring lock
+            if (_factory is not null)
+            {
+                return _factory;
+            }
+
+            var factory = new LoggerFactory();
+            try
+            {
+                factory.AddSerilog(Log.Logger);
+                _factory = factory;
+                factory = null; // Ownership transferred to static field
+            }
+            finally
+            {
+                factory?.Dispose(); // Dispose only if ownership NOT transferred
+            }
+
+            return _factory;
+        }
+    }
+
     /// <summary>
     /// Create a JSON-enabled service logger.
     /// </summary>
@@ -22,8 +59,7 @@ public static class ServiceLogging
             .ReadFrom.Configuration(IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
-        ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
-        return factory.CreateLogger("app");
+        return GetOrCreateFactory().CreateLogger("app");
     }
 
     /// <summary>
@@ -35,13 +71,24 @@ public static class ServiceLogging
             throw new ArgumentException("'app' is not a valid service logger name. Use CreateApplicationLogger() instead is meaning to do so.");
 
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/{serviceName.ToLower()}.log");
-        var logger = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
             .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
             .ReadFrom.Configuration(IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
-        ILoggerFactory factory = new LoggerFactory().AddSerilog(logger);
-        return factory.CreateLogger(serviceName.ToLower());
+        return GetOrCreateFactory().CreateLogger(serviceName.ToLower());
+    }
+
+    /// <summary>
+    /// Disposes the shared logger factory. Call on application shutdown.
+    /// </summary>
+    public static void DisposeFactory()
+    {
+        lock (_lock)
+        {
+            _factory?.Dispose();
+            _factory = null;
+        }
     }
 
     private static LoggerConfiguration WriteToFile(this LoggerConfiguration config, string logFilepath)
