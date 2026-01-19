@@ -13,12 +13,18 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 {
     private BannouClient? _realClient;
 
+    /// <summary>
+    /// Initializes test resources.
+    /// </summary>
     public Task InitializeAsync()
     {
         _realClient = new BannouClient();
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Cleans up test resources.
+    /// </summary>
     public async Task DisposeAsync()
     {
         if (_realClient != null)
@@ -33,10 +39,10 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that constructor accepts valid client.
     /// </summary>
     [Fact]
-    public void Constructor_ValidClient_CreatesInstance()
+    public async Task Constructor_ValidClient_CreatesInstance()
     {
         // Act
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Assert
         Assert.NotNull(source);
@@ -46,10 +52,10 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that constructor accepts optional logger.
     /// </summary>
     [Fact]
-    public void Constructor_WithLogger_CreatesInstance()
+    public async Task Constructor_WithLogger_CreatesInstance()
     {
         // Act
-        var source = new BannouWebSocketAssetSource(_realClient!, logger: null);
+        await using var source = new BannouWebSocketAssetSource(_realClient!, logger: null);
 
         // Assert
         Assert.NotNull(source);
@@ -59,13 +65,13 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that constructor accepts mocked IBannouClient.
     /// </summary>
     [Fact]
-    public void Constructor_MockedClient_CreatesInstance()
+    public async Task Constructor_MockedClient_CreatesInstance()
     {
         // Arrange
         var mockClient = new Mock<IBannouClient>();
 
         // Act
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         // Assert
         Assert.NotNull(source);
@@ -79,10 +85,10 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that RequiresAuthentication is true.
     /// </summary>
     [Fact]
-    public void RequiresAuthentication_ReturnsTrue()
+    public async Task RequiresAuthentication_ReturnsTrue()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Assert
         Assert.True(source.RequiresAuthentication);
@@ -92,10 +98,10 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that IsAvailable reflects client connection state.
     /// </summary>
     [Fact]
-    public void IsAvailable_WhenDisconnected_ReturnsFalse()
+    public async Task IsAvailable_WhenDisconnected_ReturnsFalse()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Assert - client is not connected
         Assert.False(source.IsAvailable);
@@ -105,12 +111,12 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// Verifies that IsAvailable returns true when mock client is connected.
     /// </summary>
     [Fact]
-    public void IsAvailable_WhenConnected_ReturnsTrue()
+    public async Task IsAvailable_WhenConnected_ReturnsTrue()
     {
         // Arrange
         var mockClient = new Mock<IBannouClient>();
         mockClient.Setup(c => c.IsConnected).Returns(true);
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         // Assert
         Assert.True(source.IsAvailable);
@@ -127,7 +133,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task ResolveBundlesAsync_WhenDisconnected_ThrowsInvalidOperationException()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -141,7 +147,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task GetBundleDownloadInfoAsync_WhenDisconnected_ThrowsInvalidOperationException()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -155,7 +161,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task GetBundleDownloadInfoAsync_EmptyBundleId_ThrowsArgumentException()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
@@ -169,7 +175,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task GetAssetDownloadInfoAsync_WhenDisconnected_ThrowsInvalidOperationException()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -183,7 +189,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task GetAssetDownloadInfoAsync_EmptyAssetId_ThrowsArgumentException()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
@@ -202,7 +208,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
         var assetIds = new[] { "asset-1", "asset-2" };
 
         SetupResolveBundlesResponse(mockClient, new ResolveBundlesResponse
@@ -239,7 +245,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         SetupResolveBundlesResponse(mockClient, new ResolveBundlesResponse
@@ -283,7 +289,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         SetupResolveBundlesResponse(mockClient, new ResolveBundlesResponse
         {
@@ -318,7 +324,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         SetupResolveBundlesResponse(mockClient, new ResolveBundlesResponse
@@ -358,7 +364,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         SetupResolveBundlesResponse(mockClient, new ResolveBundlesResponse
         {
@@ -387,7 +393,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         mockClient
             .Setup(c => c.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
@@ -423,7 +429,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         mockClient
@@ -463,7 +469,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         mockClient
             .Setup(c => c.InvokeAsync<GetBundleRequest, BundleWithDownloadUrl>(
@@ -499,7 +505,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         var expiresAt = DateTimeOffset.UtcNow.AddHours(1);
         mockClient
@@ -554,7 +560,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         mockClient
             .Setup(c => c.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
@@ -586,7 +592,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     {
         // Arrange
         var mockClient = CreateConnectedMockClient();
-        var source = new BannouWebSocketAssetSource(mockClient.Object);
+        await using var source = new BannouWebSocketAssetSource(mockClient.Object);
 
         mockClient
             .Setup(c => c.InvokeAsync<GetAssetRequest, AssetWithDownloadUrl>(
@@ -622,10 +628,9 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     public async Task DisposeAsync_WhenNotOwningClient_DoesNotDisposeClient()
     {
         // Arrange
-        var source = new BannouWebSocketAssetSource(_realClient!);
+        await using var source = new BannouWebSocketAssetSource(_realClient!);
 
-        // Act
-        await source.DisposeAsync();
+        // Act - dispose happens automatically via await using
 
         // Assert - client should still be usable (not disposed)
         // This is a sanity check - the real verification is that no exception is thrown
