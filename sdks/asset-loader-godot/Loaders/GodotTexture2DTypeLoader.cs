@@ -42,7 +42,7 @@ public sealed class GodotTexture2DTypeLoader : IAssetTypeLoader<Texture2D>
 
         ct.ThrowIfCancellationRequested();
 
-        var image = new Image();
+        using var image = new Image();
         Error error;
 
         // Determine format from content type

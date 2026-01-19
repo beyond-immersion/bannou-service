@@ -57,13 +57,23 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {
-        var client = new BannouClient();
-        var connected = await client.ConnectAsync(serverUrl, email, password, ct).ConfigureAwait(false);
+        BannouClient? client = new BannouClient();
+        try
+        {
+            var connected = await client.ConnectAsync(serverUrl, email, password, ct).ConfigureAwait(false);
 
-        if (!connected)
-            throw new InvalidOperationException("Failed to connect to Bannou server");
+            if (!connected)
+                throw new InvalidOperationException("Failed to connect to Bannou server");
 
-        return new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
+            var result = new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
+            client = null; // Ownership transferred to BannouWebSocketAssetSource
+            return result;
+        }
+        finally
+        {
+            if (client != null)
+                await client.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -82,13 +92,23 @@ public sealed class BannouWebSocketAssetSource : IAssetSource, IAsyncDisposable
         ILogger<BannouWebSocketAssetSource>? logger = null,
         CancellationToken ct = default)
     {
-        var client = new BannouClient();
-        var connected = await client.ConnectWithTokenAsync(serverUrl, serviceToken, refreshToken: null, ct).ConfigureAwait(false);
+        BannouClient? client = new BannouClient();
+        try
+        {
+            var connected = await client.ConnectWithTokenAsync(serverUrl, serviceToken, refreshToken: null, ct).ConfigureAwait(false);
 
-        if (!connected)
-            throw new InvalidOperationException("Failed to connect to Bannou server");
+            if (!connected)
+                throw new InvalidOperationException("Failed to connect to Bannou server");
 
-        return new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
+            var result = new BannouWebSocketAssetSource(client, defaultRealm, logger) { _ownsClient = true };
+            client = null; // Ownership transferred to BannouWebSocketAssetSource
+            return result;
+        }
+        finally
+        {
+            if (client != null)
+                await client.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />

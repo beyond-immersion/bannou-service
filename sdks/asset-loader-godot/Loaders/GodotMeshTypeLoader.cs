@@ -42,8 +42,8 @@ public sealed class GodotMeshTypeLoader : IAssetTypeLoader<Mesh>
 
         ct.ThrowIfCancellationRequested();
 
-        var gltfDoc = new GltfDocument();
-        var gltfState = new GltfState();
+        using var gltfDoc = new GltfDocument();
+        using var gltfState = new GltfState();
 
         // Load from buffer
         var error = gltfDoc.AppendFromBuffer(data.ToArray(), "", gltfState);

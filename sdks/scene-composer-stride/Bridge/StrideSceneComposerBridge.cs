@@ -145,12 +145,8 @@ public class StrideSceneComposerBridge : ISceneComposerBridge
         {
             _scene.Entities.Remove(entity);
 
-            // Dispose any managed resources
-            var modelComponent = entity.Get<ModelComponent>();
-            if (modelComponent != null)
-            {
-                // Model cleanup if needed
-            }
+            // Dispose the entity and its components
+            (entity as IDisposable)?.Dispose();
         }
     }
 
