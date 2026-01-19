@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// </summary>
 public interface IBannouController
 {
-    private static required (Type, BannouControllerAttribute)[] _controllers;
+    private static (Type, BannouControllerAttribute)[]? _controllers;
 
     /// <summary>
     /// Gets the full list of Bannou controllers.

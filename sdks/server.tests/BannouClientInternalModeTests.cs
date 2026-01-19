@@ -20,9 +20,9 @@ public class BannouClientInternalModeTests
     }
 
     [Fact]
-    public void BuildAuthorizationHeader_WithAccessToken_UsesBearer()
+    public async Task BuildAuthorizationHeader_WithAccessToken_UsesBearer()
     {
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         SetPrivateField(client, "_accessToken", "jwt-token");
 
         var header = InvokeBuildAuthorizationHeader(client, allowAnonymousInternal: false);
@@ -31,9 +31,9 @@ public class BannouClientInternalModeTests
     }
 
     [Fact]
-    public void BuildAuthorizationHeader_ServiceToken_InternalHeader()
+    public async Task BuildAuthorizationHeader_ServiceToken_InternalHeader()
     {
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         SetPrivateField(client, "_serviceToken", "secret");
 
         var header = InvokeBuildAuthorizationHeader(client, allowAnonymousInternal: false);
@@ -42,9 +42,9 @@ public class BannouClientInternalModeTests
     }
 
     [Fact]
-    public void BuildAuthorizationHeader_AnonymousInternal_InternalHeader()
+    public async Task BuildAuthorizationHeader_AnonymousInternal_InternalHeader()
     {
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
 
         var header = InvokeBuildAuthorizationHeader(client, allowAnonymousInternal: true);
 
@@ -52,9 +52,9 @@ public class BannouClientInternalModeTests
     }
 
     [Fact]
-    public void BuildAuthorizationHeader_NoTokensAndNotInternal_ReturnsEmpty()
+    public async Task BuildAuthorizationHeader_NoTokensAndNotInternal_ReturnsEmpty()
     {
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
 
         var header = InvokeBuildAuthorizationHeader(client, allowAnonymousInternal: false);
 

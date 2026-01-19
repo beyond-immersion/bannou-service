@@ -211,7 +211,7 @@ public class RawAssetProcessorTests : IDisposable
         var processor = RawAssetProcessor.Instance;
         var asset = CreateExtractedAsset("cancel.bin", new byte[] { 1, 2, 3 });
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

@@ -25,21 +25,21 @@ public abstract class ApiMessage
         public static Type List => typeof(List<string>);
     };
 
-    private static required Type[] _arrayInterfaces;
+    private static Type[]? _arrayInterfaces;
     /// <summary>
     /// Gets the array interfaces implemented by the Array type.
     /// </summary>
     public static Type[] ArrayInterfaces
             => _arrayInterfaces ??= typeof(Array).GetAllImplementedInterfaces();
 
-    private static required Type[] _listInterfaces;
+    private static Type[]? _listInterfaces;
     /// <summary>
     /// Gets the interfaces implemented by the generic List type.
     /// </summary>
     public static Type[] ListInterfaces
             => _listInterfaces ??= typeof(List<>).GetAllImplementedInterfaces();
 
-    private static required Type[] _dictionaryInterfaces;
+    private static Type[]? _dictionaryInterfaces;
     /// <summary>
     /// Gets the interfaces implemented by the generic Dictionary type.
     /// </summary>

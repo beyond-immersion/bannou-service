@@ -200,7 +200,7 @@ public class DirectoryAssetSourceTests : IDisposable
             new DirectoryInfo(_sourceDir),
             "test", "Test", "1.0");
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

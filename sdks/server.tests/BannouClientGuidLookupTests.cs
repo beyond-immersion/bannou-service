@@ -32,10 +32,10 @@ public class BannouClientGuidLookupTests
     /// Tests that GetServiceGuid returns the correct GUID for exact method:path key.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_ExactMatch_ReturnsCorrectGuid()
+    public async Task GetServiceGuid_ExactMatch_ReturnsCorrectGuid()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var expectedGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
         {
@@ -55,10 +55,10 @@ public class BannouClientGuidLookupTests
     /// Tests that GetServiceGuid returns null for non-existent endpoints.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_NonExistentEndpoint_ReturnsNull()
+    public async Task GetServiceGuid_NonExistentEndpoint_ReturnsNull()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
             { "POST:/account/get", Guid.NewGuid() }
@@ -77,10 +77,10 @@ public class BannouClientGuidLookupTests
     /// This was the bug that caused endpoint prefix collision.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_PrefixCollision_ReturnsCorrectGuid()
+    public async Task GetServiceGuid_PrefixCollision_ReturnsCorrectGuid()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var getGuid = Guid.NewGuid();
         var getByCodeGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
@@ -106,10 +106,10 @@ public class BannouClientGuidLookupTests
     /// Tests multiple similar endpoint patterns that could cause collision.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_MultipleSimilarEndpoints_NoCollision()
+    public async Task GetServiceGuid_MultipleSimilarEndpoints_NoCollision()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var endpoints = new Dictionary<string, Guid>
         {
             { "POST:/location/get", Guid.NewGuid() },
@@ -141,10 +141,10 @@ public class BannouClientGuidLookupTests
     /// Tests case sensitivity of method matching.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_MethodCaseSensitive_ReturnsNull()
+    public async Task GetServiceGuid_MethodCaseSensitive_ReturnsNull()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
             { "POST:/account/get", Guid.NewGuid() }
@@ -162,10 +162,10 @@ public class BannouClientGuidLookupTests
     /// Tests different HTTP methods for the same path.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_DifferentMethods_ReturnsCorrectGuid()
+    public async Task GetServiceGuid_DifferentMethods_ReturnsCorrectGuid()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var postGuid = Guid.NewGuid();
         var getGuid = Guid.NewGuid();
         var mappings = new Dictionary<string, Guid>
@@ -191,10 +191,10 @@ public class BannouClientGuidLookupTests
     /// Tests that empty mappings return null.
     /// </summary>
     [Fact]
-    public void GetServiceGuid_EmptyMappings_ReturnsNull()
+    public async Task GetServiceGuid_EmptyMappings_ReturnsNull()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         // Don't populate any mappings
 
         // Act
@@ -208,10 +208,10 @@ public class BannouClientGuidLookupTests
     /// Tests partial path matching (should NOT match).
     /// </summary>
     [Fact]
-    public void GetServiceGuid_PartialPath_ReturnsNull()
+    public async Task GetServiceGuid_PartialPath_ReturnsNull()
     {
         // Arrange
-        using var client = new BannouClient();
+        await using var client = new BannouClient();
         var mappings = new Dictionary<string, Guid>
         {
             { "POST:/species/get-by-code", Guid.NewGuid() }
