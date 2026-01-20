@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Build tools (xunit, Moq, Test.Sdk come from test-utilities) -->
+    <!-- Build tools (xunit, Moq come from test-utilities; Test.Sdk needed for test discovery) -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

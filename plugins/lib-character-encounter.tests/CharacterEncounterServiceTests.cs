@@ -2,7 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;

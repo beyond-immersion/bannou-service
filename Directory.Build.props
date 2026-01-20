@@ -9,11 +9,22 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <!-- Suppress Moq-specific nullable inference warnings in test projects (T22 compliant) -->
-  <!-- These are caused by Moq's generic type inference and cannot be fixed in our code. -->
-  <!-- See: docs/reference/tenets/QUALITY.md (T22) -->
+  <!-- Test project configuration -->
+  <!-- These settings apply to all projects with '.tests' in the name -->
   <PropertyGroup Condition="$(MSBuildProjectName.Contains('.tests'))">
     <!--
+      CopyLocalLockFileAssemblies: Ensures all transitive NuGet dependencies are copied to output.
+      Required for test infrastructure packages (xunit, Moq, Castle.Core) that flow from
+      test-utilities via project reference. Without this, runtime dependencies like
+      Castle.Core (Moq's dependency) aren't copied, causing test execution failures.
+    -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!--
+      Suppress Moq-specific nullable inference warnings (QUALITY TENETS compliant)
+      These are caused by Moq's generic type inference and cannot be fixed in our code.
+      See: docs/reference/tenets/QUALITY.md
+
       CS8620: Argument of type 'Task<T?>' cannot be used for parameter of type 'Task<T>'
               Moq's Returns() method has nullable inference issues with Task<T?> vs Task<T>
       CS8619: Nullability of reference types in value doesn't match target type

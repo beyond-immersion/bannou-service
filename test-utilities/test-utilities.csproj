@@ -10,8 +10,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Test infrastructure packages - transitive to all test projects via test-utilities reference -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!--
+      Test infrastructure packages - transitive to all test projects via test-utilities reference.
+
+      Microsoft.NET.Test.Sdk is excluded here because:
+      1. Its runtime assets (testhost.dll) cause issues with CopyLocalLockFileAssemblies
+      2. It needs to be in each test project directly for proper test discovery
+      3. Only the build props/targets are needed transitively (for compile time)
+
+      The test projects add Microsoft.NET.Test.Sdk directly while getting xunit, Moq,
+      and Castle.Core transitively from this project.
+    -->
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Moq's runtime dependency - must be explicit for transitive flow -->
