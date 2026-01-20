@@ -1,8 +1,6 @@
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Auth.Services;

@@ -5,9 +5,7 @@
 
 #nullable enable
 
-using BeyondImmersion.BannouService.Services;
-
-namespace BeyondImmersion.BannouService.State.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// State store name constants and configuration definitions.

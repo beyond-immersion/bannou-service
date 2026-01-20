@@ -51,9 +51,7 @@ def generate_csharp(stores: dict) -> str:
         "",
         "#nullable enable",
         "",
-        "using BeyondImmersion.BannouService.Services;",
-        "",
-        "namespace BeyondImmersion.BannouService.State.Services;",
+        "namespace BeyondImmersion.BannouService.Services;",
         "",
         "/// <summary>",
         "/// State store name constants and configuration definitions.",
@@ -272,9 +270,9 @@ def main():
     if not stores:
         print("Warning: No state stores defined in schema")
 
-    # Generate C# code (output to lib-state where StoreConfiguration is defined)
+    # Generate C# code (output to bannou-service where StoreConfiguration is defined)
     csharp_code = generate_csharp(stores)
-    csharp_output = repo_root / 'plugins' / 'lib-state' / 'Generated' / 'StateStoreDefinitions.cs'
+    csharp_output = repo_root / 'bannou-service' / 'Generated' / 'StateStoreDefinitions.cs'
     csharp_output.parent.mkdir(parents=True, exist_ok=True)
     with open(csharp_output, 'w') as f:
         f.write(csharp_code)

@@ -8,13 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib-account/lib-account.csproj" />
-    <ProjectReference Include="../lib-subscription/lib-subscription.csproj" />
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Microsoft.AspNetCore.Authentication.JwtBearer comes from bannou-service -->
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
