@@ -386,6 +386,10 @@ fix:
 	@$(MAKE) fix-format
 	@$(MAKE) fix-endings
 	@$(MAKE) fix-config
+	@if [ -f "sdks/typescript/package.json" ]; then \
+		echo "🔧 Formatting TypeScript SDK..."; \
+		cd sdks/typescript && npm install --silent && npm run format; \
+	fi
 	@echo "✅ All formatting tasks complete"
 
 # Alias for fix (common convention)
@@ -1053,3 +1057,73 @@ tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'
 	git push origin $(tagname)
+
+# =============================================================================
+# TYPESCRIPT SDK
+# =============================================================================
+# TypeScript client SDK for browser and Node.js environments.
+# Location: sdks/typescript/
+# =============================================================================
+
+TS_SDK_DIR := sdks/typescript
+
+generate-sdk-ts: ## Generate TypeScript SDK proxies and event registry from schemas
+	@echo "🔧 Generating TypeScript SDK code..."
+	python3 scripts/generate-client-proxies-ts.py
+	python3 scripts/generate-client-event-registry-ts.py
+	@echo "✅ TypeScript SDK code generation completed"
+
+format-sdk-ts: ## Format TypeScript SDK code with Prettier
+	@echo "🔧 Formatting TypeScript SDK..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR) && npm run format
+	@echo "✅ TypeScript SDK formatting completed"
+
+build-sdk-ts: generate-sdk-ts format-sdk-ts ## Build TypeScript SDK packages
+	@echo "🔧 Building TypeScript SDK..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	@if [ ! -d "$(TS_SDK_DIR)/core/node_modules" ]; then \
+		echo "📦 Installing core dependencies..."; \
+		cd $(TS_SDK_DIR)/core && npm install; \
+	fi
+	@if [ ! -d "$(TS_SDK_DIR)/client/node_modules" ]; then \
+		echo "📦 Installing client dependencies..."; \
+		cd $(TS_SDK_DIR)/client && npm install; \
+	fi
+	cd $(TS_SDK_DIR)/core && npm run build
+	cd $(TS_SDK_DIR)/client && npm run build
+	@echo "✅ TypeScript SDK build completed"
+
+test-sdk-ts: build-sdk-ts ## Run TypeScript SDK tests
+	@echo "🧪 Running TypeScript SDK tests..."
+	cd $(TS_SDK_DIR)/client && npm test
+	@echo "✅ TypeScript SDK tests completed"
+
+clean-sdk-ts: ## Clean TypeScript SDK build artifacts
+	@echo "🧹 Cleaning TypeScript SDK..."
+	rm -rf $(TS_SDK_DIR)/core/dist $(TS_SDK_DIR)/core/node_modules
+	rm -rf $(TS_SDK_DIR)/client/dist $(TS_SDK_DIR)/client/node_modules
+	rm -rf $(TS_SDK_DIR)/client/Generated/proxies/*.ts
+	rm -rf $(TS_SDK_DIR)/client/Generated/events/*.ts
+	@echo "✅ TypeScript SDK cleaned"
+
+typecheck-sdk-ts: ## Type-check TypeScript SDK without building
+	@echo "🔍 Type-checking TypeScript SDK..."
+	cd $(TS_SDK_DIR)/core && npm run typecheck
+	cd $(TS_SDK_DIR)/client && npm run typecheck
+	@echo "✅ TypeScript SDK type-check completed"
+
+check-sdk-ts: ## Check TypeScript SDK formatting (for CI)
+	@echo "🔍 Checking TypeScript SDK formatting..."
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing root dependencies..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR) && npm run format:check
+	@echo "✅ TypeScript SDK formatting check passed"

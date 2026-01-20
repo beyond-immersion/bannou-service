@@ -1,0 +1,23 @@
+{
+  "name": "@beyondimmersion/bannou-typescript",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bannou TypeScript SDK workspace",
+  "workspaces": [
+    "core",
+    "client"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=core && npm run build --workspace=client",
+    "clean": "rm -rf core/dist client/dist",
+    "typecheck": "npm run typecheck --workspace=core && npm run typecheck --workspace=client",
+    "generate": "python3 ../../scripts/generate-client-proxies-ts.py && python3 ../../scripts/generate-client-event-registry-ts.py",
+    "test": "npm run test --workspace=client",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.0",
+    "typescript": "^5.3.0"
+  }
+}

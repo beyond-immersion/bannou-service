@@ -31,8 +31,8 @@ fix_line_endings() {
         needs_fix=true
     fi
 
-    # For .cs files only: check and remove trailing whitespace + whitespace-only lines
-    if [[ "$file" == *.cs ]]; then
+    # For source code files: check and remove trailing whitespace + whitespace-only lines
+    if [[ "$file" == *.cs ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.tsx ]] || [[ "$file" == *.js ]] || [[ "$file" == *.jsx ]]; then
         # Remove trailing whitespace
         if grep -q '[[:space:]]\+$' "$file" 2>/dev/null; then
             echo -e "${YELLOW}  Removing trailing whitespace: $file${NC}"
@@ -72,6 +72,10 @@ echo "📋 Processing all text files (excluding build artifacts)..."
 # File patterns to fix line endings for
 FILE_PATTERNS=(
     "*.cs"      # C# source files
+    "*.ts"      # TypeScript files
+    "*.tsx"     # TypeScript JSX files
+    "*.js"      # JavaScript files
+    "*.jsx"     # JavaScript JSX files
     "*.md"      # Markdown files
     "*.json"    # JSON configuration files
     "*.yml"     # YAML files
@@ -103,5 +107,5 @@ done
 echo ""
 echo -e "${GREEN}📊 Line ending fixes completed!${NC}"
 echo -e "  📁 Total files processed: $TOTAL_FILES"
-echo -e "  🎯 File types: .cs, .md, .json, .yml/.yaml, .sh, .txt, .xml, .csproj, .sln"
+echo -e "  🎯 File types: .cs, .ts, .tsx, .js, .jsx, .md, .json, .yml/.yaml, .sh, .txt, .xml, .csproj, .sln"
 echo -e "  ✅ All files now have LF line endings and proper final newlines"
