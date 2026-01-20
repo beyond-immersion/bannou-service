@@ -1115,7 +1115,7 @@ public class AuthServiceTests : IDisposable
             It.IsAny<string?>(),
             It.IsAny<ServiceErrorEventSeverity>(),
             It.IsAny<object?>(),
-            It.IsAny<Guid?>(),
+            It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);

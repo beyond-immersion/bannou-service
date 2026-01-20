@@ -356,12 +356,12 @@ public class SteamAchievementSyncTests : IDisposable
     #region UnlockAsync Configuration Validation Tests
 
     [Fact]
-    public async Task UnlockAsync_MissingSteamApiKey_ReturnsFailure()
+    public async Task UnlockAsync_MissingSteamApiKey_ReturnsDisabled()
     {
-        // Arrange
+        // Arrange - Steam sync disabled when API key not configured
         var config = new AchievementServiceConfiguration
         {
-            SteamApiKey = string.Empty,
+            SteamApiKey = null,
             SteamAppId = "480"
         };
 
@@ -374,19 +374,20 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
 
-        // Assert
-        Assert.False(result.Success);
-        Assert.Contains("Steam API key not configured", result.ErrorMessage);
+        // Assert - Success=true indicates graceful disable, not failure
+        Assert.True(result.Success);
+        Assert.Equal("disabled", result.SyncId);
+        Assert.Null(result.ErrorMessage);
     }
 
     [Fact]
-    public async Task UnlockAsync_MissingSteamAppId_ReturnsFailure()
+    public async Task UnlockAsync_MissingSteamAppId_ReturnsDisabled()
     {
-        // Arrange
+        // Arrange - Steam sync disabled when App ID not configured
         var config = new AchievementServiceConfiguration
         {
             SteamApiKey = "test-key",
-            SteamAppId = string.Empty
+            SteamAppId = null
         };
 
         var sync = new SteamAchievementSync(
@@ -398,9 +399,10 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
 
-        // Assert
-        Assert.False(result.Success);
-        Assert.Contains("Steam App ID not configured", result.ErrorMessage);
+        // Assert - Success=true indicates graceful disable, not failure
+        Assert.True(result.Success);
+        Assert.Equal("disabled", result.SyncId);
+        Assert.Null(result.ErrorMessage);
     }
 
     #endregion
@@ -584,12 +586,12 @@ public class SteamAchievementSyncTests : IDisposable
     }
 
     [Fact]
-    public async Task SetProgressAsync_MissingSteamApiKey_ReturnsFailure()
+    public async Task SetProgressAsync_MissingSteamApiKey_ReturnsDisabled()
     {
-        // Arrange
+        // Arrange - Steam sync disabled when API key not configured
         var config = new AchievementServiceConfiguration
         {
-            SteamApiKey = string.Empty,
+            SteamApiKey = null,
             SteamAppId = "480"
         };
 
@@ -602,9 +604,10 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);
 
-        // Assert
-        Assert.False(result.Success);
-        Assert.Contains("Steam API key not configured", result.ErrorMessage);
+        // Assert - Success=true indicates graceful disable, not failure
+        Assert.True(result.Success);
+        Assert.Equal("disabled", result.SyncId);
+        Assert.Null(result.ErrorMessage);
     }
 
     #endregion
