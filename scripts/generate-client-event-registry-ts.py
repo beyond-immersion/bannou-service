@@ -202,7 +202,7 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     schema_dir = repo_root / 'schemas'
-    output_dir = repo_root / 'sdks' / 'typescript' / 'client' / 'Generated' / 'events'
+    output_dir = repo_root / 'sdks' / 'typescript' / 'client' / 'src' / 'Generated' / 'events'
 
     if not schema_dir.exists():
         print(f"ERROR: Schema directory not found: {schema_dir}")
@@ -213,7 +213,7 @@ def main():
 
     print("Generating TypeScript client event registry from schemas...")
     print(f"  Reading from: schemas/*-client-events.yaml")
-    print(f"  Writing to: sdks/typescript/client/Generated/events/")
+    print(f"  Writing to: sdks/typescript/client/src/Generated/events/")
     print()
 
     all_events: List[EventInfo] = []

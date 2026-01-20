@@ -1067,10 +1067,13 @@ tag:
 
 TS_SDK_DIR := sdks/typescript
 
-generate-sdk-ts: ## Generate TypeScript SDK proxies and event registry from schemas
+generate-sdk-ts: ## Generate TypeScript SDK types, proxies, and event registry from schemas
 	@echo "🔧 Generating TypeScript SDK code..."
-	python3 scripts/generate-client-proxies-ts.py
-	python3 scripts/generate-client-event-registry-ts.py
+	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
+		echo "📦 Installing dependencies for type generation..."; \
+		cd $(TS_SDK_DIR) && npm install; \
+	fi
+	cd $(TS_SDK_DIR)/client && npm run generate
 	@echo "✅ TypeScript SDK code generation completed"
 
 format-sdk-ts: ## Format TypeScript SDK code with Prettier
@@ -1109,8 +1112,10 @@ clean-sdk-ts: ## Clean TypeScript SDK build artifacts
 	@echo "🧹 Cleaning TypeScript SDK..."
 	rm -rf $(TS_SDK_DIR)/core/dist $(TS_SDK_DIR)/core/node_modules
 	rm -rf $(TS_SDK_DIR)/client/dist $(TS_SDK_DIR)/client/node_modules
-	rm -rf $(TS_SDK_DIR)/client/Generated/proxies/*.ts
-	rm -rf $(TS_SDK_DIR)/client/Generated/events/*.ts
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/types/*.ts
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/proxies/*.ts
+	rm -rf $(TS_SDK_DIR)/client/src/Generated/events/*.ts
+	rm -rf $(TS_SDK_DIR)/node_modules
 	@echo "✅ TypeScript SDK cleaned"
 
 typecheck-sdk-ts: ## Type-check TypeScript SDK without building

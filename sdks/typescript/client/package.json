@@ -32,10 +32,10 @@
     "dist"
   ],
   "scripts": {
-    "generate:types": "echo 'Type generation requires schemas - run from repo root'",
-    "generate:proxies": "python3 ../../scripts/generate-client-proxies-ts.py",
-    "generate:events": "python3 ../../scripts/generate-client-event-registry-ts.py",
-    "generate": "npm run generate:proxies && npm run generate:events",
+    "generate:types": "bash scripts/generate-types.sh",
+    "generate:proxies": "python3 ../../../scripts/generate-client-proxies-ts.py",
+    "generate:events": "python3 ../../../scripts/generate-client-event-registry-ts.py",
+    "generate": "npm run generate:types && npm run generate:proxies && npm run generate:events",
     "build": "tsup",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
@@ -56,6 +56,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/ws": "^8.5.0",
+    "openapi-typescript": "^7.10.1",
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",
     "vitest": "^3.0.0"
