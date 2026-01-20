@@ -12,7 +12,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

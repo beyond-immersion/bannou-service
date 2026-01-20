@@ -9,7 +9,6 @@ using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State.Services;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Voice;
 using Microsoft.Extensions.DependencyInjection;

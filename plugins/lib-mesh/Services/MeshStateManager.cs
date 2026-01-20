@@ -4,7 +4,6 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
