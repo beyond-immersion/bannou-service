@@ -189,7 +189,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -221,7 +221,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -242,7 +242,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.CreateEncounterTypeAsync(request);
+        var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
@@ -259,7 +259,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetEncounterTypeAsync(
-            new GetEncounterTypeRequest { Code = "DIALOGUE" });
+            new GetEncounterTypeRequest { Code = "DIALOGUE" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -277,7 +277,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetEncounterTypeAsync(
-            new GetEncounterTypeRequest { Code = "NONEXISTENT" });
+            new GetEncounterTypeRequest { Code = "NONEXISTENT" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -309,7 +309,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.ListEncounterTypesAsync(
-            new ListEncounterTypesRequest { IncludeInactive = true });
+            new ListEncounterTypesRequest { IncludeInactive = true }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -343,7 +343,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdateEncounterTypeAsync(request);
+        var (status, response) = await service.UpdateEncounterTypeAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -376,7 +376,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdateEncounterTypeAsync(request);
+        var (status, response) = await service.UpdateEncounterTypeAsync(request, CancellationToken.None);
 
         // Assert - Built-in types can be updated with limited fields
         Assert.Equal(StatusCodes.OK, status);
@@ -408,7 +408,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "CUSTOM" });
+            new DeleteEncounterTypeRequest { Code = "CUSTOM" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -424,7 +424,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var status = await service.DeleteEncounterTypeAsync(
-            new DeleteEncounterTypeRequest { Code = "COMBAT" });
+            new DeleteEncounterTypeRequest { Code = "COMBAT" }, CancellationToken.None);
 
         // Assert - Cannot delete built-in types
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -478,7 +478,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request);
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
 
         // Assert - Response
         Assert.Equal(StatusCodes.OK, status);
@@ -513,7 +513,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request);
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -556,7 +556,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request);
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -602,7 +602,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RecordEncounterAsync(request);
+        var (status, response) = await service.RecordEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -652,7 +652,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryByCharacterAsync(
-            new QueryByCharacterRequest { CharacterId = characterId });
+            new QueryByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -674,7 +674,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryByCharacterAsync(
-            new QueryByCharacterRequest { CharacterId = characterId });
+            new QueryByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -691,9 +691,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var charA = Guid.NewGuid();
         var charB = Guid.NewGuid();
         var encounterId = Guid.NewGuid();
-
-        // Ensure canonical ordering for pair key
-        var pairKey = charA < charB ? $"pair-idx-{charA}:{charB}" : $"pair-idx-{charB}:{charA}";
 
         var pairIndex = new PairIndexData
         {
@@ -722,7 +719,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.QueryBetweenAsync(
-            new QueryBetweenRequest { CharacterIdA = charA, CharacterIdB = charB });
+            new QueryBetweenRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -752,7 +749,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.HasMetAsync(
-            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB });
+            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -775,7 +772,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.HasMetAsync(
-            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB });
+            new HasMetRequest { CharacterIdA = charA, CharacterIdB = charB }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -835,13 +832,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetSentimentAsync(
-            new GetSentimentRequest { CharacterId = characterId, TargetCharacterId = targetId });
+            new GetSentimentRequest { CharacterId = characterId, TargetCharacterId = targetId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(1, response.EncounterCount);
-        // Sentiment is calculated based on memory-weighted sentiment shifts
     }
 
     [Fact]
@@ -854,7 +850,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         var target2 = Guid.NewGuid();
 
         // Setup for target1 - they have met
-        var pairIndex1Key = characterId < target1 ? $"pair-idx-{characterId}:{target1}" : $"pair-idx-{target1}:{characterId}";
         _mockPairIndexStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.Contains(target1.ToString())), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PairIndexData
@@ -874,7 +869,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.BatchGetSentimentAsync(request);
+        var (status, response) = await service.BatchGetSentimentAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -897,7 +892,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.BatchGetSentimentAsync(request);
+        var (status, response) = await service.BatchGetSentimentAsync(request, CancellationToken.None);
 
         // Assert - MaxBatchSize is 100
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -939,12 +934,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.GetPerspectiveAsync(
-            new GetPerspectiveRequest { EncounterId = encounterId, CharacterId = characterId });
+            new GetPerspectiveRequest { EncounterId = encounterId, CharacterId = characterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal(characterId, response.Perspective.CharacterId);
     }
 
     [Fact]
@@ -991,12 +986,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.UpdatePerspectiveAsync(request);
+        var (status, response) = await service.UpdatePerspectiveAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("A pivotal moment", response.RememberedAs);
+        Assert.Equal("A pivotal moment", response.Perspective.RememberedAs);
         Assert.NotNull(savedPerspective);
         Assert.Equal("A pivotal moment", savedPerspective.RememberedAs);
     }
@@ -1019,13 +1014,13 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockPerspectiveStore.Setup(s => s.GetAsync($"pers-{perspectiveId}", It.IsAny<CancellationToken>())).ReturnsAsync(perspective);
         _mockPerspectiveStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<PerspectiveData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
-        PerspectiveUpdatedEvent? capturedEvent = null;
+        EncounterPerspectiveUpdatedEvent? capturedEvent = null;
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.Is<string>(t => t == "encounter.perspective.updated"),
-                It.IsAny<PerspectiveUpdatedEvent>(),
+                It.IsAny<EncounterPerspectiveUpdatedEvent>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, PerspectiveUpdatedEvent, CancellationToken>((_, evt, _) => capturedEvent = evt)
+            .Callback<string, EncounterPerspectiveUpdatedEvent, CancellationToken>((_, evt, _) => capturedEvent = evt)
             .ReturnsAsync(true);
 
         var request = new UpdatePerspectiveRequest
@@ -1036,7 +1031,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        await service.UpdatePerspectiveAsync(request);
+        await service.UpdatePerspectiveAsync(request, CancellationToken.None);
 
         // Assert
         Assert.NotNull(capturedEvent);
@@ -1075,7 +1070,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         };
 
         // Act
-        var (status, response) = await service.RefreshMemoryAsync(request);
+        var (status, response) = await service.RefreshMemoryAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1111,7 +1106,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.RefreshMemoryAsync(
-            new RefreshMemoryRequest { EncounterId = encounterId, CharacterId = characterId });
+            new RefreshMemoryRequest { EncounterId = encounterId, CharacterId = characterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1161,8 +1156,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockGlobalIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GlobalCharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
         // Act
-        var status = await service.DeleteEncounterAsync(
-            new DeleteEncounterRequest { EncounterId = encounterId });
+        var (status, _) = await service.DeleteEncounterAsync(
+            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1180,8 +1175,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .ReturnsAsync((EncounterData?)null);
 
         // Act
-        var status = await service.DeleteEncounterAsync(
-            new DeleteEncounterRequest { EncounterId = encounterId });
+        var (status, _) = await service.DeleteEncounterAsync(
+            new DeleteEncounterRequest { EncounterId = encounterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
@@ -1226,7 +1221,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DeleteByCharacterAsync(
-            new DeleteByCharacterRequest { CharacterId = characterId });
+            new DeleteByCharacterRequest { CharacterId = characterId }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1260,7 +1255,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DecayMemoriesAsync(
-            new DecayMemoriesRequest { CharacterId = characterId, DryRun = false });
+            new DecayMemoriesRequest { CharacterId = characterId, DryRun = false }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
@@ -1292,7 +1287,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
 
         // Act
         var (status, response) = await service.DecayMemoriesAsync(
-            new DecayMemoriesRequest { CharacterId = characterId, DryRun = true });
+            new DecayMemoriesRequest { CharacterId = characterId, DryRun = true }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
