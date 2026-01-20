@@ -20,6 +20,7 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ACHIEVEMENT_AUTO_SYNC_ON_UNLOCK` | bool | `true` | Automatically sync achievements to platforms when unlocked |
 | `ACHIEVEMENT_DEFINITION_STORE_NAME` | string | `achievement-definition` | Name of the state store for achievement definitions (MySQL r... |
+| `ACHIEVEMENT_MOCK_PLATFORM_SYNC` | bool | `false` | Enable mock mode for platform sync (returns success without ... |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_ID` | string | **REQUIRED** | PlayStation Network client ID (stub - not implemented) |
 | `ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET` | string | **REQUIRED** | PlayStation Network client secret (stub - not implemented) |
 | `ACHIEVEMENT_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached progress data |
@@ -573,9 +574,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 439
+- **Total properties**: 440
 - **Required (no default)**: 40
-- **Optional (has default)**: 399
+- **Optional (has default)**: 400
 
 ## Environment Variable Naming Convention
 

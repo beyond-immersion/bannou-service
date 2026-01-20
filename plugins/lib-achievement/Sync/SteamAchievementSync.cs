@@ -1,4 +1,8 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Account;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Achievement.Sync;
 
@@ -6,143 +10,514 @@ namespace BeyondImmersion.BannouService.Achievement.Sync;
 /// Steam achievement sync implementation using Steam Web API.
 /// </summary>
 /// <remarks>
-/// Requires Steam Web API key and app ID to be configured.
+/// <para>
+/// Requires Steam Web API publisher key and app ID to be configured.
 /// The Steam Web API requires the game to be published on Steam and
 /// achievements to be configured in Steamworks.
+/// </para>
+/// <para>
+/// Uses the publisher API endpoint (partner.steam-api.com) for setting
+/// achievement and stat values. This requires publisher-level access
+/// to the Steam Web API.
+/// </para>
 /// </remarks>
 public class SteamAchievementSync : IPlatformAchievementSync
 {
+    private const string SteamPartnerApiBaseUrl = "https://partner.steam-api.com";
+    private const string SetUserStatsEndpoint = "/ISteamUserStats/SetUserStatsForGame/v1/";
+
     private readonly AchievementServiceConfiguration _configuration;
+    private readonly IAccountClient _accountClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<SteamAchievementSync> _logger;
 
     /// <inheritdoc />
     public Platform Platform => Platform.Steam;
 
     /// <summary>
+    /// Gets a value indicating whether Steam sync is properly configured.
+    /// </summary>
+    /// <remarks>
+    /// Returns true only if both SteamApiKey and SteamAppId are configured.
+    /// When false, sync operations will succeed as no-ops (feature disabled).
+    /// </remarks>
+    public bool IsConfigured =>
+        !string.IsNullOrEmpty(_configuration.SteamApiKey) &&
+        !string.IsNullOrEmpty(_configuration.SteamAppId);
+
+    /// <summary>
     /// Initializes a new instance of the SteamAchievementSync.
     /// </summary>
+    /// <param name="configuration">Achievement service configuration containing Steam API credentials.</param>
+    /// <param name="accountClient">Client for querying account service for Steam link status.</param>
+    /// <param name="httpClientFactory">Factory for creating HTTP clients for Steam API calls.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
     public SteamAchievementSync(
         AchievementServiceConfiguration configuration,
+        IAccountClient accountClient,
+        IHttpClientFactory httpClientFactory,
         ILogger<SteamAchievementSync> logger)
     {
-        _configuration = configuration;
-        _logger = logger;
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _accountClient = accountClient ?? throw new ArgumentNullException(nameof(accountClient));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
     public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
-        // TODO: Query account service for Steam link status
-        // For now, return false - no accounts are linked
         _logger.LogDebug("Checking Steam link status for account {AccountId}", accountId);
-        await Task.CompletedTask;
-        return false;
+
+        try
+        {
+            var authMethods = await _accountClient.GetAuthMethodsAsync(
+                new GetAuthMethodsRequest { AccountId = accountId },
+                ct);
+
+            var hasSteam = authMethods.AuthMethods.Any(m => m.Provider == AuthProvider.Steam);
+
+            _logger.LogDebug(
+                "Account {AccountId} Steam link status: {IsLinked}",
+                accountId,
+                hasSteam);
+
+            return hasSteam;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug(
+                "Account {AccountId} not found when checking Steam link status",
+                accountId);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to check Steam link status for account {AccountId}",
+                accountId);
+            return false;
+        }
     }
 
     /// <inheritdoc />
     public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
-        // TODO: Query account service for Steam ID
-        // The Steam ID is a 64-bit integer (SteamID64)
         _logger.LogDebug("Getting Steam ID for account {AccountId}", accountId);
-        await Task.CompletedTask;
+
+        try
+        {
+            var authMethods = await _accountClient.GetAuthMethodsAsync(
+                new GetAuthMethodsRequest { AccountId = accountId },
+                ct);
+
+            var steamMethod = authMethods.AuthMethods.FirstOrDefault(m => m.Provider == AuthProvider.Steam);
+
+            if (steamMethod is null)
+            {
+                _logger.LogDebug(
+                    "No Steam authentication method linked for account {AccountId}",
+                    accountId);
+                return null;
+            }
+
+            var externalId = steamMethod.ExternalId;
+
+            if (string.IsNullOrEmpty(externalId))
+            {
+                _logger.LogWarning(
+                    "Steam authentication method exists for account {AccountId} but external ID is empty",
+                    accountId);
+                return null;
+            }
+
+            _logger.LogDebug(
+                "Found Steam ID {SteamId} for account {AccountId}",
+                externalId,
+                accountId);
+
+            return externalId;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug(
+                "Account {AccountId} not found when getting Steam ID",
+                accountId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to get Steam ID for account {AccountId}",
+                accountId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PlatformSyncResult> UnlockAsync(
+        string externalUserId,
+        string platformAchievementId,
+        CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "Unlocking Steam achievement {AchievementId} for user {SteamId}",
+            platformAchievementId,
+            externalUserId);
+
+        // Validate configuration
+        var configValidation = ValidateConfiguration(out var apiKey, out var appId);
+        if (configValidation is not null)
+        {
+            return configValidation;
+        }
+
+        // Check for mock mode
+        if (_configuration.MockPlatformSync)
+        {
+            _logger.LogInformation(
+                "Mock mode enabled - returning success without Steam API call for achievement {AchievementId}",
+                platformAchievementId);
+
+            return new PlatformSyncResult
+            {
+                Success = true,
+                SyncId = $"mock-{Guid.NewGuid():N}"
+            };
+        }
+
+        try
+        {
+            // Build the request to Steam Web API
+            // For achievements, we set the achievement value to 1 to unlock it
+            using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["key"] = apiKey,
+                ["steamid"] = externalUserId,
+                ["appid"] = appId,
+                ["count"] = "1",
+                ["name[0]"] = platformAchievementId,
+                ["value[0]"] = "1" // 1 = unlocked
+            });
+
+            var result = await CallSteamApiAsync(formContent, ct);
+
+            if (result.Success)
+            {
+                _logger.LogInformation(
+                    "Successfully unlocked Steam achievement {AchievementId} for user {SteamId}",
+                    platformAchievementId,
+                    externalUserId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Failed to unlock Steam achievement {AchievementId} for user {SteamId}: {Error}",
+                    platformAchievementId,
+                    externalUserId,
+                    result.ErrorMessage);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Exception while unlocking Steam achievement {AchievementId} for user {SteamId}",
+                platformAchievementId,
+                externalUserId);
+
+            return new PlatformSyncResult
+            {
+                Success = false,
+                ErrorMessage = $"Steam API call failed: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PlatformSyncResult> SetProgressAsync(
+        string externalUserId,
+        string platformAchievementId,
+        int current,
+        int target,
+        CancellationToken ct = default)
+    {
+        _logger.LogInformation(
+            "Setting Steam progress {Current}/{Target} for stat {StatId} for user {SteamId}",
+            current,
+            target,
+            platformAchievementId,
+            externalUserId);
+
+        // Validate configuration
+        var configValidation = ValidateConfiguration();
+        if (configValidation is not null)
+        {
+            return configValidation;
+        }
+
+        // Check for mock mode
+        if (_configuration.MockPlatformSync)
+        {
+            _logger.LogInformation(
+                "Mock mode enabled - returning success without Steam API call for stat {StatId}",
+                platformAchievementId);
+
+            return new PlatformSyncResult
+            {
+                Success = true,
+                SyncId = $"mock-{Guid.NewGuid():N}"
+            };
+        }
+
+        try
+        {
+            // Steam uses stats for progress tracking
+            // When a stat reaches a threshold configured in Steamworks,
+            // Steam automatically unlocks the associated achievement
+            using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["key"] = _configuration.SteamApiKey,
+                ["steamid"] = externalUserId,
+                ["appid"] = _configuration.SteamAppId,
+                ["count"] = "1",
+                ["name[0]"] = platformAchievementId,
+                ["value[0]"] = current.ToString()
+            });
+
+            var result = await CallSteamApiAsync(formContent, ct);
+
+            if (result.Success)
+            {
+                _logger.LogInformation(
+                    "Successfully set Steam stat {StatId} to {Value} for user {SteamId}",
+                    platformAchievementId,
+                    current,
+                    externalUserId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Failed to set Steam stat {StatId} for user {SteamId}: {Error}",
+                    platformAchievementId,
+                    externalUserId,
+                    result.ErrorMessage);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Exception while setting Steam stat {StatId} for user {SteamId}",
+                platformAchievementId,
+                externalUserId);
+
+            return new PlatformSyncResult
+            {
+                Success = false,
+                ErrorMessage = $"Steam API call failed: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Validates that the required Steam API configuration is present and returns the validated credentials.
+    /// </summary>
+    /// <param name="apiKey">The validated API key when configuration is valid.</param>
+    /// <param name="appId">The validated App ID when configuration is valid.</param>
+    /// <returns>
+    /// A success result with "disabled" SyncId if Steam sync is not configured (feature gracefully disabled),
+    /// or null if configuration is valid and sync should proceed.
+    /// </returns>
+    private PlatformSyncResult? ValidateConfiguration(out string apiKey, out string appId)
+    {
+        var configApiKey = _configuration.SteamApiKey;
+        var configAppId = _configuration.SteamAppId;
+
+        if (string.IsNullOrEmpty(configApiKey) || string.IsNullOrEmpty(configAppId))
+        {
+            // Steam sync is not configured - this is a valid deployment state
+            // Return success to indicate no error, but no sync occurred
+            _logger.LogDebug("Steam sync disabled - API credentials not configured");
+            apiKey = string.Empty;
+            appId = string.Empty;
+            return new PlatformSyncResult
+            {
+                Success = true,
+                SyncId = "disabled"
+            };
+        }
+
+        apiKey = configApiKey;
+        appId = configAppId;
         return null;
     }
 
-    /// <inheritdoc />
-    public async Task<PlatformSyncResult> UnlockAsync(string externalUserId, string platformAchievementId, CancellationToken ct = default)
+    /// <summary>
+    /// Makes the actual HTTP call to Steam Web API.
+    /// </summary>
+    /// <param name="content">Form-encoded content to send.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Result of the API call.</returns>
+    private async Task<PlatformSyncResult> CallSteamApiAsync(
+        FormUrlEncodedContent content,
+        CancellationToken ct)
     {
-        _logger.LogInformation("Unlocking Steam achievement {AchievementId} for user {SteamId}",
-            platformAchievementId, externalUserId);
+        using var httpClient = _httpClientFactory.CreateClient("SteamApi");
 
-        // Steam Web API endpoint: ISteamUserStats/SetUserStatsForGame/v1/
-        // Requires: steamid, appid, count, name[0], value[0]
-        // This API requires publisher-level access
+        // Build the full URL
+        var requestUrl = $"{SteamPartnerApiBaseUrl}{SetUserStatsEndpoint}";
 
-        if (string.IsNullOrEmpty(_configuration.SteamApiKey))
+        using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl)
         {
+            Content = content
+        };
+
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        _logger.LogDebug("Sending request to Steam API: {Url}", requestUrl);
+
+        var response = await httpClient.SendAsync(request, ct);
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
+
+        _logger.LogDebug(
+            "Steam API response: Status={StatusCode}, Body={Body}",
+            (int)response.StatusCode,
+            responseBody);
+
+        // Handle rate limiting
+        if ((int)response.StatusCode == 429)
+        {
+            _logger.LogWarning("Steam API rate limit exceeded");
             return new PlatformSyncResult
             {
                 Success = false,
-                ErrorMessage = "Steam API key not configured"
+                ErrorMessage = "Steam API rate limit exceeded - retry later"
             };
         }
 
-        if (string.IsNullOrEmpty(_configuration.SteamAppId))
+        // Handle other HTTP errors
+        if (!response.IsSuccessStatusCode)
         {
+            _logger.LogWarning(
+                "Steam API returned error status {StatusCode}: {Body}",
+                (int)response.StatusCode,
+                responseBody);
+
             return new PlatformSyncResult
             {
                 Success = false,
-                ErrorMessage = "Steam App ID not configured"
+                ErrorMessage = $"Steam API returned status {(int)response.StatusCode}: {GetErrorFromResponse(responseBody)}"
             };
         }
 
+        // Parse response
+        return ParseSteamResponse(responseBody);
+    }
+
+    /// <summary>
+    /// Parses the Steam API response JSON.
+    /// </summary>
+    /// <param name="responseBody">The JSON response body.</param>
+    /// <returns>Result of parsing the response.</returns>
+    private PlatformSyncResult ParseSteamResponse(string responseBody)
+    {
         try
         {
-            // TODO: Implement actual Steam Web API call
-            // POST to https://api.steampowered.com/ISteamUserStats/SetUserStatsForGame/v1/
-            // with parameters: key, steamid, appid, count, name[0], value[0]
+            using var doc = JsonDocument.Parse(responseBody);
 
-            _logger.LogError("Steam achievement sync not implemented - API call skipped");
+            if (!doc.RootElement.TryGetProperty("response", out var responseElement))
+            {
+                return new PlatformSyncResult
+                {
+                    Success = false,
+                    ErrorMessage = "Steam API returned unexpected response format (missing 'response' field)"
+                };
+            }
 
-            // For now, simulate success for development
-            await Task.Delay(10, ct); // Simulate API latency
+            // Check result code - 1 means success
+            if (responseElement.TryGetProperty("result", out var resultElement))
+            {
+                var result = resultElement.GetInt32();
+
+                if (result == 1)
+                {
+                    return new PlatformSyncResult
+                    {
+                        Success = true,
+                        SyncId = $"steam-{DateTime.UtcNow:yyyyMMddHHmmss}"
+                    };
+                }
+
+                // Check for error details
+                var errorMessage = "Unknown error";
+                if (responseElement.TryGetProperty("error", out var errorElement))
+                {
+                    var error = errorElement.GetString();
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        errorMessage = error;
+                    }
+                }
+
+                return new PlatformSyncResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Steam API returned error result ({result}): {errorMessage}"
+                };
+            }
 
             return new PlatformSyncResult
             {
                 Success = false,
-                ErrorMessage = "Steam sync not yet implemented - requires Steam Web API integration"
+                ErrorMessage = "Steam API returned unexpected response format (missing 'result' field)"
             };
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to unlock Steam achievement {AchievementId}", platformAchievementId);
+            _logger.LogWarning(ex, "Failed to parse Steam API response: {Body}", responseBody);
+
             return new PlatformSyncResult
             {
                 Success = false,
-                ErrorMessage = ex.Message
+                ErrorMessage = $"Failed to parse Steam API response: {ex.Message}"
             };
         }
     }
 
-    /// <inheritdoc />
-    public async Task<PlatformSyncResult> SetProgressAsync(string externalUserId, string platformAchievementId, int current, int target, CancellationToken ct = default)
+    /// <summary>
+    /// Attempts to extract an error message from a response body.
+    /// </summary>
+    /// <param name="responseBody">The response body to parse.</param>
+    /// <returns>Error message or a truncated version of the response body.</returns>
+    private static string GetErrorFromResponse(string responseBody)
     {
-        _logger.LogInformation("Setting Steam progress {Current}/{Target} for achievement {AchievementId} for user {SteamId}",
-            current, target, platformAchievementId, externalUserId);
-
-        // Steam uses stats for progress tracking, not direct achievement progress
-        // You set a stat value, and Steamworks automatically unlocks achievements
-        // when the stat reaches the configured threshold
-
-        if (string.IsNullOrEmpty(_configuration.SteamApiKey))
-        {
-            return new PlatformSyncResult
-            {
-                Success = false,
-                ErrorMessage = "Steam API key not configured"
-            };
-        }
-
         try
         {
-            // TODO: Implement Steam stats update
-            await Task.Delay(10, ct);
+            using var doc = JsonDocument.Parse(responseBody);
 
-            return new PlatformSyncResult
+            if (doc.RootElement.TryGetProperty("response", out var responseElement) &&
+                responseElement.TryGetProperty("error", out var errorElement))
             {
-                Success = false,
-                ErrorMessage = "Steam progress sync not yet implemented"
-            };
+                var error = errorElement.GetString();
+                if (!string.IsNullOrEmpty(error))
+                {
+                    return error;
+                }
+            }
         }
-        catch (Exception ex)
+        catch (JsonException)
         {
-            _logger.LogError(ex, "Failed to set Steam progress for achievement {AchievementId}", platformAchievementId);
-            return new PlatformSyncResult
-            {
-                Success = false,
-                ErrorMessage = ex.Message
-            };
+            // Ignore parse errors, fall through to truncated response
         }
+
+        // Return truncated response body if we can't parse it
+        return responseBody.Length > 200 ? responseBody[..200] + "..." : responseBody;
     }
 }

@@ -66,46 +66,46 @@ public class AchievementServiceConfiguration : IServiceConfiguration
     public string UnlockStoreName { get; set; } = "achievement-unlock";
 
     /// <summary>
-    /// Steam Web API key for achievement sync
+    /// Steam Web API key for achievement sync (optional - Steam sync disabled if not set)
     /// Environment variable: ACHIEVEMENT_STEAM_API_KEY
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string SteamApiKey { get; set; } = string.Empty;
+    public string? SteamApiKey { get; set; }
 
     /// <summary>
-    /// Steam App ID for achievement mapping
+    /// Steam App ID for achievement mapping (optional - Steam sync disabled if not set)
     /// Environment variable: ACHIEVEMENT_STEAM_APP_ID
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string SteamAppId { get; set; } = string.Empty;
+    public string? SteamAppId { get; set; }
 
     /// <summary>
-    /// Xbox Live client ID (stub - not implemented)
+    /// Xbox Live client ID (optional - not implemented)
     /// Environment variable: ACHIEVEMENT_XBOX_CLIENT_ID
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string XboxClientId { get; set; } = string.Empty;
+    public string? XboxClientId { get; set; }
 
     /// <summary>
-    /// Xbox Live client secret (stub - not implemented)
+    /// Xbox Live client secret (optional - not implemented)
     /// Environment variable: ACHIEVEMENT_XBOX_CLIENT_SECRET
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string XboxClientSecret { get; set; } = string.Empty;
+    public string? XboxClientSecret { get; set; }
 
     /// <summary>
-    /// PlayStation Network client ID (stub - not implemented)
+    /// PlayStation Network client ID (optional - not implemented)
     /// Environment variable: ACHIEVEMENT_PLAYSTATION_CLIENT_ID
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string PlayStationClientId { get; set; } = string.Empty;
+    public string? PlayStationClientId { get; set; }
 
     /// <summary>
-    /// PlayStation Network client secret (stub - not implemented)
+    /// PlayStation Network client secret (optional - not implemented)
     /// Environment variable: ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET
     /// </summary>
-    [Required(AllowEmptyStrings = false)]
-    public string PlayStationClientSecret { get; set; } = string.Empty;
+    public string? PlayStationClientSecret { get; set; }
+
+    /// <summary>
+    /// Enable mock mode for platform sync (returns success without real API calls)
+    /// Environment variable: ACHIEVEMENT_MOCK_PLATFORM_SYNC
+    /// </summary>
+    public bool MockPlatformSync { get; set; } = false;
 
     /// <summary>
     /// Automatically sync achievements to platforms when unlocked

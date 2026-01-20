@@ -305,9 +305,11 @@ validate-compose-services:
 
 # Regenerate all services, SDK, and documentation
 generate:
-	@echo "🔧 Generating everything: projects, service files, client SDK, documentation"
+	@echo "🔧 Generating everything: projects, service files, client SDKs, documentation"
 	scripts/generate-all-services.sh
 	scripts/generate-client-sdk.sh
+	@$(MAKE) generate-sdk-ts
+	@$(MAKE) generate-unreal-sdk
 	scripts/generate-docs.sh
 	@echo "✅ All generations completed"
 
@@ -1069,8 +1071,8 @@ TS_SDK_DIR := sdks/typescript
 
 generate-sdk-ts: generate-client-schema ## Generate TypeScript SDK types, proxies, and event registry from schemas
 	@echo "🔧 Generating TypeScript SDK code..."
-	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
-		echo "📦 Installing dependencies for type generation..."; \
+	@if [ ! -d "$(TS_SDK_DIR)/client/node_modules/openapi-typescript" ]; then \
+		echo "📦 Installing TypeScript SDK dependencies..."; \
 		cd $(TS_SDK_DIR) && npm install; \
 	fi
 	cd $(TS_SDK_DIR)/client && npm run generate

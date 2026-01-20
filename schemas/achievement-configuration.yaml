@@ -27,32 +27,43 @@ x-service-configuration:
       description: Name of the state store for unlock records (MySQL for persistence)
       default: "achievement-unlock"
       env: ACHIEVEMENT_UNLOCK_STORE_NAME
-    # Platform Sync Configuration
+    # Platform Sync Configuration (all optional - platform sync disabled when not configured)
     SteamApiKey:
       type: string
-      description: Steam Web API key for achievement sync
+      nullable: true  # NRT: Optional - Steam sync disabled when not configured
+      description: Steam Web API key for achievement sync (optional - Steam sync disabled if not set)
       env: ACHIEVEMENT_STEAM_API_KEY
     SteamAppId:
       type: string
-      description: Steam App ID for achievement mapping
+      nullable: true  # NRT: Optional - Steam sync disabled when not configured
+      description: Steam App ID for achievement mapping (optional - Steam sync disabled if not set)
       env: ACHIEVEMENT_STEAM_APP_ID
     XboxClientId:
       type: string
-      description: Xbox Live client ID (stub - not implemented)
+      nullable: true  # NRT: Optional - Xbox sync disabled when not configured (stub - not implemented)
+      description: Xbox Live client ID (optional - not implemented)
       env: ACHIEVEMENT_XBOX_CLIENT_ID
     XboxClientSecret:
       type: string
-      description: Xbox Live client secret (stub - not implemented)
+      nullable: true  # NRT: Optional - Xbox sync disabled when not configured (stub - not implemented)
+      description: Xbox Live client secret (optional - not implemented)
       env: ACHIEVEMENT_XBOX_CLIENT_SECRET
     PlayStationClientId:
       type: string
-      description: PlayStation Network client ID (stub - not implemented)
+      nullable: true  # NRT: Optional - PlayStation sync disabled when not configured (stub - not implemented)
+      description: PlayStation Network client ID (optional - not implemented)
       env: ACHIEVEMENT_PLAYSTATION_CLIENT_ID
     PlayStationClientSecret:
       type: string
-      description: PlayStation Network client secret (stub - not implemented)
+      nullable: true  # NRT: Optional - PlayStation sync disabled when not configured (stub - not implemented)
+      description: PlayStation Network client secret (optional - not implemented)
       env: ACHIEVEMENT_PLAYSTATION_CLIENT_SECRET
     # Sync Behavior Configuration
+    MockPlatformSync:
+      type: boolean
+      description: Enable mock mode for platform sync (returns success without real API calls)
+      default: false
+      env: ACHIEVEMENT_MOCK_PLATFORM_SYNC
     AutoSyncOnUnlock:
       type: boolean
       description: Automatically sync achievements to platforms when unlocked
