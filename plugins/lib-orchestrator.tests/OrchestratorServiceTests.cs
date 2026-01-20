@@ -40,7 +40,6 @@ public class OrchestratorServiceTests
         _configuration = new OrchestratorServiceConfiguration
         {
             RedisConnectionString = "redis:6379",
-            RabbitMqConnectionString = "amqp://guest:guest@rabbitmq:5672",
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };
@@ -1704,7 +1703,6 @@ public class OrchestratorProcessingPoolTests
         _configuration = new OrchestratorServiceConfiguration
         {
             RedisConnectionString = "redis:6379",
-            RabbitMqConnectionString = "amqp://guest:guest@rabbitmq:5672",
             HeartbeatTimeoutSeconds = 90,
             DegradationThresholdMinutes = 5
         };

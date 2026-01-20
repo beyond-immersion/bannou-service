@@ -199,7 +199,8 @@ components:
           description: ID of the created game session
         reservationToken:
           type: string
-          description: Token to claim reservation when joining session
+          nullable: true
+          description: Token to claim reservation when joining session (null when reservation not required)
         joinDeadlineSeconds:
           type: integer
           nullable: true

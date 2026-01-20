@@ -1178,9 +1178,14 @@ public partial class SaveLoadService : ISaveLoadService
                 ContentHash = version.ContentHash,
                 SchemaVersion = version.SchemaVersion,
                 CreatedAt = version.CreatedAt,
-                Metadata = version.Metadata?.ToDictionary(
-                    kv => kv.Key,
-                    kv => kv.Value?.ToString() ?? string.Empty) ?? new Dictionary<string, string>()
+                // Filter out null metadata values rather than coercing to empty string
+                Metadata = version.Metadata?
+                    .Where(kv => kv.Value != null)
+                    .ToDictionary(
+                        kv => kv.Key,
+                        kv => kv.Value?.ToString() ?? throw new InvalidOperationException(
+                            $"Metadata value became null after filter for key '{kv.Key}'"))
+                    ?? new Dictionary<string, string>()
             });
         }
         catch (Exception ex)
@@ -1844,9 +1849,14 @@ public partial class SaveLoadService : ISaveLoadService
                         Pinned = version.IsPinned,
                         CheckpointName = version.CheckpointName,
                         CreatedAt = version.CreatedAt,
-                        Metadata = version.Metadata?.ToDictionary(
-                            kvp => kvp.Key,
-                            kvp => kvp.Value?.ToString() ?? string.Empty) ?? new Dictionary<string, string>()
+                        // Filter out null metadata values rather than coercing to empty string
+                        Metadata = version.Metadata?
+                            .Where(kvp => kvp.Value != null)
+                            .ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value?.ToString() ?? throw new InvalidOperationException(
+                                    $"Metadata value became null after filter for key '{kvp.Key}'"))
+                            ?? new Dictionary<string, string>()
                     });
                 }
             }
@@ -2712,9 +2722,13 @@ public partial class SaveLoadService : ISaveLoadService
             Pinned = version.IsPinned,
             CheckpointName = version.CheckpointName,
             CreatedAt = version.CreatedAt,
-            Metadata = version.Metadata.ToDictionary(
-                kv => kv.Key,
-                kv => kv.Value?.ToString() ?? string.Empty)
+            // Filter out null metadata values rather than coercing to empty string
+            Metadata = version.Metadata
+                .Where(kv => kv.Value != null)
+                .ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value?.ToString() ?? throw new InvalidOperationException(
+                        $"Metadata value became null after filter for key '{kv.Key}'"))
         };
     }
 

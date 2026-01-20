@@ -2060,12 +2060,10 @@ public partial class BundleInfo
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Owner account ID or service name
+    /// Owner account ID or service name (null for system-owned bundles)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Owner { get; set; } = default!;
+    public string? Owner { get; set; } = default!;
 
     /// <summary>
     /// Game realm this bundle belongs to

@@ -10785,7 +10785,6 @@
           "bundleType",
           "version",
           "metadataVersion",
-          "owner",
           "realm",
           "status",
           "assetCount",
@@ -10820,7 +10819,8 @@
           },
           "owner": {
             "type": "string",
-            "description": "Owner account ID or service name"
+            "nullable": true,
+            "description": "Owner account ID or service name (null for system-owned bundles)"
           },
           "realm": {
             "$ref": "#/components/schemas/Realm",

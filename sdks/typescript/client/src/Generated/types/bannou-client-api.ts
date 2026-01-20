@@ -5474,8 +5474,8 @@ export interface components {
       name?: string | null;
       /** @description Bundle description */
       description?: string | null;
-      /** @description Owner account ID or service name */
-      owner: string;
+      /** @description Owner account ID or service name (null for system-owned bundles) */
+      owner?: string | null;
       /** @description Game realm this bundle belongs to */
       realm: components['schemas']['Realm'];
       /** @description Key-value tags for categorization and filtering */

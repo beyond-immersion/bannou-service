@@ -246,10 +246,10 @@ public partial class MatchConfirmedEvent : BaseClientEvent
     public System.Guid GameSessionId { get; set; } = default!;
 
     /// <summary>
-    /// Token to claim reservation when joining session
+    /// Token to claim reservation when joining session (null when reservation not required)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reservationToken")]
-    public string ReservationToken { get; set; } = default!;
+    public string? ReservationToken { get; set; } = default!;
 
     /// <summary>
     /// Seconds to join before reservation expires

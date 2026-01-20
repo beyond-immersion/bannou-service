@@ -25553,7 +25553,7 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Owner">
             <summary>
-            Owner account ID or service name
+            Owner account ID or service name (null for system-owned bundles)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Asset.BundleInfo.Realm">

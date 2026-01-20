@@ -7725,7 +7725,6 @@ components:
       - bundleType
       - version
       - metadataVersion
-      - owner
       - realm
       - status
       - assetCount
@@ -7753,7 +7752,9 @@ components:
           description: Bundle description
         owner:
           type: string
-          description: Owner account ID or service name
+          nullable: true
+          description: Owner account ID or service name (null for system-owned 
+            bundles)
         realm:
           $ref: '#/components/schemas/Realm'
           description: Game realm this bundle belongs to
