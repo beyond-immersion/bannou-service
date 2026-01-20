@@ -15,8 +15,5 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\lib-messaging\lib-messaging.csproj" />
-  </ItemGroup>
 
 </Project>

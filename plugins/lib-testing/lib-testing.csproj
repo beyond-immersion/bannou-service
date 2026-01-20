@@ -26,8 +26,5 @@
     <PackageReference Include="System.Text.Json" Version="9.0.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\lib-messaging\lib-messaging.csproj" />
-  </ItemGroup>
 
 </Project>
