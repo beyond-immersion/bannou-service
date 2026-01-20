@@ -4,7 +4,6 @@ using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.SaveLoad.Delta;
 using BeyondImmersion.BannouService.SaveLoad.Helpers;
 using BeyondImmersion.BannouService.SaveLoad.Migration;
