@@ -77,6 +77,7 @@ public class ActorRunnerTests
 
         var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
         var personalityCacheMock = new Mock<IPersonalityCache>();
+        var encounterCacheMock = new Mock<IEncounterCache>();
         var executorMock = new Mock<IDocumentExecutor>();
         var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
 
@@ -116,6 +117,7 @@ public class ActorRunnerTests
             stateStoreMock.Object,
             behaviorCacheMock.Object,
             personalityCacheMock.Object,
+            encounterCacheMock.Object,
             executorMock.Object,
             expressionEvaluatorMock.Object,
             loggerMock.Object,

@@ -115,7 +115,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 Description = body.Description,
                 IsBuiltIn = false,
                 DefaultEmotionalImpact = body.DefaultEmotionalImpact?.ToString(),
-                SortOrder = body.SortOrder ?? 100,
+                SortOrder = body.SortOrder,
                 IsActive = true,
                 CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
@@ -637,8 +637,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
 
             // Paginate
-            var page = body.Page ?? 1;
-            var pageSize = Math.Min(body.PageSize ?? _configuration.DefaultPageSize, _configuration.MaxPageSize);
+            var page = body.Page;
+            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
@@ -714,8 +714,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
 
             // Paginate
-            var page = body.Page ?? 1;
-            var pageSize = Math.Min(body.PageSize ?? _configuration.DefaultPageSize, _configuration.MaxPageSize);
+            var page = body.Page;
+            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
@@ -786,8 +786,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             encounters = encounters.OrderByDescending(e => e.Encounter.Timestamp).ToList();
 
             // Paginate
-            var page = body.Page ?? 1;
-            var pageSize = Math.Min(body.PageSize ?? _configuration.DefaultPageSize, _configuration.MaxPageSize);
+            var page = body.Page;
+            var pageSize = Math.Min(body.PageSize, _configuration.MaxPageSize);
             var totalCount = encounters.Count;
             var paged = encounters.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
@@ -888,7 +888,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 if (encounter == null) continue;
 
                 // Find the perspective for our character
-                var perspectives = await GetEncounterPerspectivesAsync(Guid.Parse(encounterId), cancellationToken);
+                var perspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
                 var perspective = perspectives.FirstOrDefault(p => p.CharacterId == body.CharacterId);
                 if (perspective == null) continue;
 
@@ -1124,8 +1124,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             var previousStrength = perspective.MemoryStrength;
-            var boost = body.StrengthBoost ?? _configuration.MemoryRefreshBoost;
-            perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0, 1);
+            var boost = body.StrengthBoost;
+            perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
             perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
             var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
@@ -1358,14 +1358,14 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 {
                     PerspectivesProcessed = 0,
                     MemoriesFaded = 0,
-                    DryRun = body.DryRun ?? false
+                    DryRun = body.DryRun
                 });
             }
 
             var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
             var perspectivesProcessed = 0;
             var memoriesFaded = 0;
-            var dryRun = body.DryRun ?? false;
+            var dryRun = body.DryRun;
 
             IEnumerable<Guid> perspectiveIds;
             if (body.CharacterId.HasValue)

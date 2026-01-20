@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -660,6 +661,8 @@ public class OAuthProviderServiceTests : IDisposable
             It.Is<string>(msg => msg.Contains("Connection refused")),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
             It.IsAny<string?>(),
             It.IsAny<string?>(),
             It.IsAny<CancellationToken>()),

@@ -895,7 +895,7 @@ public class AuthServiceTests : IDisposable
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("test-access-token", Guid.NewGuid()));
+            .ReturnsAsync(("test-access-token", Guid.NewGuid().ToString()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
@@ -963,7 +963,7 @@ public class AuthServiceTests : IDisposable
         _mockTokenService.Setup(t => t.GenerateAccessTokenAsync(
             It.IsAny<AccountResponse>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(("mock-token", Guid.NewGuid()));
+            .ReturnsAsync(("mock-token", Guid.NewGuid().ToString()));
         _mockTokenService.Setup(t => t.GenerateRefreshToken())
             .Returns("mock-refresh");
 
