@@ -1067,7 +1067,7 @@ tag:
 
 TS_SDK_DIR := sdks/typescript
 
-generate-sdk-ts: ## Generate TypeScript SDK types, proxies, and event registry from schemas
+generate-sdk-ts: generate-client-schema ## Generate TypeScript SDK types, proxies, and event registry from schemas
 	@echo "🔧 Generating TypeScript SDK code..."
 	@if [ ! -d "$(TS_SDK_DIR)/node_modules" ]; then \
 		echo "📦 Installing dependencies for type generation..."; \
@@ -1132,3 +1132,29 @@ check-sdk-ts: ## Check TypeScript SDK formatting (for CI)
 	fi
 	cd $(TS_SDK_DIR) && npm run format:check
 	@echo "✅ TypeScript SDK formatting check passed"
+
+# =============================================================================
+# UNREAL ENGINE SDK
+# =============================================================================
+# Unreal Engine helper files for integrating with Bannou services.
+# Location: sdks/unreal/
+# Generated: Protocol headers, type definitions, endpoint registry
+# =============================================================================
+
+UE_SDK_DIR := sdks/unreal
+
+generate-client-schema: ## Generate consolidated client-facing OpenAPI schema
+	@echo "🔧 Generating consolidated client schema..."
+	python3 scripts/generate-client-schema.py
+	@echo "✅ Client schema generation completed"
+
+generate-unreal-sdk: generate-client-schema ## Generate Unreal Engine SDK helper headers
+	@echo "🔧 Generating Unreal Engine SDK..."
+	python3 scripts/generate-unreal-sdk.py
+	@echo "✅ Unreal Engine SDK generation completed"
+
+clean-unreal-sdk: ## Clean Unreal SDK generated files
+	@echo "🧹 Cleaning Unreal SDK..."
+	rm -rf $(UE_SDK_DIR)/Generated/*.h
+	rm -rf schemas/Generated/bannou-client-api.*
+	@echo "✅ Unreal SDK cleaned"

@@ -2,27 +2,30 @@
 """
 Generate typed service proxy classes for the Bannou TypeScript Client SDK.
 
-This script reads OpenAPI schemas from schemas/*-api.yaml and generates
+This script reads the consolidated client OpenAPI schema and generates
 TypeScript proxy classes that provide typed wrappers around BannouClient.invokeAsync.
 
 Architecture:
+- Reads from schemas/Generated/bannou-client-api.yaml (consolidated schema)
 - Each service gets a proxy class (e.g., CharacterProxy, AuthProxy)
 - Proxy methods call invokeAsync with proper request/response types
 - Extension file adds proxy properties to BannouClient
 
 Output:
-- sdks/typescript/client/Generated/proxies/{Service}Proxy.ts - One per service
-- sdks/typescript/client/Generated/proxies/index.ts - Barrel export
+- sdks/typescript/client/src/Generated/proxies/{Service}Proxy.ts - One per service
+- sdks/typescript/client/src/Generated/proxies/index.ts - Barrel export
 
 Usage:
     python3 scripts/generate-client-proxies-ts.py
 
-The script processes all *-api.yaml files in the schemas/ directory.
+Prerequisites:
+    Run scripts/generate-client-schema.py first to create the consolidated schema.
 """
 
+import re
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 try:
     from ruamel.yaml import YAML
@@ -35,16 +38,9 @@ except ImportError:
 
 def to_pascal_case(name: str) -> str:
     """Convert kebab-case, snake_case, or camelCase to PascalCase."""
-    import re
-
-    # First, handle kebab-case and snake_case by replacing delimiters with spaces
     name = name.replace('-', ' ').replace('_', ' ')
-
-    # If no spaces (was camelCase or PascalCase), split on case boundaries
     if ' ' not in name:
         name = re.sub(r'([a-z])([A-Z])', r'\1 \2', name)
-
-    # Split on spaces and capitalize each part, then join
     parts = name.split()
     return ''.join(p[0].upper() + p[1:] if p else '' for p in parts)
 
@@ -97,10 +93,8 @@ class EndpointInfo:
 class ServiceInfo:
     """Information about a service extracted from its OpenAPI schema."""
 
-    def __init__(self, name: str, title: str, description: str):
+    def __init__(self, name: str):
         self.name = name  # e.g., 'auth'
-        self.title = title
-        self.description = description
         self.endpoints: List[EndpointInfo] = []
 
     @property
@@ -119,30 +113,31 @@ class ServiceInfo:
         return to_camel_case(self.name)
 
 
-def parse_schema(schema_path: Path) -> Optional[ServiceInfo]:
-    """Parse an OpenAPI schema file and extract service information."""
+def extract_service_name(path: str) -> str:
+    """Extract service name from path (e.g., '/account/get' -> 'account')."""
+    parts = path.strip('/').split('/')
+    if parts:
+        # Handle paths like /auth/oauth/{provider}/init -> auth
+        return parts[0]
+    return 'unknown'
+
+
+def parse_consolidated_schema(schema_path: Path) -> Dict[str, ServiceInfo]:
+    """Parse the consolidated schema and organize endpoints by service."""
     with open(schema_path) as f:
-        try:
-            schema = yaml.load(f)
-        except Exception as e:
-            print(f"  Warning: Failed to parse {schema_path.name}: {e}")
-            return None
+        schema = yaml.load(f)
 
     if schema is None or 'paths' not in schema:
-        return None
+        return {}
 
-    # Extract service info
-    service_name = schema_path.stem.replace('-api', '')
-    info = schema.get('info', {})
-    title = info.get('title', service_name)
-    description = info.get('description', '')
-
-    service = ServiceInfo(service_name, title, description)
+    services: Dict[str, ServiceInfo] = {}
 
     # Parse each path
     for path, methods in schema.get('paths', {}).items():
         if not isinstance(methods, dict):
             continue
+
+        service_name = extract_service_name(path)
 
         for method, details in methods.items():
             # Skip non-HTTP methods (parameters, servers, etc.)
@@ -190,9 +185,14 @@ def parse_schema(schema_path: Path) -> Optional[ServiceInfo]:
                 summary=summary,
                 tag=tag
             )
-            service.endpoints.append(endpoint)
 
-    return service if service.endpoints else None
+            # Create service if not exists
+            if service_name not in services:
+                services[service_name] = ServiceInfo(service_name)
+
+            services[service_name].endpoints.append(endpoint)
+
+    return services
 
 
 def generate_proxy_class(service: ServiceInfo) -> str:
@@ -205,12 +205,13 @@ def generate_proxy_class(service: ServiceInfo) -> str:
         "",
         "import type { IBannouClient } from '../../IBannouClient.js';",
         "import type { ApiResponse } from '@beyondimmersion/bannou-core';",
+        "import type { components } from '../types/bannou-client-api.js';",
         "",
-        "// Import generated types (placeholder - configure openapi-typescript for actual types)",
-        f"// import type {{ ... }} from '../types/{service.name}-api.js';",
+        "// Type aliases for cleaner code",
+        "type Schemas = components['schemas'];",
         "",
         "/**",
-        f" * Typed proxy for {service.title} API endpoints.",
+        f" * Typed proxy for {service.pascal_name} API endpoints.",
         " */",
         f"export class {service.proxy_class_name} {{",
         "  private readonly client: IBannouClient;",
@@ -248,11 +249,11 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append(f"   * @returns ApiResponse containing the response on success.")
             lines.append("   */")
             lines.append(f"  async {endpoint.method_name}(")
-            lines.append(f"    request: {endpoint.request_type},")
+            lines.append(f"    request: Schemas['{endpoint.request_type}'],")
             lines.append("    channel: number = 0,")
             lines.append("    timeout?: number")
-            lines.append(f"  ): Promise<ApiResponse<{endpoint.response_type}>> {{")
-            lines.append(f"    return this.client.invokeAsync<{endpoint.request_type}, {endpoint.response_type}>(")
+            lines.append(f"  ): Promise<ApiResponse<Schemas['{endpoint.response_type}']>> {{")
+            lines.append(f"    return this.client.invokeAsync<Schemas['{endpoint.request_type}'], Schemas['{endpoint.response_type}']>(")
             lines.append(f"      '{endpoint.method}', '{endpoint.path}', request, channel, timeout")
             lines.append("    );")
             lines.append("  }")
@@ -265,8 +266,8 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append(f"  async {endpoint.method_name}(")
             lines.append("    channel: number = 0,")
             lines.append("    timeout?: number")
-            lines.append(f"  ): Promise<ApiResponse<{endpoint.response_type}>> {{")
-            lines.append(f"    return this.client.invokeAsync<object, {endpoint.response_type}>(")
+            lines.append(f"  ): Promise<ApiResponse<Schemas['{endpoint.response_type}']>> {{")
+            lines.append(f"    return this.client.invokeAsync<object, Schemas['{endpoint.response_type}']>(")
             lines.append(f"      '{endpoint.method}', '{endpoint.path}', {{}}, channel, timeout")
             lines.append("    );")
             lines.append("  }")
@@ -278,10 +279,10 @@ def generate_proxy_class(service: ServiceInfo) -> str:
             lines.append("   */")
             event_method = endpoint.method_name.replace('Async', 'EventAsync')
             lines.append(f"  async {event_method}(")
-            lines.append(f"    request: {endpoint.request_type},")
+            lines.append(f"    request: Schemas['{endpoint.request_type}'],")
             lines.append("    channel: number = 0")
             lines.append("  ): Promise<void> {")
-            lines.append(f"    return this.client.sendEventAsync<{endpoint.request_type}>(")
+            lines.append(f"    return this.client.sendEventAsync<Schemas['{endpoint.request_type}']>(")
             lines.append(f"      '{endpoint.method}', '{endpoint.path}', request, channel")
             lines.append("    );")
             lines.append("  }")
@@ -310,14 +311,15 @@ def generate_index_file(services: List[ServiceInfo]) -> str:
 
 
 def main():
-    """Process all API schemas and generate proxy classes."""
+    """Process consolidated schema and generate proxy classes."""
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
-    schema_dir = repo_root / 'schemas'
+    schema_path = repo_root / 'schemas' / 'Generated' / 'bannou-client-api.yaml'
     output_dir = repo_root / 'sdks' / 'typescript' / 'client' / 'src' / 'Generated' / 'proxies'
 
-    if not schema_dir.exists():
-        print(f"ERROR: Schema directory not found: {schema_dir}")
+    if not schema_path.exists():
+        print(f"ERROR: Consolidated client schema not found: {schema_path}")
+        print("       Run scripts/generate-client-schema.py first.")
         sys.exit(1)
 
     # Create output directory
@@ -326,57 +328,53 @@ def main():
     # Clean up old proxy files
     for old_file in output_dir.glob('*.ts'):
         old_file.unlink()
-        print(f"  Cleaned up: {old_file.name}")
 
-    print("Generating TypeScript client proxies from OpenAPI schemas...")
-    print(f"  Reading from: schemas/*-api.yaml")
+    print("Generating TypeScript client proxies from consolidated schema...")
+    print(f"  Reading from: schemas/Generated/bannou-client-api.yaml")
     print(f"  Writing to: sdks/typescript/client/src/Generated/proxies/")
     print()
 
-    services: List[ServiceInfo] = []
-    errors = []
+    # Parse consolidated schema
+    services = parse_consolidated_schema(schema_path)
 
-    for schema_path in sorted(schema_dir.glob('*-api.yaml')):
-        try:
-            service = parse_schema(schema_path)
-            if service is None:
-                continue
+    if not services:
+        print("No services found in consolidated schema")
+        sys.exit(1)
 
-            # Generate proxy class
-            proxy_code = generate_proxy_class(service)
-            output_file = output_dir / f"{service.proxy_class_name}.ts"
+    service_list: List[ServiceInfo] = []
+    total_endpoints = 0
 
-            with open(output_file, 'w', newline='\n') as f:
-                f.write(proxy_code)
+    for service_name in sorted(services.keys()):
+        service = services[service_name]
 
-            services.append(service)
-            print(f"  Generated {service.proxy_class_name}.ts ({len(service.endpoints)} endpoints)")
+        # Skip services with no usable endpoints
+        usable_endpoints = [e for e in service.endpoints if e.request_type or e.response_type]
+        if not usable_endpoints:
+            continue
 
-        except Exception as e:
-            errors.append(f"{schema_path.name}: {e}")
+        # Generate proxy class
+        proxy_code = generate_proxy_class(service)
+        output_file = output_dir / f"{service.proxy_class_name}.ts"
+
+        with open(output_file, 'w', newline='\n') as f:
+            f.write(proxy_code)
+
+        service_list.append(service)
+        total_endpoints += len(usable_endpoints)
+        print(f"  Generated {service.proxy_class_name}.ts ({len(usable_endpoints)} endpoints)")
 
     # Generate index file
-    if services:
-        index_code = generate_index_file(services)
+    if service_list:
+        index_code = generate_index_file(service_list)
         index_file = output_dir / "index.ts"
 
         with open(index_file, 'w', newline='\n') as f:
             f.write(index_code)
 
-        print(f"\n  Generated index.ts ({len(services)} proxies)")
+        print(f"\n  Generated index.ts ({len(service_list)} proxies)")
 
-    # Report results
     print()
-    if errors:
-        print("Errors:")
-        for error in errors:
-            print(f"  {error}")
-        sys.exit(1)
-
-    if services:
-        print(f"Generated {len(services)} proxy classes with {sum(len(s.endpoints) for s in services)} total endpoints")
-    else:
-        print("No services found to generate proxies for")
+    print(f"Generated {len(service_list)} proxy classes with {total_endpoints} total endpoints")
 
 
 if __name__ == '__main__':
