@@ -1105,12 +1105,18 @@ public class AuthServiceTests : IDisposable
         Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
 
-        // Verify error event was published
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            It.Is<string>(topic => topic.Contains("error")),
-            It.IsAny<object>(),
-            It.IsAny<PublishOptions?>(),
+        // Verify error event was published via TryPublishErrorAsync
+        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
+            "auth",
+            "VerifySteamAuth",
+            "account_creation_failed",
+            It.IsAny<string>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<ServiceErrorEventSeverity>(),
+            It.IsAny<object?>(),
             It.IsAny<Guid?>(),
+            It.IsAny<string?>(),
             It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
     }

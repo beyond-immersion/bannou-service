@@ -254,7 +254,7 @@ public class SteamAchievementSync : IPlatformAchievementSync
             externalUserId);
 
         // Validate configuration
-        var configValidation = ValidateConfiguration();
+        var configValidation = ValidateConfiguration(out var apiKey, out var appId);
         if (configValidation is not null)
         {
             return configValidation;
@@ -281,9 +281,9 @@ public class SteamAchievementSync : IPlatformAchievementSync
             // Steam automatically unlocks the associated achievement
             using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                ["key"] = _configuration.SteamApiKey,
+                ["key"] = apiKey,
                 ["steamid"] = externalUserId,
-                ["appid"] = _configuration.SteamAppId,
+                ["appid"] = appId,
                 ["count"] = "1",
                 ["name[0]"] = platformAchievementId,
                 ["value[0]"] = current.ToString()
