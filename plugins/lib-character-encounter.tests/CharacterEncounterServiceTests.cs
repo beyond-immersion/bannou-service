@@ -86,8 +86,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private CharacterEncounterService CreateService()
     {
         return new CharacterEncounterService(
-            _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object);
@@ -184,7 +184,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Code = "CUSTOM",
             Name = "Custom Encounter",
             Description = "A custom encounter type",
-            DefaultEmotionalImpact = EmotionalImpact.JOY,
+            DefaultEmotionalImpact = EmotionalImpact.GRATITUDE,
             SortOrder = 100
         };
 
@@ -212,7 +212,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         // Arrange
         var service = CreateService();
-        SetupTypeExists("EXISTING", isBuiltIn: false);
+        SetupTypeExists("EXISTING", CreateTestEncounterType("EXISTING", "Existing Type", isBuiltIn: false));
 
         var request = new CreateEncounterTypeRequest
         {
@@ -233,7 +233,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     {
         // Arrange
         var service = CreateService();
-        SetupTypeExists("COMBAT", isBuiltIn: true);
+        SetupTypeExists("COMBAT", CreateTestEncounterType("COMBAT", "Combat", isBuiltIn: true));
 
         var request = new CreateEncounterTypeRequest
         {
@@ -597,7 +597,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Perspectives = new List<PerspectiveInput>
             {
                 new() { CharacterId = charA, EmotionalImpact = EmotionalImpact.GRATITUDE, SentimentShift = 0.3f, RememberedAs = "A great deal" },
-                new() { CharacterId = charB, EmotionalImpact = EmotionalImpact.CONTENTMENT, SentimentShift = 0.1f, RememberedAs = "Fair trade" }
+                new() { CharacterId = charB, EmotionalImpact = EmotionalImpact.RESPECT, SentimentShift = 0.1f, RememberedAs = "Fair trade" }
             }
         };
 
