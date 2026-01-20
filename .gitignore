@@ -58,6 +58,11 @@ provisioning/openresty/overrides/*.conf
 !provisioning/openresty/generated/.gitkeep
 !provisioning/openresty/overrides/.gitkeep
 
+# Node.js / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+
 # MegaLinter reports
 megalinter-reports/
 
