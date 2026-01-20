@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Test infrastructure packages needed for validators -->
+    <!-- Test infrastructure packages - transitive to all test projects via test-utilities reference -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Moq" Version="4.20.72" />
   </ItemGroup>
