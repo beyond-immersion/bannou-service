@@ -11,20 +11,16 @@
 
   <ItemGroup>
     <!--
-      Test infrastructure packages - transitive to all test projects via test-utilities reference.
+      Shared test infrastructure packages.
 
-      Microsoft.NET.Test.Sdk is excluded here because:
-      1. Its runtime assets (testhost.dll) cause issues with CopyLocalLockFileAssemblies
-      2. It needs to be in each test project directly for proper test discovery
-      3. Only the build props/targets are needed transitively (for compile time)
+      xunit: Flows transitively to test projects for compile-time types.
+      Moq: Used by test-utilities (ServiceConstructorValidator, etc.) - test projects
+           also need direct Moq reference for Castle.Core runtime dependency to copy.
 
-      The test projects add Microsoft.NET.Test.Sdk directly while getting xunit, Moq,
-      and Castle.Core transitively from this project.
+      Microsoft.NET.Test.Sdk must be direct in each test project (MSBuild props don't flow).
     -->
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <!-- Moq's runtime dependency - must be explicit for transitive flow -->
-    <PackageReference Include="Castle.Core" Version="5.1.1" />
   </ItemGroup>
 
   <ItemGroup>
