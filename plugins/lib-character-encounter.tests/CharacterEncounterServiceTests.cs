@@ -134,15 +134,15 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.True(config.MemoryDecayEnabled);
         Assert.Equal("lazy", config.MemoryDecayMode);
         Assert.Equal(24, config.MemoryDecayIntervalHours);
-        Assert.Equal(0.05f, config.MemoryDecayRate);
-        Assert.Equal(0.1f, config.MemoryFadeThreshold);
+        Assert.Equal(0.05, config.MemoryDecayRate, 3);
+        Assert.Equal(0.1, config.MemoryFadeThreshold, 3);
         Assert.Equal(1000, config.MaxEncountersPerCharacter);
         Assert.Equal(100, config.MaxEncountersPerPair);
         Assert.Equal(20, config.DefaultPageSize);
         Assert.Equal(100, config.MaxPageSize);
         Assert.Equal(100, config.MaxBatchSize);
-        Assert.Equal(1.0f, config.DefaultMemoryStrength);
-        Assert.Equal(0.2f, config.MemoryRefreshBoost);
+        Assert.Equal(1.0, config.DefaultMemoryStrength, 3);
+        Assert.Equal(0.2, config.MemoryRefreshBoost, 3);
         Assert.True(config.SeedBuiltInTypesOnStartup);
     }
 
@@ -229,7 +229,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     }
 
     [Fact]
-    public async Task CreateEncounterTypeAsync_BuiltInCode_ReturnsConflict()
+    public async Task CreateEncounterTypeAsync_BuiltInCode_ReturnsBadRequest()
     {
         // Arrange
         var service = CreateService();
@@ -244,8 +244,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         // Act
         var (status, response) = await service.CreateEncounterTypeAsync(request, CancellationToken.None);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
+        // Assert - Built-in codes cannot be created as custom types
+        Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
 

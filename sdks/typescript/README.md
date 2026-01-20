@@ -4,9 +4,9 @@ TypeScript client SDK for connecting to Bannou services via WebSocket. Provides 
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `@beyondimmersion/bannou-core` | Shared types, JSON helpers, base event types |
+| Package                          | Description                                    |
+| -------------------------------- | ---------------------------------------------- |
+| `@beyondimmersion/bannou-core`   | Shared types, JSON helpers, base event types   |
 | `@beyondimmersion/bannou-client` | WebSocket client with typed proxies and events |
 
 ## Features
@@ -43,7 +43,7 @@ await client.connectAsync('wss://bannou.example.com/connect', accessToken);
 // Use typed service proxies
 const loginResponse = await client.auth.loginAsync({
   email: 'player@example.com',
-  password: 'password'
+  password: 'password',
 });
 
 if (loginResponse.isSuccess) {
@@ -136,23 +136,23 @@ The SDK implements Bannou's binary WebSocket protocol:
 
 ### Request Header (31 bytes)
 
-| Offset | Size | Field | Description |
-|--------|------|-------|-------------|
-| 0 | 1 | Flags | Message flags (binary, encrypted, etc.) |
-| 1 | 2 | Channel | Message channel for ordering |
-| 3 | 4 | Sequence | Sequence number within channel |
-| 7 | 16 | Service GUID | Target service endpoint GUID |
-| 23 | 8 | Message ID | Correlation ID for response matching |
+| Offset | Size | Field        | Description                             |
+| ------ | ---- | ------------ | --------------------------------------- |
+| 0      | 1    | Flags        | Message flags (binary, encrypted, etc.) |
+| 1      | 2    | Channel      | Message channel for ordering            |
+| 3      | 4    | Sequence     | Sequence number within channel          |
+| 7      | 16   | Service GUID | Target service endpoint GUID            |
+| 23     | 8    | Message ID   | Correlation ID for response matching    |
 
 ### Response Header (16 bytes)
 
-| Offset | Size | Field | Description |
-|--------|------|-------|-------------|
-| 0 | 1 | Flags | Response flags |
-| 1 | 1 | Response Code | Status code (0 = OK) |
-| 2 | 2 | Reserved | Reserved for future use |
-| 4 | 4 | Payload Length | JSON payload length |
-| 8 | 8 | Message ID | Correlation ID from request |
+| Offset | Size | Field          | Description                 |
+| ------ | ---- | -------------- | --------------------------- |
+| 0      | 1    | Flags          | Response flags              |
+| 1      | 1    | Response Code  | Status code (0 = OK)        |
+| 2      | 2    | Reserved       | Reserved for future use     |
+| 4      | 4    | Payload Length | JSON payload length         |
+| 8      | 8    | Message ID     | Correlation ID from request |
 
 All multi-byte integers use **big-endian** (network) byte order.
 
@@ -175,6 +175,7 @@ await client.sessions.joinAsync({ sessionId });
 ```
 
 Each proxy method returns `Promise<ApiResponse<T>>` with:
+
 - `isSuccess`: Whether the request succeeded
 - `data`: Response payload (if successful)
 - `error`: Error information (if failed)
