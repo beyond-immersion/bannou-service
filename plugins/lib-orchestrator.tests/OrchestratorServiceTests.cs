@@ -1406,7 +1406,7 @@ public class OrchestratorResetToDefaultTests
 
         var request = new DeployRequest
         {
-            Preset = preset ?? string.Empty
+            Preset = preset
         };
 
         // Act

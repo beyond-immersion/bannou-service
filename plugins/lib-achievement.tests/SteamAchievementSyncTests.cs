@@ -618,9 +618,9 @@ public class SteamAchievementSyncTests : IDisposable
     public async Task UnlockAsync_SendsCorrectRequestParameters()
     {
         // Arrange
-        var capturedMethod = HttpMethod.Get;
-        var capturedUri = string.Empty;
-        var capturedContent = string.Empty;
+        HttpMethod? capturedMethod = null;
+        string? capturedUri = null;
+        string? capturedContent = null;
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -630,7 +630,7 @@ public class SteamAchievementSyncTests : IDisposable
             .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
             {
                 capturedMethod = req.Method;
-                capturedUri = req.RequestUri?.ToString() ?? string.Empty;
+                capturedUri = req.RequestUri?.ToString();
                 // Read content before it gets disposed by the caller
                 if (req.Content is not null)
                 {
@@ -648,7 +648,11 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
 
-        // Assert
+        // Assert - verify the mock was called
+        Assert.NotNull(capturedMethod);
+        Assert.NotNull(capturedUri);
+        Assert.NotNull(capturedContent);
+
         Assert.Equal(HttpMethod.Post, capturedMethod);
         Assert.Contains("partner.steam-api.com", capturedUri);
         Assert.Contains("ISteamUserStats/SetUserStatsForGame", capturedUri);
@@ -665,7 +669,7 @@ public class SteamAchievementSyncTests : IDisposable
     public async Task SetProgressAsync_SendsProgressValueInRequest()
     {
         // Arrange
-        var capturedContent = string.Empty;
+        string? capturedContent = null;
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -691,7 +695,8 @@ public class SteamAchievementSyncTests : IDisposable
         // Act
         await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 75, 100);
 
-        // Assert
+        // Assert - verify the mock was called
+        Assert.NotNull(capturedContent);
         Assert.Contains("value%5B0%5D=75", capturedContent); // URL encoded value[0]=75
     }
 
