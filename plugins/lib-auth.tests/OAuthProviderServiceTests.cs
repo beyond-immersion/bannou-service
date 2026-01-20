@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
@@ -7,6 +8,9 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
+using System.Net;
+using System.Text;
 using System.Web;
 using Xunit;
 
@@ -25,10 +29,13 @@ public class OAuthProviderServiceTests : IDisposable
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IAccountClient> _mockAccountClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<HttpMessageHandler> _mockHttpHandler;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<OAuthProviderService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly OAuthProviderService _service;
+    private readonly List<HttpClient> _createdHttpClients = new();
+    private readonly List<HttpResponseMessage> _createdResponses = new();
 
     public OAuthProviderServiceTests()
     {
@@ -39,6 +46,7 @@ public class OAuthProviderServiceTests : IDisposable
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockAccountClient = new Mock<IAccountClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockHttpHandler = new Mock<HttpMessageHandler>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<OAuthProviderService>>();
 
@@ -86,7 +94,176 @@ public class OAuthProviderServiceTests : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+
+        foreach (var client in _createdHttpClients)
+        {
+            client.Dispose();
+        }
+        _createdHttpClients.Clear();
+
+        foreach (var response in _createdResponses)
+        {
+            response.Dispose();
+        }
+        _createdResponses.Clear();
+
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Creates an HttpClient with a mocked handler that returns the specified response.
+    /// </summary>
+    private HttpClient CreateMockedHttpClient(HttpStatusCode statusCode, string? content = null)
+    {
+        var response = new HttpResponseMessage(statusCode);
+        _createdResponses.Add(response);
+
+        if (content != null)
+        {
+            response.Content = new StringContent(content, Encoding.UTF8, "application/json");
+        }
+
+        _mockHttpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(response);
+
+        var httpClient = new HttpClient(_mockHttpHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
+    }
+
+    /// <summary>
+    /// Creates an HttpClient that throws when SendAsync is called.
+    /// </summary>
+    private HttpClient CreateThrowingHttpClient(Exception exception)
+    {
+        _mockHttpHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(exception);
+
+        var httpClient = new HttpClient(_mockHttpHandler.Object);
+        _createdHttpClients.Add(httpClient);
+        return httpClient;
+    }
+
+    /// <summary>
+    /// Creates an OAuthProviderService with the specified HttpClient for testing.
+    /// </summary>
+    private OAuthProviderService CreateServiceWithMockedHttp(HttpClient httpClient, AuthServiceConfiguration? configOverride = null)
+    {
+        var mockFactory = new Mock<IHttpClientFactory>();
+        mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        return new OAuthProviderService(
+            _mockStateStoreFactory.Object,
+            _mockAccountClient.Object,
+            mockFactory.Object,
+            configOverride ?? _configuration,
+            _mockMessageBus.Object,
+            _mockLogger.Object);
+    }
+
+    /// <summary>
+    /// Helper class providing Steam Web API response templates for testing.
+    /// </summary>
+    private static class SteamTestResponses
+    {
+        /// <summary>
+        /// Returns a successful Steam ticket validation response.
+        /// </summary>
+        public static string Success(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": false,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response for a VAC-banned user.
+        /// </summary>
+        public static string VacBanned(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": true,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response for a publisher-banned user.
+        /// </summary>
+        public static string PublisherBanned(string steamId = "76561198012345678") => $$"""
+            {
+                "response": {
+                    "params": {
+                        "result": "OK",
+                        "steamid": "{{steamId}}",
+                        "ownersteamid": "{{steamId}}",
+                        "vacbanned": false,
+                        "publisherbanned": true
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a Steam API error response.
+        /// </summary>
+        public static string ApiError(int errorCode, string errorDesc) => $$"""
+            {
+                "response": {
+                    "error": {
+                        "errorcode": {{errorCode}},
+                        "errordesc": "{{errorDesc}}"
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns a response with an invalid (non-"OK") result.
+        /// </summary>
+        public static string InvalidResult() => """
+            {
+                "response": {
+                    "params": {
+                        "result": "FAIL",
+                        "steamid": "",
+                        "ownersteamid": "",
+                        "vacbanned": false,
+                        "publisherbanned": false
+                    }
+                }
+            }
+            """;
+
+        /// <summary>
+        /// Returns an empty/malformed response.
+        /// </summary>
+        public static string MalformedResponse() => """
+            {
+                "response": {}
+            }
+            """;
     }
 
     #region Constructor Tests

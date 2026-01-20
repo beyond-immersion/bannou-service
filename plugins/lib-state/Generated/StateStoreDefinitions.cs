@@ -63,6 +63,10 @@ public static class StateStoreDefinitions
     /// <summary>Persistent character data</summary>
     public const string Character = "character-statestore";
 
+    // CharacterEncounter Service
+    /// <summary>Encounter records and participant perspectives</summary>
+    public const string CharacterEncounter = "character-encounter-statestore";
+
     // CharacterHistory Service
     /// <summary>Character historical events and backstory</summary>
     public const string CharacterHistory = "character-history-statestore";
@@ -213,6 +217,7 @@ public static class StateStoreDefinitions
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
             [Asset] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset" },
             [Auth] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth" },
+            [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
@@ -278,6 +283,7 @@ public static class StateStoreDefinitions
             [AnalyticsSummary] = new StoreMetadata("Analytics", "Entity statistics summaries", "redis"),
             [Asset] = new StoreMetadata("Asset", "Asset upload tracking and bundle state", "redis"),
             [Auth] = new StoreMetadata("Auth", "Session and token state (ephemeral)", "redis"),
+            [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql"),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),

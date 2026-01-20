@@ -1,0 +1,2381 @@
+openapi: 3.0.0
+info:
+  title: Bannou Character Encounter Service API
+  description: |
+    Character encounter tracking service for memorable interactions between characters.
+
+    **Purpose**: Tracks what happens BETWEEN characters (encounters) as opposed to
+    Character-History which tracks what happens TO a character. Enables:
+    - Dialogue triggers ("We've met before...")
+    - Grudges/alliances ("You killed my brother!")
+    - Quest hooks ("The merchant you saved has a job for you")
+    - NPC memory (Characters remember interactions)
+
+    **Multi-Participant Design**: Each encounter has one shared record with N perspectives
+    (one per participant). This scales linearly O(N) and supports group events.
+
+    **Memory Decay**: Encounter memories fade over time unless reinforced. Memory decay
+    is applied lazily on access (not via background jobs) for simpler deployment.
+
+    **Configurable Type Codes**: Games can define custom encounter types beyond the
+    built-in types (COMBAT, TRADE, DIALOGUE, QUEST, SOCIAL, CEREMONY).
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before modifying
+    this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /character-encounter/type/create:
+    post:
+      summary: Create new encounter type
+      operationId: createEncounterType
+      tags:
+      - Encounter Type Management
+      description: |
+        Creates a new encounter type code for game-specific encounter categories.
+        Built-in types (COMBAT, TRADE, etc.) cannot be created via this endpoint.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEncounterTypeRequest'
+      responses:
+        '200':
+          description: Encounter type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
+        '400':
+          description: Invalid encounter type data
+        '409':
+          description: Encounter type with this code already exists
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateEncounterTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"CreateEncounterTypeRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to create a new encounter type\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 50,\n                    \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n               \
+        \     \"description\": \"Unique code for the encounter type\"\n                },\n                \"name\": {\n \
+        \                   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Display name for the encounter type\"\n                },\n       \
+        \         \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Description of this encounter type\"\
+        \n                },\n                \"defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Suggested emotional response\"\n\
+        \                },\n                \"sortOrder\": {\n                    \"type\": \"integer\",\n              \
+        \      \"default\": 100,\n                    \"description\": \"Display ordering (lower = first)\"\n            \
+        \    }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n           \
+        \ \"description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n          \
+        \      \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n     \
+        \           \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\"\
+        ,\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
+        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
+        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create new encounter type\",\n    \"description\": \"Creates a new encounter
+        type code for game-specific encounter categories.\\nBuilt-in types (COMBAT, TRADE, etc.) cannot be created via this
+        endpoint.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"createEncounterType\"\n}"
+  /character-encounter/type/get:
+    post:
+      summary: Get encounter type by code
+      operationId: getEncounterType
+      tags:
+      - Encounter Type Management
+      description: Retrieve an encounter type by its unique code.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEncounterTypeRequest'
+      responses:
+        '200':
+          description: Encounter type retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
+        '404':
+          description: Encounter type not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEncounterTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEncounterTypeRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to retrieve an encounter type by code\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"code\"\n            ],\n            \"properties\": {\n                \"code\":
+        {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code of the encounter
+        type\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
+        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
+        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get encounter type by code\",\n    \"description\": \"Retrieve an encounter
+        type by its unique code.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getEncounterType\"\n}"
+  /character-encounter/type/list:
+    post:
+      summary: List all encounter types
+      operationId: listEncounterTypes
+      tags:
+      - Encounter Type Management
+      description: Retrieve all encounter types including built-in and custom types.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEncounterTypesRequest'
+      responses:
+        '200':
+          description: Encounter types retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEncounterTypesRequest\"\
+        ,\n    \"$defs\": {\n        \"ListEncounterTypesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list encounter types with optional filtering\",\n            \"additionalProperties\": false,\n   \
+        \         \"properties\": {\n                \"includeInactive\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"default\": false,\n                    \"description\": \"Include soft-deleted types\"\n  \
+        \              },\n                \"builtInOnly\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"default\": false,\n                    \"description\": \"Only return built-in types\"\n                },\n\
+        \                \"customOnly\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Only return custom types\"\n                }\n            }\n        }\n\
+        \    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeListResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterTypeListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing a list of encounter types\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"types\",\n                \"totalCount\"\n            ],\n            \"properties\"\
+        : {\n                \"types\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
+        \                      \"$ref\": \"#/$defs/EncounterTypeResponse\"\n                    },\n                    \"\
+        description\": \"List of encounter types\"\n                },\n                \"totalCount\": {\n              \
+        \      \"type\": \"integer\",\n                    \"description\": \"Total number of types\"\n                }\n\
+        \            }\n        },\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"typeId\",\n                \"code\",\n                \"name\",\n        \
+        \        \"isBuiltIn\",\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n       \
+        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Display name\"\n                },\n                \"description\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Description\"\n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this is a built-in type\"\n                },\n                \"\
+        defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Suggested emotional response\"\n                },\n             \
+        \   \"sortOrder\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List all encounter types\",\n    \"description\": \"Retrieve all encounter
+        types including built-in and custom types.\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n  \
+        \  \"deprecated\": false,\n    \"operationId\": \"listEncounterTypes\"\n}"
+  /character-encounter/type/update:
+    post:
+      summary: Update encounter type
+      operationId: updateEncounterType
+      tags:
+      - Encounter Type Management
+      description: |
+        Update an existing encounter type. Built-in types can only have their
+        description and defaultEmotionalImpact updated.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEncounterTypeRequest'
+      responses:
+        '200':
+          description: Encounter type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterTypeResponse'
+        '404':
+          description: Encounter type not found
+        '400':
+          description: Invalid update data
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateEncounterTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateEncounterTypeRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to update an encounter type\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Code of the type to update\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n          \
+        \          \"description\": \"New display name\"\n                },\n                \"description\": {\n       \
+        \             \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"New description\"\n                },\n                \"defaultEmotionalImpact\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"New suggested emotional response\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New display ordering\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n       \
+        \     \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing an encounter type\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"typeId\",\n                \"code\",\n                \"name\",\n                \"isBuiltIn\"\
+        ,\n                \"sortOrder\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n\
+        \            \"properties\": {\n                \"typeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Unique identifier\"\n                },\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Display name\"\n                },\n                \"description\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Description\"\
+        \n                },\n                \"isBuiltIn\": {\n                    \"type\": \"boolean\",\n             \
+        \       \"description\": \"Whether this is a built-in type\"\n                },\n                \"defaultEmotionalImpact\"\
+        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Suggested emotional response\"\n                },\n                \"sortOrder\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Display ordering\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether the type is active\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the type was created\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update encounter type\",\n    \"description\": \"Update an existing encounter
+        type. Built-in types can only have their\\ndescription and defaultEmotionalImpact updated.\\n\",\n    \"tags\": [\n\
+        \        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEncounterType\"\
+        \n}"
+  /character-encounter/type/delete:
+    post:
+      summary: Delete encounter type
+      operationId: deleteEncounterType
+      tags:
+      - Encounter Type Management
+      description: |
+        Delete a custom encounter type. Built-in types cannot be deleted.
+        Types with existing encounters cannot be deleted.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEncounterTypeRequest'
+      responses:
+        '200':
+          description: Encounter type deleted successfully
+        '404':
+          description: Encounter type not found
+        '400':
+          description: Cannot delete built-in type
+        '409':
+          description: Cannot delete - type is in use by encounters
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEncounterTypeRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteEncounterTypeRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to delete an encounter type\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"code\"\n            ],\n            \"properties\": {\n                \"code\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Code of the type to delete\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete encounter type\",\n    \"description\": \"Delete a custom encounter
+        type. Built-in types cannot be deleted.\\nTypes with existing encounters cannot be deleted.\\n\",\n    \"tags\": [\n\
+        \        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteEncounterType\"\
+        \n}"
+  /character-encounter/type/seed:
+    post:
+      summary: Seed default encounter types
+      operationId: seedEncounterTypes
+      tags:
+      - Encounter Type Management
+      description: |
+        Idempotent operation to seed built-in encounter types. Called automatically
+        at service startup, but can be invoked manually to restore defaults.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedEncounterTypesRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedEncounterTypesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedEncounterTypesRequest\"\
+        ,\n    \"$defs\": {\n        \"SeedEncounterTypesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to seed default encounter types\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"forceReset\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Reset built-in types to defaults even if they exist\"\n         \
+        \       }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedEncounterTypesResponse\"\
+        ,\n    \"$defs\": {\n        \"SeedEncounterTypesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Response from seed operation\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"created\",\n                \"updated\",\n                \"skipped\"\n            ],\n   \
+        \         \"properties\": {\n                \"created\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Number of types created\"\n                },\n                \"updated\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Number of types updated\"\n    \
+        \            },\n                \"skipped\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Number of types skipped\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Seed default encounter types\",\n    \"description\": \"Idempotent operation
+        to seed built-in encounter types. Called automatically\\nat service startup, but can be invoked manually to restore
+        defaults.\\n\",\n    \"tags\": [\n        \"Encounter Type Management\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"seedEncounterTypes\"\n}"
+  /character-encounter/record:
+    post:
+      summary: Record new encounter with perspectives
+      operationId: recordEncounter
+      tags:
+      - Recording
+      description: |
+        Records a new encounter between two or more characters. Creates the shared
+        encounter record and individual perspectives for each participant.
+
+        Perspectives can be provided in the request or will be auto-generated with
+        default values if not specified.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordEncounterRequest'
+      responses:
+        '200':
+          description: Encounter recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterResponse'
+        '400':
+          description: Invalid encounter data (requires at least 2 participants)
+        '404':
+          description: One or more characters not found
+        '409':
+          description: Duplicate encounter (same participants, timestamp, and type)
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RecordEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"RecordEncounterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to record a new encounter\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"timestamp\",\n                \"realmId\",\n                \"encounterTypeCode\",\n        \
+        \        \"outcome\",\n                \"participantIds\"\n            ],\n            \"properties\": {\n       \
+        \         \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"In-game time of the encounter\"\n                },\n                \"\
+        realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
+        \       \"description\": \"Realm where the encounter occurred\"\n                },\n                \"locationId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Specific location (optional)\"\n                },\n   \
+        \             \"encounterTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type code (must be an active type)\"\n                },\n                \"context\": {\n                   \
+        \ \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n      \
+        \              \"description\": \"What triggered the encounter\"\n                },\n                \"outcome\"\
+        : {\n                    \"$ref\": \"#/$defs/EncounterOutcome\"\n                },\n                \"participantIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"minItems\"\
+        : 2,\n                    \"description\": \"Character IDs involved (minimum 2)\"\n                },\n          \
+        \      \"perspectives\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
+        \               \"$ref\": \"#/$defs/PerspectiveInput\"\n                    },\n                    \"nullable\":
+        true,\n                    \"description\": \"Optional perspectives (auto-generated if not provided)\"\n         \
+        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional encounter data\"\
+        \n                }\n            }\n        },\n        \"EncounterOutcome\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Overall outcome of an encounter\",\n            \"enum\": [\n                \"\
+        POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n                \"MEMORABLE\",\n       \
+        \         \"TRANSFORMATIVE\"\n            ]\n        },\n        \"PerspectiveInput\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"Input for a single participant's perspective\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"emotionalImpact\"\n   \
+        \         ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character this perspective
+        belongs to\"\n                },\n                \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        \n                },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Opinion change toward other participants\"\
+        \n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"default\": 1.0,\n                    \"description\": \"Initial memory strength\"\n       \
+        \         },\n                \"rememberedAs\": {\n                    \"type\": \"string\",\n                   \
+        \ \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\": \"How this character
+        remembers the encounter\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n        \
+        \    \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
+        ,\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n\
+        \                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\"\
+        ,\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n     \
+        \   }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing an encounter with perspectives\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"encounter\",\n                \"perspectives\"\n            ],\n         \
+        \   \"properties\": {\n                \"encounter\": {\n                    \"$ref\": \"#/$defs/EncounterModel\"\n\
+        \                },\n                \"perspectives\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                  \
+        \  },\n                    \"description\": \"All perspectives on this encounter\"\n                }\n          \
+        \  }\n        },\n        \"EncounterModel\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Core encounter record representing a memorable interaction\",\n            \"additionalProperties\": false,\n    \
+        \        \"required\": [\n                \"encounterId\",\n                \"timestamp\",\n                \"realmId\"\
+        ,\n                \"encounterTypeCode\",\n                \"outcome\",\n                \"participantIds\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this encounter\"\n                },\n                \"timestamp\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"In-game time when the encounter occurred\"\n                },\n                \"realmId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        where the encounter took place\"\n                },\n                \"locationId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Specific location within the realm (optional)\"\n                },\n                \"\
+        encounterTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type code
+        for this encounter (e.g., COMBAT, TRADE)\"\n                },\n                \"context\": {\n                 \
+        \   \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"What triggered or contextualized the encounter\"\n                },\n       \
+        \         \"outcome\": {\n                    \"$ref\": \"#/$defs/EncounterOutcome\"\n                },\n       \
+        \         \"participantIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"minItems\": 2,\n                    \"description\": \"All character IDs involved in the encounter\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional encounter-specific data\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                }\n            }\n        },\n        \"EncounterOutcome\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Overall outcome of an encounter\",\n      \
+        \      \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n \
+        \               \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n        },\n        \"EncounterPerspectiveModel\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A character's individual perspective on an
+        encounter\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"perspectiveId\"\
+        ,\n                \"encounterId\",\n                \"characterId\",\n                \"emotionalImpact\",\n    \
+        \            \"memoryStrength\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"perspectiveId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this perspective\"\n                },\n   \
+        \             \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Reference to the shared encounter record\"\n                },\n       \
+        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
+        \   \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\n                },\n      \
+        \          \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n      \
+        \          },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n    \
+        \            \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Short description from this character's
+        POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n\
+        \        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the encounter
+        emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"\
+        ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n               \
+        \ \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n  \
+        \              \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Record new encounter with perspectives\",\n    \"description\": \"Records
+        a new encounter between two or more characters. Creates the shared\\nencounter record and individual perspectives
+        for each participant.\\n\\nPerspectives can be provided in the request or will be auto-generated with\\ndefault values
+        if not specified.\\n\",\n    \"tags\": [\n        \"Recording\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"recordEncounter\"\n}"
+  /character-encounter/query/by-character:
+    post:
+      summary: Get character's encounters (paginated)
+      operationId: queryByCharacter
+      tags:
+      - Queries
+      description: |
+        Retrieves all encounters for a character with optional filtering.
+        Memory decay is applied lazily on access.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryByCharacterRequest'
+      responses:
+        '200':
+          description: Encounters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryByCharacterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query encounters by character\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character to query encounters for\"\n                },\n                \"encounterTypeCode\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by encounter type\"\n                },\n                \"outcome\": {\n                    \"$ref\":
+        \"#/$defs/EncounterOutcome\",\n                    \"nullable\": true,\n                    \"description\": \"Filter
+        by outcome\"\n                },\n                \"minimumMemoryStrength\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"nullable\": true,\n                    \"description\": \"Filter by minimum memory strength\"\
+        \n                },\n                \"fromTimestamp\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter encounters after this time\"\n                },\n                \"toTimestamp\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Filter encounters before this time\"\n                },\n               \
+        \ \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                 \
+        \   \"default\": 1,\n                    \"description\": \"Page number (1-based)\"\n                },\n        \
+        \        \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n      \
+        \              \"maximum\": 100,\n                    \"default\": 20,\n                    \"description\": \"Results
+        per page\"\n                }\n            }\n        },\n        \"EncounterOutcome\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Overall outcome of an encounter\",\n            \"enum\": [\n          \
+        \      \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n                \"MEMORABLE\",\n\
+        \                \"TRANSFORMATIVE\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterListResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Paginated list of encounters\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"encounters\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"encounters\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EncounterResponse\"\n  \
+        \                  },\n                    \"description\": \"List of encounters with perspectives\"\n           \
+        \     },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total matching encounters\"\n                },\n                \"page\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Current page (1-based)\"\n                },\n                \"\
+        pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Results per page\"\
+        \n                },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether more results exist\"\n                },\n                \"hasPreviousPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether previous results exist\"\
+        \n                }\n            }\n        },\n        \"EncounterResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Response containing an encounter with perspectives\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"encounter\",\n                \"perspectives\"\n        \
+        \    ],\n            \"properties\": {\n                \"encounter\": {\n                    \"$ref\": \"#/$defs/EncounterModel\"\
+        \n                },\n                \"perspectives\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                 \
+        \   },\n                    \"description\": \"All perspectives on this encounter\"\n                }\n         \
+        \   }\n        },\n        \"EncounterModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"Core encounter record representing a memorable interaction\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"encounterId\",\n                \"timestamp\",\n                \"realmId\"\
+        ,\n                \"encounterTypeCode\",\n                \"outcome\",\n                \"participantIds\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this encounter\"\n                },\n                \"timestamp\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"In-game time when the encounter occurred\"\n                },\n                \"realmId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        where the encounter took place\"\n                },\n                \"locationId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Specific location within the realm (optional)\"\n                },\n                \"\
+        encounterTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type code
+        for this encounter (e.g., COMBAT, TRADE)\"\n                },\n                \"context\": {\n                 \
+        \   \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"What triggered or contextualized the encounter\"\n                },\n       \
+        \         \"outcome\": {\n                    \"$ref\": \"#/$defs/EncounterOutcome\"\n                },\n       \
+        \         \"participantIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"minItems\": 2,\n                    \"description\": \"All character IDs involved in the encounter\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional encounter-specific data\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                }\n            }\n        },\n        \"EncounterOutcome\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Overall outcome of an encounter\",\n      \
+        \      \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n \
+        \               \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n        },\n        \"EncounterPerspectiveModel\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A character's individual perspective on an
+        encounter\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"perspectiveId\"\
+        ,\n                \"encounterId\",\n                \"characterId\",\n                \"emotionalImpact\",\n    \
+        \            \"memoryStrength\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"perspectiveId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this perspective\"\n                },\n   \
+        \             \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Reference to the shared encounter record\"\n                },\n       \
+        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
+        \   \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\n                },\n      \
+        \          \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n      \
+        \          },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n    \
+        \            \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Short description from this character's
+        POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n\
+        \        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the encounter
+        emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"\
+        ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n               \
+        \ \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n  \
+        \              \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get character's encounters (paginated)\",\n    \"description\": \"Retrieves
+        all encounters for a character with optional filtering.\\nMemory decay is applied lazily on access.\\n\",\n    \"\
+        tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryByCharacter\"\n}"
+  /character-encounter/query/between:
+    post:
+      summary: Get encounters between two characters
+      operationId: queryBetween
+      tags:
+      - Queries
+      description: |
+        Retrieves all encounters between two specific characters.
+        Useful for relationship history and dialogue context.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryBetweenRequest'
+      responses:
+        '200':
+          description: Encounters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBetweenRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryBetweenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query encounters between two characters\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"characterIdA\",\n                \"characterIdB\"\n            ],\n      \
+        \      \"properties\": {\n                \"characterIdA\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"First character\"\n                },\n\
+        \                \"characterIdB\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Second character\"\n                },\n                \"encounterTypeCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by encounter type\"\n                },\n                \"minimumMemoryStrength\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n \
+        \                   \"maximum\": 1.0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by minimum memory strength (for either character)\"\n                },\n                \"page\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Page number (1-based)\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 100,\n                    \"default\": 20,\n                    \"description\": \"Results per page\"\n        \
+        \        }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterListResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Paginated list of encounters\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"encounters\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"encounters\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EncounterResponse\"\n  \
+        \                  },\n                    \"description\": \"List of encounters with perspectives\"\n           \
+        \     },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total matching encounters\"\n                },\n                \"page\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Current page (1-based)\"\n                },\n                \"\
+        pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Results per page\"\
+        \n                },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether more results exist\"\n                },\n                \"hasPreviousPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether previous results exist\"\
+        \n                }\n            }\n        },\n        \"EncounterResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Response containing an encounter with perspectives\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"encounter\",\n                \"perspectives\"\n        \
+        \    ],\n            \"properties\": {\n                \"encounter\": {\n                    \"$ref\": \"#/$defs/EncounterModel\"\
+        \n                },\n                \"perspectives\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                 \
+        \   },\n                    \"description\": \"All perspectives on this encounter\"\n                }\n         \
+        \   }\n        },\n        \"EncounterModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"Core encounter record representing a memorable interaction\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"encounterId\",\n                \"timestamp\",\n                \"realmId\"\
+        ,\n                \"encounterTypeCode\",\n                \"outcome\",\n                \"participantIds\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this encounter\"\n                },\n                \"timestamp\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"In-game time when the encounter occurred\"\n                },\n                \"realmId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        where the encounter took place\"\n                },\n                \"locationId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Specific location within the realm (optional)\"\n                },\n                \"\
+        encounterTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type code
+        for this encounter (e.g., COMBAT, TRADE)\"\n                },\n                \"context\": {\n                 \
+        \   \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"What triggered or contextualized the encounter\"\n                },\n       \
+        \         \"outcome\": {\n                    \"$ref\": \"#/$defs/EncounterOutcome\"\n                },\n       \
+        \         \"participantIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"minItems\": 2,\n                    \"description\": \"All character IDs involved in the encounter\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional encounter-specific data\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                }\n            }\n        },\n        \"EncounterOutcome\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Overall outcome of an encounter\",\n      \
+        \      \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n \
+        \               \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n        },\n        \"EncounterPerspectiveModel\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A character's individual perspective on an
+        encounter\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"perspectiveId\"\
+        ,\n                \"encounterId\",\n                \"characterId\",\n                \"emotionalImpact\",\n    \
+        \            \"memoryStrength\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"perspectiveId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this perspective\"\n                },\n   \
+        \             \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Reference to the shared encounter record\"\n                },\n       \
+        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
+        \   \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\n                },\n      \
+        \          \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n      \
+        \          },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n    \
+        \            \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Short description from this character's
+        POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n\
+        \        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the encounter
+        emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"\
+        ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n               \
+        \ \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n  \
+        \              \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get encounters between two characters\",\n    \"description\": \"Retrieves
+        all encounters between two specific characters.\\nUseful for relationship history and dialogue context.\\n\",\n  \
+        \  \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryBetween\"\n}"
+  /character-encounter/query/by-location:
+    post:
+      summary: Recent encounters at location
+      operationId: queryByLocation
+      tags:
+      - Queries
+      description: |
+        Retrieves recent encounters at a specific location.
+        Useful for scene context and area history.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryByLocationRequest'
+      responses:
+        '200':
+          description: Encounters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryByLocationRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryByLocationRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query recent encounters at a location\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"locationId\"\n            ],\n            \"properties\": {\n              \
+        \  \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Location to query\"\n                },\n                \"encounterTypeCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by encounter type\"\n                },\n                \"fromTimestamp\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Filter encounters after this time\"\n                },\n                \"page\":
+        {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
+        : 1,\n                    \"description\": \"Page number (1-based)\"\n                },\n                \"pageSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 100,\n                    \"default\": 20,\n                    \"description\": \"Results per page\"\n        \
+        \        }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterListResponse\"\
+        ,\n    \"$defs\": {\n        \"EncounterListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Paginated list of encounters\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
+        \               \"encounters\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"encounters\": {\n                    \"type\":
+        \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EncounterResponse\"\n  \
+        \                  },\n                    \"description\": \"List of encounters with perspectives\"\n           \
+        \     },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total matching encounters\"\n                },\n                \"page\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Current page (1-based)\"\n                },\n                \"\
+        pageSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Results per page\"\
+        \n                },\n                \"hasNextPage\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"description\": \"Whether more results exist\"\n                },\n                \"hasPreviousPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether previous results exist\"\
+        \n                }\n            }\n        },\n        \"EncounterResponse\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Response containing an encounter with perspectives\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"encounter\",\n                \"perspectives\"\n        \
+        \    ],\n            \"properties\": {\n                \"encounter\": {\n                    \"$ref\": \"#/$defs/EncounterModel\"\
+        \n                },\n                \"perspectives\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                 \
+        \   },\n                    \"description\": \"All perspectives on this encounter\"\n                }\n         \
+        \   }\n        },\n        \"EncounterModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"Core encounter record representing a memorable interaction\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"encounterId\",\n                \"timestamp\",\n                \"realmId\"\
+        ,\n                \"encounterTypeCode\",\n                \"outcome\",\n                \"participantIds\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"encounterId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this encounter\"\n                },\n                \"timestamp\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"In-game time when the encounter occurred\"\n                },\n                \"realmId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        where the encounter took place\"\n                },\n                \"locationId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Specific location within the realm (optional)\"\n                },\n                \"\
+        encounterTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type code
+        for this encounter (e.g., COMBAT, TRADE)\"\n                },\n                \"context\": {\n                 \
+        \   \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"What triggered or contextualized the encounter\"\n                },\n       \
+        \         \"outcome\": {\n                    \"$ref\": \"#/$defs/EncounterOutcome\"\n                },\n       \
+        \         \"participantIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
+        \                    \"minItems\": 2,\n                    \"description\": \"All character IDs involved in the encounter\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional encounter-specific data\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                }\n            }\n        },\n        \"EncounterOutcome\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Overall outcome of an encounter\",\n      \
+        \      \"enum\": [\n                \"POSITIVE\",\n                \"NEGATIVE\",\n                \"NEUTRAL\",\n \
+        \               \"MEMORABLE\",\n                \"TRANSFORMATIVE\"\n            ]\n        },\n        \"EncounterPerspectiveModel\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A character's individual perspective on an
+        encounter\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"perspectiveId\"\
+        ,\n                \"encounterId\",\n                \"characterId\",\n                \"emotionalImpact\",\n    \
+        \            \"memoryStrength\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n \
+        \               \"perspectiveId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier for this perspective\"\n                },\n   \
+        \             \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Reference to the shared encounter record\"\n                },\n       \
+        \         \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character holding this perspective\"\n                },\n             \
+        \   \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\n                },\n      \
+        \          \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Opinion change toward other participants (-1.0 to +1.0)\"\n      \
+        \          },\n                \"memoryStrength\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n      \
+        \              \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n                },\n    \
+        \            \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Short description from this character's
+        POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n\
+        \        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the encounter
+        emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"\
+        ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n               \
+        \ \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n  \
+        \              \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Recent encounters at location\",\n    \"description\": \"Retrieves recent
+        encounters at a specific location.\\nUseful for scene context and area history.\\n\",\n    \"tags\": [\n        \"\
+        Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryByLocation\"\n}"
+  /character-encounter/has-met:
+    post:
+      summary: Quick check if two characters have met
+      operationId: hasMet
+      tags:
+      - Queries
+      description: |
+        Fast boolean check for whether two characters have any recorded encounters.
+        Does not apply memory decay or return encounter details.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasMetRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasMetResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasMetRequest\"\
+        ,\n    \"$defs\": {\n        \"HasMetRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to check if two characters have met\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterIdA\",\n                \"characterIdB\"\n            ],\n            \"properties\"\
+        : {\n                \"characterIdA\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"First character\"\n                },\n                \"characterIdB\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Second character\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasMetResponse\"\
+        ,\n    \"$defs\": {\n        \"HasMetResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response for has-met check\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"hasMet\",\n                \"encounterCount\"\n            ],\n            \"properties\": {\n   \
+        \             \"hasMet\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the characters have any recorded encounters\"\n                },\n                \"encounterCount\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Total number of encounters between them\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Quick check if two characters have met\",\n    \"description\": \"Fast
+        boolean check for whether two characters have any recorded encounters.\\nDoes not apply memory decay or return encounter
+        details.\\n\",\n    \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        hasMet\"\n}"
+  /character-encounter/get-sentiment:
+    post:
+      summary: Aggregate sentiment toward another character
+      operationId: getSentiment
+      tags:
+      - Queries
+      description: |
+        Calculates the aggregate sentiment a character has toward another based
+        on all their encounters. Memory strength is factored into the calculation.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSentimentRequest'
+      responses:
+        '200':
+          description: Sentiment calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSentimentRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSentimentRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get aggregate sentiment toward another character\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\",\n                \"targetCharacterId\"\n          \
+        \  ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment to
+        query\"\n                },\n                \"targetCharacterId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Target character to measure sentiment
+        toward\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SentimentResponse\"\
+        ,\n    \"$defs\": {\n        \"SentimentResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing aggregate sentiment\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"targetCharacterId\",\n                \"sentiment\",\n  \
+        \              \"encounterCount\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character whose sentiment was queried\"\n                },\n                \"targetCharacterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Target of the sentiment\"\n                },\n                \"sentiment\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": -1.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"Aggregate sentiment (-1.0 = hostile,
+        +1.0 = friendly)\"\n                },\n                \"encounterCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of encounters factored in\"\n                },\n               \
+        \ \"dominantEmotion\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Most common emotional impact across encounters\"\n               \
+        \ }\n            }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"How the encounter emotionally affected the character\",\n            \"enum\": [\n              \
+        \  \"GRATITUDE\",\n                \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n         \
+        \       \"CONTEMPT\",\n                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\"\
+        ,\n                \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Aggregate sentiment toward another character\",\n    \"description\": \"\
+        Calculates the aggregate sentiment a character has toward another based\\non all their encounters. Memory strength
+        is factored into the calculation.\\n\",\n    \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getSentiment\"\n}"
+  /character-encounter/batch-get:
+    post:
+      summary: Bulk sentiment for multiple targets
+      operationId: batchGetSentiment
+      tags:
+      - Queries
+      description: |
+        Calculates sentiment toward multiple target characters in a single call.
+        Efficient for behavior system queries that check multiple NPCs.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetSentimentRequest'
+      responses:
+        '200':
+          description: Sentiments calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSentimentResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetSentimentRequest\"\
+        ,\n    \"$defs\": {\n        \"BatchGetSentimentRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get sentiment toward multiple characters\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"characterId\",\n                \"targetCharacterIds\"\n            ],\n\
+        \            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment to query\"\
+        \n                },\n                \"targetCharacterIds\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"\
+        uuid\"\n                    },\n                    \"minItems\": 1,\n                    \"maxItems\": 100,\n   \
+        \                 \"description\": \"Target characters to measure sentiment toward\"\n                }\n        \
+        \    }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchSentimentResponse\"\
+        ,\n    \"$defs\": {\n        \"BatchSentimentResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing sentiment toward multiple targets\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"characterId\",\n                \"sentiments\"\n            ],\n      \
+        \      \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment was queried\"\
+        \n                },\n                \"sentiments\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/SentimentResponse\"\n                    },\n   \
+        \                 \"description\": \"Sentiment toward each target\"\n                }\n            }\n        },\n\
+        \        \"SentimentResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Response containing
+        aggregate sentiment\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
+        \  \"characterId\",\n                \"targetCharacterId\",\n                \"sentiment\",\n                \"encounterCount\"\
+        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose sentiment
+        was queried\"\n                },\n                \"targetCharacterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Target of the sentiment\"\n \
+        \               },\n                \"sentiment\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n     \
+        \               \"description\": \"Aggregate sentiment (-1.0 = hostile, +1.0 = friendly)\"\n                },\n \
+        \               \"encounterCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of encounters factored in\"\n                },\n                \"dominantEmotion\": {\n             \
+        \       \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Most common emotional impact across encounters\"\n                }\n            }\n        },\n        \"EmotionalImpact\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the
+        character\",\n            \"enum\": [\n                \"GRATITUDE\",\n                \"ANGER\",\n              \
+        \  \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n                \"AFFECTION\",\n      \
+        \          \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"GUILT\",\n                \"PRIDE\"\n\
+        \            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bulk sentiment for multiple targets\",\n    \"description\": \"Calculates
+        sentiment toward multiple target characters in a single call.\\nEfficient for behavior system queries that check multiple
+        NPCs.\\n\",\n    \"tags\": [\n        \"Queries\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"batchGetSentiment\"\
+        \n}"
+  /character-encounter/get-perspective:
+    post:
+      summary: Get character's view of encounter
+      operationId: getPerspective
+      tags:
+      - Perspectives
+      description: |
+        Retrieves a specific character's perspective on an encounter.
+        Includes emotional impact, sentiment shift, and memory strength.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPerspectiveRequest'
+      responses:
+        '200':
+          description: Perspective retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerspectiveResponse'
+        '404':
+          description: Perspective not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetPerspectiveRequest\"\
+        ,\n    \"$defs\": {\n        \"GetPerspectiveRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get a character's perspective on an encounter\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"encounterId\",\n                \"characterId\"\n            ],\n  \
+        \          \"properties\": {\n                \"encounterId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Encounter to get perspective for\"\n\
+        \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"Character whose perspective to retrieve\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PerspectiveResponse\"\
+        ,\n    \"$defs\": {\n        \"PerspectiveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing a perspective\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"perspective\"\n            ],\n            \"properties\": {\n                \"perspective\"\
+        : {\n                    \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                }\n            }\n     \
+        \   },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
+        ,\n                \"emotionalImpact\",\n                \"memoryStrength\",\n                \"createdAt\"\n    \
+        \        ],\n            \"properties\": {\n                \"perspectiveId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        this perspective\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Reference to the shared encounter
+        record\"\n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Character holding this perspective\"\
+        \n                },\n                \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        \n                },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Opinion change toward other participants
+        (-1.0 to +1.0)\"\n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n           \
+        \     },\n                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get character's view of encounter\",\n    \"description\": \"Retrieves
+        a specific character's perspective on an encounter.\\nIncludes emotional impact, sentiment shift, and memory strength.\\\
+        n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getPerspective\"\
+        \n}"
+  /character-encounter/update-perspective:
+    post:
+      summary: Update perspective (reflection)
+      operationId: updatePerspective
+      tags:
+      - Perspectives
+      description: |
+        Updates a character's perspective on an encounter. Used when a character
+        reflects on past events or gains new information about an encounter.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePerspectiveRequest'
+      responses:
+        '200':
+          description: Perspective updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerspectiveResponse'
+        '404':
+          description: Perspective not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdatePerspectiveRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdatePerspectiveRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to update a character's perspective\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"encounterId\",\n                \"characterId\"\n            ],\n            \"properties\"\
+        : {\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Encounter to update perspective for\"\n                },\n  \
+        \              \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character whose perspective to update\"\n                },\n          \
+        \      \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"New emotional impact\"\n                },\n           \
+        \     \"sentimentShift\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New sentiment shift\"\n                },\n                \"rememberedAs\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New memory description\"\n                }\n            }\n     \
+        \   },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How the
+        encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n       \
+        \         \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n   \
+        \             \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n                \"\
+        GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PerspectiveResponse\"\
+        ,\n    \"$defs\": {\n        \"PerspectiveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing a perspective\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"perspective\"\n            ],\n            \"properties\": {\n                \"perspective\"\
+        : {\n                    \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                }\n            }\n     \
+        \   },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
+        ,\n                \"emotionalImpact\",\n                \"memoryStrength\",\n                \"createdAt\"\n    \
+        \        ],\n            \"properties\": {\n                \"perspectiveId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        this perspective\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Reference to the shared encounter
+        record\"\n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Character holding this perspective\"\
+        \n                },\n                \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        \n                },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Opinion change toward other participants
+        (-1.0 to +1.0)\"\n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n           \
+        \     },\n                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update perspective (reflection)\",\n    \"description\": \"Updates a character's
+        perspective on an encounter. Used when a character\\nreflects on past events or gains new information about an encounter.\\\
+        n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePerspective\"\
+        \n}"
+  /character-encounter/refresh-memory:
+    post:
+      summary: Strengthen memory (referenced)
+      operationId: refreshMemory
+      tags:
+      - Perspectives
+      description: |
+        Strengthens a character's memory of an encounter. Called when the encounter
+        is referenced in dialogue, thought, or action. Counteracts memory decay.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshMemoryRequest'
+      responses:
+        '200':
+          description: Memory refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerspectiveResponse'
+        '404':
+          description: Perspective not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RefreshMemoryRequest\"\
+        ,\n    \"$defs\": {\n        \"RefreshMemoryRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to refresh memory strength\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"encounterId\",\n                \"characterId\"\n            ],\n            \"properties\"\
+        : {\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Encounter to refresh memory for\"\n                },\n      \
+        \          \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Character whose memory to refresh\"\n                },\n              \
+        \  \"strengthBoost\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n \
+        \                   \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.2,\n\
+        \                    \"description\": \"Amount to boost memory strength (capped at 1.0)\"\n                }\n   \
+        \         }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PerspectiveResponse\"\
+        ,\n    \"$defs\": {\n        \"PerspectiveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response containing a perspective\",\n            \"additionalProperties\": false,\n            \"required\":
+        [\n                \"perspective\"\n            ],\n            \"properties\": {\n                \"perspective\"\
+        : {\n                    \"$ref\": \"#/$defs/EncounterPerspectiveModel\"\n                }\n            }\n     \
+        \   },\n        \"EncounterPerspectiveModel\": {\n            \"type\": \"object\",\n            \"description\":
+        \"A character's individual perspective on an encounter\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"perspectiveId\",\n                \"encounterId\",\n                \"characterId\"\
+        ,\n                \"emotionalImpact\",\n                \"memoryStrength\",\n                \"createdAt\"\n    \
+        \        ],\n            \"properties\": {\n                \"perspectiveId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        this perspective\"\n                },\n                \"encounterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Reference to the shared encounter
+        record\"\n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Character holding this perspective\"\
+        \n                },\n                \"emotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        \n                },\n                \"sentimentShift\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": -1.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Opinion change toward other participants
+        (-1.0 to +1.0)\"\n                },\n                \"memoryStrength\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 1.0,\n                    \"description\": \"How strongly remembered (0.0-1.0, decays over time)\"\n           \
+        \     },\n                \"rememberedAs\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"Short description from this
+        character's POV\"\n                },\n                \"lastDecayedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When memory decay was last applied\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"System timestamp when record was created\"\n                },\n                \"updatedAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Last modification timestamp\"\n                }\n            }\n\
+        \        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\": \"How
+        the encounter emotionally affected the character\",\n            \"enum\": [\n                \"GRATITUDE\",\n   \
+        \             \"ANGER\",\n                \"FEAR\",\n                \"RESPECT\",\n                \"CONTEMPT\",\n\
+        \                \"AFFECTION\",\n                \"RIVALRY\",\n                \"INDIFFERENCE\",\n               \
+        \ \"GUILT\",\n                \"PRIDE\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Strengthen memory (referenced)\",\n    \"description\": \"Strengthens a
+        character's memory of an encounter. Called when the encounter\\nis referenced in dialogue, thought, or action. Counteracts
+        memory decay.\\n\",\n    \"tags\": [\n        \"Perspectives\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"refreshMemory\"\n}"
+  /character-encounter/delete:
+    post:
+      summary: Delete encounter and perspectives
+      operationId: deleteEncounter
+      tags:
+      - Admin
+      description: |
+        Deletes an encounter record and all associated perspectives.
+        This is a hard delete and cannot be undone.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEncounterRequest'
+      responses:
+        '200':
+          description: Encounter deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEncounterResponse'
+        '404':
+          description: Encounter not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEncounterRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteEncounterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete an encounter\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"encounterId\"\n            ],\n            \"properties\": {\n                \"encounterId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Encounter to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteEncounterResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteEncounterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from delete operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"encounterId\",\n                \"perspectivesDeleted\"\n            ],\n            \"properties\"\
+        : {\n                \"encounterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Deleted encounter ID\"\n                },\n                \"\
+        perspectivesDeleted\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of perspectives deleted\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete encounter and perspectives\",\n    \"description\": \"Deletes an
+        encounter record and all associated perspectives.\\nThis is a hard delete and cannot be undone.\\n\",\n    \"tags\"\
+        : [\n        \"Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteEncounter\"\n}"
+  /character-encounter/delete-by-character:
+    post:
+      summary: Delete all encounters for a character
+      operationId: deleteByCharacter
+      tags:
+      - Admin
+      description: |
+        Deletes all encounter records and perspectives involving a specific character.
+        Used during character deletion or compression. This is a hard delete.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteByCharacterRequest'
+      responses:
+        '200':
+          description: Encounters deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteByCharacterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to delete all encounters for a character\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n             \
+        \   \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"Character to delete encounters for\"\n                }\n            }\n    \
+        \    }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteByCharacterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from delete-by-character operation\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"encountersDeleted\",\n                \"perspectivesDeleted\"\
+        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose data
+        was deleted\"\n                },\n                \"encountersDeleted\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of encounters deleted\"\n                },\n                \"perspectivesDeleted\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of perspectives deleted\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete all encounters for a character\",\n    \"description\": \"Deletes
+        all encounter records and perspectives involving a specific character.\\nUsed during character deletion or compression.
+        This is a hard delete.\\n\",\n    \"tags\": [\n        \"Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"deleteByCharacter\"\n}"
+  /character-encounter/decay-memories:
+    post:
+      summary: Trigger memory decay (maintenance)
+      operationId: decayMemories
+      tags:
+      - Admin
+      description: |
+        Manually triggers memory decay processing for all or specific characters.
+        Normally decay is applied lazily on access, but this can be used for
+        maintenance or testing purposes.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecayMemoriesRequest'
+      responses:
+        '200':
+          description: Decay processing completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecayMemoriesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DecayMemoriesRequest\"\
+        ,\n    \"$defs\": {\n        \"DecayMemoriesRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to trigger memory decay processing\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Specific character to
+        process (null for all)\"\n                },\n                \"dryRun\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Preview changes without applying\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DecayMemoriesResponse\"\
+        ,\n    \"$defs\": {\n        \"DecayMemoriesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response from decay processing\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"perspectivesProcessed\",\n                \"memoriesFaded\",\n                \"dryRun\"\n    \
+        \        ],\n            \"properties\": {\n                \"perspectivesProcessed\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Number of perspectives processed\"\n                },\n  \
+        \              \"memoriesFaded\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of memories that fell below threshold\"\n                },\n                \"dryRun\": {\n          \
+        \          \"type\": \"boolean\",\n                    \"description\": \"Whether this was a preview run\"\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Trigger memory decay (maintenance)\",\n    \"description\": \"Manually
+        triggers memory decay processing for all or specific characters.\\nNormally decay is applied lazily on access, but
+        this can be used for\\nmaintenance or testing purposes.\\n\",\n    \"tags\": [\n        \"Admin\"\n    ],\n    \"\
+        deprecated\": false,\n    \"operationId\": \"decayMemories\"\n}"
+components:
+  schemas:
+    EncounterOutcome:
+      type: string
+      description: Overall outcome of an encounter
+      enum:
+      - POSITIVE
+      - NEGATIVE
+      - NEUTRAL
+      - MEMORABLE
+      - TRANSFORMATIVE
+    EmotionalImpact:
+      type: string
+      description: How the encounter emotionally affected the character
+      enum:
+      - GRATITUDE
+      - ANGER
+      - FEAR
+      - RESPECT
+      - CONTEMPT
+      - AFFECTION
+      - RIVALRY
+      - INDIFFERENCE
+      - GUILT
+      - PRIDE
+    EncounterModel:
+      type: object
+      description: Core encounter record representing a memorable interaction
+      additionalProperties: false
+      required:
+      - encounterId
+      - timestamp
+      - realmId
+      - encounterTypeCode
+      - outcome
+      - participantIds
+      - createdAt
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for this encounter
+        timestamp:
+          type: string
+          format: date-time
+          description: In-game time when the encounter occurred
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where the encounter took place
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific location within the realm (optional)
+        encounterTypeCode:
+          type: string
+          description: Type code for this encounter (e.g., COMBAT, TRADE)
+        context:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: What triggered or contextualized the encounter
+        outcome:
+          $ref: '#/components/schemas/EncounterOutcome'
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          description: All character IDs involved in the encounter
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional encounter-specific data
+        createdAt:
+          type: string
+          format: date-time
+          description: System timestamp when record was created
+    EncounterPerspectiveModel:
+      type: object
+      description: A character's individual perspective on an encounter
+      additionalProperties: false
+      required:
+      - perspectiveId
+      - encounterId
+      - characterId
+      - emotionalImpact
+      - memoryStrength
+      - createdAt
+      properties:
+        perspectiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this perspective
+        encounterId:
+          type: string
+          format: uuid
+          description: Reference to the shared encounter record
+        characterId:
+          type: string
+          format: uuid
+          description: Character holding this perspective
+        emotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: Opinion change toward other participants (-1.0 to +1.0)
+        memoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: How strongly remembered (0.0-1.0, decays over time)
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: Short description from this character's POV
+        lastDecayedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When memory decay was last applied
+        createdAt:
+          type: string
+          format: date-time
+          description: System timestamp when record was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last modification timestamp
+    EncounterTypeModel:
+      type: object
+      description: Configurable encounter type definition
+      additionalProperties: false
+      required:
+      - typeId
+      - code
+      - name
+      - isBuiltIn
+      - sortOrder
+      - isActive
+      - createdAt
+      properties:
+        typeId:
+          type: string
+          format: uuid
+          description: Unique identifier for this type
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code (e.g., COMBAT, TRADE, HEALING)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the encounter type
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Description of this encounter type
+        isBuiltIn:
+          type: boolean
+          description: True for system types, false for custom
+        defaultEmotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: Suggested emotional response for this type
+        sortOrder:
+          type: integer
+          description: Display ordering
+        isActive:
+          type: boolean
+          description: Soft-delete flag
+        createdAt:
+          type: string
+          format: date-time
+          description: System timestamp when type was created
+    CreateEncounterTypeRequest:
+      type: object
+      description: Request to create a new encounter type
+      additionalProperties: false
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the encounter type
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the encounter type
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Description of this encounter type
+        defaultEmotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: Suggested emotional response
+        sortOrder:
+          type: integer
+          default: 100
+          description: Display ordering (lower = first)
+    GetEncounterTypeRequest:
+      type: object
+      description: Request to retrieve an encounter type by code
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Unique code of the encounter type
+    ListEncounterTypesRequest:
+      type: object
+      description: Request to list encounter types with optional filtering
+      additionalProperties: false
+      properties:
+        includeInactive:
+          type: boolean
+          default: false
+          description: Include soft-deleted types
+        builtInOnly:
+          type: boolean
+          default: false
+          description: Only return built-in types
+        customOnly:
+          type: boolean
+          default: false
+          description: Only return custom types
+    UpdateEncounterTypeRequest:
+      type: object
+      description: Request to update an encounter type
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Code of the type to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          description: New display name
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: New description
+        defaultEmotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: New suggested emotional response
+        sortOrder:
+          type: integer
+          nullable: true
+          description: New display ordering
+    DeleteEncounterTypeRequest:
+      type: object
+      description: Request to delete an encounter type
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Code of the type to delete
+    SeedEncounterTypesRequest:
+      type: object
+      description: Request to seed default encounter types
+      additionalProperties: false
+      properties:
+        forceReset:
+          type: boolean
+          default: false
+          description: Reset built-in types to defaults even if they exist
+    RecordEncounterRequest:
+      type: object
+      description: Request to record a new encounter
+      additionalProperties: false
+      required:
+      - timestamp
+      - realmId
+      - encounterTypeCode
+      - outcome
+      - participantIds
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: In-game time of the encounter
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where the encounter occurred
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific location (optional)
+        encounterTypeCode:
+          type: string
+          description: Type code (must be an active type)
+        context:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: What triggered the encounter
+        outcome:
+          $ref: '#/components/schemas/EncounterOutcome'
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          description: Character IDs involved (minimum 2)
+        perspectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerspectiveInput'
+          nullable: true
+          description: Optional perspectives (auto-generated if not provided)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional encounter data
+    PerspectiveInput:
+      type: object
+      description: Input for a single participant's perspective
+      additionalProperties: false
+      required:
+      - characterId
+      - emotionalImpact
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this perspective belongs to
+        emotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: Opinion change toward other participants
+        memoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Initial memory strength
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: How this character remembers the encounter
+    QueryByCharacterRequest:
+      type: object
+      description: Request to query encounters by character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to query encounters for
+        encounterTypeCode:
+          type: string
+          nullable: true
+          description: Filter by encounter type
+        outcome:
+          $ref: '#/components/schemas/EncounterOutcome'
+          nullable: true
+          description: Filter by outcome
+        minimumMemoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum memory strength
+        fromTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: Filter encounters after this time
+        toTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: Filter encounters before this time
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Results per page
+    QueryBetweenRequest:
+      type: object
+      description: Request to query encounters between two characters
+      additionalProperties: false
+      required:
+      - characterIdA
+      - characterIdB
+      properties:
+        characterIdA:
+          type: string
+          format: uuid
+          description: First character
+        characterIdB:
+          type: string
+          format: uuid
+          description: Second character
+        encounterTypeCode:
+          type: string
+          nullable: true
+          description: Filter by encounter type
+        minimumMemoryStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum memory strength (for either character)
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Results per page
+    QueryByLocationRequest:
+      type: object
+      description: Request to query recent encounters at a location
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to query
+        encounterTypeCode:
+          type: string
+          nullable: true
+          description: Filter by encounter type
+        fromTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: Filter encounters after this time
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Results per page
+    HasMetRequest:
+      type: object
+      description: Request to check if two characters have met
+      additionalProperties: false
+      required:
+      - characterIdA
+      - characterIdB
+      properties:
+        characterIdA:
+          type: string
+          format: uuid
+          description: First character
+        characterIdB:
+          type: string
+          format: uuid
+          description: Second character
+    GetSentimentRequest:
+      type: object
+      description: Request to get aggregate sentiment toward another character
+      additionalProperties: false
+      required:
+      - characterId
+      - targetCharacterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose sentiment to query
+        targetCharacterId:
+          type: string
+          format: uuid
+          description: Target character to measure sentiment toward
+    BatchGetSentimentRequest:
+      type: object
+      description: Request to get sentiment toward multiple characters
+      additionalProperties: false
+      required:
+      - characterId
+      - targetCharacterIds
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose sentiment to query
+        targetCharacterIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: Target characters to measure sentiment toward
+    GetPerspectiveRequest:
+      type: object
+      description: Request to get a character's perspective on an encounter
+      additionalProperties: false
+      required:
+      - encounterId
+      - characterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to get perspective for
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose perspective to retrieve
+    UpdatePerspectiveRequest:
+      type: object
+      description: Request to update a character's perspective
+      additionalProperties: false
+      required:
+      - encounterId
+      - characterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to update perspective for
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose perspective to update
+        emotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: New emotional impact
+        sentimentShift:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          nullable: true
+          description: New sentiment shift
+        rememberedAs:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: New memory description
+    RefreshMemoryRequest:
+      type: object
+      description: Request to refresh memory strength
+      additionalProperties: false
+      required:
+      - encounterId
+      - characterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to refresh memory for
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose memory to refresh
+        strengthBoost:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.2
+          description: Amount to boost memory strength (capped at 1.0)
+    DeleteEncounterRequest:
+      type: object
+      description: Request to delete an encounter
+      additionalProperties: false
+      required:
+      - encounterId
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Encounter to delete
+    DeleteByCharacterRequest:
+      type: object
+      description: Request to delete all encounters for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to delete encounters for
+    DecayMemoriesRequest:
+      type: object
+      description: Request to trigger memory decay processing
+      additionalProperties: false
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific character to process (null for all)
+        dryRun:
+          type: boolean
+          default: false
+          description: Preview changes without applying
+    EncounterTypeResponse:
+      type: object
+      description: Response containing an encounter type
+      additionalProperties: false
+      required:
+      - typeId
+      - code
+      - name
+      - isBuiltIn
+      - sortOrder
+      - isActive
+      - createdAt
+      properties:
+        typeId:
+          type: string
+          format: uuid
+          description: Unique identifier
+        code:
+          type: string
+          description: Unique code
+        name:
+          type: string
+          description: Display name
+        description:
+          type: string
+          nullable: true
+          description: Description
+        isBuiltIn:
+          type: boolean
+          description: Whether this is a built-in type
+        defaultEmotionalImpact:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: Suggested emotional response
+        sortOrder:
+          type: integer
+          description: Display ordering
+        isActive:
+          type: boolean
+          description: Whether the type is active
+        createdAt:
+          type: string
+          format: date-time
+          description: When the type was created
+    EncounterTypeListResponse:
+      type: object
+      description: Response containing a list of encounter types
+      additionalProperties: false
+      required:
+      - types
+      - totalCount
+      properties:
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterTypeResponse'
+          description: List of encounter types
+        totalCount:
+          type: integer
+          description: Total number of types
+    SeedEncounterTypesResponse:
+      type: object
+      description: Response from seed operation
+      additionalProperties: false
+      required:
+      - created
+      - updated
+      - skipped
+      properties:
+        created:
+          type: integer
+          description: Number of types created
+        updated:
+          type: integer
+          description: Number of types updated
+        skipped:
+          type: integer
+          description: Number of types skipped
+    EncounterResponse:
+      type: object
+      description: Response containing an encounter with perspectives
+      additionalProperties: false
+      required:
+      - encounter
+      - perspectives
+      properties:
+        encounter:
+          $ref: '#/components/schemas/EncounterModel'
+        perspectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterPerspectiveModel'
+          description: All perspectives on this encounter
+    EncounterListResponse:
+      type: object
+      description: Paginated list of encounters
+      additionalProperties: false
+      required:
+      - encounters
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: List of encounters with perspectives
+        totalCount:
+          type: integer
+          description: Total matching encounters
+        page:
+          type: integer
+          description: Current page (1-based)
+        pageSize:
+          type: integer
+          description: Results per page
+        hasNextPage:
+          type: boolean
+          description: Whether more results exist
+        hasPreviousPage:
+          type: boolean
+          description: Whether previous results exist
+    HasMetResponse:
+      type: object
+      description: Response for has-met check
+      additionalProperties: false
+      required:
+      - hasMet
+      - encounterCount
+      properties:
+        hasMet:
+          type: boolean
+          description: Whether the characters have any recorded encounters
+        encounterCount:
+          type: integer
+          description: Total number of encounters between them
+    SentimentResponse:
+      type: object
+      description: Response containing aggregate sentiment
+      additionalProperties: false
+      required:
+      - characterId
+      - targetCharacterId
+      - sentiment
+      - encounterCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose sentiment was queried
+        targetCharacterId:
+          type: string
+          format: uuid
+          description: Target of the sentiment
+        sentiment:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          description: Aggregate sentiment (-1.0 = hostile, +1.0 = friendly)
+        encounterCount:
+          type: integer
+          description: Number of encounters factored in
+        dominantEmotion:
+          $ref: '#/components/schemas/EmotionalImpact'
+          nullable: true
+          description: Most common emotional impact across encounters
+    BatchSentimentResponse:
+      type: object
+      description: Response containing sentiment toward multiple targets
+      additionalProperties: false
+      required:
+      - characterId
+      - sentiments
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose sentiment was queried
+        sentiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SentimentResponse'
+          description: Sentiment toward each target
+    PerspectiveResponse:
+      type: object
+      description: Response containing a perspective
+      additionalProperties: false
+      required:
+      - perspective
+      properties:
+        perspective:
+          $ref: '#/components/schemas/EncounterPerspectiveModel'
+    DeleteEncounterResponse:
+      type: object
+      description: Response from delete operation
+      additionalProperties: false
+      required:
+      - encounterId
+      - perspectivesDeleted
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Deleted encounter ID
+        perspectivesDeleted:
+          type: integer
+          description: Number of perspectives deleted
+    DeleteByCharacterResponse:
+      type: object
+      description: Response from delete-by-character operation
+      additionalProperties: false
+      required:
+      - characterId
+      - encountersDeleted
+      - perspectivesDeleted
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose data was deleted
+        encountersDeleted:
+          type: integer
+          description: Number of encounters deleted
+        perspectivesDeleted:
+          type: integer
+          description: Number of perspectives deleted
+    DecayMemoriesResponse:
+      type: object
+      description: Response from decay processing
+      additionalProperties: false
+      required:
+      - perspectivesProcessed
+      - memoriesFaded
+      - dryRun
+      properties:
+        perspectivesProcessed:
+          type: integer
+          description: Number of perspectives processed
+        memoriesFaded:
+          type: integer
+          description: Number of memories that fell below threshold
+        dryRun:
+          type: boolean
+          description: Whether this was a preview run

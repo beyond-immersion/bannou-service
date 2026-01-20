@@ -1,0 +1,311 @@
+openapi: 3.0.3
+info:
+  title: Character Encounter Service Events
+  description: |
+    Event models for Character Encounter service RabbitMQ pub/sub via MassTransit.
+    These events are published when encounter data changes.
+
+    **NRT Compliance**: AI agents MUST review docs/NRT-SCHEMA-RULES.md before
+    modifying this schema. Optional reference types require `nullable: true`.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: character.deleted
+      event: CharacterDeletedEvent
+      handler: OnCharacterDeleted
+      description: Clean up all encounter data when a character is deleted
+  x-event-publications:
+    - topic: encounter.recorded
+      event: EncounterRecordedEvent
+      description: Published when a new encounter is recorded
+    - topic: encounter.memory.faded
+      event: EncounterMemoryFadedEvent
+      description: Published when a memory decays below the fade threshold
+    - topic: encounter.memory.refreshed
+      event: EncounterMemoryRefreshedEvent
+      description: Published when a memory is strengthened (referenced)
+    - topic: encounter.perspective.updated
+      event: EncounterPerspectiveUpdatedEvent
+      description: Published when a perspective is updated
+    - topic: encounter.deleted
+      event: EncounterDeletedEvent
+      description: Published when an encounter is deleted
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # ==========================================================================
+    # Published Events
+    # ==========================================================================
+
+    EncounterRecordedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new encounter is recorded between characters
+      required:
+        - eventId
+        - timestamp
+        - encounterId
+        - encounterTypeCode
+        - outcome
+        - realmId
+        - participantIds
+        - encounterTimestamp
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the recorded encounter
+        encounterTypeCode:
+          type: string
+          description: Type code of the encounter (e.g., COMBAT, TRADE)
+        outcome:
+          type: string
+          description: Outcome of the encounter (POSITIVE, NEGATIVE, etc.)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where the encounter occurred
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific location of the encounter (if provided)
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: All character IDs involved in the encounter
+        context:
+          type: string
+          nullable: true
+          description: Context description of the encounter
+        encounterTimestamp:
+          type: string
+          format: date-time
+          description: In-game time when the encounter occurred
+
+    EncounterMemoryFadedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's memory of an encounter fades below threshold
+      required:
+        - eventId
+        - timestamp
+        - encounterId
+        - characterId
+        - perspectiveId
+        - previousStrength
+        - newStrength
+        - fadeThreshold
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the encounter whose memory faded
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose memory faded
+        perspectiveId:
+          type: string
+          format: uuid
+          description: ID of the perspective that faded
+        previousStrength:
+          type: number
+          format: float
+          description: Memory strength before decay
+        newStrength:
+          type: number
+          format: float
+          description: Memory strength after decay
+        fadeThreshold:
+          type: number
+          format: float
+          description: The threshold below which memories are considered faded
+
+    EncounterMemoryRefreshedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's memory of an encounter is strengthened
+      required:
+        - eventId
+        - timestamp
+        - encounterId
+        - characterId
+        - perspectiveId
+        - previousStrength
+        - newStrength
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the encounter whose memory was refreshed
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose memory was refreshed
+        perspectiveId:
+          type: string
+          format: uuid
+          description: ID of the perspective that was refreshed
+        previousStrength:
+          type: number
+          format: float
+          description: Memory strength before refresh
+        newStrength:
+          type: number
+          format: float
+          description: Memory strength after refresh
+
+    EncounterPerspectiveUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's perspective on an encounter is updated
+      required:
+        - eventId
+        - timestamp
+        - encounterId
+        - characterId
+        - perspectiveId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the encounter
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose perspective changed
+        perspectiveId:
+          type: string
+          format: uuid
+          description: ID of the updated perspective
+        previousEmotionalImpact:
+          type: string
+          nullable: true
+          description: Previous emotional impact (if changed)
+        newEmotionalImpact:
+          type: string
+          nullable: true
+          description: New emotional impact (if changed)
+        previousSentimentShift:
+          type: number
+          format: float
+          nullable: true
+          description: Previous sentiment shift (if changed)
+        newSentimentShift:
+          type: number
+          format: float
+          nullable: true
+          description: New sentiment shift (if changed)
+
+    EncounterDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an encounter is deleted
+      required:
+        - eventId
+        - timestamp
+        - encounterId
+        - participantIds
+        - perspectivesDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the deleted encounter
+        participantIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Character IDs that were involved in the encounter
+        perspectivesDeleted:
+          type: integer
+          description: Number of perspectives deleted with the encounter
+        deletedByCharacterCleanup:
+          type: boolean
+          nullable: true
+          description: True if deleted as part of character deletion cleanup
+        cleanupCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID that triggered the cleanup (if applicable)
+
+    # ==========================================================================
+    # Subscribed Events (from other services)
+    # ==========================================================================
+
+    CharacterDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Event received when a character is deleted (from lib-character)
+      required:
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the deleted character
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the character belonged to (if available)
+        deletionReason:
+          type: string
+          nullable: true
+          description: Reason for deletion (e.g., compression, admin action)
