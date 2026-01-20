@@ -229,6 +229,25 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
 | `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
+### Character Encounter
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
+| `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
+| `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_PER_CHARACTER` | int | `1000` | Maximum encounters stored per character before oldest are pr... |
+| `CHARACTER_ENCOUNTER_MAX_PER_PAIR` | int | `100` | Maximum encounters stored per character pair before oldest a... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | bool | `true` | Enable time-based memory decay for encounter perspectives |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS` | int | `24` | Hours between decay checks (used for calculating decay amoun... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | string | `lazy` | Memory decay mode - 'lazy' applies decay on access, 'schedul... |
+| `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | double | `0.05` | Memory strength reduction per decay interval (0.0-1.0) |
+| `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
+| `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
+| `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
+| `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
+
 ### Connect
 
 | Environment Variable | Type | Default | Description |
@@ -554,9 +573,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 425
+- **Total properties**: 439
 - **Required (no default)**: 40
-- **Optional (has default)**: 385
+- **Optional (has default)**: 399
 
 ## Environment Variable Naming Convention
 
