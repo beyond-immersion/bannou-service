@@ -9,7 +9,15 @@ import {
   type BaseClientEvent,
   createErrorResponse,
 } from '@beyondimmersion/bannou-core';
-import type { IBannouClient } from './IBannouClient.js';
+import type {
+  IBannouClient,
+  DisconnectInfo,
+  MetaResponse,
+  EndpointInfoData,
+  JsonSchemaData,
+  FullSchemaData,
+} from './IBannouClient.js';
+import { DisconnectReason, MetaType } from './IBannouClient.js';
 import { ConnectionState } from './ConnectionState.js';
 import { EventSubscription, type IEventSubscription } from './EventSubscription.js';
 import { generateMessageId, generateUuid } from './GuidGenerator.js';
@@ -81,6 +89,10 @@ export class BannouClient implements IBannouClient {
 
   private capabilityManifestResolver: ((value: boolean) => void) | null = null;
   private eventHandlerFailedCallback: ((error: Error) => void) | null = null;
+  private disconnectCallback: ((info: DisconnectInfo) => void) | null = null;
+  private errorCallback: ((error: Error) => void) | null = null;
+  private pendingReconnectionToken: string | undefined;
+  private lastDisconnectInfo: DisconnectInfo | undefined;
 
   /**
    * Current connection state.
@@ -129,6 +141,27 @@ export class BannouClient implements IBannouClient {
    */
   set onEventHandlerFailed(callback: ((error: Error) => void) | null) {
     this.eventHandlerFailedCallback = callback;
+  }
+
+  /**
+   * Set a callback for when the connection is closed.
+   */
+  set onDisconnect(callback: ((info: DisconnectInfo) => void) | null) {
+    this.disconnectCallback = callback;
+  }
+
+  /**
+   * Set a callback for when a connection error occurs.
+   */
+  set onError(callback: ((error: Error) => void) | null) {
+    this.errorCallback = callback;
+  }
+
+  /**
+   * Get the last disconnect information (if any).
+   */
+  get lastDisconnect(): DisconnectInfo | undefined {
+    return this.lastDisconnectInfo;
   }
 
   /**
@@ -403,6 +436,130 @@ export class BannouClient implements IBannouClient {
   }
 
   /**
+   * Requests metadata about an endpoint instead of executing it.
+   * Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+   */
+  async getEndpointMetaAsync<T>(
+    method: string,
+    path: string,
+    metaType: MetaType = MetaType.FullSchema,
+    timeout: number = 10_000
+  ): Promise<MetaResponse<T>> {
+    if (!this.isConnected || !this.webSocket) {
+      throw new Error('WebSocket is not connected. Call connectAsync first.');
+    }
+
+    if (!this.connectionState) {
+      throw new Error('Connection state not initialized.');
+    }
+
+    // Get service GUID (same as regular requests)
+    const serviceGuid = this.getServiceGuid(method, path);
+    if (!serviceGuid) {
+      const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(', ');
+      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+    }
+
+    // Create meta message - meta type encoded in Channel field, payload is EMPTY
+    const messageId = generateMessageId();
+    const sequenceNumber = this.connectionState.getNextSequenceNumber(metaType);
+
+    const message: BinaryMessage = {
+      flags: MessageFlags.Meta, // Meta flag triggers route transformation
+      channel: metaType, // Meta type in Channel (0=info, 1=req, 2=resp, 3=full)
+      sequenceNumber,
+      serviceGuid,
+      messageId,
+      responseCode: 0,
+      payload: new Uint8Array(0), // EMPTY - Connect never reads payloads
+    };
+
+    // Set up response awaiter
+    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${method}`, path);
+    this.connectionState.addPendingMessage(messageId, `META:${method}:${path}`, new Date());
+
+    try {
+      // Send message
+      const messageBytes = toByteArray(message);
+      this.sendBinaryMessage(messageBytes);
+
+      // Wait for response
+      const response = await responsePromise;
+
+      // Check response code
+      if (response.responseCode !== 0) {
+        throw new Error(`Meta request failed with response code ${response.responseCode}`);
+      }
+
+      // Parse meta response
+      const responseJson = getJsonPayload(response);
+      const result = BannouJson.deserialize<MetaResponse<T>>(responseJson);
+      if (result === null) {
+        throw new Error('Failed to deserialize meta response');
+      }
+
+      return result;
+    } finally {
+      this.pendingRequests.delete(messageId.toString());
+      this.connectionState?.removePendingMessage(messageId);
+    }
+  }
+
+  /**
+   * Gets human-readable endpoint information (summary, description, tags).
+   */
+  async getEndpointInfoAsync(
+    method: string,
+    path: string
+  ): Promise<MetaResponse<EndpointInfoData>> {
+    return this.getEndpointMetaAsync<EndpointInfoData>(method, path, MetaType.EndpointInfo);
+  }
+
+  /**
+   * Gets JSON Schema for the request body of an endpoint.
+   */
+  async getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>> {
+    return this.getEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.RequestSchema);
+  }
+
+  /**
+   * Gets JSON Schema for the response body of an endpoint.
+   */
+  async getResponseSchemaAsync(
+    method: string,
+    path: string
+  ): Promise<MetaResponse<JsonSchemaData>> {
+    return this.getEndpointMetaAsync<JsonSchemaData>(method, path, MetaType.ResponseSchema);
+  }
+
+  /**
+   * Gets full schema including info, request schema, and response schema.
+   */
+  async getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>> {
+    return this.getEndpointMetaAsync<FullSchemaData>(method, path, MetaType.FullSchema);
+  }
+
+  /**
+   * Reconnects using a reconnection token from a DisconnectNotificationEvent.
+   */
+  async reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean> {
+    if (!this.serverBaseUrl && !this.connectUrl) {
+      this._lastError = 'No server URL available for reconnection';
+      return false;
+    }
+
+    // Store the reconnection token for the WebSocket connection
+    this.pendingReconnectionToken = reconnectionToken;
+
+    try {
+      // Re-establish WebSocket connection with the reconnection token
+      return await this.establishWebSocketAsync();
+    } finally {
+      this.pendingReconnectionToken = undefined;
+    }
+  }
+
+  /**
    * Disconnects from the server.
    */
   async disconnectAsync(): Promise<void> {
@@ -618,17 +775,80 @@ export class BannouClient implements IBannouClient {
       }
     };
 
+    const handleClose = (code: number, reason?: string): void => {
+      // Map close code to disconnect reason
+      let disconnectReason = DisconnectReason.ServerClose;
+      let canReconnect = false;
+
+      // WebSocket close codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
+      if (code === 1000) {
+        disconnectReason = DisconnectReason.ClientDisconnect;
+      } else if (code === 1001) {
+        disconnectReason = DisconnectReason.ServerShutdown;
+        canReconnect = true;
+      } else if (code >= 4000 && code < 5000) {
+        // Application-specific codes
+        if (code === 4001) {
+          disconnectReason = DisconnectReason.SessionExpired;
+        } else if (code === 4002) {
+          disconnectReason = DisconnectReason.Kicked;
+        } else {
+          disconnectReason = DisconnectReason.ServerClose;
+          canReconnect = true;
+        }
+      } else if (code >= 1002 && code <= 1015) {
+        disconnectReason = DisconnectReason.NetworkError;
+        canReconnect = true;
+      }
+
+      // Use pending reconnection token if available (from DisconnectNotificationEvent)
+      const reconnectionToken = this.pendingReconnectionToken;
+      if (reconnectionToken) {
+        canReconnect = true;
+      }
+
+      const info: DisconnectInfo = {
+        reason: disconnectReason,
+        message: reason || undefined,
+        reconnectionToken,
+        canReconnect,
+        closeCode: code,
+      };
+
+      this.lastDisconnectInfo = info;
+      this.disconnectCallback?.(info);
+    };
+
+    const handleError = (error: Error | Event): void => {
+      const err = error instanceof Error ? error : new Error('WebSocket error');
+      this.errorCallback?.(err);
+    };
+
     if ('addEventListener' in this.webSocket) {
       // Browser WebSocket
-      (this.webSocket as WebSocket).addEventListener('message', (event: MessageEvent) => {
+      const browserWs = this.webSocket as WebSocket;
+      browserWs.addEventListener('message', (event: MessageEvent) => {
         if (event.data instanceof ArrayBuffer) {
           handleMessage(event.data);
         }
       });
+      browserWs.addEventListener('close', (event: CloseEvent) => {
+        handleClose(event.code, event.reason);
+      });
+      browserWs.addEventListener('error', (event: Event) => {
+        handleError(event);
+      });
     } else {
       // Node.js 'ws' WebSocket
-      (this.webSocket as import('ws').WebSocket).on('message', (data: Buffer) => {
+      const nodeWs = this.webSocket as import('ws').WebSocket;
+      nodeWs.on('message', (data: Buffer) => {
         handleMessage(data);
+      });
+      nodeWs.on('close', (code: number, reason: Buffer) => {
+        handleClose(code, reason.toString());
+      });
+      nodeWs.on('error', (error: Error) => {
+        handleError(error);
       });
     }
   }
@@ -664,6 +884,11 @@ export class BannouClient implements IBannouClient {
       // Handle capability manifest specially
       if (eventName === 'connect.capability_manifest') {
         this.handleCapabilityManifest(payloadJson);
+      }
+
+      // Handle disconnect notification specially
+      if (eventName === 'connect.disconnect_notification') {
+        this.handleDisconnectNotification(payloadJson);
       }
 
       // Dispatch to registered handlers
@@ -711,6 +936,42 @@ export class BannouClient implements IBannouClient {
       }
     } catch {
       // Ignore manifest parse errors
+    }
+  }
+
+  private handleDisconnectNotification(json: string): void {
+    try {
+      const notification = JSON.parse(json) as {
+        reason?: string;
+        message?: string;
+        reconnectionToken?: string;
+        shutdownTime?: string;
+      };
+
+      // Store reconnection token for when WebSocket actually closes
+      if (notification.reconnectionToken) {
+        this.pendingReconnectionToken = notification.reconnectionToken;
+      }
+
+      // Pre-populate disconnect info with data from notification
+      // This will be merged with close event data when connection actually closes
+      let reason = DisconnectReason.ServerClose;
+      if (notification.reason === 'session_expired') {
+        reason = DisconnectReason.SessionExpired;
+      } else if (notification.reason === 'kicked') {
+        reason = DisconnectReason.Kicked;
+      } else if (notification.reason === 'server_shutdown') {
+        reason = DisconnectReason.ServerShutdown;
+      }
+
+      this.lastDisconnectInfo = {
+        reason,
+        message: notification.message,
+        reconnectionToken: notification.reconnectionToken,
+        canReconnect: !!notification.reconnectionToken,
+      };
+    } catch {
+      // Ignore parse errors
     }
   }
 

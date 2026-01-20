@@ -7,6 +7,89 @@ import type { ApiResponse, BaseClientEvent } from '@beyondimmersion/bannou-core'
 import type { IEventSubscription } from './EventSubscription.js';
 
 /**
+ * Disconnect reason codes.
+ */
+export enum DisconnectReason {
+  /** Normal client-initiated disconnect */
+  ClientDisconnect = 'client_disconnect',
+  /** Server closed the connection */
+  ServerClose = 'server_close',
+  /** Network error or connection lost */
+  NetworkError = 'network_error',
+  /** Session expired (token invalid) */
+  SessionExpired = 'session_expired',
+  /** Server is shutting down */
+  ServerShutdown = 'server_shutdown',
+  /** Kicked by admin or anti-cheat */
+  Kicked = 'kicked',
+}
+
+/**
+ * Information about a disconnect event.
+ */
+export interface DisconnectInfo {
+  /** Reason for the disconnect */
+  reason: DisconnectReason;
+  /** Human-readable message */
+  message?: string;
+  /** Reconnection token (if server provided one) */
+  reconnectionToken?: string;
+  /** Whether reconnection is possible */
+  canReconnect: boolean;
+  /** WebSocket close code (if available) */
+  closeCode?: number;
+}
+
+/**
+ * Meta type for endpoint metadata requests.
+ */
+export enum MetaType {
+  /** Basic endpoint info (summary, description, tags) */
+  EndpointInfo = 0,
+  /** JSON Schema for request body */
+  RequestSchema = 1,
+  /** JSON Schema for response body */
+  ResponseSchema = 2,
+  /** Full schema (info + request + response) */
+  FullSchema = 3,
+}
+
+/**
+ * Endpoint information from meta request.
+ */
+export interface EndpointInfoData {
+  summary?: string;
+  description?: string;
+  tags?: string[];
+  deprecated?: boolean;
+}
+
+/**
+ * JSON Schema data from meta request.
+ */
+export interface JsonSchemaData {
+  schema: Record<string, unknown>;
+}
+
+/**
+ * Full schema data from meta request.
+ */
+export interface FullSchemaData {
+  info: EndpointInfoData;
+  requestSchema?: Record<string, unknown>;
+  responseSchema?: Record<string, unknown>;
+}
+
+/**
+ * Meta response wrapper.
+ */
+export interface MetaResponse<T> {
+  data: T;
+  endpointKey: string;
+  metaType: MetaType;
+}
+
+/**
  * Interface for the Bannou WebSocket client.
  */
 export interface IBannouClient {
@@ -153,4 +236,65 @@ export interface IBannouClient {
    * Disconnects from the server.
    */
   disconnectAsync(): Promise<void>;
+
+  // Lifecycle callbacks
+
+  /**
+   * Set callback for when the connection is closed.
+   */
+  set onDisconnect(callback: ((info: DisconnectInfo) => void) | null);
+
+  /**
+   * Set callback for when a connection error occurs.
+   */
+  set onError(callback: ((error: Error) => void) | null);
+
+  /**
+   * Set callback for when event handlers throw exceptions.
+   */
+  set onEventHandlerFailed(callback: ((error: Error) => void) | null);
+
+  // Meta requests
+
+  /**
+   * Requests metadata about an endpoint instead of executing it.
+   * @param method - HTTP method
+   * @param path - API path
+   * @param metaType - Type of metadata to request
+   * @param timeout - Request timeout in milliseconds
+   */
+  getEndpointMetaAsync<T>(
+    method: string,
+    path: string,
+    metaType?: MetaType,
+    timeout?: number
+  ): Promise<MetaResponse<T>>;
+
+  /**
+   * Gets human-readable endpoint information (summary, description, tags).
+   */
+  getEndpointInfoAsync(method: string, path: string): Promise<MetaResponse<EndpointInfoData>>;
+
+  /**
+   * Gets JSON Schema for the request body of an endpoint.
+   */
+  getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+
+  /**
+   * Gets JSON Schema for the response body of an endpoint.
+   */
+  getResponseSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+
+  /**
+   * Gets full schema including info, request schema, and response schema.
+   */
+  getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>>;
+
+  // Reconnection
+
+  /**
+   * Reconnects using a reconnection token from a DisconnectNotificationEvent.
+   * @param reconnectionToken - Token provided by the server
+   */
+  reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
 }

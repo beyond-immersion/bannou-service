@@ -45,7 +45,15 @@ export {
 
 // Client exports
 export { BannouClient } from './BannouClient.js';
-export type { IBannouClient } from './IBannouClient.js';
+export type {
+  IBannouClient,
+  DisconnectInfo,
+  MetaResponse,
+  EndpointInfoData,
+  JsonSchemaData,
+  FullSchemaData,
+} from './IBannouClient.js';
+export { DisconnectReason, MetaType } from './IBannouClient.js';
 export { ConnectionState, type PendingMessageInfo } from './ConnectionState.js';
 export { EventSubscription, type IEventSubscription } from './EventSubscription.js';
 export { generateMessageId, generateUuid, resetMessageIdCounter } from './GuidGenerator.js';

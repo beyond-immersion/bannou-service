@@ -4,6 +4,24 @@ var bannouCore = require('@beyondimmersion/bannou-core');
 
 // src/index.ts
 
+// src/IBannouClient.ts
+var DisconnectReason = /* @__PURE__ */ ((DisconnectReason2) => {
+  DisconnectReason2["ClientDisconnect"] = "client_disconnect";
+  DisconnectReason2["ServerClose"] = "server_close";
+  DisconnectReason2["NetworkError"] = "network_error";
+  DisconnectReason2["SessionExpired"] = "session_expired";
+  DisconnectReason2["ServerShutdown"] = "server_shutdown";
+  DisconnectReason2["Kicked"] = "kicked";
+  return DisconnectReason2;
+})(DisconnectReason || {});
+var MetaType = /* @__PURE__ */ ((MetaType2) => {
+  MetaType2[MetaType2["EndpointInfo"] = 0] = "EndpointInfo";
+  MetaType2[MetaType2["RequestSchema"] = 1] = "RequestSchema";
+  MetaType2[MetaType2["ResponseSchema"] = 2] = "ResponseSchema";
+  MetaType2[MetaType2["FullSchema"] = 3] = "FullSchema";
+  return MetaType2;
+})(MetaType || {});
+
 // src/ConnectionState.ts
 var ConnectionState = class {
   /** Session ID assigned by the server */
@@ -515,6 +533,10 @@ var BannouClient = class {
   _lastError;
   capabilityManifestResolver = null;
   eventHandlerFailedCallback = null;
+  disconnectCallback = null;
+  errorCallback = null;
+  pendingReconnectionToken;
+  lastDisconnectInfo;
   /**
    * Current connection state.
    */
@@ -556,6 +578,24 @@ var BannouClient = class {
    */
   set onEventHandlerFailed(callback) {
     this.eventHandlerFailedCallback = callback;
+  }
+  /**
+   * Set a callback for when the connection is closed.
+   */
+  set onDisconnect(callback) {
+    this.disconnectCallback = callback;
+  }
+  /**
+   * Set a callback for when a connection error occurs.
+   */
+  set onError(callback) {
+    this.errorCallback = callback;
+  }
+  /**
+   * Get the last disconnect information (if any).
+   */
+  get lastDisconnect() {
+    return this.lastDisconnectInfo;
   }
   /**
    * Connects to a Bannou server using username/password authentication.
@@ -751,6 +791,95 @@ var BannouClient = class {
     this.eventHandlers.delete(eventName);
   }
   /**
+   * Requests metadata about an endpoint instead of executing it.
+   * Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+   */
+  async getEndpointMetaAsync(method, path, metaType = 3 /* FullSchema */, timeout = 1e4) {
+    if (!this.isConnected || !this.webSocket) {
+      throw new Error("WebSocket is not connected. Call connectAsync first.");
+    }
+    if (!this.connectionState) {
+      throw new Error("Connection state not initialized.");
+    }
+    const serviceGuid = this.getServiceGuid(method, path);
+    if (!serviceGuid) {
+      const available = Array.from(this.apiMappings.keys()).slice(0, 10).join(", ");
+      throw new Error(`Unknown endpoint: ${method} ${path}. Available: ${available}...`);
+    }
+    const messageId = generateMessageId();
+    const sequenceNumber = this.connectionState.getNextSequenceNumber(metaType);
+    const message = {
+      flags: MessageFlags.Meta,
+      // Meta flag triggers route transformation
+      channel: metaType,
+      // Meta type in Channel (0=info, 1=req, 2=resp, 3=full)
+      sequenceNumber,
+      serviceGuid,
+      messageId,
+      responseCode: 0,
+      payload: new Uint8Array(0)
+      // EMPTY - Connect never reads payloads
+    };
+    const responsePromise = this.createResponsePromise(messageId, timeout, `META:${method}`, path);
+    this.connectionState.addPendingMessage(messageId, `META:${method}:${path}`, /* @__PURE__ */ new Date());
+    try {
+      const messageBytes = toByteArray(message);
+      this.sendBinaryMessage(messageBytes);
+      const response = await responsePromise;
+      if (response.responseCode !== 0) {
+        throw new Error(`Meta request failed with response code ${response.responseCode}`);
+      }
+      const responseJson = getJsonPayload(response);
+      const result = bannouCore.BannouJson.deserialize(responseJson);
+      if (result === null) {
+        throw new Error("Failed to deserialize meta response");
+      }
+      return result;
+    } finally {
+      this.pendingRequests.delete(messageId.toString());
+      this.connectionState?.removePendingMessage(messageId);
+    }
+  }
+  /**
+   * Gets human-readable endpoint information (summary, description, tags).
+   */
+  async getEndpointInfoAsync(method, path) {
+    return this.getEndpointMetaAsync(method, path, 0 /* EndpointInfo */);
+  }
+  /**
+   * Gets JSON Schema for the request body of an endpoint.
+   */
+  async getRequestSchemaAsync(method, path) {
+    return this.getEndpointMetaAsync(method, path, 1 /* RequestSchema */);
+  }
+  /**
+   * Gets JSON Schema for the response body of an endpoint.
+   */
+  async getResponseSchemaAsync(method, path) {
+    return this.getEndpointMetaAsync(method, path, 2 /* ResponseSchema */);
+  }
+  /**
+   * Gets full schema including info, request schema, and response schema.
+   */
+  async getFullSchemaAsync(method, path) {
+    return this.getEndpointMetaAsync(method, path, 3 /* FullSchema */);
+  }
+  /**
+   * Reconnects using a reconnection token from a DisconnectNotificationEvent.
+   */
+  async reconnectWithTokenAsync(reconnectionToken) {
+    if (!this.serverBaseUrl && !this.connectUrl) {
+      this._lastError = "No server URL available for reconnection";
+      return false;
+    }
+    this.pendingReconnectionToken = reconnectionToken;
+    try {
+      return await this.establishWebSocketAsync();
+    } finally {
+      this.pendingReconnectionToken = void 0;
+    }
+  }
+  /**
    * Disconnects from the server.
    */
   async disconnectAsync() {
@@ -913,15 +1042,68 @@ var BannouClient = class {
       } catch {
       }
     };
+    const handleClose = (code, reason) => {
+      let disconnectReason = "server_close" /* ServerClose */;
+      let canReconnect = false;
+      if (code === 1e3) {
+        disconnectReason = "client_disconnect" /* ClientDisconnect */;
+      } else if (code === 1001) {
+        disconnectReason = "server_shutdown" /* ServerShutdown */;
+        canReconnect = true;
+      } else if (code >= 4e3 && code < 5e3) {
+        if (code === 4001) {
+          disconnectReason = "session_expired" /* SessionExpired */;
+        } else if (code === 4002) {
+          disconnectReason = "kicked" /* Kicked */;
+        } else {
+          disconnectReason = "server_close" /* ServerClose */;
+          canReconnect = true;
+        }
+      } else if (code >= 1002 && code <= 1015) {
+        disconnectReason = "network_error" /* NetworkError */;
+        canReconnect = true;
+      }
+      const reconnectionToken = this.pendingReconnectionToken;
+      if (reconnectionToken) {
+        canReconnect = true;
+      }
+      const info = {
+        reason: disconnectReason,
+        message: reason || void 0,
+        reconnectionToken,
+        canReconnect,
+        closeCode: code
+      };
+      this.lastDisconnectInfo = info;
+      this.disconnectCallback?.(info);
+    };
+    const handleError = (error) => {
+      const err = error instanceof Error ? error : new Error("WebSocket error");
+      this.errorCallback?.(err);
+    };
     if ("addEventListener" in this.webSocket) {
-      this.webSocket.addEventListener("message", (event) => {
+      const browserWs = this.webSocket;
+      browserWs.addEventListener("message", (event) => {
         if (event.data instanceof ArrayBuffer) {
           handleMessage(event.data);
         }
       });
+      browserWs.addEventListener("close", (event) => {
+        handleClose(event.code, event.reason);
+      });
+      browserWs.addEventListener("error", (event) => {
+        handleError(event);
+      });
     } else {
-      this.webSocket.on("message", (data) => {
+      const nodeWs = this.webSocket;
+      nodeWs.on("message", (data) => {
         handleMessage(data);
+      });
+      nodeWs.on("close", (code, reason) => {
+        handleClose(code, reason.toString());
+      });
+      nodeWs.on("error", (error) => {
+        handleError(error);
       });
     }
   }
@@ -949,6 +1131,9 @@ var BannouClient = class {
       }
       if (eventName === "connect.capability_manifest") {
         this.handleCapabilityManifest(payloadJson);
+      }
+      if (eventName === "connect.disconnect_notification") {
+        this.handleDisconnectNotification(payloadJson);
       }
       const handlers = this.eventHandlers.get(eventName);
       if (handlers) {
@@ -981,6 +1166,29 @@ var BannouClient = class {
         this.capabilityManifestResolver(true);
         this.capabilityManifestResolver = null;
       }
+    } catch {
+    }
+  }
+  handleDisconnectNotification(json) {
+    try {
+      const notification = JSON.parse(json);
+      if (notification.reconnectionToken) {
+        this.pendingReconnectionToken = notification.reconnectionToken;
+      }
+      let reason = "server_close" /* ServerClose */;
+      if (notification.reason === "session_expired") {
+        reason = "session_expired" /* SessionExpired */;
+      } else if (notification.reason === "kicked") {
+        reason = "kicked" /* Kicked */;
+      } else if (notification.reason === "server_shutdown") {
+        reason = "server_shutdown" /* ServerShutdown */;
+      }
+      this.lastDisconnectInfo = {
+        reason,
+        message: notification.message,
+        reconnectionToken: notification.reconnectionToken,
+        canReconnect: !!notification.reconnectionToken
+      };
     } catch {
     }
   }
@@ -1056,10 +1264,12 @@ Object.defineProperty(exports, "toJson", {
 });
 exports.BannouClient = BannouClient;
 exports.ConnectionState = ConnectionState;
+exports.DisconnectReason = DisconnectReason;
 exports.EMPTY_GUID = EMPTY_GUID;
 exports.EventSubscription = EventSubscription;
 exports.HEADER_SIZE = HEADER_SIZE;
 exports.MessageFlags = MessageFlags;
+exports.MetaType = MetaType;
 exports.RESPONSE_HEADER_SIZE = RESPONSE_HEADER_SIZE;
 exports.ResponseCodes = ResponseCodes;
 exports.createRequest = createRequest;

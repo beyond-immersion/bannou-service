@@ -38,6 +38,82 @@ declare class EventSubscription implements IEventSubscription {
  */
 
 /**
+ * Disconnect reason codes.
+ */
+declare enum DisconnectReason {
+    /** Normal client-initiated disconnect */
+    ClientDisconnect = "client_disconnect",
+    /** Server closed the connection */
+    ServerClose = "server_close",
+    /** Network error or connection lost */
+    NetworkError = "network_error",
+    /** Session expired (token invalid) */
+    SessionExpired = "session_expired",
+    /** Server is shutting down */
+    ServerShutdown = "server_shutdown",
+    /** Kicked by admin or anti-cheat */
+    Kicked = "kicked"
+}
+/**
+ * Information about a disconnect event.
+ */
+interface DisconnectInfo {
+    /** Reason for the disconnect */
+    reason: DisconnectReason;
+    /** Human-readable message */
+    message?: string;
+    /** Reconnection token (if server provided one) */
+    reconnectionToken?: string;
+    /** Whether reconnection is possible */
+    canReconnect: boolean;
+    /** WebSocket close code (if available) */
+    closeCode?: number;
+}
+/**
+ * Meta type for endpoint metadata requests.
+ */
+declare enum MetaType {
+    /** Basic endpoint info (summary, description, tags) */
+    EndpointInfo = 0,
+    /** JSON Schema for request body */
+    RequestSchema = 1,
+    /** JSON Schema for response body */
+    ResponseSchema = 2,
+    /** Full schema (info + request + response) */
+    FullSchema = 3
+}
+/**
+ * Endpoint information from meta request.
+ */
+interface EndpointInfoData {
+    summary?: string;
+    description?: string;
+    tags?: string[];
+    deprecated?: boolean;
+}
+/**
+ * JSON Schema data from meta request.
+ */
+interface JsonSchemaData {
+    schema: Record<string, unknown>;
+}
+/**
+ * Full schema data from meta request.
+ */
+interface FullSchemaData {
+    info: EndpointInfoData;
+    requestSchema?: Record<string, unknown>;
+    responseSchema?: Record<string, unknown>;
+}
+/**
+ * Meta response wrapper.
+ */
+interface MetaResponse<T> {
+    data: T;
+    endpointKey: string;
+    metaType: MetaType;
+}
+/**
  * Interface for the Bannou WebSocket client.
  */
 interface IBannouClient {
@@ -145,6 +221,47 @@ interface IBannouClient {
      * Disconnects from the server.
      */
     disconnectAsync(): Promise<void>;
+    /**
+     * Set callback for when the connection is closed.
+     */
+    set onDisconnect(callback: ((info: DisconnectInfo) => void) | null);
+    /**
+     * Set callback for when a connection error occurs.
+     */
+    set onError(callback: ((error: Error) => void) | null);
+    /**
+     * Set callback for when event handlers throw exceptions.
+     */
+    set onEventHandlerFailed(callback: ((error: Error) => void) | null);
+    /**
+     * Requests metadata about an endpoint instead of executing it.
+     * @param method - HTTP method
+     * @param path - API path
+     * @param metaType - Type of metadata to request
+     * @param timeout - Request timeout in milliseconds
+     */
+    getEndpointMetaAsync<T>(method: string, path: string, metaType?: MetaType, timeout?: number): Promise<MetaResponse<T>>;
+    /**
+     * Gets human-readable endpoint information (summary, description, tags).
+     */
+    getEndpointInfoAsync(method: string, path: string): Promise<MetaResponse<EndpointInfoData>>;
+    /**
+     * Gets JSON Schema for the request body of an endpoint.
+     */
+    getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+    /**
+     * Gets JSON Schema for the response body of an endpoint.
+     */
+    getResponseSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+    /**
+     * Gets full schema including info, request schema, and response schema.
+     */
+    getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>>;
+    /**
+     * Reconnects using a reconnection token from a DisconnectNotificationEvent.
+     * @param reconnectionToken - Token provided by the server
+     */
+    reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
 }
 
 /**
@@ -170,6 +287,10 @@ declare class BannouClient implements IBannouClient {
     private _lastError;
     private capabilityManifestResolver;
     private eventHandlerFailedCallback;
+    private disconnectCallback;
+    private errorCallback;
+    private pendingReconnectionToken;
+    private lastDisconnectInfo;
     /**
      * Current connection state.
      */
@@ -198,6 +319,18 @@ declare class BannouClient implements IBannouClient {
      * Set a callback for when event handlers throw exceptions.
      */
     set onEventHandlerFailed(callback: ((error: Error) => void) | null);
+    /**
+     * Set a callback for when the connection is closed.
+     */
+    set onDisconnect(callback: ((info: DisconnectInfo) => void) | null);
+    /**
+     * Set a callback for when a connection error occurs.
+     */
+    set onError(callback: ((error: Error) => void) | null);
+    /**
+     * Get the last disconnect information (if any).
+     */
+    get lastDisconnect(): DisconnectInfo | undefined;
     /**
      * Connects to a Bannou server using username/password authentication.
      */
@@ -239,6 +372,31 @@ declare class BannouClient implements IBannouClient {
      */
     removeEventHandlers(eventName: string): void;
     /**
+     * Requests metadata about an endpoint instead of executing it.
+     * Uses the Meta flag (0x80) which triggers route transformation at Connect service.
+     */
+    getEndpointMetaAsync<T>(method: string, path: string, metaType?: MetaType, timeout?: number): Promise<MetaResponse<T>>;
+    /**
+     * Gets human-readable endpoint information (summary, description, tags).
+     */
+    getEndpointInfoAsync(method: string, path: string): Promise<MetaResponse<EndpointInfoData>>;
+    /**
+     * Gets JSON Schema for the request body of an endpoint.
+     */
+    getRequestSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+    /**
+     * Gets JSON Schema for the response body of an endpoint.
+     */
+    getResponseSchemaAsync(method: string, path: string): Promise<MetaResponse<JsonSchemaData>>;
+    /**
+     * Gets full schema including info, request schema, and response schema.
+     */
+    getFullSchemaAsync(method: string, path: string): Promise<MetaResponse<FullSchemaData>>;
+    /**
+     * Reconnects using a reconnection token from a DisconnectNotificationEvent.
+     */
+    reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
+    /**
      * Disconnects from the server.
      */
     disconnectAsync(): Promise<void>;
@@ -251,6 +409,7 @@ declare class BannouClient implements IBannouClient {
     private handleReceivedMessage;
     private handleEventMessage;
     private handleCapabilityManifest;
+    private handleDisconnectNotification;
     private waitForCapabilityManifest;
     private createResponsePromise;
     private sendBinaryMessage;
@@ -337,4 +496,4 @@ declare function generateUuid(): string;
  */
 declare function resetMessageIdCounter(): void;
 
-export { BannouClient, ConnectionState, EventSubscription, type IBannouClient, type IEventSubscription, type PendingMessageInfo, generateMessageId, generateUuid, resetMessageIdCounter };
+export { BannouClient, ConnectionState, type DisconnectInfo, DisconnectReason, type EndpointInfoData, EventSubscription, type FullSchemaData, type IBannouClient, type IEventSubscription, type JsonSchemaData, type MetaResponse, MetaType, type PendingMessageInfo, generateMessageId, generateUuid, resetMessageIdCounter };
