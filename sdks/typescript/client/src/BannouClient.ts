@@ -91,6 +91,9 @@ export class BannouClient implements IBannouClient {
   private eventHandlerFailedCallback: ((error: Error) => void) | null = null;
   private disconnectCallback: ((info: DisconnectInfo) => void) | null = null;
   private errorCallback: ((error: Error) => void) | null = null;
+  private tokenRefreshedCallback:
+    | ((accessToken: string, refreshToken: string | undefined) => void)
+    | null = null;
   private pendingReconnectionToken: string | undefined;
   private lastDisconnectInfo: DisconnectInfo | undefined;
 
@@ -155,6 +158,15 @@ export class BannouClient implements IBannouClient {
    */
   set onError(callback: ((error: Error) => void) | null) {
     this.errorCallback = callback;
+  }
+
+  /**
+   * Set a callback for when tokens are refreshed.
+   */
+  set onTokenRefreshed(
+    callback: ((accessToken: string, refreshToken: string | undefined) => void) | null
+  ) {
+    this.tokenRefreshedCallback = callback;
   }
 
   /**
@@ -556,6 +568,56 @@ export class BannouClient implements IBannouClient {
       return await this.establishWebSocketAsync();
     } finally {
       this.pendingReconnectionToken = undefined;
+    }
+  }
+
+  /**
+   * Refreshes the access token using the stored refresh token.
+   */
+  async refreshAccessTokenAsync(): Promise<boolean> {
+    if (!this._refreshToken) {
+      this._lastError = 'No refresh token available';
+      return false;
+    }
+
+    if (!this.serverBaseUrl) {
+      this._lastError = 'No server URL available for token refresh';
+      return false;
+    }
+
+    const refreshUrl = `${this.serverBaseUrl}/auth/refresh`;
+
+    try {
+      const response = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: this._refreshToken }),
+      });
+
+      if (!response.ok) {
+        const errorContent = await response.text();
+        this._lastError = `Token refresh failed (${response.status}): ${errorContent}`;
+        return false;
+      }
+
+      const result: LoginResponse = await response.json();
+      if (!result.accessToken) {
+        this._lastError = 'Token refresh response missing access token';
+        return false;
+      }
+
+      this._accessToken = result.accessToken;
+      if (result.refreshToken) {
+        this._refreshToken = result.refreshToken;
+      }
+
+      // Notify callback if set
+      this.tokenRefreshedCallback?.(this._accessToken, this._refreshToken);
+
+      return true;
+    } catch (error) {
+      this._lastError = `Token refresh exception: ${(error as Error).message}`;
+      return false;
     }
   }
 

@@ -297,4 +297,19 @@ export interface IBannouClient {
    * @param reconnectionToken - Token provided by the server
    */
   reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
+
+  /**
+   * Refreshes the access token using the stored refresh token.
+   * Requires a valid refresh token from previous login/registration.
+   * @returns True if refresh successful, false otherwise
+   */
+  refreshAccessTokenAsync(): Promise<boolean>;
+
+  /**
+   * Set callback for when tokens are refreshed.
+   * Useful for persisting updated tokens.
+   */
+  set onTokenRefreshed(
+    callback: ((accessToken: string, refreshToken: string | undefined) => void) | null
+  );
 }

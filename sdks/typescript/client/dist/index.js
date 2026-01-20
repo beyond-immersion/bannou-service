@@ -534,6 +534,7 @@ var BannouClient = class {
   eventHandlerFailedCallback = null;
   disconnectCallback = null;
   errorCallback = null;
+  tokenRefreshedCallback = null;
   pendingReconnectionToken;
   lastDisconnectInfo;
   /**
@@ -589,6 +590,12 @@ var BannouClient = class {
    */
   set onError(callback) {
     this.errorCallback = callback;
+  }
+  /**
+   * Set a callback for when tokens are refreshed.
+   */
+  set onTokenRefreshed(callback) {
+    this.tokenRefreshedCallback = callback;
   }
   /**
    * Get the last disconnect information (if any).
@@ -876,6 +883,46 @@ var BannouClient = class {
       return await this.establishWebSocketAsync();
     } finally {
       this.pendingReconnectionToken = void 0;
+    }
+  }
+  /**
+   * Refreshes the access token using the stored refresh token.
+   */
+  async refreshAccessTokenAsync() {
+    if (!this._refreshToken) {
+      this._lastError = "No refresh token available";
+      return false;
+    }
+    if (!this.serverBaseUrl) {
+      this._lastError = "No server URL available for token refresh";
+      return false;
+    }
+    const refreshUrl = `${this.serverBaseUrl}/auth/refresh`;
+    try {
+      const response = await fetch(refreshUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: this._refreshToken })
+      });
+      if (!response.ok) {
+        const errorContent = await response.text();
+        this._lastError = `Token refresh failed (${response.status}): ${errorContent}`;
+        return false;
+      }
+      const result = await response.json();
+      if (!result.accessToken) {
+        this._lastError = "Token refresh response missing access token";
+        return false;
+      }
+      this._accessToken = result.accessToken;
+      if (result.refreshToken) {
+        this._refreshToken = result.refreshToken;
+      }
+      this.tokenRefreshedCallback?.(this._accessToken, this._refreshToken);
+      return true;
+    } catch (error) {
+      this._lastError = `Token refresh exception: ${error.message}`;
+      return false;
     }
   }
   /**

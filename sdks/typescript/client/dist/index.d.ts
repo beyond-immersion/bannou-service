@@ -262,6 +262,17 @@ interface IBannouClient {
      * @param reconnectionToken - Token provided by the server
      */
     reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
+    /**
+     * Refreshes the access token using the stored refresh token.
+     * Requires a valid refresh token from previous login/registration.
+     * @returns True if refresh successful, false otherwise
+     */
+    refreshAccessTokenAsync(): Promise<boolean>;
+    /**
+     * Set callback for when tokens are refreshed.
+     * Useful for persisting updated tokens.
+     */
+    set onTokenRefreshed(callback: ((accessToken: string, refreshToken: string | undefined) => void) | null);
 }
 
 /**
@@ -289,6 +300,7 @@ declare class BannouClient implements IBannouClient {
     private eventHandlerFailedCallback;
     private disconnectCallback;
     private errorCallback;
+    private tokenRefreshedCallback;
     private pendingReconnectionToken;
     private lastDisconnectInfo;
     /**
@@ -327,6 +339,10 @@ declare class BannouClient implements IBannouClient {
      * Set a callback for when a connection error occurs.
      */
     set onError(callback: ((error: Error) => void) | null);
+    /**
+     * Set a callback for when tokens are refreshed.
+     */
+    set onTokenRefreshed(callback: ((accessToken: string, refreshToken: string | undefined) => void) | null);
     /**
      * Get the last disconnect information (if any).
      */
@@ -396,6 +412,10 @@ declare class BannouClient implements IBannouClient {
      * Reconnects using a reconnection token from a DisconnectNotificationEvent.
      */
     reconnectWithTokenAsync(reconnectionToken: string): Promise<boolean>;
+    /**
+     * Refreshes the access token using the stored refresh token.
+     */
+    refreshAccessTokenAsync(): Promise<boolean>;
     /**
      * Disconnects from the server.
      */
