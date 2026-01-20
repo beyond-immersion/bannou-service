@@ -28,6 +28,10 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-character-personality -->
     <ProjectReference Include="../lib-character-personality/lib-character-personality.csproj" />
+    <!-- lib-messaging for PublishOptions and IMessageBus testing -->
+    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
+    <!-- lib-state for IStateStoreFactory and IStateStore testing -->
+    <ProjectReference Include="../lib-state/lib-state.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
   </ItemGroup>
