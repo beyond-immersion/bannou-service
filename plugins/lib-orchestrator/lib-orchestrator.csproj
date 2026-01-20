@@ -8,11 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Docker client and orchestration packages -->
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="KubernetesClient" Version="18.0.13" />

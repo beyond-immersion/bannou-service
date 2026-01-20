@@ -18,9 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Add plugin-to-plugin references here as needed -->
-    <ProjectReference Include="../lib-messaging/lib-messaging.csproj" />
-    <ProjectReference Include="../lib-state/lib-state.csproj" />
     <!-- Music Theory SDK for pure computation music generation -->
     <ProjectReference Include="../../sdks/music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
     <!-- Music Storyteller SDK for narrative-driven composition intelligence -->
