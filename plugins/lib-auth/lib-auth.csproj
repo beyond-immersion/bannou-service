@@ -8,13 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Microsoft.AspNetCore.Authentication.JwtBearer comes from bannou-service -->
+    <!-- Domain-specific packages not provided by bannou-service -->
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

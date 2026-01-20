@@ -9,8 +9,6 @@
 
   <ItemGroup>
     <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="JsonPatch.Net" Version="3.1.0" />
   </ItemGroup>
 
