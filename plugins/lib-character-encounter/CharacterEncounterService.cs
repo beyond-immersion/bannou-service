@@ -37,6 +37,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private const string CHAR_INDEX_PREFIX = "char-idx-";
     private const string PAIR_INDEX_PREFIX = "pair-idx-";
     private const string LOCATION_INDEX_PREFIX = "loc-idx-";
+    private const string GLOBAL_CHAR_INDEX_KEY = "global-char-idx";
+    private const string CUSTOM_TYPE_INDEX_KEY = "custom-type-idx";
 
     // Event topics
     private const string ENCOUNTER_RECORDED_TOPIC = "encounter.recorded";
@@ -120,6 +122,9 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             };
 
             await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+            // Add to custom type index for enumeration
+            await AddToCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
 
             _logger.LogInformation("Created encounter type {Code} with ID {TypeId}", body.Code, typeId);
             return (StatusCodes.OK, MapToEncounterTypeResponse(data));
@@ -325,10 +330,12 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return StatusCodes.BadRequest;
             }
 
-            // Check if type is in use (would need to query encounters)
-            // For now, we'll just soft-delete by marking inactive
+            // Soft-delete by marking inactive
             data.IsActive = false;
             await store.SaveAsync(key, data, cancellationToken: cancellationToken);
+
+            // Remove from custom type index
+            await RemoveFromCustomTypeIndexAsync(body.Code.ToUpperInvariant(), cancellationToken);
 
             _logger.LogInformation("Deleted (deactivated) encounter type {Code}", body.Code);
             return StatusCodes.OK;
@@ -533,6 +540,13 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             {
                 await AddToLocationIndexAsync(body.LocationId.Value, encounterId, cancellationToken);
             }
+
+            // Enforce encounter limits by pruning oldest encounters
+            foreach (var participantId in participantIds)
+            {
+                await PruneCharacterEncountersIfNeededAsync(participantId, cancellationToken);
+            }
+            await PrunePairEncountersIfNeededAsync(participantIds, cancellationToken);
 
             // Publish event
             await _messageBus.TryPublishAsync(ENCOUNTER_RECORDED_TOPIC, new EncounterRecordedEvent
@@ -1510,18 +1524,29 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         }
     }
 
-    private Task<List<string>> GetAllTypeKeysAsync(IStateStore<EncounterTypeData> store, CancellationToken cancellationToken)
+    private async Task<List<string>> GetAllTypeKeysAsync(IStateStore<EncounterTypeData> store, CancellationToken cancellationToken)
     {
-        // For MySQL backend, we need to query by prefix
-        // This is a simplified implementation - in production, use proper prefix queries
         var keys = new List<string>();
+
+        // Add built-in type keys
         foreach (var builtIn in BuiltInTypes)
         {
             keys.Add($"{TYPE_KEY_PREFIX}{builtIn.Code}");
         }
-        // Also check for custom types by trying to query with pattern
-        // For now, just return built-in type keys plus any custom ones we know about
-        return Task.FromResult(keys);
+
+        // Add custom type keys from the index
+        var customTypeIndexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var customTypeIndex = await customTypeIndexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
+
+        if (customTypeIndex != null)
+        {
+            foreach (var typeCode in customTypeIndex.TypeCodes)
+            {
+                keys.Add($"{TYPE_KEY_PREFIX}{typeCode}");
+            }
+        }
+
+        return keys;
     }
 
     private async Task<List<Guid>> GetCharacterPerspectiveIdsAsync(Guid characterId, CancellationToken cancellationToken)
@@ -1550,11 +1575,35 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     {
         var indexStore = _stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
         var key = $"{CHAR_INDEX_PREFIX}{characterId}";
-        var index = await indexStore.GetAsync(key, cancellationToken) ?? new CharacterIndexData { CharacterId = characterId.ToString() };
+        var index = await indexStore.GetAsync(key, cancellationToken);
+        var isNewCharacter = index == null;
+
+        index ??= new CharacterIndexData { CharacterId = characterId.ToString() };
+
         if (!index.PerspectiveIds.Contains(perspectiveId.ToString()))
         {
             index.PerspectiveIds.Add(perspectiveId.ToString());
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+        }
+
+        // Add to global character index if this is the character's first perspective
+        if (isNewCharacter)
+        {
+            await AddToGlobalCharacterIndexAsync(characterId, cancellationToken);
+        }
+    }
+
+    private async Task AddToGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
+    {
+        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken)
+            ?? new GlobalCharacterIndexData();
+
+        var characterIdStr = characterId.ToString();
+        if (!globalIndex.CharacterIds.Contains(characterIdStr))
+        {
+            globalIndex.CharacterIds.Add(characterIdStr);
+            await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
         }
     }
 
@@ -1567,6 +1616,191 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         {
             index.PerspectiveIds.Remove(perspectiveId.ToString());
             await indexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+
+            // Remove from global index if this was the character's last perspective
+            if (index.PerspectiveIds.Count == 0)
+            {
+                await RemoveFromGlobalCharacterIndexAsync(characterId, cancellationToken);
+            }
+        }
+    }
+
+    private async Task RemoveFromGlobalCharacterIndexAsync(Guid characterId, CancellationToken cancellationToken)
+    {
+        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
+
+        if (globalIndex != null)
+        {
+            globalIndex.CharacterIds.Remove(characterId.ToString());
+            await globalIndexStore.SaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task AddToCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var index = await indexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken)
+            ?? new CustomTypeIndexData();
+
+        if (!index.TypeCodes.Contains(typeCode))
+        {
+            index.TypeCodes.Add(typeCode);
+            await indexStore.SaveAsync(CUSTOM_TYPE_INDEX_KEY, index, cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task RemoveFromCustomTypeIndexAsync(string typeCode, CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<CustomTypeIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var index = await indexStore.GetAsync(CUSTOM_TYPE_INDEX_KEY, cancellationToken);
+
+        if (index != null)
+        {
+            index.TypeCodes.Remove(typeCode);
+            await indexStore.SaveAsync(CUSTOM_TYPE_INDEX_KEY, index, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Prunes encounters for a character if they exceed MaxEncountersPerCharacter.
+    /// Removes oldest encounters (by timestamp) first.
+    /// </summary>
+    private async Task PruneCharacterEncountersIfNeededAsync(Guid characterId, CancellationToken cancellationToken)
+    {
+        var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
+        if (perspectiveIds.Count <= _configuration.MaxEncountersPerCharacter)
+        {
+            return;
+        }
+
+        var perspectiveStore = _stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+
+        // Load all perspectives with their encounter timestamps
+        var perspectivesWithTimestamp = new List<(Guid perspectiveId, Guid encounterId, long timestamp)>();
+        foreach (var perspectiveId in perspectiveIds)
+        {
+            var perspective = await perspectiveStore.GetAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
+            if (perspective == null) continue;
+
+            var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
+            if (encounter == null) continue;
+
+            perspectivesWithTimestamp.Add((perspectiveId, Guid.Parse(perspective.EncounterId), encounter.Timestamp));
+        }
+
+        // Sort by timestamp ascending (oldest first)
+        var sorted = perspectivesWithTimestamp.OrderBy(p => p.timestamp).ToList();
+
+        // Calculate how many to remove
+        var toRemove = sorted.Count - _configuration.MaxEncountersPerCharacter;
+        if (toRemove <= 0) return;
+
+        _logger.LogInformation("Pruning {Count} oldest encounters for character {CharacterId}", toRemove, characterId);
+
+        // Remove the oldest perspectives
+        for (var i = 0; i < toRemove; i++)
+        {
+            var (perspectiveId, encounterId, _) = sorted[i];
+
+            // Delete the perspective
+            await perspectiveStore.DeleteAsync($"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}", cancellationToken);
+            await RemoveFromCharacterIndexAsync(characterId, perspectiveId, cancellationToken);
+
+            // Check if this encounter has any remaining perspectives
+            var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+            if (encounter != null)
+            {
+                var remainingPerspectives = await GetEncounterPerspectivesAsync(encounterId, cancellationToken);
+                if (remainingPerspectives.Count == 0)
+                {
+                    // No perspectives left - delete the encounter
+                    await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+
+                    // Clean up pair indexes
+                    var participantIds = encounter.ParticipantIds.Select(Guid.Parse).ToList();
+                    await RemoveFromPairIndexesAsync(participantIds, encounterId, cancellationToken);
+
+                    // Clean up location index
+                    if (!string.IsNullOrEmpty(encounter.LocationId))
+                    {
+                        await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), encounterId, cancellationToken);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Prunes encounters between character pairs if they exceed MaxEncountersPerPair.
+    /// Removes oldest encounters (by timestamp) first.
+    /// </summary>
+    private async Task PrunePairEncountersIfNeededAsync(List<Guid> participantIds, CancellationToken cancellationToken)
+    {
+        var encounterStore = _stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+
+        // Check each unique pair
+        for (var i = 0; i < participantIds.Count; i++)
+        {
+            for (var j = i + 1; j < participantIds.Count; j++)
+            {
+                var charA = participantIds[i];
+                var charB = participantIds[j];
+
+                var encounterIds = await GetPairEncounterIdsAsync(charA, charB, cancellationToken);
+                if (encounterIds.Count <= _configuration.MaxEncountersPerPair)
+                {
+                    continue;
+                }
+
+                // Load encounters with timestamps
+                var encountersWithTimestamp = new List<(Guid encounterId, long timestamp)>();
+                foreach (var encounterId in encounterIds)
+                {
+                    var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+                    if (encounter != null)
+                    {
+                        encountersWithTimestamp.Add((encounterId, encounter.Timestamp));
+                    }
+                }
+
+                // Sort by timestamp ascending (oldest first)
+                var sorted = encountersWithTimestamp.OrderBy(e => e.timestamp).ToList();
+
+                // Calculate how many to remove
+                var toRemove = sorted.Count - _configuration.MaxEncountersPerPair;
+                if (toRemove <= 0) continue;
+
+                _logger.LogInformation("Pruning {Count} oldest encounters between pair {CharA}/{CharB}",
+                    toRemove, charA, charB);
+
+                // Remove the oldest encounters
+                for (var k = 0; k < toRemove; k++)
+                {
+                    var (encounterId, _) = sorted[k];
+
+                    // Delete all perspectives for this encounter
+                    await DeleteEncounterPerspectivesAsync(encounterId, cancellationToken);
+
+                    // Delete the encounter
+                    var encounter = await encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+                    if (encounter != null)
+                    {
+                        await encounterStore.DeleteAsync($"{ENCOUNTER_KEY_PREFIX}{encounterId}", cancellationToken);
+
+                        // Clean up pair indexes (including this pair and any others)
+                        var allParticipants = encounter.ParticipantIds.Select(Guid.Parse).ToList();
+                        await RemoveFromPairIndexesAsync(allParticipants, encounterId, cancellationToken);
+
+                        // Clean up location index
+                        if (!string.IsNullOrEmpty(encounter.LocationId))
+                        {
+                            await RemoveFromLocationIndexAsync(Guid.Parse(encounter.LocationId), encounterId, cancellationToken);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1710,11 +1944,27 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         return deleted;
     }
 
-    private Task<IEnumerable<Guid>> GetAllPerspectiveIdsAsync(CancellationToken cancellationToken)
+    private async Task<IEnumerable<Guid>> GetAllPerspectiveIdsAsync(CancellationToken cancellationToken)
     {
-        // This is a simplified implementation
-        // In production, this would need proper query support or batching
-        return Task.FromResult<IEnumerable<Guid>>(new List<Guid>());
+        var globalIndexStore = _stateStoreFactory.GetStore<GlobalCharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var globalIndex = await globalIndexStore.GetAsync(GLOBAL_CHAR_INDEX_KEY, cancellationToken);
+
+        if (globalIndex == null || globalIndex.CharacterIds.Count == 0)
+        {
+            return Enumerable.Empty<Guid>();
+        }
+
+        var allPerspectiveIds = new List<Guid>();
+        foreach (var characterIdStr in globalIndex.CharacterIds)
+        {
+            if (Guid.TryParse(characterIdStr, out var characterId))
+            {
+                var perspectiveIds = await GetCharacterPerspectiveIdsAsync(characterId, cancellationToken);
+                allPerspectiveIds.AddRange(perspectiveIds);
+            }
+        }
+
+        return allPerspectiveIds;
     }
 
     private async Task<PerspectiveData> ApplyLazyDecayAsync(IStateStore<PerspectiveData> store, PerspectiveData perspective, CancellationToken cancellationToken)
@@ -1929,4 +2179,22 @@ internal class LocationIndexData
 {
     public string LocationId { get; set; } = string.Empty;
     public List<string> EncounterIds { get; set; } = new();
+}
+
+/// <summary>
+/// Global index tracking all character IDs that have encounter perspectives.
+/// Used for global memory decay operations.
+/// </summary>
+internal class GlobalCharacterIndexData
+{
+    public List<string> CharacterIds { get; set; } = new();
+}
+
+/// <summary>
+/// Index tracking all custom encounter type codes.
+/// Used for listing custom types since state stores don't support prefix queries.
+/// </summary>
+internal class CustomTypeIndexData
+{
+    public List<string> TypeCodes { get; set; } = new();
 }
